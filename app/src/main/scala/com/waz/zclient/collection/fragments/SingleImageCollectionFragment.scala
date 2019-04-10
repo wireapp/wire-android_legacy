@@ -41,6 +41,7 @@ import com.waz.zclient.collection.controllers.CollectionController.{AllContent, 
 import com.waz.zclient.collection.fragments.SingleImageCollectionFragment.ImageSwipeAdapter
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -76,7 +77,7 @@ class SingleImageCollectionFragment
         collectionController.focusedItem ! imageSwipeAdapter.getItem(position)
       }
     })
-    pager.setPageTransformer(false, new CustomPagerTransformer (CustomPagerTransformer.SLIDE))
+    pager.setPageTransformer(false, new CustomPagerTransformer(CustomPagerTransformer.SLIDE))
 
     getFocusedItem(imageSwipeAdapter) foreach { pos =>
       if (pos >= 0) pager.setCurrentItem(pos, false)
@@ -199,14 +200,17 @@ object SingleImageCollectionFragment {
       }
     })
 
-    def setAsset(assetId: AssetId): Unit =
+    def setAsset(assetId: AssetId): Unit = {
+      verbose(l"$this Setting asset: $assetId")
       GlideBuilder.apply(assetId)(getContext)
         .apply(new RequestOptions().fitCenter().placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(this)
+    }
 
     def setMessageData(messageData: MessageData): Unit = {
       this.messageData = Option(messageData)
+      verbose(l"Setting message data: $messageData")
       messageData.assetId match {
         case Some(id: AssetId) => setAsset(id)
         case _ =>

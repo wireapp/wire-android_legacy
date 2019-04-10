@@ -43,4 +43,7 @@ object GlideBuilder {
 
   def apply(assetId: GeneralAssetId)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetRequest(assetId))
   def apply(picture: Picture)(implicit context: Context): RequestBuilder[Drawable] = WireGlide().load(AssetRequest(picture))
+
+  def load(url: URL)(implicit context: Context): RequestBuilder[Array[Byte]] =
+    WireGlide().as(classOf[Array[Byte]]).load(url.toString)
 }

@@ -39,12 +39,13 @@ import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.glide.{CustomImageViewTarget, GlideBuilder, WireGlide}
 import com.waz.zclient.messages.controllers.MessageActionsController
-import com.waz.zclient.messages.parts.assets.FileAssetPartView
+import com.waz.zclient.messages.parts.assets.{AssetPart, FileAssetPartView}
 import com.waz.zclient.messages.parts.{EphemeralPartView, WebLinkPartView}
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.log.LogUI._
 
 trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedLogTag {
   protected lazy val civZms = inject[Signal[ZMessaging]]
@@ -102,7 +103,7 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
   }
 }
 
-class CollectionImageView(context: Context) extends ImageView(context) with CollectionItemView {
+class CollectionImageView(context: Context) extends ImageView(context) with CollectionItemView with DerivedLogTag {
   setId(R.id.collection_image_view)
 
   override val tpe: MsgPart = MsgPart.Image
@@ -123,14 +124,17 @@ class CollectionImageView(context: Context) extends ImageView(context) with Coll
 
   Signal(messageData.map(_.assetId), ephemeralColorDrawable).onUi {
     case (Some(id: AssetId), None) =>
+      verbose(l"Set image asset $id")
       GlideBuilder(id)
         .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(target)
     case (_, Some(ephemeralDrawable)) =>
+      verbose(l"Set ephemeral drawable")
       WireGlide().clear(this)
       setImageDrawable(ephemeralDrawable)
     case _ =>
+      verbose(l"Set nothing")
 
   }
 
@@ -163,7 +167,7 @@ class CollectionFileAssetPartView(context: Context, attrs: AttributeSet, style: 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  override def layoutList = {
+  override def layoutList: PartialFunction[AssetPart, Int] = {
     case _: CollectionFileAssetPartView => R.layout.collection_message_file_asset_content
   }
 

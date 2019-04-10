@@ -25,11 +25,10 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetData
 import com.waz.service.assets.AssetService.BitmapResult
+import com.waz.service.media.GiphyService.GifObject
 import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
-import com.waz.zclient.giphy.GiphySharingPreviewFragment.GifData
 import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
 import com.waz.zclient.ui.utils.MathUtils
@@ -48,41 +47,39 @@ object GiphyGridViewAdapter {
 
     private lazy val gifPreview = itemView.findViewById[AspectRatioImageView](R.id.iv__row_giphy_image)
 
-
-    def setImageAssets(image: AssetData, preview: Option[AssetData], position: Int): Unit = {
+    def setGif(gifObject: GifObject): Unit = {
       gifPreview.setOnClickListener(new View.OnClickListener() {
         override def onClick(v: View): Unit = {
-          scrollGifCallback.setSelectedGifFromGridView(image)
+          scrollGifCallback.setSelectedGifFromGridView(gifObject)
         }
       })
 
       val colorArray = cxt.getResources.getIntArray(R.array.selectable_accents_color)
-      val defaultDrawable = new ColorDrawable(colorArray(position % (colorArray.length - 1)))
+      lazy val defaultDrawable = new ColorDrawable(colorArray(getAdapterPosition % (colorArray.length - 1)))
 
-      preview match {
+
+      val gifDims = gifObject.original.dimensions
+      gifPreview.setAspectRatio(
+        if (MathUtils.floatEqual(gifDims.height, 0)) 1f
+        else gifDims.width.toFloat / gifDims.height
+      )
+
+      gifObject.preview match {
+        case Some(gif) =>
+          GlideBuilder(gif.source)
+            .apply(new RequestOptions()
+              .fitCenter()
+              .placeholder(defaultDrawable))
+            .into(gifPreview)
         case None =>
           WireGlide().clear(gifPreview)
           gifPreview.setImageDrawable(defaultDrawable)
-        case Some(data) =>
-          gifPreview.setAspectRatio(
-            if (MathUtils.floatEqual(data.height, 0)) 1f
-            else data.width.toFloat / data.height
-          )
-
-          data.source.foreach { uri =>
-            GlideBuilder(AndroidURIUtil.unwrap(uri))
-              .apply(new RequestOptions()
-                .placeholder(defaultDrawable)
-                .fitCenter()
-                .dontAnimate())
-              .into(gifPreview)
-          }
       }
     }
   }
 
   trait ScrollGifCallback {
-    def setSelectedGifFromGridView(gifAsset: AssetData): Unit
+    def setSelectedGifFromGridView(gif: GifObject): Unit
   }
 
 }
@@ -94,7 +91,7 @@ class GiphyGridViewAdapter(val scrollGifCallback: ScrollGifCallback)
 
   import GiphyGridViewAdapter._
 
-  private var giphyResults = Seq.empty[GifData]
+  private var giphyResults = Seq.empty[GifObject]
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): GiphyGridViewAdapter.ViewHolder = {
     val rootView = ViewHelper.inflate[View](R.layout.row_giphy_image, parent, addToParent = false)
@@ -102,13 +99,12 @@ class GiphyGridViewAdapter(val scrollGifCallback: ScrollGifCallback)
   }
 
   override def onBindViewHolder(holder: GiphyGridViewAdapter.ViewHolder, position: Int): Unit = {
-    val GifData(preview, image) = giphyResults(position)
-    holder.setImageAssets(image, preview, position)
+    holder.setGif(giphyResults(position))
   }
 
   override def getItemCount: Int = giphyResults.size
 
-  def setGiphyResults(giphyResults: Seq[GifData]): Unit = {
+  def setGiphyResults(giphyResults: Seq[GifObject]): Unit = {
     this.giphyResults = giphyResults
     notifyDataSetChanged()
   }

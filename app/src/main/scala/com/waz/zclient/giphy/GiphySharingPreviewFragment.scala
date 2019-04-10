@@ -27,13 +27,14 @@ import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
-import com.waz.model.AssetData
+import com.waz.model.{AssetData, Mime}
+import com.waz.service.assets2.{Content, ContentForUpload}
+import com.waz.service.media.GiphyService.GifObject
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.common.controllers.{ScreenController, ThemeController}
@@ -47,6 +48,9 @@ import com.waz.zclient.utils.ContextUtils.getColorWithTheme
 import com.waz.zclient.utils.{RichEditText, RichView}
 import com.waz.zclient.views.LoadingIndicatorView
 
+import scala.concurrent.Future
+
+//TODO Should be splitted in two fragments
 class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragment.Container]
   with FragmentHelper
   with OnBackPressedListener {
@@ -67,24 +71,23 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
   private lazy val searchTerm = Signal[String]("")
   private lazy val isPreviewShown = Signal[Boolean](false)
   private lazy val isGifShowing = Signal[Boolean](false)
-  private lazy val selectedGif = Signal[Option[AssetData]]()
-  private lazy val gifImage: Signal[Option[URIWrapper]] = selectedGif.map(_.flatMap(_.source))
+  private lazy val selectedGif = Signal[Option[GifObject]]()
 
   private lazy val giphySearchResults = for {
     giphyService <- giphyService
     term <- searchTerm
     searchResults <- Signal.future(
       if (TextUtils.isEmpty(term)) giphyService.trending()
-      else giphyService.searchGiphyImage(term)
+      else giphyService.search(term)
     )
-  } yield searchResults.map(GifData.tupled)
+  } yield searchResults
 
   private lazy val previewImage = returning(view[ImageView](R.id.giphy_preview)) { vh =>
     networkService.isOnline.onUi(isOnline => vh.foreach(_.setClickable(isOnline)))
     isPreviewShown.onUi(isPreview => vh.foreach(_.fade(isPreview)))
-    gifImage.onUi {
-      case Some(uri) => vh.foreach { v =>
-        GlideBuilder(uri)
+    selectedGif.onUi {
+      case Some(gif) => vh.foreach { v =>
+        GlideBuilder(gif.original.source)
           .addListener(new RequestListener[Drawable]() {
             override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
               isGifShowing ! false
@@ -156,9 +159,9 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
 
   private lazy val giphyGridViewAdapter = returning(new GiphyGridViewAdapter(
     scrollGifCallback = new ScrollGifCallback {
-      override def setSelectedGifFromGridView(gifAsset: AssetData): Unit = {
+      override def setSelectedGifFromGridView(gif: GifObject): Unit = {
         isPreviewShown ! true
-        selectedGif ! Some(gifAsset)
+        selectedGif ! Some(gif)
         keyboardController.hideKeyboardIfVisible()
       }
     }
@@ -240,7 +243,8 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       }
     }
 
-  private def sendGif() = {
+  //TODO Should be moved to 'Presenter'
+  private def sendGif(): Unit = {
     ZMessaging.currentGlobal.trackingService.contribution(new ContributionEvent.Action("text"))
     for {
       term <- searchTerm.head
@@ -248,9 +252,12 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       msg =
         if (TextUtils.isEmpty(term)) getString(R.string.giphy_preview__message_via_random_trending)
         else getString(R.string.giphy_preview__message_via_search, term)
-      _    <- conversationController.sendMessage(msg)
-      _    <- conversationController.sendAssetMessage(gif.flatMap(_.source).map(u => URIWrapper.toJava(u)).get, getActivity, None)
-    } yield screenController.hideGiphy ! true
+      gifContent <- Future { GlideBuilder.load(gif.get.original.source).submit().get() }(Threading.Background)
+      contentForUpload = ContentForUpload(s"${gif.get.id}.${Mime.extensionsMap(Mime.Image.Gif)}", Content.Bytes(Mime.Image.Gif, gifContent))
+      _  <- conversationController.sendMessage(msg)
+      _  <- conversationController.sendAssetMessage(contentForUpload, getActivity, None)
+    } yield ()
+    screenController.hideGiphy ! true
   }
 
 }

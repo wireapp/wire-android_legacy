@@ -185,7 +185,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   }
 
   // display full screen image for given message
-  def showSingleImage(msg: MessageData, container: View) =
+  def showSingleImage(msg: MessageData, container: View): Unit =
     if (!(msg.isEphemeral && msg.expired)) {
       verbose(l"message loaded, opening single image for ${msg.id}")
       singleImage.setViewReferences(container)
