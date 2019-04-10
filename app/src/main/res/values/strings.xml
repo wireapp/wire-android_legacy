@@ -28,7 +28,8 @@
     <string name="internet_connectivity_error_message">Please check your Internet connection and try again</string>
 
     <string name="too_many_attempts_header">Too many attempts</string>
-    <string name="login_later_message">PLEASE TRY TO LOG IN LATER</string>
+    <string name="email_login_later_message">PLEASE TRY TO LOG IN LATER</string>
+    <string name="phone_login_later_message">Please try to log in later</string>
 
     <string name="email_exists_header">Email address already taken</string>
     <string name="email_exists_message">THIS EMAIL ADDRESS HAS ALREADY BEEN REGISTERED</string>
