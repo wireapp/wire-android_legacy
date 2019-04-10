@@ -21,7 +21,6 @@ public interface Validator {
 
     enum AcceptMode {
         STRICT,
-        STRICT_LEGACY,
         EMPTY_STRING,
         ALL
     }

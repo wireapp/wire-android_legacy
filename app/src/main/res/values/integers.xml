@@ -81,10 +81,7 @@
 
     <integer name="notifications__system__led_off">1000</integer>
     <integer name="notifications__system__led_on">300</integer>
-
-    <integer name="password_validator__min_password_length">8</integer>
-    <integer name="password_validator__min_password_length_legacy">6</integer>
-
+    
     <integer name="people_picker__animation_duration">350</integer>
     <integer name="people_picker__keyboard__show_delay">500</integer>
 

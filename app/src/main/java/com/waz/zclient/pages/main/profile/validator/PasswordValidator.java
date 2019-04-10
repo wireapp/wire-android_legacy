@@ -25,25 +25,14 @@ public class PasswordValidator implements Validator {
 
     private final AcceptMode acceptMode;
     private final Context context;
-    private int minPasswordLength;
 
     private PasswordValidator(Context context, AcceptMode acceptMode) {
         this.acceptMode = acceptMode;
         this.context = context;
-
-        if (acceptMode == AcceptMode.STRICT) {
-            minPasswordLength = context.getResources().getInteger(R.integer.password_validator__min_password_length);
-        } else {
-            minPasswordLength = context.getResources().getInteger(R.integer.password_validator__min_password_length_legacy);
-        }
     }
 
     public static PasswordValidator instance(Context context) {
         return new PasswordValidator(context, AcceptMode.STRICT);
-    }
-
-    public static PasswordValidator instanceLegacy(Context context) {
-        return new PasswordValidator(context, AcceptMode.STRICT_LEGACY);
     }
 
     public static PasswordValidator instanceAcceptingEmptyString(Context context) {
@@ -64,17 +53,11 @@ public class PasswordValidator implements Validator {
             return true;
         }
 
-        text = text.trim();
-
-        return !TextUtils.isEmpty(text) && text.length() >= minPasswordLength;
+        return !TextUtils.isEmpty(text);
     }
 
     @Override
     public boolean invalidate(String text) {
-        text = text.trim();
-        if (!TextUtils.isEmpty(text)) {
-            return text.length() > 1;
-        }
-        return false;
+        return !TextUtils.isEmpty(text);
     }
 }
