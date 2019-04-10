@@ -57,7 +57,7 @@ case class SetTeamEmailFragment() extends CreateTeamFragment {
         accountsService.requestEmailCode(EmailAddress(text)).map {
           case Left(err) =>
             if (err.code == DuplicateEmailErrorCode) aboutButton.foreach(_.setVisible(true))
-            Some(getString(EmailError(err).bodyResource).toUpperCase)
+            Some(getString(EmailError(err).bodyResource))
           case _ =>
             showFragment(VerifyTeamEmailFragment(), VerifyTeamEmailFragment.Tag)
             None

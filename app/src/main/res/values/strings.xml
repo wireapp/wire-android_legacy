@@ -28,16 +28,16 @@
     <string name="internet_connectivity_error_message">Please check your Internet connection and try again</string>
 
     <string name="too_many_attempts_header">Too many attempts</string>
-    <string name="login_later_message">Please try to log in later</string>
+    <string name="login_later_message">PLEASE TRY TO LOG IN LATER</string>
 
     <string name="email_exists_header">Email address already taken</string>
-    <string name="email_exists_message">This email address has already been registered</string>
+    <string name="email_exists_message">THIS EMAIL ADDRESS HAS ALREADY BEEN REGISTERED</string>
 
     <string name="email_invalid_header">Invalid email address</string>
-    <string name="email_invalid_message">Please enter a valid email address</string>
+    <string name="email_invalid_message">PLEASE ENTER A VALID EMAIL ADDRESS</string>
 
     <string name="invalid_credentials_header">Invalid information</string>
-    <string name="invalid_credentials_message">Please verify your details and try again</string>
+    <string name="invalid_credentials_message">PLEASE VERIFY YOUR DETAILS AND TRY AGAIN</string>
 
     <string name="phone_exists_header">Phone number already taken</string>
     <string name="phone_exists_message">The phone number you provided has already been registered. Please try again</string>
@@ -50,7 +50,7 @@
 
     <string name="invalid_code_header">Invalid code</string>
     <string name="incorrect_code_header">Incorrect Code</string>
-    <string name="wrong_code_message">Please enter a valid code</string>
+    <string name="wrong_code_message">PLEASE ENTER A VALID CODE</string>
 
     <string name="phone_pending_login_header">Code Already Sent</string>
     <string name="phone_pending_login_message">We already sent you a code via SMS. Tap Resend after 10 minutes to get a new one.</string>
@@ -1130,9 +1130,9 @@
     <string name="teams_invitations_skip">SKIP</string>
     <string name="teams_invitations_done">DONE</string>
 
-    <string name="teams_invitations_error_too_many">The maximum number of invitations has been sent</string>
-    <string name="teams_invitations_error_already_sent">Already sent</string>
-    <string name="teams_invitations_error_generic">Something went wrong, please try again</string>
+    <string name="teams_invitations_error_too_many">THE MAXIMUM NUMBER OF INVITATIONS HAS BEEN SENT</string>
+    <string name="teams_invitations_error_already_sent">ALREADY SENT</string>
+    <string name="teams_invitations_error_generic">SOMETHING WENT WRONG, PLEASE TRY AGAIN</string>
 
     <string name="teams_invite_email_hint">COLLEAGUE@YOURCOMPANY.COM</string>
     <string name="teams_invitations_error_invalid_email">PLEASE ENTER A VALID EMAIL ADDRESS</string>

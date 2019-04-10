@@ -82,9 +82,9 @@ case class InviteToTeamFragment() extends CreateTeamFragment {
               case Left(ErrorResponse(ConnectionErrorCode, _, _)) => Some(R.string.teams_invitations_error_no_internet)
               case Left(_) => Some(R.string.teams_invitations_error_generic)
               case _ => None
-            }.map(_.map(ContextUtils.getString).map(_.toUpperCase))
+            }.map(_.map(ContextUtils.getString))
           case _ =>
-            Future.successful(Some(context.getString(R.string.teams_invitations_error_invalid_email).toUpperCase))
+            Future.successful(Some(context.getString(R.string.teams_invitations_error_invalid_email)))
         }
       }
     }
