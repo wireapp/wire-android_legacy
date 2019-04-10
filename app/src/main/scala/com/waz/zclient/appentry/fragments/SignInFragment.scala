@@ -31,18 +31,18 @@ import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
+import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment}
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.TabPages
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.pages.main.profile.validator.{EmailValidator, NameValidator, PasswordValidator}
 import com.waz.zclient.pages.main.profile.views.GuidedEditText
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.{GlobalTrackingController, SignUpScreenEvent}
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
 import com.waz.zclient.ui.utils.{KeyboardUtils, TextViewUtils}
@@ -92,15 +92,23 @@ class SignInFragment
 
   private lazy val nameValidator = new NameValidator()
   private lazy val emailValidator = EmailValidator.newInstance()
+
+  // This validator is only for enabling/disabling the confirmation button.
   private lazy val passwordValidator = PasswordValidator.instance(context)
-  private lazy val legacyPasswordValidator = PasswordValidator.instanceLegacy(context)
+
+  // This is used when setting a password once the confirmation button is clicked.
+  private val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
+  private val maxPasswordLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
+
+  private lazy val strongPasswordValidator =
+    StrongValidator.createStrongPasswordValidator(minPasswordLength, maxPasswordLength)
 
   lazy val isValid: Signal[Boolean] = uiSignInState.flatMap {
     case SignInMethod(Login, Email, _) =>
       for {
         email    <- email
         password <- password
-      } yield emailValidator.validate(email) && legacyPasswordValidator.validate(password)
+      } yield emailValidator.validate(email) && passwordValidator.validate(password)
     case SignInMethod(Register, Email, false) =>
       for {
         name     <- name
@@ -138,6 +146,7 @@ class SignInFragment
 
   def confirmationButton = Option(findById[PhoneConfirmationButton](R.id.pcb__signin__email))
 
+  def passwordPolicyHint = Option(findById[TypefaceTextView](R.id.password_policy_hint))
   def termsOfService = Option(findById[TypefaceTextView](R.id.terms_of_service_text))
 
   def forgotPasswordButton = Option(findById[View](getView, R.id.ttv_signin_forgot_password))
@@ -161,7 +170,10 @@ class SignInFragment
       field.setValidator(passwordValidator)
       field.setResource(R.layout.guided_edit_text_sign_in__password)
       field.setText(password.currentValue.getOrElse(""))
-      field.getEditText.addTextListener(password ! _)
+      field.getEditText.addTextListener { text =>
+        password ! text
+        passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.white)))
+      }
     }
 
     nameField.foreach { field =>
@@ -178,6 +190,11 @@ class SignInFragment
         field.addTextListener(phone ! _)
       }
     )
+
+    passwordPolicyHint.foreach { textView =>
+      textView.setText(getString(R.string.password_policy_hint, minPasswordLength))
+      textView.setTextColor(getColor(R.color.white))
+    }
 
     termsOfService.foreach { text =>
       TextViewUtils.linkifyText(text, getColor(R.color.white), true, new Runnable {
@@ -338,7 +355,6 @@ class SignInFragment
       case R.id.pcb__signin__email => //TODO rename!
         implicit val ec = Threading.Ui
         KeyboardUtils.closeKeyboardIfShown(getActivity)
-        activity.enableProgress(true)
 
         def onResponse[A](req: Either[ErrorResponse, A], method: SignInMethod) = {
           tracking.onEnteredCredentials(req, method)
@@ -353,6 +369,8 @@ class SignInFragment
 
         uiSignInState.head.flatMap {
           case m@SignInMethod(Login, Email, _) =>
+            activity.enableProgress(true)
+
             for {
               email     <- email.head
               password  <- password.head
@@ -366,9 +384,16 @@ class SignInFragment
               password  <- password.head
               name      <- name.head
               req       <- accountsService.requestEmailCode(EmailAddress(email))
-            } yield onResponse(req, m).right.foreach { _ =>
-              activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+            } yield {
+              if (strongPasswordValidator.isValidPassword(password)) {
+                onResponse(req, m).right.foreach { _ =>
+                  activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                }
+              } else { // Invalid password
+                passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
+              }
             }
+
           case m@SignInMethod(method, Phone, false) =>
             val isLogin = method == Login
             activity.enableProgress(true)
