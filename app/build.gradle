@@ -267,6 +267,10 @@ android {
 
 
     sourceSets {
+        main {
+            scala.srcDirs += ['src/main/scala', 'src/main/java']
+            java.srcDirs = []
+        }
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
             java.srcDirs += ['src/androidTest/kotlin']

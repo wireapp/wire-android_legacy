@@ -18,6 +18,8 @@
 package com.waz.zclient.markdown
 
 import android.text.SpannableString
+import com.waz.zclient.ScalaFacade
+import com.waz.zclient.FooJavaClass
 import com.waz.zclient.markdown.visitors.SpanRenderer
 import org.commonmark.parser.Parser
 
@@ -28,6 +30,8 @@ class Markdown {
             val document = Parser.builder().build().parse(input)
             val renderer = SpanRenderer(style ?: StyleSheet())
             document.accept(renderer)
+            val foo: FooJavaClass = ScalaFacade.foo()
+            foo.foofoo()
             return renderer.spannableString
         }
     }
