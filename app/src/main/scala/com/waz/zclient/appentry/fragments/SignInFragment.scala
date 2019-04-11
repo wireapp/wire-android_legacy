@@ -148,6 +148,7 @@ class SignInFragment
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
     phoneButton.foreach(_.setVisible(!onlyLogin))
+    companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
     logo.foreach(_.setVisible(!onlyLogin))
 
     emailField.foreach { field =>
