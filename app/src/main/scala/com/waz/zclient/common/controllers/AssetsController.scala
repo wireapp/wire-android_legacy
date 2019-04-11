@@ -327,10 +327,11 @@ object AssetsController {
   case class AssetForShare(asset: Asset[General], file: File)
 
   def getTargetFile(asset: Asset[General], directory: File): File = {
-    def file(prefix: String = "") = new File(
-      directory,
-      s"${if (prefix.isEmpty) "" else prefix + "_"}${asset.name}.${asset.mime.extension}"
-    )
+    def file(prefix: String = "") = {
+      val prefixPart = if (prefix.isEmpty) "" else prefix + "_"
+      val namePart = if (asset.name.contains('.')) asset.name else s"${asset.name}.${asset.mime.extension}"
+      new File(directory, prefixPart + namePart)
+    }
 
     val baseFile = file()
     if (!baseFile.exists()) baseFile
