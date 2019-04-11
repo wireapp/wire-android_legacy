@@ -24,7 +24,7 @@ import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
 import android.widget._
-import com.waz.service.assets2.AssetStatus
+import com.waz.service.assets2.{AssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
@@ -76,9 +76,15 @@ class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   text.on(Threading.Ui)(fileInfoView.setText)
 
   assetActionButton.onClick {
-    assetStatus.map(_._1).currentValue match {
-      case Some(AssetStatus.Done) =>
-        asset.currentValue.foreach { a => controller.openFile(a.id) }
+    for {
+      s <- assetStatus.map(_._1).currentValue
+      a <- asset.currentValue
+      m <- message.currentValue
+    } yield s match {
+      case AssetStatus.Done =>
+        controller.openFile(a.id)
+      case UploadAssetStatus.NotStarted | UploadAssetStatus.InProgress =>
+        controller.cancelUpload(a.id, m)
       case _ =>
     }
   }
