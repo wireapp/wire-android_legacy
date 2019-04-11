@@ -93,6 +93,10 @@ import org.threeten.bp.Clock
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
+case class FooClass(foo: String = "Foo!") extends DerivedLogTag {
+  def foofoo(): Unit = info(l"${showString(foo)}")
+}
+
 object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
 
@@ -101,6 +105,8 @@ object WireApplication extends DerivedLogTag {
   type AccountToUsersStorage = (UserId) => Future[Option[UsersStorage]]
   type AccountToConvsStorage = (UserId) => Future[Option[ConversationStorage]]
   type AccountToConvsService = (UserId) => Future[Option[ConversationsService]]
+
+  def foo(): FooClass = FooClass()
 
   lazy val Global = new Module {
 
