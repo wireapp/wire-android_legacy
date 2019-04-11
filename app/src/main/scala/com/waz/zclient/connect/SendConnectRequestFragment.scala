@@ -34,7 +34,7 @@ import com.waz.zclient.common.controllers.{ThemeController, UserAccountsControll
 import com.waz.zclient.connect.PendingConnectRequestFragment.ArgUserRequester
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
@@ -180,7 +180,7 @@ class SendConnectRequestFragment
     guestIndicatorIcon
 
     user.map(_.picture).collect { case Some(p) => p }.onUi { id =>
-      imageViewProfile.foreach(GlideBuilder.apply(id).apply(new RequestOptions().circleCrop()).into(_))
+      imageViewProfile.foreach(WireGlide(context).load(id).apply(new RequestOptions().circleCrop()).into(_))
     }
 
     val backgroundContainer = findById[View](R.id.background_container)

@@ -40,7 +40,7 @@ import com.waz.zclient.common.controllers.global.{AccentColorController, Keyboar
 import com.waz.zclient.common.controllers.{ScreenController, ThemeController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -87,7 +87,8 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
     isPreviewShown.onUi(isPreview => vh.foreach(_.fade(isPreview)))
     selectedGif.onUi {
       case Some(gif) => vh.foreach { v =>
-        GlideBuilder(gif.original.source)
+        WireGlide(getContext)
+          .load(gif.original.source.toString)
           .addListener(new RequestListener[Drawable]() {
             override def onLoadFailed(e: GlideException, model: scala.Any, target: Target[Drawable], isFirstResource: Boolean): Boolean = {
               isGifShowing ! false
@@ -101,7 +102,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
           })
           .into(v)
       }
-      case _ => vh.foreach(WireGlide().clear(_))
+      case _ => vh.foreach(WireGlide(getContext).clear(_))
     }
   }
 
@@ -252,7 +253,7 @@ class GiphySharingPreviewFragment extends BaseFragment[GiphySharingPreviewFragme
       msg =
         if (TextUtils.isEmpty(term)) getString(R.string.giphy_preview__message_via_random_trending)
         else getString(R.string.giphy_preview__message_via_search, term)
-      gifContent <- Future { GlideBuilder.load(gif.get.original.source).submit().get() }(Threading.Background)
+      gifContent <- Future { WireGlide(getContext).as(classOf[Array[Byte]]).load(gif.get.original.source.toString).submit().get() }(Threading.Background)
       contentForUpload = ContentForUpload(s"${gif.get.id}.${Mime.extensionsMap(Mime.Image.Gif)}", Content.Bytes(Mime.Image.Gif, gifContent))
       _  <- conversationController.sendMessage(msg)
       _  <- conversationController.sendAssetMessage(contentForUpload, getActivity, None)

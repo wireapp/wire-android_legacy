@@ -50,12 +50,12 @@ import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.utils.{NameParts, returning}
 import com.waz.zclient.common.views.ChatHeadView._
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.glide.transformations.{GlyphOverlayTransformation, GreyScaleTransformation, IntegrationBackgroundCrop}
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.ui.utils.TypefaceUtils
 import com.waz.zclient.utils.ContextUtils.{getColor, getString}
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.log.LogUI._
 
 class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends ImageView(context, attrs, defStyleAttr) with ViewHelper with DerivedLogTag {
@@ -88,7 +88,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 
   def loadUser(userId: UserId): Unit = {
-    WireGlide().clear(this)
+    WireGlide(context).clear(this)
     this.userId ! Some(userId)
   }
 
@@ -96,7 +96,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     setInfo(optionsForUser(userData, belongsToSelfTeam, attributes))
 
   def clearImage(): Unit = {
-    WireGlide().clear(this)
+    WireGlide(context).clear(this)
     setImageDrawable(null)
   }
 
@@ -112,7 +112,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     verbose(l"will set options: $options")
 
     if (options.picture.isEmpty) {
-      WireGlide().clear(this)
+      WireGlide(context).clear(this)
       setImageDrawable(options.placeholder)
     } else {
       options.glideRequest.into(this)
@@ -190,8 +190,8 @@ object ChatHeadView {
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
       val request = picture match {
-        case Some(p) => GlideBuilder.apply(p)
-        case _ => GlideBuilder(placeholder)
+        case Some(p) => WireGlide(context).load(p)
+        case _ => WireGlide(context).load(placeholder)
       }
       val requestOptions = new RequestOptions()
 

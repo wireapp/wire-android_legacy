@@ -30,7 +30,7 @@ import com.waz.model.{AssetId, GeneralAssetId, MessageData}
 import com.waz.service.assets2.{Asset, GeneralAsset}
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.text.LinkTextView
@@ -107,12 +107,13 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
     imageAsset match {
       case Some(a: AssetId) =>
-        GlideBuilder(a)
+        WireGlide(context)
+          .load(a)
           .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(10)))
           .into(image)
         image.setVisibility(View.VISIBLE)
       case _ =>
-        WireGlide().clear(image)
+        WireGlide(context).clear(image)
         image.setVisibility(View.GONE)
     }
   }

@@ -37,7 +37,8 @@ import com.waz.utils.events.{EventContext, EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.glide.{CustomImageViewTarget, GlideBuilder, WireGlide}
+import com.waz.zclient.glide.{CustomImageViewTarget, WireGlide}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.messages.parts.assets.{AssetPart, FileAssetPartView}
 import com.waz.zclient.messages.parts.{EphemeralPartView, WebLinkPartView}
@@ -45,7 +46,6 @@ import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.log.LogUI._
 
 trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedLogTag {
   protected lazy val civZms = inject[Signal[ZMessaging]]
@@ -125,13 +125,14 @@ class CollectionImageView(context: Context) extends ImageView(context) with Coll
   Signal(messageData.map(_.assetId), ephemeralColorDrawable).onUi {
     case (Some(id: AssetId), None) =>
       verbose(l"Set image asset $id")
-      GlideBuilder(id)
+      WireGlide(context)
+        .load(id)
         .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(target)
     case (_, Some(ephemeralDrawable)) =>
       verbose(l"Set ephemeral drawable")
-      WireGlide().clear(this)
+      WireGlide(context).clear(this)
       setImageDrawable(ephemeralDrawable)
     case _ =>
       verbose(l"Set nothing")

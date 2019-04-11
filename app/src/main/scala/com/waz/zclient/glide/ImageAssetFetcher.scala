@@ -33,7 +33,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
-
 class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   extends DataFetcher[InputStream] with DerivedLogTag {
 

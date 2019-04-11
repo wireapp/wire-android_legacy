@@ -29,7 +29,7 @@ import com.waz.service.media.GiphyService.GifObject
 import com.waz.ui.MemoryImageCache.BitmapRequest
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
 import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{Injector, R, ViewHelper}
@@ -66,13 +66,14 @@ object GiphyGridViewAdapter {
 
       gifObject.preview match {
         case Some(gif) =>
-          GlideBuilder(gif.source)
+          WireGlide(cxt)
+            .load(gif.source.toString)
             .apply(new RequestOptions()
               .fitCenter()
               .placeholder(defaultDrawable))
             .into(gifPreview)
         case None =>
-          WireGlide().clear(gifPreview)
+          WireGlide(cxt).clear(gifPreview)
           gifPreview.setImageDrawable(defaultDrawable)
       }
     }

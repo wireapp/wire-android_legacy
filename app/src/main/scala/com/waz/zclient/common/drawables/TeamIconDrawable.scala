@@ -21,14 +21,14 @@ import android.content.Context
 import android.graphics._
 import android.graphics.drawable.Drawable
 import com.bumptech.glide.request.RequestOptions
-import com.waz.model.UserData.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserData.Picture
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.drawables.TeamIconDrawable._
-import com.waz.zclient.glide.{AssetRequest, WireGlide}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
@@ -93,11 +93,11 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
     b <- bounds
     p <- picture
     bmp <- Signal.future(
-      p.fold(Future.successful(Option.empty[Bitmap])) { aId =>
+      p.fold(Future.successful(Option.empty[Bitmap])) { picture =>
         Threading.Background {
-          Option(WireGlide()
+          Option(WireGlide(ctx)
             .asBitmap()
-            .load(AssetRequest(aId))
+            .load(picture)
             .apply(new RequestOptions().circleCrop())
             .submit(b.width, b.height)
             .get())

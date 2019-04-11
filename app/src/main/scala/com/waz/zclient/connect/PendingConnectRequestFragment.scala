@@ -29,12 +29,12 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.glide.GlideBuilder
-import com.waz.zclient.participants.UserRequester
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
 import com.waz.zclient.pages.main.participants.ProfileAnimation
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils
@@ -121,7 +121,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
     userHandleView
 
     user.map(_.picture).collect { case Some(p) => p }.onUi { id =>
-      imageViewProfile.foreach(GlideBuilder.apply(id).apply(new RequestOptions().circleCrop()).into(_))
+      imageViewProfile.foreach(WireGlide(context).load(id).apply(new RequestOptions().circleCrop()).into(_))
     }
 
     userNameView.foreach { v =>

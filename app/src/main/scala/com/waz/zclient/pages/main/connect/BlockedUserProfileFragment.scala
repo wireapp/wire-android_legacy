@@ -30,7 +30,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment._
 import com.waz.zclient.pages.main.participants.ProfileAnimation
@@ -136,7 +136,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     userNameView
     userUsernameView
     pictureSignal.onUi { id =>
-      profileImageView.foreach(GlideBuilder.apply(id)
+      profileImageView.foreach(WireGlide(ctx).load(id)
         .apply(new RequestOptions().centerCrop())
         .into(_))
     }

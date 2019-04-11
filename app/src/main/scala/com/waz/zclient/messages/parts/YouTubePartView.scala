@@ -33,7 +33,7 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.glide.transformations.DarkenTransformation
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
@@ -67,7 +67,8 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
   val loadingFailed = Signal(false)
 
   image.onUi { id =>
-    GlideBuilder(id)
+    WireGlide(context)
+      .load(id)
       .apply(new RequestOptions().transform(new DarkenTransformation((alphaOverlay * 255).toInt)))
       .into(new CustomViewTarget[YouTubePartView, Drawable](this) {
       override def onResourceCleared(placeholder: Drawable): Unit = {

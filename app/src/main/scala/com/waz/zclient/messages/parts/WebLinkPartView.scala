@@ -36,8 +36,8 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
@@ -101,8 +101,8 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
   private val dotsDrawable = new ProgressDotsDrawable
 
   image.map (_.map{
-    case Left(asset) => GlideBuilder(AssetId(asset.remoteId.get.str))
-    case Right(uri) => GlideBuilder(uri)
+    case Left(asset) => WireGlide(context).load(AssetId(asset.remoteId.get.str))
+    case Right(uri) => WireGlide(context).load(uri.toString)
   }).onUi {
     case Some(request) =>
       request.apply(new RequestOptions().centerCrop().placeholder(dotsDrawable))
@@ -111,7 +111,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
           registerEphemeral(imageView, resource)
       })
     case _ =>
-      WireGlide().clear(imageView)
+      WireGlide(context).clear(imageView)
       imageView.setImageDrawable(dotsDrawable)
 
   }

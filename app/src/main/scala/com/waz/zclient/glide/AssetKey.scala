@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,24 @@
  */
 package com.waz.zclient.glide
 
-import android.content.Context
-import com.bumptech.glide.{Glide, RequestManager}
+import java.security.MessageDigest
 
-object WireGlide {
-  def apply(implicit context: Context): RequestManager = Glide.`with`(context)
+import com.bumptech.glide.load.{Key, Options}
+
+case class AssetKey(key: String, width: Int, height: Int, options: Options) extends Key {
+
+  override def hashCode(): Int = toString.hashCode
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case ak: AssetKey =>
+      ak.key == key && ak.width == width && ak.height == height && ak.options.eq(options)
+    case _ =>
+      false
+  }
+
+  override def toString: String = s"$key-$width-$height-$options"
+
+  override def updateDiskCacheKey(messageDigest: MessageDigest): Unit = {
+    messageDigest.update(toString.getBytes(Key.CHARSET))
+  }
 }

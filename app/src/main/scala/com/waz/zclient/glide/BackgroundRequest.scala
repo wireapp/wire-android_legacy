@@ -37,6 +37,6 @@ object BackgroundRequest {
       new BlurTransformation(),
       new DarkenTransformation(148, 2f))
 
-    GlideBuilder.apply(picture).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
+    WireGlide(context).load(picture).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
   }
 }

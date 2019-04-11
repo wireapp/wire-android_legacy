@@ -36,7 +36,7 @@ import com.waz.zclient.common.controllers.{ThemeController, UserAccountsControll
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.glide.transformations.IntegrationBackgroundCrop
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.ServicePlaceholderDrawable
@@ -102,7 +102,8 @@ class IntegrationDetailsFragment extends FragmentHelper {
       val placeholder = ServicePlaceholderDrawable(getDimenPx(R.dimen.wire__padding__regular))
       assetId match {
         case Some(id) =>
-          GlideBuilder.apply(id)
+          WireGlide(ctx)
+            .load(id)
             .apply(new RequestOptions().placeholder(placeholder).transforms(new IntegrationBackgroundCrop()))
             .into(iv)
         case _ =>

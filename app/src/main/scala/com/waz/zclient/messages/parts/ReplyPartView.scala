@@ -33,7 +33,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MsgPart._
@@ -188,8 +188,8 @@ class ImageReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   private val imageView = findById[ImageView](R.id.image)
 
   quotedMessage.map(_.assetId).onUi {
-    case Some(aid: AssetId) => GlideBuilder(aid).apply(new RequestOptions().centerInside()).into(imageView)
-    case _ => WireGlide().clear(imageView)
+    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case _ => WireGlide(context).clear(imageView)
   }
 }
 
@@ -227,8 +227,8 @@ class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   private val imageIcon = findById[GlyphTextView](R.id.image_icon)
 
   quotedAsset.map(_.flatMap(_.preview)).onUi {
-    case Some(aid: AssetId) => GlideBuilder(aid).apply(new RequestOptions().centerInside()).into(imageView)
-    case _ => WireGlide().clear(imageView)
+    case Some(aid: AssetId) => WireGlide(context).load(aid).apply(new RequestOptions().centerInside()).into(imageView)
+    case _ => WireGlide(context).clear(imageView)
   }
 
   imageIcon.setVisibility(View.VISIBLE)

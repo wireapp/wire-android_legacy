@@ -41,7 +41,7 @@ import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.glide.{AssetRequest, WireGlide}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
@@ -357,9 +357,9 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
                 Future.successful(Option.empty[android.graphics.Bitmap])
               } { picture =>
                 Threading.Background {
-                  Option(WireGlide()
+                  Option(WireGlide(cxt)
                     .asBitmap()
-                    .load(AssetRequest(picture))
+                    .load(picture)
                     .apply(new RequestOptions().circleCrop())
                     .submit(128, 128)
                     .get())

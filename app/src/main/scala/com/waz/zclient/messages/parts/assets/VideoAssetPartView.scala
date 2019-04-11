@@ -21,12 +21,12 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, ImageView}
+import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
-import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart with HighlightViewPart {
@@ -41,8 +41,8 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   hideContent.map(!_).on(Threading.Ui)(controls.setVisible)
 
   previewAssetId.onUi {
-    case Some(aId) => GlideBuilder(aId).into(image)
-    case _         => WireGlide().clear(image)
+    case Some(aId) => WireGlide(context).load(aId).into(image)
+    case _         => WireGlide(context).clear(image)
   }
 
 

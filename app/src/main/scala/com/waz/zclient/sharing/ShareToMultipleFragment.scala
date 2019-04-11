@@ -134,7 +134,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
           case ImageContent(uris) =>
             returning(inflater.inflate(R.layout.share_preview_image, layout).findViewById[ImageView](R.id.image_content)) { imagePreview =>
-              WireGlide().load(Uri.parse(uris.head.toString))
+              WireGlide(cxt).load(Uri.parse(uris.head.toString))
                 .apply(new RequestOptions().centerCrop().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
                 .into(imagePreview)
             }

@@ -23,7 +23,6 @@ import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
-import com.waz.zclient.log.LogUI._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, MessageContent}
 import com.waz.service.messages.MessageAndLikes
@@ -31,7 +30,8 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
 import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
@@ -74,7 +74,8 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
     verbose(l"message asset id => $aId")
 
     aId.foreach { a =>
-      GlideBuilder(a)
+      WireGlide(getContext)
+        .load(a)
         .apply(new RequestOptions().fitCenter())
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(imageView)

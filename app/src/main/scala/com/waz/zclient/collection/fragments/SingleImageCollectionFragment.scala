@@ -40,7 +40,7 @@ import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.controllers.CollectionController.{AllContent, ContentType, Images}
 import com.waz.zclient.collection.fragments.SingleImageCollectionFragment.ImageSwipeAdapter
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
@@ -202,7 +202,8 @@ object SingleImageCollectionFragment {
 
     def setAsset(assetId: AssetId): Unit = {
       verbose(l"$this Setting asset: $assetId")
-      GlideBuilder.apply(assetId)(getContext)
+      WireGlide(getContext)
+        .load(assetId)
         .apply(new RequestOptions().fitCenter().placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(this)

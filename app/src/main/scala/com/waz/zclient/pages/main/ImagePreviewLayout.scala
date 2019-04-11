@@ -34,8 +34,8 @@ import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.glide.transformations.ScaleTransformation
-import com.waz.zclient.glide.{GlideBuilder, WireGlide}
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView
@@ -140,7 +140,7 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   def setImage(imageData: Array[Byte], isMirrored: Boolean): Unit = {
     this.source = Option(ImagePreviewLayout.Source.Camera)
     this.imageInput = Some(Content.Bytes(Mime.Image.Jpg, imageData))
-    val request = WireGlide().load(imageData)
+    val request = WireGlide(context).load(imageData)
     if (isMirrored) request.apply(new RequestOptions().transform(new ScaleTransformation(-1f, 1f)))
     request.into(imageView)
   }
@@ -148,7 +148,7 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   def setImage(uri: URIWrapper, source: ImagePreviewLayout.Source): Unit = {
     this.source = Option(source)
     this.imageInput = Some(Content.Uri(URI.create(uri.toString)))
-    GlideBuilder(uri)
+    WireGlide(context).load(uri)
       .apply(new RequestOptions().centerInside()).into(imageView)
   }
 

@@ -27,19 +27,19 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.api.Message
-import com.waz.model.{AssetId, MessageContent}
 import com.waz.model.messages.media.{ArtistData, MediaAssetData}
+import com.waz.model.{AssetId, MessageContent}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.events.Signal
-import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
-import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.utils.ContextUtils._
 import com.waz.utils._
-import com.waz.zclient.utils._
-import com.waz.zclient.ui.text.GlyphTextView
+import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.messages.MessageView.MsgBindOptions
+import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
+import com.waz.zclient.ui.text.GlyphTextView
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils._
+import com.waz.zclient.{R, ViewHelper}
 
 class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
   extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
@@ -70,7 +70,8 @@ class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   image.onUi { id =>
-    GlideBuilder(id)
+    WireGlide(context)
+      .load(id)
       .apply(new RequestOptions().placeholder(new ColorDrawable(getColor(R.color.content__youtube__background))))
       .into(new CustomViewTarget[SoundMediaPartView, Drawable](this) {
         override def onResourceCleared(placeholder: Drawable): Unit = {

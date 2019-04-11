@@ -27,7 +27,7 @@ import com.waz.model.UserData.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.views.GlyphButton
-import com.waz.zclient.glide.GlideBuilder
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.utils.{BackStackKey, UiStorage, UserSignal}
@@ -52,7 +52,7 @@ class ProfilePictureViewImpl(context: Context, attrs: AttributeSet, style: Int) 
     }
   })
 
-  override def setPicture(picture: Picture): Unit = GlideBuilder.apply(picture).into(image)
+  override def setPicture(picture: Picture): Unit = WireGlide(context).load(picture).into(image)
 }
 
 case class ProfilePictureBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
