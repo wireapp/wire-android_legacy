@@ -100,6 +100,11 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
           .edit
           .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.StagingBackend.environment)
           .commit
+      case SELECT_PROD_BE =>
+        PreferenceManager.getDefaultSharedPreferences(context)
+          .edit
+          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.ProdBackend.environment)
+          .commit
       case _ =>
         setResultData("Unknown Intent!")
         setResultCode(Activity.RESULT_CANCELED)
@@ -124,6 +129,7 @@ object AbstractPreferenceReceiver {
   private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
   private val HIDE_GDPR_POPUPS         = packageName + ".intent.action.HIDE_GDPR_POPUPS"
   private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"
+  private val SELECT_PROD_BE           = packageName + ".intent.action.SELECT_PROD_BE"
 
   private lazy val DeveloperAnalyticsEnabled = PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
 }
