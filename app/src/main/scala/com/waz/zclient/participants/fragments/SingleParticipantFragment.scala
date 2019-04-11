@@ -25,6 +25,7 @@ import android.support.design.widget.TabLayout.OnTabSelectedListener
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import com.waz.model.UserField
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -33,7 +34,6 @@ import com.waz.zclient.common.controllers.{BrowserController, ThemeController, U
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -124,10 +124,8 @@ class SingleParticipantFragment extends FragmentHelper {
       case _          => vh.foreach(_.setVisible(false))
     }
 
-    if (fromDeepLink) {
-      verbose(l"DEEP details view, setting the top margin")
+    if (fromDeepLink)
       vh.foreach(_.setMarginTop(ContextUtils.getDimenPx(R.dimen.wire__padding__50)))
-    }
   }
 
   private lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
@@ -234,9 +232,14 @@ class SingleParticipantFragment extends FragmentHelper {
                               // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
         _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-      } yield (user.id, isGuest, isDarkTheme, isTeamTheSame)).foreach {
-        case (userId, isGuest, isDarkTheme, isTeamTheSame) =>
+      } yield (user.id, user.email, isGuest, isDarkTheme, isTeamTheSame)).foreach {
+        case (userId, emailAddress, isGuest, isDarkTheme, isTeamTheSame) =>
           val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme)
+          val emailUserField = emailAddress match {
+            case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
+            case None        => Seq.empty
+          }
+
           Signal(
             participantsController.otherParticipant.map(_.fields),
             availability,
@@ -244,11 +247,9 @@ class SingleParticipantFragment extends FragmentHelper {
             readReceipts
           ).onUi {
             case (fields, av, tt, rr) if isTeamTheSame =>
-              verbose(l"fields: $fields")
-              adapter.set(fields, av, tt, rr)
+              adapter.set(emailUserField ++ fields, av, tt, rr)
             case (_, av, tt, rr) =>
-              verbose(l"fields is None because the team of both users are different")
-              adapter.set(Seq.empty, av, tt, rr)
+              adapter.set(emailUserField, av, tt, rr)
           }
           view.setAdapter(adapter)
       }

@@ -823,6 +823,8 @@
     <string name="otr__reset_session__button_ok">OK</string>
     <string name="otr__reset_session__button_fail">Try again</string>
 
+    <string name="user_profile_email_field_name">Email</string>
+
     <string name="advanced_image_download_wifi_info">The picture will appear when you are on Wi-Fi again</string>
     <string name="change_settings">Change Settings</string>
     <string name="conversation_list__action_join_call">JOIN</string>
