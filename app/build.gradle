@@ -118,6 +118,7 @@ android {
         buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
         buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
         buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
+        buildConfigField 'boolean',  'ALLOW_SSO',                    "$config.allowSSO"
         buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
         buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
         buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""

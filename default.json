@@ -7,6 +7,7 @@
   "backendUrl": "https://prod-nginz-https.wire.com",
   "websocketUrl": "https://prod-nginz-ssl.wire.com/await",
   "allow_account_creation": true,
+  "allowSSO": true,
   "supportEmail": "support@wire.com",
   "firebasePushSenderId": "782078216207",
   "firebaseAppId": "1:782078216207:android:d3db2443512d2055",
