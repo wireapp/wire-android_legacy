@@ -25,7 +25,7 @@ import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{FrameLayout, ImageView, LinearLayout}
+import android.widget.{FrameLayout, LinearLayout}
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
@@ -94,7 +94,7 @@ class SignInFragment
   private lazy val emailValidator = EmailValidator.newInstance()
 
   // This validator is only for enabling/disabling the confirmation button.
-  private lazy val passwordValidator = PasswordValidator.instance(context)
+  private lazy val passwordValidator = PasswordValidator.instance()
 
   // This is used when setting a password once the confirmation button is clicked.
   private val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
@@ -128,7 +128,6 @@ class SignInFragment
     R.layout.sign_up_phone_scene
   )
 
-  private lazy val logo        = view[ImageView](R.id.iv__reg__logo)
   private lazy val phoneButton = view[TypefaceTextView](R.id.ttv__new_reg__sign_in__go_to__phone)
   private lazy val emailButton = view[TypefaceTextView](R.id.ttv__new_reg__sign_in__go_to__email)
   private lazy val tabSelector = view[TabIndicatorLayout](R.id.til__app_entry)
@@ -157,8 +156,8 @@ class SignInFragment
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
     phoneButton.foreach(_.setVisible(!onlyLogin))
+
     companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
-    logo.foreach(_.setVisible(!onlyLogin))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -355,7 +354,6 @@ class SignInFragment
 
       case R.id.pcb__signin__email => //TODO rename!
         implicit val ec = Threading.Ui
-        KeyboardUtils.closeKeyboardIfShown(getActivity)
 
         def onResponse[A](req: Either[ErrorResponse, A], method: SignInMethod) = {
           tracking.onEnteredCredentials(req, method)
@@ -377,6 +375,7 @@ class SignInFragment
               password  <- password.head
               req       <- accountsService.loginEmail(email, password)
             } yield onResponse(req, m).right.foreach { id =>
+              KeyboardUtils.closeKeyboardIfShown(getActivity)
               activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
             }
           case m@SignInMethod(Register, Email, false) =>
@@ -388,6 +387,7 @@ class SignInFragment
             } yield {
               if (strongPasswordValidator.isValidPassword(password)) {
                 onResponse(req, m).right.foreach { _ =>
+                  KeyboardUtils.closeKeyboardIfShown(getActivity)
                   activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
                 }
               } else { // Invalid password
@@ -404,6 +404,7 @@ class SignInFragment
               phone = PhoneNumber(s"+${country.getCountryCode}$phoneStr")
               req <- accountsService.requestPhoneCode(phone, login = isLogin)
             } yield onResponse(req, m).right.foreach { _ =>
+              KeyboardUtils.closeKeyboardIfShown(getActivity)
               activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
             }
           case SignInMethod(_, _, true) =>

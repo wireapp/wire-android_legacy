@@ -58,8 +58,8 @@ abstract class CredentialsFragment extends FragmentHelper {
   lazy val spinner  = inject[SpinnerController]
   lazy val keyboard = inject[KeyboardController]
 
-  def hasPw        = getBooleanArg(HasPasswordArg)
-  def displayEmail = getStringArg(EmailArg).map(EmailAddress)
+  protected lazy val hasPw        = getBooleanArg(HasPasswordArg)
+  protected lazy val displayEmail = getStringArg(EmailArg).map(EmailAddress)
 
   override def onPause(): Unit = {
     keyboard.hideKeyboardIfVisible()
@@ -264,11 +264,16 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
     StrongValidator.createStrongPasswordValidator(minPasswordLength, maxPasswordLength)
 
   // For guidance dot and confirmation button state.
-  lazy val nonEmptyValidator = PasswordValidator.instance(getContext)
+  lazy val nonEmptyValidator = PasswordValidator.instance()
 
   lazy val passwordIsNonEmpty = password.map {
     case Some(p) => nonEmptyValidator.validate(p.str)
     case _ => false
+  }
+
+  private lazy val passwordPolicyHint = returning(view[TextView](R.id.set_password_policy_hint)) { vh =>
+    vh.foreach(_.setText(getString(R.string.password_policy_hint, minPasswordLength)))
+    password.onChanged.onUi(_ => vh.foreach(_.setTextColor(getColor(R.color.white))))
   }
 
   // email is a necessary parameter for the fragment, it should always be set.
@@ -291,42 +296,45 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
       } {
         // Validate password strength
         if (strongPasswordValidator.isValidPassword(pw.str)) {
+          if (hasPw) {
           // There was an existing password, we're resetting it.
-          hasPw match {
-            case true =>
-              for {
-                resp  <- am.auth.onPasswordReset(Some(EmailCredentials(email, pw)))
-                resp2 <- resp.fold(e => Future.successful(Left(e)),
-                  _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient()))
-              } yield resp2 match {
-                case Right(state) =>
-                  (am.storage.userPrefs(PendingPassword) := false).map { _ =>
-                    keyboard.hideKeyboardIfVisible()
-                    state match {
-                      case LimitReached => activity.replaceMainFragment(OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag, addToBackStack = false)
-                      case _ => activity.startFirstFragment()
-                    }
+            for {
+              resp  <- am.auth.onPasswordReset(Some(EmailCredentials(email, pw)))
+              resp2 <- resp.fold(
+                        e => Future.successful(Left(e)),
+                        _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient())
+                       )
+            } yield resp2 match {
+              case Right(state) =>
+                (am.storage.userPrefs(PendingPassword) := false).map { _ =>
+                  keyboard.hideKeyboardIfVisible()
+                  state match {
+                    case LimitReached => activity.replaceMainFragment(OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag, addToBackStack = false)
+                    case _            => activity.startFirstFragment()
                   }
-                case Left(err) => showError(err)
-              }
+                }
+              case Left(err) => showError(err)
+            }
+          } else {
             // There was no existing password, setting it for first time.
-            case false =>
               for {
                 resp <- am.setPassword(pw)
-                _    <- resp.fold(e => Future.successful(Left(e)),
-                  _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({})))
+                _    <- resp.fold(
+                          e => Future.successful(Left(e)),
+                          _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({}))
+                        )
               } yield resp match {
-                case Right(_) => activity.startFirstFragment()
+                case Right(_) =>
+                  activity.startFirstFragment()
+                case Left(err) if err.code == ResponseCode.Forbidden =>
+                  accounts.logout(am.userId).map(_ => activity.startFirstFragment())
                 case Left(err) =>
-                  if (err.code == ResponseCode.Forbidden) {
-                    accounts.logout(am.userId).map(_ => activity.startFirstFragment())
-                  } else showError(err)
+                  showError(err)
               }
           }
-
         } else {
-          // Invalid password.
-          // TODO: Show error
+          spinner.hideSpinner()
+          passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
         }
       }
 
@@ -365,6 +373,8 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
       forgotPw.onClick(inject[BrowserController].openForgotPasswordPage())
       forgotPw.setVisibility(if (hasPw) View.VISIBLE else View.INVISIBLE)
     }
+
+    passwordPolicyHint
   }
 }
 

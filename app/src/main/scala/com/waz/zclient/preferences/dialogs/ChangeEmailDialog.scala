@@ -23,25 +23,28 @@ import android.os.Bundle
 import android.support.design.widget.TextInputLayout
 import android.support.v4.app.DialogFragment
 import android.support.v7.app.AlertDialog
+import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.{UserService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
-import com.waz.utils.returning
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.global.PasswordController
-import com.waz.zclient.pages.main.profile.validator.{EmailValidator, PasswordValidator}
+import com.waz.zclient.pages.main.profile.validator.EmailValidator
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 import com.waz.sync.client.ErrorOr
+import com.waz.utils.{returning, PasswordValidator => StrongValidator}
+import com.waz.zclient.utils.ContextUtils.getColor
 
 import scala.util.Try
 
-class ChangeEmailDialog extends DialogFragment with FragmentHelper {
+class ChangeEmailDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
   import ChangeEmailDialog._
   import Threading.Implicits.Ui
 
@@ -67,8 +70,16 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
     })
   }
 
+  private lazy val passwordPolicyHint = findById[TextView](root, R.id.add_email_password_policy_hint)
+
   private lazy val passwordInputLayout = findById[TextInputLayout](root, R.id.til__preferences__password)
   private lazy val passwordEditText = returning(findById[EditText](root, R.id.acet__preferences__password)) { v =>
+    v.setOnKeyListener(new View.OnKeyListener {
+      def onKey(v: View, keyCode: Int, event: KeyEvent): Boolean = {
+        if (!hasPassword) passwordPolicyHint.setTextColor(getColor(R.color.white))
+        false
+      }
+    })
     v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean =
         if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -79,16 +90,25 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
   }
 
   private lazy val emailValidator    = EmailValidator.newInstance
-  private lazy val passwordValidator = PasswordValidator.instance(getActivity)
 
+  // This is used when setting a password once the confirmation button is clicked.
+  private val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
+  private val maxPasswordLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
+
+  private lazy val strongPasswordValidator =
+    StrongValidator.createStrongPasswordValidator(minPasswordLength, maxPasswordLength)
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-
     //lazy init
     emailInputLayout
     emailEditText
     passwordInputLayout
     passwordEditText
+
+    if (!hasPassword) {
+      passwordPolicyHint.setVisible(true)
+      passwordPolicyHint.setText(getString(R.string.password_policy_hint, minPasswordLength))
+    }
 
     passwordInputLayout.setVisible(!hasPassword)
 
@@ -112,9 +132,23 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
   }
 
   private def handleInput(): Unit = {
-    val email = Option(emailInputLayout.getEditText.getText.toString.trim).filter(emailValidator.validate).map(EmailAddress)
-    val password = Option(passwordInputLayout.getEditText.getText.toString.trim).filter(passwordValidator.validate).map(Password)
+    val passwordText = Option(passwordInputLayout.getEditText.getText.toString.trim).getOrElse("")
+    val password =
+      if (hasPassword) {
+        None
+      } else if (!TextUtils.isEmpty(passwordText)) {
+        if (strongPasswordValidator.isValidPassword(passwordText)) {
+          Some(Password(passwordText))
+        } else {
+          passwordPolicyHint.setTextColor(getColor(R.color.teams_error_red))
+          None
+        }
+      } else {
+        passwordEditText.setError(getString(R.string.pref__account_action__dialog__add_email_password__error__invalid_password))
+        None
+      }
 
+    val email = Option(emailInputLayout.getEditText.getText.toString.trim).filter(emailValidator.validate).map(EmailAddress)
     def setEmail(email: EmailAddress, f: UserService => ErrorOr[Unit]) = {
       usersService.head.flatMap(f(_)).map {
         case Right(_) =>
@@ -132,7 +166,6 @@ class ChangeEmailDialog extends DialogFragment with FragmentHelper {
     }
 
     if (email.isEmpty) emailInputLayout.setError(getString(R.string.pref__account_action__dialog__add_email_password__error__invalid_email))
-    if (password.isEmpty && hasPassword) passwordEditText.setError(getString(R.string.pref__account_action__dialog__add_email_password__error__invalid_password))
   }
 
 }

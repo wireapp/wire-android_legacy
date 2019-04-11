@@ -17,42 +17,16 @@
  */
 package com.waz.zclient.pages.main.profile.validator;
 
-import android.content.Context;
 import android.text.TextUtils;
-import com.waz.zclient.R;
 
 public class PasswordValidator implements Validator {
 
-    private final AcceptMode acceptMode;
-    private final Context context;
-
-    private PasswordValidator(Context context, AcceptMode acceptMode) {
-        this.acceptMode = acceptMode;
-        this.context = context;
-    }
-
-    public static PasswordValidator instance(Context context) {
-        return new PasswordValidator(context, AcceptMode.STRICT);
-    }
-
-    public static PasswordValidator instanceAcceptingEmptyString(Context context) {
-        return new PasswordValidator(context, AcceptMode.EMPTY_STRING);
-    }
-
-    public static PasswordValidator instanceAcceptingEverything(Context context) {
-        return new PasswordValidator(context, AcceptMode.ALL);
+    public static PasswordValidator instance() {
+        return new PasswordValidator();
     }
 
     @Override
     public boolean validate(String text) {
-        if (acceptMode == AcceptMode.ALL) {
-            return true;
-        }
-
-        if (acceptMode == AcceptMode.EMPTY_STRING && TextUtils.isEmpty(text)) {
-            return true;
-        }
-
         return !TextUtils.isEmpty(text);
     }
 
