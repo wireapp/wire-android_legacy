@@ -34,16 +34,6 @@
         android:layout_gravity="top|left"
         >
 
-        <ImageView
-            android:id="@+id/iv__reg__logo"
-            android:layout_width="@dimen/first_time__logo__width"
-            android:layout_height="@dimen/first_time__logo__height"
-            android:layout_marginLeft="@dimen/first_time__logo__padding_left"
-            android:layout_marginTop="@dimen/wire_logo_margin_top"
-            android:scaleType="fitCenter"
-            android:src="@drawable/wire"
-            />
-
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/tv__reg__title"
             android:layout_width="match_parent"
