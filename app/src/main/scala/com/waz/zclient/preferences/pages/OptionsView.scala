@@ -96,6 +96,8 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
   vbrSwitch.setPreference(VBREnabled)
 
+  messagePreviewSwitch.setPreference(MessagePreview)
+
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
