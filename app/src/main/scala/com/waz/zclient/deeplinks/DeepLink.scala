@@ -17,8 +17,10 @@
  */
 package com.waz.zclient.deeplinks
 
+import android.util.Patterns
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
+import com.waz.utils.wrappers.URI
 import com.waz.zclient.BuildConfig
 
 import scala.util.matching.Regex
@@ -29,17 +31,19 @@ object DeepLink extends DerivedLogTag {
   case object SSOLogin extends DeepLink
   case object User extends DeepLink
   case object Conversation extends DeepLink
+  case object Access extends DeepLink
 
   sealed trait Token
   case class SSOLoginToken(token: String) extends Token
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
+  case class CustomBackendLink(url: URI) extends Token
 
   case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean, self: Boolean = false)
 
   case class RawToken(value: String) extends AnyVal
 
-  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation)
+  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation, Access)
 }
 
 object DeepLinkParser {
@@ -53,6 +57,7 @@ object DeepLinkParser {
     case DeepLink.SSOLogin => "start-sso"
     case DeepLink.User => "user"
     case DeepLink.Conversation => "conversation"
+    case DeepLink.Access => "access"
   }
 
   def parseLink(str: String): Option[(DeepLink, RawToken)] = {
@@ -85,6 +90,10 @@ object DeepLinkParser {
         res <- UuidRegex.findFirstIn(raw.value)
         convId = ConvId(res)
       } yield ConversationToken(convId)
+    case DeepLink.Access =>
+      if(Patterns.WEB_URL.matcher(raw.value).matches())
+        Some(CustomBackendLink(URI.parse(raw.value)))
+      else None
   }
 
 }
