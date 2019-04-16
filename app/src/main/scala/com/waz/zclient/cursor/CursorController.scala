@@ -284,8 +284,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     case CursorMenuItem.More => secondaryToolbarVisible ! true
     case CursorMenuItem.Less => secondaryToolbarVisible ! false
     case AudioMessage =>
-      //TODO: Deactivate voice filter recording for now
-      //checkIfCalling(isVideoMessage = false)(keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING))
+      checkIfCalling(isVideoMessage = false)(keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING))
     case Camera =>
         keyboard ! KeyboardState.ExtendedCursor(ExtendedCursorContainer.Type.IMAGES)
     case Ping =>
