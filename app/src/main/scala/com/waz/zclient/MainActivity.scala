@@ -171,6 +171,10 @@ class MainActivity extends BaseActivity
         }
         deepLinkService.deepLink ! None
 
+      case Some(OpenDeepLink(CustomBackendLink(url), _)) =>
+        verbose(l"custom backend url: $url")
+        startFirstFragment()
+
       case Some(_) =>
         verbose(l"the default path (no deep link, or a link handled later)")
         startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
