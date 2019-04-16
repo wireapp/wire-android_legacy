@@ -22,10 +22,8 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "141.0.2265"
+    zMessagingVersion = "141.0.2665"
     paging_version = "1.0.0"
-    // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '141.0.2263@aar'
 
     avsVersion = '4.9.170@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
@@ -37,6 +35,10 @@ ext {
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
+
+    zMessagingDevVersion =  (System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '-DEV'
+    zMessagingReleaseVersion = (System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar'
+
 }
 
 if (project.file('user.gradle').exists()) {
