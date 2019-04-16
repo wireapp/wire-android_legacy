@@ -171,7 +171,7 @@ class MainActivity extends BaseActivity
         }
         deepLinkService.deepLink ! None
 
-      case Some(OpenDeepLink(CustomBackendLink(url), _)) =>
+      case Some(OpenDeepLink(CustomBackendToken(url), _)) =>
         verbose(l"custom backend url: $url")
         startFirstFragment()
 

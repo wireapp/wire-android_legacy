@@ -36,7 +36,7 @@ object DeepLink extends DerivedLogTag {
   case class SSOLoginToken(token: String) extends Token
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
-  case class CustomBackendLink(url: URI) extends Token
+  case class CustomBackendToken(url: String) extends Token
 
   case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean, self: Boolean = false)
 
@@ -93,7 +93,7 @@ object DeepLinkParser {
     case DeepLink.Access =>
       val uri = URI.parse(raw.value)
       Option(uri.getQueryParameter("config")).map { configAddress =>
-        CustomBackendLink(URI.parse(configAddress))
+        CustomBackendToken(configAddress)
       }
   }
 
