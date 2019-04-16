@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.deeplinks
 
-import android.util.Patterns
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.wrappers.URI
@@ -90,10 +89,12 @@ object DeepLinkParser {
         res <- UuidRegex.findFirstIn(raw.value)
         convId = ConvId(res)
       } yield ConversationToken(convId)
+
     case DeepLink.Access =>
-      if(Patterns.WEB_URL.matcher(raw.value).matches())
-        Some(CustomBackendLink(URI.parse(raw.value)))
-      else None
+      val uri = URI.parse(raw.value)
+      Option(uri.getQueryParameter("config")).map { configAddress =>
+        CustomBackendLink(URI.parse(configAddress))
+      }
   }
 
 }
