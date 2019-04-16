@@ -13,7 +13,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.30."
+    majorVersion = "3.31."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
@@ -33,7 +33,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.0.7@aar'
+    customAvsVersion = '4.9.12@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'

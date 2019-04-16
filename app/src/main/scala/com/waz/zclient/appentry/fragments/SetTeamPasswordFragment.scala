@@ -63,6 +63,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
       // but it will become red when validation fails.
       inputField.errorText.setGravity(Gravity.START)
       inputField.errorText.setTextColor(context.getColor(R.color.teams_placeholder_text))
+      inputField.setShouldDisableOnClick(false)
       inputField.setShouldClearErrorOnClick(false)
       inputField.setShouldClearErrorOnTyping(false)
       inputField.showErrorMessage(Some(getString(R.string.password_policy_hint, passwordMinLength)))
