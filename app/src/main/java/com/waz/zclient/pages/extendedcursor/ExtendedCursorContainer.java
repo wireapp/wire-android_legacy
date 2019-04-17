@@ -33,6 +33,7 @@ import com.waz.zclient.cursor.EphemeralLayout;
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout;
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout;
 import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout;
+import com.waz.zclient.pages.extendedcursor.voicefilter2.AudioMessageRecordingScreen;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.ContextUtils;
@@ -66,7 +67,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
     private int accentColor;
     private boolean isExpanded;
 
-    private VoiceFilterLayout voiceFilterLayout;
+    private AudioMessageRecordingScreen voiceFilterLayout;
     private EmojiKeyboardLayout emojiKeyboardLayout;
     private EphemeralLayout ephemeralLayout;
 
@@ -115,7 +116,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
 
     public void openVoiceFilter(VoiceFilterLayout.Callback callback) {
         openWithType(Type.VOICE_FILTER_RECORDING);
-        voiceFilterLayout.setCallback(callback);
+//        voiceFilterLayout.setCallback(callback);
     }
 
     public void openCursorImages(CursorImagesLayout.Callback callback) {
@@ -143,7 +144,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
             case NONE:
                 break;
             case VOICE_FILTER_RECORDING:
-                voiceFilterLayout.setAccentColor(accentColor);
+//                voiceFilterLayout.setAccentColor(accentColor);
                 break;
         }
     }
@@ -215,9 +216,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
         switch (type) {
             case VOICE_FILTER_RECORDING:
                 closeCursorImages();
-                voiceFilterLayout = (VoiceFilterLayout) LayoutInflater.from(getContext()).inflate(R.layout.voice_filter_layout,
-                                                                                                  this,
-                                                                                                  false);
+                voiceFilterLayout = new AudioMessageRecordingScreen(getContext());
                 voiceFilterLayout.setAccentColor(accentColor);
                 addView(voiceFilterLayout);
                 break;
@@ -261,7 +260,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
 
     private void closeVoiceFilter() {
         if (voiceFilterLayout != null) {
-            voiceFilterLayout.onClose();
+//            voiceFilterLayout.onClose();
             voiceFilterLayout = null;
         }
     }
