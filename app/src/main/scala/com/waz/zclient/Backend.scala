@@ -18,6 +18,7 @@
 package com.waz.zclient
 
 import com.waz.service.{BackendConfig, CertificatePin, FirebaseOptions}
+import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.utils.SafeBase64
 import com.waz.utils.wrappers.URI
 
@@ -55,4 +56,13 @@ object Backend {
     URI.parse(BuildConfig.BLACKLIST_HOST))
 
   lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
+
+  // TODO: Move this to SE. Also, what about the remaining urls?
+  def createCustomBackend(config: BackendConfigResponse): BackendConfig = BackendConfig(
+    URI.parse(config.endpoints.backendURL.toString), // TODO: Clean up
+    URI.parse(config.endpoints.backendWSURL.toString),
+    StagingFirebaseOptions, // TODO: what should this be?
+    config.title,
+    blacklistHost = URI.parse(config.endpoints.blackListURL.toString)
+  )
 }
