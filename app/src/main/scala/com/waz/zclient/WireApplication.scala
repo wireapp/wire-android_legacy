@@ -48,6 +48,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
+import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
@@ -148,6 +149,7 @@ object WireApplication extends DerivedLogTag {
     bind [PermissionsService]             to inject[GlobalModule].permissions
     bind [MetaDataService]                to inject[GlobalModule].metadata
     bind [LogsService]                    to inject[GlobalModule].logsService
+    bind [CustomBackendClient]            to inject[GlobalModule].customBackendClient
 
     import com.waz.threading.Threading.Implicits.Background
     bind [AccountToImageLoader]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.imageLoader)))
