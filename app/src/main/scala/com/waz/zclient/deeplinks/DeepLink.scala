@@ -17,9 +17,10 @@
  */
 package com.waz.zclient.deeplinks
 
+import java.net.URI
+
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
-import com.waz.utils.wrappers.URI
 import com.waz.zclient.BuildConfig
 
 import scala.util.matching.Regex
@@ -91,9 +92,15 @@ object DeepLinkParser {
       } yield ConversationToken(convId)
 
     case DeepLink.Access =>
-      val uri = URI.parse(raw.value)
-      Option(uri.getQueryParameter("config")).map { configAddress =>
-        CustomBackendToken(configAddress)
+      // For some reason the android URI can't parse a query prefixed with https.
+      // So just do it manually.
+      val uri = new URI(raw.value)
+      val query = uri.getQuery
+      if (query.startsWith("config=")) {
+        val configAddress = query.stripPrefix("config=")
+        Some(CustomBackendToken(configAddress))
+      } else {
+        None
       }
   }
 
