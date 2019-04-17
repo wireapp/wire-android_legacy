@@ -62,7 +62,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
       // We need to adjust the behaviour of the error text view: It should always be visible,
       // but it will become red when validation fails.
       inputField.errorText.setGravity(Gravity.START)
-      inputField.errorText.setTextColor(context.getColor(R.color.teams_placeholder_text))
+      inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
       inputField.setShouldDisableOnClick(false)
       inputField.setShouldClearErrorOnClick(false)
       inputField.setShouldClearErrorOnTyping(false)
@@ -72,7 +72,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
 
       inputField.editText.addTextListener { text =>
         createTeamController.password = text
-        inputField.errorText.setTextColor(context.getColor(R.color.teams_placeholder_text))
+        inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
       }
 
       inputField.editText.requestFocus()
@@ -80,7 +80,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
 
       inputField.setOnClick( text =>
         if (!validator.isValidPassword(text)) {
-          inputField.errorText.setTextColor(context.getColor(R.color.teams_error_red))
+          inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_error_red))
           Future.successful(Some(getString(R.string.password_policy_hint, passwordMinLength)))
         } else {
           AppEntryDialogs.showTermsAndConditions(context).flatMap {
