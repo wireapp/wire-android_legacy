@@ -1302,6 +1302,26 @@
 
     <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
 
+    <!-- Custom Backend -->
+    <string name="custom_backend_info_title">Connected to "%1$s"</string>
+    <string name="custom_backend_info_show_more">Show more</string>
+
+    <string name="custom_backend_dialog_ok">OK</string>
+    <string name="custom_backend_dialog_cancel">Cancel</string>
+    <string name="custom_backend_dialog_connect">Connect</string>
+
+    <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
+    <string name="custom_backend_dialog_confirmation_message">This configuration will connect the app to a third-party server: %1$s</string>
+
+    <string name="custom_backend_dialog_info_title">You are connected to a third-party server: "%1$s"</string>
+
+    <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
+    <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
+
+    <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
+    <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
+
+
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>
     <string name="quote_timestamp_message_date">Original message from %s</string>
