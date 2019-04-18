@@ -98,12 +98,12 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
       case SELECT_STAGING_BE =>
         PreferenceManager.getDefaultSharedPreferences(context)
           .edit
-          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.StagingBackend.environment)
+          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.StagingBackend.getEnvironment)
           .commit
       case SELECT_PROD_BE =>
         PreferenceManager.getDefaultSharedPreferences(context)
           .edit
-          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.ProdBackend.environment)
+          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.ProdBackend.getEnvironment)
           .commit
       case _ =>
         setResultData("Unknown Intent!")

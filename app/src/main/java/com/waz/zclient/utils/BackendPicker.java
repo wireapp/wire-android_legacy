@@ -60,8 +60,8 @@ public class BackendPicker {
 
     private void showDialog(final BackendConfig prod, Activity activity, final Callback<BackendConfig> callback) {
         final String[] backends = new String[] {
-            Backend.StagingBackend().environment(),
-            prod.environment()
+            Backend.StagingBackend().getEnvironment(),
+            prod.getEnvironment()
         };
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
@@ -115,7 +115,7 @@ public class BackendPicker {
     private void saveBackendConfig(BackendConfig backend) {
         prefs()
             .edit()
-            .putString(CUSTOM_BACKEND_PREFERENCE, backend.environment())
+            .putString(CUSTOM_BACKEND_PREFERENCE, backend.getEnvironment())
             .commit();
     }
 

@@ -18,7 +18,6 @@
 package com.waz.zclient
 
 import com.waz.service.{BackendConfig, CertificatePin, FirebaseOptions}
-import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.utils.SafeBase64
 import com.waz.utils.wrappers.URI
 
@@ -27,42 +26,32 @@ object Backend {
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   private val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
 
-  private val blacklistHostStaging = URI.parse(s"https://clientblacklist.wire.com/staging/android")
-
   //This information can be found in downloadable google-services.json file from the BE console.
   val StagingFirebaseOptions = FirebaseOptions(
     "723990470614",
     "1:723990470614:android:9a1527f79aa62284",
     "AIzaSyAGCoJGUtDBLJJiQPLxHQRrdkbyI0wlbo8")
+
   val ProdFirebaseOptions    = FirebaseOptions(
     BuildConfig.FIREBASE_PUSH_SENDER_ID,
     BuildConfig.FIREBASE_APP_ID,
     BuildConfig.FIREBASE_API_KEY)
 
   //These are only here so that we can compile tests, the UI sets the backendConfig
-  val StagingBackend = BackendConfig(
-    URI.parse("https://staging-nginz-https.zinfra.io"),
-    URI.parse("https://staging-nginz-ssl.zinfra.io/await"),
-    StagingFirebaseOptions,
+  val StagingBackend = new BackendConfig(
     "staging",
-    blacklistHost = blacklistHostStaging)
+    baseUrl = URI.parse("https://staging-nginz-https.zinfra.io"),
+    websocketUrl = URI.parse("https://staging-nginz-ssl.zinfra.io/await"),
+    blacklistHost = URI.parse(s"https://clientblacklist.wire.com/staging/android"),
+    StagingFirebaseOptions)
 
-  val ProdBackend: BackendConfig = BackendConfig(
+  val ProdBackend: BackendConfig = new BackendConfig(
+    "prod",
     URI.parse(BuildConfig.BACKEND_URL),
     URI.parse(BuildConfig.WEBSOCKET_URL),
+    URI.parse(BuildConfig.BLACKLIST_HOST),
     ProdFirebaseOptions,
-    "prod",
-    certPin,
-    URI.parse(BuildConfig.BLACKLIST_HOST))
+    certPin)
 
-  lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
-
-  // TODO: Move this to SE. Also, what about the remaining urls?
-  def createCustomBackend(config: BackendConfigResponse): BackendConfig = BackendConfig(
-    URI.parse(config.endpoints.backendURL.toString), // TODO: Clean up
-    URI.parse(config.endpoints.backendWSURL.toString),
-    StagingFirebaseOptions, // TODO: what should this be?
-    config.title,
-    blacklistHost = URI.parse(config.endpoints.blackListURL.toString)
-  )
+  lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.getEnvironment -> b).toMap
 }
