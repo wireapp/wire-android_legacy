@@ -18,8 +18,8 @@
 package com.waz.zclient.appentry
 
 import android.app.FragmentManager
-import android.content.{Context, Intent}
 import android.content.res.Configuration
+import android.content.{Context, Intent}
 import android.os.Bundle
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
 import android.support.v4.app.{Fragment, FragmentTransaction}
@@ -36,18 +36,18 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
+import com.waz.zclient.deeplinks.DeepLinkService.Error.UserLoggedIn
+import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
+import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog}
 import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
-import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
-import com.waz.zclient.deeplinks.DeepLinkService.Error.UserLoggedIn
-import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
-import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog, getString}
 
 import scala.collection.JavaConverters._
 
@@ -167,16 +167,18 @@ class AppEntryActivity extends BaseActivity {
         deepLinkService.deepLink ! None
 
         val shouldConnect = showConfirmationDialog(
-          getString(R.string.custom_backend_dialog_confirmation_title),
-          getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+          ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+          ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
           R.string.custom_backend_dialog_connect)
 
         shouldConnect.foreach {
           case false => verbose(l"[BE]: cancelling backend switch")
           case true => verbose(l"[BE]: trying to connect")
+            enableProgress(true)
             inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
               case Left(errorResponse) =>
                 error(l"[BE]: error trying to download config.", errorResponse)
+                enableProgress(false)
 
                 showErrorDialog(
                     R.string.custom_backend_dialog_network_error_title,
@@ -184,6 +186,8 @@ class AppEntryActivity extends BaseActivity {
 
               case Right(config) =>
                 verbose(l"[BE]: got config response: $config")
+                enableProgress(false)
+
                 // TODO: Also, we need to think about the backend picker and preferences.
                 // Do we need to store this config somewhere?
                 inject[GlobalModule].backend.update(config)
