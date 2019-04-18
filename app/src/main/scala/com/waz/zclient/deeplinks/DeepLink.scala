@@ -17,12 +17,14 @@
  */
 package com.waz.zclient.deeplinks
 
-import java.net.URI
+import java.net.{URI, URL}
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.log.LogUI._
 
+import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 
 sealed trait DeepLink
@@ -37,7 +39,7 @@ object DeepLink extends DerivedLogTag {
   case class SSOLoginToken(token: String) extends Token
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
-  case class CustomBackendToken(url: String) extends Token
+  case class CustomBackendToken(url: URL) extends Token
 
   case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean, self: Boolean = false)
 
@@ -92,15 +94,33 @@ object DeepLinkParser {
       } yield ConversationToken(convId)
 
     case DeepLink.Access =>
-      // For some reason the android URI can't parse a query prefixed with https.
-      // So just do it manually.
-      val uri = new URI(raw.value)
-      val query = uri.getQuery
-      if (query.startsWith("config=")) {
-        val configAddress = query.stripPrefix("config=")
-        Some(CustomBackendToken(configAddress))
-      } else {
-        None
+      // For some reason the android URI can't parse a query prefixed with https. Instead we
+      // parse it manually.
+
+      // TODO: Remove log tags
+      Try(new URI(raw.value)) match {
+        case Failure(exception) =>
+          warn(l"[BE]: couldn't parse access token.", exception)
+          None
+
+        case Success(uri) =>
+          val query = uri.getQuery
+          if (query.startsWith("config=")) {
+            val configAddress = query.stripPrefix("config=")
+
+            Try(new URL(configAddress)) match {
+              case Failure(exception) =>
+                warn(l"[BE]: couldn't parse access token query.", exception)
+                None
+
+              case Success(url) =>
+                Some(CustomBackendToken(url))
+            }
+          } else {
+            warn(l"[BE]: couldn't find access token query parameter.")
+            None
+          }
+
       }
   }
 

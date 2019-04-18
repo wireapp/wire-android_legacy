@@ -174,38 +174,30 @@ class MainActivity extends BaseActivity
         }
         deepLinkService.deepLink ! None
 
-      case Some(OpenDeepLink(CustomBackendToken(urlStr), _)) =>
-        verbose(l"[BE]: custom backend url: $urlStr")
+      case Some(OpenDeepLink(CustomBackendToken(configUrl), _)) =>
+        verbose(l"[BE]: custom backend url: $configUrl. Attempting to download")
 
-        Try(new URL(urlStr)) match {
-          case Failure(exception) =>
-            error(l"[BE]: invalid config url.", exception)
-            deepLinkService.deepLink ! None
-          // TODO: show error
+        for { response <- inject[CustomBackendClient].loadBackendConfig(configUrl) }
+          yield {
+            response match {
+            case Left(errorResponse) =>
+              error(l"[BE]: error trying to download config.", errorResponse)
+              deepLinkService.deepLink ! None
+            // TODO: show error
 
-          case Success(url) =>
-            verbose(l"[BE]: config url is valid. Trying to download")
+            case Right(config) =>
+              verbose(l"[BE]: got config response: $config")
 
-            for { response <- inject[CustomBackendClient].loadBackendConfig(url) }
-              yield { response match {
-                case Left(errorResponse) =>
-                  error(l"[BE]: error trying to download config.", errorResponse)
-                  deepLinkService.deepLink ! None
-                // TODO: show error
+              // TODO: Also, we need to think about the backend picker and preferences.
+              // Do we need to store this config somewhere?
 
-                case Right(config) =>
-                  verbose(l"[BE]: got config response: $config")
+              inject[GlobalModule].backend.update(config)
+              verbose(l"[BE]: switched backend!")
 
-                  // TODO: Also, we need to think about the backend picker and preferences.
-                  // Do we need to store this config somewhere?
-                  
-                  inject[GlobalModule].backend.update(config)
-                  deepLinkService.deepLink ! None
-              }
+              deepLinkService.deepLink ! None
             }
-        }
-
-
+          }
+        
         startFirstFragment()
 
       case Some(DoNotOpenDeepLink(Access, UserLoggedIn)) =>
