@@ -17,8 +17,6 @@
  */
 package com.waz.zclient
 
-import java.net.URL
-
 import android.content.Intent
 import android.content.Intent._
 import android.content.res.Configuration
@@ -32,8 +30,7 @@ import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
-import com.waz.service.{AccountManager, AccountsService, GlobalModule, ZMessaging}
-import com.waz.sync.client.CustomBackendClient
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
@@ -47,7 +44,7 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
 import com.waz.zclient.deeplinks.DeepLinkService
-import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts, UserLoggedIn}
+import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts}
 import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
@@ -66,7 +63,6 @@ import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success, Try}
 
 class MainActivity extends BaseActivity
   with CallingBannerActivity
@@ -162,53 +158,23 @@ class MainActivity extends BaseActivity
 
       case Some(DoNotOpenDeepLink(SSOLogin, InvalidToken)) =>
         verbose(l"do not open, SSO token invalid")
-        showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map { _ =>
-          startFirstFragment()
-        }
+        showErrorDialog(
+          R.string.sso_signin_wrong_code_title,
+          R.string.sso_signin_wrong_code_message)
+          .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
 
       case Some(DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts)) =>
         verbose(l"do not open, SSO token, too many accounts")
-        showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map { _ =>
-          startFirstFragment()
-        }
+        showErrorDialog(
+          R.string.sso_signin_max_accounts_title,
+          R.string.sso_signin_max_accounts_message)
+          .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
-
-      case Some(OpenDeepLink(CustomBackendToken(configUrl), _)) =>
-        verbose(l"[BE]: custom backend url: $configUrl. Attempting to download")
-
-        for { response <- inject[CustomBackendClient].loadBackendConfig(configUrl) }
-          yield {
-            response match {
-            case Left(errorResponse) =>
-              error(l"[BE]: error trying to download config.", errorResponse)
-              deepLinkService.deepLink ! None
-            // TODO: show error
-
-            case Right(config) =>
-              verbose(l"[BE]: got config response: $config")
-
-              // TODO: Also, we need to think about the backend picker and preferences.
-              // Do we need to store this config somewhere?
-
-              inject[GlobalModule].backend.update(config)
-              verbose(l"[BE]: switched backend!")
-
-              deepLinkService.deepLink ! None
-            }
-          }
-        
-        startFirstFragment()
-
-      case Some(DoNotOpenDeepLink(Access, UserLoggedIn)) =>
-        // TODO: show error
-        verbose(l"[BE]: do not open, Access, user logged in")
-        deepLinkService.deepLink ! None
-        startFirstFragment()
 
       case Some(_) =>
         verbose(l"the default path (no deep link, or a link handled later)")
-        startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
+        startFirstFragment()
     }
   }
 
@@ -230,6 +196,12 @@ class MainActivity extends BaseActivity
   override protected def onResume(): Unit = {
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
+  }
+
+
+  override def onDestroy(): Unit = {
+    verbose(l"[BE]: onDestroy")
+    super.onDestroy()
   }
 
   private def openSignUpPage(ssoToken: Option[String] = None): Unit = {

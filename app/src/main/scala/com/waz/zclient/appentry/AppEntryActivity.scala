@@ -26,7 +26,8 @@ import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.view.View
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
-import com.waz.service.AccountsService
+import com.waz.service.{AccountsService, GlobalModule}
+import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -39,13 +40,14 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
-import com.waz.zclient.deeplinks.DeepLink.{ConversationToken, UserToken}
+import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
+import com.waz.zclient.deeplinks.DeepLinkService.Error.UserLoggedIn
 import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
-import com.waz.zclient.utils.ContextUtils.showErrorDialog
+import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog, getString}
 
 import scala.collection.JavaConverters._
 
@@ -71,6 +73,8 @@ object AppEntryActivity {
 }
 
 class AppEntryActivity extends BaseActivity {
+
+  import Threading.Implicits.Ui
 
   implicit def ctx: Context = this
 
@@ -153,9 +157,51 @@ class AppEntryActivity extends BaseActivity {
       case OpenDeepLink(UserToken(_), _) | DoNotOpenDeepLink(DeepLink.User, _) =>
         showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
         deepLinkService.deepLink ! None
+
       case OpenDeepLink(ConversationToken(_), _) | DoNotOpenDeepLink(DeepLink.Conversation, _) =>
         showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
         deepLinkService.deepLink ! None
+
+      case OpenDeepLink(CustomBackendToken(configUrl), _) =>
+        verbose(l"[BE]: custom backend url: $configUrl")
+        deepLinkService.deepLink ! None
+
+        val shouldConnect = showConfirmationDialog(
+          getString(R.string.custom_backend_dialog_confirmation_title),
+          getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+          R.string.custom_backend_dialog_connect)
+
+        shouldConnect.foreach {
+          case false => verbose(l"[BE]: cancelling backend switch")
+          case true => verbose(l"[BE]: trying to connect")
+            inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+              case Left(errorResponse) =>
+                error(l"[BE]: error trying to download config.", errorResponse)
+
+                showErrorDialog(
+                    R.string.custom_backend_dialog_network_error_title,
+                    R.string.custom_backend_dialog_network_error_message)
+
+              case Right(config) =>
+                verbose(l"[BE]: got config response: $config")
+                // TODO: Also, we need to think about the backend picker and preferences.
+                // Do we need to store this config somewhere?
+                inject[GlobalModule].backend.update(config)
+                verbose(l"[BE]: switched backend!")
+
+              // TODO: Adjust ui of landing page.
+            }
+        }
+
+      case DoNotOpenDeepLink(Access, UserLoggedIn) =>
+        verbose(l"[BE]: do not open, Access, user logged in")
+        deepLinkService.deepLink ! None
+
+        showErrorDialog(
+            R.string.custom_backend_dialog_logged_in_error_title,
+            R.string.custom_backend_dialog_logged_in_error_message
+      )
+
       case _ =>
     }
   }
