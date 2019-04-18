@@ -32,7 +32,7 @@ import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
-import com.waz.service.{AccountManager, AccountsService, ZMessaging}
+import com.waz.service.{AccountManager, AccountsService, GlobalModule, ZMessaging}
 import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -196,10 +196,10 @@ class MainActivity extends BaseActivity
                 case Right(config) =>
                   verbose(l"[BE]: got config response: $config")
 
-                  val backendConfig = Backend.createCustomBackend(config)
-                  // TODO: We need to tear down the current zms
-                  // TODO: Also, we need to think about the backend picker and preferences. Do we need to store this config somewhere?
-                  getApplication.asInstanceOf[WireApplication].ensureInitialized(backendConfig)
+                  // TODO: Also, we need to think about the backend picker and preferences.
+                  // Do we need to store this config somewhere?
+                  
+                  inject[GlobalModule].backend.update(config)
                   deepLinkService.deepLink ! None
               }
             }
