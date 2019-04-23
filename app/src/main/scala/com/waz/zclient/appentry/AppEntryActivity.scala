@@ -46,7 +46,7 @@ import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog}
-import com.waz.zclient.utils.{ContextUtils, RichView, ViewUtils}
+import com.waz.zclient.utils.{BackendSelector, ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.collection.JavaConverters._
@@ -187,10 +187,7 @@ class AppEntryActivity extends BaseActivity {
               case Right(config) =>
                 verbose(l"[BE]: got config response: $config")
                 enableProgress(false)
-
-                // TODO: Also, we need to think about the backend picker and preferences.
-                // Do we need to store this config somewhere?
-                inject[GlobalModule].backend.update(config)
+                new BackendSelector().switchBackend(inject[GlobalModule], config)
                 verbose(l"[BE]: switched backend!")
 
               // TODO: Adjust ui of landing page.

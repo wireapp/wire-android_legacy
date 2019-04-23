@@ -19,9 +19,11 @@ package com.waz.zclient
 
 import com.waz.service.{BackendConfig, CertificatePin, FirebaseOptions}
 import com.waz.utils.SafeBase64
-import com.waz.utils.wrappers.URI
 
 object Backend {
+
+  lazy val byName: Map[String, BackendConfig] =
+    Seq(StagingBackend, ProdBackend).map(b => b.getEnvironment -> b).toMap
 
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   private val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
@@ -32,26 +34,24 @@ object Backend {
     "1:723990470614:android:9a1527f79aa62284",
     "AIzaSyAGCoJGUtDBLJJiQPLxHQRrdkbyI0wlbo8")
 
-  val ProdFirebaseOptions    = FirebaseOptions(
+  val ProdFirebaseOptions = FirebaseOptions(
     BuildConfig.FIREBASE_PUSH_SENDER_ID,
     BuildConfig.FIREBASE_APP_ID,
     BuildConfig.FIREBASE_API_KEY)
 
   //These are only here so that we can compile tests, the UI sets the backendConfig
-  val StagingBackend = new BackendConfig(
-    "staging",
-    baseUrl = URI.parse("https://staging-nginz-https.zinfra.io"),
-    websocketUrl = URI.parse("https://staging-nginz-ssl.zinfra.io/await"),
-    blacklistHost = URI.parse(s"https://clientblacklist.wire.com/staging/android"),
+  val StagingBackend = BackendConfig(
+    environment = "staging",
+    baseUrl = "https://staging-nginz-https.zinfra.io",
+    websocketUrl = "https://staging-nginz-ssl.zinfra.io/await",
+    blacklistHost = s"https://clientblacklist.wire.com/staging/android",
     StagingFirebaseOptions)
 
-  val ProdBackend: BackendConfig = new BackendConfig(
-    "prod",
-    URI.parse(BuildConfig.BACKEND_URL),
-    URI.parse(BuildConfig.WEBSOCKET_URL),
-    URI.parse(BuildConfig.BLACKLIST_HOST),
+  val ProdBackend: BackendConfig = BackendConfig(
+    environment = "prod",
+    BuildConfig.BACKEND_URL,
+    BuildConfig.WEBSOCKET_URL,
+    BuildConfig.BLACKLIST_HOST,
     ProdFirebaseOptions,
     certPin)
-
-  lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.getEnvironment -> b).toMap
 }

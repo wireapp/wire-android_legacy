@@ -70,8 +70,8 @@ import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversation.creation.CreateConversationController
+import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.deeplinks.DeepLinkService
@@ -86,7 +86,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage}
+import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendSelector, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
@@ -366,9 +366,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
-    new BackendPicker(this).withBackend(new Callback[BackendConfig]() {
-      def callback(be: BackendConfig) = ensureInitialized(be)
-    }, Backend.ProdBackend)
+    val be = new BackendSelector()(this).getStoredBackendConfig.getOrElse(Backend.ProdBackend)
+    ensureInitialized(be)
   }
 
   def ensureInitialized(backend: BackendConfig) = {

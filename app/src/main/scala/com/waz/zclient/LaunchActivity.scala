@@ -22,28 +22,24 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.{AccountsService, BackendConfig}
+import com.waz.service.AccountsService
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.{BackendPicker, Callback}
+import com.waz.zclient.utils.BackendSelector
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
   override def onStart() = {
     super.onStart()
 
-    new BackendPicker(getApplicationContext).withBackend(this, new Callback[BackendConfig]() {
-      override def callback(be: BackendConfig) = {
-        getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
-
-        //TODO - could this be racing with setting the active account?
-        inject[AccountsService].activeAccountId.head(LogTag("BackendPicker")).map {
-          case Some(_) => startMain()
-          case _       => startSignUp()
-        } (Threading.Ui)
-      }
-    }, Backend.ProdBackend)
+    new BackendSelector()(this).selectBackend { be =>
+      getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
+      inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
+        case Some(_) => startMain()
+        case _ => startSignUp()
+      }(Threading.Ui)
+    }
   }
 
   override protected def onNewIntent(intent: Intent) = {
