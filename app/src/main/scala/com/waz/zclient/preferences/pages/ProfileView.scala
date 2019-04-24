@@ -49,6 +49,7 @@ import com.waz.zclient.views.AvailabilityView
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.appentry.AppEntryActivity
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -99,7 +100,9 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   if(MaxAccountsCount > 1 && ACCOUNT_CREATION_ENABLED) {
     newTeamButton.setVisible(true)
     newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
-      new ProfileBottomSheetDialog(context, R.style.message__bottom_sheet__base).show()
+      // We want to go directly to the landing page.
+      val intent = new Intent(getContext, classOf[AppEntryActivity])
+      getContext.startActivity(intent)
     }
   } else {
     newTeamButton.setVisible(false)
