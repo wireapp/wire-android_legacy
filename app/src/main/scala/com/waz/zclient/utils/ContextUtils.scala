@@ -211,6 +211,23 @@ object ContextUtils {
     p.future
   }
 
+  /// Dialog with title, message and ok.
+  def showInfoDialog(title: String, msg: String, positiveRes: Int = android.R.string.ok)
+                    (implicit context: Context): Future[Boolean] = {
+
+    val p = Promise[Boolean]()
+    new AlertDialog.Builder(context)
+      .setTitle(title)
+      .setMessage(msg)
+      .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(true))
+      })
+      .setCancelable(false)
+      .create
+      .show()
+    p.future
+  }
+
   //TODO Context has to be an Activity - maybe specify this in the type
   def showWifiWarningDialog(size: Long)(implicit context: Context): Future[Boolean] = {
     showConfirmationDialog(
