@@ -1303,8 +1303,8 @@
     <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
 
     <!-- Custom Backend -->
-    <string name="custom_backend_info_title">Connected to "%1$s"</string>
-    <string name="custom_backend_info_show_more">Show more</string>
+    <string name="custom_backend_info_title">Connected to \"%1$s\"</string>
+    <string name="custom_backend_info_show_more">SHOW MORE</string>
 
     <string name="custom_backend_dialog_ok">OK</string>
     <string name="custom_backend_dialog_cancel">Cancel</string>
@@ -1313,7 +1313,7 @@
     <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
     <string name="custom_backend_dialog_confirmation_message">This configuration will connect the app to a third-party server: %1$s</string>
 
-    <string name="custom_backend_dialog_info_title">You are connected to a third-party server: "%1$s"</string>
+    <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
 
     <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
     <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
