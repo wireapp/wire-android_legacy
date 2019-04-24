@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.utils
 
+import java.net.URL
+
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, SharedPreferences}
 import android.preference.PreferenceManager
@@ -38,6 +40,10 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
       !e.equals(Backend.ProdEnvironment) && !e.equals(Backend.StagingEnvironment)
     }
   }
+
+  /// The url string where the custom backend config was downloaded from.
+  def customBackendConfigUrl: Option[String] = getStringPreference(CONFIG_URL_PREF)
+
 
   /// Retrieves the backend config stored in shared preferences, if present.
   def getStoredBackendConfig: Option[BackendConfig] = {
@@ -66,12 +72,13 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   }
 
   /// Saves the given backend config to shared preferences.
-  def setStoredBackendConfig(config: BackendConfig): Unit = {
+  def setStoredBackendConfig(config: BackendConfig, configUrl: Option[URL] = None): Unit = {
     prefs.edit()
       .putString(ENVIRONMENT_PREF, config.getEnvironment)
       .putString(BASE_URL_PREF, config.getBaseUrl.toString)
       .putString(WEBSOCKET_URL_PREF, config.getWebsocketUrl.toString)
       .putString(BLACKLIST_HOST_PREF, config.getBlacklistHost.toString)
+      .putString(CONFIG_URL_PREF, configUrl.getOrElse(config.getEnvironment).toString)
       .commit()
   }
 
@@ -85,9 +92,9 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   /// Switches the backend in the global module and saves the config to shared preferences.
   /// Warning: use with caution. It is assumed that there are no logged in accounts and the
   /// the global module is ready.
-  def switchBackend(globalModule: GlobalModule, configResponse: BackendConfigResponse): Unit = {
+  def switchBackend(globalModule: GlobalModule, configResponse: BackendConfigResponse, configUrl: URL): Unit = {
     globalModule.backend.update(configResponse)
-    setStoredBackendConfig(globalModule.backend)
+    setStoredBackendConfig(globalModule.backend, Some(configUrl))
   }
 
   /// Presents a dialog to select backend.
@@ -127,4 +134,5 @@ object BackendSelector {
   val BASE_URL_PREF = "CUSTOM_BACKEND_BASE_URL"
   val WEBSOCKET_URL_PREF = "CUSTOM_BACKEND_WEBSOCKET_URL"
   val BLACKLIST_HOST_PREF = "CUSTOM_BACKEND_BLACKLIST_HOST"
+  val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
 }

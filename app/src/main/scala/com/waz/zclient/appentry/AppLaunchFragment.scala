@@ -62,17 +62,15 @@ class AppLaunchFragment extends SSOFragment {
       logo.foreach(_.setVisible(false))
       backendInfo.foreach(_.setVisible(true))
 
-      val name = backendSelector.getStoredBackendConfig.map(_.getEnvironment).getOrElse("Unknown")
+      val name = backendSelector.getStoredBackendConfig.map(_.getEnvironment).getOrElse("N/A")
       backendTitle.foreach(_.setText(getString(R.string.custom_backend_info_title, name)))
 
-      // TODO: This is just a placeholder
-      backendSubtitle.foreach(_.setText("s3-eu-1.internal.pineapple.com/custom-backend-config.json".toUpperCase))
+      val configUrl = backendSelector.customBackendConfigUrl.getOrElse("N/A").toUpperCase
+      backendSubtitle.foreach(_.setText(configUrl))
 
       backendShowMoreButton.foreach(_.setOnTouchListener(new OnTouchListener {
         override def onTouch(v: View, event: MotionEvent): Boolean = {
-          showInfoDialog(
-            getString(R.string.custom_backend_dialog_info_title, name),
-            "s3-eu-1.internal.pineapple.com/custom-backend-config.json") // TODO: This is just a placeholder
+          showInfoDialog(getString(R.string.custom_backend_dialog_info_title, name), configUrl)
           false
         }
       }))
