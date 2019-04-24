@@ -187,10 +187,13 @@ class AppEntryActivity extends BaseActivity {
               case Right(config) =>
                 verbose(l"[BE]: got config response: $config")
                 enableProgress(false)
+
                 new BackendSelector().switchBackend(inject[GlobalModule], config)
                 verbose(l"[BE]: switched backend!")
 
-              // TODO: Adjust ui of landing page.
+                // re-present fragment for updated ui.
+                getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
             }
         }
 
