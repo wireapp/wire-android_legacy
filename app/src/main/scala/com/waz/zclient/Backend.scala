@@ -26,7 +26,10 @@ object Backend {
     Seq(StagingBackend, ProdBackend).map(b => b.getEnvironment -> b).toMap
 
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
-  private val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
+  val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
+
+  val ProdEnvironment = "prod"
+  val StagingEnvironment = "staging"
 
   //This information can be found in downloadable google-services.json file from the BE console.
   val StagingFirebaseOptions = FirebaseOptions(
@@ -41,14 +44,15 @@ object Backend {
 
   //These are only here so that we can compile tests, the UI sets the backendConfig
   val StagingBackend = BackendConfig(
-    environment = "staging",
+    StagingEnvironment,
     baseUrl = "https://staging-nginz-https.zinfra.io",
     websocketUrl = "https://staging-nginz-ssl.zinfra.io/await",
     blacklistHost = s"https://clientblacklist.wire.com/staging/android",
-    StagingFirebaseOptions)
+    StagingFirebaseOptions,
+    certPin)
 
-  val ProdBackend: BackendConfig = BackendConfig(
-    environment = "prod",
+  val ProdBackend = BackendConfig(
+    ProdEnvironment,
     BuildConfig.BACKEND_URL,
     BuildConfig.WEBSOCKET_URL,
     BuildConfig.BLACKLIST_HOST,

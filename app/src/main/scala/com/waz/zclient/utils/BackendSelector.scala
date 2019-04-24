@@ -32,6 +32,13 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   private def prefs: SharedPreferences =
     PreferenceManager.getDefaultSharedPreferences(context)
 
+  /// A custom backend is one that is neither the Wire production nor staging backend.
+  def hasCustomBackend: Boolean = {
+    getStringPreference(ENVIRONMENT_PREF).exists { e =>
+      !e.equals(Backend.ProdEnvironment) && !e.equals(Backend.StagingEnvironment)
+    }
+  }
+
   /// Retrieves the backend config stored in shared preferences, if present.
   def getStoredBackendConfig: Option[BackendConfig] = {
     val environment = getStringPreference(ENVIRONMENT_PREF)
@@ -42,8 +49,15 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
     (environment, baseUrl, websocketUrl, blackListHost) match {
       case (Some(env), Some(base), Some(web), Some(black)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
-        // TODO: Will need to set firebase options and certificate pin.
-        Some(BackendConfig(env, base, web, black, Backend.StagingFirebaseOptions))
+
+        val firebaseOptions = env match {
+          case Backend.ProdEnvironment => Backend.ProdFirebaseOptions
+          case Backend.StagingEnvironment => Backend.StagingFirebaseOptions
+          case _ => Backend.ProdFirebaseOptions // Custom BEs use production firebase options
+        }
+
+        val config = BackendConfig(env, base, web, black, firebaseOptions, Backend.certPin)
+        Some(config)
 
       case _ =>
         info(l"Couldn't load backend config due to missing data.")
