@@ -35,15 +35,10 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
     PreferenceManager.getDefaultSharedPreferences(context)
 
   /// A custom backend is one that is neither the Wire production nor staging backend.
-  def hasCustomBackend: Boolean = {
-    getStringPreference(ENVIRONMENT_PREF).exists { e =>
-      !e.equals(Backend.ProdEnvironment) && !e.equals(Backend.StagingEnvironment)
-    }
-  }
+  def hasCustomBackend: Boolean = getStringPreference(CONFIG_URL_PREF).isDefined
 
   /// The url string where the custom backend config was downloaded from.
   def customBackendConfigUrl: Option[String] = getStringPreference(CONFIG_URL_PREF)
-
 
   /// Retrieves the backend config stored in shared preferences, if present.
   def getStoredBackendConfig: Option[BackendConfig] = {
@@ -72,13 +67,12 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   }
 
   /// Saves the given backend config to shared preferences.
-  def setStoredBackendConfig(config: BackendConfig, configUrl: Option[URL] = None): Unit = {
+  def setStoredBackendConfig(config: BackendConfig): Unit = {
     prefs.edit()
       .putString(ENVIRONMENT_PREF, config.getEnvironment)
       .putString(BASE_URL_PREF, config.getBaseUrl.toString)
       .putString(WEBSOCKET_URL_PREF, config.getWebsocketUrl.toString)
       .putString(BLACKLIST_HOST_PREF, config.getBlacklistHost.toString)
-      .putString(CONFIG_URL_PREF, configUrl.getOrElse(config.getEnvironment).toString)
       .commit()
   }
 
@@ -94,7 +88,9 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   /// the global module is ready.
   def switchBackend(globalModule: GlobalModule, configResponse: BackendConfigResponse, configUrl: URL): Unit = {
     globalModule.backend.update(configResponse)
-    setStoredBackendConfig(globalModule.backend, Some(configUrl))
+    setStoredBackendConfig(globalModule.backend)
+
+    prefs.edit().putString(CONFIG_URL_PREF, configUrl.toString).commit()
   }
 
   /// Presents a dialog to select backend.
