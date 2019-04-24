@@ -26,28 +26,33 @@
               android:background="@color/teams_background">
 
     <ImageView
+        android:id="@+id/app_entry_logo_image"
         android:layout_width="match_parent"
         android:layout_height="@dimen/app_entry_logo_height"
         android:src="@drawable/wire"
         android:tint="@color/teams_headline_text"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="72dp"/>
+        android:layout_marginTop="40dp"/>
 
+    <!-- Wrapper with: Personal - Pro -->
     <LinearLayout
+        android:id="@+id/app_entry_personal_pro_wrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_above="@+id/login_button"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginBottom="24dp"
         android:orientation="vertical">
 
+        <!-- Wrapper with: Personal -->
         <LinearLayout
             android:id="@+id/create_account_button"
             android:orientation="vertical"
             android:layout_width="@dimen/app_entry_button_width"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:paddingTop="@dimen/wire__padding__regular"
-            android:paddingBottom="@dimen/wire__padding__regular"
             android:paddingStart="@dimen/wire__padding__regular"
             android:paddingEnd="@dimen/wire__padding__regular"
             android:background="@drawable/app_entry_button_background"
@@ -88,6 +93,7 @@
 
         </LinearLayout>
 
+        <!-- Wrapper with: Pro -->
         <LinearLayout
             android:id="@+id/create_team_button"
             android:orientation="vertical"
@@ -95,8 +101,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="@dimen/wire__padding__32"
-            android:paddingTop="@dimen/wire__padding__regular"
-            android:paddingBottom="@dimen/wire__padding__regular"
             android:paddingStart="@dimen/wire__padding__regular"
             android:paddingEnd="@dimen/wire__padding__regular"
             android:background="@drawable/app_entry_button_background"
@@ -139,6 +143,7 @@
 
     </LinearLayout>
 
+    <!-- Wrapper with: Login -->
     <LinearLayout
         android:id="@+id/login_button"
         android:layout_width="@dimen/app_entry_button_width"

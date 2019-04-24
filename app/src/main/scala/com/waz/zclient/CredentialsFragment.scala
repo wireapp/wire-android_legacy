@@ -272,7 +272,13 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
   }
 
   private lazy val passwordPolicyHint = returning(view[TextView](R.id.set_password_policy_hint)) { vh =>
-    vh.foreach(_.setText(getString(R.string.password_policy_hint, minPasswordLength)))
+    vh.foreach { textView =>
+      // If there exists a password already, then we're not setting a new one, and thus
+      // we shouldn't see this hint.
+      textView.setVisible(!hasPw)
+      textView.setText(getString(R.string.password_policy_hint, minPasswordLength))
+    }
+
     password.onChanged.onUi(_ => vh.foreach(_.setTextColor(getColor(R.color.white))))
   }
 
@@ -294,50 +300,48 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
         am       <- am.head
         Some(pw) <- password.head // pw should be defined
       } {
-        // Validate password strength
-        if (strongPasswordValidator.isValidPassword(pw.str)) {
-          if (hasPw) {
-          // There was an existing password, we're resetting it.
-            for {
-              resp  <- am.auth.onPasswordReset(Some(EmailCredentials(email, pw)))
-              resp2 <- resp.fold(
-                        e => Future.successful(Left(e)),
-                        _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient())
-                       )
-            } yield resp2 match {
-              case Right(state) =>
-                (am.storage.userPrefs(PendingPassword) := false).map { _ =>
-                  keyboard.hideKeyboardIfVisible()
-                  state match {
-                    case LimitReached => activity.replaceMainFragment(OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag, addToBackStack = false)
-                    case _            => activity.startFirstFragment()
-                  }
+        // There is an existing password, thus user is just entering it.
+        if (hasPw) {
+          for {
+            resp  <- am.auth.onPasswordReset(Some(EmailCredentials(email, pw)))
+            resp2 <- resp.fold(
+              e => Future.successful(Left(e)),
+              _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient())
+            )
+          } yield resp2 match {
+            case Right(state) =>
+              (am.storage.userPrefs(PendingPassword) := false).map { _ =>
+                keyboard.hideKeyboardIfVisible()
+                state match {
+                  case LimitReached => activity.replaceMainFragment(OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag, addToBackStack = false)
+                  case _            => activity.startFirstFragment()
                 }
-              case Left(err) => showError(err)
-            }
-          } else {
-            // There was no existing password, setting it for first time.
-              for {
-                resp <- am.setPassword(pw)
-                _    <- resp.fold(
-                          e => Future.successful(Left(e)),
-                          _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({}))
-                        )
-              } yield resp match {
-                case Right(_) =>
-                  activity.startFirstFragment()
-                case Left(err) if err.code == ResponseCode.Forbidden =>
-                  accounts.logout(am.userId).map(_ => activity.startFirstFragment())
-                case Left(err) =>
-                  showError(err)
               }
+            case Left(err) => showError(err)
           }
         } else {
-          spinner.hideSpinner()
-          passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
+          // There was no existing password, the user is setting it for first time.
+          if (strongPasswordValidator.isValidPassword(pw.str)) {
+            for {
+              resp <- am.setPassword(pw)
+              _    <- resp.fold(
+                e => Future.successful(Left(e)),
+                _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({}))
+              )
+            } yield resp match {
+              case Right(_) =>
+                activity.startFirstFragment()
+              case Left(err) if err.code == ResponseCode.Forbidden =>
+                accounts.logout(am.userId).map(_ => activity.startFirstFragment())
+              case Left(err) =>
+                showError(err)
+            }
+          } else {
+            spinner.hideSpinner()
+            passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
+          }
         }
       }
-
     }
   }
 
