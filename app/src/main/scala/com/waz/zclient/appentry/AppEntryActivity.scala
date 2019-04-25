@@ -31,7 +31,6 @@ import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.InputDialog.ValidatorResult.Invalid
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
@@ -205,8 +204,6 @@ class AppEntryActivity extends BaseActivity {
           R.string.custom_backend_dialog_logged_in_error_title,
           R.string.custom_backend_dialog_logged_in_error_message)
         deepLinkService.deepLink ! None
-
-      )
 
       case DoNotOpenDeepLink(Access, InvalidToken) =>
         verbose(l"do not open, Access, invalid token")

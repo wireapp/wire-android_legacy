@@ -1294,6 +1294,9 @@
     <string name="reply_message_type_asset">ATTACHMENT</string>
     <string name="reply_message_type_unknown">You cannot see this message.</string>
 
+    <string name="deep_link_generic_error_title">Invalid link.</string>
+    <string name="deep_link_generic_error_message">The link you opened is not valid.</string>
+
     <string name="deep_link_conversation_error_title">Wire can\'t open this conversation.</string>
     <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
 

@@ -40,7 +40,6 @@ import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleIm
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
 import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
 import com.waz.zclient.deeplinks.DeepLinkService
-import com.waz.zclient.deeplinks.DeepLinkService.Error.UserLoggedIn
 import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.log.LogUI
@@ -194,8 +193,6 @@ class MainPhoneFragment extends FragmentHelper
           R.string.custom_backend_dialog_logged_in_error_message)
         deepLinkService.deepLink ! None
 
-      )
-        
       case _ =>
     }
   }
