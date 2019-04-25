@@ -51,11 +51,12 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
       case (Some(env), Some(base), Some(web), Some(black)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
 
-        val firebaseOptions = env match {
-          case Backend.ProdEnvironment => Backend.ProdFirebaseOptions
-          case Backend.StagingEnvironment => Backend.StagingFirebaseOptions
-          case _ => Backend.ProdFirebaseOptions // Custom BEs use production firebase options
-        }
+        // Staging requires its own firebase options, but all other BEs (prod or custom)
+        // will use the same firebase options.
+        val firebaseOptions = if (env.equals(Backend.StagingBackend.environment))
+          Backend.StagingFirebaseOptions
+        else
+          Backend.ProdFirebaseOptions
 
         val config = BackendConfig(env, base, web, black, firebaseOptions, Backend.certPin)
         Some(config)
