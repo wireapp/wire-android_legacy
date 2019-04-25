@@ -76,7 +76,6 @@ class AppLaunchFragment extends SSOFragment {
       }))
     }
 
-
     createAccountButton.foreach { v =>
       v.setVisible(!hasCustomBackend)
       v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>

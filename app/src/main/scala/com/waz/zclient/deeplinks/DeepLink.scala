@@ -94,13 +94,9 @@ object DeepLinkParser {
       } yield ConversationToken(convId)
 
     case DeepLink.Access =>
-      // For some reason the android URI can't parse a query prefixed with https. Instead we
-      // parse it manually.
-
-      // TODO: Remove log tags
       Try(new URI(raw.value)) match {
         case Failure(exception) =>
-          warn(l"[BE]: couldn't parse access token.", exception)
+          warn(l"Couldn't parse access token.", exception)
           None
 
         case Success(uri) =>
@@ -110,17 +106,16 @@ object DeepLinkParser {
 
             Try(new URL(configAddress)) match {
               case Failure(exception) =>
-                warn(l"[BE]: couldn't parse access token query.", exception)
+                warn(l"Couldn't parse access token query.", exception)
                 None
 
               case Success(url) =>
                 Some(CustomBackendToken(url))
             }
           } else {
-            warn(l"[BE]: couldn't find access token query parameter.")
+            warn(l"Couldn't find access token query parameter.")
             None
           }
-
       }
   }
 

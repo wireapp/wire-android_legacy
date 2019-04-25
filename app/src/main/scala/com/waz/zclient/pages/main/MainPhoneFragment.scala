@@ -187,12 +187,13 @@ class MainPhoneFragment extends FragmentHelper
         showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
         deepLinkService.deepLink ! None
 
-      case OpenDeepLink(CustomBackendToken(_), _) | DoNotOpenDeepLink(Access, UserLoggedIn) =>
-        verbose(l"[BE]: do not open, Access, user logged in")
-        deepLinkService.deepLink ! None
+      case OpenDeepLink(CustomBackendToken(_), _) | DoNotOpenDeepLink(Access, _) =>
+        verbose(l"do not open, Access, user logged in")
         showErrorDialog(
-            R.string.custom_backend_dialog_logged_in_error_title,
-            R.string.custom_backend_dialog_logged_in_error_message
+          R.string.custom_backend_dialog_logged_in_error_title,
+          R.string.custom_backend_dialog_logged_in_error_message)
+        deepLinkService.deepLink ! None
+
       )
         
       case _ =>

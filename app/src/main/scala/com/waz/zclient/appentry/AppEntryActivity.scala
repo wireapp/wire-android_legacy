@@ -31,6 +31,7 @@ import com.waz.sync.client.CustomBackendClient
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.InputDialog.ValidatorResult.Invalid
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
@@ -38,7 +39,7 @@ import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
-import com.waz.zclient.deeplinks.DeepLinkService.Error.UserLoggedIn
+import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, UserLoggedIn}
 import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
 import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
 import com.waz.zclient.log.LogUI._
@@ -163,7 +164,7 @@ class AppEntryActivity extends BaseActivity {
         deepLinkService.deepLink ! None
 
       case OpenDeepLink(CustomBackendToken(configUrl), _) =>
-        verbose(l"[BE]: custom backend url: $configUrl")
+        verbose(l"got custom backend url: $configUrl")
         deepLinkService.deepLink ! None
 
         val shouldConnect = showConfirmationDialog(
@@ -172,12 +173,13 @@ class AppEntryActivity extends BaseActivity {
           R.string.custom_backend_dialog_connect)
 
         shouldConnect.foreach {
-          case false => verbose(l"[BE]: cancelling backend switch")
-          case true => verbose(l"[BE]: trying to connect")
+          case false =>
+            verbose(l"cancelling backend switch")
+          case true =>
             enableProgress(true)
             inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
               case Left(errorResponse) =>
-                error(l"[BE]: error trying to download config.", errorResponse)
+                error(l"error trying to download backend config.", errorResponse)
                 enableProgress(false)
 
                 showErrorDialog(
@@ -185,11 +187,11 @@ class AppEntryActivity extends BaseActivity {
                     R.string.custom_backend_dialog_network_error_message)
 
               case Right(config) =>
-                verbose(l"[BE]: got config response: $config")
+                verbose(l"got config response: $config")
                 enableProgress(false)
 
                 new BackendSelector().switchBackend(inject[GlobalModule], config, configUrl)
-                verbose(l"[BE]: switched backend!")
+                verbose(l"switched backend")
 
                 // re-present fragment for updated ui.
                 getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
@@ -198,13 +200,20 @@ class AppEntryActivity extends BaseActivity {
         }
 
       case DoNotOpenDeepLink(Access, UserLoggedIn) =>
-        verbose(l"[BE]: do not open, Access, user logged in")
+        verbose(l"do not open, Access, user logged in")
+        showErrorDialog(
+          R.string.custom_backend_dialog_logged_in_error_title,
+          R.string.custom_backend_dialog_logged_in_error_message)
         deepLinkService.deepLink ! None
 
-        showErrorDialog(
-            R.string.custom_backend_dialog_logged_in_error_title,
-            R.string.custom_backend_dialog_logged_in_error_message
       )
+
+      case DoNotOpenDeepLink(Access, InvalidToken) =>
+        verbose(l"do not open, Access, invalid token")
+        showErrorDialog(
+          R.string.custom_backend_dialog_network_error_title,
+          R.string.custom_backend_dialog_network_error_message)
+        deepLinkService.deepLink ! None
 
       case _ =>
     }
