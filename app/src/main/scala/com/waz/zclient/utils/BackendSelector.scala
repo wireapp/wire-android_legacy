@@ -112,6 +112,19 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
 
     builder.setCancelable(false)
     builder.create().show()
+
+    // QA needs to be able to switch backends via intents. Any changes to the
+    // preference while the dialog is open will be treated as a user selection.
+    val listener = new SharedPreferences.OnSharedPreferenceChangeListener {
+      override def onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String): Unit = {
+        if (key.equals(ENVIRONMENT_PREF)) {
+          callback(getStoredBackendConfig.getOrElse(Backend.ProdBackend))
+          prefs.unregisterOnSharedPreferenceChangeListener(this)
+        }
+      }
+    }
+
+    prefs.registerOnSharedPreferenceChangeListener(listener)
   }
 
   private def shouldShowBackendSelector: Boolean =

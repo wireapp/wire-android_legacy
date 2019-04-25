@@ -366,8 +366,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
-    val be = new BackendSelector()(this).getStoredBackendConfig.getOrElse(Backend.ProdBackend)
-    ensureInitialized(be)
+    new BackendSelector()(this).getStoredBackendConfig.foreach { be =>
+      ensureInitialized(be)
+    }
   }
 
   def ensureInitialized(backend: BackendConfig) = {
