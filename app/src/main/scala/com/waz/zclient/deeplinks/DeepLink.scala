@@ -17,10 +17,14 @@
  */
 package com.waz.zclient.deeplinks
 
+import java.net.{URI, URL}
+
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.log.LogUI._
 
+import scala.util.{Failure, Success, Try}
 import scala.util.matching.Regex
 
 sealed trait DeepLink
@@ -29,17 +33,19 @@ object DeepLink extends DerivedLogTag {
   case object SSOLogin extends DeepLink
   case object User extends DeepLink
   case object Conversation extends DeepLink
+  case object Access extends DeepLink
 
   sealed trait Token
   case class SSOLoginToken(token: String) extends Token
   case class UserToken(userId: UserId) extends Token
   case class ConversationToken(conId: ConvId) extends Token
+  case class CustomBackendToken(url: URL) extends Token
 
   case class UserTokenInfo(connected: Boolean, currentTeamMember: Boolean, self: Boolean = false)
 
   case class RawToken(value: String) extends AnyVal
 
-  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation)
+  def getAll: Seq[DeepLink] = Seq(SSOLogin, User, Conversation, Access)
 }
 
 object DeepLinkParser {
@@ -53,6 +59,7 @@ object DeepLinkParser {
     case DeepLink.SSOLogin => "start-sso"
     case DeepLink.User => "user"
     case DeepLink.Conversation => "conversation"
+    case DeepLink.Access => "access"
   }
 
   def parseLink(str: String): Option[(DeepLink, RawToken)] = {
@@ -85,6 +92,31 @@ object DeepLinkParser {
         res <- UuidRegex.findFirstIn(raw.value)
         convId = ConvId(res)
       } yield ConversationToken(convId)
+
+    case DeepLink.Access =>
+      Try(new URI(raw.value)) match {
+        case Failure(exception) =>
+          warn(l"Couldn't parse access token.", exception)
+          None
+
+        case Success(uri) =>
+          val query = uri.getQuery
+          if (query.startsWith("config=")) {
+            val configAddress = query.stripPrefix("config=")
+
+            Try(new URL(configAddress)) match {
+              case Failure(exception) =>
+                warn(l"Couldn't parse access token query.", exception)
+                None
+
+              case Success(url) =>
+                Some(CustomBackendToken(url))
+            }
+          } else {
+            warn(l"Couldn't find access token query parameter.")
+            None
+          }
+      }
   }
 
 }

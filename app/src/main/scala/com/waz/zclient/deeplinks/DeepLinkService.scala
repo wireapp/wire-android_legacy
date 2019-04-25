@@ -26,8 +26,8 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.deeplinks.DeepLink.{Conversation, UserTokenInfo}
-import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.{BuildConfig, Injectable, Injector}
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
@@ -125,6 +125,14 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
             case _ => Future.successful(DoNotOpenDeepLink(deepLink, Unknown))
           }
 
+        case DeepLink.CustomBackendToken(url) =>
+          val res: CheckingResult = if (accounts.nonEmpty)
+            DoNotOpenDeepLink(deepLink, UserLoggedIn)
+          else
+            OpenDeepLink(token)
+
+          Future.successful(res)
+
         case _ =>
           Future.successful(OpenDeepLink(token))
       }
@@ -146,6 +154,7 @@ object DeepLinkService {
     case object SSOLoginTooManyAccounts extends Error
     case object NotFound extends Error
     case object NotAllowed extends Error
+    case object UserLoggedIn extends Error
   }
 
 }
