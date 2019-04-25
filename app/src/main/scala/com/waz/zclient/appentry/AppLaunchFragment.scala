@@ -62,7 +62,7 @@ class AppLaunchFragment extends SSOFragment {
       logo.foreach(_.setVisible(false))
       backendInfo.foreach(_.setVisible(true))
 
-      val name = backendSelector.getStoredBackendConfig.map(_.getEnvironment).getOrElse("N/A")
+      val name = backendSelector.getStoredBackendConfig.map(_.environment).getOrElse("N/A")
       backendTitle.foreach(_.setText(getString(R.string.custom_backend_info_title, name)))
 
       val configUrl = backendSelector.customBackendConfigUrl.getOrElse("N/A").toUpperCase

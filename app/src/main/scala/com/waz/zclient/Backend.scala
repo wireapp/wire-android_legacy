@@ -23,7 +23,7 @@ import com.waz.utils.SafeBase64
 object Backend {
 
   lazy val byName: Map[String, BackendConfig] =
-    Seq(StagingBackend, ProdBackend).map(b => b.getEnvironment -> b).toMap
+    Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
 
   private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
   val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)

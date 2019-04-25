@@ -69,10 +69,10 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   /// Saves the given backend config to shared preferences.
   def setStoredBackendConfig(config: BackendConfig): Unit = {
     prefs.edit()
-      .putString(ENVIRONMENT_PREF, config.getEnvironment)
-      .putString(BASE_URL_PREF, config.getBaseUrl.toString)
-      .putString(WEBSOCKET_URL_PREF, config.getWebsocketUrl.toString)
-      .putString(BLACKLIST_HOST_PREF, config.getBlacklistHost.toString)
+      .putString(ENVIRONMENT_PREF, config.environment)
+      .putString(BASE_URL_PREF, config.baseUrl.toString)
+      .putString(WEBSOCKET_URL_PREF, config.websocketUrl.toString)
+      .putString(BLACKLIST_HOST_PREF, config.blacklistHost.toString)
       .commit()
   }
 
