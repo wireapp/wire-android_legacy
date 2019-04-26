@@ -172,9 +172,9 @@ class MainActivity extends BaseActivity
           .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
 
-      case Some(DeepLinkNotFound) =>
+      case Some(DeepLinkUnknown) =>
         verbose(l"received unrecognized deep link")
-        val ok = showErrorDialog(
+        showErrorDialog(
           R.string.deep_link_generic_error_title,
           R.string.deep_link_generic_error_message)
           .map { _ => startFirstFragment() }

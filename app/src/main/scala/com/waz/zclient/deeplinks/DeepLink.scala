@@ -62,6 +62,8 @@ object DeepLinkParser {
     case DeepLink.Access => "access"
   }
 
+  def isDeepLink(str: String): Boolean = str.startsWith(s"$Scheme://")
+
   def parseLink(str: String): Option[(DeepLink, RawToken)] = {
     getAll.view
       .map { link =>
