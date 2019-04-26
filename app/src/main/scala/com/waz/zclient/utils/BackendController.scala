@@ -46,9 +46,13 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     val baseUrl = getStringPreference(BASE_URL_PREF)
     val websocketUrl = getStringPreference(WEBSOCKET_URL_PREF)
     val blackListHost = getStringPreference(BLACKLIST_HOST_PREF)
+    val teamsUrl = getStringPreference(TEAMS_URL_PREF)
+    val accountsUrl = getStringPreference(ACCOUNTS_URL_PREF)
+    val websiteUrl = getStringPreference(WEBSITE_URL_PREF)
 
-    (environment, baseUrl, websocketUrl, blackListHost) match {
-      case (Some(env), Some(base), Some(web), Some(black)) =>
+    // TODO: Find  a way to clean this up.
+    (environment, baseUrl, websocketUrl, blackListHost, teamsUrl, accountsUrl, websiteUrl) match {
+      case (Some(env), Some(base), Some(web), Some(black), Some(teams), Some(accounts), Some(website)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
 
         // Staging requires its own firebase options, but all other BEs (prod or custom)
@@ -58,7 +62,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
         else
           Backend.ProdFirebaseOptions
 
-        val config = BackendConfig(env, base, web, black, firebaseOptions, Backend.certPin)
+        val config = BackendConfig(env, base, web, black, teams, accounts, website, firebaseOptions, Backend.certPin)
         Some(config)
 
       case _ =>
@@ -74,6 +78,9 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
       .putString(BASE_URL_PREF, config.baseUrl.toString)
       .putString(WEBSOCKET_URL_PREF, config.websocketUrl.toString)
       .putString(BLACKLIST_HOST_PREF, config.blacklistHost.toString)
+      .putString(TEAMS_URL_PREF, config.teamsUrl.toString)
+      .putString(ACCOUNTS_URL_PREF, config.accountsUrl.toString)
+      .putString(WEBSITE_URL_PREF, config.websiteUrl.toString)
       .commit()
   }
 
@@ -144,6 +151,9 @@ object BackendController {
   val BASE_URL_PREF = "CUSTOM_BACKEND_BASE_URL"
   val WEBSOCKET_URL_PREF = "CUSTOM_BACKEND_WEBSOCKET_URL"
   val BLACKLIST_HOST_PREF = "CUSTOM_BACKEND_BLACKLIST_HOST"
+  val TEAMS_URL_PREF = "CUSTOM_BACKEND_TEAMS_URL"
+  val ACCOUNTS_URL_PREF = "CUSTOM_BACKEND_ACCOUNTS_URL"
+  val WEBSITE_URL_PREF = "CUSTOM_BACKEND_WEBSITE_URL"
   val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
 
   def apply()(implicit context: Context): BackendController = new BackendController()
