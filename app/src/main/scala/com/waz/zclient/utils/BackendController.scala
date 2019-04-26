@@ -26,7 +26,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, GlobalModule}
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.{Backend, BuildConfig}
+import com.waz.zclient.{Backend, BuildConfig, R}
+import com.waz.znet2.http.Request.UrlCreator
+
 
 class BackendController(implicit context: Context) extends DerivedLogTag {
   import BackendController._
@@ -143,6 +145,11 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
 
   private def getStringPreference(key: String): Option[String] =
     Option(prefs.getString(key, null))
+
+  def urls: BackendUrls = {
+    val config = getStoredBackendConfig.getOrElse(Backend.ProdBackend)
+    new BackendUrls(config, hasCustomBackend)
+  }
 }
 
 object BackendController {
@@ -157,4 +164,134 @@ object BackendController {
   val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
 
   def apply()(implicit context: Context): BackendController = new BackendController()
+}
+
+class BackendUrls(config: BackendConfig, isCustom: Boolean = false)(implicit context: Context) {
+
+  import ContextUtils.getString
+  import BackendUrls._
+
+
+
+  // Used to generate various links to external support websites.
+  val teamsUrl: UrlCreator = UrlCreator.simpleAppender(() =>  config.teamsUrl.toString)
+  val accountsUrl: UrlCreator = UrlCreator.simpleAppender(() => config.accountsUrl.toString)
+  val websiteUrl: UrlCreator = UrlCreator.simpleAppender(() => config.websiteUrl.toString)
+
+  // Accounts
+
+  def forgotPassword: String = {
+    if (isCustom) accountsUrl.create(ForgotPath, List.empty).toString
+    else if (config == Backend.StagingBackend) getString(R.string.url_password_reset_staging)
+    else getString(R.string.url_password_reset)
+  }
+
+  // Teams
+
+  def prefsManageTeam: String = {
+    if (isCustom) teamsUrl.create(PrefsManageTeamPath, List.empty).toString
+    else getString(R.string.pref_manage_team_url)
+  }
+
+  def startUIManageTeam: String = {
+    if (isCustom) teamsUrl.create(StartUIManageTeamPath, List.empty).toString
+    else getString(R.string.pick_user_manage_team_url)
+  }
+
+  def manageServices: String = {
+    if (isCustom) config.teamsUrl.toString
+    else if (config == Backend.StagingBackend) getString(R.string.url_manage_services_staging)
+    else getString(R.string.url_manage_services)
+  }
+
+  // Website
+
+  def homePage: String = {
+    if (isCustom) config.websiteUrl.toString
+    else getString(R.string.url_home)
+  }
+
+  def aboutWebsite: String = {
+    if (isCustom) config.websiteUrl.toString
+    else getString(R.string.pref_about_website_url)
+  }
+
+  def aboutTeams: String = {
+    if (isCustom) websiteUrl.create(AboutTeamsPath, List.empty).toString
+    else getString(R.string.url_about_teams)
+  }
+
+  def usernamesLearnMore: String = {
+    if (isCustom) websiteUrl.create(UsernamesLearnMorePath, List.empty).toString
+    else getString(R.string.usernames__learn_more__link)
+  }
+
+  def privacyPolicy: String = {
+    if (isCustom) websiteUrl.create(PrivacyPolicyPath, List.empty).toString
+    else getString(R.string.url_privacy_policy)
+  }
+
+  def personalTermsOfService: String = {
+    if (isCustom) websiteUrl.create(PersonalTermsOfServicePath, List.empty).toString
+    else getString(R.string.url_terms_of_service_personal)
+  }
+
+  def teamsTermsOfService: String = {
+    if (isCustom) websiteUrl.create(TeamsTermsOfServicePath, List.empty).toString
+    else getString(R.string.url_terms_of_service_teams)
+  }
+
+  def thirdPartyLicenses: String = {
+    if (isCustom) websiteUrl.create(ThirdPartyLicensesPath, List.empty).toString
+    else getString(R.string.url_third_party_licences)
+  }
+
+  def otrLearnWhy: String = {
+    if (isCustom) websiteUrl.create(OtrLearnWhyPath, List.empty).toString
+    else getString(R.string.url_otr_learn_why)
+  }
+
+  def otrLearnHow: String = {
+    if (isCustom) websiteUrl.create(OtrLearnHowPath, List.empty).toString
+    else getString(R.string.url_otr_learn_how)
+  }
+
+  def decryptionError1: String = {
+    if (isCustom) websiteUrl.create(DecryptionError1Path, List.empty).toString
+    else getString(R.string.url_otr_decryption_error_1)
+  }
+
+  def decryptionError2: String = {
+    if (isCustom) websiteUrl.create(DecryptionError2Path, List.empty).toString
+    else getString(R.string.url_otr_decryption_error_2)
+  }
+
+  // Support
+
+  def help: String = getString(R.string.url__help)
+
+  def supportPage: String = getString(R.string.pref_support_website_url)
+
+  def contactSupport: String = getString(R.string.pref_support_contact_url)
+
+  def invalidEmailHelp: String = getString(R.string.invalid_email_help)
+
+  def aboutSetTeamEmail: String = getString(R.string.teams_set_email_about_url)
+
+}
+
+object BackendUrls {
+  val ForgotPath = "/forgot/"
+  val PrefsManageTeamPath = "/login/?utm_source=client_settings&amp;utm_term=android"
+  val StartUIManageTeamPath = "/login/?utm_source=client_landing&amp;utm_term=android"
+  val PersonalTermsOfServicePath = "/legal/terms/personal/"
+  val TeamsTermsOfServicePath = "/legal/terms/teams/"
+  val PrivacyPolicyPath = "/legal/privacy/embed/"
+  val ThirdPartyLicensesPath = "/legal/#licenses"
+  val OtrLearnWhyPath = "/privacy/why"
+  val OtrLearnHowPath = "/privacy/how"
+  val DecryptionError1Path = "/privacy/error-1"
+  val DecryptionError2Path = "/privacy/error-2"
+  val AboutTeamsPath = "/products/pro-secure-team-collaboration/"
+  val UsernamesLearnMorePath = "/support/username/"
 }
