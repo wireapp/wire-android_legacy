@@ -26,14 +26,14 @@ import com.waz.service.AccountsService
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.BackendSelector
+import com.waz.zclient.utils.BackendController
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
   override def onStart() = {
     super.onStart()
 
-    new BackendSelector()(this).selectBackend { be =>
+    BackendController()(this).selectBackend { be =>
       getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
       inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
         case Some(_) => startMain()

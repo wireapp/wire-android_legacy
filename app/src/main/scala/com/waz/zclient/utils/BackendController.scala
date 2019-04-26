@@ -28,8 +28,8 @@ import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Backend, BuildConfig}
 
-class BackendSelector(implicit context: Context) extends DerivedLogTag {
-  import BackendSelector._
+class BackendController(implicit context: Context) extends DerivedLogTag {
+  import BackendController._
 
   private def prefs: SharedPreferences =
     PreferenceManager.getDefaultSharedPreferences(context)
@@ -138,11 +138,13 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
     Option(prefs.getString(key, null))
 }
 
-object BackendSelector {
+object BackendController {
   // Preference Keys
   val ENVIRONMENT_PREF = "CUSTOM_BACKEND_ENVIRONMENT"
   val BASE_URL_PREF = "CUSTOM_BACKEND_BASE_URL"
   val WEBSOCKET_URL_PREF = "CUSTOM_BACKEND_WEBSOCKET_URL"
   val BLACKLIST_HOST_PREF = "CUSTOM_BACKEND_BLACKLIST_HOST"
   val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
+
+  def apply()(implicit context: Context): BackendController = new BackendController()
 }

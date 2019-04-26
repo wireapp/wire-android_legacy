@@ -26,7 +26,7 @@ import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.fragments.{SignInFragment, TeamNameFragment}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.showInfoDialog
-import com.waz.zclient.utils.{BackendSelector, LayoutSpec, RichView}
+import com.waz.zclient.utils.{BackendController, LayoutSpec, RichView}
 
 object AppLaunchFragment {
 
@@ -55,17 +55,17 @@ class AppLaunchFragment extends SSOFragment {
     inflater.inflate(R.layout.app_entry_scene, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    val backendSelector = new BackendSelector()
-    val hasCustomBackend = backendSelector.hasCustomBackend
+    val backendController = BackendController()
+    val hasCustomBackend = backendController.hasCustomBackend
 
     if (hasCustomBackend) {
       logo.foreach(_.setVisible(false))
       backendInfo.foreach(_.setVisible(true))
 
-      val name = backendSelector.getStoredBackendConfig.map(_.environment).getOrElse("N/A")
+      val name = backendController.getStoredBackendConfig.map(_.environment).getOrElse("N/A")
       backendTitle.foreach(_.setText(getString(R.string.custom_backend_info_title, name)))
 
-      val configUrl = backendSelector.customBackendConfigUrl.getOrElse("N/A").toUpperCase
+      val configUrl = backendController.customBackendConfigUrl.getOrElse("N/A").toUpperCase
       backendSubtitle.foreach(_.setText(configUrl))
 
       backendShowMoreButton.foreach(_.setOnTouchListener(new OnTouchListener {
