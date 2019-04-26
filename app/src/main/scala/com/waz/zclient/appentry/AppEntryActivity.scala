@@ -189,7 +189,7 @@ class AppEntryActivity extends BaseActivity {
                 verbose(l"got config response: $config")
                 enableProgress(false)
 
-                BackendController().switchBackend(inject[GlobalModule], config, configUrl)
+                inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
                 verbose(l"switched backend")
 
                 // re-present fragment for updated ui.

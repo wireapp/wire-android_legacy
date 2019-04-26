@@ -19,8 +19,7 @@ package com.waz.zclient.utils
 
 import java.net.URL
 
-import android.app.AlertDialog
-import android.content.{Context, DialogInterface, SharedPreferences}
+import android.content.{Context, SharedPreferences}
 import android.preference.PreferenceManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, GlobalModule}
@@ -33,8 +32,7 @@ import com.waz.znet2.http.Request.UrlCreator
 class BackendController(implicit context: Context) extends DerivedLogTag {
   import BackendController._
 
-  private def prefs: SharedPreferences =
-    PreferenceManager.getDefaultSharedPreferences(context)
+  private def prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
   /// A custom backend is one that is loaded by a config url via deep link.
   def hasCustomBackend: Boolean = customBackendConfigUrl.isDefined
@@ -86,13 +84,6 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
       .commit()
   }
 
-  /// Presents a dialog to select the backend if necessary, otherwise loads the stored
-  /// backend preference if present, otherwise loads the default production backend.
-  def selectBackend(callback: BackendConfig => Unit): Unit = {
-    if (shouldShowBackendSelector) showDialog(callback)
-    else callback(getStoredBackendConfig.getOrElse(Backend.ProdBackend))
-  }
-
   /// Switches the backend in the global module and saves the config to shared preferences.
   /// Warning: use with caution. It is assumed that there are no logged in accounts and the
   /// the global module is ready.
@@ -103,28 +94,12 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     prefs.edit().putString(CONFIG_URL_PREF, configUrl.toString).commit()
   }
 
-  /// Presents a dialog to select backend.
-  private def showDialog(callback: BackendConfig => Unit): Unit = {
-    val environments = Backend.byName
-    val items: Array[CharSequence] = environments.keys.toArray
+  def shouldShowBackendSelector: Boolean =
+    BuildConfig.DEVELOPER_FEATURES_ENABLED && !backendPreferenceExists
 
-    val builder = new AlertDialog.Builder(context)
-    builder.setTitle("Select Backend")
-
-    builder.setItems(items, new DialogInterface.OnClickListener {
-      override def onClick(dialog: DialogInterface, which: Int): Unit = {
-        val choice = items.apply(which).toString
-        val config = environments.apply(choice)
-        setStoredBackendConfig(config)
-        callback(config)
-      }
-    })
-
-    builder.setCancelable(false)
-    builder.create().show()
-
-    // QA needs to be able to switch backends via intents. Any changes to the
-    // preference while the dialog is open will be treated as a user selection.
+  // This is a helper method to dismiss the backend selector dialog when QA automation
+  // selects the backend via an intent.
+  def onPreferenceSet(callback: BackendConfig => Unit): Unit = {
     val listener = new SharedPreferences.OnSharedPreferenceChangeListener {
       override def onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String): Unit = {
         if (key.equals(ENVIRONMENT_PREF)) {
@@ -136,9 +111,6 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
 
     prefs.registerOnSharedPreferenceChangeListener(listener)
   }
-
-  private def shouldShowBackendSelector: Boolean =
-    BuildConfig.DEVELOPER_FEATURES_ENABLED && !backendPreferenceExists
 
   private def backendPreferenceExists: Boolean =
     prefs.contains(ENVIRONMENT_PREF)
@@ -162,14 +134,12 @@ object BackendController {
   val ACCOUNTS_URL_PREF = "CUSTOM_BACKEND_ACCOUNTS_URL"
   val WEBSITE_URL_PREF = "CUSTOM_BACKEND_WEBSITE_URL"
   val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
-
-  def apply()(implicit context: Context): BackendController = new BackendController()
 }
 
 class BackendUrls(config: BackendConfig, isCustom: Boolean = false)(implicit context: Context) {
 
-  import ContextUtils.getString
   import BackendUrls._
+  import ContextUtils.getString
 
 
 

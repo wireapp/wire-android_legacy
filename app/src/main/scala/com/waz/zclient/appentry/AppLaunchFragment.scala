@@ -55,7 +55,7 @@ class AppLaunchFragment extends SSOFragment {
     inflater.inflate(R.layout.app_entry_scene, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    val backendController = BackendController()
+    val backendController = inject[BackendController]
     val hasCustomBackend = backendController.hasCustomBackend
 
     if (hasCustomBackend) {

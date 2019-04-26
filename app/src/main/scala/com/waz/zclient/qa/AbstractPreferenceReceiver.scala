@@ -96,11 +96,15 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
         }
       case SELECT_STAGING_BE =>
         // Note, the app must be terminated for this to work.
-        BackendController()(context).setStoredBackendConfig(Backend.StagingBackend)
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.StagingBackend)
         setResultCode(Activity.RESULT_OK)
       case SELECT_PROD_BE =>
         // Note, the app must be terminated for this to work.
-        BackendController()(context).setStoredBackendConfig(Backend.ProdBackend)
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.ProdBackend)
         setResultCode(Activity.RESULT_OK)
       case _ =>
         setResultData("Unknown Intent!")

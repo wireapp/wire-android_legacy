@@ -201,6 +201,7 @@ object WireApplication extends DerivedLogTag {
     bind [IConfirmationController]       toProvider controllerFactory.getConfirmationController
 
     // global controllers
+    bind [BackendController]       to new BackendController()
     bind [WebSocketController]     to new WebSocketController
     bind [CrashController]         to new CrashController
     bind [AccentColorController]   to new AccentColorController()
@@ -366,7 +367,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
-    BackendController()(this).getStoredBackendConfig.foreach { be =>
+    inject[BackendController].getStoredBackendConfig.foreach { be =>
       ensureInitialized(be)
     }
   }
