@@ -49,20 +49,26 @@ class DeepLinkService(implicit injector: Injector) extends Injectable with Deriv
   private lazy val convController      = inject[ConversationController]
   private lazy val membersStorage      = inject[MembersStorage]
 
-  def checkDeepLink(intent: Intent): Unit = Option(intent.getDataString).flatMap(DeepLinkParser.parseLink) match {
-    case None =>
-      deepLink ! Some(DeepLinkNotFound)
-    case Some((link, rawToken)) =>
-      DeepLinkParser.parseToken(link, rawToken) match {
-        case None =>
-          deepLink ! Some(DoNotOpenDeepLink(link, Error.InvalidToken))
-        case Some(token) =>
-          checkDeepLink(link, token).map {
-            deepLink ! Some(_)
-          }.recover {
-            case _ => deepLink ! Some(DoNotOpenDeepLink(link, Unknown))
-          }
-      }
+  def checkDeepLink(intent: Intent): Unit = {
+    Option(intent.getDataString) match {
+      case None => deepLink ! Some(DeepLinkNotFound)
+      case Some(data) if !DeepLinkParser.isDeepLink(data) => deepLink ! Some(DeepLinkNotFound)
+      case Some(data) => DeepLinkParser.parseLink(data) match {
+          case None =>
+            deepLink ! Some(DeepLinkUnknown)
+          case Some((link, rawToken)) =>
+            DeepLinkParser.parseToken(link, rawToken) match {
+              case None =>
+                deepLink ! Some(DoNotOpenDeepLink(link, Error.InvalidToken))
+              case Some(token) =>
+                checkDeepLink(link, token).map {
+                  deepLink ! Some(_)
+                }.recover {
+                  case _ => deepLink ! Some(DoNotOpenDeepLink(link, Unknown))
+                }
+            }
+        }
+    }
   }
 
   private def checkDeepLink(deepLink: DeepLink, token: DeepLink.Token): Future[CheckingResult] = {
@@ -144,6 +150,7 @@ object DeepLinkService {
 
   sealed trait CheckingResult
   case object DeepLinkNotFound extends CheckingResult
+  case object DeepLinkUnknown extends CheckingResult
   case class DoNotOpenDeepLink(link: DeepLink, reason: Error) extends CheckingResult
   case class OpenDeepLink(token: DeepLink.Token, additionalInfo: Any = Unit) extends CheckingResult
 
