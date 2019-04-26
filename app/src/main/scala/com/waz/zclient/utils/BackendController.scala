@@ -34,8 +34,8 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
   private def prefs: SharedPreferences =
     PreferenceManager.getDefaultSharedPreferences(context)
 
-  /// A custom backend is one that is neither the Wire production nor staging backend.
-  def hasCustomBackend: Boolean = getStringPreference(CONFIG_URL_PREF).isDefined
+  /// A custom backend is one that is loaded by a config url via deep link.
+  def hasCustomBackend: Boolean = customBackendConfigUrl.isDefined
 
   /// The url string where the custom backend config was downloaded from.
   def customBackendConfigUrl: Option[String] = getStringPreference(CONFIG_URL_PREF)
