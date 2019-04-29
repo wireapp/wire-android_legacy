@@ -129,8 +129,8 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
 }
 
 object BrowserController {
-  val Accounts = "ACCOUNTS"
-  val Teams = "TEAMS"
-  val Website = "WEBSITE"
+  val Accounts = "|ACCOUNTS|"
+  val Teams = "|TEAMS|"
+  val Website = "|WEBSITE|"
 
 }
