@@ -88,6 +88,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
   /// the global module is ready.
   def switchBackend(globalModule: GlobalModule, configResponse: BackendConfigResponse, configUrl: URL): Unit = {
     globalModule.backend.update(configResponse)
+    globalModule.blacklistClient.loadVersionBlacklist()
     setStoredBackendConfig(globalModule.backend)
 
     prefs.edit().putString(CONFIG_URL_PREF, configUrl.toString).commit()
