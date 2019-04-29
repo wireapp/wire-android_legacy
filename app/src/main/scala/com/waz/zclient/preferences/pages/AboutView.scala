@@ -18,8 +18,7 @@
 package com.waz.zclient.preferences.pages
 
 import android.content.pm.PackageManager
-import android.content.{Context, Intent}
-import android.net.Uri
+import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
@@ -28,6 +27,7 @@ import com.waz.api.ZmsVersion
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{MetaDataService, ZMessaging}
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.preferences.pages.AboutView._
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.utils.BackStackKey
@@ -46,6 +46,8 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int)
 
   private var versionClickCounter: Int = 0
 
+  private lazy val browser = inject[BrowserController]
+
   val websiteButton       = findById[TextButton](R.id.preferences_about_website)
   val termsButton         = findById[TextButton](R.id.preferences_about_terms)
   val privacyPolicyButton = findById[TextButton](R.id.preferences_about_privacy)
@@ -54,12 +56,15 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int)
   val versionTextButton = findById[TextButton](R.id.preferences_about_version)
   val copyrightButton = findById[TextButton](R.id.preferences_about_copyright)
 
-  websiteButton.onClickEvent(_ => openUrl(R.string.pref_about_website_url))
+  websiteButton.onClickEvent { _ => browser.openAboutWebsite() }
   termsButton.onClickEvent { _ =>
-    openUrl(if (inject[Signal[Option[ZMessaging]]].map(_.flatMap(_.teamId)).currentValue.flatten.isDefined) R.string.url_terms_of_service_teams else R.string.url_terms_of_service_personal)
+    if (inject[Signal[Option[ZMessaging]]].map(_.flatMap(_.teamId)).currentValue.flatten.isDefined)
+      browser.openTeamsTermsOfService()
+    else
+      browser.openPersonalTermsOfService()
   }
-  privacyPolicyButton.onClickEvent(_ => openUrl(R.string.url_privacy_policy))
-  licenseButton.onClickEvent(_ => openUrl(R.string.pref_about_licenses_url))
+  privacyPolicyButton.onClickEvent { _ => browser.openPrivacyPolicy() }
+  licenseButton.onClickEvent {_ => browser.openThirdPartyLicenses() }
 
   versionTextButton.onClickEvent{ _ =>
     versionClickCounter += 1
@@ -68,9 +73,6 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int)
       showToast(getVersion)
     }
   }
-
-  private def openUrl(id: Int): Unit =
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(id))))
 
   def setVersion(version: String) = versionTextButton.setTitle(getString(R.string.pref_about_version_title, version))
 

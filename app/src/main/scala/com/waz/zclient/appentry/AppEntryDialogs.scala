@@ -18,19 +18,16 @@
 package com.waz.zclient.appentry
 
 import android.content.DialogInterface.OnDismissListener
-import android.content.Intent.{ACTION_VIEW, FLAG_ACTIVITY_NEW_TASK}
-import android.content.{Context, DialogInterface, Intent}
-import android.net.Uri
+import android.content.{Context, DialogInterface}
 import android.support.v7.app.AlertDialog
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.returning
 import com.waz.zclient.R
-import com.waz.zclient.log.LogUI._
+import com.waz.zclient.common.controllers.BrowserController
 
 import scala.concurrent.{Future, Promise}
 
 object AppEntryDialogs extends DerivedLogTag {
-  def showTermsAndConditions(context: Context): Future[Boolean] = {
+  def showTermsAndConditions(context: Context, browser: BrowserController): Future[Boolean] = {
     val dialogResult = Promise[Boolean]()
     val dialog = new AlertDialog.Builder(context)
       .setPositiveButton(R.string.app_entry_dialog_accept, new DialogInterface.OnClickListener {
@@ -41,7 +38,7 @@ object AppEntryDialogs extends DerivedLogTag {
       })
       .setNeutralButton(R.string.app_entry_dialog_view, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int): Unit = {
-          onOpenUrl(context, context.getString(R.string.url_terms_of_service_teams))
+          browser.openTeamsTermsOfService()
           dialogResult.trySuccess(false)
         }
       })
@@ -54,7 +51,7 @@ object AppEntryDialogs extends DerivedLogTag {
     dialogResult.future
   }
 
-  def showNotificationsWarning(context: Context): Future[Boolean] = {
+  def showNotificationsWarning(context: Context, browser: BrowserController): Future[Boolean] = {
     val dialogResult = Promise[Boolean]()
     val dialog = new AlertDialog.Builder(context)
       .setPositiveButton(R.string.app_entry_dialog_accept, new DialogInterface.OnClickListener {
@@ -65,7 +62,7 @@ object AppEntryDialogs extends DerivedLogTag {
       })
       .setNeutralButton(R.string.app_entry_dialog_view, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int): Unit = {
-          onOpenUrl(context, context.getString(R.string.url_privacy_policy))
+          browser.openPrivacyPolicy()
           dialogResult.trySuccess(false)
         }
       })
@@ -76,16 +73,5 @@ object AppEntryDialogs extends DerivedLogTag {
       })
     dialog.show()
     dialogResult.future
-  }
-
-  private def onOpenUrl(context: Context, url: String) = {
-    try {
-      val normUrl = Uri.parse(if (!url.startsWith("http://") && !url.startsWith("https://")) s"http://$url" else url)
-      val browserIntent = returning(new Intent(ACTION_VIEW, normUrl))(_.addFlags(FLAG_ACTIVITY_NEW_TASK))
-      context.startActivity(browserIntent)
-    }
-    catch {
-      case _: Exception => error(l"Failed to open URL: ${redactedString(url)}")
-    }
   }
 }

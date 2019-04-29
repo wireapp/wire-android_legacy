@@ -111,7 +111,7 @@ class SetHandleFragment extends BaseFragment[SetHandleFragment.Container] with F
 
     summaryTextView.foreach { summaryTextView =>
       TextViewUtils.linkifyText(summaryTextView, Color.WHITE, R.string.wire__typeface__light, false, new Runnable() {
-        def run(): Unit = browser.openUrl(getString(R.string.usernames__learn_more__link))
+        def run(): Unit = browser.openUserNamesLearnMore()
       })
     }
 

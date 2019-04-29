@@ -175,36 +175,36 @@
     <string translatable="false" name="pref_dev_category_sign_in_account_title">Sign into account</string>
     <string translatable="false" name="pref_dev_category_sign_in_account_summary">Sign into another account and switch to that one</string>
 
-    <string translatable="false" name="pref_manage_team_url">https://teams.wire.com/login/?utm_source=client_settings&amp;utm_term=android</string>
+    <!--
+    The prefixes ACCOUNTS, TEAMS, and WEBSITE are placeholders for hosts. These are
+    replaced at runtime with corresponding endpoints defined in the BackendConfig.
+    Custom whitelabel versions can overwrite these with urls (without prefixes of course).
+    -->
 
-    <string translatable="false" name="pick_user_manage_team_url">https://teams.wire.com/login/?utm_source=client_landing&amp;utm_term=android</string>
+    <string translatable="false" name="url_password_reset">ACCOUNTS/forgot/</string>
 
-    <string translatable="false" name="invalid_email_help">https://support.wire.com/hc/en-us/articles/115004082129-My-email-address-is-already-in-use-and-I-cannot-create-an-account-What-can-I-do-</string>
-    <string translatable="false" name="teams_set_email_about_url">https://support.wire.com/hc/en-us/articles/115004082129</string>
+    <string translatable="false" name="pref_manage_team_url">TEAMS/login/?utm_source=client_settings&amp;utm_term=android</string>
+    <string translatable="false" name="pick_user_manage_team_url">TEAMS/login/?utm_source=client_landing&amp;utm_term=android</string>
+    <string translatable="false" name="url_manage_services">TEAMS/services</string>
 
-    <string translatable="false" name="url_home">https://wire.com</string>
-    <string translatable="false" name="url_terms_of_service_personal">https://wire.com/legal/terms/personal/</string>
-    <string translatable="false" name="url_terms_of_service_teams">https://wire.com/legal/terms/teams/</string>
-    <string translatable="false" name="url_privacy_policy">https://wire.com/legal/privacy/embed/</string>
-    <string translatable="false" name="url__help">https://support.wire.com</string>
+    <string translatable="false" name="url_home">WEBSITE</string>
+    <string translatable="false" name="url_terms_of_service_personal">WEBSITE/legal/terms/personal/</string>
+    <string translatable="false" name="url_terms_of_service_teams">WEBSITE/legal/terms/teams/</string>
+    <string translatable="false" name="url_privacy_policy">WEBSITE/legal/privacy/embed/</string>
+    <string translatable="false" name="url_third_party_licences">WEBSITE/legal/#licenses</string>
+    <string translatable="false" name="url_otr_learn_why">WEBSITE/privacy/why</string>
+    <string translatable="false" name="url_otr_learn_how">WEBSITE/privacy/how</string>
+    <string translatable="false" name="url_otr_decryption_error_1">WEBSITE/privacy/error-1</string>
+    <string translatable="false" name="url_otr_decryption_error_2">WEBSITE/privacy/error-2</string>
+    <string translatable="false" name="url_about_teams">WEBSITE/products/pro-secure-team-collaboration/</string>
+    <string translatable="false" name="usernames__learn_more__link">WEBSITE/support/username/</string>
+    <string translatable="false" name="pref_about_website_url">WEBSITE</string>
 
-    <string translatable="false" name="url_password_reset">https://account.wire.com/forgot/</string>
-    <string translatable="false" name="url_password_reset_staging">https://wire-account-staging.zinfra.io/forgot/</string>
-
-    <string translatable="false" name="url_third_party_licences">https://wire.com/legal/#licenses</string>
-    <string translatable="false" name="url_otr_learn_why">https://wire.com/privacy/why</string>
-    <string translatable="false" name="url_otr_learn_how">https://wire.com/privacy/how</string>
-    <string translatable="false" name="url_otr_decryption_error_1">https://wire.com/privacy/error-1</string>
-    <string translatable="false" name="url_otr_decryption_error_2">https://wire.com/privacy/error-2</string>
-    <string translatable="false" name="url_about_teams">https://wire.com/products/pro-secure-team-collaboration/</string>
-
-    <string translatable="false" name="url_manage_services">https://teams.wire.com/</string>
-    <string translatable="false" name="url_manage_services_staging">https://wire-admin-dev.zinfra.io/services/</string>
-    <string translatable="false" name="usernames__learn_more__link">https://wire.com/support/username/</string>
     <string translatable="false" name="pref_support_website_url">https://support.wire.com</string>
     <string translatable="false" name="pref_support_contact_url">https://support.wire.com/hc/requests/new</string>
-    <string translatable="false" name="pref_about_website_url">https://wire.com</string>
-
+    <string translatable="false" name="url__help">https://support.wire.com</string>
+    <string translatable="false" name="invalid_email_help">https://support.wire.com/hc/en-us/articles/115004082129-My-email-address-is-already-in-use-and-I-cannot-create-an-account-What-can-I-do-</string>
+    <string translatable="false" name="teams_set_email_about_url">https://support.wire.com/hc/en-us/articles/115004082129</string>
 
 </resources>
 
