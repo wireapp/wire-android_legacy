@@ -61,15 +61,15 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   // Accounts
 
   def openForgotPassword(): Try[Unit] =
-    openUrl(getString(R.string.url_password_reset).replaceFirst(Accounts, config.accountsUrl.toString))
+    openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, config.accountsUrl.toString))
 
   // Teams
 
   def openPrefsManageTeam(): Try[Unit] =
-    openUrl(getString(R.string.pref_manage_team_url).replaceFirst(Teams, config.teamsUrl.toString))
+    openUrl(getString(R.string.url_pref_manage_team).replaceFirst(Teams, config.teamsUrl.toString))
 
   def openStartUIManageTeam(): Try[Unit] =
-    openUrl(getString(R.string.pick_user_manage_team_url).replaceFirst(Teams, config.teamsUrl.toString))
+    openUrl(getString(R.string.url_start_ui_manage_team).replaceFirst(Teams, config.teamsUrl.toString))
 
   def openManageServices(): Try[Unit] =
     openUrl(getString(R.string.url_manage_services).replaceFirst(Teams, config.teamsUrl.toString))
@@ -80,13 +80,13 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
     openUrl(getString(R.string.url_home).replaceFirst(Website, config.websiteUrl.toString))
 
   def openAboutWebsite(): Try[Unit] =
-    openUrl(getString(R.string.pref_about_website_url).replaceFirst(Website, config.websiteUrl.toString))
+    openUrl(getString(R.string.url_about_website).replaceFirst(Website, config.websiteUrl.toString))
 
   def openAboutTeams(): Try[Unit] =
     openUrl(getString(R.string.url_about_teams).replaceFirst(Website, config.websiteUrl.toString))
 
   def openUserNamesLearnMore(): Try[Unit] =
-    openUrl(getString(R.string.usernames__learn_more__link).replaceFirst(Website, config.websiteUrl.toString))
+    openUrl(getString(R.string.url_usernames_learn_more).replaceFirst(Website, config.websiteUrl.toString))
 
   def openPrivacyPolicy(): Try[Unit] =
     openUrl(getString(R.string.url_privacy_policy).replaceFirst(Website, config.websiteUrl.toString))
@@ -117,20 +117,19 @@ class BrowserController(implicit context: Context, injector: Injector) extends I
   // Custom backend configs don't include endpoints for a support website, so just use the
   // resources strings as they are.
 
-  def openHelp(): Try[Unit] = openUrl(getString(R.string.url__help))
+  def openHelp(): Try[Unit] = openUrl(getString(R.string.url_help))
 
-  def openSupportPage(): Try[Unit] = openUrl(getString(R.string.pref_support_website_url))
+  def openSupportPage(): Try[Unit] = openUrl(getString(R.string.url_support_website))
 
-  def openContactSupport(): Try[Unit] = openUrl(getString(R.string.pref_support_contact_url))
+  def openContactSupport(): Try[Unit] = openUrl(getString(R.string.url_contact_support))
 
-  def openInvalidEmailHelp(): Try[Unit] = openUrl(getString(R.string.invalid_email_help))
+  def openInvalidEmailHelp(): Try[Unit] = openUrl(getString(R.string.url_invalid_email_help))
 
-  def openAboutSetTeamEmail(): Try[Unit] = openUrl(getString(R.string.teams_set_email_about_url))
+  def openAboutSetTeamEmail(): Try[Unit] = openUrl(getString(R.string.url_teams_set_email_about))
 }
 
 object BrowserController {
   val Accounts = "\\|ACCOUNTS\\|"
   val Teams = "\\|TEAMS\\|"
   val Website = "\\|WEBSITE\\|"
-
 }
