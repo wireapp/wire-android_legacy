@@ -48,8 +48,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     val teamsUrl = getStringPreference(TEAMS_URL_PREF)
     val accountsUrl = getStringPreference(ACCOUNTS_URL_PREF)
     val websiteUrl = getStringPreference(WEBSITE_URL_PREF)
-
-    // TODO: Find  a way to clean this up.
+    
     (environment, baseUrl, websocketUrl, blackListHost, teamsUrl, accountsUrl, websiteUrl) match {
       case (Some(env), Some(base), Some(web), Some(black), Some(teams), Some(accounts), Some(website)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
