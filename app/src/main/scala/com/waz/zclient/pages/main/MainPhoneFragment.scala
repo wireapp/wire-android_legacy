@@ -125,7 +125,7 @@ class MainPhoneFragment extends FragmentHelper
         R.string.app_entry_dialog_not_now
       ).map { confirmed =>
         am.setMarketingConsent(confirmed)
-        if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
+        if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
       }
   } yield {}
 
@@ -184,6 +184,13 @@ class MainPhoneFragment extends FragmentHelper
       case DoNotOpenDeepLink(User, reason) =>
         verbose(l"do not open, user deep link error. Reason: $reason")
         showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
+        deepLinkService.deepLink ! None
+
+      case OpenDeepLink(CustomBackendToken(_), _) | DoNotOpenDeepLink(Access, _) =>
+        verbose(l"do not open, Access, user logged in")
+        showErrorDialog(
+          R.string.custom_backend_dialog_logged_in_error_title,
+          R.string.custom_backend_dialog_logged_in_error_message)
         deepLinkService.deepLink ! None
 
       case _ =>

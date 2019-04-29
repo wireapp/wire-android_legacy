@@ -18,34 +18,64 @@
 
 package com.waz.zclient
 
-import android.content.Intent
+import android.app.AlertDialog
+import android.content.{DialogInterface, Intent}
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
-import com.waz.zclient.utils.{BackendPicker, Callback}
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.utils.BackendController
 
+class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
-class LaunchActivity extends AppCompatActivity with ActivityHelper {
+  private lazy val backendController = inject[BackendController]
 
   override def onStart() = {
     super.onStart()
-    new BackendPicker(getApplicationContext).withBackend(this, new Callback[BackendConfig]() {
-      override def callback(be: BackendConfig) = {
-        getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
 
-        //TODO - could this be racing with setting the active account?
-        inject[AccountsService].activeAccountId.head(LogTag("BackendPicker")).map {
-          case Some(_) => startMain()
-          case _       => startSignUp()
-        } (Threading.Ui)
+    val callback: BackendConfig => Unit = { be =>
+      getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
+      inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
+        case Some(_) => startMain()
+        case _ => startSignUp()
+      }(Threading.Ui)
+    }
+
+    if (backendController.shouldShowBackendSelector) showDialog(callback)
+    else callback(backendController.getStoredBackendConfig.getOrElse(Backend.ProdBackend))
+  }
+
+  /// Presents a dialog to select backend.
+  private def showDialog(callback: BackendConfig => Unit): Unit = {
+    val environments = Backend.byName
+    val items: Array[CharSequence] = environments.keys.toArray
+
+    val builder = new AlertDialog.Builder(this)
+    builder.setTitle("Select Backend")
+
+    builder.setItems(items, new DialogInterface.OnClickListener {
+      override def onClick(dialog: DialogInterface, which: Int): Unit = {
+        val choice = items.apply(which).toString
+        val config = environments.apply(choice)
+        backendController.setStoredBackendConfig(config)
+        callback(config)
       }
-    }, Backend.ProdBackend)
+    })
+
+    builder.setCancelable(false)
+    builder.create().show()
+
+    // QA needs to be able to switch backends via intents. Any changes to the backend
+    // preference while the dialog is open will be treated as a user selection.
+    backendController.onPreferenceSet(callback)
   }
 
   override protected def onNewIntent(intent: Intent) = {
     super.onNewIntent(intent)
+    verbose(l"Setting intent")
     setIntent(intent)
   }
 

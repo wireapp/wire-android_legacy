@@ -34,7 +34,7 @@ import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
-import com.waz.zclient.Intents._
+import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
@@ -47,7 +47,6 @@ import com.waz.zclient.deeplinks.DeepLinkService
 import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts}
 import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.fragments.ConnectivityFragment
-import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.main.MainPhoneFragment
@@ -159,21 +158,31 @@ class MainActivity extends BaseActivity
 
       case Some(DoNotOpenDeepLink(SSOLogin, InvalidToken)) =>
         verbose(l"do not open, SSO token invalid")
-        showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map { _ =>
-          startFirstFragment()
-        }
+        showErrorDialog(
+          R.string.sso_signin_wrong_code_title,
+          R.string.sso_signin_wrong_code_message)
+          .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
 
       case Some(DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts)) =>
         verbose(l"do not open, SSO token, too many accounts")
-        showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map { _ =>
-          startFirstFragment()
-        }
+        showErrorDialog(
+          R.string.sso_signin_max_accounts_title,
+          R.string.sso_signin_max_accounts_message)
+          .map { _ => startFirstFragment() }
+        deepLinkService.deepLink ! None
+
+      case Some(DeepLinkUnknown) =>
+        verbose(l"received unrecognized deep link")
+        showErrorDialog(
+          R.string.deep_link_generic_error_title,
+          R.string.deep_link_generic_error_message)
+          .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
 
       case Some(_) =>
         verbose(l"the default path (no deep link, or a link handled later)")
-        startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
+        startFirstFragment()
     }
   }
 
@@ -195,6 +204,12 @@ class MainActivity extends BaseActivity
   override protected def onResume(): Unit = {
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
+  }
+
+
+  override def onDestroy(): Unit = {
+    verbose(l"[BE]: onDestroy")
+    super.onDestroy()
   }
 
   private def openSignUpPage(ssoToken: Option[String] = None): Unit = {

@@ -18,8 +18,6 @@
 package com.waz.zclient.appentry.fragments
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
@@ -29,6 +27,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.CreateTeamFragment
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.fragments.SetTeamEmailFragment._
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.EmailValidator
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -64,11 +63,7 @@ case class SetTeamEmailFragment() extends CreateTeamFragment {
         }(Threading.Ui)
       }
     }
-    aboutButton.foreach(_.onClick(openUrl(R.string.teams_set_email_about_url)))
-  }
-
-  private def openUrl(id: Int): Unit ={
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id))))
+    aboutButton.foreach(_.onClick(inject[BrowserController].openAboutSetTeamEmail()))
   }
 }
 

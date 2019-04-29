@@ -198,7 +198,7 @@ class SignInFragment
 
     termsOfService.foreach { text =>
       TextViewUtils.linkifyText(text, getColor(R.color.white), true, new Runnable {
-        override def run(): Unit = browserController.openUrl(getString(R.string.url_terms_of_service_personal))
+        override def run(): Unit = browserController.openPersonalTermsOfService()
       })
     }
     countryButton.foreach(_.setOnClickListener(this))
@@ -414,7 +414,7 @@ class SignInFragment
         }
 
       case R.id.ttv_signin_forgot_password =>
-        browserController.openForgotPasswordPage()
+        browserController.openForgotPassword()
       case R.id.close_button =>
         activity.abortAddAccount()
       case _ =>

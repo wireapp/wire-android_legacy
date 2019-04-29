@@ -82,7 +82,7 @@ case class VerifyTeamEmailFragment() extends CreateTeamFragment{
               createTeamController.receiveNewsAndOffers = confirmed
               createTeamController.code = code
               showFragment(SetNameFragment(), SetNameFragment.Tag)
-              if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
+              if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
               None
             }
         }

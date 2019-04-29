@@ -134,7 +134,7 @@ class AddParticipantsFragment extends FragmentHelper {
       case _ => View.GONE
     }).onUi(vis => vh.foreach(_.setVisibility(vis)))
 
-    vh.onClick(_ => browserController.openManageTeamsPage())
+    vh.onClick(_ => browserController.openManageServices())
   }
 
   private lazy val errorText = returning(view[TypefaceTextView](R.id.empty_search_message)) { vh =>

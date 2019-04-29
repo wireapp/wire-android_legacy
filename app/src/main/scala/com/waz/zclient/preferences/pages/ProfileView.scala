@@ -20,7 +20,6 @@ package com.waz.zclient.preferences.pages
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
@@ -34,7 +33,7 @@ import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
@@ -49,6 +48,7 @@ import com.waz.zclient.views.AvailabilityView
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.appentry.AppEntryActivity
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -91,15 +91,16 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   private var dialog = Option.empty[AlertDialog]
 
-  teamButton.onClickEvent.on(Threading.Ui) { _ =>
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(R.string.pref_manage_team_url)))) }
+  teamButton.onClickEvent.on(Threading.Ui) { _ => inject[BrowserController].openPrefsManageTeam() }
   teamButton.setVisible(false)
   teamDivider.setVisible(false)
 
   if(MaxAccountsCount > 1 && ACCOUNT_CREATION_ENABLED) {
     newTeamButton.setVisible(true)
     newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
-      new ProfileBottomSheetDialog(context, R.style.message__bottom_sheet__base).show()
+      // We want to go directly to the landing page.
+      val intent = new Intent(getContext, classOf[AppEntryActivity])
+      getContext.startActivity(intent)
     }
   } else {
     newTeamButton.setVisible(false)
