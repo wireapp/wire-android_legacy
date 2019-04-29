@@ -125,7 +125,7 @@ class MainPhoneFragment extends FragmentHelper
         R.string.app_entry_dialog_not_now
       ).map { confirmed =>
         am.setMarketingConsent(confirmed)
-        if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
+        if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
       }
   } yield {}
 

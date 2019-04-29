@@ -45,6 +45,9 @@ object Backend {
     baseUrl = "https://staging-nginz-https.zinfra.io",
     websocketUrl = "https://staging-nginz-ssl.zinfra.io/await",
     blacklistHost = s"https://clientblacklist.wire.com/staging/android",
+    teamsUrl = "https://wire-teams-staging.zinfra.io",
+    accountsUrl = "https://wire-account-staging.zinfra.io",
+    websiteUrl = "https://wire.com",
     StagingFirebaseOptions,
     certPin)
 
@@ -53,6 +56,9 @@ object Backend {
     BuildConfig.BACKEND_URL,
     BuildConfig.WEBSOCKET_URL,
     BuildConfig.BLACKLIST_HOST,
+    teamsUrl = "https://teams.wire.com",
+    accountsUrl = "https://account.wire.com",
+    websiteUrl = "https://wire.com",
     ProdFirebaseOptions,
     certPin)
 }

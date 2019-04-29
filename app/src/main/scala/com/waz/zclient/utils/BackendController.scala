@@ -19,8 +19,7 @@ package com.waz.zclient.utils
 
 import java.net.URL
 
-import android.app.AlertDialog
-import android.content.{Context, DialogInterface, SharedPreferences}
+import android.content.{Context, SharedPreferences}
 import android.preference.PreferenceManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, GlobalModule}
@@ -28,14 +27,14 @@ import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Backend, BuildConfig}
 
-class BackendSelector(implicit context: Context) extends DerivedLogTag {
-  import BackendSelector._
 
-  private def prefs: SharedPreferences =
-    PreferenceManager.getDefaultSharedPreferences(context)
+class BackendController(implicit context: Context) extends DerivedLogTag {
+  import BackendController._
 
-  /// A custom backend is one that is neither the Wire production nor staging backend.
-  def hasCustomBackend: Boolean = getStringPreference(CONFIG_URL_PREF).isDefined
+  private def prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+
+  /// A custom backend is one that is loaded by a config url via deep link.
+  def hasCustomBackend: Boolean = customBackendConfigUrl.isDefined
 
   /// The url string where the custom backend config was downloaded from.
   def customBackendConfigUrl: Option[String] = getStringPreference(CONFIG_URL_PREF)
@@ -46,9 +45,12 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
     val baseUrl = getStringPreference(BASE_URL_PREF)
     val websocketUrl = getStringPreference(WEBSOCKET_URL_PREF)
     val blackListHost = getStringPreference(BLACKLIST_HOST_PREF)
-
-    (environment, baseUrl, websocketUrl, blackListHost) match {
-      case (Some(env), Some(base), Some(web), Some(black)) =>
+    val teamsUrl = getStringPreference(TEAMS_URL_PREF)
+    val accountsUrl = getStringPreference(ACCOUNTS_URL_PREF)
+    val websiteUrl = getStringPreference(WEBSITE_URL_PREF)
+    
+    (environment, baseUrl, websocketUrl, blackListHost, teamsUrl, accountsUrl, websiteUrl) match {
+      case (Some(env), Some(base), Some(web), Some(black), Some(teams), Some(accounts), Some(website)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
 
         // Staging requires its own firebase options, but all other BEs (prod or custom)
@@ -58,7 +60,7 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
         else
           Backend.ProdFirebaseOptions
 
-        val config = BackendConfig(env, base, web, black, firebaseOptions, Backend.certPin)
+        val config = BackendConfig(env, base, web, black, teams, accounts, website, firebaseOptions, Backend.certPin)
         Some(config)
 
       case _ =>
@@ -74,14 +76,10 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
       .putString(BASE_URL_PREF, config.baseUrl.toString)
       .putString(WEBSOCKET_URL_PREF, config.websocketUrl.toString)
       .putString(BLACKLIST_HOST_PREF, config.blacklistHost.toString)
+      .putString(TEAMS_URL_PREF, config.teamsUrl.toString)
+      .putString(ACCOUNTS_URL_PREF, config.accountsUrl.toString)
+      .putString(WEBSITE_URL_PREF, config.websiteUrl.toString)
       .commit()
-  }
-
-  /// Presents a dialog to select the backend if necessary, otherwise loads the stored
-  /// backend preference if present, otherwise loads the default production backend.
-  def selectBackend(callback: BackendConfig => Unit): Unit = {
-    if (shouldShowBackendSelector) showDialog(callback)
-    else callback(getStoredBackendConfig.getOrElse(Backend.ProdBackend))
   }
 
   /// Switches the backend in the global module and saves the config to shared preferences.
@@ -89,33 +87,18 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
   /// the global module is ready.
   def switchBackend(globalModule: GlobalModule, configResponse: BackendConfigResponse, configUrl: URL): Unit = {
     globalModule.backend.update(configResponse)
+    globalModule.blacklistClient.loadVersionBlacklist()
     setStoredBackendConfig(globalModule.backend)
 
     prefs.edit().putString(CONFIG_URL_PREF, configUrl.toString).commit()
   }
 
-  /// Presents a dialog to select backend.
-  private def showDialog(callback: BackendConfig => Unit): Unit = {
-    val environments = Backend.byName
-    val items: Array[CharSequence] = environments.keys.toArray
+  def shouldShowBackendSelector: Boolean =
+    BuildConfig.DEVELOPER_FEATURES_ENABLED && !backendPreferenceExists
 
-    val builder = new AlertDialog.Builder(context)
-    builder.setTitle("Select Backend")
-
-    builder.setItems(items, new DialogInterface.OnClickListener {
-      override def onClick(dialog: DialogInterface, which: Int): Unit = {
-        val choice = items.apply(which).toString
-        val config = environments.apply(choice)
-        setStoredBackendConfig(config)
-        callback(config)
-      }
-    })
-
-    builder.setCancelable(false)
-    builder.create().show()
-
-    // QA needs to be able to switch backends via intents. Any changes to the
-    // preference while the dialog is open will be treated as a user selection.
+  // This is a helper method to dismiss the backend selector dialog when QA automation
+  // selects the backend via an intent.
+  def onPreferenceSet(callback: BackendConfig => Unit): Unit = {
     val listener = new SharedPreferences.OnSharedPreferenceChangeListener {
       override def onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String): Unit = {
         if (key.equals(ENVIRONMENT_PREF)) {
@@ -128,21 +111,22 @@ class BackendSelector(implicit context: Context) extends DerivedLogTag {
     prefs.registerOnSharedPreferenceChangeListener(listener)
   }
 
-  private def shouldShowBackendSelector: Boolean =
-    BuildConfig.DEVELOPER_FEATURES_ENABLED && !backendPreferenceExists
-
   private def backendPreferenceExists: Boolean =
     prefs.contains(ENVIRONMENT_PREF)
 
   private def getStringPreference(key: String): Option[String] =
     Option(prefs.getString(key, null))
+
 }
 
-object BackendSelector {
+object BackendController {
   // Preference Keys
   val ENVIRONMENT_PREF = "CUSTOM_BACKEND_ENVIRONMENT"
   val BASE_URL_PREF = "CUSTOM_BACKEND_BASE_URL"
   val WEBSOCKET_URL_PREF = "CUSTOM_BACKEND_WEBSOCKET_URL"
   val BLACKLIST_HOST_PREF = "CUSTOM_BACKEND_BLACKLIST_HOST"
+  val TEAMS_URL_PREF = "CUSTOM_BACKEND_TEAMS_URL"
+  val ACCOUNTS_URL_PREF = "CUSTOM_BACKEND_ACCOUNTS_URL"
+  val WEBSITE_URL_PREF = "CUSTOM_BACKEND_WEBSITE_URL"
   val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
 }

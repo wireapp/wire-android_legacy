@@ -374,7 +374,7 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
     confirmationButton.foreach(_.setAccentColor(Color.WHITE))
 
     Option(findById[View](R.id.ttv_signin_forgot_password)).foreach { forgotPw =>
-      forgotPw.onClick(inject[BrowserController].openForgotPasswordPage())
+      forgotPw.onClick(inject[BrowserController].openForgotPassword())
       forgotPw.setVisibility(if (hasPw) View.VISIBLE else View.INVISIBLE)
     }
 

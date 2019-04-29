@@ -20,7 +20,6 @@ package com.waz.zclient.preferences.pages
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
@@ -34,7 +33,7 @@ import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
@@ -92,8 +91,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   private var dialog = Option.empty[AlertDialog]
 
-  teamButton.onClickEvent.on(Threading.Ui) { _ =>
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(R.string.pref_manage_team_url)))) }
+  teamButton.onClickEvent.on(Threading.Ui) { _ => inject[BrowserController].openPrefsManageTeam() }
   teamButton.setVisible(false)
   teamDivider.setVisible(false)
 

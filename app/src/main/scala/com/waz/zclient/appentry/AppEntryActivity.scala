@@ -46,7 +46,7 @@ import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog}
-import com.waz.zclient.utils.{BackendSelector, ContextUtils, RichView, ViewUtils}
+import com.waz.zclient.utils.{BackendController, ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.collection.JavaConverters._
@@ -189,7 +189,7 @@ class AppEntryActivity extends BaseActivity {
                 verbose(l"got config response: $config")
                 enableProgress(false)
 
-                new BackendSelector().switchBackend(inject[GlobalModule], config, configUrl)
+                inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
                 verbose(l"switched backend")
 
                 // re-present fragment for updated ui.

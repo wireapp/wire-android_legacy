@@ -518,7 +518,6 @@
     <string name="pref_about_tos_title">Terms of Use</string>
     <string name="pref_about_privacy_policy_title">Privacy Policy</string>
     <string name="pref_about_licenses_title">License information</string>
-    <string name="pref_about_licenses_url">@string/url_third_party_licences</string>
     <string name="pref_about_version_title">Version %s</string>
     <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
 

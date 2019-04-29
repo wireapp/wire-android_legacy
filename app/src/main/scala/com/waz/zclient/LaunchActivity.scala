@@ -18,28 +18,59 @@
 
 package com.waz.zclient
 
-import android.content.Intent
+import android.app.AlertDialog
+import android.content.{DialogInterface, Intent}
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.AccountsService
+import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.BackendSelector
+import com.waz.zclient.utils.BackendController
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
+
+  private lazy val backendController = inject[BackendController]
 
   override def onStart() = {
     super.onStart()
 
-    new BackendSelector()(this).selectBackend { be =>
+    val callback: BackendConfig => Unit = { be =>
       getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
       inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
         case Some(_) => startMain()
         case _ => startSignUp()
       }(Threading.Ui)
     }
+
+    if (backendController.shouldShowBackendSelector) showDialog(callback)
+    else callback(backendController.getStoredBackendConfig.getOrElse(Backend.ProdBackend))
+  }
+
+  /// Presents a dialog to select backend.
+  private def showDialog(callback: BackendConfig => Unit): Unit = {
+    val environments = Backend.byName
+    val items: Array[CharSequence] = environments.keys.toArray
+
+    val builder = new AlertDialog.Builder(this)
+    builder.setTitle("Select Backend")
+
+    builder.setItems(items, new DialogInterface.OnClickListener {
+      override def onClick(dialog: DialogInterface, which: Int): Unit = {
+        val choice = items.apply(which).toString
+        val config = environments.apply(choice)
+        backendController.setStoredBackendConfig(config)
+        callback(config)
+      }
+    })
+
+    builder.setCancelable(false)
+    builder.create().show()
+
+    // QA needs to be able to switch backends via intents. Any changes to the backend
+    // preference while the dialog is open will be treated as a user selection.
+    backendController.onPreferenceSet(callback)
   }
 
   override protected def onNewIntent(intent: Intent) = {

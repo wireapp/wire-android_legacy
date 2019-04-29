@@ -30,6 +30,7 @@ import com.waz.utils.PasswordValidator
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.{AppEntryDialogs, CreateTeamFragment}
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.SimpleValidator
 import com.waz.zclient.tracking.TeamAcceptedTerms
@@ -83,7 +84,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
           inputField.errorText.setTextColor(context.getColor(R.color.teams_error_red))
           Future.successful(Some(getString(R.string.password_policy_hint, passwordMinLength)))
         } else {
-          AppEntryDialogs.showTermsAndConditions(context).flatMap {
+          AppEntryDialogs.showTermsAndConditions(context, inject[BrowserController]).flatMap {
             case true =>
               tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
               val credentials = EmailCredentials(EmailAddress(createTeamController.teamEmail), Password(text), Some(ConfirmationCode(createTeamController.code)))
