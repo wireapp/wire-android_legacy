@@ -25,9 +25,8 @@ import android.os.Build
 import android.support.v4.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
-import com.waz.model.{ConvId, LocalInstant, Name, UserId}
+import com.waz.model._
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
-import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.{AccountManager, AccountsService, GlobalModule, ZMessaging}
 import com.waz.services.calling.CallWakeService._
@@ -65,49 +64,66 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
   val filteredGlobalProfile: Signal[(Option[ConvId], Seq[(ConvId, (UserId, UserId))])] =
     for {
       globalProfile <- inject[GlobalModule].calling.globalCallProfile
-      curCallId     = globalProfile.activeCall.map(_.convId)
-      allCalls = globalProfile.calls.values.filter(c => c.state == OtherCalling || (curCallId.contains(c.convId) && c.state != Ongoing))
-        .map(c => c.convId -> (c.caller, c.account)).toSeq
+      curCallId     =  globalProfile.activeCall.map(_.convId)
+      allCalls      =  globalProfile
+                         .calls
+                         .values
+                         .filter(c => c.state == OtherCalling || (curCallId.contains(c.convId) && c.state != Ongoing))
+                         .map(c => c.convId -> (c.caller, c.account))
+                         .toSeq
     } yield (curCallId, allCalls)
 
   val notifications =
     for {
-      zs <- inject[AccountsService].zmsInstances
+      zs                     <- inject[AccountsService].zmsInstances
       (curCallId, allCallsF) <- filteredGlobalProfile
-      bitmaps <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
-        zs.find(_.selfUserId == account).fold2(Signal.const(conv -> Option.empty[Bitmap]), z => getBitmapSignal(z, caller).map(conv -> _))
-      }: _*).map(_.toMap)
-      notInfo <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
-        zs.find(_.selfUserId == account).fold2(Signal.const(Option.empty[CallInfo], Name.Empty, Name.Empty, false),
-          z => Signal(z.calling.joinableCallsNotMuted.map(_.get(conv)),
-            z.usersStorage.optSignal(caller).map(_.map(_.name).getOrElse(Name.Empty)),
-            z.convsStorage.optSignal(conv).map(_.map(_.displayName).getOrElse(Name.Empty)),
-            z.conversations.groupConversation(conv))).map(conv -> _)
-      }: _*)
-      notificationData = notInfo.collect {
-        case (convId, (Some(callInfo), title, msg, isGroup)) =>
-          val action = callInfo.state match {
-            case OtherCalling => NotificationAction.DeclineOrJoin
-            case SelfConnected | SelfCalling | SelfJoining => NotificationAction.Leave
-            case _ => NotificationAction.Nothing
-          }
-          CallNotification(
-            convId.str.hashCode,
-            convId,
-            callInfo.account,
-            callInfo.startTime,
-            title,
-            msg,
-            bitmaps.getOrElse(convId, None),
-            curCallId.contains(convId),
-            action,
-            callInfo.isVideoCall,
-            isGroup)
-      }
+      bitmaps                <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
+                                  zs.find(_.selfUserId == account)
+                                    .fold2(
+                                      Signal.const(conv -> Option.empty[Bitmap]),
+                                      z => getBitmapSignal(z, caller).map(conv -> _)
+                                    )
+                                }: _*).map(_.toMap)
+      notInfo                <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
+                                  zs.find(_.selfUserId == account)
+                                    .fold2(
+                                      Signal.const(None, Name.Empty, None, false, Availability.None),
+                                      z => Signal(
+                                        z.calling.joinableCallsNotMuted.map(_.get(conv)),
+                                        z.usersStorage.optSignal(caller).map(_.map(_.name).getOrElse(Name.Empty)),
+                                        z.convsStorage.optSignal(conv),
+                                        z.conversations.groupConversation(conv),
+                                        z.usersStorage.optSignal(z.selfUserId).map(_.fold[Availability](Availability.None)(_.availability))
+                                      )).map(conv -> _)
+                                }: _*)
+      notificationData        = notInfo.collect {
+                                  case (convId, (Some(callInfo), title, conv, isGroup, availability)) =>
+                                    val muteSet = conv.fold(MuteSet.AllMuted)(_.muted)
+                                    val action  = (availability, muteSet, callInfo.state) match {
+                                      case (Availability.Away, _, _)                         => NotificationAction.Nothing
+                                      case (Availability.Busy, MuteSet.AllMuted, _)          => NotificationAction.Nothing
+                                      case (_, _, OtherCalling)                              => NotificationAction.DeclineOrJoin
+                                      case (_, _, SelfConnected | SelfCalling | SelfJoining) => NotificationAction.Leave
+                                      case _                                                 => NotificationAction.Nothing
+                                    }
+                                    CallNotification(
+                                      convId.str.hashCode,
+                                      convId,
+                                      callInfo.account,
+                                      callInfo.startTime,
+                                      title,
+                                      conv.fold(Name.Empty)(_.displayName),
+                                      bitmaps.getOrElse(convId, None),
+                                      curCallId.contains(convId),
+                                      action,
+                                      callInfo.isVideoCall,
+                                      isGroup
+                                    )
+                                }
     } yield notificationData.sortWith {
       case (cn1, _) if curCallId.contains(cn1.convId) => false
       case (_, cn2) if curCallId.contains(cn2.convId) => true
-      case (cn1, cn2) => cn1.convId.str > cn2.convId.str
+      case (cn1, cn2)                                 => cn1.convId.str > cn2.convId.str
     }
 
   private lazy val currentNotificationsPref = inject[Signal[AccountManager]].map(_.userPrefs(UserPreferences.CurrentNotifications))
@@ -139,27 +155,28 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     verbose(l"${nots.size} call notifications")
 
     cancelNots(nots)
-    nots.foreach { not =>
+    nots.foreach {
+      case not if not.action != NotificationAction.Nothing =>
+        val builder = androidNotificationBuilder(not)
 
-      val builder = androidNotificationBuilder(not)
-
-      def showNotification() = {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-          verbose(l"Adding not: ${not.id}")
-          currentNotificationsPref.head.foreach(_.mutate(_ + not.id))
-        }
-        notificationManager.notify(CallNotificationTag, not.id, builder.build())
-      }
-
-      Try(showNotification()).recover {
-        case NonFatal(e) =>
-          error(l"Notify failed: try without bitmap", e)
-          builder.setLargeIcon(null)
-          try showNotification()
-          catch {
-            case NonFatal(e2) => error(l"second display attempt failed, aborting", e2)
+        def showNotification() = {
+          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            verbose(l"Adding not: ${not.id}")
+            currentNotificationsPref.head.foreach(_.mutate(_ + not.id))
           }
-      }
+          notificationManager.notify(CallNotificationTag, not.id, builder.build())
+        }
+
+        Try(showNotification()).recover {
+          case NonFatal(e) =>
+            error(l"Notify failed: try without bitmap", e)
+            builder.setLargeIcon(null)
+            try showNotification()
+            catch {
+              case NonFatal(e2) => error(l"second display attempt failed, aborting", e2)
+            }
+        }
+      case _ =>
     }
   }
 

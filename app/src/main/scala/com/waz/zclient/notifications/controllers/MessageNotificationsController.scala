@@ -48,6 +48,7 @@ import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray, toPx}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -105,6 +106,35 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
           nots.foreach { case (id, props) => notificationManager.showNotification(id, props) }
       }.future
     } yield {}
+  }
+
+  def showAppNotification(title: ResString, body: ResString): Future[Unit] = {
+    val contentTitle = SpannableWrapper(title, List(Span(Span.StyleSpanBold, Span.HeaderRange)))
+    val contentText = SpannableWrapper(
+      header = ResString(""),
+      body = body,
+      spans = List(Span(Span.ForegroundColorSpanBlack, Span.HeaderRange)),
+      separator = ""
+    )
+    for {
+      accountId <- selfId.head
+      color     <- notificationColor(accountId)
+    } yield {
+      val props = NotificationProps(
+        accountId,
+        when              = Some(Instant.now().toEpochMilli),
+        showWhen          = Some(true),
+        category          = Some(NotificationCompat.CATEGORY_MESSAGE),
+        priority          = Some(NotificationCompat.PRIORITY_HIGH),
+        smallIcon         = Some(R.drawable.ic_menu_logo),
+        openAccountIntent = Some(accountId),
+        color             = color,
+        contentTitle      = Some(contentTitle),
+        contentText       = Some(contentText),
+        style             = Some(StyleBuilder(StyleBuilder.BigText, title = contentTitle, bigText = Some(contentText)))
+      )
+      notificationManager.showNotification(accountId.hashCode(), props)
+    }
   }
 
   private def fetchTeamName(userId: UserId) =

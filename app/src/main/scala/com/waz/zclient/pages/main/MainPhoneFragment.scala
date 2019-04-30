@@ -23,6 +23,7 @@ import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.model.nano.Messages.Availability
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -91,43 +92,68 @@ class MainPhoneFragment extends FragmentHelper
     accentColorController.accentColor.map(_.color).onUi(color => vh.foreach(_.setButtonColor(color)))
   }
 
-  lazy val consentDialogFuture = for {
-    true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
-    am   <- am.head
-    showAnalyticsPopup <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
-      previouslyShown =>
-        !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
-    }
-    // Show "Help make wire better" popup
-    _ <- if (!showAnalyticsPopup) Future.successful({}) else
-      showConfirmationDialog(
-        getString(R.string.crashes_and_analytics_request_title),
-        getString(R.string.crashes_and_analytics_request_body),
-        R.string.crashes_and_analytics_request_agree,
-        R.string.crashes_and_analytics_request_no
-      ).flatMap { resp =>
-        zms.head.flatMap { zms =>
-          for {
-            _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
-            _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
-            _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
-          } yield {}
-        }
-      }
+  private lazy val consentDialog = for {
+    true                     <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
+    am                       <- am.head
+    showAnalyticsPopup       <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
+                                  previouslyShown => !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
+                                }
+                             // Show "Help make wire better" popup
+    _                        <- if (!showAnalyticsPopup) Future.successful({}) else
+                             showConfirmationDialog(
+                               getString(R.string.crashes_and_analytics_request_title),
+                               getString(R.string.crashes_and_analytics_request_body),
+                               R.string.crashes_and_analytics_request_agree,
+                               R.string.crashes_and_analytics_request_no
+                             ).flatMap { resp =>
+                               zms.head.flatMap { zms =>
+                                 for {
+                                   _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
+                                   _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
+                                   _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
+                                 } yield {}
+                               }
+                             }
     askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
-    // Show marketing consent popup
-    _ <- if (!askMarketingConsentAgain) Future.successful({}) else
-      showConfirmationDialogWithNeutralButton(
-        R.string.receive_news_and_offers_request_title,
-        R.string.receive_news_and_offers_request_body,
-        R.string.app_entry_dialog_privacy_policy,
-        R.string.app_entry_dialog_accept,
-        R.string.app_entry_dialog_not_now
-      ).map { confirmed =>
-        am.setMarketingConsent(confirmed)
-        if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
-      }
+                             // Show marketing consent popup
+    _                        <- if (!askMarketingConsentAgain) Future.successful({}) else
+                             showConfirmationDialogWithNeutralButton(
+                               R.string.receive_news_and_offers_request_title,
+                               R.string.receive_news_and_offers_request_body,
+                               R.string.app_entry_dialog_privacy_policy,
+                               R.string.app_entry_dialog_accept,
+                               R.string.app_entry_dialog_not_now
+                             ).map { confirmed =>
+                               am.setMarketingConsent(confirmed)
+                               if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
+                             }
   } yield {}
+
+  private lazy val statusNotificationsPopup = for {
+    prefs        <- inject[Signal[UserPreferences]].head
+    popupEnabled <- prefs(UserPreferences.StatusNotificationsPopupEnabled).apply()
+    avVisible    <- usersController.availabilityVisible.head
+    av           <- usersController.selfUser.map(_.availability).head
+  } yield {
+    if (!popupEnabled || !avVisible) Future.successful({})
+    else {
+      val (title, body) = av.id match {
+        case Availability.AWAY      => (R.string.availability_notification_warning_away_title, R.string.availability_notification_warning_away)
+        case Availability.BUSY      => (R.string.availability_notification_warning_busy_title, R.string.availability_notification_warning_busy)
+        case Availability.AVAILABLE => (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
+        case Availability.NONE      => (R.string.availability_notification_warning_nostatus_title, R.string.availability_notification_warning_nostatus)
+      }
+      showConfirmationDialog(
+        getString(title),
+        getString(body),
+        R.string.availability_notification_dont_show,
+        R.string.availability_notification_ok
+      ).flatMap {
+        case false => Future.successful({})
+        case true  => prefs(UserPreferences.StatusNotificationsPopupEnabled) := false
+      }
+    }
+  }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     if (savedInstanceState == null)
@@ -142,7 +168,6 @@ class MainPhoneFragment extends FragmentHelper
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
-
 
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
@@ -195,6 +220,34 @@ class MainPhoneFragment extends FragmentHelper
 
       case _ =>
     }
+
+    (for {
+      prefs      <- inject[Signal[UserPreferences]]
+      shouldWarn <- prefs(UserPreferences.StatusNotificationsPopupEnabled).signal
+      avVisible  <- usersController.availabilityVisible
+      av         <- usersController.selfUser.map(_.availability)
+    } yield (shouldWarn && avVisible, av)).onUi {
+      case (false, _) =>
+      case (true, av) =>
+        val (title, body) = av.id match {
+          case Availability.AWAY      => (R.string.availability_notification_warning_away_title,      R.string.availability_notification_warning_away)
+          case Availability.BUSY      => (R.string.availability_notification_warning_busy_title,      R.string.availability_notification_warning_busy)
+          case Availability.AVAILABLE => (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
+          case Availability.NONE      => (R.string.availability_notification_warning_nostatus_title,  R.string.availability_notification_warning_nostatus)
+        }
+        showConfirmationDialog(
+          getString(title),
+          getString(body),
+          R.string.availability_notification_dont_show,
+          R.string.availability_notification_ok
+        ).map {
+          case false =>
+          case true  =>
+            inject[Signal[UserPreferences]].head.foreach { prefs =>
+              prefs(UserPreferences.StatusNotificationsPopupEnabled) := false
+            }
+        }
+    }
   }
 
   override def onStart(): Unit = {
@@ -203,7 +256,7 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
 
-    consentDialogFuture
+    consentDialog.flatMap(_ => statusNotificationsPopup)
   }
 
   override def onStop(): Unit = {
