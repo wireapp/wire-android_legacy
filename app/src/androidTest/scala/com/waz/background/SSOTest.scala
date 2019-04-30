@@ -15,15 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient
+package com.waz.background
 
+import android.support.test.runner.AndroidJUnit4
 import com.waz.model.UserId
 import com.waz.sync.client.AuthenticationManager.Cookie
 import com.waz.zclient.appentry.SSOWebViewWrapper
 import org.junit.Test
-import org.scalatest.junit.JUnitSuite
+import org.junit.runner.RunWith
 
-class SSOTest extends JUnitSuite {
+@RunWith(classOf[AndroidJUnit4])
+class SSOTest {
 
   @Test
   def ignoreNonWireURls(): Unit ={
@@ -31,14 +33,14 @@ class SSOTest extends JUnitSuite {
     assert(SSOWebViewWrapper.parseURL(url).isEmpty)
   }
 
-
   @Test
   def parseSuccessURI(): Unit ={
     val url = s"${SSOWebViewWrapper.ResponseSchema}://something/?${SSOWebViewWrapper.UserIdQuery}=123&${SSOWebViewWrapper.CookieQuery}=321"
+
     val result = SSOWebViewWrapper.parseURL(url)
     assert(result.exists{
       case Right((Cookie("321"), UserId("123"))) => true
-      case _ =>false
+      case _ => false
     })
   }
 
