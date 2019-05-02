@@ -22,7 +22,7 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingVersion = "141.0.2267"
+    zMessagingVersion = "141.0.2269"
     paging_version = "1.0.0"
 
     avsVersion = '4.9.170@aar'
@@ -320,7 +320,7 @@ dependencies {
     // TODO   when there are different SE APIs in dev vs internal/prod)
     boolean internal = true
     for (String taskName : gradle.startParameter.taskNames) {
-        if (taskName.contains("Prod") || taskName.contains("Candidate")) {
+        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
             internal = false
             break
         }
