@@ -611,6 +611,7 @@
     <string name="notification__message__one_to_one__shared_video">Shared a video</string>
     <string name="notification__message__one_to_one__shared_audio">Shared an audio message</string>
     <string name="notification__message__one_to_one__shared_location">Shared a location</string>
+    <string name="notification__message_one_to_one_message_preview">Sent a message</string>
 
     <!-- %1$s == username, %2$s == conversation -->
     <string name="notification__message__group__prefix__other">%1$s in %2$s \u0020</string>

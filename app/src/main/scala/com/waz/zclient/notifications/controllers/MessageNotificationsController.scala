@@ -48,6 +48,8 @@ import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray, toPx}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.service.ZMessaging
+import com.waz.content.UserPreferences.MessagePreview
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -71,6 +73,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
+  private lazy val zms                   = inject[Signal[ZMessaging]]
+  private lazy val messagePreview        = zms.map(_.userPrefs).flatMap(_.preference(MessagePreview).signal).disableAutowiring().currentValue.getOrElse(false)
 
   override val notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]] =
     for {
@@ -273,7 +277,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         case _ if n.ephemeral && n.isSelfMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
         case _ if n.ephemeral && n.isReply => ResString(R.string.notification__message_with_quote__ephemeral)
         case _ if n.ephemeral => ResString(R.string.notification__message__ephemeral)
-        case TEXT             => ResString(message)
+        case TEXT             => if (messagePreview) ResString(message) else ResString(R.string.notification__message_one_to_one_message_preview)
         case MISSED_CALL      => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
         case KNOCK            => ResString(R.string.notification__message__one_to_one__pinged)
         case ANY_ASSET        => ResString(R.string.notification__message__one_to_one__shared_file)
