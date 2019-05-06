@@ -48,8 +48,7 @@ import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray, toPx}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
-import com.waz.service.ZMessaging
-import com.waz.content.UserPreferences.MessagePreview
+import com.waz.content.UserPreferences
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -73,8 +72,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
-  private lazy val zms                   = inject[Signal[ZMessaging]]
-  private lazy val messagePreview        = zms.map(_.userPrefs).flatMap(_.preference(MessagePreview).signal).disableAutowiring().currentValue.getOrElse(false)
+  private lazy val userPrefs             = inject[UserPreferences]
 
   override val notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]] =
     for {
@@ -272,6 +270,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       }
       convName <- getConvName(account, n).map(_.getOrElse(Name.Empty))
       userName <- getUserName(account, n).map(_.getOrElse(Name.Empty))
+      messagePreview <- userPrefs.preference(UserPreferences.MessagePreview).apply()
     } yield {
       val body = n.msgType match {
         case _ if n.ephemeral && n.isSelfMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
