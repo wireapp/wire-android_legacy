@@ -171,8 +171,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
           case NonFatal(e) =>
             error(l"Notify failed: try without bitmap", e)
             builder.setLargeIcon(null)
-            try showNotification()
-            catch {
+            Try(showNotification()).recover {
               case NonFatal(e2) => error(l"second display attempt failed, aborting", e2)
             }
         }

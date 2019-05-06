@@ -226,9 +226,7 @@ class MainPhoneFragment extends FragmentHelper
       shouldWarn <- prefs(UserPreferences.StatusNotificationsPopupEnabled).signal
       avVisible  <- usersController.availabilityVisible
       av         <- usersController.selfUser.map(_.availability)
-    } yield (shouldWarn && avVisible, av)).onUi {
-      case (false, _) =>
-      case (true, av) =>
+    } yield (shouldWarn && avVisible, av)).filter(_._1).map(_._2).onUi { av =>
         val (title, body) = av.id match {
           case Availability.AWAY      => (R.string.availability_notification_warning_away_title,      R.string.availability_notification_warning_away)
           case Availability.BUSY      => (R.string.availability_notification_warning_busy_title,      R.string.availability_notification_warning_busy)
