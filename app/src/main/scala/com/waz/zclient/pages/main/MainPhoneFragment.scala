@@ -23,7 +23,6 @@ import android.support.v4.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
-import com.waz.model.nano.Messages.Availability
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -98,13 +97,15 @@ class MainPhoneFragment extends FragmentHelper
     showAnalyticsPopup       <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
                                   previouslyShown => !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
                                 }
+    color                    <- accentColorController.accentColor.head
                              // Show "Help make wire better" popup
     _                        <- if (!showAnalyticsPopup) Future.successful({}) else
                              showConfirmationDialog(
                                getString(R.string.crashes_and_analytics_request_title),
                                getString(R.string.crashes_and_analytics_request_body),
                                R.string.crashes_and_analytics_request_agree,
-                               R.string.crashes_and_analytics_request_no
+                               R.string.crashes_and_analytics_request_no,
+                               Some(color)
                              ).flatMap { resp =>
                                zms.head.flatMap { zms =>
                                  for {
@@ -122,38 +123,25 @@ class MainPhoneFragment extends FragmentHelper
                                R.string.receive_news_and_offers_request_body,
                                R.string.app_entry_dialog_privacy_policy,
                                R.string.app_entry_dialog_accept,
-                               R.string.app_entry_dialog_not_now
+                               R.string.app_entry_dialog_not_now,
+                               Some(color)
                              ).map { confirmed =>
                                am.setMarketingConsent(confirmed)
                                if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
                              }
   } yield {}
-
-  private lazy val statusNotificationsPopup = for {
-    prefs        <- inject[Signal[UserPreferences]].head
-    popupEnabled <- prefs(UserPreferences.StatusNotificationsPopupEnabled).apply()
-    avVisible    <- usersController.availabilityVisible.head
-    av           <- usersController.selfUser.map(_.availability).head
-  } yield {
-    if (!popupEnabled || !avVisible) Future.successful({})
-    else {
-      val (title, body) = av.id match {
-        case Availability.AWAY      => (R.string.availability_notification_warning_away_title, R.string.availability_notification_warning_away)
-        case Availability.BUSY      => (R.string.availability_notification_warning_busy_title, R.string.availability_notification_warning_busy)
-        case Availability.AVAILABLE => (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
-        case Availability.NONE      => (R.string.availability_notification_warning_nostatus_title, R.string.availability_notification_warning_nostatus)
-      }
-      showConfirmationDialog(
-        getString(title),
-        getString(body),
-        R.string.availability_notification_dont_show,
-        R.string.availability_notification_ok
-      ).flatMap {
-        case false => Future.successful({})
-        case true  => prefs(UserPreferences.StatusNotificationsPopupEnabled) := false
-      }
-    }
-  }
+/*
+  private var prevAvailability = Option.empty[Availability]
+  private lazy val curAvailability = for {
+    prefs     <- inject[Signal[UserPreferences]]
+    mask      <- prefs(UserPreferences.StatusNotificationsBitmask).signal
+    _ = verbose(l"AVV mask: $mask")
+    avVisible <- usersController.availabilityVisible
+    _ = verbose(l"AVV avVisible: $avVisible")
+    av        <- if (!avVisible) Signal.const(Option.empty[Availability])
+                 else usersController.selfUser.map(_.availability).map(Option(_))
+    _ = verbose(l"AVV av: $av")
+  } yield (av, mask)*/
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     if (savedInstanceState == null)
@@ -167,7 +155,9 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
-    zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
+    zms.flatMap(_.errors.getErrors).onUi {
+      _.foreach(handleSyncError)
+    }
 
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
@@ -220,32 +210,41 @@ class MainPhoneFragment extends FragmentHelper
 
       case _ =>
     }
+/*
+    curAvailability.onUi { case (cur, mask) =>
+      verbose(l"AVV ($cur, $mask)")
+      verbose(l"AVV prevAvailability: $prevAvailability")
+      val av = if (cur.isEmpty || prevAvailability.isEmpty || cur == prevAvailability) Option.empty[Availability]
+      else cur.flatMap { av => if ((mask & av.bitmask) == 0) Some(av) else None }
 
-    (for {
-      prefs      <- inject[Signal[UserPreferences]]
-      shouldWarn <- prefs(UserPreferences.StatusNotificationsPopupEnabled).signal
-      avVisible  <- usersController.availabilityVisible
-      av         <- usersController.selfUser.map(_.availability)
-    } yield (shouldWarn && avVisible, av)).filter(_._1).map(_._2).onUi { av =>
-        val (title, body) = av.id match {
-          case Availability.AWAY      => (R.string.availability_notification_warning_away_title,      R.string.availability_notification_warning_away)
-          case Availability.BUSY      => (R.string.availability_notification_warning_busy_title,      R.string.availability_notification_warning_busy)
-          case Availability.AVAILABLE => (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
-          case Availability.NONE      => (R.string.availability_notification_warning_nostatus_title,  R.string.availability_notification_warning_nostatus)
+      verbose(l"AVV av after filtering: $av")
+
+      av.foreach { availability =>
+        val (title, body) = availability match {
+          case Availability.None      => (R.string.availability_notification_warning_nostatus_title, R.string.availability_notification_warning_nostatus)
+          case Availability.Available => (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
+          case Availability.Busy      => (R.string.availability_notification_warning_busy_title, R.string.availability_notification_warning_busy)
+          case Availability.Away      => (R.string.availability_notification_warning_away_title, R.string.availability_notification_warning_away)
         }
-        showConfirmationDialog(
-          getString(title),
-          getString(body),
-          R.string.availability_notification_dont_show,
-          R.string.availability_notification_ok
-        ).map {
-          case false =>
-          case true  =>
-            inject[Signal[UserPreferences]].head.foreach { prefs =>
-              prefs(UserPreferences.StatusNotificationsPopupEnabled) := false
-            }
+        accentColorController.accentColor.head.foreach { color =>
+          showConfirmationDialog(
+            getString(title),
+            getString(body),
+            R.string.availability_notification_dont_show,
+            R.string.availability_notification_ok,
+            Some(color)
+          ).foreach {
+            case false =>
+            case true =>
+              inject[Signal[UserPreferences]].head.foreach { prefs =>
+                prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | availability.bitmask)
+              }
+          }
         }
-    }
+      }
+
+      prevAvailability = cur
+    }*/
   }
 
   override def onStart(): Unit = {
@@ -254,7 +253,7 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
 
-    consentDialog.flatMap(_ => statusNotificationsPopup)
+    consentDialog
   }
 
   override def onStop(): Unit = {

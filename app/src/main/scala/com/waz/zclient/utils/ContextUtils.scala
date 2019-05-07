@@ -30,6 +30,7 @@ import android.text.format.Formatter
 import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
+import com.waz.model.AccentColor
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
@@ -191,10 +192,12 @@ object ContextUtils {
   def showConfirmationDialog(title:    String,
                              msg:      String,
                              positiveRes: Int = android.R.string.ok,
-                             negativeRes: Int = android.R.string.cancel)
+                             negativeRes: Int = android.R.string.cancel,
+                             accentColor: Option[AccentColor] = None
+                            )
                             (implicit context: Context): Future[Boolean] = {
     val p = Promise[Boolean]()
-    new AlertDialog.Builder(context)
+    val dialog = new AlertDialog.Builder(context)
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
@@ -207,7 +210,20 @@ object ContextUtils {
         override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(false))
       })
       .create
-      .show()
+
+    dialog.show()
+
+    // TODO: Can it be done in xml?
+    val positiveButton = Option(dialog.getButton(DialogInterface.BUTTON_POSITIVE))
+    val negativeButton = Option(dialog.getButton(DialogInterface.BUTTON_NEGATIVE))
+
+    accentColor.foreach { color =>
+      positiveButton.foreach(_.setTextColor(color.color))
+      negativeButton.foreach(_.setTextColor(color.color))
+    }
+    positiveButton.foreach(_.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END))
+    negativeButton.foreach(_.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END))
+
     p.future
   }
 
@@ -229,14 +245,15 @@ object ContextUtils {
   }
 
   //TODO Context has to be an Activity - maybe specify this in the type
-  def showWifiWarningDialog(size: Long)(implicit context: Context): Future[Boolean] = {
+  def showWifiWarningDialog(size: Long, accentColor: Option[AccentColor] = None)(implicit context: Context): Future[Boolean] =
     showConfirmationDialog(
       getString(R.string.asset_upload_warning__large_file__title),
       if (size > 0)
         getString(R.string.asset_upload_warning__large_file__message, Formatter.formatFileSize(context, size))
       else
-        getString(R.string.asset_upload_warning__large_file__message_default))
-  }
+        getString(R.string.asset_upload_warning__large_file__message_default),
+      accentColor = accentColor
+    )
 
   def showPermissionsErrorDialog(titleRes: Int, msgRes: Int, ackRes: Int = android.R.string.ok)(implicit cxt: Context): Future[Unit] = {
     val p = Promise[Unit]()
@@ -261,7 +278,8 @@ object ContextUtils {
                                               msg:            Int,
                                               neutralRes:     Int,
                                               positiveRes:    Int = android.R.string.ok,
-                                              negativeRes:    Int = android.R.string.cancel)
+                                              negativeRes:    Int = android.R.string.cancel,
+                                              accentColor: Option[AccentColor] = None)
                                              (implicit context: Context): Future[Option[Boolean]] = {
     val p = Promise[Option[Boolean]]()
     val dialog = new AlertDialog.Builder(context)
@@ -281,6 +299,18 @@ object ContextUtils {
       })
       .create
     dialog.show()
+
+    // TODO: Can it be done in xml?
+    val positiveButton = Option(dialog.getButton(DialogInterface.BUTTON_POSITIVE))
+    val negativeButton = Option(dialog.getButton(DialogInterface.BUTTON_NEGATIVE))
+
+    accentColor.foreach { color =>
+      positiveButton.foreach(_.setTextColor(color.color))
+      negativeButton.foreach(_.setTextColor(color.color))
+    }
+    positiveButton.foreach(_.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END))
+    negativeButton.foreach(_.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END))
+
     p.future
   }
 }

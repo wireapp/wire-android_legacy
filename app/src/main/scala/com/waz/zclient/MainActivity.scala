@@ -142,30 +142,27 @@ class MainActivity extends BaseActivity
       case false =>
     }
 
-    (for {
-      Some(user) <- userAccountsController.currentUser
-      teamName   <- user.teamId.fold(Signal.const(Option.empty[Name]))(teamId => Signal.future(inject[TeamsStorage].get(teamId).map(_.map(_.name))))
-      prefs      <- userPreferences
-      shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).signal
-      avVisible  <- usersController.availabilityVisible
-    } yield (shouldWarn && avVisible, user.availability, teamName)).onUi {
-      case (true, Availability.Away, Some(teamName)) =>
-        inject[MessageNotificationsController].showAppNotification(
-          ResString(R.string.availability_notification_blocked_title, teamName.str),
-          ResString(R.string.availability_notification_blocked)
-        )
-        userPreferences.head.foreach(prefs =>
-          prefs(UserPreferences.ShouldWarnStatusNotifications) := false
-        )
-      case (true, Availability.Busy, Some(teamName)) =>
-        inject[MessageNotificationsController].showAppNotification(
-          ResString(R.string.availability_notification_changed_title, teamName.str),
-          ResString(R.string.availability_notification_changed)
-        )
-        userPreferences.head.foreach(prefs =>
-          prefs(UserPreferences.ShouldWarnStatusNotifications) := false
-        )
-      case _ =>
+    for {
+      Some(user) <- userAccountsController.currentUser.head
+      teamName   <- user.teamId.fold(Future.successful(Option.empty[Name]))(teamId => inject[TeamsStorage].get(teamId).map(_.map(_.name)))
+      prefs      <- userPreferences.head
+      shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).apply()
+      avVisible  <- usersController.availabilityVisible.head
+    } yield {
+      (shouldWarn && avVisible, user.availability, teamName) match {
+        case (true, Availability.Away, Some(name)) =>
+          inject[MessageNotificationsController].showAppNotification(
+            ResString(R.string.availability_notification_blocked_title, name.str),
+            ResString(R.string.availability_notification_blocked)
+          )
+        case (true, Availability.Busy, Some(name)) =>
+          inject[MessageNotificationsController].showAppNotification(
+            ResString(R.string.availability_notification_changed_title, name.str),
+            ResString(R.string.availability_notification_changed)
+          )
+        case _ =>
+      }
+      if (shouldWarn) prefs(UserPreferences.ShouldWarnStatusNotifications) := false
     }
 
     ForceUpdateActivity.checkBlacklist(this)

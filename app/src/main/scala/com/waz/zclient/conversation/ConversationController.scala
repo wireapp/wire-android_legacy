@@ -35,6 +35,7 @@ import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.calling.controllers.CallStartController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -52,16 +53,17 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
-  private lazy val selectedConv       = inject[Signal[SelectedConversationService]]
-  private lazy val convsUi            = inject[Signal[ConversationsUiService]]
-  private lazy val conversations      = inject[Signal[ConversationsService]]
-  private lazy val convsStorage       = inject[Signal[ConversationStorage]]
-  private lazy val membersStorage     = inject[Signal[MembersStorage]]
-  private lazy val usersStorage       = inject[Signal[UsersStorage]]
-  private lazy val otrClientsStorage  = inject[Signal[OtrClientsStorage]]
-  private lazy val account            = inject[Signal[Option[AccountManager]]]
-  private lazy val callStart          = inject[CallStartController]
-  private lazy val convListController = inject[ConversationListController]
+  private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
+  private lazy val convsUi               = inject[Signal[ConversationsUiService]]
+  private lazy val conversations         = inject[Signal[ConversationsService]]
+  private lazy val convsStorage          = inject[Signal[ConversationStorage]]
+  private lazy val membersStorage        = inject[Signal[MembersStorage]]
+  private lazy val usersStorage          = inject[Signal[UsersStorage]]
+  private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
+  private lazy val account               = inject[Signal[Option[AccountManager]]]
+  private lazy val callStart             = inject[CallStartController]
+  private lazy val convListController    = inject[ConversationListController]
+  private lazy val accentColorController = inject[AccentColorController]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -179,12 +181,28 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, input))
 
   def sendMessage(uri: URI, activity: Activity): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, UriInput(uri), (s: Long) => showWifiWarningDialog(s)(activity)))
+    convsUiwithCurrentConv((ui, id) =>
+      accentColorController.accentColor.head.flatMap(color =>
+        ui.sendAssetMessage(
+          id,
+          UriInput(uri),
+          (s: Long) => showWifiWarningDialog(s, Some(color))(activity)
+        )
+      )
+    )
 
   def sendMessage(audioAsset: AssetForUpload, activity: Activity): Future[Option[MessageData]] =
     audioAsset match {
       case asset: com.waz.api.impl.AudioAssetForUpload =>
-        convsUiwithCurrentConv((ui, id) => ui.sendMessage(id, asset, (s: Long) => showWifiWarningDialog(s)(activity)))
+        accentColorController.accentColor.head.flatMap(color =>
+          convsUiwithCurrentConv((ui, id) =>
+            ui.sendMessage(
+              id,
+              asset,
+              (s: Long) => showWifiWarningDialog(s, Some(color))(activity)
+            )
+          )
+        )
       case _ => Future.successful(None)
     }
 

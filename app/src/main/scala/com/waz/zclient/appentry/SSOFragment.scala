@@ -25,6 +25,7 @@ import com.waz.zclient.InputDialog.{Event, OnNegativeBtn, OnPositiveBtn, Validat
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 
@@ -107,7 +108,13 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
           case Left(error) =>
-            showConfirmationDialog(getString(R.string.sso_signin_error_title), getString(R.string.sso_signin_error_try_again_message, error.code.toString)).map(_ => ())
+            inject[AccentColorController].accentColor.head.flatMap { color =>
+              showConfirmationDialog(
+                title = getString(R.string.sso_signin_error_title),
+                msg = getString(R.string.sso_signin_error_try_again_message, error.code.toString),
+                accentColor = Some(color)
+              )
+            }.map(_ => ())
         }
       }
     }
