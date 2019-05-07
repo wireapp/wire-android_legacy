@@ -24,10 +24,11 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
+import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
-import com.waz.model.{ConvId, UserId}
+import com.waz.model._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
@@ -48,7 +49,9 @@ import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTo
 import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.fragments.ConnectivityFragment
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.messages.controllers.NavigationController
+import com.waz.zclient.notifications.controllers.MessageNotificationsController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.preferences.PreferencesActivity
@@ -56,7 +59,7 @@ import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.UiTrackingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{Emojis, IntentUtils, ViewUtils}
+import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.collection.JavaConverters._
@@ -86,6 +89,8 @@ class MainActivity extends BaseActivity
   private lazy val spinnerController      = inject[SpinnerController]
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
+  private lazy val usersController        = inject[UsersController]
+  private lazy val userPreferences        = inject[Signal[UserPreferences]]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -135,6 +140,32 @@ class MainActivity extends BaseActivity
         finish()
         startActivity(returning(new Intent(this, classOf[AppEntryActivity]))(_.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)))
       case false =>
+    }
+
+    (for {
+      Some(user) <- userAccountsController.currentUser
+      teamName   <- user.teamId.fold(Signal.const(Option.empty[Name]))(teamId => Signal.future(inject[TeamsStorage].get(teamId).map(_.map(_.name))))
+      prefs      <- userPreferences
+      shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).signal
+      avVisible  <- usersController.availabilityVisible
+    } yield (shouldWarn && avVisible, user.availability, teamName)).onUi {
+      case (true, Availability.Away, Some(teamName)) =>
+        inject[MessageNotificationsController].showAppNotification(
+          ResString(R.string.availability_notification_blocked_title, teamName.str),
+          ResString(R.string.availability_notification_blocked)
+        )
+        userPreferences.head.foreach(prefs =>
+          prefs(UserPreferences.ShouldWarnStatusNotifications) := false
+        )
+      case (true, Availability.Busy, Some(teamName)) =>
+        inject[MessageNotificationsController].showAppNotification(
+          ResString(R.string.availability_notification_changed_title, teamName.str),
+          ResString(R.string.availability_notification_changed)
+        )
+        userPreferences.head.foreach(prefs =>
+          prefs(UserPreferences.ShouldWarnStatusNotifications) := false
+        )
+      case _ =>
     }
 
     ForceUpdateActivity.checkBlacklist(this)
