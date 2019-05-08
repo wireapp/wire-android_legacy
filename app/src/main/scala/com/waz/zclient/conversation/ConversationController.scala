@@ -186,7 +186,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
         ui.sendAssetMessage(
           id,
           UriInput(uri),
-          (s: Long) => showWifiWarningDialog(s, Some(color))(activity)
+          (s: Long) => showWifiWarningDialog(s, color)(dispatcher, activity)
         )
       )
     )
@@ -199,7 +199,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
             ui.sendMessage(
               id,
               asset,
-              (s: Long) => showWifiWarningDialog(s, Some(color))(activity)
+              (s: Long) => showWifiWarningDialog(s, color)(dispatcher, activity)
             )
           )
         )

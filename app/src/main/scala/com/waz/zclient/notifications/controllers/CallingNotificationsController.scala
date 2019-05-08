@@ -155,8 +155,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     verbose(l"${nots.size} call notifications")
 
     cancelNots(nots)
-    nots.foreach {
-      case not if not.action != NotificationAction.Nothing =>
+    nots.foreach { not =>
         val builder = androidNotificationBuilder(not)
 
         def showNotification() = {
@@ -175,7 +174,6 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
               case NonFatal(e2) => error(l"second display attempt failed, aborting", e2)
             }
         }
-      case _ =>
     }
   }
 
