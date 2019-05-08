@@ -37,6 +37,7 @@ import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
 import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, UserLoggedIn}
 import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
@@ -166,36 +167,38 @@ class AppEntryActivity extends BaseActivity {
         verbose(l"got custom backend url: $configUrl")
         deepLinkService.deepLink ! None
 
-        val shouldConnect = showConfirmationDialog(
-          ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
-          ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
-          R.string.custom_backend_dialog_connect)
+        inject[AccentColorController].accentColor.head.flatMap { color =>
+          showConfirmationDialog(
+            title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+            msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+            positiveRes = R.string.custom_backend_dialog_connect,
+            accentColor = Some(color)
+          )
+        }.foreach {
+        case false =>
+          verbose(l"cancelling backend switch")
+        case true =>
+          enableProgress(true)
+          inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+            case Left(errorResponse) =>
+              error(l"error trying to download backend config.", errorResponse)
+              enableProgress(false)
 
-        shouldConnect.foreach {
-          case false =>
-            verbose(l"cancelling backend switch")
-          case true =>
-            enableProgress(true)
-            inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
-              case Left(errorResponse) =>
-                error(l"error trying to download backend config.", errorResponse)
-                enableProgress(false)
+              showErrorDialog(
+                  R.string.custom_backend_dialog_network_error_title,
+                  R.string.custom_backend_dialog_network_error_message)
 
-                showErrorDialog(
-                    R.string.custom_backend_dialog_network_error_title,
-                    R.string.custom_backend_dialog_network_error_message)
+            case Right(config) =>
+              verbose(l"got config response: $config")
+              enableProgress(false)
 
-              case Right(config) =>
-                verbose(l"got config response: $config")
-                enableProgress(false)
+              inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
+              verbose(l"switched backend")
 
-                inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
-                verbose(l"switched backend")
-
-                // re-present fragment for updated ui.
-                getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-            }
+              // re-present fragment for updated ui.
+              getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+              showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+          }
         }
 
       case DoNotOpenDeepLink(Access, UserLoggedIn) =>

@@ -1077,7 +1077,7 @@
     <string name="availability_notification_warning_available">You will appear as Available to other people. You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
     <string name="availability_notification_warning_nostatus_title">No status set</string>
     <string name="availability_notification_warning_nostatus">You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
-    <string name="availability_notification_dont_show">Do not display this information again.</string>
+    <string name="availability_notification_dont_show">Do not display this information again</string>
     <string name="availability_notification_ok">Ok</string>
     <string name="availability_notification_blocked_title">Notifications are disabled in %1$s</string>
     <string name="availability_notification_blocked">Status affects notifications now. You\'re set to \"Away\" and won\'t receive any notifications.</string>

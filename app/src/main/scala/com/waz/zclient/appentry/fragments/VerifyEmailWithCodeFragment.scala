@@ -36,6 +36,7 @@ import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignInMethod}
 import com.waz.zclient.appentry.fragments.VerifyEmailWithCodeFragment._
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
@@ -178,9 +179,10 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
     KeyboardUtils.hideKeyboard(getActivity)
 
     for {
-      resp <- accountService.register(EmailCredentials(emailAddress, password, Some(confirmationCode)), name)
+      resp                <- accountService.register(EmailCredentials(emailAddress, password, Some(confirmationCode)), name)
       askMarketingConsent <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
-      _    <- resp match {
+      color               <- inject[AccentColorController].accentColor.head
+      _                   <- resp match {
         case Right(Some(am)) =>
           (if (!askMarketingConsent) Future.successful(Some(false)) else
             showConfirmationDialogWithNeutralButton(
@@ -188,7 +190,8 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
               R.string.receive_news_and_offers_request_body,
               R.string.app_entry_dialog_privacy_policy,
               R.string.app_entry_dialog_accept,
-              R.string.app_entry_dialog_no_thanks
+              R.string.app_entry_dialog_no_thanks,
+              Some(color)
             )).map { consent =>
             am.setMarketingConsent(consent)
             if (consent.isEmpty) inject[BrowserController].openPrivacyPolicy()
