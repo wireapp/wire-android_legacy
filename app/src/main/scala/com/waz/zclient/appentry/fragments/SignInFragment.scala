@@ -385,12 +385,10 @@ class SignInFragment
               name      <- name.head
             } yield {
               if (strongPasswordValidator.isValidPassword(password)) {
-                for {
-                  req       <- accountsService.requestEmailCode(EmailAddress(email))
-                } yield {
+               accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
                   onResponse(req, m).right.foreach { _ =>
-                  KeyboardUtils.closeKeyboardIfShown(getActivity)
-                  activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                    KeyboardUtils.closeKeyboardIfShown(getActivity)
+                    activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
                   }
                 }
               } else { // Invalid password
