@@ -91,7 +91,8 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
               getString(R.string.calling_ongoing_call_title),
               getString(if (isJoiningCall) R.string.calling_ongoing_call_join_message else R.string.calling_ongoing_call_start_message),
               positiveRes = if (isJoiningCall) R.string.calling_ongoing_call_join_anyway else R.string.calling_ongoing_call_start_anyway,
-              accentColor = Some(color)
+              negativeRes = android.R.string.cancel,
+              color       = color
             ).flatMap {
               case true  => z.calling.endCall(c.convId, skipTerminating = true).map(_ => (true, true))
               case false => Future.successful((false, false))
@@ -110,7 +111,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
               showConfirmationDialog(
                 getString(R.string.calling__slow_connection__title),
                 getString(R.string.calling__video_call__slow_connection__message),
-                accentColor = Some(color)
+                color = color
               )
             case _                                => Future.successful(true)
           }
@@ -121,7 +122,8 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
               getString(R.string.group_calling_title),
               getString(R.string.group_calling_message, members.size.toString),
               positiveRes = R.string.group_calling_confirm,
-              accentColor = Some(color)
+              negativeRes = android.R.string.cancel,
+              color       = color
             )
           else
             Future.successful(true)

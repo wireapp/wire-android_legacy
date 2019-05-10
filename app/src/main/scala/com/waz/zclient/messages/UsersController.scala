@@ -90,23 +90,7 @@ class UsersController(implicit injector: Injector, context: Context)
       verbose(l"mask = $mask, bit = ${availability.bitmask}, res = ${mask & availability.bitmask}")
       if ((mask & availability.bitmask) == 0) {
         inject[AccentColorController].accentColor.head.foreach { color =>
-          val (title, body) = availability match {
-            case Availability.None      =>
-              (R.string.availability_notification_warning_nostatus_title, R.string.availability_notification_warning_nostatus)
-            case Availability.Available =>
-              (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
-            case Availability.Busy      =>
-              (R.string.availability_notification_warning_busy_title, R.string.availability_notification_warning_busy)
-            case Availability.Away      =>
-              (R.string.availability_notification_warning_away_title, R.string.availability_notification_warning_away)
-          }
-          showConfirmationDialog(
-            title       = getString(title),
-            msg         = getString(body),
-            positiveRes = R.string.availability_notification_dont_show,
-            negativeRes = R.string.availability_notification_ok,
-            accentColor = Some(color)
-          ).foreach {
+          showStatusNotificationWarning(availability, color).foreach {
             if (_) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | availability.bitmask)
           }
         }

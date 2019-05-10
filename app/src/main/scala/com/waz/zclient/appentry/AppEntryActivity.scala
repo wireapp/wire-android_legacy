@@ -169,10 +169,11 @@ class AppEntryActivity extends BaseActivity {
 
         inject[AccentColorController].accentColor.head.flatMap { color =>
           showConfirmationDialog(
-            title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
-            msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+            title       = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+            msg         = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
             positiveRes = R.string.custom_backend_dialog_connect,
-            accentColor = Some(color)
+            negativeRes = android.R.string.cancel,
+            color       = color
           )
         }.foreach {
         case false =>

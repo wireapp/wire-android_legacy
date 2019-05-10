@@ -73,13 +73,13 @@ case class VerifyTeamEmailFragment() extends CreateTeamFragment{
             inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply().flatMap {
               case true =>
                 inject[AccentColorController].accentColor.head.flatMap(color =>
-                  showConfirmationDialogWithNeutralButton(
-                    R.string.receive_news_and_offers_request_title,
-                    R.string.receive_news_and_offers_request_body,
-                    R.string.app_entry_dialog_privacy_policy,
+                  showConfirmationDialog(
+                    getString(R.string.receive_news_and_offers_request_title),
+                    getString(R.string.receive_news_and_offers_request_body),
                     R.string.app_entry_dialog_accept,
                     R.string.app_entry_dialog_not_now,
-                    Some(color)
+                    Some(R.string.app_entry_dialog_privacy_policy),
+                    color
                   )
                 )
               case false => Future.successful(Some(false))

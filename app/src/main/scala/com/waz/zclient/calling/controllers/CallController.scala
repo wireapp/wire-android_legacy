@@ -23,7 +23,7 @@ import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
+import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
@@ -183,6 +183,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
 
   val conversation        = callingZms.zip(callConvId) flatMap { case (z, cId) => z.convsStorage.signal(cId) }
+  val convMuteStatus      = conversation.map(_.muted)
   val conversationName    = conversation.map(_.displayName)
   val conversationMembers = for {
     zms     <- callingZms
@@ -263,8 +264,18 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     active
   }
 
+  private lazy val availability = for {
+    zms   <- callingZms
+    users <- userStorage
+    self  <- users.signal(zms.selfUserId)
+  } yield self.availability
+
   onCallStarted.on(Threading.Ui) { _ =>
-    CallingActivity.start(cxt)
+    Signal(availability, convMuteStatus).head.foreach {
+      case (Availability.Away, _) =>
+      case (Availability.Busy, muted) if muted.isAllMuted =>
+      case _ => CallingActivity.start(cxt)
+    }
   }(EventContext.Global)
 
   (lastCallAccountId zip isCallEstablished).onChanged.filter(_._2 == true) { case (userId, _) =>

@@ -185,13 +185,13 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
       _                   <- resp match {
         case Right(Some(am)) =>
           (if (!askMarketingConsent) Future.successful(Some(false)) else
-            showConfirmationDialogWithNeutralButton(
-              R.string.receive_news_and_offers_request_title,
-              R.string.receive_news_and_offers_request_body,
-              R.string.app_entry_dialog_privacy_policy,
+            showConfirmationDialog(
+              getString(R.string.receive_news_and_offers_request_title),
+              getString(R.string.receive_news_and_offers_request_body),
               R.string.app_entry_dialog_accept,
               R.string.app_entry_dialog_no_thanks,
-              Some(color)
+              Some(R.string.app_entry_dialog_privacy_policy),
+              color
             )).map { consent =>
             am.setMarketingConsent(consent)
             if (consent.isEmpty) inject[BrowserController].openPrivacyPolicy()
