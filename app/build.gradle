@@ -36,17 +36,7 @@ ext {
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 
-    zMessagingDevVersion = ''
-    if (System.getenv("LOCAL_ZMESSAGING_VERSION") != null) {
-        zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION")
-    } else if (System.getenv("ZMESSAGING_VERSION") != null) {
-        zMessagingDevVersion = System.getenv("ZMESSAGING_VERSION")
-    } else if (zMessagingVersion.endsWith("-PR") || zMessagingVersion.endsWith("-SNAPSHOT")) {
-        zMessagingDevVersion = zMessagingVersion
-    } else {
-        zMessagingDevVersion = zMessagingVersion + "-DEV"
-    }
-
+    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '-DEV')
     zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
 
 }
