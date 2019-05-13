@@ -20,6 +20,7 @@ package com.waz.zclient.calling.controllers
 import android.Manifest.permission._
 import com.waz.api.NetworkMode
 import com.waz.content.GlobalPreferences.AutoAnswerCallPrefKey
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -28,6 +29,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils.{getString, showConfirmationDialog, showErrorDialog, showPermissionsErrorDialog}
 import com.waz.zclient.utils.PhoneUtils
@@ -41,11 +43,11 @@ import scala.util.control.NonFatal
   * This class needs to be activity scoped so that it can show dialogs and handle user actions before finally starting a
   * call on the appropriate account and conversation. Once a call is started, the CallingController takes over
   */
-class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends Injectable {
+class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventContext) extends Injectable with DerivedLogTag {
 
   import Threading.Implicits.Ui
 
-  val callController = inject[CallController]
+  private val callController = inject[CallController]
   import callController._
 
   for {
@@ -115,7 +117,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
               )
             case _                                => Future.successful(true)
           }
-        members           <- conversationController.loadMembers(newCallConv.id)
+        members           <- inject[ConversationController].loadMembers(newCallConv.id)
         true              <-
           if (members.size > 5 && !acceptingCall && !isJoiningCall) //!acceptingCall is superfluous, but here for clarity
             showConfirmationDialog(
