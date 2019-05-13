@@ -191,7 +191,6 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         wave_graph_view.keepScreenOn = false
         showAudioFilters()
         recordingDisposable?.dispose()
-        audioService.playPcmAudio(recordFile)
     }
 
     fun sendRecording() {
@@ -200,20 +199,18 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     fun applyAudioEffectAndPlay(effect: AudioEffect) {
         val avsEffects = com.waz.audioeffect.AudioEffect()
-        val sourceFile = recordFile.absolutePath
-        val targetFile = recordWithEffectFile.absolutePath
-        val player = MediaPlayer()
-
         try {
-            val res = avsEffects.applyEffectWav(sourceFile, targetFile, effect.avsOrdinal, true)
-            if (res < 0) throw RuntimeException("applyEffectWav returned error code: $res")
+            val res = avsEffects.applyEffectPCM(
+                recordFile.absolutePath,
+                recordWithEffectFile.absolutePath,
+                AudioService.Companion.Pcm.sampleRate,
+                effect.avsOrdinal,
+                true)
 
-            player.setDataSource(recordWithEffectFile.absolutePath)
-            player.prepare()
-            player.start()
+            if (res < 0) throw RuntimeException("applyEffectWav returned error code: $res")
+            audioService.playPcmAudio(recordWithEffectFile)
         } catch (ex: Exception) {
             println("Exception while applying audio effect. $ex")
-            player.release()
         } finally {
             avsEffects.destroy()
         }

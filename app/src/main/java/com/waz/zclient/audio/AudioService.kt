@@ -8,7 +8,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder.LITTLE_ENDIAN
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.fixedRateTimer
 
 interface AudioService {
@@ -16,13 +15,16 @@ interface AudioService {
         data class RecordingProgress(val maxAmplitude: Int)
 
         object Pcm {
-            val sampleRate = 44100
-            val inputChannel = AudioFormat.CHANNEL_IN_MONO
-            val outputChannel = AudioFormat.CHANNEL_OUT_MONO
-            val sampleFormat = AudioFormat.ENCODING_PCM_16BIT
-            val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, inputChannel, sampleFormat)
+            const val sampleRate = 44100
+            const val inputChannel = AudioFormat.CHANNEL_IN_MONO
+            const val outputChannel = AudioFormat.CHANNEL_OUT_MONO
+            const val sampleFormat = AudioFormat.ENCODING_PCM_16BIT
+            const val readBufferSize = 1 shl 13
+            val recorderBufferSize =
+                Math.max(1 shl 16, AudioRecord.getMinBufferSize(sampleRate, inputChannel, sampleFormat))
         }
     }
+
 
     /**
      * Returns Observable which will emmit one element when audio focus is granted and
@@ -99,26 +101,24 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
     override fun recordPcmAudio(targetFile: File): Observable<AudioService.Companion.RecordingProgress> =
         Observable.create { emitter ->
-            val audioSource = MediaRecorder.AudioSource.MIC
-            val sampleRate = 44100
-            val inputChannel = AudioFormat.CHANNEL_IN_MONO
-            val sampleFormat = AudioFormat.ENCODING_PCM_16BIT
-            val recorderBufferSize = AudioRecord.getMinBufferSize(sampleRate, inputChannel, sampleFormat)
-
             var fos: FileOutputStream? = null
-            val recorder = AudioRecord(audioSource, sampleRate, inputChannel, sampleFormat, recorderBufferSize)
-            val recorderBuffer = ShortArray(recorderBufferSize)
+            val recorder = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                AudioService.Companion.Pcm.sampleRate,
+                AudioService.Companion.Pcm.inputChannel,
+                AudioService.Companion.Pcm.sampleFormat,
+                AudioService.Companion.Pcm.recorderBufferSize
+            )
+            val readBuffer = ShortArray(AudioService.Companion.Pcm.readBufferSize)
             recorder.startRecording()
-
-            val cancelled = AtomicBoolean(false)
 
             Thread(Runnable {
                 try {
                     fos = FileOutputStream(targetFile)
-                    var shortsRead = recorder.read(recorderBuffer, 0, recorderBufferSize)
+                    var shortsRead = recorder.read(readBuffer, 0, AudioService.Companion.Pcm.readBufferSize)
                     while (shortsRead > 0 && !emitter.isDisposed) {
                         val bytes = ByteBuffer.allocateDirect(shortsRead * Short.SIZE_BYTES).order(LITTLE_ENDIAN)
-                        val shorts = bytes.asShortBuffer().put(recorderBuffer, 0, shortsRead)
+                        val shorts = bytes.asShortBuffer().put(readBuffer, 0, shortsRead)
                         shorts.flip()
 
                         var maxAmplitude = 0
@@ -128,11 +128,9 @@ class AudioServiceImpl(private val context: Context): AudioService {
                                 maxAmplitude = elem.toInt()
                         }
 
-                        bytes.rewind()
-                        fos?.write(bytes.array())
-
+                        fos?.channel?.write(bytes)
                         emitter.onNext(AudioService.Companion.RecordingProgress(maxAmplitude))
-                        shortsRead = recorder.read(recorderBuffer, 0, recorderBufferSize)
+                        shortsRead = recorder.read(readBuffer, 0, AudioService.Companion.Pcm.readBufferSize)
                     }
                 } catch (ex: Exception) {
                     try {
@@ -146,6 +144,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
             emitter.setCancellable {
                 try {
+                    recorder.stop()
                     recorder.release()
                     fos?.flush()
                     fos?.close()
@@ -159,13 +158,13 @@ class AudioServiceImpl(private val context: Context): AudioService {
             AudioService.Companion.Pcm.sampleRate,
             AudioService.Companion.Pcm.outputChannel,
             AudioService.Companion.Pcm.sampleFormat,
-            AudioService.Companion.Pcm.minBufferSize,
+            AudioService.Companion.Pcm.readBufferSize,
             AudioTrack.MODE_STREAM)
 
         track.play()
 
         Thread(Runnable {
-            val playerBuffer = ByteArray(AudioService.Companion.Pcm.minBufferSize)
+            val playerBuffer = ByteArray(AudioService.Companion.Pcm.readBufferSize)
             val fis = FileInputStream(targetFile)
 
             var readCount = fis.read(playerBuffer)
@@ -173,7 +172,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
                 track.write(playerBuffer, 0, readCount)
                 readCount = fis.read(playerBuffer)
             }
-        })
+        }).start()
 
     }
 
