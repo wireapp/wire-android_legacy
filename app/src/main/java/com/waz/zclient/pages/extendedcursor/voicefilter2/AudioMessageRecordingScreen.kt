@@ -1,6 +1,7 @@
 package com.waz.zclient.pages.extendedcursor.voicefilter2
 
 import android.content.Context
+import android.media.AudioTrack
 import android.media.MediaPlayer
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -15,6 +16,7 @@ import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.audio_message_recording_screen.view.*
 import java.io.File
+import kotlin.concurrent.fixedRateTimer
 
 class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     ViewAnimator(context, attrs), View.OnClickListener {
@@ -38,6 +40,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     private val recordFile: File = File(context.cacheDir, "record_temp.pcm")
     private val recordWithEffectFile: File = File(context.cacheDir, "record_with_effect_temp.pcm")
     private val recordLevels: MutableList<Int> = mutableListOf()
+    private var audioTrack: AudioTrack? = null
 
     private lateinit var currentCenterButton: CenterButton
     private var listener: Listener? = null
@@ -208,12 +211,35 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
                 true)
 
             if (res < 0) throw RuntimeException("applyEffectWav returned error code: $res")
-            audioService.playPcmAudio(recordWithEffectFile)
         } catch (ex: Exception) {
             println("Exception while applying audio effect. $ex")
         } finally {
             avsEffects.destroy()
         }
+    }
+
+    fun playAudio() {
+        audioTrack = audioService.preparePcmAudioTrack(recordWithEffectFile)
+        audioTrack?.play()
+
+        val audioDuration = AudioService.Companion.Pcm
+            .durationInMillisFromByteCount(recordWithEffectFile.length())
+
+        val maxAmplitudeTask = fixedRateTimer(
+            "displaying_pcm_progress_$recordWithEffectFile",
+            false,
+            0L,
+            50
+        ) {
+            val currentDuration = AudioService.Companion.Pcm
+                .durationFromInMillisFromSampleCount(audioTrack!!.playbackHeadPosition.toLong())
+
+
+
+            if (audioDuration == currentDuration) cancel()
+        }
+
+
     }
 
 }

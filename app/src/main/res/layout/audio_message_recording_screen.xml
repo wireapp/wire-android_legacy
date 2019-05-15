@@ -207,7 +207,7 @@
             >
 
             <com.waz.zclient.pages.extendedcursor.voicefilter.WaveBinView
-                android:id="@+id/wbv__voice_filter"
+                android:id="@+id/wave_bin_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 />

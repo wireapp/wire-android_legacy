@@ -22,6 +22,11 @@ interface AudioService {
             const val readBufferSize = 1 shl 13
             val recorderBufferSize =
                 Math.max(1 shl 16, AudioRecord.getMinBufferSize(sampleRate, inputChannel, sampleFormat))
+
+            fun durationInMillisFromByteCount(byteCount: Long): Long =
+                durationFromInMillisFromSampleCount(byteCount / Short.SIZE_BYTES)
+            fun durationFromInMillisFromSampleCount(sampleCount: Long): Long =
+                sampleCount * 1000L / sampleRate
         }
     }
 
@@ -44,7 +49,7 @@ interface AudioService {
 
     fun recordPcmAudio(targetFile: File): Observable<RecordingProgress>
 
-    fun playPcmAudio(targetFile: File)
+    fun preparePcmAudioTrack(targetFile: File): AudioTrack
 }
 
 class AudioServiceImpl(private val context: Context): AudioService {
@@ -152,7 +157,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
             }
         }
 
-    override fun playPcmAudio(targetFile: File) {
+    override fun preparePcmAudioTrack(targetFile: File): AudioTrack {
         val track = AudioTrack(
             AudioManager.STREAM_MUSIC,
             AudioService.Companion.Pcm.sampleRate,
@@ -160,8 +165,6 @@ class AudioServiceImpl(private val context: Context): AudioService {
             AudioService.Companion.Pcm.sampleFormat,
             AudioService.Companion.Pcm.readBufferSize,
             AudioTrack.MODE_STREAM)
-
-        track.play()
 
         Thread(Runnable {
             val playerBuffer = ByteArray(AudioService.Companion.Pcm.readBufferSize)
@@ -174,6 +177,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
             }
         }).start()
 
+        return track
     }
 
 }
