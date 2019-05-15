@@ -114,9 +114,10 @@
 
         <android.support.v7.widget.GridLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             app:columnCount="4"
             app:useDefaultMargins="true"
+            android:layout_weight="1"
             android:layout_marginBottom="@dimen/wire__padding__32"
             android:layout_marginLeft="@dimen/wire__padding__16"
             android:layout_marginRight="@dimen/wire__padding__16"
@@ -220,7 +221,7 @@
                 >
 
                 <android.support.v7.widget.AppCompatTextView
-                    android:id="@+id/tv__track_time"
+                    android:id="@+id/time_label"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -229,7 +230,7 @@
                     />
 
                 <android.support.v7.widget.AppCompatTextView
-                    android:id="@+id/tv__voice_filter__hint"
+                    android:id="@+id/audio_filters_hint"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"

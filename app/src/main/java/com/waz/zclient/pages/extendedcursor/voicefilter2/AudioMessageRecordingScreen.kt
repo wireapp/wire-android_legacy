@@ -16,6 +16,7 @@ import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.audio_message_recording_screen.view.*
 import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.fixedRateTimer
 
 class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
@@ -211,6 +212,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
                 true)
 
             if (res < 0) throw RuntimeException("applyEffectWav returned error code: $res")
+            playAudio()
         } catch (ex: Exception) {
             println("Exception while applying audio effect. $ex")
         } finally {
@@ -219,6 +221,8 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     }
 
     fun playAudio() {
+        audio_filters_hint.visibility = View.GONE
+
         audioTrack = audioService.preparePcmAudioTrack(recordWithEffectFile)
         audioTrack?.play()
 
@@ -234,7 +238,10 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             val currentDuration = AudioService.Companion.Pcm
                 .durationFromInMillisFromSampleCount(audioTrack!!.playbackHeadPosition.toLong())
 
-
+            time_label.post {
+                println("updating audio progress: ${TimeUnit.MILLISECONDS.toSeconds(currentDuration)}")
+                time_label.text = TimeUnit.MILLISECONDS.toSeconds(currentDuration).toString()
+            }
 
             if (audioDuration == currentDuration) cancel()
         }
