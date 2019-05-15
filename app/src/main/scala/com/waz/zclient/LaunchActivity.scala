@@ -45,7 +45,12 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     }
 
     if (backendController.shouldShowBackendSelector) showDialog(callback)
-    else callback(backendController.getStoredBackendConfig.getOrElse(Backend.ProdBackend))
+    else backendController.getStoredBackendConfig match {
+      case Some(be) => callback(be)
+      case None =>
+        backendController.setStoredBackendConfig(Backend.ProdBackend)
+        callback(Backend.ProdBackend)
+    }
   }
 
   /// Presents a dialog to select backend.
