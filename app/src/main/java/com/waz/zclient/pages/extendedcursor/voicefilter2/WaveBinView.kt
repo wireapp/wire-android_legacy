@@ -90,7 +90,25 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     }
 
     fun setAudioLevels(levels: IntArray) {
-        this.levels = levels
+        when {
+            levels.size <= 1 -> {
+                this.levels = IntArray(MAX_NUM_OF_LEVELS)
+            }
+            levels.size < MAX_NUM_OF_LEVELS -> {
+                val interpolation = LinearInterpolation(levels, MAX_NUM_OF_LEVELS)
+                this.levels = IntArray(MAX_NUM_OF_LEVELS) { i -> interpolation.interpolate(i) }
+
+                println("Audio levels: ${this.levels}")
+            }
+            else -> {
+                val dx = levels.size.toFloat() / MAX_NUM_OF_LEVELS
+                this.levels = IntArray(MAX_NUM_OF_LEVELS) { i ->
+                    (i * dx).toInt().rangeTo(((i + 1f) * dx).toInt()).map { levels[it] }.max()!!
+                }
+
+                println("Audio levels: ${this.levels}")
+            }
+        }
     }
 
     fun setAudioPlayingProgress(current: Long, total: Long) {

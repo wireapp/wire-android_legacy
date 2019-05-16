@@ -41,6 +41,7 @@ import org.junit.runner.RunWith
 import org.junit.{After, Before, Rule, Test}
 import org.mockito.Mockito
 import com.waz.model.errors._
+import com.waz.sync.SyncServiceHandle
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -52,6 +53,7 @@ class AssetServiceTest {
 
   val assetsClient: AssetClient2 = Mockito.mock(classOf[AssetClient2], "assetsClient")
   val uriHelper: UriHelper = Mockito.mock(classOf[AndroidUriHelper], "uriHelper")
+  val syncHandler: SyncServiceHandle = Mockito.mock(classOf[SyncServiceHandle], "syncHandler")
 
   val lruCacheDirectory = new File(getContext.getCacheDir, s"assets_${System.currentTimeMillis()}")
   val rawCacheDirectory = new File(getContext.getCacheDir, s"raw_assets_${System.currentTimeMillis()}")
@@ -59,7 +61,7 @@ class AssetServiceTest {
   val uriHelperImpl = new AndroidUriHelper(getContext)
   val detailsService = new AssetDetailsServiceImpl(uriHelperImpl)(getContext, global)
   val contentCache = new AssetContentCacheImpl(cacheDirectory = lruCacheDirectory, directorySizeThreshold = 1024 * 1024 * 200L, sizeCheckingInterval = 30.seconds)(Threading.BlockingIO, EventContext.Global)
-  val uploadContentCache = new RawAssetContentCacheImpl(rawCacheDirectory)(Threading.BlockingIO)
+  val uploadContentCache = new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.BlockingIO)
   val transformationsService = new AssetTransformationsServiceImpl(List(new ImageDownscalingCompressing(new AndroidImageRecoder)))
   val restrictionsService = new AssetRestrictionsServiceImpl(uriHelperImpl, None)
   val previewService = new AssetPreviewServiceImpl()(getContext, global)
@@ -75,7 +77,8 @@ class AssetServiceTest {
     uriHelper,
     contentCache,
     uploadContentCache,
-    assetsClient
+    assetsClient,
+    syncHandler
   )(global)
 
   val DatabaseName = s"test_db_${System.currentTimeMillis()}"
@@ -115,7 +118,7 @@ class AssetServiceTest {
     Mockito.when(uriHelper.openInputStream(uri)).thenCallRealMethod()
 
     for {
-      videoAsset <- assetService.createAndSaveRawAsset(content, NoEncryption, public = true, Retention.Volatile, None)
+      videoAsset <- assetService.createAndSaveUploadAsset(content, NoEncryption, public = true, Retention.Volatile, None)
       errorOrUpdatedAsset <- assetService.createAndSavePreview(videoAsset).modelToEither
     } yield {
       lazy val errorMsg = s"Updated asset: $errorOrUpdatedAsset"

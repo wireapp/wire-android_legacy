@@ -129,6 +129,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     fun setAccentColor(color: Int) {
         wave_graph_view.setAccentColor(color)
+        wave_bin_view.setAccentColor(color)
     }
 
     private fun setCenterButton(button: CenterButton) {
@@ -229,6 +230,9 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         val audioDuration = AudioService.Companion.Pcm
             .durationInMillisFromByteCount(recordWithEffectFile.length())
 
+        println("Setting levels $recordLevels")
+        wave_bin_view.setAudioLevels(recordLevels.toIntArray())
+
         val maxAmplitudeTask = fixedRateTimer(
             "displaying_pcm_progress_$recordWithEffectFile",
             false,
@@ -240,6 +244,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
             time_label.post {
                 println("updating audio progress: ${TimeUnit.MILLISECONDS.toSeconds(currentDuration)}")
+                wave_bin_view.setAudioPlayingProgress(currentDuration, audioDuration)
                 time_label.text = TimeUnit.MILLISECONDS.toSeconds(currentDuration).toString()
             }
 

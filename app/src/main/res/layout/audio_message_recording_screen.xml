@@ -207,7 +207,7 @@
             android:layout_marginRight="@dimen/wire__padding__16"
             >
 
-            <com.waz.zclient.pages.extendedcursor.voicefilter.WaveBinView
+            <com.waz.zclient.pages.extendedcursor.voicefilter2.WaveBinView
                 android:id="@+id/wave_bin_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

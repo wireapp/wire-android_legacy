@@ -64,7 +64,7 @@ class RawAssetStorageTest extends GeneralStorageTest(UploadAssetDao)(
       details = ImageDetails(Dim2(1,2)),
       assetId = None,
       status = AssetStatus.Done,
-      preview = RawPreviewEmpty
+      preview = Preview.Empty
     )
 //    RawAsset(
 //      id = RawAssetId(),
