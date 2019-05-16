@@ -367,13 +367,14 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
-    inject[BackendController].getStoredBackendConfig.foreach { be =>
-      ensureInitialized(be)
-    }
+    ensureInitialized()
   }
 
-  def ensureInitialized(backend: BackendConfig) = {
+  def ensureInitialized(): Unit =
+    if (Option(ZMessaging.currentGlobal).isEmpty)
+      inject[BackendController].getStoredBackendConfig.foreach(ensureInitialized)
 
+  def ensureInitialized(backend: BackendConfig) = {
     JobManager.create(this).addJobCreator(new JobCreator {
       override def create(tag: String) =
         if      (tag.contains(FetchJob.Tag))          new FetchJob
@@ -419,3 +420,4 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     super.onTerminate()
   }
 }
+
