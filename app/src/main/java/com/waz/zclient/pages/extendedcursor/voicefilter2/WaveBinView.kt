@@ -20,7 +20,7 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
 
     private val activePaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val inactivePaint: Paint
-    private var levels: IntArray? = null
+    private var levels: FloatArray? = null
     private val binWidth: Int
     private val binSpaceWidth: Int
 
@@ -54,15 +54,15 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
             }
             var lh = levels!![i] * height
             if (lh < binWidth) {
-                lh = binWidth
+                lh = binWidth.toFloat()
             }
             val top = (height - lh) / 2
 
             canvas.drawRect(
                 currentX.toFloat(),
-                top.toFloat(),
+                top,
                 (currentX + binWidth).toFloat(),
-                (top + lh).toFloat(),
+                (top + lh),
                 activePaint)
             currentX += binWidth + binSpaceWidth
         }
@@ -70,16 +70,16 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
         for (i in breakPoint until MAX_NUM_OF_LEVELS) {
             var lh = levels!![i] * height
             if (lh < binWidth) {
-                lh = binWidth
+                lh = binWidth.toFloat()
             }
             val top = (height - lh) / 2
 
 
             canvas.drawRect(
                 currentX.toFloat(),
-                top.toFloat(),
+                top,
                 (currentX + binWidth).toFloat(),
-                (top + lh).toFloat(),
+                (top + lh),
                 inactivePaint)
             currentX += binWidth + binSpaceWidth
         }
@@ -92,23 +92,30 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     fun setAudioLevels(levels: IntArray) {
         when {
             levels.size <= 1 -> {
-                this.levels = IntArray(MAX_NUM_OF_LEVELS)
+                this.levels = FloatArray(MAX_NUM_OF_LEVELS)
             }
             levels.size < MAX_NUM_OF_LEVELS -> {
                 val interpolation = LinearInterpolation(levels, MAX_NUM_OF_LEVELS)
-                this.levels = IntArray(MAX_NUM_OF_LEVELS) { i -> interpolation.interpolate(i) }
-
-                println("Audio levels: ${this.levels}")
+                this.levels = FloatArray(MAX_NUM_OF_LEVELS) { i ->
+                    normalizeAudioLoudness(interpolation.interpolate(i))
+                }
             }
             else -> {
                 val dx = levels.size.toFloat() / MAX_NUM_OF_LEVELS
-                this.levels = IntArray(MAX_NUM_OF_LEVELS) { i ->
-                    (i * dx).toInt().rangeTo(((i + 1f) * dx).toInt()).map { levels[it] }.max()!!
+                this.levels = FloatArray(MAX_NUM_OF_LEVELS) { i ->
+                    val level = (i * dx).toInt().rangeTo(((i + 1f) * dx).toInt()).map { levels[it] }.max()!!
+                    normalizeAudioLoudness(level)
                 }
-
-                println("Audio levels: ${this.levels}")
             }
         }
+    }
+
+    private fun normalizeAudioLoudness(level: Int): Float {
+        val n = Math.min(Math.max(Short.MIN_VALUE.toInt(), level), Short.MAX_VALUE.toInt())
+        val doubleValue = if (n < 0) n.toDouble() / -32768 else n.toDouble() / 32767
+        val dbfsSquare = 20 * Math.log10(Math.abs(doubleValue))
+
+        return Math.pow(2.0, Math.min(dbfsSquare, 0.0) / 10.0).toFloat()
     }
 
     fun setAudioPlayingProgress(current: Long, total: Long) {

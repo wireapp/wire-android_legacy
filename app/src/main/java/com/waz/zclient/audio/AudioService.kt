@@ -19,7 +19,7 @@ interface AudioService {
             const val inputChannel = AudioFormat.CHANNEL_IN_MONO
             const val outputChannel = AudioFormat.CHANNEL_OUT_MONO
             const val sampleFormat = AudioFormat.ENCODING_PCM_16BIT
-            const val readBufferSize = 1 shl 13
+            const val readBufferSize = 1 shl 11
             val recorderBufferSize =
                 Math.max(1 shl 16, AudioRecord.getMinBufferSize(sampleRate, inputChannel, sampleFormat))
 
