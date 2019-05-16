@@ -48,6 +48,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
+import com.waz.sync.client.CustomBackendClient
 import com.waz.sync.{SyncHandler, SyncRequestService}
 import com.waz.threading.Threading
 import com.waz.utils.SafeBase64
@@ -69,8 +70,8 @@ import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.controllers.navigation.INavigationController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversation.creation.CreateConversationController
+import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.deeplinks.DeepLinkService
@@ -85,7 +86,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendPicker, Callback, ExternalFileSharing, LocalThumbnailCache, UiStorage}
+import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
@@ -148,6 +149,7 @@ object WireApplication extends DerivedLogTag {
     bind [PermissionsService]             to inject[GlobalModule].permissions
     bind [MetaDataService]                to inject[GlobalModule].metadata
     bind [LogsService]                    to inject[GlobalModule].logsService
+    bind [CustomBackendClient]            to inject[GlobalModule].customBackendClient
 
     import com.waz.threading.Threading.Implicits.Background
     bind [AccountToImageLoader]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.imageLoader)))
@@ -181,6 +183,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[MessageAndLikesStorage]]        to inject[Signal[ZMessaging]].map(_.msgAndLikes)
     bind [Signal[ReadReceiptsStorage]]           to inject[Signal[ZMessaging]].map(_.readReceiptsStorage)
     bind [Signal[ReactionsStorage]]              to inject[Signal[ZMessaging]].map(_.reactionsStorage)
+    bind [Signal[FCMNotificationStatsService]]   to inject[Signal[ZMessaging]].map(_.fcmNotStatsService)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers
@@ -198,6 +201,7 @@ object WireApplication extends DerivedLogTag {
     bind [IConfirmationController]       toProvider controllerFactory.getConfirmationController
 
     // global controllers
+    bind [BackendController]       to new BackendController()
     bind [WebSocketController]     to new WebSocketController
     bind [CrashController]         to new CrashController
     bind [AccentColorController]   to new AccentColorController()
@@ -349,12 +353,12 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     SafeBase64.setDelegate(new AndroidBase64Delegate)
 
     ZMessaging.globalReady.future.onSuccess {
-      case _ => if (BuildConfig.LOGGING_ENABLED) {
+      case _ =>
         InternalLog.setLogsService(inject[LogsService])
         InternalLog.add(new AndroidLogOutput(showSafeOnly = BuildConfig.SAFE_LOGGING))
-        InternalLog.add(new BufferedLogOutput(baseDir = getApplicationContext.getApplicationInfo.dataDir,
+        InternalLog.add(new BufferedLogOutput(
+          baseDir = getApplicationContext.getApplicationInfo.dataDir,
           showSafeOnly = BuildConfig.SAFE_LOGGING))
-      }
     }
 
     verbose(l"onCreate")
@@ -363,13 +367,14 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
-    new BackendPicker(this).withBackend(new Callback[BackendConfig]() {
-      def callback(be: BackendConfig) = ensureInitialized(be)
-    }, Backend.ProdBackend)
+    ensureInitialized()
   }
 
-  def ensureInitialized(backend: BackendConfig) = {
+  def ensureInitialized(): Unit =
+    if (Option(ZMessaging.currentGlobal).isEmpty)
+      inject[BackendController].getStoredBackendConfig.foreach(ensureInitialized)
 
+  def ensureInitialized(backend: BackendConfig) = {
     JobManager.create(this).addJobCreator(new JobCreator {
       override def create(tag: String) =
         if      (tag.contains(FetchJob.Tag))          new FetchJob
@@ -415,3 +420,4 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     super.onTerminate()
   }
 }
+

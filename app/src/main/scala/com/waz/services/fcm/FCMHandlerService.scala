@@ -23,11 +23,12 @@ import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service.push.PushService.FetchFromIdle
-import com.waz.service.push.{PushService, ReceivedPushData, ReceivedPushStorage}
-import com.waz.service.{AccountsService, NetworkModeService, ZMessaging}
+import com.waz.service.push._
+import com.waz.service.{AccountsService, FCMNotificationStatsService, NetworkModeService, ZMessaging}
 import com.waz.services.ZMessagingService
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
+import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import org.json
 import org.threeten.bp.Instant
@@ -58,8 +59,9 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     * it is sometimes not enough time to process everything - leading to missing messages!
     */
   override def onMessageReceived(remoteMessage: RemoteMessage) = {
-
     import FCMHandlerService._
+
+    WireApplication.APP_INSTANCE.ensureInitialized()
 
     Option(remoteMessage.getData).map(_.asScala.toMap).foreach { data =>
       verbose(l"onMessageReceived with data: ${redactedString(data.toString())}")
@@ -67,31 +69,24 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
         case Some(glob) if glob.backend.pushSenderId == remoteMessage.getFrom =>
           data.get(UserKey).map(UserId) match {
             case Some(target) =>
-              accounts.accountsWithManagers.head.flatMap { accs =>
+              accounts.accountsWithManagers.head.foreach { accs =>
                 accs.find(_ == target) match {
                   case Some(acc) =>
-                    accounts.getZms(acc).flatMap {
+                    accounts.getZms(acc).foreach {
                       case Some(zms) => FCMHandler(zms, data, Instant.ofEpochMilli(remoteMessage.getSentTime))
-                      case _ =>
-                        warn(l"Couldn't instantiate zms instance")
-                        Future.successful({})
+                      case _         => warn(l"Couldn't instantiate zms instance")
                     }
-                  case _ =>
-                    warn(l"Could not find target account for notification")
-                    Future.successful({})
+                  case _ => warn(l"Could not find target account for notification")
                 }
               }
             case _ =>
               warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
               tracking.exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
-              Future.successful({})
           }
         case Some(_) =>
           warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
-          Future.successful({})
         case _ =>
           warn(l"No ZMessaging global available - calling too early")
-          Future.successful({})
       }
     }
   }
@@ -109,20 +104,20 @@ object FCMHandlerService {
 
   val UserKeyMissingMsg = "Notification did not contain user key - discarding"
 
-  class FCMHandler(userId:         UserId,
-                   accounts:       AccountsService,
-                   push:           PushService,
-                   network:        NetworkModeService,
-                   receivedPushes: ReceivedPushStorage,
-                   sentTime:       Instant) extends DerivedLogTag {
+  class FCMHandler(userId: UserId,
+                   accounts: AccountsService,
+                   push: PushService,
+                   network: NetworkModeService,
+                   fcmPushes: FCMNotificationStatsService,
+                   sentTime: Instant) extends DerivedLogTag {
 
     import com.waz.threading.Threading.Implicits.Background
+    import com.waz.model.FCMNotification.Pushed
 
     def handleMessage(data: Map[String, String]): Future[Unit] = {
       data match {
         case NoticeNotification(nId) =>
           addNotificationToProcess(Some(nId))
-
         case _ =>
           warn(l"Unexpected notification, sync anyway")
           addNotificationToProcess(None)
@@ -133,20 +128,12 @@ object FCMHandlerService {
       for {
         false <- accounts.accountState(userId).map(_ == InForeground).head
         drift <- push.beDrift.head
-        nw    <- network.networkMode.head
-        now   = clock.instant + drift
-        idle  = network.isDeviceIdleMode
-        _ <- nId.fold(Future.successful({})) { nId =>
-          receivedPushes.insert(
-            ReceivedPushData(
-              nId,
-              sentTime.until(now),
-              now,
-              nw,
-              network.getNetworkOperatorName,
-              idle
-            )).map(_ => {})
-        }
+        now   =  clock.instant + drift
+        idle  =  network.isDeviceIdleMode
+        _     <- nId match {
+                   case Some(n) => fcmPushes.markNotificationsWithState(Set(n), Pushed)
+                   case _       => Future.successful(())
+                 }
 
         /**
           * Warning: Here we want to trigger a direct fetch if we are in doze mode - when we get an FCM in doze mode, it is
@@ -157,13 +144,15 @@ object FCMHandlerService {
           * online at once. For that reason, we start a job which can run for as long as we need to avoid the app from being
           * killed mid-processing messages.
           */
-        _ <- if (idle) push.syncHistory(FetchFromIdle(nId)) else Serialized.future("fetch")(Future(FetchJob(userId, nId)))
+        _ <-     if (idle)  push.syncHistory(FetchFromIdle(nId))
+                 else Serialized.future("fetch")(Future(FetchJob(userId, nId)))
       } yield {}
   }
 
   object FCMHandler {
     def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
-      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.receivedPushStorage, sentTime).handleMessage(data)
+      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.fcmNotStatsService, sentTime)
+        .handleMessage(data)
   }
 
   val DataKey = "data"

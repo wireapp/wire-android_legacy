@@ -21,7 +21,6 @@ import android.app.Activity
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
-import android.net.Uri
 import android.os.{Bundle, Parcel, Parcelable}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
@@ -47,7 +46,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -77,7 +76,7 @@ trait AccountView {
   def setAccountLocked(locked: Boolean): Unit
 }
 
-class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper {
+class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper with DerivedLogTag {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -250,7 +249,8 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   view.onEmailClick.filter( _ => BuildConfig.ALLOW_CHANGE_OF_EMAIL).onUi { _ =>
     import Threading.Implicits.Ui
     accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
-      case Left(ex) => val (h, b) = DialogErrorMessage.genericError(ex.code)
+      case Left(ex) =>
+        val (h, b) = DialogErrorMessage.genericError(ex.code)
         showErrorDialog(h, b)
       case Right(hasPass) =>
         showPrefDialog(
@@ -301,9 +301,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     }(Threading.Ui)
   }
 
-  view.onPasswordResetClick.onUi { _ =>
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_password_reset))))
-  }
+  view.onPasswordResetClick.onUi { _ => inject[BrowserController].openForgotPassword() }
 
   view.onLogoutClick.onUi { _ =>
     showAlertDialog(context, null,

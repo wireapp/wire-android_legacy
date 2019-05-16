@@ -156,11 +156,6 @@ object ConversationListAdapter {
     override val filter = ConversationListController.IncomingListFilter
   }
 
-  case object Integration extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = ConversationListController.IntegrationFilter
-  }
-
   trait ConversationRowViewHolder extends RecyclerView.ViewHolder
 
   case class NormalConversationRowViewHolder(view: NormalConversationListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {

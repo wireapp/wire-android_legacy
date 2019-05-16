@@ -13,7 +13,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.30."
+    majorVersion = "3.33."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
@@ -22,21 +22,23 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingDevVersion = "141.0.2260"
+    zMessagingVersion = "141.0.2277"
     paging_version = "1.0.0"
-    // Release version number must be like this X.0(.Y)
-    zMessagingReleaseVersion = System.getenv("ZMESSAGING_VERSION") ?: '141.0.2260@aar'
 
-    avsVersion = '4.9.170@aar'
+    avsVersion = '4.9.12@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '4.9.9@aar'
+    customAvsVersion = '4.9.12@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
+
+    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '-DEV')
+    zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
+
 }
 
 if (project.file('user.gradle').exists()) {
@@ -118,6 +120,7 @@ android {
         buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
         buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
         buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
+        buildConfigField 'boolean',  'ALLOW_SSO',                    "$config.allowSSO"
         buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
         buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
         buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
@@ -126,10 +129,12 @@ android {
         buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
         buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
         buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
-        buildConfigField 'boolean',  'SUBMIT_CRASH_REPORTS',      "$config.submitCrashReports"
-        buildConfigField 'boolean',  'ALLOW_MARKETING_COMMUNICATION',      "$config.allowMarketingCommunication"
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',       "$config.submitCrashReports"
+        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
         buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
-        buildConfigField 'String', 'CUSTOM_URL_SCHEME',           "\"$config.custom_url_scheme\""
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',          "\"$config.custom_url_scheme\""
+        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH', "$config.new_password_minimum_length"
+        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH', "$config.new_password_maximum_length"
     }
 
     packagingOptions {
@@ -315,7 +320,7 @@ dependencies {
     // TODO   when there are different SE APIs in dev vs internal/prod)
     boolean internal = true
     for (String taskName : gradle.startParameter.taskNames) {
-        if (taskName.contains("Prod") || taskName.contains("Candidate")) {
+        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
             internal = false
             break
         }
@@ -351,7 +356,10 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
     implementation "com.google.android.gms:play-services-location:$playServicesVersion"
     implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
-    implementation 'com.google.firebase:firebase-messaging:17.3.0'
+    implementation ('com.google.firebase:firebase-messaging:17.3.0') {
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+    }
 
     //WorkManager
     def work_version = "1.0.0-alpha13"

@@ -105,9 +105,12 @@
             android:layout_gravity="center_horizontal|top"/>
 
         <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/empty_search_message"
+            android:id="@+id/error_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:layout_marginStart="@dimen/wire__padding__16"
+            android:layout_marginEnd="@dimen/wire__padding__16"
             android:textSize="@dimen/wire__text_size__small"
             android:textColor="@color/teams_error_red"
             android:gravity="center"

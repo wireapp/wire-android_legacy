@@ -65,6 +65,17 @@
     </FrameLayout>
 
     <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/password_policy_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/wire__padding__16"
+        android:gravity="center_vertical|start"
+        android:layout_gravity="start"
+        android:textColor="@color/white"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__regular"/>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/terms_of_service_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

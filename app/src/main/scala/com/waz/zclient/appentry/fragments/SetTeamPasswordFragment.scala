@@ -20,17 +20,19 @@ package com.waz.zclient.appentry.fragments
 import android.app.Activity
 import android.os.Bundle
 import android.text.InputType
-import android.view.View
+import android.view.{Gravity, View}
 import com.waz.api.EmailCredentials
 import com.waz.model.AccountData.Password
 import com.waz.model.{ConfirmationCode, EmailAddress}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
+import com.waz.utils.PasswordValidator
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.{AppEntryDialogs, CreateTeamFragment}
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.InputBox
-import com.waz.zclient.common.views.InputBox.PasswordValidator
+import com.waz.zclient.common.views.InputBox.SimpleValidator
 import com.waz.zclient.tracking.TeamAcceptedTerms
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils._
@@ -46,31 +48,59 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
 
   private lazy val inputField = view[InputBox](R.id.input_field)
 
+  private val passwordMinLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
+  private val passwordMaxLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
+  private val validator = PasswordValidator.createStrongPasswordValidator(passwordMinLength, passwordMaxLength)
+
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     inputField.foreach { inputField =>
       inputField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)
-      inputField.setValidator(PasswordValidator)
+
+      // This validator is to enable the input field confirmation button. Strong validation
+      // is enforced when this button is clicked.
+      inputField.setValidator(SimpleValidator)
+
+      // We need to adjust the behaviour of the error text view: It should always be visible,
+      // but it will become red when validation fails.
+      inputField.errorText.setGravity(Gravity.START)
+      inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
+      inputField.setShouldDisableOnClick(false)
+      inputField.setShouldClearErrorOnClick(false)
+      inputField.setShouldClearErrorOnTyping(false)
+      inputField.showErrorMessage(Some(getString(R.string.password_policy_hint, passwordMinLength)))
+
       inputField.editText.setText(createTeamController.password)
-      inputField.editText.addTextListener(createTeamController.password = _)
+
+      inputField.editText.addTextListener { text =>
+        createTeamController.password = text
+        inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
+      }
+
       inputField.editText.requestFocus()
       KeyboardUtils.showKeyboard(context.asInstanceOf[Activity])
-      inputField.setOnClick( text =>
-        AppEntryDialogs.showTermsAndConditions(context).flatMap {
-          case true =>
-            tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
-            val credentials = EmailCredentials(EmailAddress(createTeamController.teamEmail), Password(text), Some(ConfirmationCode(createTeamController.code)))
 
-            accountsService.register(credentials, createTeamController.teamUserName, Some(createTeamController.teamName)).flatMap {
-              case Left(error) =>
-                Future.successful(Some(getString(EmailError(error).bodyResource)))
-              case Right(am) =>
-                am.fold(Future.successful({}))(_.setMarketingConsent(createTeamController.receiveNewsAndOffers).map(_ => {})).map { _ =>
+      inputField.setOnClick( text =>
+        if (!validator.isValidPassword(text)) {
+          inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_error_red))
+          Future.successful(Some(getString(R.string.password_policy_hint, passwordMinLength)))
+        } else {
+          AppEntryDialogs.showTermsAndConditions(context, inject[BrowserController]).flatMap {
+            case true =>
+              tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
+              val credentials = EmailCredentials(EmailAddress(createTeamController.teamEmail), Password(text), Some(ConfirmationCode(createTeamController.code)))
+
+              accountsService.register(credentials, createTeamController.teamUserName, Some(createTeamController.teamName)).flatMap {
+                case Left(error) =>
+                  Future.successful(Some(getString(EmailError(error).bodyResource)))
+                case Right(am) =>
+                  am.fold(Future.successful({}))(_.setMarketingConsent(createTeamController.receiveNewsAndOffers).map(_ => {})).map { _ =>
                     showFragment(InviteToTeamFragment(), InviteToTeamFragment.Tag)
                     None
-                }
-            }
-          case false =>
-            Future.successful(None)
+                  }
+              }
+            case false =>
+              Future.successful(None)
+          }
         })
     }
   }

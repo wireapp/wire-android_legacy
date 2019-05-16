@@ -24,7 +24,7 @@ import android.arch.lifecycle.MutableLiveData
 import android.content.Context
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.{AndroidJUnit4, AndroidJUnitRunner}
-import androidx.work.test.WorkManagerTestInitHelper
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.waz.api.{NetworkMode, SyncState}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.{AndroidLogOutput, InternalLog}

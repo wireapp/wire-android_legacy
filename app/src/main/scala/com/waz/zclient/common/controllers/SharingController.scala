@@ -19,7 +19,7 @@ package com.waz.zclient.common.controllers
 
 import android.app.Activity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.ConvId
+import com.waz.model.{AccentColor, ConvId}
 import com.waz.service.assets.AssetService.RawAssetInput.UriInput
 import com.waz.service.conversation.ConversationsUiService
 import com.waz.threading.SerialDispatchQueue
@@ -27,6 +27,7 @@ import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.Intents._
 import com.waz.zclient.common.controllers.SharingController._
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.utils.ContextUtils.showWifiWarningDialog
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
@@ -51,14 +52,19 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   }
 
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
-    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) = {
+    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration], color: AccentColor) = {
       sendEvent ! (content, convs, expiration)
       inject[Signal[ConversationsUiService]].head.flatMap { convsUi =>
         content match {
           case TextContent(t) =>
             convsUi.sendTextMessages(convs, t, Nil, expiration)
           case uriContent =>
-            convsUi.sendAssetMessages(convs, uriContent.uris.map(UriInput), (s: Long) => showWifiWarningDialog(s)(activity), expiration)
+            convsUi.sendAssetMessages(
+              convs,
+              uriContent.uris.map(UriInput),
+              (s: Long) => showWifiWarningDialog(s, color)(dispatcher, activity),
+              expiration
+            )
         }
       }
     }
@@ -67,7 +73,8 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       Some(content) <- sharableContent.head
       convs         <- targetConvs.head
       expiration    <- ephemeralExpiration.head
-      _             <- send(content, convs, expiration)
+      color         <- inject[AccentColorController].accentColor.head
+      _             <- send(content, convs, expiration, color)
       _             = resetContent()
     } yield convs
   }
