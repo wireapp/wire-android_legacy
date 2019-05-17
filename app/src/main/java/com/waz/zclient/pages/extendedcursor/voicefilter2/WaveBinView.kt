@@ -103,7 +103,9 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
             else -> {
                 val dx = levels.size.toFloat() / MAX_NUM_OF_LEVELS
                 this.levels = FloatArray(MAX_NUM_OF_LEVELS) { i ->
-                    val level = (i * dx).toInt().rangeTo(((i + 1f) * dx).toInt()).map { levels[it] }.max()!!
+                    val level = (i * dx).toInt().rangeTo(((i + 1f) * dx).toInt())
+                        .map { levels.getOrNull(it) ?: 0 }
+                        .max()!!
                     normalizeAudioLoudness(level)
                 }
             }

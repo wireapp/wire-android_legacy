@@ -185,7 +185,6 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             .subscribe({ progress ->
                 recordLevels.add(progress.maxAmplitude)
                 wave_graph_view.setMaxAmplitude(progress.maxAmplitude)
-                println("Max amplitude ${progress.maxAmplitude}")
             }, { error ->
                 println("Error while recording $error")
                 wave_graph_view.keepScreenOn = false
@@ -223,32 +222,32 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     fun playAudio() {
         audio_filters_hint.visibility = View.GONE
+        audioTrack?.stop()
 
-        audioTrack = audioService.preparePcmAudioTrack(recordWithEffectFile)
-        audioTrack?.play()
+        val preparedAudioTrack = audioService.preparePcmAudioTrack(recordWithEffectFile)
+        audioTrack = preparedAudioTrack
+        preparedAudioTrack.play()
 
         val audioDuration = AudioService.Companion.Pcm
             .durationInMillisFromByteCount(recordWithEffectFile.length())
 
-        println("Setting levels $recordLevels")
         wave_bin_view.setAudioLevels(recordLevels.toIntArray())
 
-        val maxAmplitudeTask = fixedRateTimer(
+        fixedRateTimer(
             "displaying_pcm_progress_$recordWithEffectFile",
             false,
             0L,
             50
         ) {
             val currentDuration = AudioService.Companion.Pcm
-                .durationFromInMillisFromSampleCount(audioTrack!!.playbackHeadPosition.toLong())
+                .durationFromInMillisFromSampleCount(preparedAudioTrack.playbackHeadPosition.toLong())
 
             time_label.post {
-                println("updating audio progress: ${TimeUnit.MILLISECONDS.toSeconds(currentDuration)}")
                 wave_bin_view.setAudioPlayingProgress(currentDuration, audioDuration)
                 time_label.text = TimeUnit.MILLISECONDS.toSeconds(currentDuration).toString()
             }
 
-            if (audioDuration == currentDuration) cancel()
+            if (preparedAudioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) cancel()
         }
 
 
