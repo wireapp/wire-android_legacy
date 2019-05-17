@@ -86,31 +86,40 @@ class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver with DerivedLog
   implicit lazy val injector: Injector =
     context.getApplicationContext.asInstanceOf[WireApplication].module
 
-  private lazy val controller =
-    injector.binding[WebSocketController].getOrElse(throw new Exception(s"Failed to load WebSocketController")).apply()
-
-  private lazy val accounts =
-    injector.binding[AccountsService].getOrElse(throw new Exception(s"Failed to load AccountsService")).apply()
-
   override def onReceive(context: Context, intent: Intent): Unit = {
     this.context = context
     verbose(l"onReceive ${RichIntent(intent)}")
 
-    accounts.zmsInstances.head.foreach { zs =>
-      zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
-    } (Threading.Background)
+    WireApplication.APP_INSTANCE.ensureInitialized()
 
+    injector.binding[AccountsService] match {
+      case Some(accounts) =>
+        verbose(l"AccountsService loaded")
+        accounts().zmsInstances.head.foreach { zs =>
+          zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
+        } (Threading.Background)
 
-    controller.serviceInForeground.head.foreach {
-      case true =>
-        verbose(l"startForegroundService")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-          context.startForegroundService(new Intent(context, classOf[WebSocketService]))
-        else
-          WebSocketService(context)
-      case false =>
-        verbose(l"foreground service not needed, will wait for application to start service if necessary")
-    } (Threading.Ui)
+      case _ =>
+        error(l"Failed to load AccountsService")
+    }
+
+    injector.binding[WebSocketController] match {
+      case Some(controller) =>
+        verbose(l"WebSocketController loaded")
+        controller().serviceInForeground.head.foreach {
+          case true =>
+            verbose(l"startForegroundService")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+              context.startForegroundService(new Intent(context, classOf[WebSocketService]))
+            else
+              WebSocketService(context)
+          case false =>
+            verbose(l"foreground service not needed, will wait for application to start service if necessary")
+        } (Threading.Ui)
+
+      case None =>
+        error(l"Failed to load WebSocketController")
+    }
   }
 }
 
