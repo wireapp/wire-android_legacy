@@ -58,10 +58,8 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     * According to the docs, we have 10 seconds to process notifications upon receiving the `remoteMessage`.
     * it is sometimes not enough time to process everything - leading to missing messages!
     */
-  override def onMessageReceived(remoteMessage: RemoteMessage) = {
+  override def onMessageReceived(remoteMessage: RemoteMessage) = if (WireApplication.ensureInitialized()){
     import FCMHandlerService._
-
-    WireApplication.APP_INSTANCE.ensureInitialized()
 
     Option(remoteMessage.getData).map(_.asScala.toMap).foreach { data =>
       verbose(l"onMessageReceived with data: ${redactedString(data.toString())}")
