@@ -29,6 +29,7 @@ import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import android.support.v4.app.{FragmentActivity, FragmentManager}
 import android.telephony.TelephonyManager
+import android.util.Log
 import com.evernote.android.job.{JobCreator, JobManager}
 import com.google.android.gms.security.ProviderInstaller
 import com.waz.api.NetworkMode
@@ -96,6 +97,10 @@ import scala.util.control.NonFatal
 
 object WireApplication extends DerivedLogTag {
   var APP_INSTANCE: WireApplication = _
+
+  def ensureInitialized(): Boolean =
+    if (Option(APP_INSTANCE).isEmpty) false // too early
+    else APP_INSTANCE.ensureInitialized()
 
   type AccountToImageLoader = (UserId) => Future[Option[ImageLoader]]
   type AccountToAssetsStorage = (UserId) => Future[Option[AssetsStorage]]
@@ -370,11 +375,21 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     ensureInitialized()
   }
 
-  def ensureInitialized(): Unit =
-    if (Option(ZMessaging.currentGlobal).isEmpty)
-      inject[BackendController].getStoredBackendConfig.foreach(ensureInitialized)
+  private[waz] def ensureInitialized(): Boolean =
+    if (Option(ZMessaging.currentGlobal).isDefined) true // the app is initialized, nothing to do here
+    else
+      try {
+        inject[BackendController].getStoredBackendConfig.fold(false){ config =>
+          ensureInitialized(config)
+          true
+        }
+      } catch {
+        case t: Throwable =>
+          Log.e(WireApplication.getClass.getName, "Failed to initialize the app", t)
+          false
+      }
 
-  def ensureInitialized(backend: BackendConfig) = {
+  def ensureInitialized(backend: BackendConfig): Unit = {
     JobManager.create(this).addJobCreator(new JobCreator {
       override def create(tag: String) =
         if      (tag.contains(FetchJob.Tag))          new FetchJob
