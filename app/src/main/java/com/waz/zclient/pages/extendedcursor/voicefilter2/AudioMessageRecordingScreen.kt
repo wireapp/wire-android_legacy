@@ -2,7 +2,6 @@ package com.waz.zclient.pages.extendedcursor.voicefilter2
 
 import android.content.Context
 import android.media.AudioTrack
-import android.media.MediaPlayer
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -40,7 +39,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     private val audioService: AudioService = AudioServiceImpl(context)
     private val recordFile: File = File(context.cacheDir, "record_temp.pcm")
     private val recordWithEffectFile: File = File(context.cacheDir, "record_with_effect_temp.pcm")
-    private val recordLevels: MutableList<Int> = mutableListOf()
+    private val normalizedRecordLevels: MutableList<Float> = mutableListOf()
     private var audioTrack: AudioTrack? = null
 
     private lateinit var currentCenterButton: CenterButton
@@ -177,14 +176,15 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     fun startRecording() {
         showAudioRecordingInProgress()
         recordFile.delete()
-        recordLevels.clear()
+        normalizedRecordLevels.clear()
         wave_graph_view.keepScreenOn = true
 
         recordingDisposable = audioService.withAudioFocus()
             .flatMap { audioService.recordPcmAudio(recordFile) }
             .subscribe({ progress ->
-                recordLevels.add(progress.maxAmplitude)
-                wave_graph_view.setMaxAmplitude(progress.maxAmplitude)
+                val normalizedAudioLevel = normalizeAudioLoudness(progress.maxAmplitude)
+                normalizedRecordLevels.add(normalizedAudioLevel)
+                wave_graph_view.setMaxAmplitude(normalizedAudioLevel)
             }, { error ->
                 println("Error while recording $error")
                 wave_graph_view.keepScreenOn = false
@@ -231,7 +231,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         val audioDuration = AudioService.Companion.Pcm
             .durationInMillisFromByteCount(recordWithEffectFile.length())
 
-        wave_bin_view.setAudioLevels(recordLevels.toIntArray())
+        wave_bin_view.setAudioLevels(prepareAudioLevels(normalizedRecordLevels.toFloatArray(), 56))
 
         fixedRateTimer(
             "displaying_pcm_progress_$recordWithEffectFile",
@@ -249,8 +249,32 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
             if (preparedAudioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) cancel()
         }
+    }
 
+    private fun normalizeAudioLoudness(level: Int): Float {
+        val n = Math.min(Math.max(Short.MIN_VALUE.toInt(), level), Short.MAX_VALUE.toInt())
+        val doubleValue = if (n < 0) n.toDouble() / -32768 else n.toDouble() / 32767
+        val dbfsSquare = 20 * Math.log10(Math.abs(doubleValue))
 
+        return Math.pow(2.0, Math.min(dbfsSquare, 0.0) / 10.0).toFloat()
+    }
+
+    private fun prepareAudioLevels(levels: FloatArray, levelsCount: Int): FloatArray = when {
+        levels.size <= 1 -> {
+            FloatArray(levelsCount)
+        }
+        levels.size < levelsCount -> {
+            val interpolation = LinearInterpolation(levels, levelsCount)
+            FloatArray(levelsCount) { i -> interpolation.interpolate(i) }
+        }
+        else -> {
+            val dx = levels.size.toFloat() / levelsCount
+            FloatArray(levelsCount) { i ->
+                (i * dx).toInt().rangeTo(((i + 1f) * dx).toInt())
+                    .map { levels.getOrNull(it) ?: 0.0F }
+                    .max()!!
+            }
+        }
     }
 
 }

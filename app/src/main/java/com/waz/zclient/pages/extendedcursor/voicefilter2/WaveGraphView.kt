@@ -27,7 +27,7 @@ class WaveGraphView @JvmOverloads constructor(context: Context, attrs: Attribute
     private val idleAmplitude: Float
     private val phaseShift: Float
     private val density: Double
-    private var currentMaxAmplitude: Int? = null
+    private var currentMaxAmplitude: Float? = null
 
     private val paint: Paint
     private val numberOfWaves: Int
@@ -54,12 +54,12 @@ class WaveGraphView @JvmOverloads constructor(context: Context, attrs: Attribute
         path = Path()
     }
 
-    fun setMaxAmplitude(maxAmplitude: Int) {
-        this.currentMaxAmplitude = maxAmplitude
+    fun setMaxAmplitude(normalizedAmplitude: Float) {
+        this.currentMaxAmplitude = normalizedAmplitude
         invalidate()
 
         phase += phaseShift
-        val newAmplitude = Math.max(maxAmplitude.toFloat() / 5000, idleAmplitude)
+        val newAmplitude = Math.max(normalizedAmplitude, idleAmplitude)
         amplitude = (amplitude * 2 + newAmplitude) / 3
     }
 
