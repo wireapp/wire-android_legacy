@@ -38,6 +38,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     private val audioService: AudioService = AudioServiceImpl(context)
     private val recordFile: File = File(context.cacheDir, "record_temp.pcm")
+    private val compressedRecordFile: File = File(context.cacheDir, "record_temp.mp4")
     private val recordWithEffectFile: File = File(context.cacheDir, "record_with_effect_temp.pcm")
     private val normalizedRecordLevels: MutableList<Float> = mutableListOf()
     private var audioTrack: AudioTrack? = null
@@ -195,6 +196,10 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         wave_graph_view.keepScreenOn = false
         showAudioFilters()
         recordingDisposable?.dispose()
+
+        compressedRecordFile.delete()
+        compressedRecordFile.createNewFile()
+        audioService.recodePcmToMp4(recordFile, compressedRecordFile)
     }
 
     fun sendRecording() {

@@ -1,17 +1,18 @@
 package com.waz.zclient.audio
 
+import android.annotation.TargetApi
 import android.content.Context
 import android.media.*
+import android.os.Build
 import io.reactivex.Observable
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder.LITTLE_ENDIAN
 import kotlin.concurrent.fixedRateTimer
 
 interface AudioService {
     companion object {
+        const val LogTag = "AudioService"
         data class RecordingProgress(val maxAmplitude: Int)
 
         object Pcm {
@@ -50,6 +51,8 @@ interface AudioService {
     fun recordPcmAudio(targetFile: File): Observable<RecordingProgress>
 
     fun preparePcmAudioTrack(targetFile: File): AudioTrack
+
+    fun recodePcmToMp4(source: File, target: File)
 }
 
 class AudioServiceImpl(private val context: Context): AudioService {
@@ -178,6 +181,94 @@ class AudioServiceImpl(private val context: Context): AudioService {
         }).start()
 
         return track
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @Throws(IOException::class)
+    override fun recodePcmToMp4(source: File, target: File) {
+        val codecTimeout = 5000
+        val compressedAudioMime = "audio/mp4a-latm"
+        val channelCount = 1
+        val targetBitrate = 128000
+        val sampleRate = AudioService.Companion.Pcm.sampleRate
+
+        var mediaFormat = MediaFormat.createAudioFormat(compressedAudioMime, sampleRate, channelCount)
+        mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, targetBitrate)
+
+        val mediaCodec = MediaCodec.createEncoderByType(compressedAudioMime)
+        mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        mediaCodec.start()
+
+        val codecInputBuffers = mediaCodec.inputBuffers
+        val codecOutputBuffers = mediaCodec.outputBuffers
+
+        val bufferInfo = MediaCodec.BufferInfo()
+
+        val mediaMuxer = MediaMuxer(target.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        var totalBytesRead = 0
+        var presentationTimeUs = 0.0
+
+        val tempBuffer = ByteArray(2 * sampleRate)
+        var hasMoreData = true
+        var stop = false
+
+        var audioTrackId = 0
+        var outputBufferIndex: Int
+
+        val inputStream = FileInputStream(source)
+        while (!stop) {
+            var inputBufferIndex = 0
+            var currentBatchRead = 0
+            while (inputBufferIndex != -1 && hasMoreData && currentBatchRead <= 50 * sampleRate) {
+                inputBufferIndex = mediaCodec.dequeueInputBuffer(codecTimeout.toLong())
+
+                if (inputBufferIndex >= 0) {
+                    val buffer = codecInputBuffers[inputBufferIndex]
+                    buffer.clear()
+
+                    val bytesRead = inputStream.read(tempBuffer, 0, buffer.limit())
+                    if (bytesRead == -1) {
+                        mediaCodec.queueInputBuffer(inputBufferIndex, 0, 0, presentationTimeUs.toLong(), 0)
+                        hasMoreData = false
+                        stop = true
+                    } else {
+                        totalBytesRead += bytesRead
+                        currentBatchRead += bytesRead
+                        buffer.put(tempBuffer, 0, bytesRead)
+                        mediaCodec.queueInputBuffer(inputBufferIndex, 0, bytesRead, presentationTimeUs.toLong(), 0)
+                        presentationTimeUs = (1000000L * (totalBytesRead / 2) / sampleRate).toDouble()
+                    }
+                }
+            }
+
+            outputBufferIndex = 0
+            while (outputBufferIndex != MediaCodec.INFO_TRY_AGAIN_LATER) {
+                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, codecTimeout.toLong())
+                if (outputBufferIndex >= 0) {
+                    val encodedData = codecOutputBuffers[outputBufferIndex]
+                    encodedData.position(bufferInfo.offset)
+                    encodedData.limit(bufferInfo.offset + bufferInfo.size)
+
+                    if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0 && bufferInfo.size != 0) {
+                        mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
+                    } else {
+                        mediaMuxer.writeSampleData(audioTrackId, codecOutputBuffers[outputBufferIndex], bufferInfo)
+                        mediaCodec.releaseOutputBuffer(outputBufferIndex, false)
+                    }
+                } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    mediaFormat = mediaCodec.outputFormat
+                    audioTrackId = mediaMuxer.addTrack(mediaFormat)
+                    mediaMuxer.start()
+                }
+            }
+        }
+
+        inputStream.close()
+        mediaCodec.stop()
+        mediaCodec.release()
+        mediaMuxer.stop()
+        mediaMuxer.release()
     }
 
 }
