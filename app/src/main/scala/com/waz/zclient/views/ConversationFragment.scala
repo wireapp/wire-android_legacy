@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.views
 
+import java.io.File
+
 import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}
 import android.content.Intent
 import android.os.Bundle
@@ -27,13 +29,12 @@ import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
-import com.waz.api.{AudioEffect, ErrorType}
+import com.waz.api.ErrorType
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets.GlobalRecordAndPlayService.Audio
 import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
@@ -53,9 +54,9 @@ import com.waz.zclient.controllers.globallayout.{IGlobalLayoutController, Keyboa
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page, PagerControllerObserver}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
+import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.log.LogUI._
@@ -63,7 +64,7 @@ import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
-import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout
+import com.waz.zclient.pages.extendedcursor.voicefilter2.AudioMessageRecordingScreenListener
 import com.waz.zclient.pages.main.conversation.{AssetIntentsManager, MessageStreamAnimation}
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
@@ -597,15 +598,17 @@ class ConversationFragment extends FragmentHelper {
           }, exp.map(_.duration)))
         }
       case ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING =>
-        extendedCursorContainer.foreach(_.openVoiceFilter(new VoiceFilterLayout.Callback {
+        extendedCursorContainer.foreach(_.openVoiceFilter(new AudioMessageRecordingScreenListener {
           override def onAudioMessageRecordingStarted(): Unit = {
             globalLayoutController.keepScreenAwake()
           }
 
-          override def onCancel(): Unit = extendedCursorContainer.foreach(_.close(false))
+          override def onCancel(): Unit = {
+            extendedCursorContainer.foreach(_.close(true))
+          }
 
-          override def sendRecording(audio: Audio, appliedAudioEffect: AudioEffect): Unit = {
-            val content = ContentForUpload(s"audio_record_${AESKey().str}", Content.File(audio.mime, audio.file))
+          override def sendRecording(mime: String, audioFile: File): Unit = {
+            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.mp4", Content.File(Mime.Audio.MP4, audioFile))
             convController.sendAssetMessage(content, getActivity, None)
             extendedCursorContainer.foreach(_.close(true))
           }
