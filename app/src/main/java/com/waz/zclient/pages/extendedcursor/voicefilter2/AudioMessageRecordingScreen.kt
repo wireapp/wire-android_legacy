@@ -12,11 +12,13 @@ import com.waz.zclient.R
 import com.waz.zclient.audio.AudioService
 import com.waz.zclient.audio.AudioServiceImpl
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
+import com.waz.zclient.utils.StringUtils
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.audio_message_recording_screen.view.*
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.util.*
 import kotlin.concurrent.fixedRateTimer
+import kotlin.concurrent.*
 
 class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
     ViewAnimator(context, attrs), View.OnClickListener {
@@ -52,7 +54,6 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         LayoutInflater.from(context)
             .inflate(R.layout.audio_message_recording_screen, this, true)
 
-
         center_button.setOnClickListener(this)
         left_button.setOnClickListener(this)
         right_button.setOnClickListener(this)
@@ -85,6 +86,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         audio_recording_hint_container.visibility = View.VISIBLE
         wave_graph_view.visibility = View.GONE
         audio_filters_container.visibility = View.GONE
+        fl__voice_filter_time_hint__container.visibility = View.GONE
 
         setCenterButton(Companion.CenterButton.RECORD_START)
         left_button.visibility = View.GONE
@@ -95,6 +97,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         wave_graph_view.visibility = View.VISIBLE
         audio_recording_hint_container.visibility = View.GONE
         audio_filters_container.visibility = View.GONE
+        fl__voice_filter_time_hint__container.visibility = View.GONE
 
         setCenterButton(Companion.CenterButton.RECORD_STOP)
         left_button.visibility = View.GONE
@@ -104,6 +107,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     private fun showAudioFilters() {
         audio_recording_container.visibility = View.GONE
         audio_filters_container.visibility = View.VISIBLE
+        fl__voice_filter_time_hint__container.visibility = View.VISIBLE
 
         setCenterButton(Companion.CenterButton.CONFIRM)
         left_button.visibility = View.VISIBLE
@@ -225,7 +229,15 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         }
     }
 
+    private var hideWaveshowTimeTask: TimerTask? = null
+    private var hideTimeShowHintTask: TimerTask? = null
+
     fun playAudio() {
+        hideWaveshowTimeTask?.cancel()
+        hideWaveshowTimeTask = null
+        hideTimeShowHintTask?.cancel()
+        hideTimeShowHintTask = null
+
         audio_filters_hint.visibility = View.GONE
         audioTrack?.stop()
 
@@ -237,6 +249,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             .durationInMillisFromByteCount(recordWithEffectFile.length())
 
         wave_bin_view.setAudioLevels(prepareAudioLevels(normalizedRecordLevels.toFloatArray(), 56))
+        wave_bin_view.visibility = View.VISIBLE
 
         fixedRateTimer(
             "displaying_pcm_progress_$recordWithEffectFile",
@@ -247,12 +260,24 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             val currentDuration = AudioService.Companion.Pcm
                 .durationFromInMillisFromSampleCount(preparedAudioTrack.playbackHeadPosition.toLong())
 
-            time_label.post {
-                wave_bin_view.setAudioPlayingProgress(currentDuration, audioDuration)
-                time_label.text = TimeUnit.MILLISECONDS.toSeconds(currentDuration).toString()
-            }
+            wave_bin_view.setAudioPlayingProgress(currentDuration, audioDuration)
 
             if (preparedAudioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) cancel()
+        }
+
+        hideWaveshowTimeTask = Timer().schedule(audioDuration) {
+            wave_bin_view.post {
+                wave_bin_view.visibility = View.GONE
+                time_label.text = StringUtils.formatTimeSeconds(audioDuration / 1000)
+                time_label.visibility = View.VISIBLE
+            }
+
+            hideTimeShowHintTask = Timer().schedule(1000) {
+                time_label.post {
+                    time_label.visibility = View.GONE
+                    audio_filters_hint.visibility = View.VISIBLE
+                }
+            }
         }
     }
 
