@@ -82,6 +82,9 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
 
     private fun showAudioRecordingHint() {
+        stopPlaying()
+        wave_bin_view.visibility = View.GONE
+
         audio_recording_container.visibility = View.VISIBLE
         audio_recording_hint_container.visibility = View.VISIBLE
         wave_graph_view.visibility = View.GONE
@@ -149,8 +152,10 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         when (v.id) {
             R.id.left_button ->
                 showAudioRecordingHint()
-            R.id.right_button ->
+            R.id.right_button -> {
+                stopPlaying()
                 listener?.onCancel()
+            }
             R.id.center_button -> when (currentCenterButton) {
                 Companion.CenterButton.RECORD_START -> startRecording()
                 Companion.CenterButton.RECORD_STOP -> stopRecording()
@@ -233,14 +238,20 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     private var hideWaveshowTimeTask: TimerTask? = null
     private var hideTimeShowHintTask: TimerTask? = null
 
-    private fun playAudio() {
+    private fun stopPlaying() {
         hideWaveshowTimeTask?.cancel()
         hideWaveshowTimeTask = null
         hideTimeShowHintTask?.cancel()
         hideTimeShowHintTask = null
+        audioTrack?.stop()
+        audioTrack = null
+    }
+
+    private fun playAudio() {
+        stopPlaying()
 
         audio_filters_hint.visibility = View.GONE
-        audioTrack?.stop()
+        time_label.visibility = View.GONE
 
         val preparedAudioTrack = audioService.preparePcmAudioTrack(recordWithEffectFile)
         audioTrack = preparedAudioTrack
