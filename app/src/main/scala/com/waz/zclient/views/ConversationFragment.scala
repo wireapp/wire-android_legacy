@@ -680,8 +680,11 @@ class ConversationFragment extends FragmentHelper {
           callController.isCallActive.head.foreach {
             case true  => showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
             case false =>
-              extendedCursorContainer.foreach(_.close(true))
-              audioMessageRecordingView.show()
+              permissions.requestAllPermissions(CursorController.keyboardPermissions(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING))
+                .foreach { _ =>
+                  extendedCursorContainer.foreach(_.close(true))
+                  audioMessageRecordingView.show()
+                }
           }
         case _ => //
       }
