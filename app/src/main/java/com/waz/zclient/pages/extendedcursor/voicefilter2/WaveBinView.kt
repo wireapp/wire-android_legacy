@@ -94,6 +94,6 @@ class WaveBinView @JvmOverloads constructor(context: Context, attrs: AttributeSe
     fun setAudioPlayingProgress(current: Long, total: Long) {
         this.currentHead = current
         this.duration = total
-        invalidate()
+        postInvalidate()
     }
 }

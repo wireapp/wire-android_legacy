@@ -362,6 +362,7 @@ dependencies {
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'com.evernote:android-job:1.2.6'
     implementation 'com.jakewharton.timber:timber:4.7.0'
     implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'

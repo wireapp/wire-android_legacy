@@ -260,7 +260,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
 
     private void closeVoiceFilter() {
         if (voiceFilterLayout != null) {
-//            voiceFilterLayout.onClose();
+            voiceFilterLayout.onClose();
             voiceFilterLayout = null;
         }
     }
