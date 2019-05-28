@@ -7,12 +7,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.Animation
 import android.widget.ViewAnimator
+import androidx.work.impl.Schedulers
 import com.waz.api.AudioEffect
 import com.waz.zclient.R
 import com.waz.zclient.audio.AudioService
 import com.waz.zclient.audio.AudioServiceImpl
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.StringUtils
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.audio_message_recording_screen.view.*
 import java.io.File
@@ -187,6 +189,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
         recordingDisposable = audioService.withAudioFocus()
             .flatMap { audioService.recordPcmAudio(recordFile) }
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ progress ->
                 val normalizedAudioLevel = normalizeAudioLoudness(progress.maxAmplitude)
                 normalizedRecordLevels.add(normalizedAudioLevel)
