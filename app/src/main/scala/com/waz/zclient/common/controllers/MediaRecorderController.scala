@@ -47,7 +47,7 @@ class MediaRecorderControllerImpl(context: Context)
       r.setAudioSource(AudioSource.MIC)
       r.setOutputFormat(OutputFormat.MPEG_4)
       r.setAudioEncoder(AudioEncoder.HE_AAC)
-      r.setOutputFile(file)
+      r.setOutputFile(file.getAbsolutePath)
     }
 
   override def startRecording(): Unit = {
