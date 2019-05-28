@@ -319,7 +319,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       _ = is.close()
     } yield AssetForShare(asset, file)
   }
-
 }
 
 object AssetsController {

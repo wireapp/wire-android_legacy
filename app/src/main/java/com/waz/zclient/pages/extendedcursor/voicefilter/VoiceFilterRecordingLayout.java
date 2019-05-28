@@ -69,6 +69,7 @@ public class VoiceFilterRecordingLayout extends FrameLayout implements
         this.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 controller.startRecording();
             }
         });

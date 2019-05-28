@@ -19,17 +19,15 @@ package com.waz.testutils
 
 import java.util.concurrent.{CountDownLatch, TimeUnit, TimeoutException}
 
-import com.waz.utils._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.WireContext
-import org.robolectric.Robolectric
-import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-object TestUtils {
+object TestUtils extends DerivedLogTag {
 
   implicit val eventContext = EventContext.Implicits.global
   implicit val executionContext = ExecutionContext.Implicits.global
@@ -45,12 +43,6 @@ object TestUtils {
 
   // active wait to make sure UI thread is not blocked (Robolectric blocks it)
   def awaitUi[A](f: Future[A])(implicit timeout: FiniteDuration = 5.seconds): A = {
-    val endTime = Instant.now + timeout
-    while (!f.isCompleted && Instant.now.isBefore(endTime)) {
-      Robolectric.runBackgroundTasks()
-      Robolectric.runUiThreadTasksIncludingDelayedTasks()
-      Thread.sleep(50) // sleep a bit
-    }
     f.value match {
       case None => throw new TimeoutException("Future did not complete within supplied timeout")
       case Some(Failure(ex)) => throw ex
