@@ -82,6 +82,9 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         showAudioRecordingHint()
     }
 
+    fun onClose() {
+        stopRecording()
+    }
 
     private fun showAudioRecordingHint() {
         audio_recording_container.visibility = View.VISIBLE
