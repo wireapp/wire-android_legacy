@@ -212,12 +212,11 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         wave_graph_view.keepScreenOn = false
         showAudioFilters()
         recordingDisposable?.dispose()
-
-        compressedRecordFile.delete()
-        compressedRecordFile.createNewFile()
     }
 
     private fun sendRecording() {
+        compressedRecordFile.delete()
+        compressedRecordFile.createNewFile()
         audioService.recodePcmToMp4(recordWithEffectFile, compressedRecordFile)
         listener?.sendRecording("audio/mp4a-latm", compressedRecordFile)
     }
