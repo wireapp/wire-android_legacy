@@ -21,13 +21,14 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.{FrameLayout, SeekBar}
+import com.waz.service.assets2.AssetStatus
 import com.waz.threading.Threading
 import com.waz.zclient.R
+import com.waz.zclient.cursor.CursorController
+import com.waz.zclient.cursor.CursorController.KeyboardState
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.RichSeekBar
+import com.waz.zclient.utils.{RichSeekBar, RichView}
 import org.threeten.bp.Duration
-import com.waz.service.assets2.AssetStatus
-import com.waz.zclient.utils.RichView
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with FileLayoutAssetPart with HighlightViewPart {
@@ -47,9 +48,12 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   playControls.flatMap(_.playHead).map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
   playControls.flatMap(_.isPlaying) (isPlaying ! _)
 
+  private lazy val keyboard = inject[CursorController].keyboard
+
   assetActionButton.onClick {
     assetStatus.map(_._1).currentValue match {
       case Some(AssetStatus.Done) =>
+        keyboard ! KeyboardState.Hidden
         playControls.head.foreach(_.playOrPause())(Threading.Background)
       case _ =>
     }
