@@ -76,7 +76,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
         set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)
       case Type.ANY_ASSET =>
         val assetName = asset match {
-          case Some(a: Asset[_]) => a.name
+          case Some(a: Asset) => a.name
           case _ => getString(R.string.reply_message_type_asset)
         }
 

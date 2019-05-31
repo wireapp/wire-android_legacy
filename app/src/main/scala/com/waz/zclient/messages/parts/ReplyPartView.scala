@@ -27,7 +27,6 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.assets2.Asset
-import com.waz.service.assets2.Asset.General
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events._
@@ -84,9 +83,9 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
   container.setBackground(new ReplyBackgroundDrawable(getStyledColor(R.attr.replyBorderColor), getStyledColor(R.attr.wireBackgroundCollection)))
 
   protected val quotedMessage: SourceSignal[MessageData] with NoAutowiring = Signal[MessageData]()
-  protected val quotedAsset: Signal[Option[Asset[General]]] =
+  protected val quotedAsset: Signal[Option[Asset]] =
     quotedMessage.map(_.assetId).flatMap(assetsController.assetSignal).map {
-      case Some(x: Asset[General]) => Some(x)
+      case Some(x: Asset) => Some(x)
       case _ => None
     }
 

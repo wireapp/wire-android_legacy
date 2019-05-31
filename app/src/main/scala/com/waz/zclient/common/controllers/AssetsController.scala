@@ -39,7 +39,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets.GlobalRecordAndPlayService
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
-import com.waz.service.assets2.Asset.{Audio, General, Image, Video}
+import com.waz.service.assets2.Asset.{Audio, Video}
 import com.waz.service.assets2.{AssetStatus, _}
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
@@ -125,13 +125,13 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def assetPreviewId(assetId: Signal[GeneralAssetId]): Signal[Option[GeneralAssetId]] =
     assetSignal(assetId).map {
-      case u: UploadAsset[_] => u.preview match {
-        case Preview.Uploaded(aId) => Option(aId)
-        case Preview.NotUploaded(aId) => Option(aId)
+      case u: UploadAsset => u.preview match {
+        case Uploaded(aId) => Option(aId)
+        case NotUploaded(aId) => Option(aId)
         case _ => Option.empty[GeneralAssetId]
       }
       case d: DownloadAsset => d.preview
-      case a: Asset[_] => a.preview
+      case a: Asset => a.preview
       case _ => Option.empty[GeneralAssetId]
     }
 
@@ -164,7 +164,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
     def getPlaybackControls(asset: Signal[GeneralAsset]): Signal[PlaybackControls] = asset.flatMap { a =>
     (a.details, a) match {
-      case (_: Audio, audioAsset: Asset[_]) =>
+      case (_: Audio, audioAsset: Asset) =>
 
         val file = new File(context.getCacheDir, s"${audioAsset.id.str}.mp4")
         Signal.future((if (!file.exists()) {
@@ -211,7 +211,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     // TODO: display error
   }
 
-  def showOpenFileDialog(uri: Uri, asset: Asset[General]): Unit = {
+  def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
     val intent = getOpenFileIntent(uri, asset.mime.orDefault.str)
     val fileCanBeOpened = fileTypeCanBeOpened(context.getPackageManager, intent)
 
@@ -259,7 +259,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     dialog.show()
   }
 
-  private def saveAssetContentToFile(asset: Asset[General], targetDir: File): Future[File] = {
+  private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] = {
     for {
       p <- permissions.head
       _ <- p.ensurePermissions(ListSet(WRITE_EXTERNAL_STORAGE))
@@ -270,7 +270,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     } yield targetFile
   }
 
-  def saveImageToGallery(asset: Asset[Image]): Unit = {
+  def saveImageToGallery(asset: Asset): Unit = {
     val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
     saveAssetContentToFile(asset, targetDir).onComplete {
       case Success(file) =>
@@ -282,7 +282,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
   }
 
-  def saveToDownloads(asset: Asset[General]): Unit = {
+  def saveToDownloads(asset: Asset): Unit = {
     val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
     saveAssetContentToFile(asset, targetDir).onComplete {
       case Success(file) =>
@@ -304,7 +304,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def assetForSharing(id: AssetId): Future[AssetForShare] = {
 
-    def getSharedFilename(asset: Asset[General]): String =
+    def getSharedFilename(asset: Asset): String =
       if (asset.name.nonEmpty)
         asset.name
       else
@@ -323,9 +323,9 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
 object AssetsController {
 
-  case class AssetForShare(asset: Asset[General], file: File)
+  case class AssetForShare(asset: Asset, file: File)
 
-  def getTargetFile(asset: Asset[General], directory: File): File = {
+  def getTargetFile(asset: Asset, directory: File): File = {
     def file(prefix: String = "") = {
       val prefixPart = if (prefix.isEmpty) "" else prefix + "_"
       val namePart = if (asset.name.contains('.')) asset.name else s"${asset.name}.${asset.mime.extension}"

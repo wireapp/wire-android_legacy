@@ -19,7 +19,7 @@ package com.waz.zclient.glide
 
 import com.waz.model.UserData.Picture
 import com.waz.model._
-import com.waz.service.assets2.{Asset, ImageDetails}
+import com.waz.service.assets2.Asset
 
 sealed trait AssetRequest {
   val key: String
@@ -45,7 +45,7 @@ case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
 case class PublicAssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
-case class ImageAssetRequest(asset: Asset[ImageDetails]) extends AssetRequest {
+case class ImageAssetRequest(asset: Asset) extends AssetRequest {
   override val key: String = asset.id.str
 }
 case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
