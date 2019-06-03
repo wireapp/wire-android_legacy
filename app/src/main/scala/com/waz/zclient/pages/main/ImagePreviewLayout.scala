@@ -148,7 +148,7 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   def setImage(uri: URIWrapper, source: ImagePreviewLayout.Source): Unit = {
     this.source = Option(source)
     this.imageInput = Some(Content.Uri(URI.create(uri.toString)))
-    WireGlide(context).load(uri)
+    WireGlide(context).load(URIWrapper.unwrap(uri))
       .apply(new RequestOptions().centerInside()).into(imageView)
   }
 
