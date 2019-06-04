@@ -235,14 +235,21 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
               // Restart the preview as it gets stopped by camera.takePicture()
               c.startPreview()
 
-              // Correct the orientation
+              // Correct the orientation, if needed.
               val exif = new ExifInterface(new ByteArrayInputStream(data))
               val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-              val corrected = BitmapUtils.fixOrientation(BitmapFactory.decodeByteArray(data, 0, data.length), orientation)
-              val output = new ByteArrayOutputStream()
-              corrected.compress(Bitmap.CompressFormat.JPEG, 100, output)
 
-              promise.success(output.toByteArray)
+              val result = orientation match {
+                case ExifInterface.ORIENTATION_NORMAL | ExifInterface.ORIENTATION_UNDEFINED =>
+                  data
+                case _ =>
+                  val corrected = BitmapUtils.fixOrientation(BitmapFactory.decodeByteArray(data, 0, data.length), orientation)
+                  val output = new ByteArrayOutputStream()
+                  corrected.compress(Bitmap.CompressFormat.JPEG, 100, output)
+                  output.toByteArray
+              }
+
+              promise.success(result)
             }
           }))
       } catch {
