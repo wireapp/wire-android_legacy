@@ -59,7 +59,12 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
           case TextContent(t) =>
             convsUi.sendTextMessages(convs, t, Nil, expiration)
           case uriContent =>
-            convsUi.sendAssetMessages(convs, uriContent.uris.map(UriInput), (s: Long) => showWifiWarningDialog(s, Some(color))(activity), expiration)
+            convsUi.sendAssetMessages(
+              convs,
+              uriContent.uris.map(UriInput),
+              (s: Long) => showWifiWarningDialog(s, color)(dispatcher, activity),
+              expiration
+            )
         }
       }
     }

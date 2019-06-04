@@ -25,6 +25,7 @@ import android.os.Build
 import android.support.v4.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.call.CallInfo.CallState._
@@ -39,6 +40,7 @@ import com.waz.utils._
 import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
@@ -49,19 +51,17 @@ import scala.concurrent.Future
 import scala.util.Try
 import scala.util.control.NonFatal
 
-class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable {
+class CallingNotificationsController(implicit cxt: WireContext, eventContext: EventContext, inj: Injector) extends Injectable with DerivedLogTag {
 
   import CallingNotificationsController._
 
-  val callImageSizePx = toPx(CallImageSizeDp)
+  private lazy val soundController = inject[SoundController]
+  private lazy val notificationManager = inject[NotificationManager]
+  private lazy val callCtrler = inject[CallController]
 
-  val notificationManager = inject[NotificationManager]
+  private val callImageSizePx = toPx(CallImageSizeDp)
 
-  val callCtrler = inject[CallController]
-
-  import callCtrler._
-
-  val filteredGlobalProfile: Signal[(Option[ConvId], Seq[(ConvId, (UserId, UserId))])] =
+  private val filteredGlobalProfile: Signal[(Option[ConvId], Seq[(ConvId, (UserId, UserId))])] =
     for {
       globalProfile <- inject[GlobalModule].calling.globalCallProfile
       curCallId     =  globalProfile.activeCall.map(_.convId)
@@ -99,12 +99,12 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
       notificationData        = notInfo.collect {
                                   case (convId, (Some(callInfo), title, conv, isGroup, availability)) =>
                                     val muteSet = conv.fold(MuteSet.AllMuted)(_.muted)
-                                    val action  = (availability, muteSet, callInfo.state) match {
-                                      case (Availability.Away, _, _)                         => NotificationAction.Nothing
-                                      case (Availability.Busy, MuteSet.AllMuted, _)          => NotificationAction.Nothing
-                                      case (_, _, OtherCalling)                              => NotificationAction.DeclineOrJoin
-                                      case (_, _, SelfConnected | SelfCalling | SelfJoining) => NotificationAction.Leave
-                                      case _                                                 => NotificationAction.Nothing
+                                    val allowedByStatus = availability != Availability.Away && (availability != Availability.Busy || muteSet != MuteSet.AllMuted)
+                                    val action  = (allowedByStatus, callInfo.state) match {
+                                      case (false, _)                                     => NotificationAction.Nothing
+                                      case (_, OtherCalling)                              => NotificationAction.DeclineOrJoin
+                                      case (_, SelfConnected | SelfCalling | SelfJoining) => NotificationAction.Leave
+                                      case _                                              => NotificationAction.Nothing
                                     }
                                     CallNotification(
                                       convId.str.hashCode,
@@ -117,7 +117,8 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
                                       curCallId.contains(convId),
                                       action,
                                       callInfo.isVideoCall,
-                                      isGroup
+                                      isGroup,
+                                      allowedByStatus
                                     )
                                 }
     } yield notificationData.sortWith {
@@ -128,7 +129,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   private lazy val currentNotificationsPref = inject[Signal[AccountManager]].map(_.userPrefs(UserPreferences.CurrentNotifications))
 
-  notifications.map(_.exists(!_.isMainCall)).onUi(soundController.playRingFromThemInCall)
+  notifications.map(_.exists(n => !n.isMainCall && n.allowedByStatus)).onUi(soundController.playRingFromThemInCall)
 
   callCtrler.currentCallOpt.map(_.isDefined).onUi {
     case true => cxt.startService(new content.Intent(cxt, classOf[CallingNotificationsService]))
@@ -155,8 +156,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     verbose(l"${nots.size} call notifications")
 
     cancelNots(nots)
-    nots.foreach {
-      case not if not.action != NotificationAction.Nothing =>
+    nots.foreach { not =>
         val builder = androidNotificationBuilder(not)
 
         def showNotification() = {
@@ -175,7 +175,6 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
               case NonFatal(e2) => error(l"second display attempt failed, aborting", e2)
             }
         }
-      case _ =>
     }
   }
 
@@ -201,7 +200,9 @@ object CallingNotificationsController {
                               isMainCall:    Boolean,
                               action:        NotificationAction,
                               videoCall:     Boolean,
-                              isGroup:       Boolean)
+                              isGroup:       Boolean,
+                              allowedByStatus: Boolean
+                             )
 
 
   object NotificationAction extends Enumeration {

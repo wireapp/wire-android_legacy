@@ -111,8 +111,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
             inject[AccentColorController].accentColor.head.flatMap { color =>
               showConfirmationDialog(
                 title = getString(R.string.sso_signin_error_title),
-                msg = getString(R.string.sso_signin_error_try_again_message, error.code.toString),
-                accentColor = Some(color)
+                msg   = getString(R.string.sso_signin_error_try_again_message, error.code.toString),
+                color = color
               )
             }.map(_ => ())
         }

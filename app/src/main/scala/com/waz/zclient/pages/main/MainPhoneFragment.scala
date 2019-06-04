@@ -105,7 +105,7 @@ class MainPhoneFragment extends FragmentHelper
                                getString(R.string.crashes_and_analytics_request_body),
                                R.string.crashes_and_analytics_request_agree,
                                R.string.crashes_and_analytics_request_no,
-                               Some(color)
+                               color
                              ).flatMap { resp =>
                                zms.head.flatMap { zms =>
                                  for {
@@ -118,30 +118,18 @@ class MainPhoneFragment extends FragmentHelper
     askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
                              // Show marketing consent popup
     _                        <- if (!askMarketingConsentAgain) Future.successful({}) else
-                             showConfirmationDialogWithNeutralButton(
-                               R.string.receive_news_and_offers_request_title,
-                               R.string.receive_news_and_offers_request_body,
-                               R.string.app_entry_dialog_privacy_policy,
+                             showConfirmationDialog(
+                               getString(R.string.receive_news_and_offers_request_title),
+                               getString(R.string.receive_news_and_offers_request_body),
                                R.string.app_entry_dialog_accept,
                                R.string.app_entry_dialog_not_now,
-                               Some(color)
+                               Some(R.string.app_entry_dialog_privacy_policy),
+                               color
                              ).map { confirmed =>
                                am.setMarketingConsent(confirmed)
                                if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
                              }
   } yield {}
-/*
-  private var prevAvailability = Option.empty[Availability]
-  private lazy val curAvailability = for {
-    prefs     <- inject[Signal[UserPreferences]]
-    mask      <- prefs(UserPreferences.StatusNotificationsBitmask).signal
-    _ = verbose(l"AVV mask: $mask")
-    avVisible <- usersController.availabilityVisible
-    _ = verbose(l"AVV avVisible: $avVisible")
-    av        <- if (!avVisible) Signal.const(Option.empty[Availability])
-                 else usersController.selfUser.map(_.availability).map(Option(_))
-    _ = verbose(l"AVV av: $av")
-  } yield (av, mask)*/
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     if (savedInstanceState == null)
@@ -210,41 +198,6 @@ class MainPhoneFragment extends FragmentHelper
 
       case _ =>
     }
-/*
-    curAvailability.onUi { case (cur, mask) =>
-      verbose(l"AVV ($cur, $mask)")
-      verbose(l"AVV prevAvailability: $prevAvailability")
-      val av = if (cur.isEmpty || prevAvailability.isEmpty || cur == prevAvailability) Option.empty[Availability]
-      else cur.flatMap { av => if ((mask & av.bitmask) == 0) Some(av) else None }
-
-      verbose(l"AVV av after filtering: $av")
-
-      av.foreach { availability =>
-        val (title, body) = availability match {
-          case Availability.None      => (R.string.availability_notification_warning_nostatus_title, R.string.availability_notification_warning_nostatus)
-          case Availability.Available => (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
-          case Availability.Busy      => (R.string.availability_notification_warning_busy_title, R.string.availability_notification_warning_busy)
-          case Availability.Away      => (R.string.availability_notification_warning_away_title, R.string.availability_notification_warning_away)
-        }
-        accentColorController.accentColor.head.foreach { color =>
-          showConfirmationDialog(
-            getString(title),
-            getString(body),
-            R.string.availability_notification_dont_show,
-            R.string.availability_notification_ok,
-            Some(color)
-          ).foreach {
-            case false =>
-            case true =>
-              inject[Signal[UserPreferences]].head.foreach { prefs =>
-                prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | availability.bitmask)
-              }
-          }
-        }
-      }
-
-      prevAvailability = cur
-    }*/
   }
 
   override def onStart(): Unit = {

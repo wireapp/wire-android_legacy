@@ -143,23 +143,34 @@ class MainActivity extends BaseActivity
     }
 
     for {
-      Some(user) <- userAccountsController.currentUser.head
-      teamName   <- user.teamId.fold(Future.successful(Option.empty[Name]))(teamId => inject[TeamsStorage].get(teamId).map(_.map(_.name)))
+      Some(self) <- userAccountsController.currentUser.head
+      teamName   <- self.teamId.fold(
+                      Future.successful(Option.empty[Name])
+                    )(teamId =>
+                      inject[TeamsStorage].get(teamId).map(_.map(_.name))
+                    )
       prefs      <- userPreferences.head
       shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).apply()
       avVisible  <- usersController.availabilityVisible.head
+      color      <- accentColorController.accentColor.head
     } yield {
-      (shouldWarn && avVisible, user.availability, teamName) match {
+      (shouldWarn && avVisible, self.availability, teamName) match {
         case (true, Availability.Away, Some(name)) =>
           inject[MessageNotificationsController].showAppNotification(
             ResString(R.string.availability_notification_blocked_title, name.str),
             ResString(R.string.availability_notification_blocked)
           )
+          showStatusNotificationWarning(self.availability, color).foreach { dontShowAgain =>
+            if (dontShowAgain) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | self.availability.bitmask)
+          }
         case (true, Availability.Busy, Some(name)) =>
           inject[MessageNotificationsController].showAppNotification(
             ResString(R.string.availability_notification_changed_title, name.str),
             ResString(R.string.availability_notification_changed)
           )
+          showStatusNotificationWarning(self.availability, color).foreach { dontShowAgain =>
+            if (dontShowAgain) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | self.availability.bitmask)
+          }
         case _ =>
       }
       if (shouldWarn) prefs(UserPreferences.ShouldWarnStatusNotifications) := false

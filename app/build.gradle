@@ -13,7 +13,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.32."
+    majorVersion = "3.33."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
@@ -25,13 +25,13 @@ ext {
     zMessagingVersion = "141.0.2279"
     paging_version = "1.0.0"
 
-    avsVersion = '4.9.170@aar'
+    avsVersion = '4.9.12@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.0.9@aar'
+    customAvsVersion = '5.0.23@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
