@@ -36,7 +36,7 @@ ext {
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 
-    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '-DEV')
+    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion))
     zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
 
 }
