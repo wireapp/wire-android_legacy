@@ -26,11 +26,10 @@ import android.widget.{LinearLayout, TextView, Toast}
 import com.waz.content.GlobalPreferences.WsForegroundKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService
-import com.waz.service.{FCMNotificationStatsService, ZMessaging}
+import com.waz.service.{FCMNotificationStatsService, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{BackStackKey, DebugUtils}
@@ -93,7 +92,8 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
   statsDisplay.setVisible(BuildConfig.DEVELOPER_FEATURES_ENABLED)
 
   val webSocketForegroundServiceSwitch = returning(findById[SwitchPreference](R.id.preferences_websocket_service)) { v =>
-    inject[GoogleApi].isGooglePlayServicesAvailable.map(if (_) View.GONE else View.VISIBLE).onUi(v.setVisibility)
+    v.setVisible(true)
+    inject[GlobalModule].prefs(WsForegroundKey).signal.onUi(v.setChecked(_))
     v.setPreference(WsForegroundKey, global = true)
   }
 
