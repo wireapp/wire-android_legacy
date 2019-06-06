@@ -419,6 +419,21 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[ThemeController]
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
+    Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+  }
+
+  private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit = {
+    val gps = prefs(GlobalPreferences.CheckedForPlayServices)
+    gps.signal.head.collect {
+      case false =>
+        verbose(l"never checked for play services")
+        googleApi.isGooglePlayServicesAvailable.head.foreach { gpsAvailable =>
+          for {
+            _ <- prefs(GlobalPreferences.WsForegroundKey) := !gpsAvailable
+            _ <- gps := true
+          } yield ()
+        }
+    }
   }
 
   override def onTerminate(): Unit = {
