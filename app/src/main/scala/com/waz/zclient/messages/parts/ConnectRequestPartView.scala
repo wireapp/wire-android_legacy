@@ -24,7 +24,6 @@ import com.waz.model.{UserData, UserId}
 import com.waz.service.IntegrationsService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
@@ -86,7 +85,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
     case (true, _) =>
       label.setText(R.string.content__message__connect_request__auto_connect__footer)
       TextViewUtils.linkifyText(label, getStyledColor(R.attr.wirePrimaryTextColor), true, true, new Runnable() {
-        override def run() = browser.openUrl(AndroidURIUtil parse getString(R.string.url__help))
+        override def run() = browser.openHelp()
       })
     case (false, false) =>
       label.setTextColor(getStyledColor(R.attr.wirePrimaryTextColor))

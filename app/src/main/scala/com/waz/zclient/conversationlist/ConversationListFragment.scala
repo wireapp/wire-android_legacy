@@ -77,8 +77,18 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
     userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
-    convListController.conversationListData(adapterMode).onUi {
-      case (aId, regular, incoming) => a.setData(regular, incoming)
+    adapterMode match {
+      case ConversationListAdapter.Normal =>
+        (for {
+          regular  <- convListController.regularConversationListData
+          incoming <- convListController.incomingConversationListData
+        } yield (regular, incoming)).onUi { case (regular, incoming) =>
+          a.setData(regular, incoming)
+        }
+      case ConversationListAdapter.Archive =>
+        convListController.archiveConversationListData.onUi { archive =>
+          a.setData(archive, (Seq.empty, Seq.empty))
+        }
     }
 
     a.onConversationClick { conv =>
@@ -191,10 +201,11 @@ class NormalConversationFragment extends ConversationListFragment {
 
   private val waitingAccount = Signal[Option[UserId]](None)
 
-  lazy val loading = for {
+  private lazy val loading = for {
     Some(waitingAcc) <- waitingAccount
-    adapterAccount <- convListController.conversationListData(ConversationListAdapter.Normal).map(_._1)
-  } yield waitingAcc != adapterAccount
+    z                <- zms
+    processing       <- z.push.processing
+  } yield processing || waitingAcc != z.selfUserId
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
     accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
@@ -247,7 +258,7 @@ class NormalConversationFragment extends ConversationListFragment {
     super.onViewCreated(v, savedInstanceState)
 
     for {
-      convList <- conversationListView
+      convList    <- conversationListView
       actionsList <- listActionsView
     } yield {
       convList.addOnScrollListener(listActionsScrollListener)
@@ -291,7 +302,6 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 
   private def showLoading(): Unit = {
-    conversationListView.foreach(_.setVisibility(View.INVISIBLE))
     loadingListView.foreach { lv =>
       lv.setAlpha(1f)
       lv.setVisibility(VISIBLE)
@@ -301,13 +311,6 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 
   private def hideLoading(): Unit = {
-    conversationListView.foreach { lv =>
-      if (lv.getVisibility != VISIBLE) {
-        lv.setVisibility(VISIBLE)
-        lv.setAlpha(0f)
-        lv.animate().alpha(1f).setDuration(500)
-      }
-    }
     listActionsView.foreach(_.animate().alpha(1f).setDuration(500))
     loadingListView.foreach(v => v.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
       override def run() = {

@@ -91,42 +91,44 @@ class MainPhoneFragment extends FragmentHelper
     accentColorController.accentColor.map(_.color).onUi(color => vh.foreach(_.setButtonColor(color)))
   }
 
-  lazy val consentDialogFuture = for {
-    true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
-    am   <- am.head
-    showAnalyticsPopup <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
-      previouslyShown =>
-        !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
-    }
-    // Show "Help make wire better" popup
-    _ <- if (!showAnalyticsPopup) Future.successful({}) else
-      showConfirmationDialog(
-        getString(R.string.crashes_and_analytics_request_title),
-        getString(R.string.crashes_and_analytics_request_body),
-        R.string.crashes_and_analytics_request_agree,
-        R.string.crashes_and_analytics_request_no
-      ).flatMap { resp =>
-        zms.head.flatMap { zms =>
-          for {
-            _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
-            _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
-            _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
-          } yield {}
-        }
-      }
+  private lazy val consentDialog = for {
+    true                     <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
+    am                       <- am.head
+    showAnalyticsPopup       <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
+                                  previouslyShown => !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
+                                }
+    color                    <- accentColorController.accentColor.head
+                             // Show "Help make wire better" popup
+    _                        <- if (!showAnalyticsPopup) Future.successful({}) else
+                             showConfirmationDialog(
+                               getString(R.string.crashes_and_analytics_request_title),
+                               getString(R.string.crashes_and_analytics_request_body),
+                               R.string.crashes_and_analytics_request_agree,
+                               R.string.crashes_and_analytics_request_no,
+                               color
+                             ).flatMap { resp =>
+                               zms.head.flatMap { zms =>
+                                 for {
+                                   _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
+                                   _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
+                                   _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
+                                 } yield {}
+                               }
+                             }
     askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
-    // Show marketing consent popup
-    _ <- if (!askMarketingConsentAgain) Future.successful({}) else
-      showConfirmationDialogWithNeutralButton(
-        R.string.receive_news_and_offers_request_title,
-        R.string.receive_news_and_offers_request_body,
-        R.string.app_entry_dialog_privacy_policy,
-        R.string.app_entry_dialog_accept,
-        R.string.app_entry_dialog_not_now
-      ).map { confirmed =>
-        am.setMarketingConsent(confirmed)
-        if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
-      }
+                             // Show marketing consent popup
+    _                        <- if (!askMarketingConsentAgain) Future.successful({}) else
+                             showConfirmationDialog(
+                               getString(R.string.receive_news_and_offers_request_title),
+                               getString(R.string.receive_news_and_offers_request_body),
+                               R.string.app_entry_dialog_accept,
+                               R.string.app_entry_dialog_not_now,
+                               Some(R.string.app_entry_dialog_privacy_policy),
+                               color
+                             ).map { confirmed =>
+                               am.setMarketingConsent(confirmed)
+                               if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
+                             }
   } yield {}
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
@@ -141,8 +143,9 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
-    zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
-
+    zms.flatMap(_.errors.getErrors).onUi {
+      _.foreach(handleSyncError)
+    }
 
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
@@ -186,6 +189,13 @@ class MainPhoneFragment extends FragmentHelper
         showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
         deepLinkService.deepLink ! None
 
+      case OpenDeepLink(CustomBackendToken(_), _) | DoNotOpenDeepLink(Access, _) =>
+        verbose(l"do not open, Access, user logged in")
+        showErrorDialog(
+          R.string.custom_backend_dialog_logged_in_error_title,
+          R.string.custom_backend_dialog_logged_in_error_message)
+        deepLinkService.deepLink ! None
+
       case _ =>
     }
   }
@@ -196,7 +206,7 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
 
-    consentDialogFuture
+    consentDialog
   }
 
   override def onStop(): Unit = {

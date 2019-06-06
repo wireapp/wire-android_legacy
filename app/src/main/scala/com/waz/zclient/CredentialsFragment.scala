@@ -32,7 +32,7 @@ import com.waz.service.{AccountManager, AccountsService}
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
-import com.waz.utils.{returning, _}
+import com.waz.utils.{returning, PasswordValidator => StrongValidator, _}
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.{KeyboardController, PasswordController}
@@ -58,8 +58,8 @@ abstract class CredentialsFragment extends FragmentHelper {
   lazy val spinner  = inject[SpinnerController]
   lazy val keyboard = inject[KeyboardController]
 
-  def hasPw        = getBooleanArg(HasPasswordArg)
-  def displayEmail = getStringArg(EmailArg).map(EmailAddress)
+  protected lazy val hasPw        = getBooleanArg(HasPasswordArg)
+  protected lazy val displayEmail = getStringArg(EmailArg).map(EmailAddress)
 
   override def onPause(): Unit = {
     keyboard.hideKeyboardIfVisible()
@@ -255,55 +255,94 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
 
   lazy val passwordController = inject[PasswordController]
   lazy val password = Signal(Option.empty[Password])
-  lazy val passwordValidator = PasswordValidator.instance(getContext)
 
-  lazy val isValid = password.map {
-    case Some(p) => passwordValidator.validate(p.str)
+  private val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
+  private val maxPasswordLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
+
+  // Passwords are validated when the confirmation button is clicked.
+  private val strongPasswordValidator =
+    StrongValidator.createStrongPasswordValidator(minPasswordLength, maxPasswordLength)
+
+  // For guidance dot and confirmation button state.
+  lazy val nonEmptyValidator = PasswordValidator.instance()
+
+  lazy val passwordIsNonEmpty = password.map {
+    case Some(p) => nonEmptyValidator.validate(p.str)
     case _ => false
   }
 
-  lazy val email = displayEmail.get //email is a necessary paramater for the fragment, it should always be set - let's just crash if it's not
+  private lazy val passwordPolicyHint = returning(view[TextView](R.id.set_password_policy_hint)) { vh =>
+    vh.foreach { textView =>
+      // If there exists a password already, then we're not setting a new one, and thus
+      // we shouldn't see this hint.
+      textView.setVisible(!hasPw)
+      textView.setText(getString(R.string.password_policy_hint, minPasswordLength))
+    }
+
+    password.onChanged.onUi(_ => vh.foreach(_.setTextColor(getColor(R.color.white))))
+  }
+
+  // email is a necessary parameter for the fragment, it should always be set.
+  // Let's just crash if it's not
+  lazy val email = displayEmail.get
 
   lazy val passwordInput = view[GuidedEditText](R.id.password_field)
 
   lazy val confirmationButton = returning(view[PhoneConfirmationButton](R.id.confirmation_button)) { vh =>
+
+    // Updates the confirmation button state
+    passwordIsNonEmpty.map( if(_) CONFIRM else NONE).onUi ( st => vh.foreach(_.setState(st)))
+
     vh.onClick { _ =>
       spinner.showSpinner(LoadingIndicatorView.Spinner, forcedIsDarkTheme = Some(true))
+
       for {
         am       <- am.head
-        Some(pw) <- password.head //pw should be defined
-        _        <- if (hasPw)
+        Some(pw) <- password.head // pw should be defined
+      } {
+        // There is an existing password, thus user is just entering it.
+        if (hasPw) {
           for {
             resp  <- am.auth.onPasswordReset(Some(EmailCredentials(email, pw)))
-            resp2 <- resp.fold(e => Future.successful(Left(e)),
-              _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient()))
+            resp2 <- resp.fold(
+              e => Future.successful(Left(e)),
+              _ => passwordController.setPassword(pw).flatMap(_ => am.getOrRegisterClient())
+            )
           } yield resp2 match {
             case Right(state) =>
               (am.storage.userPrefs(PendingPassword) := false).map { _ =>
                 keyboard.hideKeyboardIfVisible()
                 state match {
                   case LimitReached => activity.replaceMainFragment(OtrDeviceLimitFragment.newInstance, OtrDeviceLimitFragment.Tag, addToBackStack = false)
-                  case _ => activity.startFirstFragment()
+                  case _            => activity.startFirstFragment()
                 }
               }
             case Left(err) => showError(err)
           }
-        else
-          for {
-            resp <- am.setPassword(pw)
-            _    <- resp.fold(e => Future.successful(Left(e)),
-              _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({})))
-          } yield resp match {
-            case Right(_) => activity.startFirstFragment()
-            case Left(err) =>
-              if (err.code == ResponseCode.Forbidden) {
+        } else {
+          // There was no existing password, the user is setting it for first time.
+          if (strongPasswordValidator.isValidPassword(pw.str)) {
+            for {
+              resp <- am.setPassword(pw)
+              _    <- resp.fold(
+                e => Future.successful(Left(e)),
+                _ => passwordController.setPassword(pw).flatMap(_ => am.storage.userPrefs(PendingPassword) := false).map(_ => Right({}))
+              )
+            } yield resp match {
+              case Right(_) =>
+                activity.startFirstFragment()
+              case Left(err) if err.code == ResponseCode.Forbidden =>
                 accounts.logout(am.userId).map(_ => activity.startFirstFragment())
-              } else showError(err)
+              case Left(err) =>
+                showError(err)
+            }
+          } else {
+            spinner.hideSpinner()
+            passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
           }
-      } yield {}
+        }
+      }
     }
-
-    isValid.map( if(_) CONFIRM else NONE).onUi ( st => vh.foreach(_.setState(st)))
   }
 
   override def showError(err: ErrorResponse) = {
@@ -327,7 +366,7 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
     findById[TextView](getView, R.id.info_text).setText(info)
 
     passwordInput.foreach { v =>
-      v.setValidator(passwordValidator)
+      v.setValidator(nonEmptyValidator)
       v.setResource(R.layout.guided_edit_text_sign_in__password)
       v.getEditText.addTextListener(txt => password ! Some(Password(txt)))
     }
@@ -335,9 +374,11 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
     confirmationButton.foreach(_.setAccentColor(Color.WHITE))
 
     Option(findById[View](R.id.ttv_signin_forgot_password)).foreach { forgotPw =>
-      forgotPw.onClick(inject[BrowserController].openForgotPasswordPage())
+      forgotPw.onClick(inject[BrowserController].openForgotPassword())
       forgotPw.setVisibility(if (hasPw) View.VISIBLE else View.INVISIBLE)
     }
+
+    passwordPolicyHint
   }
 }
 

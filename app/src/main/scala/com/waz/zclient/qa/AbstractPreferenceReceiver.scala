@@ -20,7 +20,6 @@ package com.waz.zclient.qa
 
 import android.app.Activity
 import android.content.{BroadcastReceiver, Context, Intent}
-import android.preference.PreferenceManager
 import com.waz.content.GlobalPreferences._
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.Preferences.Preference.PrefCodec
@@ -32,7 +31,7 @@ import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.BackendPicker
+import com.waz.zclient.utils.BackendController
 import com.waz.zclient.{Backend, BuildConfig, WireApplication}
 
 /**
@@ -96,10 +95,17 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
             setResultCode(Activity.RESULT_CANCELED)
         }
       case SELECT_STAGING_BE =>
-        PreferenceManager.getDefaultSharedPreferences(context)
-          .edit
-          .putString(BackendPicker.CUSTOM_BACKEND_PREFERENCE, Backend.StagingBackend.environment)
-          .commit
+        // Note, the app must be terminated for this to work.
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.StagingBackend)
+        setResultCode(Activity.RESULT_OK)
+      case SELECT_PROD_BE =>
+        // Note, the app must be terminated for this to work.
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.ProdBackend)
+        setResultCode(Activity.RESULT_OK)
       case _ =>
         setResultData("Unknown Intent!")
         setResultCode(Activity.RESULT_CANCELED)
@@ -124,6 +130,7 @@ object AbstractPreferenceReceiver {
   private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
   private val HIDE_GDPR_POPUPS         = packageName + ".intent.action.HIDE_GDPR_POPUPS"
   private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"
+  private val SELECT_PROD_BE           = packageName + ".intent.action.SELECT_PROD_BE"
 
   private lazy val DeveloperAnalyticsEnabled = PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
 }

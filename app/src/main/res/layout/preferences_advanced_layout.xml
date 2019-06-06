@@ -71,6 +71,13 @@
                 app:subtitle="@string/pref_advanced_ws_foreground_summary"
             />
 
+            <TextView
+                android:id="@+id/preferences_notifications_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+            />
+
         </LinearLayout>
 
     </ScrollView>

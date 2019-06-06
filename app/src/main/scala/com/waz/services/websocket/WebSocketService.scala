@@ -23,6 +23,7 @@ import android.content
 import android.content.{BroadcastReceiver, Context, Intent}
 import android.os.{Build, IBinder}
 import android.support.v4.app.NotificationCompat
+import android.util.Log
 import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -81,37 +82,47 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
   */
 class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver with DerivedLogTag {
 
+  private val TAG = this.getClass.getName
+
   private var context: Context = _
-
-  implicit lazy val injector: Injector =
-    context.getApplicationContext.asInstanceOf[WireApplication].module
-
-  private lazy val controller =
-    injector.binding[WebSocketController].getOrElse(throw new Exception(s"Failed to load WebSocketController")).apply()
-
-  private lazy val accounts =
-    injector.binding[AccountsService].getOrElse(throw new Exception(s"Failed to load AccountsService")).apply()
 
   override def onReceive(context: Context, intent: Intent): Unit = {
     this.context = context
-    verbose(l"onReceive ${RichIntent(intent)}")
+    Log.i(TAG, s"onReceive ${intent.getDataString}")
 
-    accounts.zmsInstances.head.foreach { zs =>
-      zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
-    } (Threading.Background)
+    if (WireApplication.ensureInitialized())
+      Option(context.getApplicationContext.asInstanceOf[WireApplication].module).foreach { injector =>
+        injector.binding[AccountsService] match {
+          case Some(accounts) =>
+            Log.i(TAG, "AccountsService loaded")
+            accounts().zmsInstances.head.foreach { zs =>
+              zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
+            }(Threading.Background)
 
+          case _ =>
+            Log.e(TAG, "Failed to load AccountsService")
+        }
 
-    controller.serviceInForeground.head.foreach {
-      case true =>
-        verbose(l"startForegroundService")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-          context.startForegroundService(new Intent(context, classOf[WebSocketService]))
-        else
-          WebSocketService(context)
-      case false =>
-        verbose(l"foreground service not needed, will wait for application to start service if necessary")
-    } (Threading.Ui)
+        injector.binding[WebSocketController] match {
+          case Some(controller) =>
+            Log.i(TAG, s"WebSocketController loaded")
+            controller().serviceInForeground.head.foreach {
+              case true =>
+                Log.i(TAG, s"startForegroundService")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                  context.startForegroundService(new Intent(context, classOf[WebSocketService]))
+                else
+                  WebSocketService(context)
+              case false =>
+                Log.i(TAG, s"foreground service not needed, will wait for application to start service if necessary")
+            }(Threading.Ui)
+
+          case None =>
+            Log.e(TAG, s"Failed to load WebSocketController")
+        }
+      }
   }
+
 }
 
 

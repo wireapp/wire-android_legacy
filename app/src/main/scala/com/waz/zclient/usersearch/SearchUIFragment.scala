@@ -39,7 +39,6 @@ import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, Tracking
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient._
 import com.waz.zclient.common.controllers._
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
@@ -222,7 +221,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       btn.setGlyph(R.string.glyph__invite)
     }
 
-    emptyListButton.foreach(_.onClick(browser.openUrl(AndroidURIUtil.parse(getString(R.string.pick_user_manage_team_url)))))
+    emptyListButton.foreach(_.onClick(browser.openStartUIManageTeam()))
     errorMessageView
     toolbarTitle
     emptyServicesButton
@@ -355,8 +354,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     conversationController.selectConv(Some(conversationData.id), ConversationChangeRequester.START_CONVERSATION)
   }
 
-  override def onManageServicesClicked(): Unit =
-    browser.openManageTeamsPage()
+  override def onManageServicesClicked(): Unit = browser.openManageServices()
 
   override def onCreateConvClicked(): Unit = {
     keyboard.hideKeyboardIfVisible()

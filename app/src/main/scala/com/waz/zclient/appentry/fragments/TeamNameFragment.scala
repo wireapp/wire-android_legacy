@@ -18,12 +18,11 @@
 package com.waz.zclient.appentry.fragments
 
 import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import com.waz.zclient._
 import com.waz.zclient.appentry.{CreateTeamFragment, SSOFragment}
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.NameValidator
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -52,11 +51,8 @@ case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
         }
       )
     }
-    about.foreach(_.onClick(openUrl(R.string.url_about_teams)))
+    about.foreach(_.onClick(inject[BrowserController].openAboutTeams()))
   }
-
-  private def openUrl(id: Int): Unit =
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id))))
 }
 
 object TeamNameFragment {

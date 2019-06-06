@@ -20,7 +20,7 @@ package com.waz.zclient.conversation.creation
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.ShouldCreateFullConversation
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, IntegrationId, ProviderId, UserId}
+import com.waz.model._
 import com.waz.service.tracking._
 import com.waz.service.{IntegrationsService, ZMessaging}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -95,7 +95,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
           )
         } else Future.successful(userIds)
       teamOnly            <- teamOnly.head
-      readReceipts        <- readReceipts.head
+      readReceipts        <- if(z.teamId.isEmpty) Future.successful(false) else readReceipts.head
       _ = verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
       conv                <- conversationController.createGroupConversation(Some(name.trim), userIds, teamOnly, readReceipts)
       _                   <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })

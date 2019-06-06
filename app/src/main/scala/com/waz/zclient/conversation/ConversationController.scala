@@ -38,8 +38,8 @@ import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.assets2.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
-import com.waz.zclient.conversationlist.ConversationListAdapter.Normal
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
@@ -67,6 +67,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val callStart          = inject[CallStartController]
   private lazy val convListController = inject[ConversationListController]
   private lazy val uriHelper          = inject[UriHelper]
+  private lazy val accentColorController = inject[AccentColorController]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -174,23 +175,29 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?
 
-    def sendMessage(text: String, mentions: Seq[Mention] = Nil, quote: Option[MessageId] = None, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
-      convsUiwithCurrentConv({(ui, id) =>
-        quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
-      })
-    }
+  def sendMessage(text: String, mentions: Seq[Mention] = Nil, quote: Option[MessageId] = None, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
+    convsUiwithCurrentConv({(ui, id) =>
+      quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
+    })
+  }
 
   def sendAssetMessage(content: ContentForUpload): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
 
-  def sendAssetMessage(content: ContentForUpload, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s)(activity), exp))
+  def sendAssetMessage(content: ContentForUpload, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Option[MessageData]] = {
+    convsUiwithCurrentConv((ui, id) =>
+      accentColorController.accentColor.head.flatMap(color =>
+        ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp))
+    )
+  }
 
   def sendAssetMessage(convs: Seq[ConvId], content: ContentForUpload, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] = {
     convsUi.head.flatMap { ui =>
-      Future.traverse(convs) { id =>
-        ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s)(activity), exp)
-      }
+      accentColorController.accentColor.head.flatMap(color =>
+        Future.traverse(convs) { id =>
+          ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp)
+        }
+      )
     }
   }
 
@@ -261,8 +268,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def setCurrentConversationToNext(requester: ConversationChangeRequester): Future[Unit] = {
     def nextConversation(convId: ConvId): Future[Option[ConvId]] =
-      convListController.conversationListData(Normal).head.map {
-        case (_, regular, _) => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
+      convListController.regularConversationListData.head.map {
+        regular => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
       } (Threading.Background)
 
     for {

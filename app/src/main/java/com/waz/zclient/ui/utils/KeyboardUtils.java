@@ -39,10 +39,6 @@ public class KeyboardUtils {
         }
     }
 
-    public static boolean keyboardIsVisible(View contentView) {
-        return getKeyboardHeight(contentView) > 0;
-    }
-
     public static void hideKeyboard(Activity activity) {
         if (activity.getCurrentFocus() != null) {
             getInputMethodManager(activity).hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
