@@ -191,6 +191,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     fun startRecording() {
         showAudioRecordingInProgress()
         recordFile.delete()
+        recordWithEffectFile.delete()
         normalizedRecordLevels.clear()
         wave_graph_view.keepScreenOn = true
         listener?.onAudioMessageRecordingStarted()
@@ -215,9 +216,10 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     }
 
     private fun sendRecording() {
+        val pcm = if (recordWithEffectFile.exists()) recordWithEffectFile else recordFile
         compressedRecordFile.delete()
         compressedRecordFile.createNewFile()
-        audioService.recodePcmToMp4(recordWithEffectFile, compressedRecordFile)
+        audioService.recodePcmToMp4(pcm, compressedRecordFile)
         listener?.sendRecording("audio/mp4a-latm", compressedRecordFile)
     }
 
