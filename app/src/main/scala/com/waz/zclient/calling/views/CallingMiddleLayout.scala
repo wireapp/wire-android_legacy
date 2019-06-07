@@ -54,7 +54,7 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
   }
 
   controller.memberForPicture.onUi {
-    case Some(uId) => chathead.setUserId(uId)
+    case Some(uId) => chathead.loadUser(uId)
     case _         => chathead.clearUser()
   }
 

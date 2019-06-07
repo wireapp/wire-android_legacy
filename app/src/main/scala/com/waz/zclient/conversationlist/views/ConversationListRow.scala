@@ -65,7 +65,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     with SwipeListView.SwipeListRow
     with MoveToAnimateable
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -154,13 +154,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     isGroup <- z.conversations.groupConversation(conv.id)
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
+    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
   } yield {
     val opacity =
       if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
         getResourceFloat(R.dimen.conversation_avatar_alpha_inactive)
       else
         getResourceFloat(R.dimen.conversation_avatar_alpha_active)
-    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity)
+    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity, z.teamId)
   }
 
   def setSubtitle(text: String): Unit = {
@@ -197,15 +198,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated badge status")
   }
 
-  avatarInfo.on(Threading.Background){
-    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
-      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
-      avatar.setMembers(members.map(_.id), convId, cType)
+  avatarInfo.onUi {
+    case (convId, isGroup, members, _, selfTeam) if conversationData.forall(_.id == convId) =>
+      avatar.setMembers(members, convId, isGroup, selfTeam)
     case _ =>
       verbose(l"Outdated avatar info")
   }
-  avatarInfo.onUi{
-    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+  avatarInfo.onUi {
+    case (convId, isGroup, _, alpha, _) if conversationData.forall(_.id == convId) =>
       if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
       }
@@ -241,7 +241,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
     badge.setStatus(ConversationBadge.Empty)
     subtitle.setText("")
-    avatar.setConversationType(conversationData.convType)
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
     conversationId.publish(Some(conversationData.id), Threading.Ui)
@@ -545,7 +544,7 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
 
   def setIncomingUsers(users: Seq[UserId]): Unit = {
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
-    avatar.setMembers(users, ConvId(), ConversationType.Group)
+    //avatar.setMembers(users, ConversationType.Group)
     title.setText(getInboxName(users.size))
     badge.setStatus(ConversationBadge.WaitingConnection)
   }

@@ -25,15 +25,15 @@ import android.os.Build
 import android.support.v4.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.service.assets.AssetService.BitmapResult
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.{AccountManager, AccountsService, GlobalModule, ZMessaging}
 import com.waz.services.calling.CallWakeService._
 import com.waz.services.calling.CallingNotificationsService
 import com.waz.threading.Threading.Implicits.Background
-import com.waz.ui.MemoryImageCache.BitmapRequest.Regular
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
 import com.waz.utils._
@@ -41,7 +41,6 @@ import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.SoundController
-import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.{getString, _}
@@ -180,7 +179,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   private def getBitmapSignal(z: ZMessaging, caller: UserId) = for {
       Some(id) <- z.usersStorage.optSignal(caller).map(_.flatMap(_.picture))
-      bitmap   <- inject[ImageController].imageSignal(z, id, Regular(callImageSizePx))
+      bitmap   <- Signal.const[BitmapResult](BitmapResult.Empty) //TODO: Use new assets engine to fetch the bitmap
     } yield
       bitmap match {
         case BitmapLoaded(bmp, _) => Option(BitmapUtils.createRoundBitmap(bmp, callImageSizePx, 0, Color.TRANSPARENT))

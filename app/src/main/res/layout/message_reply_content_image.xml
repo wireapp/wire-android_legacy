@@ -26,6 +26,11 @@
     android:layout_marginTop="@dimen/wire__padding__8"
     android:layout_marginBottom="@dimen/wire__padding__8">
 
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
     <com.waz.zclient.ui.text.GlyphTextView
         android:id="@+id/image_icon"
         android:layout_width="wrap_content"

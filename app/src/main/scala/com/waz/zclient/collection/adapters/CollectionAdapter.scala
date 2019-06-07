@@ -109,13 +109,13 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
       adapterState ! AdapterState(contentMode.currentValue.get, getItemCount, messages.isEmpty)
     }
 
-    override def onItemRangeInserted(positionStart: Int, itemCount: Int) = onChanged()
+    override def onItemRangeInserted(positionStart: Int, itemCount: Int): Unit = onChanged()
 
-    override def onItemRangeChanged(positionStart: Int, itemCount: Int) = onChanged()
+    override def onItemRangeChanged(positionStart: Int, itemCount: Int): Unit = onChanged()
 
-    override def onItemRangeRemoved(positionStart: Int, itemCount: Int) = onChanged()
+    override def onItemRangeRemoved(positionStart: Int, itemCount: Int): Unit = onChanged()
 
-    override def onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int) = onChanged()
+    override def onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int): Unit = onChanged()
   })
 
   override def getItemCount: Int = messages.fold(0)(_.count)
@@ -135,11 +135,17 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = {
-    getItem(position).foreach{ md =>
+    getItem(position).foreach { md =>
+      verbose(l"Setting msg data $md")
       holder match {
-        case c: CollectionImageViewHolder => c.setMessageData(md, viewDim.currentValue.fold(0)(_.width) / CollectionController.GridColumns, ResourceUtils.getRandomAccentColor(context)); c.view.setTag(position)
-        case l: CollectionItemViewHolder if getItemViewType(position) == CollectionAdapter.VIEW_TYPE_LINK_PREVIEW => l.setMessageData(md, md.content.find(_.openGraph.nonEmpty))
-        case l: CollectionItemViewHolder => l.setMessageData(md)
+        case c: CollectionImageViewHolder =>
+          val width = viewDim.currentValue.map(_.width / CollectionController.GridColumns).getOrElse(0)
+          c.setMessageData(md, width, ResourceUtils.getRandomAccentColor(context))
+          c.view.setTag(position)
+        case l: CollectionItemViewHolder if getItemViewType(position) == CollectionAdapter.VIEW_TYPE_LINK_PREVIEW =>
+          l.setMessageData(md, md.content.find(_.openGraph.nonEmpty))
+        case l: CollectionItemViewHolder =>
+          l.setMessageData(md)
         case _ =>
       }
     }

@@ -110,12 +110,12 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
     case (Right(user), s) =>
       drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserCorners, s)
       name.setText(user.getDisplayName)
-      drawable.assetId ! user.picture
+      drawable.picture ! user.picture
     case (Left(team), s) =>
       drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamCorners, s)
       name.setText(team.name)
       // TODO use team icon when ready
-      drawable.assetId ! None
+      drawable.picture ! None
   }
 
   Signal(unreadCount, selected).onUi {

@@ -26,7 +26,7 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets2.Content
 import com.waz.utils.returning
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.camera.views.CameraPreviewTextureView
@@ -240,11 +240,11 @@ class CameraFragment extends FragmentHelper
     showCameraFeed()
   }
 
-  override def onSketchOnPreviewPicture(input: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit =
-    screenController.showSketch ! Sketch.cameraPreview(input)
+  override def onSketchOnPreviewPicture(content: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit =
+    screenController.showSketch ! Sketch.cameraPreview(content)
 
-  override def onSendPictureFromPreview(input: RawAssetInput, source: ImagePreviewLayout.Source): Unit = {
-    cameraController.onBitmapSelected(input, cameraContext)
+  override def onSendPictureFromPreview(content: Content, source: ImagePreviewLayout.Source): Unit = {
+    cameraController.onBitmapSelected(content, cameraContext)
   }
 
   private def showPreview(setImage: (ImagePreviewLayout) => Unit) = {

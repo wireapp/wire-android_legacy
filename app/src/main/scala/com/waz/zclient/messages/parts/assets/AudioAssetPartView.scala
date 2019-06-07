@@ -21,10 +21,13 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.{FrameLayout, SeekBar}
+import com.waz.service.assets2.AssetStatus
 import com.waz.threading.Threading
 import com.waz.zclient.R
+import com.waz.zclient.cursor.CursorController
+import com.waz.zclient.cursor.CursorController.KeyboardState
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.RichSeekBar
+import com.waz.zclient.utils.{RichSeekBar, RichView}
 import org.threeten.bp.Duration
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -39,25 +42,21 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   accentColorController.accentColor.map(_.color).onUi(progressBar.setColor)
 
-  val playControls = controller.getPlaybackControls(asset.map(_._1))
+  val playControls = controller.getPlaybackControls(asset)
 
   duration.map(_.getOrElse(Duration.ZERO).toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
   playControls.flatMap(_.playHead).map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
+  playControls.flatMap(_.isPlaying) (isPlaying ! _)
 
-  val isPlaying = playControls.flatMap(_.isPlaying)
+  private lazy val keyboard = inject[CursorController].keyboard
 
-  isPlaying { assetActionButton.isPlaying ! _ }
-
-  (for {
-    pl <- isPlaying
-    a <- asset
-  } yield (pl, a)).onChanged {
-    case (pl, (a, _)) =>
-      if (pl) controller.onAudioPlayed ! a
-  }
-
-  assetActionButton.onClicked.filter(state => state == DeliveryState.Complete || state == DeliveryState.DownloadFailed) { _ =>
-    playControls.currentValue.foreach(_.playOrPause())
+  assetActionButton.onClick {
+    assetStatus.map(_._1).currentValue match {
+      case Some(AssetStatus.Done) =>
+        keyboard ! KeyboardState.Hidden
+        playControls.head.foreach(_.playOrPause())(Threading.Background)
+      case _ =>
+    }
   }
 
   completed.on(Threading.Ui) { progressBar.setEnabled }

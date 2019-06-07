@@ -120,8 +120,8 @@ import scala.concurrent.Future
       zms.head.foreach(_.messages.markMessageRead(msg.convId, msg.id))
   }
 
-  def getMessage(messageId: MessageId): Signal[Option[MessageData]] = {
-    zms.flatMap(z => Signal.future(z.messagesStorage.get(messageId)))
+  def getMessage(messageId: MessageId): Signal[MessageData] = {
+    zms.flatMap(_.messagesStorage.signal(messageId))
   }
 
   def retryMessageSending(ids: Seq[MessageId]): Future[Seq[SyncId]] =

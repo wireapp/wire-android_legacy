@@ -23,6 +23,8 @@ import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
+import com.waz.zclient.common.views.ChatHeadView.{ChatHeadViewOptions, CropShape, OverlayIcon}
+import com.waz.zclient.glide.{AssetKey, AssetRequest}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.UsersController.DisplayName
@@ -32,7 +34,11 @@ import com.waz.zclient.search.SearchController.SearchUserListState
   * A collection of implicit `LogShow` instances for UI types.
   */
 trait LogShowInstancesUI {
-  
+  import LogShow._
+
+  implicit val AssetRequestLogShow: LogShow[AssetRequest] = logShowWithHash
+  implicit val AssetKeyLogShow: LogShow[AssetKey] = logShowWithHash
+
   implicit val JobLogShow: LogShow[Job] = LogShow.logShowWithHash
 
   implicit val RichIntentLogShow: LogShow[RichIntent] =
@@ -103,4 +109,18 @@ trait LogShowInstancesUI {
       l"ContentType(msgTypes: ${t.msgTypes}, typeFilter: ${t.typeFilter})"
     }
 
+  implicit val CropShapeLogShow: LogShow[CropShape] =
+    LogShow.createFrom(c => l"${showString(c.toString)}")
+
+  implicit val OverlayIconLogShow: LogShow[OverlayIcon] =
+    LogShow.createFrom(o => l"${showString(o.toString)}")
+
+  implicit val ChatHeadViewOptionsLogShow: LogShow[ChatHeadViewOptions] =
+    LogShow.createFrom { c =>
+      import c._
+      l"""ChatHeadViewOptions(picture: $picture, backgroundColor: $backgroundColor,
+          | grayScale: $grayScale, initials: ${showString(initials)}, cropShape: $cropShape,
+          | icon: $icon)
+       """.stripMargin
+    }
 }

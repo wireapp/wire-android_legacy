@@ -17,26 +17,25 @@
  */
 package com.waz.zclient.messages.controllers
 
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.{Activity, ProgressDialog}
 import android.content.DialogInterface.OnDismissListener
 import android.content._
 import android.support.v4.app.ShareCompat
 import android.support.v7.app.AlertDialog
 import android.widget.Toast
-import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
+import com.waz.service.assets2.Asset.Image
 import com.waz.service.messages.MessageAndLikes
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
-import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.AssetsController.AssetForShare
 import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.global.KeyboardController
+import com.waz.zclient.common.controllers.{AssetsController, ScreenController}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.{LikesAndReadsFragment, ReplyController}
 import com.waz.zclient.messages.MessageBottomSheetDialog
@@ -44,16 +43,16 @@ import com.waz.zclient.messages.MessageBottomSheetDialog.{MessageAction, Params}
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.participants.OptionsMenu
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.ExternalFileSharing
 import com.waz.zclient.{ClipboardUtils, Injectable, Injector, R}
 
-import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   import MessageActionsController._
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -65,6 +64,9 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private lazy val imageNotifications   = inject[ImageNotificationsController]
   private lazy val replyController      = inject[ReplyController]
   private lazy val screenController = inject[ScreenController]
+  private lazy val externalFileSharing = inject[ExternalFileSharing]
+
+  private lazy val assetsController     = inject[AssetsController]
 
   private val zms = inject[Signal[ZMessaging]]
 
@@ -170,82 +172,63 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       .create()
       .show()
 
-  private def getAsset(assetId: AssetId) = for {
-    z <- zms.head
-    asset <- z.assets.getAssetData(assetId)
-    uri <- z.assets.getContentUri(assetId)
-  } yield (asset, uri)
 
+  private def forwardMessage(message: MessageData): Unit = message.assetId match {
+    case Some(id: AssetId) => forwardAssetMessage(id)
+    case None => forwardOtherMessage(message)
+    case _ => // TODO: show error info?
+  }
 
-  private def forwardMessage(message: MessageData) = {
+  private def forwardAssetMessage(id: AssetId): Unit = {
     val intentBuilder = ShareCompat.IntentBuilder.from(context)
     intentBuilder.setChooserTitle(R.string.conversation__action_mode__fwd__chooser__title)
-    if (message.isAssetMessage) {
-      val dialog = ProgressDialog.show(context,
-        getString(R.string.conversation__action_mode__fwd__dialog__title),
-        getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
+    val dialog = ProgressDialog.show(context,
+      getString(R.string.conversation__action_mode__fwd__dialog__title),
+      getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
 
-      getAsset(message.assetId) foreach {
-        case (Some(data), Some(uri)) =>
-          dialog.dismiss()
-          val mime =
-            if (data.mime.str.equals("text/plain"))
-              "text/*"
-            else if (data.mime == Mime.Unknown)
-              //TODO: should be fixed on file receiver side
-              Mime.Default.str
-            else
-              data.mime.str
-          intentBuilder.setType(mime)
-          intentBuilder.addStream(AndroidURIUtil.unwrap(uri))
-          intentBuilder.startChooser()
-        case _ =>
-          // TODO: show error info
-          dialog.dismiss()
-      }
-    } else { // TODO: handle location and other non text messages
-      intentBuilder.setType("text/plain")
-      intentBuilder.setText(message.contentString)
-      intentBuilder.startChooser()
+    assetsController.assetForSharing(id).onComplete {
+
+      case Success(AssetForShare(asset, file)) =>
+        dialog.dismiss()
+        val mime =
+          if (asset.mime.str.equals("text/plain"))
+            "text/*"
+          else if (asset.mime == Mime.Unknown)
+            Mime.Default.str
+          else
+            asset.mime.str
+        intentBuilder.setType(mime)
+        intentBuilder.addStream(externalFileSharing.getUriForFile(file))
+        intentBuilder.startChooser()
+
+      case Failure(err) =>
+        // TODO: show error info
+        dialog.dismiss()
     }
   }
 
-  private def saveMessage(message: MessageData) =
-    permissions.requestAllPermissions(ListSet(WRITE_EXTERNAL_STORAGE)).map {  // TODO: provide explanation dialog - use requiring with message str
-      case true =>
-        if (message.msgType == Message.Type.ASSET) { // TODO: simplify once SE asset v3 is merged, we should be able to handle that without special conditions
+  private def forwardOtherMessage(message: MessageData): Unit = {
+    val intentBuilder = ShareCompat.IntentBuilder.from(context)
+    intentBuilder.setChooserTitle(R.string.conversation__action_mode__fwd__chooser__title)
+    intentBuilder.setType("text/plain")
+    intentBuilder.setText(message.contentString)
+    intentBuilder.startChooser()
+  }
 
-          val saveFuture = for {
-            z <- zms.head
-            asset <- z.assets.getAssetData(message.assetId) if asset.isDefined
-            uri <- z.imageLoader.saveImageToGallery(asset.get)
-          } yield uri
+  private def saveMessage(message: MessageData): Unit = {
+    val assetId = message.assetId collect { case id: AssetId => id }
+    if (assetId.isEmpty) return
 
-          saveFuture onComplete {
-            case Success(Some(uri)) =>
-              imageNotifications.showImageSavedNotification(message.assetId, uri)
-              Toast.makeText(context, R.string.message_bottom_menu_action_save_ok, Toast.LENGTH_SHORT).show()
-            case _ =>
-              Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
-          }
-        } else {
-          val dialog = ProgressDialog.show(context, getString(R.string.conversation__action_mode__fwd__dialog__title), getString(R.string.conversation__action_mode__fwd__dialog__message), true, true, null)
-          zms.head.flatMap(_.assets.saveAssetToDownloads(message.assetId)) foreach {
-            case Some(file) =>
-              zms.head.flatMap(_.assets.getAssetData(message.assetId)) foreach {
-                case Some(data) => onAssetSaved ! data
-                case None => // should never happen
-              }
-              Toast.makeText(context, R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
-              context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(AndroidURIUtil.unwrap(URI.fromFile(file)))))
-              dialog.dismiss()
-            case None =>
-              Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
-              dialog.dismiss()
-          }
-        }
-      case false =>
-    } (Threading.Ui)
+    for {
+      assets <- zms.head.map(_.assetService)
+      asset <- assets.getAsset(assetId.get)
+    } {
+      asset.details match {
+        case details: Image => assetsController.saveImageToGallery(asset.copy(details = details))
+        case _ => assetsController.saveToDownloads(asset)
+      }
+    }
+  }
 
   private def revealMessageInConversation(message: MessageData) = {
     zms.head.flatMap(z => z.messagesStorage.get(message.id)).onComplete{

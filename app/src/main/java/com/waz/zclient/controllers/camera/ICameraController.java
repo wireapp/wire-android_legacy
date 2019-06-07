@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.controllers.camera;
 
-import com.waz.service.assets.AssetService;
+import com.waz.service.assets2.Content;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 
 public interface ICameraController {
@@ -29,7 +29,7 @@ public interface ICameraController {
 
     void closeCamera(CameraContext cameraContext);
 
-    void onBitmapSelected(AssetService.RawAssetInput input, CameraContext cameraContext);
+    void onBitmapSelected(Content content, CameraContext cameraContext);
 
     void onCameraNotAvailable(CameraContext cameraContext);
 

@@ -35,13 +35,10 @@
         android:paddingBottom="@dimen/wire__padding__12"
         android:layout_marginStart="@dimen/wire__padding__12"
         android:layout_marginEnd="@dimen/wire__padding__12"
-        app:show_border="false"
         app:allow_icon="false"
         app:is_round="true"
-        app:isSelectable="false"
         app:show_waiting="false"
         app:gray_on_unconnected="false"
-        app:initials_font_size="@dimen/wire__text_size__regular"
         />
 
     <RelativeLayout
