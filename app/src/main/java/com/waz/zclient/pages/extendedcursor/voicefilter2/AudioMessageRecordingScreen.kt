@@ -56,9 +56,9 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         LayoutInflater.from(context)
             .inflate(R.layout.audio_message_recording_screen, this, true)
 
-        center_button.setOnClickListener(this)
-        left_button.setOnClickListener(this)
-        right_button.setOnClickListener(this)
+        audio_center_button.setOnClickListener(this)
+        redo_button.setOnClickListener(this)
+        cancel_button.setOnClickListener(this)
 
         voice_filter_none.setOnClickListener(this)
         voice_filter_balloon.setOnClickListener(this)
@@ -97,8 +97,8 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         fl__voice_filter_time_hint__container.visibility = View.GONE
 
         setCenterButton(Companion.CenterButton.RECORD_START)
-        left_button.visibility = View.GONE
-        right_button.visibility = View.GONE
+        redo_button.visibility = View.GONE
+        cancel_button.visibility = View.GONE
     }
 
     private fun showAudioRecordingInProgress() {
@@ -108,8 +108,8 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         fl__voice_filter_time_hint__container.visibility = View.GONE
 
         setCenterButton(Companion.CenterButton.RECORD_STOP)
-        left_button.visibility = View.GONE
-        right_button.visibility = View.GONE
+        redo_button.visibility = View.GONE
+        cancel_button.visibility = View.GONE
     }
 
     private fun showAudioFilters() {
@@ -118,8 +118,8 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         fl__voice_filter_time_hint__container.visibility = View.VISIBLE
 
         setCenterButton(Companion.CenterButton.CONFIRM)
-        left_button.visibility = View.VISIBLE
-        right_button.visibility = View.VISIBLE
+        redo_button.visibility = View.VISIBLE
+        cancel_button.visibility = View.VISIBLE
     }
 
     override fun setInAnimation(inAnimation: Animation) {
@@ -146,22 +146,22 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     private fun setCenterButton(button: CenterButton) {
         when (button) {
-            Companion.CenterButton.RECORD_START -> center_button.setText(R.string.glyph__record)
-            Companion.CenterButton.RECORD_STOP -> center_button.setText(R.string.glyph__stop)
-            Companion.CenterButton.CONFIRM -> center_button.setText(R.string.glyph__check)
+            Companion.CenterButton.RECORD_START -> audio_center_button.setText(R.string.glyph__record)
+            Companion.CenterButton.RECORD_STOP -> audio_center_button.setText(R.string.glyph__stop)
+            Companion.CenterButton.CONFIRM -> audio_center_button.setText(R.string.glyph__check)
         }
         currentCenterButton = button
     }
 
     override fun onClick(v: View) {
         when (v.id) {
-            R.id.left_button ->
+            R.id.redo_button ->
                 showAudioRecordingHint()
-            R.id.right_button -> {
+            R.id.cancel_button -> {
                 stopPlaying()
                 listener?.onCancel()
             }
-            R.id.center_button -> when (currentCenterButton) {
+            R.id.audio_center_button -> when (currentCenterButton) {
                 Companion.CenterButton.RECORD_START -> startRecording()
                 Companion.CenterButton.RECORD_STOP -> stopRecording()
                 Companion.CenterButton.CONFIRM -> sendRecording()
