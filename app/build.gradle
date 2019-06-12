@@ -37,9 +37,8 @@ ext {
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 
-    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion + '-DEV'))
+    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + buildSuffixForVersion(zMessagingVersion))
     zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
-
 }
 
 if (project.file('user.gradle').exists()) {
@@ -442,6 +441,10 @@ def getApiKey(String property) {
     } else {
         return UUID.randomUUID().toString().replaceAll("-", "")
     }
+}
+
+static def buildSuffixForVersion(String versionString) {
+    if(versionString.endsWith("-PR")) "" else "-DEV"
 }
 
 //add pretty naming to apk filename
