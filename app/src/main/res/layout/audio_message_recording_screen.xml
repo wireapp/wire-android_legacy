@@ -269,7 +269,7 @@
         >
 
         <com.waz.zclient.ui.text.GlyphTextViewSimple
-            android:id="@+id/left_button"
+            android:id="@+id/redo_button"
             android:layout_width="@dimen/wire__icon_button__diameter"
             android:layout_height="@dimen/wire__icon_button__diameter"
             android:layout_gravity="center_vertical|start"
@@ -281,7 +281,7 @@
             />
 
         <com.waz.zclient.ui.text.GlyphTextViewSimple
-            android:id="@+id/center_button"
+            android:id="@+id/audio_center_button"
             android:layout_width="@dimen/wire__icon_button__diameter__big"
             android:layout_height="@dimen/wire__icon_button__diameter__big"
             android:layout_gravity="center"
@@ -293,7 +293,7 @@
 
 
         <com.waz.zclient.ui.text.GlyphTextViewSimple
-            android:id="@+id/right_button"
+            android:id="@+id/cancel_button"
             android:layout_width="@dimen/wire__icon_button__diameter"
             android:layout_height="@dimen/wire__icon_button__diameter"
             android:layout_gravity="center_vertical|end"
