@@ -37,7 +37,7 @@ ext {
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 
-    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + isPR(zMessagingVersion))
+    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + buildSuffixForVersion(zMessagingVersion))
     zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
 }
 
@@ -443,7 +443,7 @@ def getApiKey(String property) {
     }
 }
 
-static def isPR(String versionString) {
+static def buildSuffixForVersion(String versionString) {
     if(versionString.endsWith("-PR")) "" else "-DEV"
 }
 
