@@ -444,7 +444,7 @@ def getApiKey(String property) {
 }
 
 static def buildSuffixForVersion(String versionString) {
-    if(versionString.endsWith("-PR")) "" else "-DEV"
+    if (versionString.matches("\\d+\\.\\d+\\.\\d+(-[.0-9a-zA-Z]+)")) "" else "-DEV"
 }
 
 //add pretty naming to apk filename
