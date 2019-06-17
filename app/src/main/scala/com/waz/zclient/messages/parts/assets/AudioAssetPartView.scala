@@ -21,13 +21,15 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.{FrameLayout, SeekBar}
+import com.waz.service.assets2.Asset.{Audio, Video}
 import com.waz.service.assets2.AssetStatus
 import com.waz.threading.Threading
+import com.waz.utils.events.Signal
 import com.waz.zclient.R
 import com.waz.zclient.cursor.CursorController
 import com.waz.zclient.cursor.CursorController.KeyboardState
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.{RichSeekBar, RichView}
+import com.waz.zclient.utils.{RichSeekBar, RichView, StringUtils}
 import org.threeten.bp.Duration
 
 class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
@@ -42,11 +44,33 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   accentColorController.accentColor.map(_.color).onUi(progressBar.setColor)
 
-  val playControls = controller.getPlaybackControls(asset)
+  private val details = asset.map(_.details)
 
-  duration.map(_.getOrElse(Duration.ZERO).toMillis.toInt).on(Threading.Ui)(progressBar.setMax)
-  playControls.flatMap(_.playHead).map(_.toMillis.toInt).on(Threading.Ui)(progressBar.setProgress)
-  playControls.flatMap(_.isPlaying) (isPlaying ! _)
+  details.map {
+    case d: Video => d.duration.toMillis.toInt
+    case d: Audio => d.duration.toMillis.toInt
+    case _        => 0
+  }.onUi(progressBar.setMax)
+
+  private val readyToPlay = details.map {
+    case _: Video => true
+    case _: Audio => true
+    case _        => false
+  }
+
+  private val progressInMillis = for {
+    ready     <- readyToPlay
+    progress  <- if (ready) playControls.flatMap(_.playHead).map(_.toMillis.toInt)
+    else Signal.const(0)
+  } yield progress
+
+  progressInMillis.onUi(progressBar.setProgress)
+
+  (for {
+    ready     <- readyToPlay
+    progress  <- progressInMillis
+    formatted = if (ready) StringUtils.formatTimeMilliSeconds(progress) else ""
+  } yield formatted).onUi(durationView.setText)
 
   private lazy val keyboard = inject[CursorController].keyboard
 

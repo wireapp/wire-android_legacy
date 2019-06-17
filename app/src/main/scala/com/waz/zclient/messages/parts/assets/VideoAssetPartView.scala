@@ -45,8 +45,6 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
     case _         => WireGlide(context).clear(image)
   }
 
-
-
   assetActionButton.onClick {
     assetStatus.map(_._1).currentValue.foreach {
       case UploadAssetStatus.Failed => message.currentValue.foreach(retr => {println(retr);  controller.retry(retr)})
