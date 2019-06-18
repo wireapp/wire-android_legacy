@@ -21,7 +21,6 @@ import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
 import com.waz.model.{Dim2, MessageContent}
-import com.waz.service.assets2.Asset.{Audio, Video}
 import com.waz.service.assets2._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -33,7 +32,7 @@ import com.waz.zclient.messages.ClickableViewPart
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
 import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPartView, ImagePartView}
-import com.waz.zclient.utils.{StringUtils, _}
+import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
 trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
@@ -104,16 +103,10 @@ trait ActionableAssetPart extends AssetPart {
 }
 
 trait PlayableAsset extends ActionableAssetPart {
-  val duration = asset.map(_.details).map {
-    case details: Video => Some(details.duration)
-    case details: Audio => Some(details.duration)
-    case _ => None
-  }
-  val formattedDuration = duration.map(_.fold("")(d => StringUtils.formatTimeSeconds(d.getSeconds)))
-
   protected val durationView: TextView = findById(R.id.duration)
 
-  formattedDuration.on(Threading.Ui)(durationView.setText)
+  protected lazy val playControls = controller.getPlaybackControls(asset)
+  playControls.flatMap(_.isPlaying) (isPlaying ! _)
 }
 
 trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
