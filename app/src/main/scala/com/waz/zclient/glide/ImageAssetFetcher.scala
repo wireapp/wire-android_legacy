@@ -44,13 +44,14 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
     verbose(l"Load asset $request")
 
-    val data = CancellableFuture.lift(zms.head).flatMap { zms =>
+    val data = CancellableFuture.lift(zms.head.map(_.assetService)).flatMap { assets =>
       request match {
-        case AssetIdRequest(assetId) => zms.assetService.loadContentById(assetId)
-        case ImageAssetRequest(asset) => zms.assetService.loadContent(asset)
-        case PublicAssetIdRequest(assetId) => zms.assetService.loadPublicContentById(assetId, None, None)
-        case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
-        case _ => CancellableFuture.failed(NotSupportedError("Unsupported image request"))
+        case AssetIdRequest(assetId)             => assets.loadContentById(assetId)
+        case ImageAssetRequest(asset)            => assets.loadContent(asset)
+        case PublicAssetIdRequest(assetId)       => assets.loadPublicContentById(assetId, None, None)
+        case UploadAssetIdRequest(uploadAssetId) => assets.loadUploadContentById(uploadAssetId, None)
+        case _ =>
+          CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
     }
     currentData.foreach(_.cancel())

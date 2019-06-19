@@ -21,8 +21,8 @@ import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.support.v7.widget.AppCompatCheckBox
 import android.util.AttributeSet
-import android.view.{Gravity, View, ViewGroup}
 import android.view.View.OnClickListener
+import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
@@ -38,23 +38,24 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 
-class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {
+class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
+  extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   inflate(R.layout.single_user_row_view)
   setTheme(Theme.Light, background = true)
 
-  private lazy val chathead = findById[ChatHeadView](R.id.chathead)
-  private lazy val nameView = findById[TypefaceTextView](R.id.name_text)
-  private lazy val subtitleView = findById[TypefaceTextView](R.id.username_text)
-  private lazy val checkbox = findById[AppCompatCheckBox](R.id.checkbox)
+  private lazy val chathead       = findById[ChatHeadView](R.id.chathead)
+  private lazy val nameView       = findById[TypefaceTextView](R.id.name_text)
+  private lazy val subtitleView   = findById[TypefaceTextView](R.id.username_text)
+  private lazy val checkbox       = findById[AppCompatCheckBox](R.id.checkbox)
   private lazy val verifiedShield = findById[ImageView](R.id.verified_shield)
   private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_indicator))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
   private lazy val videoIndicator = returning(findById[ImageView](R.id.video_indicator))(_.setImageDrawable(VideoIcon(R.color.light_graphite)))
-  private lazy val nextIndicator = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
-  private lazy val separator = findById[View](R.id.separator)
-  private lazy val auxContainer = findById[ViewGroup](R.id.aux_container)
+  private lazy val nextIndicator  = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
+  private lazy val separator      = findById[View](R.id.separator)
+  private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
 
   val onSelectionChanged: SourceStream[Boolean] = EventStream()
   private var solidBackground = false

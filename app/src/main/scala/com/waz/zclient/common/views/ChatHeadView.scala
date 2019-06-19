@@ -68,9 +68,9 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   val attributes: Attributes = parseAttributes(attrs)
 
   private val options = for {
-    z <- zms
+    z         <- zms
     Some(uId) <- userId
-    user <- z.usersStorage.signal(uId)
+    user      <- z.usersStorage.signal(uId)
   } yield optionsForUser(user, z.teamId.exists(user.teamId.contains(_)), attributes)
 
   options.onUi(setInfo)
@@ -87,10 +87,8 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     Attributes(isRound, showWaiting  && allowIcon, grayScaleOnConnected && allowIcon, defaultBackground)
   }
 
-  def loadUser(userId: UserId): Unit = {
-    WireGlide(context).clear(this)
+  def loadUser(userId: UserId): Unit =
     this.userId ! Some(userId)
-  }
 
   def setUserData(userData: UserData, belongsToSelfTeam: Boolean): Unit =
     setInfo(optionsForUser(userData, belongsToSelfTeam, attributes))
@@ -110,7 +108,6 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   def setInfo(options: ChatHeadViewOptions): Unit = {
     verbose(l"will set options: $options")
-
     if (options.picture.isEmpty) {
       WireGlide(context).clear(this)
       setImageDrawable(options.placeholder)
@@ -119,19 +116,16 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     }
   }
 
-  private def optionsForIntegration(integration: IntegrationData, attributes: Attributes): ChatHeadViewOptions = {
+  private def optionsForIntegration(integration: IntegrationData, attributes: Attributes): ChatHeadViewOptions =
     ChatHeadViewOptions(
       integration.asset.map(Picture.Uploaded),
       attributes.defaultBackground,
       grayScale = false,
       NameParts.parseFrom(integration.name).initials,
       cropShape = Some(CropShape.RoundRect),
-      None
-    )
-  }
+      None)
 
   private def optionsForUser(user: UserData, teamMember: Boolean, attributes: Attributes): ChatHeadViewOptions = {
-    val assetId = user.picture
     val backgroundColor = AccentColor.apply(user.accent).color
     val greyScale = !(user.isConnected || user.isSelf || user.isWireBot || teamMember) && attributes.greyScaleOnConnected
     val initials = NameParts.parseFrom(user.name).initials
@@ -150,17 +144,8 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
       else
         None
 
-    ChatHeadViewOptions(assetId, backgroundColor, greyScale, initials, shape, icon)
+    ChatHeadViewOptions(user.picture, backgroundColor, greyScale, initials, shape, icon)
   }
-
-  private def defaultOptions(attributes: Attributes): ChatHeadViewOptions =
-    ChatHeadViewOptions(
-      None,
-      attributes.defaultBackground,
-      grayScale = false,
-      "",
-      cropShape = if (attributes.isRound) Some(CropShape.Circle) else None,
-      icon = None)
 }
 
 object ChatHeadView {
@@ -184,14 +169,17 @@ object ChatHeadView {
                                  grayScale: Boolean,
                                  initials: String,
                                  cropShape: Option[CropShape],
-                                 icon: Option[OverlayIcon]) {
-
-    def placeholder(implicit context: Context) = new ChatHeadViewPlaceholder(backgroundColor, initials, cropShape = cropShape, reversedColors = cropShape.isEmpty)
+                                 icon: Option[OverlayIcon])(implicit context: Context) extends DerivedLogTag {
+    lazy val placeholder = ChatHeadViewPlaceholder(backgroundColor, initials, cropShape = cropShape, reversedColors = cropShape.isEmpty)
 
     def glideRequest(implicit context: Context): RequestBuilder[Drawable] = {
       val request = picture match {
-        case Some(p) => WireGlide(context).load(p)
-        case _ => WireGlide(context).load(placeholder)
+        case Some(p) =>
+          verbose(l"picture is $p")
+          WireGlide(context).load(p)
+        case _ =>
+          verbose(l"picture is None, loading a placeholder")
+          WireGlide(context).load(placeholder)
       }
       val requestOptions = new RequestOptions()
 
@@ -218,8 +206,10 @@ object ChatHeadView {
     }
   }
 
-  class ChatHeadViewPlaceholder(color: Int, text: String, cropShape: Option[CropShape], reversedColors: Boolean = false)(implicit context: Context) extends Drawable {
-
+  case class ChatHeadViewPlaceholder(color: Int,
+                                     text: String,
+                                     cropShape: Option[CropShape],
+                                     reversedColors: Boolean = false)(implicit context: Context) extends Drawable {
     private val textPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { p =>
       p.setTextAlign(Paint.Align.CENTER)
       val tf = TypefaceUtils.getTypeface(getString(if (reversedColors) R.string.wire__typeface__medium else R.string.wire__typeface__light))
