@@ -52,7 +52,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
 import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
-import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast}
+import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast, getString}
 import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
@@ -339,7 +339,7 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
       val name = conversationData.displayName
       if (name.isEmpty) {
         import Threading.Implicits.Background
-        zms.head.flatMap(_.conversations.forceNameUpdate(conversationData.id))
+        zms.head.flatMap(_.conversations.forceNameUpdate(conversationData.id, getString(R.string.default_deleted_username)(view.getContext)))
       }
       view.nameView.setText(conversationData.displayName)
     case _ => view.nameView.setText("")
