@@ -132,7 +132,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
     val icon =
       if (user.connection == ConnectionStatus.Blocked)
         Some(OverlayIcon.Blocked)
-      else if (!user.isConnected && attributes.showWaiting && !user.isWireBot)
+      else if (pendingConnectionStatuses.contains(user.connection) && attributes.showWaiting && !user.isWireBot)
         Some(OverlayIcon.Waiting)
       else
         None
@@ -149,6 +149,8 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 }
 
 object ChatHeadView {
+  private val pendingConnectionStatuses = Set(ConnectionStatus.PendingFromUser, ConnectionStatus.PendingFromOther)
+
   case class Attributes(isRound: Boolean,
                         showWaiting: Boolean,
                         greyScaleOnConnected: Boolean,
