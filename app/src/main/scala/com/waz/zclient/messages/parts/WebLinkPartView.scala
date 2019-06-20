@@ -100,9 +100,9 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private val dotsDrawable = new ProgressDotsDrawable
 
-  image.map (_.map{
-    case Left(asset) => WireGlide(context).load(AssetId(asset.remoteId.get.str))
-    case Right(uri) => WireGlide(context).load(uri.toString)
+  image.map (_.flatMap{
+    case Left(asset) => asset.remoteId.map(id => WireGlide(context).load(AssetId(id.str)))
+    case Right(uri) => Some(WireGlide(context).load(uri.toString))
   }).onUi {
     case Some(request) =>
       request.apply(new RequestOptions().centerCrop().placeholder(dotsDrawable))
