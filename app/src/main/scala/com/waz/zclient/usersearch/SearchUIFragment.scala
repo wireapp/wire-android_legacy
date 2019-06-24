@@ -85,7 +85,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private lazy val convListController     = inject[ConversationListController]
   private lazy val keyboard               = inject[KeyboardController]
   private lazy val tracking               = inject[TrackingService]
-
+  private lazy val spinner                = inject[SpinnerController]
   private lazy val pickUserController     = inject[IPickUserController]
   private lazy val convScreenController   = inject[IConversationScreenController]
   private lazy val navigationController   = inject[INavigationController]
@@ -97,6 +97,8 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   private lazy val searchResultRecyclerView = view[RecyclerView](R.id.rv__pickuser__header_list_view)
   private lazy val startUiToolbar           = view[Toolbar](R.id.pickuser_toolbar)
+
+  private val convCreationInProgress = Signal(false)
 
   private lazy val inviteButton = returning(view[FlatWireButton](R.id.invite_button)) { vh =>
     userAccountsController.isTeam.flatMap {
@@ -239,7 +241,6 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       })
     }
 
-
     searchBox.foreach(_.setOnEditorActionListener(new OnEditorActionListener {
       override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean =
         if (actionId == EditorInfo.IME_ACTION_SEARCH) keyboard.hideKeyboardIfVisible() else false
@@ -325,28 +326,38 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     }
     else false
 
-  override def onUserClicked(userId: UserId): Unit = {
-    zms.head.flatMap { z =>
-      z.usersStorage.get(userId).map {
-        case Some(user) =>
-          import ConnectionStatus._
-          keyboard.hideKeyboardIfVisible()
-          if (user.connection == Accepted || (user.connection == Unconnected && z.teamId.isDefined && z.teamId == user.teamId))
-            userAccountsController.getOrCreateAndOpenConvFor(userId)
-          else {
-            Future { user.connection match {
-              case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
-                convScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-                pickUserController.showUserProfile(userId, false)
-              case ConnectionStatus.PendingFromOther =>
-                getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
-              case _ =>
-            }}
+  override def onUserClicked(userId: UserId): Unit = zms.head.foreach { z =>
+    z.usersStorage.get(userId).foreach {
+      case Some(user) =>
+        import ConnectionStatus._
+        keyboard.hideKeyboardIfVisible()
+        if (user.connection == Accepted || (user.connection == Unconnected && z.teamId.isDefined && z.teamId == user.teamId)) {
+          convCreationInProgress.head.foreach {
+            case false =>
+              spinner.showSpinner(true)
+              convCreationInProgress ! true
+              userAccountsController
+                .getOrCreateAndOpenConvFor(userId)
+                .onComplete { _ =>
+                  spinner.hideSpinner()
+                  convCreationInProgress ! false
+                }
+            case _ =>
           }
-        case _ =>
-      }
+        } else {
+          user.connection match {
+            case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
+              convScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
+              pickUserController.showUserProfile(userId, false)
+            case ConnectionStatus.PendingFromOther =>
+              getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
+            case _ =>
+          }
+        }
+      case _ =>
     }
   }
+
 
   override def onConversationClicked(conversationData: ConversationData): Unit = {
     keyboard.hideKeyboardIfVisible()
@@ -371,12 +382,17 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   }
 
 
-  override def onCreateGuestRoomClicked(): Unit = {
-    tracking.track(TrackingEvent("guest_rooms.guest_room_creation"))
-    keyboard.hideKeyboardIfVisible()
-    conversationController.createGuestRoom().map { conv =>
-      conversationController.selectConv(Some(conv.id), ConversationChangeRequester.START_CONVERSATION)
-    } (Threading.Ui)
+  override def onCreateGuestRoomClicked(): Unit = convCreationInProgress.head.foreach {
+    case true =>
+    case false =>
+      convCreationInProgress ! true
+      spinner.showSpinner(true)
+      tracking.track(TrackingEvent("guest_rooms.guest_room_creation"))
+      keyboard.hideKeyboardIfVisible()
+      conversationController.createGuestRoom().flatMap { conv =>
+        spinner.hideSpinner()
+        conversationController.selectConv(Some(conv.id), ConversationChangeRequester.START_CONVERSATION)
+      }.onComplete(_ => convCreationInProgress ! false)
   }
 
   private def sendGenericInvite(fromSearch: Boolean): Unit =
