@@ -433,16 +433,6 @@ static def getDate() {
     return formattedDate
 }
 
-def getApiKey(String property) {
-    if (file("$projectDir/api-keys.properties").exists()) {
-        Properties properties = new Properties()
-        properties.load(new FileInputStream("$projectDir/api-keys.properties"))
-        return properties.getProperty(property)
-    } else {
-        return UUID.randomUUID().toString().replaceAll("-", "")
-    }
-}
-
 static def buildSuffixForVersion(String versionString) {
     if (versionString.matches("\\d+\\.\\d+\\.\\d+(-[.0-9a-zA-Z]+)")) "" else "-DEV"
 }
