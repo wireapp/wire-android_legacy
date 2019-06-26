@@ -76,7 +76,7 @@ class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) 
 
   Signal(integration, user.map(_.id)).onUi {
     case (Some(i), _) => chathead.setIntegration(i)
-    case (_, usr) => chathead.setUserId(usr)
+    case (_, usr) => chathead.loadUser(usr)
   }
 
   user.map(_.id)(userDetails.setUserId)

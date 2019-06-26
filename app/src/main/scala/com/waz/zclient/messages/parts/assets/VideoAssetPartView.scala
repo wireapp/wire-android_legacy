@@ -20,13 +20,13 @@ package com.waz.zclient.messages.parts.assets
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import android.widget.FrameLayout
+import android.widget.{FrameLayout, ImageView}
+import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
-import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.common.views.ImageAssetDrawable.State.Loaded
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart with HighlightViewPart {
@@ -36,21 +36,28 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   override val tpe: MsgPart = MsgPart.VideoAsset
 
   private val controls = findById[View](R.id.controls)
+  private val image = findById[ImageView](R.id.image)
 
   hideContent.map(!_).on(Threading.Ui)(controls.setVisible)
 
-  imageDrawable.state.map {
-    case Loaded(_, _, _) => getColor(R.color.white)
-    case _ => getColor(R.color.black)
-  }.on(Threading.Ui)(durationView.setTextColor)
+  previewAssetId.onUi {
+    case Some(aId) => WireGlide(context).load(aId).into(image)
+    case _         => WireGlide(context).clear(image)
+  }
 
-  asset.disableAutowiring()
-
-  assetActionButton.onClicked.filter(_ == DeliveryState.Complete) { _ =>
-    asset.currentValue foreach { case (a, _) =>
-      controller.openFile(a)
+  assetActionButton.onClick {
+    assetStatus.map(_._1).currentValue.foreach {
+      case UploadAssetStatus.Failed => message.currentValue.foreach(retr => {println(retr);  controller.retry(retr)})
+      case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
+      case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
+      case AssetStatus.Done => asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+      case _ =>
     }
   }
 
-  override def onInflated(): Unit = {}
+  padding.onUi { p =>
+    durationView.setMargin(p.l, p.t, p.r, p.b)
+  }
+
+  override def onInflated(): Unit = ()
 }

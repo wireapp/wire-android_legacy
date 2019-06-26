@@ -22,6 +22,7 @@ import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
+import com.waz.model.UserData.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
@@ -464,7 +465,7 @@ private class ScreenManager(implicit injector: Injector) extends Injectable with
 
 private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   private lazy val telephonyManager = inject[TelephonyManager]
 
   private var listening = false
@@ -510,7 +511,7 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
 
 object CallController {
   case class CallParticipantInfo(userId: UserId,
-                                 assetId: Option[AssetId],
+                                 picture: Option[Picture],
                                  displayName: String,
                                  isGuest: Boolean,
                                  isVerified: Boolean,

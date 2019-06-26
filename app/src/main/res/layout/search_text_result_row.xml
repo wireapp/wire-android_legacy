@@ -24,7 +24,6 @@
 
     <com.waz.zclient.common.views.ChatHeadView
         android:id="@+id/chathead"
-        app:show_border="false"
         android:layout_width="@dimen/search__chathead__size"
         android:layout_height="@dimen/search__chathead__size"
         android:layout_marginEnd="@dimen/wire__padding__regular"

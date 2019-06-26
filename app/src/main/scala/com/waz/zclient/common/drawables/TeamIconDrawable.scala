@@ -20,17 +20,18 @@ package com.waz.zclient.drawables
 import android.content.Context
 import android.graphics._
 import android.graphics.drawable.Drawable
+import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetData, AssetId}
+import com.waz.model.UserData.Picture
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
-import com.waz.service.images.BitmapSignal
 import com.waz.threading.Threading
-import com.waz.ui.MemoryImageCache.BitmapRequest.Single
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.drawables.TeamIconDrawable._
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.{Injectable, Injector, R}
+
+import scala.concurrent.Future
 
 object TeamIconDrawable {
   val TeamCorners = 6
@@ -41,7 +42,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
   extends Drawable
     with Injectable
     with DerivedLogTag {
-  
+
   var text = ""
   var corners = UserCorners
   var selected = false
@@ -84,22 +85,24 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
   val borderPath = new Path()
   val matrix = new Matrix()
 
-  val assetId = Signal(Option.empty[AssetId])
+  val picture = Signal(Option.empty[Picture])
   val bounds = Signal[Rect]()
   val zms = inject[Signal[ZMessaging]]
 
-  val bmp = for{
-    z <- zms
-    asset <- assetId.flatMap {
-      case Some(aId) => z.assetsStorage.signal(aId).map(Option(_))
-      case _ => Signal.const(Option.empty[AssetData])
-    }
+  val bmp = for {
     b <- bounds
-    bmp <- asset.fold {
-      Signal.const(Option.empty[Bitmap])
-    } { assetData =>
-      BitmapSignal(z, assetData, Single(b.width)).collect { case BitmapLoaded(bm, _) => Option(bm) }
-    }
+    p <- picture
+    bmp <- Signal.future(
+      p.fold(Future.successful(Option.empty[Bitmap])) { picture =>
+        Threading.Background {
+          Option(WireGlide(ctx)
+            .asBitmap()
+            .load(picture)
+            .apply(new RequestOptions().circleCrop())
+            .submit(b.width, b.height)
+            .get())
+        }.future
+      })
   } yield bmp
 
   private var currentBmp = Option.empty[Bitmap]

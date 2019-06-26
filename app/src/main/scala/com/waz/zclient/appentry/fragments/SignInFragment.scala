@@ -383,12 +383,13 @@ class SignInFragment
               email     <- email.head
               password  <- password.head
               name      <- name.head
-              req       <- accountsService.requestEmailCode(EmailAddress(email))
             } yield {
               if (strongPasswordValidator.isValidPassword(password)) {
-                onResponse(req, m).right.foreach { _ =>
-                  KeyboardUtils.closeKeyboardIfShown(getActivity)
-                  activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+               accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
+                  onResponse(req, m).right.foreach { _ =>
+                    KeyboardUtils.closeKeyboardIfShown(getActivity)
+                    activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                  }
                 }
               } else { // Invalid password
                 passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))

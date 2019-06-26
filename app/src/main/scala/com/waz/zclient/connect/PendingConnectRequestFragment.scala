@@ -22,20 +22,19 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
+import com.bumptech.glide.request.RequestOptions
 import com.waz.api.User.ConnectionStatus
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.WireImage
-import com.waz.zclient.participants.UserRequester
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
 import com.waz.zclient.pages.main.participants.ProfileAnimation
+import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils
@@ -121,12 +120,9 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     userHandleView
 
-    val assetDrawable = new ImageAssetDrawable(
-      user.map(_.picture).collect { case Some(p) => WireImage(p) },
-      scaleType = ScaleType.CenterInside,
-      request = RequestBuilder.Round
-    )
-    imageViewProfile.foreach(_.setImageDrawable(assetDrawable))
+    user.map(_.picture).collect { case Some(p) => p }.onUi { id =>
+      imageViewProfile.foreach(WireGlide(context).load(id).apply(new RequestOptions().circleCrop()).into(_))
+    }
 
     userNameView.foreach { v =>
       val paddingTop =

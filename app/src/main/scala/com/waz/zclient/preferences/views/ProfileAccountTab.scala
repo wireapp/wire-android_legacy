@@ -23,6 +23,7 @@ import android.view.{View, ViewGroup}
 import android.widget.FrameLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView}
 import com.waz.content.{AccountStorage, TeamsStorage}
+import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.service.AccountsService
 import com.waz.utils.NameParts
@@ -85,10 +86,10 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
 
   private val accentColor = teamAndUser.map(tau => AccentColor(tau._1.accent).color)
 
-  private val picture = teamAndUser.map{
+  private val picture = teamAndUser.map {
     case (user, Some(team)) =>
       // TODO use team icon when ready
-      Option.empty[AssetId]
+      Option.empty[Picture]
     case (user, _) =>
       user.picture
   }
@@ -100,7 +101,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
 
   private val drawableCorners = teamAndUser.map(_._2.fold(TeamIconDrawable.UserCorners)(_ => TeamIconDrawable.TeamCorners))
 
-  picture.onUi { drawable.assetId ! _ }
+  picture.onUi { drawable.picture ! _ }
 
   accentColor.onUi { color =>
     unreadIndicator.setAccentColor(color)

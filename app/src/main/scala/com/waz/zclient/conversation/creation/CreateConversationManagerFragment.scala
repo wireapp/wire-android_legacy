@@ -38,22 +38,23 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getInt}
 import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.DefaultPageTransitionAnimation
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 
 class CreateConversationManagerFragment extends FragmentHelper {
 
   implicit private def ctx = getContext
+  import Threading.Implicits.Ui
 
-  private lazy val ctrl      = inject[CreateConversationController]
+  private lazy val ctrl                   = inject[CreateConversationController]
   private lazy val conversationController = inject[ConversationController]
   private lazy val keyboard               = inject[KeyboardController]
   private lazy val themeController        = inject[ThemeController]
-
-  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
+  private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
+  private lazy val spinner                = inject[SpinnerController]
 
   private lazy val currentPage = Signal[Int]()
 
-  lazy val confButtonText = for {
+  private lazy val confButtonText = for {
     currentPage <- currentPage
     users       <- ctrl.users
     integrations <- ctrl.integrations
@@ -63,18 +64,23 @@ class CreateConversationManagerFragment extends FragmentHelper {
     case PickerPage                   => R.string.skip_button
   }
 
-  lazy val confButtonEnabled = for {
-    currentPage <- currentPage
-    name        <- ctrl.name
-    memberCount <- ctrl.users.map(_.size)
+  private val convCreationInProgress = Signal(false)
+
+  private lazy val confButtonEnabled = for {
+    currentPage       <- currentPage
+    name              <- ctrl.name
+    memberCount       <- ctrl.users.map(_.size)
     integrationsCount <- ctrl.integrations.map(_.size)
-  } yield currentPage match {
-    case SettingsPage if name.trim.isEmpty  => false
-    case _ if memberCount + integrationsCount >= ConversationController.MaxParticipants => false
-    case _ => true
+    inProgress        <- convCreationInProgress
+  } yield {
+    if (inProgress) false else currentPage match {
+      case SettingsPage if name.trim.isEmpty  => false
+      case _ if memberCount + integrationsCount >= ConversationController.MaxParticipants => false
+      case _ => true
+    }
   }
 
-  lazy val confButtonColor = confButtonEnabled.flatMap {
+  private lazy val confButtonColor = confButtonEnabled.flatMap {
     case false => Signal.const(getColor(R.color.teams_inactive_button))
     case _     => accentColor
   }
@@ -103,6 +109,29 @@ class CreateConversationManagerFragment extends FragmentHelper {
     confButtonEnabled.onUi(e => vh.foreach(_.setEnabled(e)))
     confButtonText.onUi (id => vh.foreach(_.setText(id)))
     confButtonColor.onUi(c => vh.foreach(_.setTextColor(c)))
+
+    vh.foreach(_.onClick {
+      currentPage.currentValue.foreach {
+        case SettingsPage =>
+          keyboard.hideKeyboardIfVisible()
+          openFragment(new AddParticipantsFragment, AddParticipantsFragment.Tag)
+        case PickerPage =>
+          convCreationInProgress.head.foreach {
+            case false =>
+              convCreationInProgress ! true
+              spinner.showSpinner(true)
+              ctrl.createConversation().foreach { convId =>
+                spinner.hideSpinner()
+                close()
+                conversationController
+                  .selectConv(Some(convId), ConversationChangeRequester.START_CONVERSATION)
+                  .onComplete(_ => convCreationInProgress ! false)
+              }
+            case true =>
+          }
+        case _ =>
+      }
+    })
   }
 
   private lazy val header = returning(view[TypefaceTextView](R.id.header)) { vh =>
@@ -170,22 +199,6 @@ class CreateConversationManagerFragment extends FragmentHelper {
   override def onViewCreated(v: View, savedInstanceState: Bundle): Unit = {
     openFragment(new CreateConversationSettingsFragment, CreateConversationSettingsFragment.Tag)
 
-    confButton.foreach(_.onClick {
-      currentPage.currentValue.foreach {
-        case SettingsPage =>
-          keyboard.hideKeyboardIfVisible()
-          openFragment(new AddParticipantsFragment, AddParticipantsFragment.Tag)
-        case PickerPage =>
-          ctrl.createConversation().flatMap { convId =>
-            close()
-            conversationController.selectConv(Some(convId), ConversationChangeRequester.START_CONVERSATION)
-          } (Threading.Ui)
-
-        case _ =>
-      }
-
-    })
-
     toolbar.foreach(_.setNavigationOnClickListener(new OnClickListener() {
       override def onClick(v: View): Unit =
         currentPage.currentValue.foreach {
@@ -197,6 +210,7 @@ class CreateConversationManagerFragment extends FragmentHelper {
 
     //lazy init
     header
+    confButton
   }
 
   override def onDestroyView() = {

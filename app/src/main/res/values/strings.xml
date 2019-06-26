@@ -504,7 +504,7 @@
     <string name="debug_report__title">Wire debug report - %1$s</string>
     <string name="debug_report__body">Please describe the steps required to reproduce the issue, provide screenshots if possible and send this email.\n\n</string>
     <string name="pref_advanced_ws_foreground_title">Maintain connection to server</string>
-    <string name="pref_advanced_ws_foreground_summary">We have detected that Google Play Services are not installed. Wire will try to keep a connection with the server open to receive notifications while the application is not in the foreground.
+    <string name="pref_advanced_ws_foreground_summary">Wire will try to keep a connection with the server open to receive notifications while the application is not in the foreground.
         Turning this setting off may improve battery performance, but you will no longer receive notifications when Wire is in the background. This applies to all accounts on this device.</string>
 
     <!-- Support -->

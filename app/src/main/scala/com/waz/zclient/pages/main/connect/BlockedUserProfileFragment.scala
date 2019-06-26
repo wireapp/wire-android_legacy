@@ -22,14 +22,15 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
+import com.bumptech.glide.request.RequestOptions
+import com.waz.model.UserData.Picture
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment._
 import com.waz.zclient.pages.main.participants.ProfileAnimation
@@ -76,8 +77,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     user <- zms.usersStorage.signal(userId)
   } yield user
 
-  private lazy val pictureSignal: Signal[ImageSource] = user.map(_.picture).collect { case Some(pic) => WireImage(pic) }
-  private lazy val profileDrawable = new ImageAssetDrawable(pictureSignal, ImageAssetDrawable.ScaleType.CenterInside, ImageAssetDrawable.RequestBuilder.Round)
+  private lazy val pictureSignal: Signal[Picture] = user.map(_.picture).collect { case Some(pic) => pic }
 
   private var userRequester = Option.empty[UserRequester]
   private var isShowingFooterMenu = true
@@ -135,7 +135,11 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     userNameView
     userUsernameView
-    profileImageView.foreach(_.setImageDrawable(profileDrawable))
+    pictureSignal.onUi { id =>
+      profileImageView.foreach(WireGlide(ctx).load(id)
+        .apply(new RequestOptions().centerCrop())
+        .into(_))
+    }
     unblockButton.foreach(_.setIsFilled(true))
     cancelButton.foreach(_.setIsFilled(true))
     smallUnblockButton.foreach(_.setIsFilled(true))

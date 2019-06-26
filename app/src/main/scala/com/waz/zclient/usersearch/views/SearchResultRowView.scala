@@ -101,7 +101,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
   infoSignal.onUi {
     case (msg, user) =>
       infoTextView.setText(TextViewUtils.getBoldText(getContext, s"[[${user.name}]] ${TimeStamp(msg.time.instant, showWeekday = false).string}"))
-      chatheadView.setUserId(msg.userId)
+      chatheadView.loadUser(msg.userId)
     case _ =>
   }
 

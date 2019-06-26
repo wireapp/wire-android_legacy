@@ -56,9 +56,9 @@ object Backend {
     BuildConfig.BACKEND_URL,
     BuildConfig.WEBSOCKET_URL,
     BuildConfig.BLACKLIST_HOST,
-    teamsUrl = "https://teams.wire.com",
-    accountsUrl = "https://account.wire.com",
-    websiteUrl = "https://wire.com",
+    teamsUrl = BuildConfig.TEAMS_URL,
+    accountsUrl = BuildConfig.ACCOUNTS_URL,
+    websiteUrl = BuildConfig.WEBSITE_URL,
     ProdFirebaseOptions,
     certPin)
 }

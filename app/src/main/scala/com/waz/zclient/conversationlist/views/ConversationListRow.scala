@@ -65,7 +65,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     with SwipeListView.SwipeListRow
     with MoveToAnimateable
     with DerivedLogTag {
-  
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -106,8 +106,9 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated
-      zms.head.foreach {_.conversations.forceNameUpdate(conv.id) }
-      Name(getString(R.string.default_deleted_username))
+      val defaultName = getString(R.string.default_deleted_username)
+      zms.head.foreach {_.conversations.forceNameUpdate(conv.id, defaultName) }
+      Name(defaultName)
     } else
       conv.displayName
   }
@@ -127,8 +128,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     call           <- z.calling.currentCall
     callDuration   <- call.filter(_.convId == conv.id).fold(Signal.const(""))(_.durationFormatted)
     isGroupConv    <- z.conversations.groupConversation(conv.id)
-    lastMessage    <- controller.lastMessage(conv.id)
-    selfId         <- selfId
   } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount, typing, availableCalls, callDuration, isGroupConv))
 
   val subtitleText = for {
@@ -151,16 +150,16 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val avatarInfo = for {
     z <- zms
     conv <- conversation
-    isGroup <- z.conversations.groupConversation(conv.id)
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
+    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
   } yield {
     val opacity =
       if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
         getResourceFloat(R.dimen.conversation_avatar_alpha_inactive)
       else
         getResourceFloat(R.dimen.conversation_avatar_alpha_active)
-    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity)
+    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity, z.teamId)
   }
 
   def setSubtitle(text: String): Unit = {
@@ -197,15 +196,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       verbose(l"Outdated badge status")
   }
 
-  avatarInfo.on(Threading.Background){
-    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
-      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
-      avatar.setMembers(members.map(_.id), convId, cType)
+  avatarInfo.onUi {
+    case (convId, isGroup, members, _, selfTeam) if conversationData.forall(_.id == convId) =>
+      avatar.setMembers(members, convId, isGroup, selfTeam)
     case _ =>
       verbose(l"Outdated avatar info")
   }
-  avatarInfo.onUi{
-    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+  avatarInfo.onUi {
+    case (convId, isGroup, _, alpha, _) if conversationData.forall(_.id == convId) =>
       if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
       }
@@ -217,7 +215,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   badge.onClickEvent {
     case ConversationBadge.IncomingCall =>
       (zms.map(_.selfUserId).currentValue, conversationData.map(_.id)) match {
-        case (Some(acc), Some(cId)) => callStartController.startCall(acc, cId, withVideo = false, forceOption = true)
+        case (Some(acc), Some(cId)) => callStartController.startCall(acc, cId, forceOption = true)
         case _ => //
       }
     case OngoingCall(_) =>
@@ -225,15 +223,13 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     case _=>
   }
 
-  private var conversationCallback: ConversationCallback = null
+  private var conversationCallback: ConversationCallback = _
   private var maxAlpha: Float = .0f
   private var openState: Boolean = false
   private val menuOpenOffset: Int = getDimenPx(R.dimen.list__menu_indicator__max_swipe_offset)
   private var moveTo: Float = .0f
   private var maxOffset: Float = .0f
-  private var swipeable: Boolean = true
-  private var moveToAnimator: ObjectAnimator = null
-  private var shouldRedraw = false
+  private var moveToAnimator: ObjectAnimator = _
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
     this.conversationData = Some(conversationData)
@@ -241,7 +237,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
     badge.setStatus(ConversationBadge.Empty)
     subtitle.setText("")
-    avatar.setConversationType(conversationData.convType)
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
     conversationId.publish(Some(conversationData.id), Threading.Ui)
@@ -545,7 +540,7 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
 
   def setIncomingUsers(users: Seq[UserId]): Unit = {
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
-    avatar.setMembers(users, ConvId(), ConversationType.Group)
+    //avatar.setMembers(users, ConversationType.Group)
     title.setText(getInboxName(users.size))
     badge.setStatus(ConversationBadge.WaitingConnection)
   }

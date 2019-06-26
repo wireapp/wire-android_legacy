@@ -19,26 +19,27 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.{ColorDrawable, Drawable}
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomViewTarget
+import com.bumptech.glide.request.transition.Transition
 import com.waz.api.Message
-import com.waz.model.MessageContent
 import com.waz.model.messages.media.{ArtistData, MediaAssetData}
+import com.waz.model.{AssetId, MessageContent}
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.events.Signal
-import com.waz.zclient.{R, ViewHelper}
-import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
-import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageAssetDrawable.State
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.utils._
-import com.waz.zclient.utils._
-import com.waz.zclient.ui.text.GlyphTextView
+import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.messages.MessageView.MsgBindOptions
+import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
+import com.waz.zclient.ui.text.GlyphTextView
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils._
+import com.waz.zclient.{R, ViewHelper}
 
 class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
   extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
@@ -65,15 +66,31 @@ class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
   }}
 
   private val image = media.flatMap {
-    _.artwork.fold2(Signal.empty[ImageSource], id => Signal.const[ImageSource](WireImage(id)))
+    _.artwork.fold2(Signal.empty[AssetId], id => Signal.const(id))
   }
 
-  private val imageDrawable = new ImageAssetDrawable(
-    image,
-    background = Some(new ColorDrawable(getColor(R.color.content__youtube__background)))
-  )
+  image.onUi { id =>
+    WireGlide(context)
+      .load(id)
+      .apply(new RequestOptions().placeholder(new ColorDrawable(getColor(R.color.content__youtube__background))))
+      .into(new CustomViewTarget[SoundMediaPartView, Drawable](this) {
+        override def onResourceCleared(placeholder: Drawable): Unit = {
+          loadingFailed ! false
+          registerEphemeral(imageView, placeholder)
+        }
 
-  registerEphemeral(imageView, imageDrawable)
+        override def onLoadFailed(errorDrawable: Drawable): Unit = {
+          loadingFailed ! true
+          registerEphemeral(imageView, errorDrawable)
+        }
+
+        override def onResourceReady(resource: Drawable, transition: Transition[_ >: Drawable]): Unit = {
+          loadingFailed ! false
+          registerEphemeral(imageView, resource)
+        }
+      })
+  }
+
   registerEphemeral(mediaNameView)
   registerEphemeral(titleView)
   registerEphemeral(artistView)
@@ -82,10 +99,7 @@ class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
 
   expired { exp => if(exp) showIcons(false) }
 
-  val loadingFailed = imageDrawable.state.map {
-    case State.Failed(_, _) => true
-    case _ => false
-  }
+  val loadingFailed = Signal(false)
 
   loadingFailed { failed => if(failed) showIcons(false, showError = true) }
 

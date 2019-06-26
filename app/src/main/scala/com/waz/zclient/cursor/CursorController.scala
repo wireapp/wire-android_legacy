@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.cursor
 
-import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO}
+import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.app.Activity
 import android.content.Context
 import android.text.TextUtils
@@ -338,7 +338,7 @@ object CursorController {
 
   val KeyboardPermissions = Map(
     ExtendedCursorContainer.Type.IMAGES -> ListSet(CAMERA, READ_EXTERNAL_STORAGE),
-    ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING -> ListSet(RECORD_AUDIO)
+    ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING -> ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
   )
 
   def keyboardPermissions(tpe: ExtendedCursorContainer.Type): ListSet[PermissionsService.PermissionKey] = KeyboardPermissions.getOrElse(tpe, ListSet.empty)

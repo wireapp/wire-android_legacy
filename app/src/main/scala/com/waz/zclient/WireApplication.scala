@@ -41,6 +41,7 @@ import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
+import com.waz.service.assets2._
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.images.ImageLoader
@@ -56,12 +57,12 @@ import com.waz.utils.SafeBase64
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
+import com.waz.zclient.assets2.{AndroidImageRecoder, AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers._
 import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController, KeyboardController, PasswordController}
-import com.waz.zclient.common.views.ImageController
 import com.waz.zclient.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
@@ -103,7 +104,7 @@ object WireApplication extends DerivedLogTag {
     else APP_INSTANCE.ensureInitialized()
 
   type AccountToImageLoader = (UserId) => Future[Option[ImageLoader]]
-  type AccountToAssetsStorage = (UserId) => Future[Option[AssetsStorage]]
+  type AccountToAssetsStorage = (UserId) => Future[Option[AssetStorage]]
   type AccountToUsersStorage = (UserId) => Future[Option[UsersStorage]]
   type AccountToConvsStorage = (UserId) => Future[Option[ConversationStorage]]
   type AccountToConvsService = (UserId) => Future[Option[ConversationsService]]
@@ -179,7 +180,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[UsersStorage]]                  to inject[Signal[ZMessaging]].map(_.usersStorage)
     bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
     bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
-    bind [Signal[AssetsStorage]]                 to inject[Signal[ZMessaging]].map(_.assetsStorage)
+    bind [Signal[AssetStorage]]                  to inject[Signal[ZMessaging]].map(_.assetsStorage)
     bind [Signal[MessagesStorage]]               to inject[Signal[ZMessaging]].map(_.messagesStorage)
     bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
@@ -228,7 +229,6 @@ object WireApplication extends DerivedLogTag {
 
     bind [GlobalTrackingController]        to new GlobalTrackingController()
     bind [PreferencesController]           to new PreferencesController()
-    bind [ImageController]                 to new ImageController()
     bind [UserAccountsController]          to new UserAccountsController()
 
     bind [LocalThumbnailCache]              to LocalThumbnailCache(ctx)
@@ -261,6 +261,9 @@ object WireApplication extends DerivedLogTag {
 
     bind [DeepLinkService]      to new DeepLinkService()
 
+    bind [UriHelper] to new AndroidUriHelper(ctx)
+
+    bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
@@ -400,14 +403,29 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     val prefs = GlobalPreferences(this)
     val googleApi = GoogleApiImpl(this, backend, prefs)
 
+    val assets2Module = new Assets2Module {
+      override def uriHelper: UriHelper = inject[UriHelper]
+      override def assetDetailsService: AssetDetailsService =
+        new AssetDetailsServiceImpl(uriHelper)(getApplicationContext, Threading.BlockingIO)
+      override def assetPreviewService: AssetPreviewService =
+        new AssetPreviewServiceImpl()(getApplicationContext, Threading.BlockingIO)
+
+      override def assetsTransformationsService: AssetTransformationsService =
+        new AssetTransformationsServiceImpl(
+          List(
+            new ImageDownscalingCompressing(new AndroidImageRecoder)
+          )
+        )
+    }
+
     ZMessaging.onCreate(
       this,
       backend,
       prefs,
       googleApi,
       null, //TODO: Use sync engine's version for now
-      inject[MessageNotificationsController]
-    )
+      inject[MessageNotificationsController],
+      assets2Module)
 
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]
@@ -419,6 +437,21 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[ThemeController]
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
+    Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+  }
+
+  private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit = {
+    val gps = prefs(GlobalPreferences.CheckedForPlayServices)
+    gps.signal.head.collect {
+      case false =>
+        verbose(l"never checked for play services")
+        googleApi.isGooglePlayServicesAvailable.head.foreach { gpsAvailable =>
+          for {
+            _ <- prefs(GlobalPreferences.WsForegroundKey) := !gpsAvailable
+            _ <- gps := true
+          } yield ()
+        }
+    }
   }
 
   override def onTerminate(): Unit = {

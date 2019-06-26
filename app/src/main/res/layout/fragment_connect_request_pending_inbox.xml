@@ -64,10 +64,8 @@
             android:layout_marginBottom="@dimen/wire__padding__regular"
             android:layout_marginTop="@dimen/wire__padding__big"
             android:layout_gravity="bottom|center_horizontal"
-            app:show_border="false"
             app:allow_icon="false"
             app:is_round="true"
-            app:isSelectable="false"
             app:show_waiting="false"
             app:gray_on_unconnected="false"
             />
