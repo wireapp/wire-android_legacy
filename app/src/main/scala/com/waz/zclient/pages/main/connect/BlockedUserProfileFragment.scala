@@ -18,10 +18,13 @@
 
 package com.waz.zclient.pages.main.connect
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
+import com.bumptech.glide.load.Transformation
+import com.bumptech.glide.load.resource.bitmap.{CenterCrop, CircleCrop}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.model.UserData.Picture
 import com.waz.model.{ConvId, UserId}
@@ -63,6 +66,13 @@ object BlockedUserProfileFragment {
     def onUnblockedUser(restoredConversationWithUser: ConvId): Unit
   }
 
+  val requestOptions = returning(new RequestOptions()) { r =>
+    val transformations = returning(Seq.newBuilder[Transformation[Bitmap]]) { ts =>
+      ts += new CenterCrop()
+      ts += new CircleCrop()
+    }
+    r.transforms(transformations.result():_*)
+  }
 }
 
 class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment.Container] with FragmentHelper {
@@ -136,9 +146,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     userNameView
     userUsernameView
     pictureSignal.onUi { id =>
-      profileImageView.foreach(WireGlide(ctx).load(id)
-        .apply(new RequestOptions().centerCrop())
-        .into(_))
+      profileImageView.foreach(v => WireGlide(ctx).load(id).apply(requestOptions).into(v))
     }
     unblockButton.foreach(_.setIsFilled(true))
     cancelButton.foreach(_.setIsFilled(true))
