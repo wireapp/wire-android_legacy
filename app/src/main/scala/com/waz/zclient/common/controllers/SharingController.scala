@@ -47,17 +47,16 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   }
 
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
-    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) = {
+    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
       content match {
         case TextContent(t) =>
-          conversationController.sendMessage(t, List.empty, None, Some(expiration))
+          conversationController.sendTextMessage(convs, t, Nil, None, Some(expiration))
         case uriContent =>
           Future.traverse(uriContent.uris) { uriWrapper =>
             val uri = URIWrapper.toJava(uriWrapper)
             conversationController.sendAssetMessage(uri, activity, Some(expiration), convs)
           }
       }
-    }
 
     for {
       Some(content) <- sharableContent.head
