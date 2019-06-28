@@ -174,53 +174,64 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?
 
-  def sendMessage(text: String, mentions: Seq[Mention] = Nil, quote: Option[MessageId] = None, exp: Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] = {
+  def sendMessage(text:     String,
+                  mentions: Seq[Mention] = Nil,
+                  quote:    Option[MessageId] = None,
+                  exp:      Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] =
     convsUiwithCurrentConv({(ui, id) =>
       quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
     })
-  }
+
+  def sendTextMessage(convs:    Seq[ConvId],
+                      text:     String,
+                      mentions: Seq[Mention] = Nil,
+                      quote:    Option[MessageId] = None,
+                      exp:      Option[Option[FiniteDuration]] = None): Future[Seq[Option[MessageData]]] =
+    convsUi.head.flatMap { ui =>
+      Future.sequence(convs.map(id =>
+        quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
+      ))
+    }
 
   def sendAssetMessage(content: ContentForUpload): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
 
-  def sendAssetMessage(content: ContentForUpload, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Option[MessageData]] = {
+  def sendAssetMessage(content:  ContentForUpload,
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) =>
       accentColorController.accentColor.head.flatMap(color =>
         ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp))
     )
-  }
 
-  def sendAssetMessage(convs: Seq[ConvId], content: ContentForUpload, activity: Activity, exp: Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] = {
-    convsUi.head.flatMap { ui =>
-      accentColorController.accentColor.head.flatMap(color =>
-        Future.traverse(convs) { id =>
-          ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp)
-        }
-      )
-    }
-  }
-
-  def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] = {
+  def sendAssetMessage(convs:    Seq[ConvId],
+                       content:  ContentForUpload,
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
     for {
-      image <- Future { ImageCompressUtils.compress(bitmap, CompressFormat.JPEG) }
-      content = ContentForUpload(assetName, Content.Bytes(Mime.Image.Jpg, image))
-      msg <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
-    } yield msg
-  }
+      ui    <- convsUi.head
+      color <- accentColorController.accentColor.head
+      msgs  <- Future.traverse(convs) { id =>
+                 ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp)
+               }
+    } yield msgs
 
-  def sendAssetMessage(uri: URI, activity: Activity, exp: Option[Option[FiniteDuration]], convs: Seq[ConvId] = Seq()): Future[Option[MessageData]] = {
-    val content = for {
-      fileName <- uriHelper.extractFileName(uri)
-    } yield ContentForUpload(fileName,  Content.Uri(uri))
-
+  def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] =
     for {
-      content <- Future.fromTry(content)
-      msg <- if (convs.isEmpty)
-        sendAssetMessage(content, activity, exp)
-      else
-        sendAssetMessage(convs, content, activity, exp).map(_.head)
+      image   <- Future { ImageCompressUtils.compress(bitmap, CompressFormat.JPEG) }
+      content =  ContentForUpload(assetName, Content.Bytes(Mime.Image.Jpg, image))
+      msg     <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
     } yield msg
-  }
+
+  def sendAssetMessage(uri:      URI,
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]],
+                       convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
+    for {
+      content <- Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri))))
+      msg     <- if (convs.isEmpty) sendAssetMessage(content, activity, exp)
+                 else sendAssetMessage(convs, content, activity, exp).map(_.head)
+    } yield msg
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))
