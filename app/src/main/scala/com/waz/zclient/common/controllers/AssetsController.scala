@@ -236,7 +236,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       openButton.setAlpha(1f)
       openButton.setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = {
-//          onFileOpened ! asset
           context.startActivity(intent)
           dialog.dismiss()
         }
@@ -250,7 +249,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
     saveButton.setOnClickListener(new View.OnClickListener() {
       def onClick(v: View) = {
-//        onFileSaved ! asset
         dialog.dismiss()
         saveToDownloads(asset)
       }
@@ -305,18 +303,17 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def assetForSharing(id: AssetId): Future[AssetForShare] = {
 
     def getSharedFilename(asset: Asset): String =
-      if (asset.name.nonEmpty)
-        asset.name
-      else
-        s"${sha2(asset.id.str).take(6)}.${asset.mime.extension}"
+      if (asset.name.isEmpty) s"${sha2(asset.id.str.take(6))}.${asset.mime.extension}"
+      else if (!asset.name.endsWith(asset.mime.extension)) s"${asset.name}.${asset.mime.extension}"
+      else asset.name
 
     for {
       assets <- zms.head.map(_.assetService)
-      asset <- assets.getAsset(id)
-      is <- assets.loadContent(asset)
-      file = new File(context.getExternalCacheDir, getSharedFilename(asset))
-      _ = IoUtils.copy(is, file)
-      _ = is.close()
+      asset  <- assets.getAsset(id)
+      is     <- assets.loadContent(asset)
+      file   =  new File(context.getExternalCacheDir, getSharedFilename(asset))
+      _      =  IoUtils.copy(is, file)
+      _      =  is.close()
     } yield AssetForShare(asset, file)
   }
 }

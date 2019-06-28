@@ -458,13 +458,11 @@ class MainActivity extends BaseActivity
         res.map(_ => true)
 
       case SharingIntent() =>
-        (for {
-          convs <- sharingController.targetConvs.head
-          exp   <- sharingController.ephemeralExpiration.head
-          _     <- sharingController.sendContent(this)
+        for {
+          convs <- sharingController.sendContent(this)
           _     <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
-        } yield clearIntent())
-          .map(_ => true)
+          _     =  clearIntent()
+        } yield true
 
       case OpenPageIntent(page) => page match {
         case Intents.Page.Settings =>
