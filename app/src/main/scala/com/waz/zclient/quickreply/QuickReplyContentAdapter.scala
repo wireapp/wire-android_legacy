@@ -152,7 +152,7 @@ object QuickReplyContentAdapter {
           StringUtils.capitalise(context.getString(R.string.notification__message__group__add))
         case CONNECT_ACCEPTED =>
           context.getString(R.string.notification__message__single__accept_request, userName)
-        case ANY_ASSET =>
+        case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET =>
           context.getString(R.string.notification__message__one_to_one__shared_file)
         case _ => ""
       }

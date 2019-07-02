@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.conversation.toolbar
 
-import android.Manifest.permission.{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.animation.{ObjectAnimator, ValueAnimator}
 import android.app.Activity
 import android.content.Context
@@ -50,7 +49,6 @@ import org.threeten.bp.Duration.between
 import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
 
-import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 
 class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
@@ -215,20 +213,14 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     slideControlState ! Recording //resets view state
   }
 
-  def show() = {
-    permissions.permissions(ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)).map(_.headOption.exists(_.granted)).head.map {
-      case true =>
-        setVisibility(VISIBLE)
-        slideControlState ! Recording
-        inject[SoundController].shortVibrate()
-        record()
-      case false =>
-        permissions.requestAllPermissions(ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)).map {
-          case false =>
-            showToast(R.string.audio_message_error__missing_audio_permissions)
-          case _ =>
-        } (Threading.Ui)
-    } (Threading.Ui)
+  def show(): Unit = {
+    setVisibility(VISIBLE)
+    slideControlState ! Recording
+    inject[SoundController].shortVibrate()
+    currentAssetKey = Option(AssetMediaKey(AssetId()))
+    setWakeLock(true)
+    recordingController.startRecording()
+    startTime ! Some(Instant.now)
   }
 
   private def setWakeLock(enabled: Boolean): Unit = {
@@ -238,14 +230,6 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     } else {
       activity.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
-  }
-
-  private def record() = {
-      val key = AssetMediaKey(AssetId())
-      currentAssetKey = Some(key)
-      setWakeLock(true)
-      recordingController.startRecording()
-      startTime ! Some(Instant.now)
   }
 
   private def sendAudioAsset(content: ContentForUpload): Future[Unit] =

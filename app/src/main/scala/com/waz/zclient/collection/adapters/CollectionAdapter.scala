@@ -122,7 +122,7 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
 
   override def getItemViewType(position: Int): Int = {
     getItem(position).fold(CollectionAdapter.VIEW_TYPE_DEFAULT)(_.msgType match {
-      case Message.Type.ANY_ASSET => CollectionAdapter.VIEW_TYPE_FILE
+      case Message.Type.ANY_ASSET | Message.Type.AUDIO_ASSET | Message.Type.VIDEO_ASSET => CollectionAdapter.VIEW_TYPE_FILE
       case Message.Type.ASSET => CollectionAdapter.VIEW_TYPE_IMAGE
       case Message.Type.RICH_MEDIA if hasOpenGraphData(position) => CollectionAdapter.VIEW_TYPE_LINK_PREVIEW
       case Message.Type.RICH_MEDIA => CollectionAdapter.VIEW_TYPE_SIMPLE_LINK
@@ -236,7 +236,7 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
     contentMode.currentValue.get match {
       case AllContent => {
         getItem(position).fold(Message.Type.UNKNOWN)(_.msgType) match {
-          case Message.Type.ANY_ASSET => Header.mainFiles
+          case Message.Type.ANY_ASSET | Message.Type.AUDIO_ASSET | Message.Type.VIDEO_ASSET => Header.mainFiles
           case Message.Type.ASSET => Header.mainImages
           case Message.Type.RICH_MEDIA => Header.mainLinks
           case _ => Header.invalid
@@ -324,9 +324,14 @@ class CollectionAdapter(viewDim: Signal[Dim2])(implicit context: Context, inject
 
   private def shouldBeClickable(headerId: HeaderId): Boolean = {
     val minCount = headerId match {
-      case HeaderId(HeaderType.Images, _, _) => AllContent.typeFilter.find(_.msgType == Message.Type.ASSET).flatMap(_.limit).getOrElse(0)
-      case HeaderId(HeaderType.Files, _, _) => AllContent.typeFilter.find(_.msgType == Message.Type.ANY_ASSET).flatMap(_.limit).getOrElse(0)
-      case HeaderId(HeaderType.Links, _, _) => AllContent.typeFilter.find(_.msgType == Message.Type.RICH_MEDIA).flatMap(_.limit).getOrElse(0)
+      case HeaderId(HeaderType.Images, _, _) =>
+        AllContent.typeFilter.find(_.msgType == Message.Type.ASSET).flatMap(_.limit).getOrElse(0)
+      case HeaderId(HeaderType.Files, _, _) =>
+        AllContent.typeFilter
+          .find(m => CollectionController.Files.msgTypes.contains(m.msgType))
+          .flatMap(_.limit).getOrElse(0)
+      case HeaderId(HeaderType.Links, _, _) =>
+        AllContent.typeFilter.find(_.msgType == Message.Type.RICH_MEDIA).flatMap(_.limit).getOrElse(0)
       case _ => 0
     }
     minCount > 0 && getHeaderCount(headerId) > minCount
@@ -371,7 +376,6 @@ object Header {
 }
 
 object CollectionAdapter {
-
   // TODO: Investigate why we can derive the log tag.
   private implicit val logTag: LogTag = LogTag[CollectionAdapter.type]
   
