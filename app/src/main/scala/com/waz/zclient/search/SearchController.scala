@@ -19,7 +19,7 @@ package com.waz.zclient.search
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{IntegrationData, UserData}
-import com.waz.service.{IntegrationsService, SearchResults, UserSearchService}
+import com.waz.service.{IntegrationsService, SearchQuery, SearchResults, UserSearchService}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.{Injectable, Injector}
@@ -41,17 +41,18 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
   lazy val addUserOrServices: Signal[AddUserListState] = {
     import AddUserListState._
     for {
-      filter  <- filter.throttle(500.millis)
-      tab     <- tab
-      res     <- tab match {
+      filter <- filter.throttle(500.millis)
+      tab    <- tab
+      res    <- tab match {
         case Tab.People =>
+          val query = SearchQuery(filter)
           for {
-            search      <- searchService
-            convId      <- createConvController.convId
-            teamOnly    <- createConvController.teamOnly
-            results     <- convId match {
-              case Some(cId) => search.usersToAddToConversation(filter, cId)
-              case None => search.usersForNewConversation(filter, teamOnly)
+            search   <- searchService
+            convId   <- createConvController.convId
+            teamOnly <- createConvController.teamOnly
+            results  <- convId match {
+              case Some(cId) => search.usersToAddToConversation(query, cId)
+              case None      => search.usersForNewConversation(query, teamOnly)
             }
           } yield
             if (results.isEmpty)

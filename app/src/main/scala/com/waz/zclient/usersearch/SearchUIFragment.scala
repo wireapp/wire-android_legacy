@@ -34,7 +34,7 @@ import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.ZMessaging
+import com.waz.service.{SearchQuery, ZMessaging}
 import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, TrackingService}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, Subscription}
@@ -57,6 +57,7 @@ import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.usersearch.SearchUIFragment.{Container, PERFORM_SEARCH_DELAY, SHOW_KEYBOARD_THRESHOLD, TAG}
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, ResColor, RichView, StringUtils, UiStorage, UserSignal}
@@ -66,7 +67,7 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
+class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
   with SearchUIAdapter.Callback {
 
@@ -109,6 +110,23 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   private lazy val searchBox = returning(view[SearchEditText](R.id.sbv__search_box)) { vh =>
     accentColor.onUi(color => vh.foreach(_.setCursorColor(color)))
+
+    vh.foreach(_.setCallback(new SearchEditText.Callback {
+      override def onRemovedTokenSpan(element: PickableElement): Unit = {}
+      override def onFocusChange(hasFocus: Boolean): Unit = {}
+
+      override def onClearButton(): Unit = closeStartUI()
+
+      private var c = Option.empty[CancellableFuture[Unit]]
+
+      override def afterTextChanged(s: String): Unit = {
+        c.foreach(_.cancel())
+        c = Option(CancellableFuture.delay(PERFORM_SEARCH_DELAY).map { _ =>
+          vh.foreach(adapter.filter ! _.getSearchFilter) // should be safe; if the fragment is destroyed, vh will be None
+          c = None
+        })
+      }
+    }))
   }
 
   private lazy val toolbarTitle = returning(view[TypefaceTextView](R.id.pickuser_title)) { vh =>
@@ -161,26 +179,13 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
     (for {
-      zms <- zms
+      zms         <- zms
       permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[UserPermissions.Permission]))
-      members <- zms.teams.searchTeamMembers().orElse(Signal.const(Set.empty[UserData]))
-      searching <- adapter.filter.map(_.nonEmpty)
+      members     <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
+      searching   <- adapter.filter.map(_.nonEmpty)
      } yield
        zms.teamId.nonEmpty && permissions(UserPermissions.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))
-  }
-
-  private val searchBoxViewCallback = new SearchEditText.Callback {
-    override def onRemovedTokenSpan(element: PickableElement): Unit = {}
-
-    override def onFocusChange(hasFocus: Boolean): Unit = {}
-
-    override def onClearButton(): Unit = closeStartUI()
-
-    override def afterTextChanged(s: String): Unit = searchBox.foreach { v =>
-      val filter = v.getSearchFilter
-      adapter.filter ! filter
-    }
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
@@ -216,7 +221,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       rv.setAdapter(adapter)
     }
 
-    searchBox.foreach(_.setCallback(searchBoxViewCallback))
+    searchBox
 
     inviteButton.foreach { btn =>
       btn.setText(R.string.pref_invite_title)
@@ -294,7 +299,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
     CancellableFuture.delay(getInt(R.integer.people_picker__keyboard__show_delay).millis).map { _ =>
 
-      convListController.establishedConversations.head.map(_.size > SearchUIFragment.SHOW_KEYBOARD_THRESHOLD).flatMap {
+      convListController.establishedConversations.head.map(_.size > SHOW_KEYBOARD_THRESHOLD).flatMap {
         case true => userAccountsController.isTeam.head.map {
           case true => searchBox.foreach { v =>
             v.setFocus()
@@ -462,26 +467,21 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       .addToBackStack(Tag)
       .commit()
 
-    navigationController.setLeftPage(Page.INTEGRATION_DETAILS, SearchUIFragment.TAG)
+    navigationController.setLeftPage(Page.INTEGRATION_DETAILS, TAG)
   }
 }
 
 object SearchUIFragment {
   val TAG: String = classOf[SearchUIFragment].getName
-  private val SHOW_KEYBOARD_THRESHOLD: Int = 10
 
-  val internalVersion = BuildConfig.APPLICATION_ID match {
-    case "com.wire.internal" | "com.waz.zclient.dev" | "com.wire.x" | "com.wire.qa" => true
-    case _ => false
-  }
+  private val SHOW_KEYBOARD_THRESHOLD = 10
+  private val PERFORM_SEARCH_DELAY = 750.millis
 
-  def newInstance(): SearchUIFragment =
-    new SearchUIFragment
+  def newInstance(): SearchUIFragment = new SearchUIFragment
 
   trait Container {
     def showIncomingPendingConnectRequest(conv: ConvId): Unit
 
     def getLoadingViewIndicator: LoadingIndicatorView
   }
-
 }
