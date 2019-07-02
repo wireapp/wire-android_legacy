@@ -19,7 +19,7 @@ package com.waz.zclient.views
 
 import java.io.File
 
-import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}
+import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
@@ -648,6 +648,12 @@ class ConversationFragment extends FragmentHelper {
     }(Threading.Ui)
   } yield {}
 
+  private val requiredAudioPermissions =
+    CursorController.keyboardPermissions(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING) ++
+      ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
+
+  private lazy val audioPermissionsGranted = permissions.allPermissions(requiredAudioPermissions)
+
   private val cursorCallback = new CursorCallback {
     override def onMotionEventFromCursorButton(cursorMenuItem: CursorMenuItem, motionEvent: MotionEvent): Unit =
       if (cursorMenuItem == CursorMenuItem.AUDIO_MESSAGE && audioMessageRecordingView.isVisible)
@@ -674,20 +680,25 @@ class ConversationFragment extends FragmentHelper {
 
     override def openFileSharing(): Unit = assetIntentsManager.foreach { _.openFileSharing() }
 
-    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit =
-      cursorMenuItem match {
-        case CursorMenuItem.AUDIO_MESSAGE =>
-          callController.isCallActive.head.foreach {
-            case true  => showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
-            case false =>
-              permissions.requestAllPermissions(CursorController.keyboardPermissions(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING))
-                .foreach { _ =>
-                  extendedCursorContainer.foreach(_.close(true))
-                  audioMessageRecordingView.show()
+    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit = cursorMenuItem match {
+      case CursorMenuItem.AUDIO_MESSAGE =>
+        callController.isCallActive.head.foreach {
+          case true  =>
+            showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
+          case false =>
+            audioPermissionsGranted.head.foreach {
+              case true  =>
+                extendedCursorContainer.foreach(_.close(true))
+                audioMessageRecordingView.show()
+              case false =>
+                permissions.requestAllPermissions(requiredAudioPermissions).foreach {
+                  case true  =>
+                  case false => showToast(R.string.audio_message_error__missing_audio_permissions)
                 }
-          }
-        case _ => //
-      }
+            }
+        }
+      case _ =>
+    }
   }
 
   private val navigationControllerObserver = new NavigationControllerObserver {
