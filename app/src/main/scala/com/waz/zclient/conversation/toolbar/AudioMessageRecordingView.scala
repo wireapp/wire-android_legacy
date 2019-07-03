@@ -76,7 +76,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   private val playbackControls = Signal[PlaybackControls]()
 
-  val actionUpMinY = getDimenPx(R.dimen.audio_message_recording__slide_control__height) - 2 *
+  private val actionUpMinY = getDimenPx(R.dimen.audio_message_recording__slide_control__height) - 2 *
     getDimenPx(R.dimen.audio_message_recording__slide_control__width) - getDimenPx(R.dimen.wire__padding__8)
 
   private val closeButtonContainer             = findById[View]    (R.id.close_button_container)
@@ -87,6 +87,14 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   private val sendButtonTextView               = findById[TextView](R.id.send_button)
   private val slideControl                     = findById[View]    (R.id.slide_control)
   private val timerTextView                    = findById[TextView](R.id.recording__duration)
+
+  private lazy val recordingIndicator =
+    returning(ObjectAnimator.ofFloat(recordingIndicatorDotView, View.ALPHA, 0f)) { an =>
+      an.setRepeatCount(ValueAnimator.INFINITE)
+      an.setRepeatMode(ValueAnimator.REVERSE)
+      an.setDuration(RecordingIndicatorHiddenInterval)
+      an.setStartDelay(RecordingIndicatorVisibleInterval)
+    }
 
   returning(findById[View](R.id.bottom_button_container))(_.onClick {
     playbackControls.currentValue.foreach { _.playOrPause() }
@@ -181,13 +189,13 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   slideControlState.onChanged.onUi {
     case Recording =>
-      startRecordingIndicator()
+      recordingIndicator.start()
       layoutController.keepScreenAwake()
     case Preview   =>
-      stopRecordingIndicator()
+      recordingIndicator.cancel()
       startTime ! None
     case SendFromRecording =>
-      stopRecordingIndicator()
+      recordingIndicator.cancel()
       currentAudio.foreach(sendAudioAsset)
     case _ =>
   }
@@ -199,9 +207,9 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   }
 
   (for {
-    playing       <- playbackControls.flatMap(_.isPlaying)
+    playing       <- playbackControls.flatMap(_.isPlaying).orElse(Signal.const(false))
     progress      <- previewProgress
-    displayedTime =  if (playing) progress.map(_.toMillis) else recordingController.duration
+    displayedTime =  if (playing || recordingController.isRecording) progress.map(_.toMillis) else recordingController.duration
     formatted     =  displayedTime.fold("")(StringUtils.formatTimeMilliSeconds)
   } yield formatted).onUi(timerTextView.setText)
 
@@ -216,7 +224,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     currentAssetKey = None
     currentAudio = None
     startTime ! None
-    stopRecordingIndicator()
+    recordingIndicator.cancel()
     layoutController.resetScreenAwakeState()
     slideControlState ! Recording //resets view state
   }
@@ -229,6 +237,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     setWakeLock(true)
     recordingController.startRecording()
     startTime ! Some(Instant.now)
+    recordingIndicator.start()
   }
 
   private def setWakeLock(enabled: Boolean): Unit = {
@@ -257,18 +266,21 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     }
 
     motionEvent.getAction match {
-      case MotionEvent.ACTION_MOVE if slidUpToSend(motionEvent)=>
+      case _ if !recordingController.isRecording =>
+
+      case MotionEvent.ACTION_MOVE if slidUpToSend(motionEvent) =>
         slideControlState ! SendFromRecording
         stopRecording()
+
       case MotionEvent.ACTION_CANCEL |
            MotionEvent.ACTION_OUTSIDE |
            MotionEvent.ACTION_UP =>
-
         stopRecording()
         slideControlState.mutate {
           case Recording => Preview
           case st        => st
         }
+
       case _ =>
     }
   }
@@ -277,22 +289,6 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case Some(Recording) | Some(SendFromRecording) => motionEvent.getY <= actionUpMinY
     case _ => false
   }
-
-  private var recordingIndicatorDotAnimator = Option.empty[ObjectAnimator]
-
-  private def startRecordingIndicator() = {
-    if (recordingIndicatorDotAnimator.isEmpty) {
-      recordingIndicatorDotAnimator = Some(returning(ObjectAnimator.ofFloat(recordingIndicatorDotView, View.ALPHA, 0f)) { an =>
-        an.setRepeatCount(ValueAnimator.INFINITE)
-        an.setRepeatMode(ValueAnimator.REVERSE)
-        an.setDuration(RecordingIndicatorHiddenInterval)
-        an.setStartDelay(RecordingIndicatorVisibleInterval)
-      })
-    }
-    recordingIndicatorDotAnimator.foreach(_.start())
-  }
-
-  private def stopRecordingIndicator() = recordingIndicatorDotAnimator.foreach(_.cancel())
 
   override protected def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) = {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
