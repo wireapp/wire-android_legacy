@@ -35,13 +35,18 @@ trait MediaRecorderController {
   def isRecording: Boolean
 
   def getFile: File
+  def duration: Option[Long]
 }
 
-class MediaRecorderControllerImpl(context: Context)
-  extends MediaRecorderController with DerivedLogTag {
+class MediaRecorderControllerImpl(context: Context) extends MediaRecorderController with DerivedLogTag {
 
-  var recorder = Option.empty[MediaRecorder]
-  lazy val file = new File(context.getCacheDir, "record_temp.mp4")
+  private var recorder = Option.empty[MediaRecorder]
+  private lazy val file = new File(context.getCacheDir, "record_temp.mp4")
+
+  private var startRecordingOffset = Option.empty[Long]
+  private var recordingDuration = Option.empty[Long]
+
+  override def duration: Option[Long] = recordingDuration
 
   private def getRecorder(file: File): MediaRecorder = returning(new MediaRecorder()) { r =>
       r.setAudioSource(AudioSource.MIC)
@@ -69,6 +74,8 @@ class MediaRecorderControllerImpl(context: Context)
     rec.start()
 
     recorder = Some(rec)
+    startRecordingOffset = Option(System.currentTimeMillis())
+    recordingDuration = None
   }
 
   override def stopRecording(): Unit = {
@@ -79,6 +86,8 @@ class MediaRecorderControllerImpl(context: Context)
       }
     }
     recorder = None
+    recordingDuration = startRecordingOffset.map(System.currentTimeMillis() - _)
+    startRecordingOffset = None
   }
 
   override def cancelRecording(): Unit = stopRecording()

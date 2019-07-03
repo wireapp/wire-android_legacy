@@ -74,8 +74,6 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   private var currentAssetKey = Option.empty[AssetMediaKey]
   private val startTime = Signal(Option.empty[Instant])
 
-  import Threading.Implicits.Background
-
   private val playbackControls = Signal[PlaybackControls]()
 
   val actionUpMinY = getDimenPx(R.dimen.audio_message_recording__slide_control__height) - 2 *
@@ -113,8 +111,9 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   private val recordingSeekBar = returning(findById[SeekBar](R.id.recording__seekbar)) { v =>
     v.setVisibility(GONE)
     v.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-      override def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) =
-        playbackControls.head.foreach(_.setPlayHead(Duration.ofMillis(progress)))
+      override def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) = {
+        if (fromUser) playbackControls.currentValue.foreach(_.setPlayHead(Duration.ofMillis(progress)))
+      }
 
       override def onStartTrackingTouch(seekBar: SeekBar) = {}
       override def onStopTrackingTouch(seekBar: SeekBar) = {}
@@ -176,7 +175,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   slideControlState.map {
     case Recording => Some(GONE)
-    case Preview   => Some(GONE)
+    case Preview   => Some(VISIBLE)
     case _         => None
   }.onUi(_.foreach(recordingSeekBar.setVisibility))
 
@@ -193,14 +192,23 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case _ =>
   }
 
-  startTime.flatMap {
+  private val previewProgress = startTime.flatMap {
     case Some(start) =>
       ClockSignal(Duration.ofSeconds(1).asScala).map(_ => Some(between(start, now)))
     case _ => playbackControls.flatMap(_.playHead).map(Some(_))
-  }.map {
-    case Some(d) => StringUtils.formatTimeMilliSeconds(d.toMillis)
-    case _       => ""
-  }.onUi(timerTextView.setText)
+  }
+
+  (for {
+    playing       <- playbackControls.flatMap(_.isPlaying)
+    progress      <- previewProgress
+    displayedTime =  if (playing) progress.map(_.toMillis) else recordingController.duration
+    formatted     =  displayedTime.fold("")(StringUtils.formatTimeMilliSeconds)
+  } yield formatted).onUi(timerTextView.setText)
+
+  previewProgress.onUi {
+    case Some(d) => recordingSeekBar.setProgress(d.toMillis.toInt)
+    case _ =>
+  }
 
   def hide() = {
     setVisibility(INVISIBLE)
@@ -235,7 +243,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   private def sendAudioAsset(content: ContentForUpload): Future[Unit] =
     convController.sendAssetMessage(content, getContext.asInstanceOf[Activity], None).map(_ => hide())(Threading.Ui)
 
-  def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent) = {
+  def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent): Unit = {
 
     def stopRecording() = currentAssetKey.foreach { key =>
       setWakeLock(false)
@@ -245,16 +253,13 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
       currentAudio = Some(content)
       playbackControls !
         new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
+      recordingController.duration.foreach(d => recordingSeekBar.setMax(d.toInt))
     }
 
     motionEvent.getAction match {
-      case MotionEvent.ACTION_MOVE =>
-        if (slidUpToSend(motionEvent)) {
-          slideControlState ! SendFromRecording
-          stopRecording()
-        } else {
-          slideControlState ! Recording
-        }
+      case MotionEvent.ACTION_MOVE if slidUpToSend(motionEvent)=>
+        slideControlState ! SendFromRecording
+        stopRecording()
       case MotionEvent.ACTION_CANCEL |
            MotionEvent.ACTION_OUTSIDE |
            MotionEvent.ACTION_UP =>
@@ -262,9 +267,9 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
         stopRecording()
         slideControlState.mutate {
           case Recording => Preview
-          case st => st
+          case st        => st
         }
-      case _ => //
+      case _ =>
     }
   }
 

@@ -45,12 +45,13 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   accentColorController.accentColor.map(_.color).onUi(progressBar.setColor)
 
   private val details = asset.map(_.details)
-
-  details.map {
+  private val duration = details.map {
     case d: Video => d.duration.toMillis.toInt
     case d: Audio => d.duration.toMillis.toInt
     case _        => 0
-  }.onUi(progressBar.setMax)
+  }
+
+  duration.onUi(progressBar.setMax)
 
   private val readyToPlay = details.map {
     case _: Video => true
@@ -61,15 +62,16 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   private val progressInMillis = for {
     ready     <- readyToPlay
     progress  <- if (ready) playControls.flatMap(_.playHead).map(_.toMillis.toInt)
-    else Signal.const(0)
+                 else Signal.const(0)
   } yield progress
 
   progressInMillis.onUi(progressBar.setProgress)
 
   (for {
-    ready     <- readyToPlay
-    progress  <- progressInMillis
-    formatted = if (ready) StringUtils.formatTimeMilliSeconds(progress) else ""
+    ready         <- readyToPlay
+    isPlaying     <- playControls.flatMap(_.isPlaying)
+    displayedTime <- if (isPlaying) progressInMillis else duration
+    formatted     =  if (ready) StringUtils.formatTimeMilliSeconds(displayedTime) else ""
   } yield formatted).onUi(durationView.setText)
 
   private lazy val keyboard = inject[CursorController].keyboard
