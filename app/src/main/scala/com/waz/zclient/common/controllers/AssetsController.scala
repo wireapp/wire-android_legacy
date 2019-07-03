@@ -353,7 +353,7 @@ object AssetsController {
 
     def playOrPause() = rPAction { case (rP, key, content, playing) => if (playing) rP.pause(key) else rP.play(key, content) }
 
-    def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, playing) => rP.setPlayhead(key, content, duration) }
+    def setPlayHead(duration: Duration) = rPAction { case (rP, key, content, _) => rP.setPlayhead(key, content, duration) }
   }
 
   def getOpenFileIntent(uri: Uri, mimeType: String): Intent = {
