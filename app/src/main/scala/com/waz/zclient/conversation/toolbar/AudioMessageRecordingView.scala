@@ -25,7 +25,7 @@ import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.View.{GONE, INVISIBLE, VISIBLE}
 import android.view.{LayoutInflater, MotionEvent, View, WindowManager}
-import android.widget.{FrameLayout, SeekBar, TextView}
+import android.widget.{FrameLayout, SeekBar, TextView, Toast}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, Mime}
 import com.waz.permissions.PermissionsService
@@ -256,13 +256,17 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
     def stopRecording() = currentAssetKey.foreach { key =>
       setWakeLock(false)
-      recordingController.stopRecording()
-      val content = ContentForUpload(s"recording-${System.currentTimeMillis}",
-        Content.File(Mime.Audio.MP4, recordingController.getFile))
-      currentAudio = Some(content)
-      playbackControls !
-        new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
-      recordingController.duration.foreach(d => recordingSeekBar.setMax(d.toInt))
+      if (recordingController.stopRecording()) {
+        val content = ContentForUpload(s"recording-${System.currentTimeMillis}",
+          Content.File(Mime.Audio.MP4, recordingController.getFile))
+        currentAudio = Some(content)
+        playbackControls !
+          new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
+        recordingController.duration.foreach(d => recordingSeekBar.setMax(d.toInt))
+      } else {
+        Toast.makeText(getContext, getString(R.string.audio_message__recording__failure__title), Toast.LENGTH_SHORT).show()
+        hide()
+      }
     }
 
     motionEvent.getAction match {

@@ -26,11 +26,10 @@ import com.waz.utils.returning
 import com.waz.zclient.utils.media.{AudioEncoder, AudioSource, OutputFormat}
 import com.waz.zclient.log.LogUI._
 
-import scala.util.Try
 
 trait MediaRecorderController {
   def startRecording(): Unit
-  def stopRecording(): Unit
+  def stopRecording(): Boolean
   def cancelRecording(): Unit
   def isRecording: Boolean
 
@@ -59,36 +58,42 @@ class MediaRecorderControllerImpl(context: Context) extends MediaRecorderControl
 
     cancelRecording()
 
-    file.delete()
+    if (file.exists()) file.delete()
     file.createNewFile()
 
     val rec = getRecorder(file)
 
     try {
       rec.prepare()
+      rec.start()
     } catch {
       case e: Throwable =>
-        verbose(l"Failed to prepare recorder ${showString(e.getMessage)}") //TODO: Abort?
+        verbose(l"Failed to prepare or start recorder: ${showString(e.getMessage)}")
+    } finally {
+      recorder = Some(rec)
+      startRecordingOffset = Option(System.currentTimeMillis())
+      recordingDuration = None
     }
-
-    rec.start()
-
-    recorder = Some(rec)
-    startRecordingOffset = Option(System.currentTimeMillis())
-    recordingDuration = None
   }
 
-  override def stopRecording(): Unit = {
-    recorder.foreach { r =>
-      Try {
+  override def stopRecording(): Boolean =
+    recorder.fold(false){ r =>
+      try {
         r.stop()
+        recordingDuration = startRecordingOffset.map(System.currentTimeMillis() - _)
+        true
+      } catch {
+        case e: RuntimeException =>
+          verbose(l"Failed to stop recorder properly: ${showString(e.getMessage)}")
+          file.delete()
+          recordingDuration = None
+          false
+      } finally {
         r.release()
+        recorder = None
+        startRecordingOffset = None
       }
     }
-    recorder = None
-    recordingDuration = startRecordingOffset.map(System.currentTimeMillis() - _)
-    startRecordingOffset = None
-  }
 
   override def cancelRecording(): Unit = stopRecording()
 
