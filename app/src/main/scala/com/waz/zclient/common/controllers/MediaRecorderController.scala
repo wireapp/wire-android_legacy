@@ -92,7 +92,7 @@ class MediaRecorderControllerImpl(context: Context) extends MediaRecorderControl
 
   override def cancelRecording(): Unit = stopRecording()
 
-  override def isRecording: Boolean = false //TODO: ???
+  override def isRecording: Boolean = recorder.isDefined
 
   override def getFile: File = file
 }
