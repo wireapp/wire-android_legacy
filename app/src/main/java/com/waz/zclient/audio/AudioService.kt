@@ -8,7 +8,6 @@ import io.reactivex.Observable
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.ByteOrder.LITTLE_ENDIAN
-import kotlin.concurrent.fixedRateTimer
 
 interface AudioService {
     companion object {
@@ -31,7 +30,6 @@ interface AudioService {
         }
     }
 
-
     /**
      * Returns Observable which will emmit one element when audio focus is granted and
      * fail when audio focus will be lost.
@@ -43,16 +41,13 @@ interface AudioService {
      * Returns Observable which is responsible for audio recording. Audio recording starts when
      * somebody subscribes to it and stops on unsubscribe.
      */
-    fun recordAudio(targetFile: File,
-                    audioSource: Int = MediaRecorder.AudioSource.MIC,
-                    audioEncoder: Int = MediaRecorder.AudioEncoder.AAC,
-                    outputFormat: Int = MediaRecorder.OutputFormat.AAC_ADTS): Observable<RecordingProgress>
+    fun recordPcmAudio(pcmFile: File, onFinish: () -> Unit = {}): Observable<RecordingProgress>
 
-    fun recordPcmAudio(targetFile: File): Observable<RecordingProgress>
+    fun preparePcmAudioTrack(pcmFile: File): AudioTrack
 
-    fun preparePcmAudioTrack(targetFile: File): AudioTrack
+    fun recodePcmToMp4(pcmFile: File, mp4File: File)
 
-    fun recodePcmToMp4(source: File, target: File)
+    fun recordMp4Audio(mp4File: File, onFinish: (File) -> Unit = {}): Observable<RecordingProgress>
 }
 
 class AudioServiceImpl(private val context: Context): AudioService {
@@ -76,38 +71,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
             }
         }
 
-    override fun recordAudio(targetFile: File,
-                             audioSource: Int,
-                             audioEncoder: Int,
-                             outputFormat: Int): Observable<AudioService.Companion.RecordingProgress> =
-        Observable.create { emitter ->
-            val recorder = MediaRecorder().apply {
-                setAudioSource(audioSource)
-                setOutputFormat(outputFormat)
-                setAudioEncoder(audioEncoder)
-                setOutputFile(targetFile.toString())
-            }
-
-            try { recorder.prepare() } catch (ex: Exception) {
-                emitter.onError(RuntimeException("Can not prepare recorder.", ex))
-            }
-            recorder.start()
-            val maxAmplitudeTask = fixedRateTimer(
-                "extracting_audio_levels_$targetFile",
-                false,
-                0L,
-                50
-            ) {
-                emitter.onNext(AudioService.Companion.RecordingProgress(recorder.maxAmplitude))
-            }
-
-            emitter.setCancellable {
-                maxAmplitudeTask.cancel()
-                recorder.release()
-            }
-        }
-
-    override fun recordPcmAudio(targetFile: File): Observable<AudioService.Companion.RecordingProgress> =
+    override fun recordPcmAudio(pcmFile: File, onFinish: () -> Unit): Observable<AudioService.Companion.RecordingProgress> =
         Observable.create { emitter ->
             var fos: FileOutputStream? = null
             val recorder = AudioRecord(
@@ -122,7 +86,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
             Thread(Runnable {
                 try {
-                    fos = FileOutputStream(targetFile)
+                    fos = FileOutputStream(pcmFile)
                     var shortsRead = recorder.read(readBuffer, 0, AudioService.Companion.Pcm.readBufferSize)
                     while (shortsRead > 0 && !emitter.isDisposed) {
                         val bytes = ByteBuffer.allocateDirect(shortsRead * Short.SIZE_BYTES).order(LITTLE_ENDIAN)
@@ -156,11 +120,12 @@ class AudioServiceImpl(private val context: Context): AudioService {
                     recorder.release()
                     fos?.flush()
                     fos?.close()
+                    onFinish()
                 } catch (ex: Exception) { }
             }
         }
 
-    override fun preparePcmAudioTrack(targetFile: File): AudioTrack {
+    override fun preparePcmAudioTrack(pcmFile: File): AudioTrack {
         val track = AudioTrack(
             AudioManager.STREAM_MUSIC,
             AudioService.Companion.Pcm.sampleRate,
@@ -171,7 +136,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
         Thread(Runnable {
             val playerBuffer = ByteArray(AudioService.Companion.Pcm.readBufferSize)
-            val fis = FileInputStream(targetFile)
+            val fis = FileInputStream(pcmFile)
 
             var readCount = fis.read(playerBuffer)
             while (readCount != -1) {
@@ -185,7 +150,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Throws(IOException::class)
-    override fun recodePcmToMp4(source: File, target: File) {
+    override fun recodePcmToMp4(pcmFile: File, mp4File: File) {
         val codecTimeout = 5000
         val compressedAudioMime = "audio/mp4a-latm"
         val channelCount = 1
@@ -205,7 +170,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
         val bufferInfo = MediaCodec.BufferInfo()
 
-        val mediaMuxer = MediaMuxer(target.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        val mediaMuxer = MediaMuxer(mp4File.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         var totalBytesRead = 0
         var presentationTimeUs = 0.0
 
@@ -216,7 +181,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
         var audioTrackId = 0
         var outputBufferIndex: Int
 
-        val inputStream = FileInputStream(source)
+        val inputStream = FileInputStream(pcmFile)
         while (!stop) {
             var inputBufferIndex = 0
             var currentBatchRead = 0
@@ -271,4 +236,17 @@ class AudioServiceImpl(private val context: Context): AudioService {
         mediaMuxer.release()
     }
 
+    override fun recordMp4Audio(mp4File: File, onFinish: (File) -> Unit): Observable<AudioService.Companion.RecordingProgress> {
+        val pcmFile = File(mp4File.parent, "${mp4File.nameWithoutExtension}_${System.currentTimeMillis()}.pcm")
+        if (pcmFile.exists()) pcmFile.delete()
+        pcmFile.createNewFile()
+        try {
+            return recordPcmAudio(pcmFile) {
+                recodePcmToMp4(pcmFile, mp4File)
+                onFinish(mp4File)
+            }
+        } finally {
+            pcmFile.delete()
+        }
+    }
 }

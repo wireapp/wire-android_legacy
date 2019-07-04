@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.conversation.toolbar
 
+import java.io.File
+
 import android.animation.{ObjectAnimator, ValueAnimator}
 import android.app.Activity
 import android.content.Context
@@ -48,6 +50,7 @@ import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Duration.between
 import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
@@ -208,8 +211,9 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
 
   (for {
     playing       <- playbackControls.flatMap(_.isPlaying).orElse(Signal.const(false))
-    progress      <- previewProgress
-    displayedTime =  if (playing || recordingController.isRecording) progress.map(_.toMillis) else recordingController.duration
+    progress      <- previewProgress.map(_.map(_.toMillis))
+    displayedTime =  if (playing || recordingController.isRecording || progress.exists(_ > 0L)) progress
+                     else recordingController.duration
     formatted     =  displayedTime.fold("")(StringUtils.formatTimeMilliSeconds)
   } yield formatted).onUi(timerTextView.setText)
 
@@ -218,7 +222,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case _ =>
   }
 
-  def hide() = {
+  def hide(): Unit = {
     setVisibility(INVISIBLE)
     recordingController.cancelRecording()
     currentAssetKey = None
@@ -230,12 +234,20 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   }
 
   def show(): Unit = {
+    def onFinishRecording(mp4File: File): Unit = currentAssetKey.foreach { key =>
+      verbose(l"recording succeeded")
+      val content = ContentForUpload(s"recording-${System.currentTimeMillis}", Content.File(Mime.Audio.MP4, mp4File))
+      currentAudio = Some(content)
+      playbackControls ! new PlaybackControls(key.id, URI.fromFile(mp4File), recordAndPlay)
+      recordingController.duration.foreach(d => recordingSeekBar.setMax(d.toInt))
+    }
+
     setVisibility(VISIBLE)
     slideControlState ! Recording
     inject[SoundController].shortVibrate()
     currentAssetKey = Option(AssetMediaKey(AssetId()))
     setWakeLock(true)
-    recordingController.startRecording()
+    recordingController.startRecording(onFinishRecording)
     startTime ! Some(Instant.now)
     recordingIndicator.start()
   }
@@ -253,17 +265,9 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     convController.sendAssetMessage(content, getContext.asInstanceOf[Activity], None).map(_ => hide())(Threading.Ui)
 
   def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent): Unit = {
-
-    def stopRecording() = currentAssetKey.foreach { key =>
+    def stopRecording(): Unit = {
       setWakeLock(false)
-      if (recordingController.stopRecording()) {
-        val content = ContentForUpload(s"recording-${System.currentTimeMillis}",
-          Content.File(Mime.Audio.MP4, recordingController.getFile))
-        currentAudio = Some(content)
-        playbackControls !
-          new PlaybackControls(key.id, URI.fromFile(recordingController.getFile), recordAndPlay)
-        recordingController.duration.foreach(d => recordingSeekBar.setMax(d.toInt))
-      } else {
+      if (recordingController.stopRecording().isFailure) {
         Toast.makeText(getContext, getString(R.string.audio_message__recording__failure__title), Toast.LENGTH_SHORT).show()
         hide()
       }
@@ -294,7 +298,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     case _ => false
   }
 
-  override protected def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) = {
+  override protected def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit = {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     closeButtonContainer.setWidth(CursorUtils.getDistanceOfAudioMessageIconToLeftScreenEdge(getContext))
     cancelButton.setMarginLeft(CursorUtils.getMarginBetweenCursorButtons(getContext))

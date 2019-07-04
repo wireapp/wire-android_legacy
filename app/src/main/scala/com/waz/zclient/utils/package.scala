@@ -39,6 +39,10 @@ import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.duration._
 
+import scala.language.implicitConversions
+import io.reactivex.functions.Consumer
+import kotlin.jvm.functions.{Function0, Function1}
+
 package object utils {
 
   case class Offset(l: Int, t: Int, r: Int, b: Int)
@@ -288,5 +292,25 @@ package object utils {
     if (!oneLiner) sb.append("\n")
 
     sb.toString()
+  }
+
+  object ScalaToKotlin {
+    implicit def f0(f: () => Unit): Function0[kotlin.Unit] = new Function0[kotlin.Unit]() {
+      def invoke(): kotlin.Unit = {
+        f()
+        kotlin.Unit.INSTANCE
+      }
+    }
+
+    implicit def f1[T](f: T => Unit): Function1[T, kotlin.Unit] = new Function1[T, kotlin.Unit]() {
+      def invoke(t: T): kotlin.Unit = {
+        f(t)
+        kotlin.Unit.INSTANCE
+      }
+    }
+
+    implicit def toConsumer[T](f: T => Unit): Consumer[T] = new Consumer[T] {
+      def accept(t: T): Unit = f(t)
+    }
   }
 }

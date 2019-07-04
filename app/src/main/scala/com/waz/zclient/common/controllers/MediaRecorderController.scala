@@ -19,85 +19,92 @@ package com.waz.zclient.common.controllers
 
 import java.io.File
 
-import android.media.MediaRecorder
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.utils.returning
-import com.waz.zclient.utils.media.{AudioEncoder, AudioSource, OutputFormat}
+import com.waz.zclient.{Injectable, Injector, KotlinServices}
 import com.waz.zclient.log.LogUI._
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.internal.functions.Functions
+import com.waz.zclient.utils.ScalaToKotlin._
 
+import scala.util.{Failure, Try}
 
 trait MediaRecorderController {
-  def startRecording(): Unit
-  def stopRecording(): Boolean
+  def startRecording(onFinish: File => Unit = _ => {}): Unit
+  def stopRecording(): Try[Unit]
   def cancelRecording(): Unit
   def isRecording: Boolean
 
-  def getFile: File
   def duration: Option[Long]
 }
 
-class MediaRecorderControllerImpl(context: Context) extends MediaRecorderController with DerivedLogTag {
+class MediaRecorderControllerImpl(context: Context)(implicit injector: Injector) extends MediaRecorderController with Injectable with DerivedLogTag {
 
-  private var recorder = Option.empty[MediaRecorder]
-  private lazy val file = new File(context.getCacheDir, "record_temp.mp4")
+  private lazy val mp4File = new File(context.getCacheDir, "record_temp.mp4")
 
+  private var recordingDisposable  = Option.empty[Disposable]
   private var startRecordingOffset = Option.empty[Long]
-  private var recordingDuration = Option.empty[Long]
+  private var recordingDuration    = Option.empty[Long]
+
+  private lazy val audioService = KotlinServices.INSTANCE.getAudioService
 
   override def duration: Option[Long] = recordingDuration
 
-  private def getRecorder(file: File): MediaRecorder = returning(new MediaRecorder()) { r =>
-      r.setAudioSource(AudioSource.MIC)
-      r.setOutputFormat(OutputFormat.MPEG_4)
-      r.setAudioEncoder(AudioEncoder.HE_AAC)
-      r.setOutputFile(file.getAbsolutePath)
-    }
-
-  override def startRecording(): Unit = {
-
+  override def startRecording(onFinish: File => Unit = _ => {}): Unit = {
+    verbose(l"startRecording")
     cancelRecording()
 
-    if (file.exists()) file.delete()
-    file.createNewFile()
+    if (mp4File.exists()) mp4File.delete()
+    mp4File.createNewFile()
 
-    val rec = getRecorder(file)
+    startRecordingOffset = Option(System.currentTimeMillis)
+    recordingDuration = None
 
-    try {
-      rec.prepare()
-      rec.start()
-    } catch {
-      case e: Throwable =>
-        verbose(l"Failed to prepare or start recorder: ${showString(e.getMessage)}")
-    } finally {
-      recorder = Some(rec)
-      startRecordingOffset = Option(System.currentTimeMillis())
-      recordingDuration = None
-    }
+    recordingDisposable = Option(
+      audioService.recordMp4Audio(mp4File, { file: File =>
+        recordingDuration = startRecordingOffset.map(System.currentTimeMillis - _)
+        onFinish(file)
+        recordingDisposable = None
+      })
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(
+          Functions.emptyConsumer(),
+          { t: Throwable =>
+            error(l"Recording failed", t)
+            reset()
+          }
+        )
+    )
   }
 
-  override def stopRecording(): Boolean =
-    recorder.fold(false){ r =>
-      try {
-        r.stop()
-        recordingDuration = startRecordingOffset.map(System.currentTimeMillis() - _)
-        true
-      } catch {
+  override def stopRecording(): Try[Unit] = recordingDisposable match {
+    case Some(r) =>
+      verbose(l"stopRecording")
+      Try(r.dispose()).recoverWith {
         case e: RuntimeException =>
-          verbose(l"Failed to stop recorder properly: ${showString(e.getMessage)}")
-          file.delete()
-          recordingDuration = None
-          false
-      } finally {
-        r.release()
-        recorder = None
-        startRecordingOffset = None
+          error(l"Failed to stop recorder properly: ${showString(e.getMessage)}", e)
+          reset()
+          Failure(e)
       }
-    }
+    case None =>
+      reset()
+      error(l"Recording failed")
+      Failure(new IllegalStateException("Recording failed"))
+  }
 
-  override def cancelRecording(): Unit = stopRecording()
+  override def cancelRecording(): Unit = {
+    verbose(l"cancelRecording")
+    recordingDisposable.foreach(_.dispose())
+    reset()
+  }
 
-  override def isRecording: Boolean = recorder.isDefined
+  override def isRecording: Boolean = recordingDisposable.isDefined
 
-  override def getFile: File = file
+  private def reset(): Unit = {
+    if (mp4File.exists()) mp4File.delete()
+    recordingDuration = None
+    recordingDisposable = None
+    startRecordingOffset = None
+  }
 }
