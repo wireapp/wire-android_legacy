@@ -27,5 +27,7 @@
   "loggingEnabled": false,
   "custom_url_scheme": "wire",
   "new_password_minimum_length": 8,
-  "new_password_maximum_length": 120
+  "new_password_maximum_length": 120,
+  "http_proxy_url": "none",
+  "http_proxy_port": "8888"
 }
