@@ -45,7 +45,7 @@ trait ChatheadsRecyclerView extends ViewGroup with ViewHelper with DerivedLogTag
         if (index < getChildCount) getChildAt(index).asInstanceOf[ChatHeadView]
         else returning(cache.get[ChatHeadView](chatHeadResId, this)) { addView }
 
-      view.setUserId(id)
+      view.loadUser(id)
     }
   }
 }

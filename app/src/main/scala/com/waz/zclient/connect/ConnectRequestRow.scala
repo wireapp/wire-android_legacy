@@ -61,6 +61,6 @@ class ConnectRequestRow(context: Context, attrs: AttributeSet, style: Int) exten
 
   def setUser(user: UserId) = {
     this.user ! user
-    chatheadView.setUserId(user)
+    chatheadView.loadUser(user)
   }
 }

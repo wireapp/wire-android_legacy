@@ -24,17 +24,18 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
+import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
-import com.waz.model.{ConvId, UserId}
+import com.waz.model._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.{RichInstant, returning}
-import com.waz.zclient.Intents._
+import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController, PasswordController}
@@ -47,9 +48,10 @@ import com.waz.zclient.deeplinks.DeepLinkService
 import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, SSOLoginTooManyAccounts}
 import com.waz.zclient.deeplinks.DeepLinkService._
 import com.waz.zclient.fragments.ConnectivityFragment
-import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.messages.UsersController
 import com.waz.zclient.messages.controllers.NavigationController
+import com.waz.zclient.notifications.controllers.MessageNotificationsController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.startup.UpdateFragment
 import com.waz.zclient.preferences.PreferencesActivity
@@ -57,7 +59,7 @@ import com.waz.zclient.preferences.dialogs.ChangeHandleFragment
 import com.waz.zclient.tracking.UiTrackingController
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.StringUtils.TextDrawing
-import com.waz.zclient.utils.{Emojis, IntentUtils, ViewUtils}
+import com.waz.zclient.utils.{Emojis, IntentUtils, ResString, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 
 import scala.collection.JavaConverters._
@@ -87,6 +89,8 @@ class MainActivity extends BaseActivity
   private lazy val spinnerController      = inject[SpinnerController]
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
+  private lazy val usersController        = inject[UsersController]
+  private lazy val userPreferences        = inject[Signal[UserPreferences]]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -138,6 +142,40 @@ class MainActivity extends BaseActivity
       case false =>
     }
 
+    for {
+      Some(self) <- userAccountsController.currentUser.head
+      teamName   <- self.teamId.fold(
+                      Future.successful(Option.empty[Name])
+                    )(teamId =>
+                      inject[TeamsStorage].get(teamId).map(_.map(_.name))
+                    )
+      prefs      <- userPreferences.head
+      shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).apply()
+      avVisible  <- usersController.availabilityVisible.head
+      color      <- accentColorController.accentColor.head
+    } yield {
+      (shouldWarn && avVisible, self.availability, teamName) match {
+        case (true, Availability.Away, Some(name)) =>
+          inject[MessageNotificationsController].showAppNotification(
+            ResString(R.string.availability_notification_blocked_title, name.str),
+            ResString(R.string.availability_notification_blocked)
+          )
+          showStatusNotificationWarning(self.availability, color).foreach { dontShowAgain =>
+            if (dontShowAgain) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | self.availability.bitmask)
+          }
+        case (true, Availability.Busy, Some(name)) =>
+          inject[MessageNotificationsController].showAppNotification(
+            ResString(R.string.availability_notification_changed_title, name.str),
+            ResString(R.string.availability_notification_changed)
+          )
+          showStatusNotificationWarning(self.availability, color).foreach { dontShowAgain =>
+            if (dontShowAgain) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | self.availability.bitmask)
+          }
+        case _ =>
+      }
+      if (shouldWarn) prefs(UserPreferences.ShouldWarnStatusNotifications) := false
+    }
+
     ForceUpdateActivity.checkBlacklist(this)
 
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
@@ -159,21 +197,31 @@ class MainActivity extends BaseActivity
 
       case Some(DoNotOpenDeepLink(SSOLogin, InvalidToken)) =>
         verbose(l"do not open, SSO token invalid")
-        showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message).map { _ =>
-          startFirstFragment()
-        }
+        showErrorDialog(
+          R.string.sso_signin_wrong_code_title,
+          R.string.sso_signin_wrong_code_message)
+          .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
 
       case Some(DoNotOpenDeepLink(SSOLogin, SSOLoginTooManyAccounts)) =>
         verbose(l"do not open, SSO token, too many accounts")
-        showErrorDialog(R.string.sso_signin_max_accounts_title, R.string.sso_signin_max_accounts_message).map { _ =>
-          startFirstFragment()
-        }
+        showErrorDialog(
+          R.string.sso_signin_max_accounts_title,
+          R.string.sso_signin_max_accounts_message)
+          .map { _ => startFirstFragment() }
+        deepLinkService.deepLink ! None
+
+      case Some(DeepLinkUnknown) =>
+        verbose(l"received unrecognized deep link")
+        showErrorDialog(
+          R.string.deep_link_generic_error_title,
+          R.string.deep_link_generic_error_message)
+          .map { _ => startFirstFragment() }
         deepLinkService.deepLink ! None
 
       case Some(_) =>
         verbose(l"the default path (no deep link, or a link handled later)")
-        startFirstFragment() // don't reset the deep link - it may be handled later (also this line should be executed if not deep link is present)
+        startFirstFragment()
     }
   }
 
@@ -195,6 +243,12 @@ class MainActivity extends BaseActivity
   override protected def onResume(): Unit = {
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
+  }
+
+
+  override def onDestroy(): Unit = {
+    verbose(l"[BE]: onDestroy")
+    super.onDestroy()
   }
 
   private def openSignUpPage(ssoToken: Option[String] = None): Unit = {
@@ -404,13 +458,11 @@ class MainActivity extends BaseActivity
         res.map(_ => true)
 
       case SharingIntent() =>
-        (for {
-          convs <- sharingController.targetConvs.head
-          exp   <- sharingController.ephemeralExpiration.head
-          _     <- sharingController.sendContent(this)
+        for {
+          convs <- sharingController.sendContent(this)
           _     <- if (convs.size == 1) conversationController.switchConversation(convs.head) else Future.successful({})
-        } yield clearIntent())
-          .map(_ => true)
+          _     =  clearIntent()
+        } yield true
 
       case OpenPageIntent(page) => page match {
         case Intents.Page.Settings =>

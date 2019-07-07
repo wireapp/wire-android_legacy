@@ -22,7 +22,6 @@ import android.util.AttributeSet
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
 import com.waz.zclient.log.LogUI._
@@ -114,8 +113,8 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
         case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  => screenController.openOtrDevicePreferences()
         case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.DevicesTab.str)
         case (STARTED_USING_DEVICE, _)                  => screenController.openOtrDevicePreferences()
-        case (OTR_ERROR, _)                             => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_1))
-        case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_2))
+        case (OTR_ERROR, _)                             => browserController.openDecryptionError1()
+        case (OTR_IDENTITY_CHANGED, _)                  => browserController.openDecryptionError2()
         case _ =>
           info(l"unhandled help link click for $msg")
       }

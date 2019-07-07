@@ -117,10 +117,10 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
 
   info.onUi {
     case (user, Some(team)) =>
-      drawable.assetId ! None
+      drawable.picture ! None
       drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamCorners, selected = false)
     case (user, _) =>
-      drawable.assetId ! user.picture
+      drawable.picture ! user.picture
       drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserCorners, selected = false)
   }
   profileButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null)

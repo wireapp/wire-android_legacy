@@ -19,40 +19,46 @@ package com.waz.zclient
 
 import com.waz.service.{BackendConfig, CertificatePin, FirebaseOptions}
 import com.waz.utils.SafeBase64
-import com.waz.utils.wrappers.URI
 
 object Backend {
 
-  private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
-  private val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
+  lazy val byName: Map[String, BackendConfig] =
+    Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
 
-  private val blacklistHostStaging = URI.parse(s"https://clientblacklist.wire.com/staging/android")
+  private val certBytes = SafeBase64.decode(BuildConfig.CERTIFICATE_PIN_BYTES).get
+  val certPin = CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
 
   //This information can be found in downloadable google-services.json file from the BE console.
   val StagingFirebaseOptions = FirebaseOptions(
     "723990470614",
     "1:723990470614:android:9a1527f79aa62284",
     "AIzaSyAGCoJGUtDBLJJiQPLxHQRrdkbyI0wlbo8")
-  val ProdFirebaseOptions    = FirebaseOptions(
+
+  val ProdFirebaseOptions = FirebaseOptions(
     BuildConfig.FIREBASE_PUSH_SENDER_ID,
     BuildConfig.FIREBASE_APP_ID,
     BuildConfig.FIREBASE_API_KEY)
 
   //These are only here so that we can compile tests, the UI sets the backendConfig
   val StagingBackend = BackendConfig(
-    URI.parse("https://staging-nginz-https.zinfra.io"),
-    URI.parse("https://staging-nginz-ssl.zinfra.io/await"),
+    environment = "staging",
+    baseUrl = "https://staging-nginz-https.zinfra.io",
+    websocketUrl = "https://staging-nginz-ssl.zinfra.io/await",
+    blacklistHost = s"https://clientblacklist.wire.com/staging/android",
+    teamsUrl = "https://wire-teams-staging.zinfra.io",
+    accountsUrl = "https://wire-account-staging.zinfra.io",
+    websiteUrl = "https://wire.com",
     StagingFirebaseOptions,
-    "staging",
-    blacklistHost = blacklistHostStaging)
+    certPin)
 
-  val ProdBackend: BackendConfig = BackendConfig(
-    URI.parse(BuildConfig.BACKEND_URL),
-    URI.parse(BuildConfig.WEBSOCKET_URL),
+  val ProdBackend = BackendConfig(
+    environment = "prod",
+    BuildConfig.BACKEND_URL,
+    BuildConfig.WEBSOCKET_URL,
+    BuildConfig.BLACKLIST_HOST,
+    teamsUrl = BuildConfig.TEAMS_URL,
+    accountsUrl = BuildConfig.ACCOUNTS_URL,
+    websiteUrl = BuildConfig.WEBSITE_URL,
     ProdFirebaseOptions,
-    "prod",
-    certPin,
-    URI.parse(BuildConfig.BLACKLIST_HOST))
-
-  lazy val byName = Seq(StagingBackend, ProdBackend).map(b => b.environment -> b).toMap
+    certPin)
 }

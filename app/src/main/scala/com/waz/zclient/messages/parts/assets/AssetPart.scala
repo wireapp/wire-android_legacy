@@ -17,24 +17,22 @@
  */
 package com.waz.zclient.messages.parts.assets
 
-import android.graphics.drawable.Drawable
 import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
-import com.waz.model.{AssetData, Dim2, MessageContent}
+import com.waz.model.{Dim2, MessageContent}
+import com.waz.service.assets2._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.messages.ClickableViewPart
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
 import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPartView, ImagePartView}
-import com.waz.zclient.utils.{StringUtils, _}
+import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
 trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
@@ -51,10 +49,13 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
     case _ => throw new Exception("Unexpected AssetPart view type - ensure you define the content layout and an id for the content for the part")
   }(self))
 
-  val asset = controller.assetSignal(message)
-  val deliveryState = DeliveryState(message, asset)
+  val assetId = message.map(_.assetId).collect { case Some(id) => id }
+  val asset = controller.assetSignal(assetId)
+  val assetStatus = controller.assetStatusSignal(assetId)
+  val deliveryState = DeliveryState(message, assetStatus.map(_._1))
   val completed = deliveryState.map(_ == DeliveryState.Complete)
   val accentColorController = inject[AccentColorController]
+  val previewAssetId = controller.assetPreviewId(assetId)
   protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
 
   lazy val assetBackground = new AssetBackground(showDots, expired, accentColorController.accentColor)
@@ -73,22 +74,39 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
 trait ActionableAssetPart extends AssetPart {
   protected val assetActionButton: AssetActionButton = findById(R.id.action_button)
 
-  override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
-    super.set(msg, part, opts)
-    assetActionButton.message.publish(msg.message, Threading.Ui)
+  val isPlaying = Signal(false)
+
+  Signal(assetStatus.map(_._1), isPlaying).onUi { case (s, p) =>
+    assetActionButton.setStatus(s, "", playing = p)
+  }
+
+  assetStatus.onUi {
+    case (AssetStatus.Done, _) =>
+      assetActionButton.clearProgress()
+    case (DownloadAssetStatus.InProgress, _) =>
+      assetActionButton.startEndlessProgress()
+    case (UploadAssetStatus.InProgress | DownloadAssetStatus.InProgress, Some(p)) =>
+      val progress = p.total.map(t => p.progress.toFloat / t.toFloat).getOrElse(0f)
+      assetActionButton.setProgress(progress)
+    case _ =>
+      assetActionButton.clearProgress()
+  }
+
+  assetActionButton.onClick {
+    assetStatus.map(_._1).currentValue.foreach {
+      case UploadAssetStatus.Failed => message.currentValue.foreach(controller.retry)
+      case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
+      case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
+      case _ => // do nothing, individual view parts will handle what happens when in the Completed state.
+    }
   }
 }
 
 trait PlayableAsset extends ActionableAssetPart {
-  val duration = asset.map(_._1).map {
-    case AssetData.WithDuration(d) => Some(d)
-    case _ => None
-  }
-  val formattedDuration = duration.map(_.fold("")(d => StringUtils.formatTimeSeconds(d.getSeconds)))
-
   protected val durationView: TextView = findById(R.id.duration)
 
-  formattedDuration.on(Threading.Ui)(durationView.setText)
+  protected lazy val playControls = controller.getPlaybackControls(asset)
+  playControls.flatMap(_.isPlaying) (isPlaying ! _)
 }
 
 trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
@@ -107,17 +125,20 @@ trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
 trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
   import ImageLayoutAssetPart._
 
-  protected val imageDim = message.map(_.imageDimensions).collect { case Some(d) => d}
   protected val maxWidth = Signal[Int]()
   protected val maxHeight = Signal[Int]()
   override protected val showDots = deliveryState.map(state => state == OtherUploading || state == Downloading)
+
+  protected val imageDim = asset.map(_.details).map {
+    case ImageDetails(dim: Dim2) => dim
+    case VideoDetails(dim: Dim2, _) => dim
+    case _ => Dim2(0, 0)
+  }
 
   val forceDownload = this match {
     case _: ImagePartView => false
     case _ => true
   }
-
-  val imageDrawable = new ImageAssetDrawable(message map { m => WireImage(m.assetId) }, forceDownload = forceDownload)
 
   private lazy val imageContainer = returning(findById[FrameLayout](R.id.image_container)) {
     _.addOnLayoutChangeListener(new OnLayoutChangeListener {
@@ -126,14 +147,7 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     })
   }
 
-  hideContent.flatMap {
-    case true => Signal.const[Drawable](assetBackground)
-    case _ => imageDrawable.state map {
-      case ImageAssetDrawable.State.Failed(_, _) |
-           ImageAssetDrawable.State.Loading(_) => assetBackground
-      case _ => imageDrawable
-    } orElse Signal.const[Drawable](imageDrawable)
-  }.on(Threading.Ui)(imageContainer.setBackground(_))
+  imageContainer.setBackground(assetBackground)
 
   val displaySize = for {
     maxW <- maxWidth
@@ -172,10 +186,9 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     Dim2(dW, _) <- displaySize
   } yield
     if (dW >= maxW) Offset.Empty
-    else Offset(0, 0, maxW - dW, 0)
+    else Offset((maxW - dW) / 2, 0, (maxW - dW) / 2, 0)
 
   padding.onUi { p =>
-    imageDrawable.padding ! p
     assetBackground.padding ! p
   }
 

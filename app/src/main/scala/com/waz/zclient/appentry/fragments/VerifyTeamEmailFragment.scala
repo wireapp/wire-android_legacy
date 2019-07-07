@@ -29,6 +29,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.CreateTeamFragment
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.NumberCodeInput
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -70,19 +71,23 @@ case class VerifyTeamEmailFragment() extends CreateTeamFragment{
             Future.successful(Some(getString(EmailError(error).bodyResource)))
           case _ =>
             inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply().flatMap {
-              case true => showConfirmationDialogWithNeutralButton(
-                R.string.receive_news_and_offers_request_title,
-                R.string.receive_news_and_offers_request_body,
-                R.string.app_entry_dialog_privacy_policy,
-                R.string.app_entry_dialog_accept,
-                R.string.app_entry_dialog_not_now
-              )
+              case true =>
+                inject[AccentColorController].accentColor.head.flatMap(color =>
+                  showConfirmationDialog(
+                    getString(R.string.receive_news_and_offers_request_title),
+                    getString(R.string.receive_news_and_offers_request_body),
+                    R.string.app_entry_dialog_accept,
+                    R.string.app_entry_dialog_not_now,
+                    Some(R.string.app_entry_dialog_privacy_policy),
+                    color
+                  )
+                )
               case false => Future.successful(Some(false))
             }.map { confirmed =>
               createTeamController.receiveNewsAndOffers = confirmed
               createTeamController.code = code
               showFragment(SetNameFragment(), SetNameFragment.Tag)
-              if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
+              if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
               None
             }
         }

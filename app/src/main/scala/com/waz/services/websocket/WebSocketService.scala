@@ -23,6 +23,7 @@ import android.content
 import android.content.{BroadcastReceiver, Context, Intent}
 import android.os.{Build, IBinder}
 import android.support.v4.app.NotificationCompat
+import android.util.Log
 import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -35,7 +36,7 @@ import com.waz.zclient._
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
 
-class WebSocketController(implicit inj: Injector) extends Injectable {
+class WebSocketController(implicit inj: Injector) extends Injectable with DerivedLogTag {
   private lazy val global   = inject[GlobalModule]
   private lazy val accounts = inject[AccountsService]
 
@@ -48,12 +49,12 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
   lazy val accountWebsocketStates: Signal[(Set[ZMessaging], Set[ZMessaging])] =
     for {
       cloudPushAvailable  <- cloudPushAvailable
-      uiActive            <- global.lifecycle.uiActive
       wsForegroundEnabled <- global.prefs(WsForegroundKey).signal
+      _ = verbose(l"wsForeground enabled: $wsForegroundEnabled")
       accs                <- accounts.zmsInstances
       accsInFG            <- Signal.sequence(accs.map(_.selfUserId).map(id => accounts.accountState(id).map(st => id -> st)).toSeq : _*).map(_.toMap)
       (zmsWithWSActive, zmsWithWSInactive) =
-        accs.partition(zms => accsInFG(zms.selfUserId) == InForeground || (!cloudPushAvailable && (uiActive || wsForegroundEnabled)))
+        accs.partition(zms => accsInFG(zms.selfUserId) == InForeground || wsForegroundEnabled || !cloudPushAvailable)
     } yield (zmsWithWSActive, zmsWithWSInactive)
 
   lazy val serviceInForeground: Signal[Boolean] =
@@ -64,15 +65,21 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
 
   lazy val notificationTitleRes: Signal[Option[Int]] =
     serviceInForeground.flatMap {
-      case true => global.network.isOnline.flatMap {
+      case true =>
+        verbose(l"Service in foreground")
+        global.network.isOnline.flatMap {
         //checks to see if there are any accounts that haven't yet established a web socket
         case true => accounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.wsPushService.connected).toSeq: _ *).map(_.exists(!identity(_)))).map {
-          case true => Option(R.string.ws_foreground_notification_connecting_title)
-          case _    => Option(R.string.ws_foreground_notification_connected_title)
+          case true => verbose(l"connecting");Option(R.string.ws_foreground_notification_connecting_title)
+          case _    => verbose(l"connected");Option(R.string.ws_foreground_notification_connected_title)
         }
-        case _ => Signal.const(Option(R.string.ws_foreground_notification_no_internet_title))
+        case _ =>
+          verbose(l"Returning no notification titles despite service in foreground")
+          Signal.const(Option(R.string.ws_foreground_notification_no_internet_title))
       }
-      case _ => Signal.const(Option.empty[Int])
+      case _ =>
+        verbose(l"Returning no notification titles")
+        Signal.const(Option.empty[Int])
     }
 }
 
@@ -81,37 +88,47 @@ class WebSocketController(implicit inj: Injector) extends Injectable {
   */
 class OnBootAndUpdateBroadcastReceiver extends BroadcastReceiver with DerivedLogTag {
 
+  private val TAG = this.getClass.getName
+
   private var context: Context = _
-
-  implicit lazy val injector: Injector =
-    context.getApplicationContext.asInstanceOf[WireApplication].module
-
-  private lazy val controller =
-    injector.binding[WebSocketController].getOrElse(throw new Exception(s"Failed to load WebSocketController")).apply()
-
-  private lazy val accounts =
-    injector.binding[AccountsService].getOrElse(throw new Exception(s"Failed to load AccountsService")).apply()
 
   override def onReceive(context: Context, intent: Intent): Unit = {
     this.context = context
-    verbose(l"onReceive ${RichIntent(intent)}")
+    Log.i(TAG, s"onReceive ${intent.getDataString}")
 
-    accounts.zmsInstances.head.foreach { zs =>
-      zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
-    } (Threading.Background)
+    if (WireApplication.ensureInitialized())
+      Option(context.getApplicationContext.asInstanceOf[WireApplication].module).foreach { injector =>
+        injector.binding[AccountsService] match {
+          case Some(accounts) =>
+            Log.i(TAG, "AccountsService loaded")
+            accounts().zmsInstances.head.foreach { zs =>
+              zs.map(_.selfUserId).foreach(PushTokenCheckJob(_))
+            }(Threading.Background)
 
+          case _ =>
+            Log.e(TAG, "Failed to load AccountsService")
+        }
 
-    controller.serviceInForeground.head.foreach {
-      case true =>
-        verbose(l"startForegroundService")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-          context.startForegroundService(new Intent(context, classOf[WebSocketService]))
-        else
-          WebSocketService(context)
-      case false =>
-        verbose(l"foreground service not needed, will wait for application to start service if necessary")
-    } (Threading.Ui)
+        injector.binding[WebSocketController] match {
+          case Some(controller) =>
+            Log.i(TAG, s"WebSocketController loaded")
+            controller().serviceInForeground.head.foreach {
+              case true =>
+                Log.i(TAG, s"startForegroundService")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                  context.startForegroundService(new Intent(context, classOf[WebSocketService]))
+                else
+                  WebSocketService(context)
+              case false =>
+                Log.i(TAG, s"foreground service not needed, will wait for application to start service if necessary")
+            }(Threading.Ui)
+
+          case None =>
+            Log.e(TAG, s"Failed to load WebSocketController")
+        }
+      }
   }
+
 }
 
 

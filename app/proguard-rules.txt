@@ -128,3 +128,11 @@
 ## JNA classes for calling v3
 -keep class * extends com.sun.jna.** { *; }
 -keep class com.sun.jna.** { *; }
+
+# Glide
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
+  **[] $VALUES;
+  public *;
+}

@@ -23,14 +23,14 @@ import android.graphics.drawable.Drawable
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
 import android.widget._
+import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
+import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message.Type
-import com.waz.model.{AssetData, AssetId, MessageData}
-import com.waz.utils.events.Signal
+import com.waz.model.{AssetId, GeneralAssetId, MessageData}
+import com.waz.service.assets2.{Asset, GeneralAsset}
 import com.waz.utils.returning
-import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.WireImage
-import com.waz.zclient.common.views.RoundedImageAssetDrawable
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.paintcode.WireStyleKit
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.text.LinkTextView
@@ -60,7 +60,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   def setOnClose(onClose: => Unit): Unit = this.onClose = () => onClose
 
-  def setMessage(messageData: MessageData, assetData: Option[AssetData], senderName: String): Unit = {
+  def setMessage(messageData: MessageData, asset: Option[GeneralAsset], senderName: String): Unit = {
     setSender(senderName, !messageData.editTime.isEpoch)
 
     messageData.msgType match {
@@ -69,13 +69,18 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
       case Type.LOCATION =>
         set(messageData.location.map(_.getName).getOrElse(getString(R.string.reply_message_type_location)), bold = true, Some(WireStyleKit.drawLocation), None)
       case Type.VIDEO_ASSET =>
-        set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), Some(messageData.assetId))
+        set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), messageData.assetId)
       case Type.ASSET =>
-        set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), Some(messageData.assetId))
+        set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), messageData.assetId)
       case Type.AUDIO_ASSET =>
         set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)
       case Type.ANY_ASSET =>
-        set(assetData.flatMap(_.name).getOrElse(getString(R.string.reply_message_type_asset)), bold = true, Some(WireStyleKit.drawFile), None)
+        val assetName = asset match {
+          case Some(a: Asset) => a.name
+          case _ => getString(R.string.reply_message_type_asset)
+        }
+
+        set(assetName, bold = true, Some(WireStyleKit.drawFile), None)
       case _ =>
       // Other types shouldn't be able to be replied to
     }
@@ -86,7 +91,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     senderText.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
   }
 
-  private def set(text: String, bold: Boolean, drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], imageAsset: Option[AssetId]): Unit = {
+  private def set(text: String, bold: Boolean, drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], imageAsset: Option[GeneralAssetId]): Unit = {
     contentText.setText(text)
     if (bold){
       contentText.setTypeface(TypefaceUtils.getTypeface(getString(R.string.wire__typeface__medium)))
@@ -99,12 +104,17 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
       contentText.markdownQuotes()
     }
     setStartIcon(drawMethod)
-    imageAsset.fold {
-      image.setVisibility(View.GONE)
-    } { assetId =>
-      val imageDrawable = new RoundedImageAssetDrawable(Signal.const(WireImage(assetId)), scaleType = ScaleType.CenterCrop, request = RequestBuilder.Single, cornerRadius = 10)
-      image.setVisibility(View.VISIBLE)
-      image.setImageDrawable(imageDrawable)
+
+    imageAsset match {
+      case Some(a: AssetId) =>
+        WireGlide(context)
+          .load(a)
+          .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(10)))
+          .into(image)
+        image.setVisibility(View.VISIBLE)
+      case _ =>
+        WireGlide(context).clear(image)
+        image.setVisibility(View.GONE)
     }
   }
 

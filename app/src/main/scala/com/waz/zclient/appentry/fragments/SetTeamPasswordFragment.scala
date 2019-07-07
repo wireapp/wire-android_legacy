@@ -30,6 +30,7 @@ import com.waz.utils.PasswordValidator
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.appentry.{AppEntryDialogs, CreateTeamFragment}
+import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.SimpleValidator
 import com.waz.zclient.tracking.TeamAcceptedTerms
@@ -62,7 +63,8 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
       // We need to adjust the behaviour of the error text view: It should always be visible,
       // but it will become red when validation fails.
       inputField.errorText.setGravity(Gravity.START)
-      inputField.errorText.setTextColor(context.getColor(R.color.teams_placeholder_text))
+      inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
+      inputField.setShouldDisableOnClick(false)
       inputField.setShouldClearErrorOnClick(false)
       inputField.setShouldClearErrorOnTyping(false)
       inputField.showErrorMessage(Some(getString(R.string.password_policy_hint, passwordMinLength)))
@@ -71,7 +73,7 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
 
       inputField.editText.addTextListener { text =>
         createTeamController.password = text
-        inputField.errorText.setTextColor(context.getColor(R.color.teams_placeholder_text))
+        inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
       }
 
       inputField.editText.requestFocus()
@@ -79,10 +81,10 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
 
       inputField.setOnClick( text =>
         if (!validator.isValidPassword(text)) {
-          inputField.errorText.setTextColor(context.getColor(R.color.teams_error_red))
+          inputField.errorText.setTextColor(ContextUtils.getColor(R.color.teams_error_red))
           Future.successful(Some(getString(R.string.password_policy_hint, passwordMinLength)))
         } else {
-          AppEntryDialogs.showTermsAndConditions(context).flatMap {
+          AppEntryDialogs.showTermsAndConditions(context, inject[BrowserController]).flatMap {
             case true =>
               tracking.track(TeamAcceptedTerms(TeamAcceptedTerms.AfterPassword))
               val credentials = EmailCredentials(EmailAddress(createTeamController.teamEmail), Password(text), Some(ConfirmationCode(createTeamController.code)))

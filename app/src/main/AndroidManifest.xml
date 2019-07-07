@@ -184,7 +184,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.VIEW" />
             </intent-filter>
-
         </activity>
 
         <activity

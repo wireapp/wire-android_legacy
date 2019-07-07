@@ -22,7 +22,7 @@ import android.content.{Context, Intent}
 import android.os.IBinder
 import com.waz.zclient.ServiceHelper
 import com.waz.zclient.notifications.controllers.CallingNotificationsController
-import com.waz.zclient.notifications.controllers.CallingNotificationsController.androidNotificationBuilder
+import com.waz.zclient.notifications.controllers.CallingNotificationsController.{NotificationAction, androidNotificationBuilder}
 
 class CallingNotificationsService extends ServiceHelper {
   private lazy val callNCtrl = inject[CallingNotificationsController]
@@ -30,7 +30,7 @@ class CallingNotificationsService extends ServiceHelper {
   implicit lazy val cxt: Context = getApplicationContext
 
   private lazy val sub = callNCtrl.notifications.map(_.find(_.isMainCall)).onUi {
-    case Some(not) =>
+    case Some(not) if not.action != NotificationAction.Nothing =>
       val builder = androidNotificationBuilder(not)
       startForeground(not.convId.str.hashCode, builder.build())
     case _ =>

@@ -22,8 +22,9 @@ import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
+import com.waz.model.UserData.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetId, LocalInstant, UserData, UserId}
+import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
@@ -51,9 +52,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   import Threading.Implicits.Background
   import VideoState._
 
-  private val screenManager  = new ScreenManager
-  val soundController        = inject[SoundController]
-  val conversationController = inject[ConversationController]
+  private lazy val screenManager  = new ScreenManager
+  private lazy val soundController        = inject[SoundController]
+  private lazy val conversationController = inject[ConversationController]
   val networkMode            = inject[NetworkModeService].networkMode
   val accounts               = inject[AccountsService]
   val themeController        = inject[ThemeController]
@@ -170,10 +171,10 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case _ =>
   }
 
-  val cameraFailed   = flowManager.flatMap(_.cameraFailedSig)
-  val userStorage    = callingZms.map(_.usersStorage)
-  val prefs          = callingZms.map(_.prefs)
-  val callingService = callingZms.map(_.calling).disableAutowiring()
+  private val cameraFailed   = flowManager.flatMap(_.cameraFailedSig)
+  private val userStorage    = callingZms.map(_.usersStorage)
+  private val callingService = callingZms.map(_.calling).disableAutowiring()
+  val prefs                  = callingZms.map(_.prefs)
 
   val callingServiceAndCurrentConvId =
     for {
@@ -190,7 +191,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     members <- zms.membersStorage.activeMembers(cId)
   } yield members
 
-  val otherUser = Signal(isGroupCall, userStorage, others.map(_.keys.toSeq.headOption)).flatMap {
+  private lazy val otherUser = Signal(isGroupCall, userStorage, others.map(_.keys.toSeq.headOption)).flatMap {
     case (false, usersStorage, Some(o)) =>
       usersStorage.optSignal(o) // one-to-one conversation has the same id as the other user, so we can access it directly
     case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
@@ -257,14 +258,27 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   def wasUiActiveOnCallStart = _wasUiActiveOnCallStart
 
-  val onCallStarted = currentCallOpt.map(_.map(_.convId)).onChanged.filter(_.isDefined).map { _ =>
+  private lazy val allowedByStatus = for {
+    zms          <- callingZms
+    users        <- userStorage
+    availability <- users.signal(zms.selfUserId).map(_.availability)
+    muteSet      <- conversation.map(_.muted)
+  } yield availability != Availability.Away && (availability != Availability.Busy || muteSet != MuteSet.AllMuted)
+
+  private val onCallStarted = currentCallOpt.map(_.map(_.convId)).onChanged.filter(_.isDefined).map { _ =>
     val active = ZMessaging.currentGlobal.lifecycle.uiActive.currentValue.getOrElse(false)
     _wasUiActiveOnCallStart = active
     active
   }
 
   onCallStarted.on(Threading.Ui) { _ =>
-    CallingActivity.start(cxt)
+    (for {
+      incoming <- isCallIncoming.head
+      allowed  <- allowedByStatus.head
+    } yield !incoming || allowed).foreach {
+      case true  => CallingActivity.start(cxt)
+      case false =>
+    }
   }(EventContext.Global)
 
   (lastCallAccountId zip isCallEstablished).onChanged.filter(_._2 == true) { case (userId, _) =>
@@ -278,7 +292,6 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   isCallActive.onChanged.filter(_ == false).on(Threading.Ui) { _ =>
     screenManager.releaseWakeLock()
   }(EventContext.Global)
-
 
   (for {
     v            <- isVideoCall
@@ -294,15 +307,16 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   }
 
   (for {
-    m <- isMuted.orElse(Signal.const(false))
-    i <- isCallIncoming
-    uid <- lastCallAccountId
-  } yield (m, i, uid)) { case (m, i, uid) =>
+    isMuted    <- isMuted.orElse(Signal.const(false))
+    isIncoming <- isCallIncoming
+    isAllowed  <- allowedByStatus
+    uid        <- lastCallAccountId
+  } yield (isMuted, isIncoming, isAllowed, uid)) { case (isMuted, isIncoming, isAllowed, uid) =>
     //TODO Why we call this method when isCallIncoming is false?
-    soundController.setIncomingRingTonePlaying(uid, !m && i)
+    soundController.setIncomingRingTonePlaying(uid, !isMuted && isIncoming && isAllowed)
   }
 
-  val convDegraded = conversation.map(_.verified == Verification.UNVERIFIED)
+  private lazy val convDegraded = conversation.map(_.verified == Verification.UNVERIFIED)
     .orElse(Signal(false))
     .disableAutowiring()
 
@@ -451,7 +465,7 @@ private class ScreenManager(implicit injector: Injector) extends Injectable with
 
 private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   private lazy val telephonyManager = inject[TelephonyManager]
 
   private var listening = false
@@ -497,7 +511,7 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
 
 object CallController {
   case class CallParticipantInfo(userId: UserId,
-                                 assetId: Option[AssetId],
+                                 picture: Option[Picture],
                                  displayName: String,
                                  isGuest: Boolean,
                                  isVerified: Boolean,

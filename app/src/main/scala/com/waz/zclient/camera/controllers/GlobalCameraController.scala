@@ -18,13 +18,16 @@
 
 package com.waz.zclient.camera.controllers
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.util.concurrent.{Executors, ThreadFactory}
 
 import android.content.Context
 import android.content.res.Configuration
-import android.graphics.{Rect, SurfaceTexture}
+import android.graphics._
 import android.hardware.Camera
+import android.support.media.ExifInterface
 import android.view.{OrientationEventListener, Surface, WindowManager}
+import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.images.ImageAssetGenerator
 import com.waz.threading.{CancellableFuture, Threading}
@@ -218,7 +221,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     c.startPreview()
   }
 
-  override def takePicture(shutter: => Unit) = {
+  override def takePicture(shutter: => Unit): Future[Array[Byte]] = {
     val promise = Promise[Array[Byte]]()
     camera match {
       case Some(c) => try {
@@ -229,8 +232,24 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
           null,
           DeprecationUtils.pictureCallback(new PictureCallbackDeprecated {
             override def onPictureTaken(data: Array[Byte], camera: CameraWrapper): Unit = {
-              c.startPreview() //restarts the preview as it gets stopped by camera.takePicture()
-              promise.success(data)
+              // Restart the preview as it gets stopped by camera.takePicture()
+              c.startPreview()
+
+              // Correct the orientation, if needed.
+              val exif = new ExifInterface(new ByteArrayInputStream(data))
+              val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+
+              val result = orientation match {
+                case ExifInterface.ORIENTATION_NORMAL | ExifInterface.ORIENTATION_UNDEFINED =>
+                  data
+                case _ =>
+                  val corrected = BitmapUtils.fixOrientation(BitmapFactory.decodeByteArray(data, 0, data.length), orientation)
+                  val output = new ByteArrayOutputStream()
+                  corrected.compress(Bitmap.CompressFormat.JPEG, 100, output)
+                  output.toByteArray
+              }
+
+              promise.success(result)
             }
           }))
       } catch {

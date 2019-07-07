@@ -17,24 +17,28 @@
  */
 package com.waz.zclient.conversation
 
+import java.net.URI
+
 import android.app.Activity
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Bitmap.CompressFormat
 import com.waz.api
-import com.waz.api.{AssetForUpload, IConversation, Verification}
-import com.waz.content._
+import com.waz.api.{IConversation, Verification}
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.AccountManager
-import com.waz.service.assets.AssetService
-import com.waz.service.assets.AssetService.RawAssetInput.UriInput
+import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
-import com.waz.utils.wrappers.URI
 import com.waz.utils.{Serialized, returning, _}
+import com.waz.zclient.assets2.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -49,7 +53,7 @@ import scala.concurrent.duration._
 
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
-  
+
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
   private lazy val selectedConv       = inject[Signal[SelectedConversationService]]
@@ -62,6 +66,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val account            = inject[Signal[Option[AccountManager]]]
   private lazy val callStart          = inject[CallStartController]
   private lazy val convListController = inject[ConversationListController]
+  private lazy val uriHelper          = inject[UriHelper]
+  private lazy val accentColorController = inject[AccentColorController]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -107,8 +113,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   } yield members.filter(_ != selfUserId)
 
   currentConvId { convId =>
-    conversations(_.forceNameUpdate(convId))
-    conversations.head.foreach(_.forceNameUpdate(convId))
+    conversations.head.foreach(_.forceNameUpdate(convId, getString(R.string.default_deleted_username)))
     if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
       verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
       convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
@@ -169,24 +174,64 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?
 
-    def sendMessage(text: String, mentions: Seq[Mention] = Nil, quote: Option[MessageId] = None): Future[Option[MessageData]] = {
-      convsUiwithCurrentConv({(ui, id) =>
-        quote.fold2(ui.sendTextMessage(id, text, mentions), ui.sendReplyMessage(_, text, mentions))
-      })
+  def sendMessage(text:     String,
+                  mentions: Seq[Mention] = Nil,
+                  quote:    Option[MessageId] = None,
+                  exp:      Option[Option[FiniteDuration]] = None): Future[Option[MessageData]] =
+    convsUiwithCurrentConv({(ui, id) =>
+      quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
+    })
+
+  def sendTextMessage(convs:    Seq[ConvId],
+                      text:     String,
+                      mentions: Seq[Mention] = Nil,
+                      quote:    Option[MessageId] = None,
+                      exp:      Option[Option[FiniteDuration]] = None): Future[Seq[Option[MessageData]]] =
+    convsUi.head.flatMap { ui =>
+      Future.sequence(convs.map(id =>
+        quote.fold2(ui.sendTextMessage(id, text, mentions, exp), ui.sendReplyMessage(_, text, mentions, exp))
+      ))
     }
 
-  def sendMessage(input: AssetService.RawAssetInput): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, input))
+  def sendAssetMessage(content: ContentForUpload): Future[Option[MessageData]] =
+    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
 
-  def sendMessage(uri: URI, activity: Activity): Future[Option[MessageData]] =
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, UriInput(uri), (s: Long) => showWifiWarningDialog(s)(activity)))
+  def sendAssetMessage(content:  ContentForUpload,
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]]): Future[Option[MessageData]] =
+    convsUiwithCurrentConv((ui, id) =>
+      accentColorController.accentColor.head.flatMap(color =>
+        ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp))
+    )
 
-  def sendMessage(audioAsset: AssetForUpload, activity: Activity): Future[Option[MessageData]] =
-    audioAsset match {
-      case asset: com.waz.api.impl.AudioAssetForUpload =>
-        convsUiwithCurrentConv((ui, id) => ui.sendMessage(id, asset, (s: Long) => showWifiWarningDialog(s)(activity)))
-      case _ => Future.successful(None)
-    }
+  def sendAssetMessage(convs:    Seq[ConvId],
+                       content:  ContentForUpload,
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
+    for {
+      ui    <- convsUi.head
+      color <- accentColorController.accentColor.head
+      msgs  <- Future.traverse(convs) { id =>
+                 ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp)
+               }
+    } yield msgs
+
+  def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] =
+    for {
+      image   <- Future { ImageCompressUtils.compress(bitmap, CompressFormat.JPEG) }
+      content =  ContentForUpload(assetName, Content.Bytes(Mime.Image.Jpg, image))
+      msg     <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
+    } yield msg
+
+  def sendAssetMessage(uri:      URI,
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]],
+                       convs:    Seq[ConvId] = Seq()): Future[Option[MessageData]] =
+    for {
+      content <- Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri))))
+      msg     <- if (convs.isEmpty) sendAssetMessage(content, activity, exp)
+                 else sendAssetMessage(convs, content, activity, exp).map(_.head)
+    } yield msg
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))

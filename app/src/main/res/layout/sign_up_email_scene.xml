@@ -68,7 +68,7 @@
         android:id="@+id/password_policy_hint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__8"
+        android:layout_marginTop="@dimen/wire__padding__16"
         android:gravity="center_vertical|start"
         android:layout_gravity="start"
         android:textColor="@color/white"

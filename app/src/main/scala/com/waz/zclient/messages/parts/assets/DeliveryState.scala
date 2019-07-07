@@ -17,14 +17,13 @@
  */
 package com.waz.zclient.messages.parts.assets
 
-import com.waz.api
-import com.waz.api.AssetStatus._
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model._
+import com.waz.service.assets2.{DownloadAssetStatus, AssetStatus, UploadAssetStatus}
 import com.waz.utils.events.Signal
-import com.waz.zclient.log.LogUI._
+import com.waz.log.LogSE._
 
 
 sealed trait DeliveryState extends SafeToLog
@@ -49,25 +48,25 @@ object DeliveryState extends DerivedLogTag {
 
   case object Unknown extends DeliveryState
 
-  private def apply(as: api.AssetStatus, ms: Message.Status): DeliveryState = {
+  private def apply(as: AssetStatus, ms: Message.Status): DeliveryState = {
     val res = (as, ms) match {
-      case (UPLOAD_CANCELLED, _) => Cancelled
-      case (UPLOAD_FAILED, _) => UploadFailed
-      case (DOWNLOAD_FAILED, _) => DownloadFailed
-      case (UPLOAD_NOT_STARTED | UPLOAD_IN_PROGRESS, mState) =>
+      case (UploadAssetStatus.Cancelled, _) => Cancelled
+      case (UploadAssetStatus.Failed, _) => UploadFailed
+      case (DownloadAssetStatus.Failed, _) => DownloadFailed
+      case (UploadAssetStatus.NotStarted | UploadAssetStatus.InProgress, mState) =>
         mState match {
           case Message.Status.FAILED => UploadFailed
           case Message.Status.SENT => OtherUploading
           case _ => Uploading
         }
-      case (DOWNLOAD_IN_PROGRESS, _) => Downloading
-      case (UPLOAD_DONE | DOWNLOAD_DONE, _) => Complete
+      case (DownloadAssetStatus.InProgress, _) => Downloading
+      case (AssetStatus.Done, _) => Complete
       case _ => Unknown
     }
     verbose(l"Mapping Asset.Status: $as, and Message.Status $ms to DeliveryState: $res")
     res
   }
 
-  def apply(message: Signal[MessageData], asset: Signal[(AssetData, api.AssetStatus)]): Signal[DeliveryState] =
-    message.zip(asset).map { case (m, (_, s)) => apply(s, m.state) }
+  def apply(message: Signal[MessageData], asset: Signal[AssetStatus]): Signal[DeliveryState] =
+    message.zip(asset).map { case (m, s) => apply(s, m.state) }
 }

@@ -18,14 +18,13 @@
 package com.waz.zclient.messages.part
 
 import com.waz.model.{Mention, UserId}
-import com.waz.specs.AndroidFreeSpec
 import com.waz.zclient.cursor.MentionUtils
 import com.waz.zclient.cursor.MentionUtils.Replacement
 import com.waz.zclient.messages.parts.TextPartView
 import org.junit.Test
-import org.scalatest.Suite
+import org.scalatest.junit.JUnitSuite
 
-class MentionsInputTest  extends AndroidFreeSpec { this: Suite =>
+class MentionsInputTest extends JUnitSuite {
 
   @Test
   def testWithAtAndSelectorAtEnd(): Unit = {

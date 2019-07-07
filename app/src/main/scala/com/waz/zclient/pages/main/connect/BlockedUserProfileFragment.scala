@@ -18,18 +18,22 @@
 
 package com.waz.zclient.pages.main.connect
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
+import com.bumptech.glide.load.Transformation
+import com.bumptech.glide.load.resource.bitmap.{CenterCrop, CircleCrop}
+import com.bumptech.glide.request.RequestOptions
+import com.waz.model.UserData.Picture
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.ImageAssetDrawable
-import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment._
 import com.waz.zclient.pages.main.participants.ProfileAnimation
@@ -62,6 +66,13 @@ object BlockedUserProfileFragment {
     def onUnblockedUser(restoredConversationWithUser: ConvId): Unit
   }
 
+  val requestOptions = returning(new RequestOptions()) { r =>
+    val transformations = returning(Seq.newBuilder[Transformation[Bitmap]]) { ts =>
+      ts += new CenterCrop()
+      ts += new CircleCrop()
+    }
+    r.transforms(transformations.result():_*)
+  }
 }
 
 class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment.Container] with FragmentHelper {
@@ -76,8 +87,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
     user <- zms.usersStorage.signal(userId)
   } yield user
 
-  private lazy val pictureSignal: Signal[ImageSource] = user.map(_.picture).collect { case Some(pic) => WireImage(pic) }
-  private lazy val profileDrawable = new ImageAssetDrawable(pictureSignal, ImageAssetDrawable.ScaleType.CenterInside, ImageAssetDrawable.RequestBuilder.Round)
+  private lazy val pictureSignal: Signal[Picture] = user.map(_.picture).collect { case Some(pic) => pic }
 
   private var userRequester = Option.empty[UserRequester]
   private var isShowingFooterMenu = true
@@ -135,7 +145,9 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     userNameView
     userUsernameView
-    profileImageView.foreach(_.setImageDrawable(profileDrawable))
+    pictureSignal.onUi { id =>
+      profileImageView.foreach(v => WireGlide(ctx).load(id).apply(requestOptions).into(v))
+    }
     unblockButton.foreach(_.setIsFilled(true))
     cancelButton.foreach(_.setIsFilled(true))
     smallUnblockButton.foreach(_.setIsFilled(true))

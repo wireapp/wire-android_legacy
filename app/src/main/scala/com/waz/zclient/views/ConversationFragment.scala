@@ -17,7 +17,9 @@
  */
 package com.waz.zclient.views
 
-import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}
+import java.io.File
+
+import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
@@ -27,17 +29,17 @@ import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
-import com.waz.api.{AudioAssetForUpload, AudioEffect, ErrorType}
+import com.waz.api.ErrorType
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{returning, returningF}
 import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
@@ -52,9 +54,9 @@ import com.waz.zclient.controllers.globallayout.{IGlobalLayoutController, Keyboa
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page, PagerControllerObserver}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
-import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.conversation.ConversationController.ConversationChange
 import com.waz.zclient.conversation.toolbar.AudioMessageRecordingView
+import com.waz.zclient.conversation.{ConversationController, ReplyContent, ReplyController, ReplyView}
 import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.log.LogUI._
@@ -62,7 +64,7 @@ import com.waz.zclient.messages.{MessagesController, MessagesListView}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
-import com.waz.zclient.pages.extendedcursor.voicefilter.VoiceFilterLayout
+import com.waz.zclient.pages.extendedcursor.voicefilter2.AudioMessageRecordingScreenListener
 import com.waz.zclient.pages.main.conversation.{AssetIntentsManager, MessageStreamAnimation}
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
@@ -502,24 +504,24 @@ class ConversationFragment extends FragmentHelper {
         })
     }
 
-    override def onSketchOnPreviewPicture(input: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
+    override def onSketchOnPreviewPicture(input: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
       screenController.showSketch ! Sketch.cameraPreview(input, method)
       extendedCursorContainer.foreach(_.close(true))
     }
 
-    override def onSendPictureFromPreview(input: RawAssetInput, source: ImagePreviewLayout.Source): Unit = {
-      convController.sendMessage(input)
+    override def onSendPictureFromPreview(image: Content, source: ImagePreviewLayout.Source): Unit = {
+      convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", image))
       extendedCursorContainer.foreach(_.close(true))
       onCancelPreview()
     }
   }
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
-    override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URI): Unit = intentType match {
+    override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URIWrapper): Unit = intentType match {
       case AssetIntentsManager.IntentType.FILE_SHARING =>
         permissions.requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
-            convController.sendMessage(uri, getActivity)
+            convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
           case _ =>
             ViewUtils.showAlertDialog(
               getActivity,
@@ -533,7 +535,7 @@ class ConversationFragment extends FragmentHelper {
       case AssetIntentsManager.IntentType.GALLERY =>
         showImagePreview { _.setImage(uri, ImagePreviewLayout.Source.DeviceGallery) }
       case _ =>
-        convController.sendMessage(uri, getActivity)
+        convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
         navigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
         extendedCursorContainer.foreach(_.close(true))
     }
@@ -596,15 +598,18 @@ class ConversationFragment extends FragmentHelper {
           }, exp.map(_.duration)))
         }
       case ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING =>
-        extendedCursorContainer.foreach(_.openVoiceFilter(new VoiceFilterLayout.Callback {
+        extendedCursorContainer.foreach(_.openVoiceFilter(new AudioMessageRecordingScreenListener {
           override def onAudioMessageRecordingStarted(): Unit = {
             globalLayoutController.keepScreenAwake()
           }
 
-          override def onCancel(): Unit = extendedCursorContainer.foreach(_.close(false))
+          override def onCancel(): Unit = {
+            extendedCursorContainer.foreach(_.close(false))
+          }
 
-          override def sendRecording(audioAssetForUpload: AudioAssetForUpload, appliedAudioEffect: AudioEffect): Unit = {
-            convController.sendMessage(audioAssetForUpload, getActivity)
+          override def sendRecording(mime: String, audioFile: File): Unit = {
+            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.mp4", Content.File(Mime.Audio.MP4, audioFile))
+            convController.sendAssetMessage(content, getActivity, None)
             extendedCursorContainer.foreach(_.close(true))
           }
         }))
@@ -614,7 +619,7 @@ class ConversationFragment extends FragmentHelper {
 
           override def openVideo(): Unit = captureVideoAskPermissions()
 
-          override def onGalleryPictureSelected(uri: URI): Unit = {
+          override def onGalleryPictureSelected(uri: URIWrapper): Unit = {
             previewShown ! true
             showImagePreview {
               _.setImage(uri, ImagePreviewLayout.Source.InAppGallery)
@@ -643,6 +648,12 @@ class ConversationFragment extends FragmentHelper {
     }(Threading.Ui)
   } yield {}
 
+  private val requiredAudioPermissions =
+    CursorController.keyboardPermissions(ExtendedCursorContainer.Type.VOICE_FILTER_RECORDING) ++
+      ListSet(RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
+
+  private lazy val audioPermissionsGranted = permissions.allPermissions(requiredAudioPermissions)
+
   private val cursorCallback = new CursorCallback {
     override def onMotionEventFromCursorButton(cursorMenuItem: CursorMenuItem, motionEvent: MotionEvent): Unit =
       if (cursorMenuItem == CursorMenuItem.AUDIO_MESSAGE && audioMessageRecordingView.isVisible)
@@ -669,17 +680,25 @@ class ConversationFragment extends FragmentHelper {
 
     override def openFileSharing(): Unit = assetIntentsManager.foreach { _.openFileSharing() }
 
-    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit =
-      cursorMenuItem match {
-        case CursorMenuItem.AUDIO_MESSAGE =>
-          callController.isCallActive.head.foreach {
-            case true  => showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
-            case false =>
-              extendedCursorContainer.foreach(_.close(true))
-              audioMessageRecordingView.show()
-          }
-        case _ => //
-      }
+    override def onCursorButtonLongPressed(cursorMenuItem: CursorMenuItem): Unit = cursorMenuItem match {
+      case CursorMenuItem.AUDIO_MESSAGE =>
+        callController.isCallActive.head.foreach {
+          case true  =>
+            showErrorDialog(R.string.calling_ongoing_call_title, R.string.calling_ongoing_call_audio_message)
+          case false =>
+            audioPermissionsGranted.head.foreach {
+              case true  =>
+                extendedCursorContainer.foreach(_.close(true))
+                audioMessageRecordingView.show()
+              case false =>
+                permissions.requestAllPermissions(requiredAudioPermissions).foreach {
+                  case true  =>
+                  case false => showToast(R.string.audio_message_error__missing_audio_permissions)
+                }
+            }
+        }
+      case _ =>
+    }
   }
 
   private val navigationControllerObserver = new NavigationControllerObserver {

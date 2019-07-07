@@ -18,7 +18,7 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import com.waz.content.MembersStorage
+import com.waz.content.{MembersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model._
@@ -26,24 +26,26 @@ import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.messages.UsersController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 
+import com.waz.zclient.log.LogUI._
+
 import scala.concurrent.Future
 
 class UsersController(implicit injector: Injector, context: Context)
   extends Injectable with DerivedLogTag {
 
-  private val zMessaging = inject[Signal[ZMessaging]]
-  private val tracking   = inject[TrackingService]
+  private lazy val zMessaging = inject[Signal[ZMessaging]]
+  private lazy val tracking   = inject[TrackingService]
   private lazy val membersStorage = inject[Signal[MembersStorage]]
 
   private lazy val itemSeparator = getString(R.string.content__system__item_separator)
   private lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
-  private def otherMembersText(count: Int) = getQuantityString(R.plurals.content__system__other_members, count, count.toString)
 
   lazy val selfUserId = zMessaging map { _.selfUserId }
 
@@ -78,11 +80,24 @@ class UsersController(implicit injector: Injector, context: Context)
     tracking.track(AvailabilityChanged(availability, method))
 
   def updateAvailability(availability: Availability): Future[Unit] = {
-    import Threading.Implicits.Background
+    verbose(l"updateAvailability $availability")
+    import Threading.Implicits.Ui
     for {
-      zms     <- zMessaging.head
-      _       <- zms.users.updateAvailability(availability)
-    } yield ()
+      zms   <- zMessaging.head
+      prefs <- inject[Signal[UserPreferences]].head
+      mask  <- prefs(UserPreferences.StatusNotificationsBitmask).apply()
+    } yield {
+      verbose(l"mask = $mask, bit = ${availability.bitmask}, res = ${mask & availability.bitmask}")
+      if ((mask & availability.bitmask) == 0) {
+        inject[AccentColorController].accentColor.head.foreach { color =>
+          showStatusNotificationWarning(availability, color).foreach {
+            if (_) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | availability.bitmask)
+          }
+        }
+      }
+
+      zms.users.updateAvailability(availability)
+    }
   }
 
   def accentColor(id: UserId): Signal[AccentColor] = user(id).map(u => AccentColor(u.accent))

@@ -198,7 +198,7 @@ class SignInFragment
 
     termsOfService.foreach { text =>
       TextViewUtils.linkifyText(text, getColor(R.color.white), true, new Runnable {
-        override def run(): Unit = browserController.openUrl(getString(R.string.url_terms_of_service_personal))
+        override def run(): Unit = browserController.openPersonalTermsOfService()
       })
     }
     countryButton.foreach(_.setOnClickListener(this))
@@ -383,12 +383,13 @@ class SignInFragment
               email     <- email.head
               password  <- password.head
               name      <- name.head
-              req       <- accountsService.requestEmailCode(EmailAddress(email))
             } yield {
               if (strongPasswordValidator.isValidPassword(password)) {
-                onResponse(req, m).right.foreach { _ =>
-                  KeyboardUtils.closeKeyboardIfShown(getActivity)
-                  activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+               accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
+                  onResponse(req, m).right.foreach { _ =>
+                    KeyboardUtils.closeKeyboardIfShown(getActivity)
+                    activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                  }
                 }
               } else { // Invalid password
                 passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
@@ -414,7 +415,7 @@ class SignInFragment
         }
 
       case R.id.ttv_signin_forgot_password =>
-        browserController.openForgotPasswordPage()
+        browserController.openForgotPassword()
       case R.id.close_button =>
         activity.abortAddAccount()
       case _ =>

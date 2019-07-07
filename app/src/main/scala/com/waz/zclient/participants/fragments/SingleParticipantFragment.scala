@@ -268,9 +268,7 @@ class SingleParticipantFragment extends FragmentHelper {
           }
         }
 
-        adapter.onHeaderClick {
-          _ => inject[BrowserController].openUrl(getString(R.string.url_otr_learn_why))
-        }
+        adapter.onHeaderClick { _ => inject[BrowserController].openOtrLearnWhy() }
       }
       view.setLayoutManager(new LinearLayoutManager(ctx))
       view.setHasFixedSize(true)

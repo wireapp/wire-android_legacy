@@ -218,7 +218,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
     case _ => None
   }
 
-  userId(chathead.setUserId)
+  userId(chathead.loadUser)
 
   user.map(u => if (u.isWireBot) u.name else if (u.deleted) Name(getString(R.string.default_deleted_username)) else u.getDisplayName).onUi(tvName.setTransformedText(_))
   user.map(_.isWireBot).on(Threading.Ui) { isBot.setVisible }

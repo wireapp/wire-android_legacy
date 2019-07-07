@@ -43,6 +43,11 @@
             android:background="@color/light_graphite_24"
             >
 
+            <ImageView
+                android:id="@+id/location_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
             <com.waz.zclient.ui.text.GlyphTextView
                 android:id="@+id/gtv__row_conversation__map_pin_glyph"
                 android:layout_width="match_parent"

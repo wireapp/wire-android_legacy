@@ -102,7 +102,7 @@ class SingleOtrClientFragment extends FragmentHelper {
     accentColor
       .map(c => getHighlightText(getActivity, getString(R.string.otr__participant__single_device__how_to_link), c, false))
       .onUi(t => vh.foreach(_.setText(t)))
-    vh.onClick(_ => inject[BrowserController].openUrl(getString(R.string.url_otr_learn_how)))
+    vh.onClick(_ => inject[BrowserController].openOtrLearnHow())
     vh.foreach(_.setVisible(userId.isDefined))
   }
 

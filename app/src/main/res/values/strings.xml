@@ -506,7 +506,7 @@
     <string name="debug_report__title">Wire debug report - %1$s</string>
     <string name="debug_report__body">Please describe the steps required to reproduce the issue, provide screenshots if possible and send this email.\n\n</string>
     <string name="pref_advanced_ws_foreground_title">Maintain connection to server</string>
-    <string name="pref_advanced_ws_foreground_summary">We have detected that Google Play Services are not installed. Wire will try to keep a connection with the server open to receive notifications while the application is not in the foreground.
+    <string name="pref_advanced_ws_foreground_summary">Wire will try to keep a connection with the server open to receive notifications while the application is not in the foreground.
         Turning this setting off may improve battery performance, but you will no longer receive notifications when Wire is in the background. This applies to all accounts on this device.</string>
 
     <!-- Support -->
@@ -520,7 +520,6 @@
     <string name="pref_about_tos_title">Terms of Use</string>
     <string name="pref_about_privacy_policy_title">Privacy Policy</string>
     <string name="pref_about_licenses_title">License information</string>
-    <string name="pref_about_licenses_url">@string/url_third_party_licences</string>
     <string name="pref_about_version_title">Version %s</string>
     <string name="pref_about_copyright_title">\u00A9 Wire Swiss GmbH</string>
 
@@ -1073,6 +1072,21 @@
     <string name="availability_text_busy">%1$s IS BUSY</string>
     <string name="availability_setstatus">SET A STATUS</string>
 
+    <string name="availability_notification_warning_away_title">You are set to Away</string>
+    <string name="availability_notification_warning_away">You will appear as Away to other people. You will not receive notifications about any incoming calls or messages.</string>
+    <string name="availability_notification_warning_busy_title">You are set to Busy</string>
+    <string name="availability_notification_warning_busy">You will appear as Busy to other people. You will only receive notifications for mentions, replies, and calls in conversations that are not muted.</string>
+    <string name="availability_notification_warning_available_title">You are set to Available</string>
+    <string name="availability_notification_warning_available">You will appear as Available to other people. You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
+    <string name="availability_notification_warning_nostatus_title">No status set</string>
+    <string name="availability_notification_warning_nostatus">You will receive notifications for incoming calls and for messages according to the Notifications setting in each conversation.</string>
+    <string name="availability_notification_dont_show">Do not display this information again</string>
+    <string name="availability_notification_ok">Ok</string>
+    <string name="availability_notification_blocked_title">Notifications are disabled in %1$s</string>
+    <string name="availability_notification_blocked">Status affects notifications now. You\'re set to \"Away\" and won\'t receive any notifications.</string>
+    <string name="availability_notification_changed_title">Notifications have changed in %1$s</string>
+    <string name="availability_notification_changed">Status affects notifications now. You\'re set to \"Busy\" and will only receive notifications when someone mentions you or replies to one of your messages.</string>
+
     <string name="preferences_profile_new">New Team or Account</string>
     <string name="preferences_profile_add_account">Add an account</string>
     <string name="preferences_profile_create_team">Create a team</string>
@@ -1106,9 +1120,9 @@
     <string name="teams_set_name_title">Your name</string>
     <string name="teams_set_name_hint">FULL NAME</string>
     <string name="app_entry_create_account">Personal</string>
-    <string name="app_entry_create_account_sub">create an account</string>
+    <string name="app_entry_create_account_sub">Chat privately with groups of friends and family</string>
     <string name="app_entry_create_team">Pro</string>
-    <string name="app_entry_create_team_sub">create a team</string>
+    <string name="app_entry_create_team_sub">Secure collaboration for businesses, institutions and professional organizations</string>
     <string name="app_entry_login_sub">Already have an account?</string>
     <string name="app_entry_login">Log in</string>
 
@@ -1297,6 +1311,9 @@
     <string name="reply_message_type_asset">ATTACHMENT</string>
     <string name="reply_message_type_unknown">You cannot see this message.</string>
 
+    <string name="deep_link_generic_error_title">Invalid link.</string>
+    <string name="deep_link_generic_error_message">The link you opened is not valid.</string>
+
     <string name="deep_link_conversation_error_title">Wire can\'t open this conversation.</string>
     <string name="deep_link_conversation_error_message">You may not have permission with this account or the person may not be on Wire.</string>
 
@@ -1304,6 +1321,26 @@
     <string name="deep_link_user_error_message">You may not have permission with this account or it no longer exists.</string>
 
     <string name="password_policy_hint">Use at least %1$s characters, with one lowercase letter, one capital letter, a number, and a special character.</string>
+
+    <!-- Custom Backend -->
+    <string name="custom_backend_info_title">Connected to \"%1$s\"</string>
+    <string name="custom_backend_info_show_more">SHOW MORE</string>
+
+    <string name="custom_backend_dialog_ok">OK</string>
+    <string name="custom_backend_dialog_cancel">Cancel</string>
+    <string name="custom_backend_dialog_connect">Connect</string>
+
+    <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
+    <string name="custom_backend_dialog_confirmation_message">This configuration will connect the app to a third-party server: %1$s</string>
+
+    <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
+
+    <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
+    <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
+
+    <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
+    <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
+
 
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>

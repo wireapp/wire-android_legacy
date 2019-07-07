@@ -25,17 +25,15 @@ import android.os.Build
 import android.support.annotation.RawRes
 import android.support.v4.app.NotificationCompat
 import android.text.TextUtils
+import com.bumptech.glide.request.RequestOptions
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
-import com.waz.bitmap.BitmapUtils
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.images.ImageLoader
 import com.waz.service.push.NotificationUiController
 import com.waz.service.{AccountsService, UiLifeCycle}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.ui.MemoryImageCache.BitmapRequest
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.Bitmap
 import com.waz.zclient.WireApplication._
@@ -43,15 +41,16 @@ import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.controllers.NavigationController
-import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray, toPx}
+import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import com.waz.content.UserPreferences
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_INT > Build.VERSION_CODES.M,
                                      applicationId: String = BuildConfig.APPLICATION_ID)
@@ -107,6 +106,35 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
           nots.foreach { case (id, props) => notificationManager.showNotification(id, props) }
       }.future
     } yield {}
+  }
+
+  def showAppNotification(title: ResString, body: ResString): Future[Unit] = {
+    val contentTitle = SpannableWrapper(title, List(Span(Span.StyleSpanBold, Span.HeaderRange)))
+    val contentText = SpannableWrapper(
+      header = ResString(""),
+      body = body,
+      spans = List(Span(Span.ForegroundColorSpanBlack, Span.HeaderRange)),
+      separator = ""
+    )
+    for {
+      accountId <- selfId.head
+      color     <- notificationColor(accountId)
+    } yield {
+      val props = NotificationProps(
+        accountId,
+        when              = Some(Instant.now().toEpochMilli),
+        showWhen          = Some(true),
+        category          = Some(NotificationCompat.CATEGORY_MESSAGE),
+        priority          = Some(NotificationCompat.PRIORITY_HIGH),
+        smallIcon         = Some(R.drawable.ic_menu_logo),
+        openAccountIntent = Some(accountId),
+        color             = color,
+        contentTitle      = Some(contentTitle),
+        contentText       = Some(contentText),
+        style             = Some(StyleBuilder(StyleBuilder.BigText, title = contentTitle, bigText = Some(contentText)))
+      )
+      notificationManager.showNotification(accountId.hashCode(), props)
+    }
   }
 
   private def fetchTeamName(userId: UserId) =
@@ -357,24 +385,22 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
             assetId <- st.getAll(nots.map(_.user).toSet).map(_.flatten.flatMap(_.picture)).map { pictures =>
               if (pictures.size == 1) pictures.headOption else None
             }
-            bitmap <- {
-              val imageLoader   = inject[AccountToImageLoader]
-              val assetsStorage = inject[AccountToAssetsStorage]
-
-              Future.sequence(List(imageLoader(userId), assetsStorage(userId))).flatMap {
-                case Some(imageLoader: ImageLoader) :: Some(assetsStorage: AssetsStorage) :: Nil =>
-                  for {
-                    assetData <- assetId.fold(Future.successful(Option.empty[AssetData]))(assetsStorage.get)
-                    bmp       <- assetData.fold(Future.successful(Option.empty[Bitmap])){ ad =>
-                      imageLoader.loadBitmap(ad, BitmapRequest.Single(toPx(64)), forceDownload = false).map(Option(_)).withTimeout(500.millis).recoverWith {
-                        case _ : Throwable => CancellableFuture.successful(None)
-                      }.future
-                    }
-                  } yield
-                    bmp.map { original => Bitmap.fromAndroid(BitmapUtils.createRoundBitmap(original, toPx(64), 0, Color.TRANSPARENT)) }
-                case _ => Future.successful(None)
+            bitmap <- for {
+              bmp <- assetId.fold {
+                Future.successful(Option.empty[android.graphics.Bitmap])
+              } { picture =>
+                Threading.Background {
+                  Option(WireGlide(cxt)
+                    .asBitmap()
+                    .load(picture)
+                    .apply(new RequestOptions().circleCrop())
+                    .submit(128, 128)
+                    .get())
+                }.future
               }
-            }
+            } yield
+              bmp.map(Bitmap.fromAndroid)
+
           } yield bitmap
         case _ => Future.successful(None)
       }

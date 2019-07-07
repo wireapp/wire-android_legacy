@@ -109,7 +109,7 @@ object SingleParticipantAdapter {
             )(implicit context: Context): Unit = {
       this.userId = Some(userId)
 
-      imageView.setUserId(userId)
+      imageView.loadUser(userId)
       guestIndication.setVisible(isGuest)
 
       val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
