@@ -9,9 +9,9 @@ import android.view.animation.Animation
 import android.widget.ViewAnimator
 import androidx.work.impl.Schedulers
 import com.waz.api.AudioEffect
+import com.waz.zclient.KotlinServices
 import com.waz.zclient.R
 import com.waz.zclient.audio.AudioService
-import com.waz.zclient.audio.AudioServiceImpl
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils.StringUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -40,7 +40,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
     }
 
 
-    private val audioService: AudioService = AudioServiceImpl(context)
+    private val audioService: AudioService = KotlinServices.audioService
     private val recordFile: File = File(context.cacheDir, "record_temp.pcm")
     private val compressedRecordFile: File = File(context.cacheDir, "record_temp.mp4")
     private val recordWithEffectFile: File = File(context.cacheDir, "record_with_effect_temp.pcm")
@@ -188,7 +188,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         }
     }
 
-    fun startRecording() {
+    private fun startRecording() {
         showAudioRecordingInProgress()
         recordFile.delete()
         recordWithEffectFile.delete()
@@ -209,7 +209,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
             })
     }
 
-    fun stopRecording() {
+    private fun stopRecording() {
         wave_graph_view.keepScreenOn = false
         showAudioFilters()
         recordingDisposable?.dispose()
