@@ -1268,7 +1268,7 @@
     <string name="backup_import_error_wrong_account">You cannot restore history from a different account.</string>
     <string name="video_paused">Video paused</string>
     <string name="calling_degraded_title">New device</string>
-    <string name="call_info_text">Up to 300 people can join a group conversation. Video calls work with up to 3 other people and you.</string>
+    <string name="call_info_text">Up to 500 people can join a group conversation. Video calls work with up to 3 other people and you.</string>
 
     <string name="markdown_link_dialog_title">Visit Link</string>
     <string name="markdown_link_dialog_message">This will take you to\n%1$s</string>
@@ -1276,8 +1276,8 @@
     <string name="markdown_link_dialog_cancel">CANCEL</string>
 
     <string name="max_participants_alert_title">The group is full</string>
-    <string name="max_participants_create_alert_message">Up to 300 people can join a conversation.</string>
-    <string name="max_participants_add_alert_message">Up to 300 people can join a conversation. Currently there is only room for %1$s more.</string>
+    <string name="max_participants_create_alert_message">Up to 500 people can join a conversation.</string>
+    <string name="max_participants_add_alert_message">Up to 500 people can join a conversation. Currently there is only room for %1$s more.</string>
     <string name="sso_signin_button">Company log in</string>
 
     <string name="sso_signin_error_title">Something went wrong</string>

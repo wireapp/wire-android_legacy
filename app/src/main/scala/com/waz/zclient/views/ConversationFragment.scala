@@ -261,6 +261,9 @@ class ConversationFragment extends FragmentHelper {
       case _ =>
     }
 
+    guestsBanner
+    guestsBannerText
+
     accountsController.isTeam.flatMap {
       case true  => participantsController.guestBotGroup
       case false => Signal.const((false, false, false))
@@ -707,7 +710,14 @@ class ConversationFragment extends FragmentHelper {
         case true  => participantsController.guestBotGroup.head
         case false => Future.successful((false, false, false))
       }.foreach {
-        case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
+        case (hasGuest, hasBot, isGroup) =>
+          val backStackSize = getFragmentManager.getBackStackEntryCount
+          if (backStackSize > 0) {
+            // update the guests' banner only if the conversation's fragment is on top
+            if (getFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
+              updateGuestsBanner(hasGuest, hasBot, isGroup)
+          } else
+            updateGuestsBanner(hasGuest, hasBot, isGroup)
       }
       inflateCollectionIcon()
       cursorView.foreach(_.enableMessageWriting())
