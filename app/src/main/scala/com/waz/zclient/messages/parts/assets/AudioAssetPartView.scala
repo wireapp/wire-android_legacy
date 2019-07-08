@@ -69,8 +69,10 @@ class AudioAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   (for {
     ready         <- readyToPlay
+    duration      <- duration
     isPlaying     <- playControls.flatMap(_.isPlaying)
-    displayedTime <- if (isPlaying) progressInMillis else duration
+    progress      <- progressInMillis
+    displayedTime =  if (isPlaying || progress > 0) progress else duration
     formatted     =  if (ready) StringUtils.formatTimeMilliSeconds(displayedTime) else ""
   } yield formatted).onUi(durationView.setText)
 
