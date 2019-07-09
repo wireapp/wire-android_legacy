@@ -25,7 +25,6 @@ import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
-import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.api.Message
@@ -107,7 +106,7 @@ object ConversationListController {
     private def entries(convMembers: Seq[ConversationMemberData]) =
       convMembers.groupBy(_.convId).map { case (convId, ms) =>
         val otherUsers = ms.collect { case ConversationMemberData(user, _) if user != zms.selfUserId => user }
-        convId -> ConversationAvatarView.shuffle(otherUsers, convId).take(4)
+        convId -> otherUsers.sortBy(_.str).take(4)
       }
 
     val updatedEntries = EventStream.union(
