@@ -211,6 +211,17 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="com.waz.services.SecurityPolicyService"
+            android:label="@string/security_policy_title"
+            android:description="@string/security_policy_desc"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="com.waz.content.WireContentProvider"
             android:authorities="${applicationId}"

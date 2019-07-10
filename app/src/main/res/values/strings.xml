@@ -1178,6 +1178,14 @@
     <string name="new_conv_no_results">No results</string>
     <string name="new_conv_no_contacts">No contacts</string>
 
+    <string name="security_policy_title">Wire Security Policy Service</string>
+    <string name="security_policy_desc">This Service is a test of security policies with Wire</string>
+    <string name="security_policy_enabled">Wire sec policy enabled</string>
+    <string name="security_policy_auth_dialog_title">Enable Security Policy</string>
+    <string name="security_policy_auth_dialog_message">Wire needs admin privileges to set security policies</string>
+    <string name="security_policy_pass_dialog_title">Password strength insufficient</string>
+    <string name="security_policy_pass_dialog_message">Your phone must have a password with minimum 12 characters to login</string>
+
     <string name="participants_divider_services">SERVICES (%1$s)</string>
     <string name="participants_divider_people">PEOPLE (%1$s)</string>
     <string name="group_name_hint">GROUP NAME</string>

@@ -17,7 +17,8 @@
  */
 package com.waz.zclient.appentry.fragments
 
-import android.content.Context
+import android.app.admin.DevicePolicyManager
+import android.content.{ComponentName, Context, DialogInterface}
 import android.graphics.Color
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.KITKAT
@@ -27,8 +28,10 @@ import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout}
 import com.waz.api.impl.ErrorResponse
+import com.waz.content.GlobalPreferences
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.services.SecurityPolicyService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.{returning, PasswordValidator => StrongValidator}
@@ -63,6 +66,8 @@ class SignInFragment
   private lazy val accountsService    = inject[AccountsService]
   private lazy val browserController  = inject[BrowserController]
   private lazy val tracking           = inject[GlobalTrackingController]
+  private lazy val secPolicyManager   = inject[SecurityPolicyService]
+  private lazy val prefs              = inject[GlobalPreferences]
 
   private lazy val isAddingAccount = accountsService.zmsInstances.map(_.nonEmpty)
 
@@ -366,52 +371,77 @@ class SignInFragment
           }
         }
 
-        uiSignInState.head.flatMap {
-          case m@SignInMethod(Login, Email, _) =>
-            activity.enableProgress(true)
-
-            for {
-              email     <- email.head
-              password  <- password.head
-              req       <- accountsService.loginEmail(email, password)
-            } yield onResponse(req, m).right.foreach { id =>
-              KeyboardUtils.closeKeyboardIfShown(getActivity)
-              activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
-            }
-          case m@SignInMethod(Register, Email, false) =>
-            for {
-              email     <- email.head
-              password  <- password.head
-              name      <- name.head
-            } yield {
-              if (strongPasswordValidator.isValidPassword(password)) {
-               accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
-                  onResponse(req, m).right.foreach { _ =>
-                    KeyboardUtils.closeKeyboardIfShown(getActivity)
-                    activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
-                  }
-                }
-              } else { // Invalid password
-                passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
+        if(!secPolicyManager.checkSecurityPolicyIsEnabled(getContext, prefs)) {
+          ViewUtils.showAlertDialog(
+            getActivity,
+            getString(R.string.security_policy_auth_dialog_title),
+            getString(R.string.security_policy_auth_dialog_message),
+            getString(android.R.string.ok), getString(android.R.string.cancel),
+            new DialogInterface.OnClickListener() {
+              def onClick(dialog: DialogInterface, which: Int) = {
+                val secPolicy = new ComponentName(getContext, classOf[SecurityPolicyService])
+                val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                  .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+                  .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                    ContextUtils.getString(R.string.security_policy_desc))
+                val REQUEST_CODE_ENABLE_ADMIN = 1
+                startActivityForResult(intent, REQUEST_CODE_ENABLE_ADMIN)
               }
-            }
+            }, null)
+        } else if(!secPolicyManager.isPasswordCompliant(getContext)) {
+          ViewUtils.showAlertDialog(
+            getActivity,
+            getString(R.string.security_policy_pass_dialog_title),
+            getString(R.string.security_policy_pass_dialog_message),
+            getString(android.R.string.ok), null, null, null)
+        } else {
+          uiSignInState.head.flatMap {
+            case m@SignInMethod(Login, Email, _) =>
+              activity.enableProgress(true)
 
-          case m@SignInMethod(method, Phone, false) =>
-            val isLogin = method == Login
-            activity.enableProgress(true)
-            for {
-              country <- phoneCountry.head
-              phoneStr <- phone.head
-              phone = PhoneNumber(s"+${country.getCountryCode}$phoneStr")
-              req <- accountsService.requestPhoneCode(phone, login = isLogin)
-            } yield onResponse(req, m).right.foreach { _ =>
-              KeyboardUtils.closeKeyboardIfShown(getActivity)
-              activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
-            }
-          case SignInMethod(_, _, true) =>
-            error(l"Invalid sign in state")
-            Future.successful({})
-          case _ => throw new NotImplementedError("Only login with email works right now") //TODO
+              for {
+                email <- email.head
+                password <- password.head
+                req <- accountsService.loginEmail(email, password)
+              } yield onResponse(req, m).right.foreach { id =>
+                KeyboardUtils.closeKeyboardIfShown(getActivity)
+                activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
+              }
+            case m@SignInMethod(Register, Email, false) =>
+              for {
+                email <- email.head
+                password <- password.head
+                name <- name.head
+              } yield {
+                if (strongPasswordValidator.isValidPassword(password)) {
+                  accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
+                    onResponse(req, m).right.foreach { _ =>
+                      KeyboardUtils.closeKeyboardIfShown(getActivity)
+                      activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                    }
+                  }
+                } else { // Invalid password
+                  passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
+                }
+              }
+
+            case m@SignInMethod(method, Phone, false) =>
+              val isLogin = method == Login
+              activity.enableProgress(true)
+              for {
+                country <- phoneCountry.head
+                phoneStr <- phone.head
+                phone = PhoneNumber(s"+${country.getCountryCode}$phoneStr")
+                req <- accountsService.requestPhoneCode(phone, login = isLogin)
+              } yield onResponse(req, m).right.foreach { _ =>
+                KeyboardUtils.closeKeyboardIfShown(getActivity)
+                activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
+              }
+            case SignInMethod(_, _, true) =>
+              error(l"Invalid sign in state")
+              Future.successful({})
+            case _ => throw new NotImplementedError("Only login with email works right now") //TODO
+          }
         }
 
       case R.id.ttv_signin_forgot_password =>
