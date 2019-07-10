@@ -36,7 +36,7 @@ import com.waz.zclient.log.LogUI._
 import org.threeten.bp
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.math.round
 import scala.util.{Failure, Success, Try}
 
@@ -46,67 +46,89 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
 
   import AssetDetailsServiceImpl._
 
-  override def extract(mime: Mime, content: PreparedContent): Future[AssetDetails] = {
-    if (Mime.Image.supported.contains(mime)) extractForImage(content)
-    else if (Mime.Video.supported.contains(mime)) extractForVideo(asSource(content))
-    else if (Mime.Audio.supported.contains(mime)) extractForAudio(asSource(content))
-    else Future.successful(BlobDetails)
-  }
+  override def extract(content: PreparedContent): (AssetDetails, Mime) =
+    content.getMime(uriHelper) match {
+      case Success(mime) if Mime.Video.supported.contains(mime) =>
+        val source = asSource(content)
+        extractForVideo(source) match {
+          case Some(details) => (details, mime)
+          case None          => extractForAudio(source) match {
+              // this is a bit hacky - we know MP4 might mean audio-only,
+              // but in case of other audio files we don't know their real mime type,
+              // so we use the original one, even though we recognize it as video
+            case Some(details) if mime == Mime.Video.MP4 => (details, Mime.Audio.MP4)
+            case Some(details)                           => (details, mime)
+            case None                                    => (BlobDetails, Mime.Default)
+          }
+        }
+      case Success(mime) if Mime.Audio.supported.contains(mime) => extractForAudio(asSource(content)) match {
+        case Some(details) => (details, mime)
+        case None          => (BlobDetails, Mime.Default)
+      }
+      case Success(mime) if Mime.Image.supported.contains(mime) => extractForImage(content) match {
+          case Some(details) => (details, mime)
+          case None          => (BlobDetails, Mime.Default)
+        }
+      case Success(mime)                                        => (BlobDetails, mime)
+      case _                                                    => (BlobDetails, Mime.Default)
+    }
 
-  private def extractForImage(content: PreparedContent): Future[ImageDetails] =
-    for {
-      is <- Future.fromTry(content.openInputStream(uriHelper))
-      details <- IoUtils.withResource(is) { _ =>
+  private def extractForImage(content: PreparedContent): Option[ImageDetails] =
+    content.openInputStream(uriHelper).map { is =>
+      IoUtils.withResource(is) { _ =>
         val opts = new BitmapFactory.Options
         opts.inJustDecodeBounds = true
         BitmapFactory.decodeStream(is, null, opts)
 
-        if (opts.outWidth == -1)
-          Future.failed(new IllegalArgumentException("can not extract image width"))
-        else if (opts.outHeight == -1)
-          Future.failed(new IllegalArgumentException("can not extract image height"))
-        else
-          Future.successful(ImageDetails(Dim2(opts.outWidth, opts.outHeight)))
+        if (opts.outWidth == -1 || opts.outHeight == -1) None
+        else Option(ImageDetails(Dim2(opts.outWidth, opts.outHeight)))
       }
-    } yield details
+    }.recover { case ex =>
+    error(l"Error while extracting image details: $content", ex)
+    None
+  }.toOption.flatten
 
-  private def extractForVideo(source: Source): Future[VideoDetails] =
-    Future {
+  private def extractForVideo(source: Source): Option[VideoDetails] = Try {
+    createMetadataRetriever(source).acquire { implicit retriever =>
+      val width    = retrieve(METADATA_KEY_VIDEO_WIDTH, "video width", _.toInt)
+      val height   = retrieve(METADATA_KEY_VIDEO_HEIGHT, "video height", _.toInt)
+      val rotation = retrieve(METADATA_KEY_VIDEO_ROTATION, "video rotation", _.toInt)
+      val duration = retrieve(METADATA_KEY_DURATION, "video duration", _.toLong)
+      (width, height, rotation, duration) match {
+        case (Some(w), Some(h), Some(r), Some(d)) =>
+          val dimensions = Dim2(w, h)
+          Option(VideoDetails(
+            if (shouldSwapDimensions(r)) dimensions.swap else dimensions,
+            bp.Duration.ofMillis(d)
+          ))
+        case _ =>
+          error(l"Error while extracting video details: $source")
+          None
+      }
+    }
+  }.recover { case ex =>
+    error(l"Error while extracting video details: $source", ex)
+    None
+  }.toOption.flatten
+
+  private def extractForAudio(source: Source, bars: Int = 100): Option[AudioDetails] =
+    Try {
       createMetadataRetriever(source).acquire { implicit retriever =>
-        for {
-          width <- retrieve(METADATA_KEY_VIDEO_WIDTH, "video width", _.toInt)
-          height <- retrieve(METADATA_KEY_VIDEO_HEIGHT, "video height", _.toInt)
-          rotation <- retrieve(METADATA_KEY_VIDEO_ROTATION, "video rotation", _.toInt)
-          duration <- retrieve(METADATA_KEY_DURATION, "video duration", s => bp.Duration.ofMillis(s.toLong))
-        } yield {
-          val dimensions = Dim2(width, height)
-          VideoDetails(
-            dimensions = if (shouldSwapDimensions(rotation)) dimensions.swap else dimensions,
-            duration
-          )
+        val duration = retrieve(METADATA_KEY_DURATION, "audio duration", _.toLong)
+        val loudness = extractAudioLoudness(source, bars)
+        (duration, loudness) match {
+          case (Some(d), Some(l)) => Option(AudioDetails(bp.Duration.ofMillis(d), l))
+          case _ =>
+            error(l"Error while extracting audio details: $source")
+            None
         }
       }
-    } flatMap {
-      case Right(details) => Future.successful(details)
-      case Left(msg) => Future.failed(new IllegalArgumentException(msg))
-    }
+    }.recover { case ex =>
+      error(l"Error while extracting audio details: $source", ex)
+      None
+    }.toOption.flatten
 
-  private def extractForAudio(source: Source, bars: Int = 100): Future[AudioDetails] =
-    Future {
-      createMetadataRetriever(source).acquire { implicit retriever =>
-        for {
-          duration <- retrieve(METADATA_KEY_DURATION, "audio duration", s => bp.Duration.ofMillis(s.toLong))
-          loudness <- extractAudioLoudness(source, bars)
-        } yield {
-          AudioDetails(duration, loudness)
-        }
-      }
-    } flatMap {
-      case Right(details) => Future.successful(details)
-      case Left(msg) => Future.failed(new IllegalArgumentException(msg))
-    }
-
-  private def extractAudioLoudness(source: Source, numBars: Int): Either[String, Loudness] =
+  private def extractAudioLoudness(source: Source, numBars: Int): Option[Loudness] =
     Try {
       val overview = for {
         extractor <- createMediaExtractor(source)
@@ -127,10 +149,10 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
 
       overview.acquire(levels => Loudness(levels.map(_.toByte)))
     } match {
-      case Success(res) => Right(res)
+      case Success(res) => Some(res)
       case Failure(err) =>
-        verbose(l"Error while audio levels extraction: $err")
-        Left("can not extract audio levels")
+        error(l"Error while audio levels extraction", err)
+        None
     }
 
   private def extractAudioTrackInfo(extractor: MediaExtractor, source: Source): TrackInfo = {
