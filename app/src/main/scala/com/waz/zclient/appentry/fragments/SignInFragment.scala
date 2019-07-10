@@ -372,28 +372,9 @@ class SignInFragment
         }
 
         if(!secPolicyManager.checkSecurityPolicyIsEnabled(getContext, prefs)) {
-          ViewUtils.showAlertDialog(
-            getActivity,
-            getString(R.string.security_policy_auth_dialog_title),
-            getString(R.string.security_policy_auth_dialog_message),
-            getString(android.R.string.ok), getString(android.R.string.cancel),
-            new DialogInterface.OnClickListener() {
-              def onClick(dialog: DialogInterface, which: Int) = {
-                val secPolicy = new ComponentName(getContext, classOf[SecurityPolicyService])
-                val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-                  .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
-                  .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                    ContextUtils.getString(R.string.security_policy_desc))
-                val REQUEST_CODE_ENABLE_ADMIN = 1
-                startActivityForResult(intent, REQUEST_CODE_ENABLE_ADMIN)
-              }
-            }, null)
+          displayDeviceAdminRequestDialog()
         } else if(!secPolicyManager.isPasswordCompliant(getContext)) {
-          ViewUtils.showAlertDialog(
-            getActivity,
-            getString(R.string.security_policy_pass_dialog_title),
-            getString(R.string.security_policy_pass_dialog_message),
-            getString(android.R.string.ok), null, null, null)
+          displayPasswordInadequateDialog()
         } else {
           uiSignInState.head.flatMap {
             case m@SignInMethod(Login, Email, _) =>
@@ -468,6 +449,33 @@ class SignInFragment
     } else {
       false
     }
+
+  def displayDeviceAdminRequestDialog(): Unit = {
+    ViewUtils.showAlertDialog(
+      getActivity,
+      getString(R.string.security_policy_auth_dialog_title),
+      getString(R.string.security_policy_auth_dialog_message),
+      getString(android.R.string.ok), getString(android.R.string.cancel),
+      new DialogInterface.OnClickListener() {
+        def onClick(dialog: DialogInterface, which: Int) = {
+          val secPolicy = new ComponentName(getContext, classOf[SecurityPolicyService])
+          val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+            .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+            .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+              ContextUtils.getString(R.string.security_policy_desc))
+          val REQUEST_CODE_ENABLE_ADMIN = 1
+          startActivityForResult(intent, REQUEST_CODE_ENABLE_ADMIN)
+        }
+      }, null)
+  }
+
+  def displayPasswordInadequateDialog(): Unit = {
+    ViewUtils.showAlertDialog(
+      getActivity,
+      getString(R.string.security_policy_pass_dialog_title),
+      getString(R.string.security_policy_pass_dialog_message),
+      getString(android.R.string.ok), null, null, null)
+  }
 
   override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 }
