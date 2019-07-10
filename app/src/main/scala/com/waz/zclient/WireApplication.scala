@@ -264,6 +264,8 @@ object WireApplication extends DerivedLogTag {
     bind [UriHelper] to new AndroidUriHelper(ctx)
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
+
+    KotlinServices.INSTANCE.init(ctx)
   }
 
   def controllers(implicit ctx: WireContext) = new Module {

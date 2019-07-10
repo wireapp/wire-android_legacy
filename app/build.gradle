@@ -26,7 +26,7 @@ ext {
     zMessagingVersion = "142.0.2297"
     paging_version = "1.0.0"
 
-    avsVersion = '4.9.12@aar'
+    avsVersion = '4.9.170@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
