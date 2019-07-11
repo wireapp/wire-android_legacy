@@ -46,32 +46,30 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
 
   import AssetDetailsServiceImpl._
 
-  override def extract(content: PreparedContent): (AssetDetails, Mime) =
+  override def extract(content: PreparedContent): (AssetDetails, Mime) = {
+    // this is a bit hacky - we know MP4 might mean audio-only,
+    // but in case of other audio files we don't know their real mime type,
+    // so we use the original one, even though we recognize it as video
+    def checkAudio(source: Source, mime: Mime) = extractForAudio(source).map {
+      case details if mime == Mime.Video.MP4 => (details, Mime.Audio.MP4)
+      case details                           => (details, mime)
+    }
+
+    lazy val source = asSource(content)
+
     content.getMime(uriHelper) match {
       case Success(mime) if Mime.Video.supported.contains(mime) =>
-        val source = asSource(content)
-        extractForVideo(source) match {
-          case Some(details) => (details, mime)
-          case None          => extractForAudio(source) match {
-              // this is a bit hacky - we know MP4 might mean audio-only,
-              // but in case of other audio files we don't know their real mime type,
-              // so we use the original one, even though we recognize it as video
-            case Some(details) if mime == Mime.Video.MP4 => (details, Mime.Audio.MP4)
-            case Some(details)                           => (details, mime)
-            case None                                    => (BlobDetails, Mime.Default)
-          }
-        }
-      case Success(mime) if Mime.Audio.supported.contains(mime) => extractForAudio(asSource(content)) match {
-        case Some(details) => (details, mime)
-        case None          => (BlobDetails, Mime.Default)
-      }
-      case Success(mime) if Mime.Image.supported.contains(mime) => extractForImage(content) match {
-          case Some(details) => (details, mime)
-          case None          => (BlobDetails, Mime.Default)
-        }
-      case Success(mime)                                        => (BlobDetails, mime)
-      case _                                                    => (BlobDetails, Mime.Default)
+        extractForVideo(source).map { (_, mime) }.orElse(checkAudio(source, mime)).getOrElse(DefaultDetails)
+      case Success(mime) if Mime.Audio.supported.contains(mime) =>
+        checkAudio(source, mime).getOrElse(DefaultDetails)
+      case Success(mime) if Mime.Image.supported.contains(mime) =>
+        extractForImage(content).map { (_, mime) }.getOrElse(DefaultDetails)
+      case Success(mime) =>
+        (BlobDetails, mime)
+      case _ =>
+        DefaultDetails
     }
+  }
 
   private def extractForImage(content: PreparedContent): Option[ImageDetails] =
     content.openInputStream(uriHelper).map { is =>
@@ -186,6 +184,8 @@ class AssetDetailsServiceImpl(uriHelper: UriHelper)
 }
 
 object AssetDetailsServiceImpl {
+
+  private[assets2] val DefaultDetails = (BlobDetails, Mime.Default)
 
   def createAudioDecoder(info: TrackInfo): MediaCodec =
     returning(MediaCodec.createDecoderByType(info.mime)) { mc =>
