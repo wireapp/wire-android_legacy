@@ -475,6 +475,7 @@ class MainActivity extends BaseActivity
       }
 
       case _ =>
+        verbose(l"unknown intent $intent")
         setIntent(intent)
         Future.successful(false)
     }
