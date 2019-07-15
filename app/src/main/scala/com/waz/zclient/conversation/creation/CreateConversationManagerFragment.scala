@@ -174,9 +174,11 @@ class CreateConversationManagerFragment extends FragmentHelper {
     ctrl.users.zip(ctrl.integrations).map { case (users, integrations) => users.size + integrations.size >= ConversationController.MaxParticipants }.onUi{
       case true =>
         ViewUtils.showAlertDialog(getContext,
-          R.string.max_participants_alert_title,
-          R.string.max_participants_create_alert_message,
-          android.R.string.ok, null, true)
+          getString(R.string.max_participants_alert_title),
+          getString(R.string.max_participants_create_alert_message, ConversationController.MaxParticipants.toString),
+          getString(android.R.string.ok),
+          null,
+          true)
       case _=>
     }
 

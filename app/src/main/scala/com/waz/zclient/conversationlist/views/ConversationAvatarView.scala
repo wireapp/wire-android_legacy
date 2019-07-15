@@ -17,10 +17,6 @@
  */
 package com.waz.zclient.conversationlist.views
 
-import java.math.BigInteger
-import java.nio.{ByteBuffer, ByteOrder}
-import java.util.UUID
-
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
@@ -32,8 +28,6 @@ import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
-
-import scala.collection.mutable.ArrayBuffer
 
 class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with ViewHelper {
@@ -64,9 +58,8 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
         avatarGroupSingle.setUserData(members.head, belongsToSelfTeam = members.head.teamId.exists(selfTeam.contains))
         showGroupSingle()
       case true =>
-        val shuffledIds = ConversationAvatarView.shuffle(members.sortBy(_.id.str), convId)
         avatarGroupSingle.clearImage()
-        chatheads.map(Some(_)).zipAll(shuffledIds.take(4).map(Some(_)), None, None).foreach{
+        chatheads.map(Some(_)).zipAll(members.sortBy(_.id.str).take(4).map(Some(_)), None, None).foreach{
           case (Some(view), Some(ud)) =>
             view.setUserData(ud, belongsToSelfTeam = ud.teamId.exists(selfTeam.contains))
           case (Some(view), None) =>
@@ -122,64 +115,5 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
     chatheads.foreach(_.clearImage())
     avatarSingle.clearImage()
     avatarGroupSingle.clearImage()
-  }
-}
-
-object ConversationAvatarView {
-
-  def longToUnsignedLongLittleEndian(l: Long): BigInt = {
-    val value = BigInt(ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).putLong(l).array())
-    if (value.signum < 0) {
-      value + BigInteger.ONE.shiftLeft(java.lang.Long.SIZE)
-    } else {
-      value
-    }
-  }
-
-  def uuidToBytes(uuid: UUID): Array[Byte] = {
-    val byteBuffer = ByteBuffer.wrap(new Array[Byte](16))
-    byteBuffer.putLong(uuid.getMostSignificantBits)
-    byteBuffer.putLong(uuid.getLeastSignificantBits)
-    byteBuffer.array()
-  }
-
-  case class RandomGeneratorFromConvId(convId: ConvId) {
-
-    private val uuid = UUID.fromString(convId.str)
-
-    private val leastBits = longToUnsignedLongLittleEndian(uuid.getLeastSignificantBits)
-    private val mostBits = longToUnsignedLongLittleEndian(uuid.getMostSignificantBits)
-
-    private var step = 0
-
-    def rand(max: Long): Long = {
-      val maxBig = BigInt(max)
-      (rand() mod maxBig).longValue()
-    }
-
-    def rand(): BigInt = {
-      val value =
-        if (step % 2 == 0) {
-          mostBits
-        } else {
-          leastBits
-        }
-      step += 1
-      value
-    }
-  }
-
-  def shuffle[T](seq: Seq[T], convId: ConvId): Seq[T] = {
-    val generator = RandomGeneratorFromConvId(convId)
-    val input = new ArrayBuffer[T] ++= seq
-    val output = new ArrayBuffer[T]
-
-    seq.indices.foreach { _ =>
-      val idx = generator.rand(input.size).toInt
-      output += input(idx)
-      input.remove(idx)
-    }
-
-    output
   }
 }
