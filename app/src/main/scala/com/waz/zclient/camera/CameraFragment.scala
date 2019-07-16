@@ -118,7 +118,7 @@ class CameraFragment extends FragmentHelper
       override def onFailed(t: AssetIntentsManager.IntentType): Unit = showCameraFeed()
       override def openIntent(intent: Intent, intentType: AssetIntentsManager.IntentType): Unit =
         startActivityForResult(intent, intentType.requestCode)
-    }, savedInstanceState)
+    })
   }
 
   override def onCreateView(inflater: LayoutInflater, c: ViewGroup, savedInstanceState: Bundle): View = {
@@ -135,11 +135,6 @@ class CameraFragment extends FragmentHelper
     previewProgressBar
 
     view.setBackgroundResource(R.color.black)
-  }
-
-  override def onSaveInstanceState(outState: Bundle): Unit = {
-    intentsManager.onSaveInstanceState(outState)
-    super.onSaveInstanceState(outState)
   }
 
   override def onDestroyView(): Unit = {

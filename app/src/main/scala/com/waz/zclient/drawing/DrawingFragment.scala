@@ -222,7 +222,7 @@ class DrawingFragment extends FragmentHelper
     super.onCreate(savedInstanceState)
     imageInput = getInputFromBundle(getArguments)
     drawingMethod = getStringArg(ArgDrawingMethod).map(DrawingMethod.valueOf)
-    assetIntentsManager = new AssetIntentsManager(getActivity, this, savedInstanceState)
+    assetIntentsManager = new AssetIntentsManager(getActivity, this)
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
