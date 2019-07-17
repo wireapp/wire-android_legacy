@@ -24,12 +24,11 @@ import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{AssetId, MessageContent}
+import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{NoAutowiring, Signal, SourceSignal}
 import com.waz.zclient.common.controllers.AssetsController
-import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
@@ -61,12 +60,6 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
     noW  <- noWifi
     hide <- hideContent
   } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
-
-  private def openDrawingFragment(drawingMethod: DrawingMethod) =
-    for {
-      msg <- message.currentValue
-      assetId <- msg.assetId.collect { case id: AssetId => id }
-    } { assets.openDrawingFragment(assetId, drawingMethod) }
 
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
