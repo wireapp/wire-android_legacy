@@ -46,9 +46,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{IoUtils, returning, sha2}
-import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
 import com.waz.zclient.controllers.singleimage.ISingleImageController
-import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
@@ -192,13 +190,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       singleImage.showSingleImage(msg.id.str)
     }
 
-  //FIXME: don't use java api
-  def openDrawingFragment(id: AssetId, drawingMethod: DrawingMethod): Unit =
-    screenController.showSketch ! Sketch.asset(id, drawingMethod)
-
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
-
       assetForSharing(id).foreach { case AssetForShare(asset, file) =>
         asset.details match {
           case _: Video =>

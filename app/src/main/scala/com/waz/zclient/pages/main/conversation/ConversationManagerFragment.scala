@@ -163,8 +163,8 @@ class ConversationManagerFragment extends FragmentHelper
     subs += screenController.hideGiphy.onUi(_ => hideFragment(GiphySharingPreviewFragment.Tag))
 
     subs += screenController.showSketch.onUi { sketch =>
-        import DrawingFragment._
-        showFragment(newInstance(sketch), Tag, Page.DRAWING)
+      import DrawingFragment._
+      showFragment(newInstance(sketch), Tag, Page.DRAWING)
     }
     subs += screenController.hideSketch.onUi { dest =>
       hideFragment(DrawingFragment.Tag)
