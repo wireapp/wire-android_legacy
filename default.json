@@ -5,7 +5,7 @@
   "_comment": "appName must match the value of 'app_name' in strings.xml",
   "appName": "Wire",
   "backendUrl": "https://prod-nginz-https.wire.com",
-  "websocketUrl": "https://prod-nginz-ssl.wire.com/await",
+  "websocketUrl": "https://prod-nginz-ssl.wire.com",
   "allow_account_creation": true,
   "allowSSO": true,
   "supportEmail": "support@wire.com",
