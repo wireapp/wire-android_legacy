@@ -377,7 +377,7 @@ object ParticipantsAdapter {
       }
     })
 
-    def bind(displayName: String, verified: Boolean, isTeam: Boolean): Unit = {
+    def bind(displayName: String, verified: Boolean, isTeam: Boolean)(implicit context: Context): Unit = {
       if (verifiedShield.isVisible != verified) verifiedShield.setVisible(verified)
       if (!convName.contains(displayName)) {
         convName = Some(displayName)
@@ -385,7 +385,7 @@ object ParticipantsAdapter {
         Selection.removeSelection(editText.getText)
       }
 
-      callInfo.setText(if (isTeam) R.string.call_info_text else R.string.empty_string)
+      callInfo.setText(if (isTeam) getString(R.string.call_info_text, ConversationController.MaxParticipants.toString) else getString(R.string.empty_string))
       callInfo.setMarginTop(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
       callInfo.setMarginBottom(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
     }
