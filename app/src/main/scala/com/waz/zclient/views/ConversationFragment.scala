@@ -194,7 +194,7 @@ class ConversationFragment extends FragmentHelper {
 
   override def onCreate(@Nullable savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback, savedInstanceState))
+    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback))
 
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
@@ -444,7 +444,6 @@ class ConversationFragment extends FragmentHelper {
 
   override def onSaveInstanceState(outState: Bundle): Unit = {
     super.onSaveInstanceState(outState)
-    assetIntentsManager.foreach { _.onSaveInstanceState(outState) }
     previewShown.head.foreach { isShown => outState.putBoolean(SAVED_STATE_PREVIEW, isShown) }
   }
 
@@ -646,8 +645,8 @@ class ConversationFragment extends FragmentHelper {
   private def captureVideoAskPermissions() = for {
     _ <- inject[GlobalCameraController].releaseCamera() //release camera so the camera app can use it
     _ <- permissions.requestAllPermissions(ListSet(CAMERA, WRITE_EXTERNAL_STORAGE)).map {
-      case true => assetIntentsManager.foreach(_.captureVideo(getContext.getApplicationContext))
-      case false => //
+      case true  => assetIntentsManager.foreach(_.captureVideo())
+      case false =>
     }(Threading.Ui)
   } yield {}
 
