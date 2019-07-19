@@ -24,9 +24,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Registry;
 import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.module.AppGlideModule;
+import com.waz.api.MessageContent;
 import com.waz.model.GeneralAssetId;
 import com.waz.model.UserData;
 import com.waz.zclient.glide.loaders.AssetModelLoader;
+import com.waz.zclient.glide.loaders.GoogleMapModelLoader;
 import com.waz.zclient.glide.loaders.PictureModelLoader;
 
 import java.io.InputStream;
@@ -37,5 +39,6 @@ public class WireGlideModule extends AppGlideModule {
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
         registry.prepend(GeneralAssetId.class, InputStream.class, new AssetModelLoader.Factory(context));
         registry.prepend(UserData.Picture.class, InputStream.class, new PictureModelLoader.Factory(context));
+        registry.prepend(MessageContent.Location.class, InputStream.class, new GoogleMapModelLoader.Factory(context));
     }
 }
