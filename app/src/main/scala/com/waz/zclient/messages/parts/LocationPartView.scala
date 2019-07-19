@@ -18,23 +18,22 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, ImageView, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.ImageViewTarget
+import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.media.GoogleMapsMediaService
 import com.waz.threading.Threading
-import com.waz.utils.wrappers.URI
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
 import com.waz.zclient.{R, ViewHelper}
+
 
 class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -64,12 +63,6 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private val browser = inject[BrowserController]
 
-  private val googleMapsApiKey: String = {
-    val packageManager = context.getPackageManager
-    val appInfo = packageManager.getApplicationInfo(context.getPackageName, PackageManager.GET_META_DATA)
-    appInfo.metaData.getString("com.google.android.geo.API_KEY")
-  }
-
   setupTextView()
   setupPinView()
   setupImageView()
@@ -87,30 +80,26 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private def setupImageView(): Unit = {
     location {
-      case Some(loc) =>
-        val basePath = GoogleMapsMediaService.getImagePath(loc)
-        val imagePath = basePath.buildUpon.appendQueryParameter("key", googleMapsApiKey).build
-        loadMapPreview(imagePath)
-      case None =>
-        warn(l"No location data.")
+      case Some(loc) => loadMapPreview(loc)
+      case None => warn(l"No location data.")
     }
   }
 
-  private def loadMapPreview(imagePath: URI): Unit = {
+  private def loadMapPreview(location: Location): Unit = {
     val options = new RequestOptions()
       .centerCrop()
       .placeholder(dotsDrawable)
 
-    val imageViewTarget = new ImageViewTarget[Drawable](imageView) {
+    val target = new ImageViewTarget[Drawable](imageView) {
       override def setResource(resource: Drawable): Unit = {
         registerEphemeral(imageView, resource)
       }
     }
 
     WireGlide(context)
-      .load(URI.unwrap(imagePath))
+      .load(location)
       .apply(options)
-      .into(imageViewTarget)
+      .into(target)
   }
 
   private def setupOnClickHandler(): Unit = {
