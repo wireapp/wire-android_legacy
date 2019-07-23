@@ -38,7 +38,7 @@ import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils.showToast
-import com.waz.zclient.{BaseActivity, R, ViewHelper}
+import com.waz.zclient.{BaseActivity, R, SecurityCheckList, ViewHelper}
 
 import scala.concurrent.Future
 
@@ -88,6 +88,15 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val checkPushTokenButton = returning(findById[TextButton](R.id.preferences_dev_check_push_tokens)) { v =>
     v.onClickEvent(_ => PushTokenCheckJob())
+  }
+
+  val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
+    v.onClickEvent(_ => deviceRooted())
+  }
+
+  private def deviceRooted(): Future[Boolean] = {
+    import SecurityCheckList._
+    SecurityCheckList(checkIfRooted -> List(displayBlockingDialog)).run(getContext)
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {
