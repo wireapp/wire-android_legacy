@@ -38,6 +38,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt: Context)
   extends Injectable with DerivedLogTag {
@@ -53,19 +54,19 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
   @volatile private var _pagedList = Option.empty[PagedList[MessageAndLikes]]
   private def getPagedList(cursor: Option[DBCursor]): PagedList[MessageAndLikes] = {
+    def createPagedList(config: PagedListConfig) =
+      new PagedList.Builder[Integer, MessageAndLikes](new MessageDataSource(cursor), config.config)
+        .setFetchExecutor(ExecutorWrapper(Threading.Background))
+        .setNotifyExecutor(ExecutorWrapper(Threading.Ui))
+        .build()
+
     _pagedList.foreach(_.getDataSource.invalidate())
 
-    val config = new PagedList.Config.Builder()
-      .setPageSize(PageSize)
-      .setInitialLoadSizeHint(InitialLoadSizeHint)
-      .setEnablePlaceholders(true)
-      .setPrefetchDistance(PrefetchDistance)
-      .build()
-
-    returning(new PagedList.Builder[Integer, MessageAndLikes](new MessageDataSource(cursor), config)
-      .setFetchExecutor(ExecutorWrapper(Threading.Background))
-      .setNotifyExecutor(ExecutorWrapper(Threading.Ui))
-      .build()) { pl => _pagedList = Option(pl) }
+    returning(
+      Try(createPagedList(NormalPagedListConfig)).getOrElse(createPagedList(MinPagedListConfig))
+    ) { pl =>
+      _pagedList = Option(pl)
+    }
   }
 
   private def cursorRefreshEvent(zms: ZMessaging, convId: ConvId): EventStream[_] = {
@@ -103,9 +104,17 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 }
 
 object MessagePagedListController {
-  val PageSize: Int = 50
-  val InitialLoadSizeHint: Int = 50
-  val PrefetchDistance: Int = 100
+  case class PagedListConfig(pageSize: Int, initialLoadSizeHint: Int, prefetchDistance: Int) {
+    lazy val config = new PagedList.Config.Builder()
+      .setPageSize(pageSize)
+      .setInitialLoadSizeHint(initialLoadSizeHint)
+      .setEnablePlaceholders(true)
+      .setPrefetchDistance(prefetchDistance)
+      .build()
+  }
+
+  val NormalPagedListConfig = PagedListConfig(10, 20, 30)
+  val MinPagedListConfig    = PagedListConfig( 5, 10, 10)
 }
 
 case class PagedListWrapper[T](pagedList: PagedList[T]) {
