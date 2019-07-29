@@ -39,8 +39,8 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   override def onStart() = {
     super.onStart()
 
-    SecurityCheckList.fromBuildConfig().run.foreach { allChecksSatisfied =>
-      if (allChecksSatisfied) loadBackend()
+    SecurityCheckList.fromBuildConfig().run.foreach { allChecksPass =>
+      if (allChecksPass) loadBackend()
     }
   }
 
