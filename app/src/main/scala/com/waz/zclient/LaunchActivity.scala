@@ -19,7 +19,7 @@
 package com.waz.zclient
 
 import android.app.AlertDialog
-import android.content.{DialogInterface, Intent}
+import android.content.{Context, DialogInterface, Intent}
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -28,14 +28,23 @@ import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.BackendController
+import Threading.Implicits.Background
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
+
+  private implicit val context: Context = this
 
   private lazy val backendController = inject[BackendController]
 
   override def onStart() = {
     super.onStart()
 
+    SecurityCheckList.fromBuildConfig().run.foreach { allChecksSatisfied =>
+      if (allChecksSatisfied) loadBackend()
+    }
+  }
+
+  private def loadBackend(): Unit = {
     val callback: BackendConfig => Unit = { be =>
       getApplication.asInstanceOf[WireApplication].ensureInitialized(be)
       inject[AccountsService].activeAccountId.head(LogTag("BackendSelector")).map {
