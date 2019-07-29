@@ -93,10 +93,9 @@ object SecurityCheckList extends DerivedLogTag {
       lazy val releaseTagsExist = getSystemProperty("ro.build.tags").contains("release-keys")
       lazy val otacertsExist = new File("/etc/security/otacerts.zip").exists()
       lazy val canRunSu = runCommand("su")
-
-      verbose(l"checkIfRooted, releaseTagsExist: $releaseTagsExist, otacertsExist: $otacertsExist, canRunSu: $canRunSu")
-
-      !releaseTagsExist || !otacertsExist || canRunSu // true means rooted
+      val isDeviceRooted = !releaseTagsExist || !otacertsExist || canRunSu
+      verbose(l"checkIfRooted, isDeviceRooted: $isDeviceRooted")
+      isDeviceRooted
     }
   }
 
