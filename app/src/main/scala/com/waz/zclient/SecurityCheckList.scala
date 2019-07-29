@@ -55,6 +55,16 @@ object SecurityCheckList extends DerivedLogTag {
 
   def apply(args: (Check, List[Action])*): SecurityCheckList = new SecurityCheckList(args.toList)
 
+  def fromBuildConfig(): SecurityCheckList = {
+    var checks: Seq[(Check, List[Action])] = List.empty
+
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      checks = checks :+ (checkIfRooted -> List(displayBlockingDialog))
+    }
+
+    new SecurityCheckList(checks.toList)
+  }
+
   def getSystemProperty(key: String): Option[String] =
     Try(
       Class.forName("android.os.SystemProperties")
