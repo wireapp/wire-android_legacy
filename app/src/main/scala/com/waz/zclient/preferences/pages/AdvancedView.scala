@@ -20,6 +20,7 @@ package com.waz.zclient.preferences.pages
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
+import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, TextView, Toast}
@@ -30,10 +31,11 @@ import com.waz.service.{FCMNotificationStatsService, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.preferences.dialogs.FullSyncDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{BackStackKey, DebugUtils}
-import com.waz.zclient.{BuildConfig, R, ViewHelper}
+import com.waz.zclient.{BaseActivity, BuildConfig, R, ViewHelper}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -100,6 +102,22 @@ class AdvancedViewImpl(context: Context, attrs: AttributeSet, style: Int)
   def setButtonEnabled(button: TextButton, enabled: Boolean): Unit = {
     button.setEnabled(enabled)
     button.setAlpha(if (enabled) 1f else .5f)
+  }
+
+  val slowSyncButton = returning(findById[TextButton](R.id.preferences_slow_sync)) { toggle =>
+    toggle.onClickEvent { _ =>
+      showPrefDialog(FullSyncDialog.newInstance, FullSyncDialog.Tag)
+    }
+  }
+
+  private def showPrefDialog(f: Fragment, tag: String) = {
+    context.asInstanceOf[BaseActivity]
+      .getSupportFragmentManager
+      .beginTransaction
+      .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+      .add(f, tag)
+      .addToBackStack(tag)
+      .commit
   }
 }
 

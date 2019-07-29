@@ -70,12 +70,6 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val randomLastIdButton = findById[TextButton](R.id.preferences_dev_generate_random_lastid)
 
-  val slowSyncButton = returning(findById[TextButton](R.id.preferences_dev_slow_sync)) {
-    _.onClickEvent { _ =>
-      zms.head.flatMap(_.sync.performFullSync())
-    }
-  }
-
   val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) { v =>
     v.onClickEvent { v =>
       registerClient(v)
