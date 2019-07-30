@@ -37,7 +37,7 @@ import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
-import com.waz.zclient.security.{BlockWithDialog, RootDetectionCheck, SecurityCheckList}
+import com.waz.zclient.security._
 import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils.showToast
 
@@ -96,8 +96,10 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def deviceRooted(): Future[Boolean] = {
-    val showDialog = BlockWithDialog("Root detected", "Root detected")(getContext)
-    SecurityCheckList(RootDetectionCheck -> List(showDialog)).run()
+    implicit val ctx = getContext
+    val showDialog = new BlockWithDialog("Root detected", "Root detected")
+    val wipeData = new WipeDataAction
+    SecurityCheckList(RootDetectionCheck -> List(wipeData, showDialog)).run()
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {

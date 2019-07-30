@@ -29,7 +29,7 @@ import com.waz.threading.Threading.Implicits.Background
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityCheckList.{Action, Check}
-import com.waz.zclient.security.{BlockWithDialog, RootDetectionCheck, SecurityCheckList}
+import com.waz.zclient.security._
 import com.waz.zclient.utils.BackendController
 
 import scala.collection.mutable.ListBuffer
@@ -52,7 +52,8 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions += (RootDetectionCheck -> List(BlockWithDialog("Root detected", "Root detected")))
+      checksAndActions +=
+        RootDetectionCheck -> List(new WipeDataAction, new BlockWithDialog("Root detected", "Root detected"))
     }
 
     new SecurityCheckList(checksAndActions.toList)
