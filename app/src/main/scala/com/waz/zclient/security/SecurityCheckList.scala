@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.security
 
-import com.waz.threading.Threading.Implicits.Ui
+import com.waz.threading.Threading.Implicits.Background
 
 import scala.concurrent.Future
 

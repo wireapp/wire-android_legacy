@@ -20,7 +20,7 @@ package com.waz.zclient.security
 import java.io.File
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.threading.Threading.Implicits.Ui
+import com.waz.threading.Threading.Implicits.Background
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future

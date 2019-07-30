@@ -19,6 +19,7 @@ package com.waz.zclient.security
 
 import android.app.AlertDialog
 import android.content.Context
+import com.waz.threading.Threading.Implicits.Ui
 
 import scala.concurrent.Future
 
@@ -27,13 +28,13 @@ case class BlockWithDialog(title: String,
                           (implicit context: Context) extends SecurityCheckList.Action {
 
   override def execute(): Future[Unit] = {
-    new AlertDialog.Builder(context)
-      .setTitle(title)
-      .setMessage(message)
-      .setCancelable(false)
-      .create()
-      .show()
-
-    Future.successful(())
+    Future {
+      new AlertDialog.Builder(context)
+        .setTitle(title)
+        .setMessage(message)
+        .setCancelable(false)
+        .create()
+        .show()
+    }
   }
 }
