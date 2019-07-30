@@ -30,11 +30,17 @@ object RootDetectionCheck extends SecurityCheckList.Check with DerivedLogTag {
 
   override def isSatisfied: Future[Boolean] =
     Future {
+      val startTime = System.currentTimeMillis()
+
       lazy val releaseTagsExist = getSystemProperty("ro.build.tags").contains("release-keys")
       lazy val otacertsExist = new File("/etc/security/otacerts.zip").exists()
       lazy val canRunSu = runCommand("su")
       val isDeviceRooted = !releaseTagsExist || !otacertsExist || canRunSu
-      verbose(l"isDeviceRooted: $isDeviceRooted")
+
+      val endTime = System.currentTimeMillis()
+      val elapsedTime = endTime - startTime
+
+      verbose(l"isDeviceRooted: $isDeviceRooted. Took $elapsedTime ms")
       !isDeviceRooted
     }
 
