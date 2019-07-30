@@ -113,7 +113,9 @@ class CursorImagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             cursors[0] = adapter.resolver.query(MediaStore.Images.Media.INTERNAL_CONTENT_URI, null, selection, selectionArgs, orderBy);
             cursors[1] = adapter.resolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null, orderBy);
 
-            return new MergeCursor(cursors);
+            Cursor c = new MergeCursor(cursors);
+            c.moveToLast();  // force cursor loading
+            return c;
         }
 
         @Override
