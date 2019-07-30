@@ -25,10 +25,14 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
+import com.waz.threading.Threading.Implicits.Background
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.SecurityCheckList.{Action, Check}
+import com.waz.zclient.security.{BlockWithDialog, RootDetectionCheck, SecurityCheckList}
 import com.waz.zclient.utils.BackendController
-import Threading.Implicits.Background
+
+import scala.collection.mutable.ListBuffer
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
@@ -39,9 +43,19 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   override def onStart() = {
     super.onStart()
 
-    SecurityCheckList.fromBuildConfig().run.foreach { allChecksPass =>
+    securityChecklist.run().foreach { allChecksPass =>
       if (allChecksPass) loadBackend()
     }
+  }
+
+  private def securityChecklist: SecurityCheckList = {
+    val checksAndActions = new ListBuffer[(Check, List[Action])]()
+
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      checksAndActions += (RootDetectionCheck -> List(BlockWithDialog("Root detected", "Root detected")))
+    }
+
+    new SecurityCheckList(checksAndActions.toList)
   }
 
   private def loadBackend(): Unit = {

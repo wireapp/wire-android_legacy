@@ -33,12 +33,13 @@ import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Pas
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
+import com.waz.zclient.security.{BlockWithDialog, RootDetectionCheck, SecurityCheckList}
 import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils.showToast
-import com.waz.zclient.{BaseActivity, R, SecurityCheckList, ViewHelper}
 
 import scala.concurrent.Future
 
@@ -95,8 +96,8 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def deviceRooted(): Future[Boolean] = {
-    import SecurityCheckList._
-    SecurityCheckList(checkIfRooted -> List(displayBlockingDialog)).run(getContext)
+    val showDialog = BlockWithDialog("Root detected", "Root detected")(getContext)
+    SecurityCheckList(RootDetectionCheck -> List(showDialog)).run()
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {
