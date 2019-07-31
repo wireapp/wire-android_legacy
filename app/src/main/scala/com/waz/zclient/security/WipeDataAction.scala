@@ -17,22 +17,16 @@
  */
 package com.waz.zclient.security
 
-import android.app.AlertDialog
 import android.content.Context
-import com.waz.threading.Threading.Implicits.Ui
+import com.waz.service.ZMessaging
+import com.waz.threading.Threading.Implicits.Background
+import com.waz.zclient.WireApplication
 
 import scala.concurrent.Future
 
-class BlockWithDialog(title: String, message: String)(implicit context: Context) extends SecurityCheckList.Action {
-
-  override def execute(): Future[Unit] = {
-    Future {
-      new AlertDialog.Builder(context)
-        .setTitle(title)
-        .setMessage(message)
-        .setCancelable(false)
-        .create()
-        .show()
-    }
+class WipeDataAction()(implicit context: Context) extends SecurityCheckList.Action {
+  override def execute(): Future[Unit] = ZMessaging.currentAccounts.wipeData().map { _ =>
+    WireApplication.clearOldVideoFiles(context)
+    context.getCacheDir.delete()
   }
 }
