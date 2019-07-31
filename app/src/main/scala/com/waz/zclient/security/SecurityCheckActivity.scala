@@ -50,8 +50,9 @@ class SecurityCheckActivity extends AppCompatActivity with DerivedLogTag {
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions +=
-        RootDetectionCheck -> List(new BlockWithDialogAction("Root detected", "Wire is blocked"))
+      checksAndActions += RootDetectionCheck -> List(
+        new WipeDataAction(),
+        new BlockWithDialogAction("Root detected", "Wire is blocked"))
     }
 
     new SecurityCheckList(checksAndActions.toList)
