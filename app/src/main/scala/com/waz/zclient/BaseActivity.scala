@@ -34,6 +34,7 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.SecureActivity
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
 

@@ -102,11 +102,11 @@
         </activity>
 
         <activity
-            android:name=".SecureActivity"
+            android:name=".security.SecureActivity"
             android:launchMode="singleTask"
             />
         <activity
-            android:name=".SecurityCheckActivity"
+            android:name=".security.SecurityCheckActivity"
             android:launchMode="singleTask"
             />
         <activity
