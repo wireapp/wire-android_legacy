@@ -27,6 +27,8 @@ import scala.concurrent.Future
 import scala.util.Try
 
 object RootDetectionCheck extends SecurityCheckList.Check with DerivedLogTag {
+  
+  override val isRecoverable: Boolean = false
 
   override def isSatisfied: Future[Boolean] =
     Future {

@@ -47,6 +47,7 @@ object SecurityCheckList {
   def apply(args: (Check, List[Action])*): SecurityCheckList = new SecurityCheckList(args.toList)
 
   trait Check {
+    val isRecoverable: Boolean
     def isSatisfied: Future[Boolean]
   }
 
