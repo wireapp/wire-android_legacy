@@ -102,6 +102,10 @@
         </activity>
 
         <activity
+            android:name=".SecureActivity"
+            android:launchMode="singleTask"
+            />
+        <activity
             android:name=".SecurityCheckActivity"
             android:launchMode="singleTask"
             />
