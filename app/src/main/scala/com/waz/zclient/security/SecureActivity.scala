@@ -20,17 +20,14 @@ package com.waz.zclient.security
 import android.app.Activity
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.zclient.log.LogUI._
 
-class SecureActivity extends AppCompatActivity with DerivedLogTag {
+class SecureActivity extends AppCompatActivity {
   import SecurityCheckActivity._
 
   private var shouldRunSecurityChecks = true
 
   override def onStart(): Unit = {
     super.onStart()
-    verbose(l"SECURITY: onCreate")
 
     if (shouldRunSecurityChecks) {
       startSecurityCheckActivity()
@@ -38,7 +35,6 @@ class SecureActivity extends AppCompatActivity with DerivedLogTag {
   }
 
   private def startSecurityCheckActivity(): Unit = {
-    verbose(l"SECURITY: starting security check activity")
     val intent = new Intent(this, classOf[SecurityCheckActivity])
     startActivityForResult(intent, RUN_SECURITY_CHECKS_REQUEST_CODE)
   }
@@ -48,10 +44,7 @@ class SecureActivity extends AppCompatActivity with DerivedLogTag {
 
     // TODO: Handle non ok results?
     (requestCode, resultCode) match {
-      case (RUN_SECURITY_CHECKS_REQUEST_CODE, Activity.RESULT_OK) =>
-        shouldRunSecurityChecks = false
-        verbose(l"SECURITY: security checks complete")
-
+      case (RUN_SECURITY_CHECKS_REQUEST_CODE, Activity.RESULT_OK) => shouldRunSecurityChecks = false
       case _ =>
     }
   }

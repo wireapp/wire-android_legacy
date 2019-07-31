@@ -35,14 +35,13 @@ class SecurityCheckActivity extends AppCompatActivity with DerivedLogTag {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    verbose(l"SECURITY: onCreate, running security checks")
     
-    securityChecklist.canProceed.foreach { canProceed =>
-      verbose(l"SECURITY: canProceed: $canProceed")
-      if (canProceed) {
+    securityChecklist.canProceed.foreach {
+      case true =>
         setResult(Activity.RESULT_OK)
         finish()
-      }
+      case false =>
+        info(l"App is blocked.")
     }
   }
 
