@@ -97,7 +97,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   private def deviceRooted(): Future[Boolean] = {
     implicit val ctx = getContext
-    val showDialog = new BlockWithDialog("Root detected", "Root detected")
+    val showDialog = new BlockWithDialogAction("Root detected", "Root detected")
     val wipeData = new WipeDataAction
     SecurityCheckList(RootDetectionCheck -> List(wipeData, showDialog)).canProceed
   }
