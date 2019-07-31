@@ -37,6 +37,12 @@ class SecureActivity extends AppCompatActivity with DerivedLogTag {
     }
   }
 
+  private def startSecurityCheckActivity(): Unit = {
+    verbose(l"SECURITY: starting security check activity")
+    val intent = new Intent(this, classOf[SecurityCheckActivity])
+    startActivityForResult(intent, RUN_SECURITY_CHECKS_REQUEST_CODE)
+  }
+
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
 
@@ -44,26 +50,9 @@ class SecureActivity extends AppCompatActivity with DerivedLogTag {
     (requestCode, resultCode) match {
       case (RUN_SECURITY_CHECKS_REQUEST_CODE, Activity.RESULT_OK) =>
         shouldRunSecurityChecks = false
-        val allChecksPassed = data.getBooleanExtra(ALL_CHECKS_PASSED_EXTRA, false)
-        verbose(l"SECURITY: got the security results. All checks passed: $allChecksPassed")
-
-        if (!allChecksPassed) {
-          startLaunchActivity()
-        }
+        verbose(l"SECURITY: security checks complete")
 
       case _ =>
     }
-  }
-
-  private def startSecurityCheckActivity(): Unit = {
-    verbose(l"SECURITY: starting security check activity")
-    val intent = new Intent(this, classOf[SecurityCheckActivity])
-    startActivityForResult(intent, RUN_SECURITY_CHECKS_REQUEST_CODE)
-  }
-
-  private def startLaunchActivity(): Unit = {
-    val intent = new Intent(this, classOf[LaunchActivity])
-    startActivity(intent)
-    finish()
   }
 }

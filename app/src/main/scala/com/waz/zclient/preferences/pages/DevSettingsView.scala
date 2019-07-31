@@ -99,7 +99,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     implicit val ctx = getContext
     val showDialog = new BlockWithDialog("Root detected", "Root detected")
     val wipeData = new WipeDataAction
-    SecurityCheckList(RootDetectionCheck -> List(wipeData, showDialog)).run()
+    SecurityCheckList(RootDetectionCheck -> List(wipeData, showDialog)).canProceed
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {
