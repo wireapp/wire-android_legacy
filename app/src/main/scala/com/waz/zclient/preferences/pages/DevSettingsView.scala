@@ -92,14 +92,11 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   }
 
   val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
-    v.onClickEvent(_ => deviceRooted())
+    v.onClickEvent(_ => checkIfDeviceIsRooted())
   }
 
-  private def deviceRooted(): Future[Boolean] = {
-    implicit val ctx = getContext
-    val showDialog = new BlockWithDialogAction("Root detected", "Root detected")
-    val wipeData = new WipeDataAction
-    SecurityCheckList(RootDetectionCheck -> List(wipeData, showDialog)).canProceed
+  private def checkIfDeviceIsRooted(): Unit = RootDetectionCheck.isSatisfied.foreach { notRooted =>
+    showToast(s"Device is ${if (notRooted) "not" else ""} rooted")
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {
