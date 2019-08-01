@@ -59,5 +59,5 @@ class SecurityCheckActivity extends AppCompatActivity with DerivedLogTag {
 }
 
 object SecurityCheckActivity {
-  val RUN_SECURITY_CHECKS_REQUEST_CODE = 0
+  val RUN_SECURITY_CHECKS_REQUEST_CODE = 3982
 }
