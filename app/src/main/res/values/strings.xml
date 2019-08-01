@@ -1338,6 +1338,8 @@
     <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
     <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
 
+    <string name="root_detected_dialog_title">Jailbreak/root detected</string>
+    <string name="root_detected_dialog_message">You can not use Wire on this device.</string>
 
     <!--Two identical strings are needed for German translation-->
     <string name="quote_timestamp_message_time">Original message from %s</string>
