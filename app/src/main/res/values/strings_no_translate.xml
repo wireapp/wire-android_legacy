@@ -160,8 +160,6 @@
     <string translatable="false" name="pref_dev_websocket_ping_interval_title">WebSocket Ping Frequency (ms)</string>
     <string translatable="false" name="pref_dev_random_last_notification_id_title">Generate a random new value for LastStableNotification</string>
     <string translatable="false" name="pref_dev_random_last_notification_id_summary">Generate a new, random value for the LastStableNotification preference. Use it to test history loss.</string>
-    <string translatable="false" name="pref_dev_random_full_sync_title">Perform full sync</string>
-    <string translatable="false" name="pref_dev_random_full_sync_summary">This performs a full sync without triggering history loss. Useful for internal versions with inconsistent state.</string>
     <string translatable="false" name="pref_dev_full_conv_key">>PREF_FULL_CONV</string>
     <string translatable="false" name="pref_dev_full_conv_summary">Instead of an empty conversation, create one populated with all contacts in the list (up to 256)</string>
     <string translatable="false" name="pref_dev_full_conv_title">Create full conversation</string>
