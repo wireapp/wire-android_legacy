@@ -23,9 +23,9 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading.Implicits.Background
-import com.waz.zclient.BuildConfig
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityCheckList.{Action, Check}
+import com.waz.zclient.{BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
 
@@ -49,9 +49,14 @@ class SecurityCheckActivity extends AppCompatActivity with DerivedLogTag {
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions += RootDetectionCheck -> List(
+      checksAndActions += PreviouslyRootedCheck() -> List(
+        BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
+      )
+
+      checksAndActions += RootDetectionCheck() -> List(
         new WipeDataAction(),
-        new BlockWithDialogAction("Root detected", "Wire is blocked"))
+        BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
+      )
     }
 
     new SecurityCheckList(checksAndActions.toList)

@@ -19,6 +19,8 @@ package com.waz.zclient.security
 
 import java.io.File
 
+import android.content.Context
+import android.preference.PreferenceManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.zclient.log.LogUI._
@@ -26,7 +28,8 @@ import com.waz.zclient.log.LogUI._
 import scala.concurrent.Future
 import scala.util.Try
 
-object RootDetectionCheck extends SecurityCheckList.Check with DerivedLogTag {
+class RootDetectionCheck(implicit context: Context) extends SecurityCheckList.Check with DerivedLogTag {
+  import RootDetectionCheck._
 
   override val isRecoverable: Boolean = false
 
@@ -42,7 +45,10 @@ object RootDetectionCheck extends SecurityCheckList.Check with DerivedLogTag {
       val endTime = System.currentTimeMillis()
       val elapsedTime = endTime - startTime
 
+      if (isDeviceRooted) noteThatPhoneIsRooted()
+
       verbose(l"isDeviceRooted: $isDeviceRooted. Took $elapsedTime ms")
+
       !isDeviceRooted
     }
 
@@ -59,4 +65,16 @@ object RootDetectionCheck extends SecurityCheckList.Check with DerivedLogTag {
       verbose(l"runCommand($command)")
       Runtime.getRuntime.exec(command)
     }.isSuccess
+
+  private def noteThatPhoneIsRooted(): Unit = {
+    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    sharedPreferences.edit().putBoolean(RootDetectedFlag, true).commit()
+  }
+}
+
+object RootDetectionCheck {
+
+  val RootDetectedFlag = "ROOT_DETECTED"
+
+  def apply()(implicit context: Context): RootDetectionCheck = new RootDetectionCheck()
 }

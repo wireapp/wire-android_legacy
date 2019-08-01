@@ -95,7 +95,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     v.onClickEvent(_ => checkIfDeviceIsRooted())
   }
 
-  private def checkIfDeviceIsRooted(): Unit = RootDetectionCheck.isSatisfied.foreach { notRooted =>
+  private def checkIfDeviceIsRooted(): Unit = RootDetectionCheck().isSatisfied.foreach { notRooted =>
     showToast(s"Device is ${if (notRooted) "not" else ""} rooted")
   }
 

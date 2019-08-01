@@ -17,32 +17,24 @@
  */
 package com.waz.zclient.security
 
-import android.app.AlertDialog
 import android.content.Context
-import com.waz.threading.Threading.Implicits.Ui
+import android.preference.PreferenceManager
+import com.waz.zclient.security.RootDetectionCheck.RootDetectedFlag
 
 import scala.concurrent.Future
 
-class BlockWithDialogAction(title: String, message: String)(implicit context: Context) extends SecurityCheckList.Action {
+class PreviouslyRootedCheck(implicit context: Context) extends SecurityCheckList.Check {
 
-  override def execute(): Future[Unit] = {
-    Future {
-      new AlertDialog.Builder(context)
-        .setTitle(title)
-        .setMessage(message)
-        .setCancelable(false)
-        .create()
-        .show()
-    }
+  override val isRecoverable: Boolean = false
+
+  override def isSatisfied: Future[Boolean] = {
+    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val rootedDetected = sharedPreferences.getBoolean(RootDetectedFlag, false)
+    Future.successful(!rootedDetected)
   }
 }
 
-object BlockWithDialogAction {
-  import com.waz.zclient.utils.ContextUtils.getString
+object PreviouslyRootedCheck {
 
-  def apply(titleResId: Int, messageResId: Int)(implicit context: Context): BlockWithDialogAction = {
-    val title = getString(titleResId)
-    val message = getString(messageResId)
-    new BlockWithDialogAction(title, message)
-  }
+  def apply()(implicit context: Context): PreviouslyRootedCheck = new PreviouslyRootedCheck()
 }
