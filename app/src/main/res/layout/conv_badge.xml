@@ -34,7 +34,7 @@
         android:textColor="@color/white"
         android:textSize="@dimen/wire__text_size__small"
         app:w_font="@string/wire__typeface__bold"
-        android:visibility="invisible"
+        android:visibility="gone"
         />
 
     <com.waz.zclient.ui.text.GlyphTextView
@@ -47,7 +47,7 @@
         android:textSize="@dimen/wire__text_size__small"
         android:paddingStart="@dimen/conversation_list__badge__glyph_padding"
         android:paddingEnd="@dimen/conversation_list__badge__glyph_padding"
-        android:visibility="invisible"
+        android:visibility="gone"
         />
 
     <com.waz.zclient.conversationlist.views.ConversationBadgeStyleKitView
@@ -56,5 +56,6 @@
         android:layout_height="@dimen/conversation_list__badge__icon_size"
         android:gravity="center"
         android:layout_gravity="center"
+        android:visibility="gone"
     />
 </merge>
