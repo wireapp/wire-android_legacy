@@ -17,14 +17,19 @@
  */
 package com.waz.zclient.security
 
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading.Implicits.Background
+import com.waz.zclient.security.SecurityChecklist._
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
-class SecurityChecklist(list: List[(SecurityChecklist.Check, List[SecurityChecklist.Action])]) {
-  import SecurityChecklist._
+class SecurityChecklist(list: List[(Check, List[Action])]) extends DerivedLogTag {
 
-  def run(): Future[Boolean] = runChecks(list)
+  def run(): Future[Boolean] = {
+    if (list.nonEmpty) info(l"Running security checks")
+    runChecks(list)
+  }
 
   private def runChecks(checks: List[(Check, List[Action])]): Future[Boolean] = checks match {
     case Nil =>
