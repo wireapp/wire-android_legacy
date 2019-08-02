@@ -79,22 +79,18 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
       Option(ZMessaging.currentGlobal) match {
         case None =>
           warn(l"No ZMessaging global available - calling too early")
-
         case Some(globalModule) if !isSenderKnown(globalModule, remoteMessage.getFrom) =>
           warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
-
         case _ => securityChecklist.run().foreach { allChecksPassed =>
           if (allChecksPassed) {
             getTargetAccount(data) match {
               case None =>
                 warn(l"User key missing msg: ${redactedString(UserKeyMissingMsg)}")
                 tracking.exception(new Exception(UserKeyMissingMsg), UserKeyMissingMsg)
-
               case Some(account) =>
                 targetAccountExists(account).foreach {
                   case false =>
                     warn(l"Could not find target account for notification")
-
                   case true =>
                     accounts.getZms(account).foreach {
                       case None => warn(l"Couldn't instantiate zms instance")
