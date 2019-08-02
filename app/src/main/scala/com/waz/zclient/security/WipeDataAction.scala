@@ -25,8 +25,12 @@ import com.waz.zclient.WireApplication
 import scala.concurrent.Future
 
 class WipeDataAction()(implicit context: Context) extends SecurityChecklist.Action {
-  override def execute(): Future[Unit] = ZMessaging.currentAccounts.wipeData().map { _ =>
-    WireApplication.clearOldVideoFiles(context)
-    context.getCacheDir.delete()
+  override def execute(): Future[Unit] = ZMessaging.currentAccounts.isWiped.flatMap {
+    case true  => Future.successful(())
+    case false =>
+      ZMessaging.currentAccounts.wipeData().map { _ =>
+        WireApplication.clearOldVideoFiles(context)
+        context.getCacheDir.delete()
+      }
   }
 }
