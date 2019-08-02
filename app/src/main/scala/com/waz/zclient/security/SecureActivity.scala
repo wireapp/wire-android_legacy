@@ -38,10 +38,6 @@ class SecureActivity extends AppCompatActivity {
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions += PreviouslyRootedCheck() -> List(
-        BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
-      )
-
       checksAndActions += RootDetectionCheck() -> List(
         new WipeDataAction(),
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)

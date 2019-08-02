@@ -33,12 +33,13 @@ class RootDetectionCheck(implicit context: Context) extends SecurityChecklist.Ch
 
   override def isSatisfied: Future[Boolean] =
     Future {
+
       val startTime = System.currentTimeMillis()
 
       lazy val releaseTagsExist = getSystemProperty("ro.build.tags").contains("release-keys")
       lazy val otacertsExist = new File("/etc/security/otacerts.zip").exists()
       lazy val canRunSu = runCommand("su")
-      val isDeviceRooted = !releaseTagsExist || !otacertsExist || canRunSu
+      val isDeviceRooted = wasPreviouslyRooted || !releaseTagsExist || !otacertsExist || canRunSu
 
       val endTime = System.currentTimeMillis()
       val elapsedTime = endTime - startTime
@@ -49,6 +50,11 @@ class RootDetectionCheck(implicit context: Context) extends SecurityChecklist.Ch
 
       !isDeviceRooted
     }
+
+  private def wasPreviouslyRooted: Boolean = {
+    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    sharedPreferences.getBoolean(RootDetectedFlag, false)
+  }
 
   private def getSystemProperty(key: String): Option[String] =
     Try(
