@@ -23,7 +23,7 @@ import com.waz.zclient.security.RootDetectionCheck.RootDetectedFlag
 
 import scala.concurrent.Future
 
-class PreviouslyRootedCheck(implicit context: Context) extends SecurityCheckList.Check {
+class PreviouslyRootedCheck(implicit context: Context) extends SecurityChecklist.Check {
 
   override def isSatisfied: Future[Boolean] = {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)

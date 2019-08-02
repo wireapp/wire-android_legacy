@@ -28,7 +28,7 @@ import com.waz.zclient.log.LogUI._
 import scala.concurrent.Future
 import scala.util.Try
 
-class RootDetectionCheck(implicit context: Context) extends SecurityCheckList.Check with DerivedLogTag {
+class RootDetectionCheck(implicit context: Context) extends SecurityChecklist.Check with DerivedLogTag {
   import RootDetectionCheck._
 
   override def isSatisfied: Future[Boolean] =

@@ -21,8 +21,8 @@ import com.waz.threading.Threading.Implicits.Background
 
 import scala.concurrent.Future
 
-class SecurityCheckList(list: List[(SecurityCheckList.Check, List[SecurityCheckList.Action])]) {
-  import SecurityCheckList._
+class SecurityChecklist(list: List[(SecurityChecklist.Check, List[SecurityChecklist.Action])]) {
+  import SecurityChecklist._
 
   def run(): Future[Boolean] = runChecks(list)
 
@@ -42,9 +42,9 @@ class SecurityCheckList(list: List[(SecurityCheckList.Check, List[SecurityCheckL
   }
 }
 
-object SecurityCheckList {
+object SecurityChecklist {
 
-  def apply(args: (Check, List[Action])*): SecurityCheckList = new SecurityCheckList(args.toList)
+  def apply(args: (Check, List[Action])*): SecurityChecklist = new SecurityChecklist(args.toList)
 
   trait Check {
     def isSatisfied: Future[Boolean]

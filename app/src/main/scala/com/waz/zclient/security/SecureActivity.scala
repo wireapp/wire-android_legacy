@@ -19,7 +19,7 @@ package com.waz.zclient.security
 
 import android.content.Context
 import android.support.v7.app.AppCompatActivity
-import com.waz.zclient.security.SecurityCheckList.{Action, Check}
+import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.{BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
@@ -34,7 +34,7 @@ class SecureActivity extends AppCompatActivity {
     securityChecklist.run()
   }
 
-  private def securityChecklist: SecurityCheckList = {
+  private def securityChecklist: SecurityChecklist = {
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
@@ -48,6 +48,6 @@ class SecureActivity extends AppCompatActivity {
       )
     }
 
-    new SecurityCheckList(checksAndActions.toList)
+    new SecurityChecklist(checksAndActions.toList)
   }
 }

@@ -23,7 +23,7 @@ import com.waz.threading.Threading.Implicits.Ui
 
 import scala.concurrent.Future
 
-class BlockWithDialogAction(title: String, message: String)(implicit context: Context) extends SecurityCheckList.Action {
+class BlockWithDialogAction(title: String, message: String)(implicit context: Context) extends SecurityChecklist.Action {
 
   override def execute(): Future[Unit] = {
     Future {
