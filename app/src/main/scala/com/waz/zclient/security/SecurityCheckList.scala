@@ -24,7 +24,7 @@ import scala.concurrent.Future
 class SecurityCheckList(list: List[(SecurityCheckList.Check, List[SecurityCheckList.Action])]) {
   import SecurityCheckList._
 
-  def canProceed: Future[Boolean] = runChecks(list)
+  def run(): Future[Boolean] = runChecks(list)
 
   private def runChecks(checks: List[(Check, List[Action])]): Future[Boolean] = checks match {
     case Nil =>
@@ -32,7 +32,7 @@ class SecurityCheckList(list: List[(SecurityCheckList.Check, List[SecurityCheckL
     case (check, actions) :: tail =>
       check.isSatisfied.flatMap {
         case true  => runChecks(tail)
-        case false => runActions(actions).map(_ => check.isRecoverable)
+        case false => runActions(actions).map(_ => false)
       }
   }
 
@@ -47,7 +47,6 @@ object SecurityCheckList {
   def apply(args: (Check, List[Action])*): SecurityCheckList = new SecurityCheckList(args.toList)
 
   trait Check {
-    val isRecoverable: Boolean
     def isSatisfied: Future[Boolean]
   }
 

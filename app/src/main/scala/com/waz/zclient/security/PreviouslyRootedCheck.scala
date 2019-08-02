@@ -25,8 +25,6 @@ import scala.concurrent.Future
 
 class PreviouslyRootedCheck(implicit context: Context) extends SecurityCheckList.Check {
 
-  override val isRecoverable: Boolean = false
-
   override def isSatisfied: Future[Boolean] = {
     val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     val rootedDetected = sharedPreferences.getBoolean(RootDetectedFlag, false)

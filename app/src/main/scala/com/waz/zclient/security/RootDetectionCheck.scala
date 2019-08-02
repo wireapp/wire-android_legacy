@@ -31,8 +31,6 @@ import scala.util.Try
 class RootDetectionCheck(implicit context: Context) extends SecurityCheckList.Check with DerivedLogTag {
   import RootDetectionCheck._
 
-  override val isRecoverable: Boolean = false
-
   override def isSatisfied: Future[Boolean] =
     Future {
       val startTime = System.currentTimeMillis()

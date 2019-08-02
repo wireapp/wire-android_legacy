@@ -17,35 +17,37 @@
  */
 package com.waz.zclient.security
 
-import android.app.Activity
-import android.content.Intent
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
+import com.waz.zclient.security.SecurityCheckList.{Action, Check}
+import com.waz.zclient.{BuildConfig, R}
+
+import scala.collection.mutable.ListBuffer
 
 class SecureActivity extends AppCompatActivity {
-  import SecurityCheckActivity._
 
-  private var shouldRunSecurityChecks = true
+  private implicit val context: Context = this
 
   override def onStart(): Unit = {
     super.onStart()
 
-    if (shouldRunSecurityChecks) {
-      startSecurityCheckActivity()
-    }
+    securityChecklist.run()
   }
 
-  private def startSecurityCheckActivity(): Unit = {
-    val intent = new Intent(this, classOf[SecurityCheckActivity])
-    startActivityForResult(intent, RUN_SECURITY_CHECKS_REQUEST_CODE)
-  }
+  private def securityChecklist: SecurityCheckList = {
+    val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
-  override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
-    super.onActivityResult(requestCode, resultCode, data)
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      checksAndActions += PreviouslyRootedCheck() -> List(
+        BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
+      )
 
-    // TODO: Handle non ok results?
-    (requestCode, resultCode) match {
-      case (RUN_SECURITY_CHECKS_REQUEST_CODE, Activity.RESULT_OK) => shouldRunSecurityChecks = false
-      case _ =>
+      checksAndActions += RootDetectionCheck() -> List(
+        new WipeDataAction(),
+        BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
+      )
     }
+
+    new SecurityCheckList(checksAndActions.toList)
   }
 }
