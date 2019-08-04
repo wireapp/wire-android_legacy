@@ -204,10 +204,10 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
         ui.sendAssetMessage(id, content, (s: Long) => showWifiWarningDialog(s, color), exp))
     )
 
-  def sendAssetMessage(convs:    Seq[ConvId],
-                       content:  ContentForUpload,
-                       activity: Activity,
-                       exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
+  private def sendAssetMessage(convs:    Seq[ConvId],
+                               content:  ContentForUpload,
+                               activity: Activity,
+                               exp:      Option[Option[FiniteDuration]]): Future[Seq[Option[MessageData]]] =
     for {
       ui    <- convsUi.head
       color <- accentColorController.accentColor.head
@@ -369,7 +369,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
 object ConversationController extends DerivedLogTag {
   val ARCHIVE_DELAY = 500.millis
-  val MaxParticipants: Int = 300
+  val MaxParticipants: Int = 500
 
   case class ConversationChange(from: Option[ConvId], to: Option[ConvId], requester: ConversationChangeRequester) {
     def toConvId: ConvId = to.orNull // TODO: remove when not used anymore

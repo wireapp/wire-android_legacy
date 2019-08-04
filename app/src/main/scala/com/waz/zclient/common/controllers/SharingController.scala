@@ -53,8 +53,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
           conversationController.sendTextMessage(convs, t, Nil, None, Some(expiration))
         case uriContent =>
           Future.traverse(uriContent.uris) { uriWrapper =>
-            val uri = URIWrapper.toJava(uriWrapper)
-            conversationController.sendAssetMessage(uri, activity, Some(expiration), convs)
+            conversationController.sendAssetMessage(URIWrapper.toJava(uriWrapper), activity, Some(expiration), convs)
           }
       }
 
@@ -63,7 +62,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       convs         <- targetConvs.head
       expiration    <- ephemeralExpiration.head
       _             <- send(content, convs, expiration)
-      _             = resetContent()
+      _             =  resetContent()
     } yield convs
   }
 

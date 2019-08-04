@@ -88,7 +88,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback, savedInstanceState))
+    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback))
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {

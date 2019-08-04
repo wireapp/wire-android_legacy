@@ -43,8 +43,7 @@
         android:layout_marginTop="@dimen/wire__padding__regular"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
-        android:layout_marginBottom="@dimen/wire__padding__24"
-        android:text="@string/call_info_text"/>
+        android:layout_marginBottom="@dimen/wire__padding__24"/>
 
     <RelativeLayout
         android:id="@+id/create_conv_options"

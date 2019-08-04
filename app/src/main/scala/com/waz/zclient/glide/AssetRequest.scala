@@ -19,6 +19,7 @@ package com.waz.zclient.glide
 
 import com.waz.model.UserData.Picture
 import com.waz.model._
+import com.waz.api.MessageContent.Location
 import com.waz.service.assets2.Asset
 
 sealed trait AssetRequest {
@@ -50,6 +51,9 @@ case class ImageAssetRequest(asset: Asset) extends AssetRequest {
 }
 case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
   override val key: String = assetId.str
+}
+case class GoogleMapRequest(location: Location) extends AssetRequest {
+  override val key: String = location.toString
 }
 case class EmptyRequest() extends AssetRequest {
   override val key: String = ""
