@@ -1351,5 +1351,11 @@
     <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
     <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
+    
+    <!--These are temporary and should be removed after release 3.36-->
+    <string name="android_4_warning_title"> Wire 3.36 is the last Android 4 compatible release.</string>
+    <string name="android_4_warning_message">To be able to install later versions, please update to Android 5 or higher.</string>
+    <string name="android_4_warning_action_ok">OK</string>
+    <string name="android_4_warning_action_dont_show_again">Don\'t show again</string>
 
 </resources>
