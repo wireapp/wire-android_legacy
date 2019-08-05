@@ -138,6 +138,8 @@ android {
         buildConfigField 'String',  'TEAMS_URL',                        "\"$config.teamsUrl\""
         buildConfigField 'String',  'ACCOUNTS_URL',                     "\"$config.accountsUrl\""
         buildConfigField 'String',  'WEBSITE_URL',                      "\"$config.websiteUrl\""
+        buildConfigField 'String',  'HTTP_PROXY_URL',                   "\"$config.http_proxy_url\""
+        buildConfigField 'String',  'HTTP_PROXY_PORT',                  "\"$config.http_proxy_port\""
         buildConfigField 'boolean', 'BLOCK_ON_JAILBREAK_OR_ROOT',       "$config.block_on_jailbreak_or_root"
     }
 

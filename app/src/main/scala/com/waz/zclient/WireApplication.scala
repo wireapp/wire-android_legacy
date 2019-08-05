@@ -18,6 +18,7 @@
 package com.waz.zclient
 
 import java.io.File
+import java.net.{InetSocketAddress, Proxy}
 import java.util.Calendar
 
 import android.app.{Activity, ActivityManager, NotificationManager}
@@ -94,6 +95,7 @@ import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object WireApplication extends DerivedLogTag {
@@ -423,6 +425,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     ZMessaging.onCreate(
       this,
       backend,
+      parseProxy(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT),
       prefs,
       googleApi,
       null, //TODO: Use sync engine's version for now
@@ -440,6 +443,16 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+  }
+
+  private def parseProxy(url: String, port: String): Option[Proxy] = {
+    val proxyHost = if(!url.equalsIgnoreCase("none")) Some(url) else None
+    val proxyPort = Try(Integer.parseInt(port)).toOption
+    (proxyHost, proxyPort) match {
+      case (Some(h), Some(p)) => Some(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(h, p)))
+      case proxyInfo => None
+    }
+
   }
 
   private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit = {
