@@ -81,7 +81,7 @@ public class AssetIntentsManager {
     }
 
     public void openBackupImport() {
-        openDocument("wire/backup-file", IntentType.BACKUP_IMPORT, false);
+        openDocument("application/octet-stream", IntentType.BACKUP_IMPORT, false);
     }
 
     public void captureVideo() {
