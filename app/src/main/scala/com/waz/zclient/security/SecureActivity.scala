@@ -31,7 +31,6 @@ class SecureActivity extends AppCompatActivity with ActivityHelper {
 
   override def onStart(): Unit = {
     super.onStart()
-
     securityChecklist.run()
   }
 
