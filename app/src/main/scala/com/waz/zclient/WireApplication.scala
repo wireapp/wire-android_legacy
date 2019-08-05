@@ -313,7 +313,7 @@ object WireApplication extends DerivedLogTag {
     bind[MessagePagedListController] to new MessagePagedListController()
   }
 
-  protected def clearOldVideoFiles(context: Context): Unit = {
+  def clearOldVideoFiles(context: Context): Unit = {
     val oneWeekAgo = Calendar.getInstance
     oneWeekAgo.add(Calendar.DAY_OF_YEAR, -7)
     Option(context.getExternalCacheDir).foreach { dir =>
