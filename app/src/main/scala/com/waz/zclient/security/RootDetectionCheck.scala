@@ -20,26 +20,28 @@ package com.waz.zclient.security
 import java.io.File
 
 import android.content.Context
-import android.preference.PreferenceManager
+import com.waz.content.GlobalPreferences
+import com.waz.content.GlobalPreferences.RootDetected
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading.Implicits.Background
+import com.waz.zclient.Injectable
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.util.Try
 
-class RootDetectionCheck(implicit context: Context) extends SecurityChecklist.Check with DerivedLogTag {
-  import RootDetectionCheck._
+class RootDetectionCheck(preferences: GlobalPreferences)(implicit context: Context)
+  extends SecurityChecklist.Check with Injectable with DerivedLogTag {
 
-  override def isSatisfied: Future[Boolean] =
-    Future {
-
+  override def isSatisfied: Future[Boolean] = wasPreviouslyRooted.map {
+    case true => true
+    case false =>
       val startTime = System.currentTimeMillis()
 
       lazy val releaseTagsExist = getSystemProperty("ro.build.tags").contains("release-keys")
       lazy val otacertsExist = new File("/etc/security/otacerts.zip").exists()
       lazy val canRunSu = runCommand("su")
-      val isDeviceRooted = wasPreviouslyRooted || !releaseTagsExist || !otacertsExist || canRunSu
+      val isDeviceRooted = !releaseTagsExist || !otacertsExist || canRunSu
 
       val endTime = System.currentTimeMillis()
       val elapsedTime = endTime - startTime
@@ -49,11 +51,6 @@ class RootDetectionCheck(implicit context: Context) extends SecurityChecklist.Ch
       verbose(l"isDeviceRooted: $isDeviceRooted. Took $elapsedTime ms")
 
       !isDeviceRooted
-    }
-
-  private def wasPreviouslyRooted: Boolean = {
-    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-    sharedPreferences.getBoolean(RootDetectedFlag, false)
   }
 
   private def getSystemProperty(key: String): Option[String] =
@@ -70,15 +67,12 @@ class RootDetectionCheck(implicit context: Context) extends SecurityChecklist.Ch
       Runtime.getRuntime.exec(command)
     }.isSuccess
 
-  private def noteThatPhoneIsRooted(): Unit = {
-    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-    sharedPreferences.edit().putBoolean(RootDetectedFlag, true).commit()
-  }
+  private def wasPreviouslyRooted: Future[Boolean] = preferences(RootDetected).apply()
+  private def noteThatPhoneIsRooted(): Future[Unit] = preferences(RootDetected) := true
 }
 
 object RootDetectionCheck {
 
-  val RootDetectedFlag = "ROOT_DETECTED"
-
-  def apply()(implicit context: Context): RootDetectionCheck = new RootDetectionCheck()
+  def apply(preferences: GlobalPreferences)(implicit context: Context): RootDetectionCheck =
+    new RootDetectionCheck(preferences)
 }

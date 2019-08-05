@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.jobs.PushTokenCheckJob
@@ -89,8 +90,11 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     v.onClickEvent(_ => checkIfDeviceIsRooted())
   }
 
-  private def checkIfDeviceIsRooted(): Unit = RootDetectionCheck().isSatisfied.foreach { notRooted =>
-    showToast(s"Device is ${if (notRooted) "not" else ""} rooted")
+  private def checkIfDeviceIsRooted(): Unit = {
+    val preferences = inject[GlobalPreferences]
+    RootDetectionCheck(preferences).isSatisfied.foreach { notRooted =>
+      showToast(s"Device is ${if (notRooted) "not" else ""} rooted")
+    }
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {

@@ -52,7 +52,8 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
 
   private val securityChecklist: SecurityChecklist = if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
     implicit val context: Context = this
-    new SecurityChecklist(List(RootDetectionCheck() -> List(new WipeDataAction())))
+    val preferences = ZMessaging.currentGlobal.prefs
+    new SecurityChecklist(List(RootDetectionCheck(preferences) -> List(new WipeDataAction())))
   } else {
     new SecurityChecklist(List.empty)
   }

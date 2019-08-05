@@ -19,12 +19,13 @@ package com.waz.zclient.security
 
 import android.content.Context
 import android.support.v7.app.AppCompatActivity
+import com.waz.content.GlobalPreferences
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
-import com.waz.zclient.{BuildConfig, R}
+import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
 
-class SecureActivity extends AppCompatActivity {
+class SecureActivity extends AppCompatActivity with ActivityHelper {
 
   private implicit val context: Context = this
 
@@ -38,7 +39,8 @@ class SecureActivity extends AppCompatActivity {
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions += RootDetectionCheck() -> List(
+      val preferences = inject[GlobalPreferences]
+      checksAndActions += RootDetectionCheck(preferences) -> List(
         new WipeDataAction(),
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
