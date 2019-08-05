@@ -36,20 +36,14 @@ class RootDetectionCheck(preferences: GlobalPreferences)(implicit context: Conte
   override def isSatisfied: Future[Boolean] = wasPreviouslyRooted.map {
     case true => true
     case false =>
-      val startTime = System.currentTimeMillis()
-
       lazy val releaseTagsExist = getSystemProperty("ro.build.tags").contains("release-keys")
       lazy val otacertsExist = new File("/etc/security/otacerts.zip").exists()
       lazy val canRunSu = runCommand("su")
       val isDeviceRooted = !releaseTagsExist || !otacertsExist || canRunSu
 
-      val endTime = System.currentTimeMillis()
-      val elapsedTime = endTime - startTime
-
       if (isDeviceRooted) noteThatPhoneIsRooted()
 
-      verbose(l"isDeviceRooted: $isDeviceRooted. Took $elapsedTime ms")
-
+      verbose(l"isDeviceRooted: $isDeviceRooted")
       !isDeviceRooted
   }
 
