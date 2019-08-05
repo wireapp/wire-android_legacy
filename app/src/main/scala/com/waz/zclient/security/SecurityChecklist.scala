@@ -27,8 +27,12 @@ import scala.concurrent.Future
 class SecurityChecklist(list: List[(Check, List[Action])]) extends DerivedLogTag {
 
   def run(): Future[Boolean] = {
-    if (list.nonEmpty) info(l"Running security checks")
-    runChecks(list)
+    if (list.isEmpty) {
+      Future.successful(true)
+    } else {
+      info(l"Running security checks")
+      runChecks(list)
+    }
   }
 
   private def runChecks(checks: List[(Check, List[Action])]): Future[Boolean] = checks match {
