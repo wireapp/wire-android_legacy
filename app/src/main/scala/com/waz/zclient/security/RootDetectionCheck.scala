@@ -34,7 +34,7 @@ class RootDetectionCheck(preferences: GlobalPreferences)(implicit context: Conte
   extends SecurityChecklist.Check with Injectable with DerivedLogTag {
 
   override def isSatisfied: Future[Boolean] = wasPreviouslyRooted.map {
-    case true => true
+    case true => false
     case false =>
       lazy val releaseTagsExist = getSystemProperty("ro.build.tags").contains("release-keys")
       lazy val otacertsExist = new File("/etc/security/otacerts.zip").exists()
