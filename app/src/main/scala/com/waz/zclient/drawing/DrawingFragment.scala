@@ -28,12 +28,9 @@ import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view._
 import android.widget.{FrameLayout, TextView}
-import cats.data.OptionT
-import cats.instances.future._
 import com.waz.api.MemoryImageCache
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.ZMessaging
 import com.waz.service.assets2.{AssetService, Content, UriHelper}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -138,7 +135,6 @@ class DrawingFragment extends FragmentHelper
   private lazy val userPrefController = inject[IUserPreferencesController] //TODO replace with SE prefs
   private lazy val sensorManager      = inject[SensorManager]
   private lazy val uriHelper          = inject[UriHelper]
-  private lazy val assetService       = inject[AssetService]
   private lazy val accentColor        = inject[Signal[AccentColor]].map(_.color)
   private lazy val drawingDestination = getStringArg(ArgDrawingDestination).map(DrawingDestination.valueOf)
 
@@ -252,9 +248,7 @@ class DrawingFragment extends FragmentHelper
       v.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
         override def onMenuItemClick(item: MenuItem): Boolean =
           item.getItemId match {
-            case R.id.close =>
-              drawingDestination.foreach(inject[ScreenController].hideSketch ! _)
-              true
+            case R.id.close => onClose()
             case _ => false
           }
       })
@@ -380,6 +374,14 @@ class DrawingFragment extends FragmentHelper
       v.setBackground(ColorUtils.getRoundedTextBoxBackground(getContext, color, v.getHeight))
       if (MathUtils.floatEqual(v.getAlpha, TextAlphaInvisible)) drawSketchEditText()
     }
+  }
+
+  override def onBackPressed(): Boolean = onClose()
+
+  private def onClose(): Boolean = {
+    drawingDestination.foreach(inject[ScreenController].hideSketch ! _)
+    keyboardController.hideKeyboardIfVisible()
+    true
   }
 
   private def onEmojiClick(): Unit =
@@ -567,9 +569,6 @@ class DrawingFragment extends FragmentHelper
       })
     }
 
-  private def getBitmapDrawing =
-    drawingCanvasView.map(_.getBitmap)
-
   private def getFinalSketchBitmap: Option[Bitmap] =
     drawingCanvasView.map { v =>
       try {
@@ -595,28 +594,25 @@ class DrawingFragment extends FragmentHelper
     }
   }
 
-  def setBackgroundBitmap(showHint: Boolean): Unit = {
-    drawingViewTip.foreach { v =>
-      if (showHint) v.setText(getString(R.string.drawing__tip__picture__message))
-      else hideTip()
-    }
-
+  private def setBackgroundBitmap(showHint: Boolean): Unit = imageInput.foreach { input =>
     for {
-      z      <- OptionT.liftF(inject[Signal[ZMessaging]].head)
-      input  <- OptionT.fromOption(imageInput)
       is     <- input match {
-        case Left(content)  => OptionT.liftF(Future.fromTry(content.openInputStream(uriHelper)))
-        case Right(assetId) => OptionT.liftF(assetService.loadContentById(assetId).future)
-      }
-      bitmap = BitmapFactory.decodeStream(is)
-    } yield for {
-      cv  <- drawingCanvasView
-      tip <- drawingViewTip
-      bg  <- drawingTipBackground
+                  case Left(content)  =>
+                    Future.fromTry(content.openInputStream(uriHelper))
+                  case Right(assetId) =>
+                    inject[Signal[AssetService]].head.flatMap(_.loadContentById(assetId).future)
+                }
+      bitmap =  BitmapFactory.decodeStream(is)
+      cv     <- drawingCanvasView
+      tip    <- drawingViewTip
+      bg     <- drawingTipBackground
     } {
       includeBackgroundImage = true
       bg.setVisibility(if (showHint) View.VISIBLE else View.INVISIBLE)
-      tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
+      if (showHint) {
+        tip.setText(getString(R.string.drawing__tip__picture__message))
+        tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
+      } else hideTip()
       cv.setBackgroundBitmap(bitmap)
       drawingMethod match {
         case Some(DrawingMethod.EMOJI) => onEmojiClick()
@@ -624,7 +620,6 @@ class DrawingFragment extends FragmentHelper
         case _ =>
       }
     }
-
   }
 
   override def onScrollWidthChanged(width: Int): Unit = {}
