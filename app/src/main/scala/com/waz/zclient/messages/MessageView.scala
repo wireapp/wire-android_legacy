@@ -81,7 +81,9 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     msgId = msg.id
 
     import opts._
-    val isOneToOne = !isGroup
+    //if we have just added a user to a conversation with a bot, we shouldn't count this as oneToOne,
+    //so we check the members size also
+    val isOneToOne = !isGroup && mAndL.message.members.size <= 2
 
     val contentParts = {
       if (msg.msgType == Message.Type.MEMBER_JOIN && msg.firstMessage) {
