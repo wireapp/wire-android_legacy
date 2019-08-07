@@ -168,6 +168,9 @@
     <string translatable="false" name="pref_dev_check_push_token_title">Check Registered Push Token</string>
     <string translatable="false" name="pref_dev_check_push_token_summary">Trigger a job to compare the push token registered for the current user on the backend with the token we have stored locally</string>
 
+    <string translatable="false" name="pref_dev_check_check_rooted_device_title">Check If The Device Is Rooted</string>
+    <string translatable="false" name="pref_dev_check_check_rooted_device_summary">Calls a method performing a list of checks in order to figure out if the current device is rooted</string>
+
     <!--Account preferences-->
     <string translatable="false" name="pref_dev_category_sign_in_account_key">PREF_ACCOUNTS_SIGN_IN</string>
     <string translatable="false" name="pref_dev_category_sign_in_account_title">Sign into account</string>

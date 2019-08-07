@@ -63,6 +63,10 @@ public class DocumentResolver {
         add("png");
     }};
 
+    private final static List<String> BACKUP_EXTENSIONS = new ArrayList<String>() {{
+        add("android_wbu");
+    }};
+
     private final ContentResolver contentResolver;
 
     DocumentResolver(ContentResolver contentResolver) {
@@ -72,6 +76,11 @@ public class DocumentResolver {
     Uri getDocumentUri() {
         Log.i(TAG, "Received request for File");
         return fileQuery(WIRE_TESTING_FILES_DIRECTORY, FILE_EXTENSIONS);
+    }
+
+    Uri getBackupUri() {
+        Log.i(TAG, "Received request for Backup");
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, BACKUP_EXTENSIONS);
     }
 
     Uri getVideoUri() {

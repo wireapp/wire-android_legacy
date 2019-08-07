@@ -65,6 +65,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
   def setGlyph(glyphId: Int, backgroundId: Int = R.drawable.conversation_badge, textColor: Int = R.color.white): Unit = {
     setVisibility(View.VISIBLE)
     glyphView.setVisibility(View.VISIBLE)
+    textView.setVisibility(View.GONE)
+    styleKitView.setVisibility(View.GONE)
     setBackground(getDrawable(backgroundId))
     glyphView.setText(glyphId)
     glyphView.setTextColor(getColor(textColor))
@@ -73,6 +75,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
   def setText(text: String, backgroundId: Int = R.drawable.conversation_badge, textColor: Int = R.color.white): Unit = {
     setVisibility(View.VISIBLE)
     textView.setVisibility(View.VISIBLE)
+    glyphView.setVisibility(View.INVISIBLE)
+    styleKitView.setVisibility(View.INVISIBLE)
     setBackground(getDrawable(backgroundId))
     textView.setText(text)
     textView.setTextColor(getColor(textColor))
@@ -81,6 +85,8 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
   //TODO: remove glyphs and use this only
   def setStyleKitView(status: Status, backgroundId: Int = R.drawable.conversation_badge, iconColor: Int = R.color.white): Unit = {
     setVisibility(View.VISIBLE)
+    textView.setVisibility(View.INVISIBLE)
+    glyphView.setVisibility(View.INVISIBLE)
     setBackground(getDrawable(backgroundId))
     styleKitView.setVisibility(View.VISIBLE)
     styleKitView.setColor(getColor(iconColor))
@@ -131,6 +137,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
         setHidden()
     }
   }
+
 }
 
 class ConversationBadgeStyleKitView(context: Context, attrs: AttributeSet, style: Int) extends GenericStyleKitView(context, attrs, style) {

@@ -29,5 +29,6 @@
   "new_password_minimum_length": 8,
   "new_password_maximum_length": 120,
   "http_proxy_url": "none",
-  "http_proxy_port": "8888"
+  "http_proxy_port": "8888",
+    "block_on_jailbreak_or_root": false
 }

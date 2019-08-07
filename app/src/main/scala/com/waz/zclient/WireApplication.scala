@@ -183,6 +183,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
     bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
     bind [Signal[AssetStorage]]                  to inject[Signal[ZMessaging]].map(_.assetsStorage)
+    bind [Signal[AssetService]]                  to inject[Signal[ZMessaging]].map(_.assetService)
     bind [Signal[MessagesStorage]]               to inject[Signal[ZMessaging]].map(_.messagesStorage)
     bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
@@ -313,7 +314,7 @@ object WireApplication extends DerivedLogTag {
     bind[MessagePagedListController] to new MessagePagedListController()
   }
 
-  protected def clearOldVideoFiles(context: Context): Unit = {
+  def clearOldVideoFiles(context: Context): Unit = {
     val oneWeekAgo = Calendar.getInstance
     oneWeekAgo.add(Calendar.DAY_OF_YEAR, -7)
     Option(context.getExternalCacheDir).foreach { dir =>
