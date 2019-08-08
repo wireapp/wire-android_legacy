@@ -1,4 +1,4 @@
-/**
+  /**
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
  *
@@ -26,7 +26,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.api.{Message, NetworkMode}
-import com.waz.model.MessageContent
+import com.waz.model.{GeneralAssetId, MessageContent}
 import com.waz.model.messages.media.MediaAssetData
 import com.waz.service.NetworkModeService
 import com.waz.service.messages.MessageAndLikes
@@ -42,7 +42,10 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
-class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends RelativeLayout(context, attrs, style) with ClickableViewPart with ViewHelper {
+class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
+  extends RelativeLayout(context, attrs, style)
+    with ClickableViewPart with ViewHelper {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -50,20 +53,21 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.message_youtube_content)
 
-  val network = inject[NetworkModeService]
-  val browser = inject[BrowserController]
+  private lazy val network = inject[NetworkModeService]
+  private lazy val browser = inject[BrowserController]
 
-  val tvTitle: TextView         = findById(R.id.ttv__youtube_message__title)
-  val error: View               = findById(R.id.ttv__youtube_message__error)
-  val glyphView: GlyphTextView  = findById(R.id.gtv__youtube_message__play)
+  private lazy val tvTitle: TextView         = findById(R.id.ttv__youtube_message__title)
+  private lazy val error: View               = findById(R.id.ttv__youtube_message__error)
+  private lazy val glyphView: GlyphTextView  = findById(R.id.gtv__youtube_message__play)
 
-  val alphaOverlay = getResourceFloat(R.dimen.content__youtube__alpha_overlay)
+  private val alphaOverlay = getResourceFloat(R.dimen.content__youtube__alpha_overlay)
 
   private val content = Signal[MessageContent]()
   private val width = Signal[Int]()
 
-  val media = content map { _.richMedia.getOrElse(MediaAssetData.empty(Message.Part.Type.YOUTUBE)) }
-  val image = media.map(_.artwork).collect { case Some(id) => id}
+  private lazy val media: Signal[MediaAssetData] = content.map(_.richMedia.getOrElse(MediaAssetData.empty(Message.Part.Type.YOUTUBE)))
+  private lazy val image: Signal[GeneralAssetId] = media.map(_.artwork).collect{case Some(id) => id}
+
   val loadingFailed = Signal(false)
 
   image.onUi { id =>
@@ -71,21 +75,21 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
       .load(id)
       .apply(new RequestOptions().transform(new DarkenTransformation((alphaOverlay * 255).toInt)))
       .into(new CustomViewTarget[YouTubePartView, Drawable](this) {
-      override def onResourceCleared(placeholder: Drawable): Unit = {
-        loadingFailed ! false
-        setBackground(placeholder)
-      }
+        override def onResourceCleared(placeholder: Drawable): Unit = {
+          loadingFailed ! false
+          setBackground(placeholder)
+        }
 
-      override def onLoadFailed(errorDrawable: Drawable): Unit = {
-        loadingFailed ! true
-        setBackground(errorDrawable)
-      }
+        override def onLoadFailed(errorDrawable: Drawable): Unit = {
+          loadingFailed ! true
+          setBackground(errorDrawable)
+        }
 
-      override def onResourceReady(resource: Drawable, transition: Transition[_ >: Drawable]): Unit = {
-        loadingFailed ! false
-        setBackground(resource)
-      }
-    })
+        override def onResourceReady(resource: Drawable, transition: Transition[_ >: Drawable]): Unit = {
+          loadingFailed ! false
+          setBackground(resource)
+        }
+      })
   }
 
   val showError = loadingFailed.zip(network.networkMode).map { case (failed, mode) => failed && mode != NetworkMode.OFFLINE }
