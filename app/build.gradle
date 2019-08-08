@@ -23,7 +23,7 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingVersion = "142.0.2313"
+    zMessagingVersion = "142.0.0-SNAPSHOT"
     paging_version = "1.0.0"
 
     avsVersion = '4.9.170@aar'
@@ -32,7 +32,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.0.28@aar'
+    customAvsVersion = '5.0.35@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
