@@ -23,7 +23,7 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingVersion = "142.0.2308"
+    zMessagingVersion = "142.0.2316"
     paging_version = "1.0.0"
 
     avsVersion = '4.9.170@aar'
@@ -32,7 +32,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.0.28@aar'
+    customAvsVersion = '5.0.35@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -153,11 +153,9 @@ android {
         exclude 'lib/mips/librs.decode.so'
         exclude 'lib/mips/librsjni.so'
         exclude 'lib/mips/libRSSupport.so'
-        exclude 'lib/arm64-v8a/libjnidispatch.so'
         exclude 'lib/armeabi/libjnidispatch.so'
         exclude 'lib/mips/libjnidispatch.so'
         exclude 'lib/mips64/libjnidispatch.so'
-        exclude 'lib/x86_64/libjnidispatch.so'
     }
 
     testOptions {

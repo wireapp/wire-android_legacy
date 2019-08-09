@@ -104,6 +104,8 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
             val contentWithOG = msg.content.filter(_.openGraph.isDefined)
             if (contentWithOG.size == 1 && msg.content.size == 1)
               msg.content.map(content => PartDesc(MsgPart(content.tpe), Some(content)))
+            else if (msg.content.headOption.nonEmpty && msg.content.head.tpe.equals(Message.Part.Type.YOUTUBE) && msg.content.size == 1)
+                Seq(PartDesc(MsgPart(msg.content.head.tpe), Some(msg.content.head)))
             else
               Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ contentWithOG.map(content => PartDesc(MsgPart(content.tpe), Some(content))).filter(_.tpe == WebLink)
           }
