@@ -18,13 +18,10 @@
 package com.waz.zclient.messages.parts
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, RelativeLayout, TextView}
+import android.widget.{ImageView, LinearLayout, RelativeLayout, TextView}
 import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.transition.Transition
 import com.waz.api.{Message, NetworkMode}
 import com.waz.model.{GeneralAssetId, MessageContent}
 import com.waz.model.messages.media.MediaAssetData
@@ -59,6 +56,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val tvTitle: TextView         = findById(R.id.ttv__youtube_message__title)
   private lazy val error: View               = findById(R.id.ttv__youtube_message__error)
   private lazy val glyphView: GlyphTextView  = findById(R.id.gtv__youtube_message__play)
+  private lazy val previewImage: ImageView   = findById(R.id.gtv__youtube_message__preview)
 
   private val alphaOverlay = getResourceFloat(R.dimen.content__youtube__alpha_overlay)
 
@@ -74,22 +72,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
     WireGlide(context)
       .load(id)
       .apply(new RequestOptions().transform(new DarkenTransformation((alphaOverlay * 255).toInt)))
-      .into(new CustomViewTarget[YouTubePartView, Drawable](this) {
-        override def onResourceCleared(placeholder: Drawable): Unit = {
-          loadingFailed ! false
-          setBackground(placeholder)
-        }
-
-        override def onLoadFailed(errorDrawable: Drawable): Unit = {
-          loadingFailed ! true
-          setBackground(errorDrawable)
-        }
-
-        override def onResourceReady(resource: Drawable, transition: Transition[_ >: Drawable]): Unit = {
-          loadingFailed ! false
-          setBackground(resource)
-        }
-      })
+      .into(previewImage)
   }
 
   val showError = loadingFailed.zip(network.networkMode).map { case (failed, mode) => failed && mode != NetworkMode.OFFLINE }
