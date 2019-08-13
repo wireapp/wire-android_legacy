@@ -23,16 +23,16 @@ import java.security.MessageDigest
 import android.graphics._
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.returning
 import com.waz.zclient.ui.utils.TypefaceUtils
 
-class GlyphOverlayTransformation(glyph: String) extends BitmapTransformation {
+class GlyphOverlayTransformation(glyph: String) extends BitmapTransformation with DerivedLogTag {
 
-  private implicit val Tag: String = ZLog.ImplicitTag.implicitLogTag + s"-$glyph"
-  private implicit val TagBytes: Array[Byte] = Tag.getBytes(Charset.forName("UTF-8"))
+  private val Tag: String = logTag.value + s"-$glyph"
+  private val TagBytes: Array[Byte] = Tag.getBytes(Charset.forName("UTF-8"))
 
-  private val darkenPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)){ p =>
+  private val darkenPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { p =>
     p.setColor(Color.BLACK)
     p.setAlpha(65)
   }

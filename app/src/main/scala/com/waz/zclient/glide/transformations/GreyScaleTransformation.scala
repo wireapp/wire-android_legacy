@@ -23,13 +23,13 @@ import java.security.MessageDigest
 import android.graphics._
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.returning
 
-class GreyScaleTransformation extends BitmapTransformation{
+class GreyScaleTransformation extends BitmapTransformation with DerivedLogTag {
 
-  private implicit val Tag: String = ZLog.ImplicitTag.implicitLogTag
-  private implicit val TagBytes: Array[Byte] = Tag.getBytes(Charset.forName("UTF-8"))
+  private val Tag: String = logTag.value
+  private val TagBytes: Array[Byte] = Tag.getBytes(Charset.forName("UTF-8"))
 
   override def transform(pool: BitmapPool, toTransform: Bitmap, outWidth: Int, outHeight: Int): Bitmap = {
     val bitmap = pool.get(outWidth, outHeight, Bitmap.Config.ARGB_8888)
