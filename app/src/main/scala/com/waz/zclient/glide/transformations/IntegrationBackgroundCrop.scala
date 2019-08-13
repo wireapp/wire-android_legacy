@@ -24,13 +24,13 @@ import android.graphics.Paint.Join
 import android.graphics._
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.returning
 
-class IntegrationBackgroundCrop extends BitmapTransformation {
+class IntegrationBackgroundCrop extends BitmapTransformation with DerivedLogTag {
 
-  private implicit val Tag: String = ZLog.ImplicitTag.implicitLogTag
-  private implicit val TagBytes: Array[Byte] = Tag.getBytes(Charset.forName("UTF-8"))
+  private val Tag: String = logTag.value
+  private val TagBytes: Array[Byte] = Tag.getBytes(Charset.forName("UTF-8"))
 
   private val circlePaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG))(_.setColor(Color.WHITE))
   private val borderPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { p =>
@@ -56,9 +56,9 @@ class IntegrationBackgroundCrop extends BitmapTransformation {
     val canvas = new Canvas(bitmap)
     val targetRect = new RectF(canvas.getClipBounds)
     targetRect.inset(strokeWidth, strokeWidth)
-    canvas.drawRoundRect(targetRect, radius,radius, circlePaint)
+    canvas.drawRoundRect(targetRect, radius, radius, circlePaint)
     canvas.drawBitmap(toTransform, dx, dy, bitmapPaint)
-    canvas.drawRoundRect(targetRect, radius,radius, borderPaint)
+    canvas.drawRoundRect(targetRect, radius, radius, borderPaint)
     canvas.setBitmap(null)
 
     bitmap
