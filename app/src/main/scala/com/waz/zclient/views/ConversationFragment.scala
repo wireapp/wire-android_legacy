@@ -506,17 +506,18 @@ class ConversationFragment extends FragmentHelper {
         })
     }
 
-    override def onSketchOnPreviewPicture(input: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
+    override def onSketchOnPreviewPicture(input: Content, method: IDrawingController.DrawingMethod): Unit = {
       screenController.showSketch ! Sketch.cameraPreview(input, method)
       extendedCursorContainer.foreach(_.close(true))
     }
 
-    override def onSendPictureFromPreview(image: Content, source: ImagePreviewLayout.Source): Unit = {
-      convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", image))
-      extendedCursorContainer.foreach(_.close(true))
-      onCancelPreview()
+    override def onSendPictureFromPreview(image: Content): Unit =
+      convController.rotateImageIfNeeded(image).foreach { preparedImage =>
+        convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", preparedImage))
+        extendedCursorContainer.foreach(_.close(true))
+        onCancelPreview()
+      }
     }
-  }
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
     override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URIWrapper): Unit = intentType match {
@@ -535,7 +536,7 @@ class ConversationFragment extends FragmentHelper {
             )
         }
       case AssetIntentsManager.IntentType.GALLERY =>
-        showImagePreview { _.setImage(uri, ImagePreviewLayout.Source.DeviceGallery) }
+        showImagePreview { _.setImage(uri) }
       case _ =>
         convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
         navigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
@@ -623,19 +624,13 @@ class ConversationFragment extends FragmentHelper {
 
           override def onGalleryPictureSelected(uri: URIWrapper): Unit = {
             previewShown ! true
-            showImagePreview {
-              _.setImage(uri, ImagePreviewLayout.Source.InAppGallery)
-            }
+            showImagePreview { _.setImage(uri) }
           }
 
-          override def openGallery(): Unit = assetIntentsManager.foreach {
-            _.openGallery()
-          }
+          override def openGallery(): Unit = assetIntentsManager.foreach { _.openGallery() }
 
           override def onPictureTaken(imageData: Array[Byte], isMirrored: Boolean): Unit =
-            showImagePreview {
-              _.setImage(imageData, isMirrored)
-            }
+            showImagePreview { _.setImage(imageData, isMirrored) }
         }))
       case _ =>
         verbose(l"openExtendedCursor(unknown)")

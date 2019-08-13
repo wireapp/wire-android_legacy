@@ -225,8 +225,11 @@ class ConversationManagerFragment extends FragmentHelper
 
   override def onBitmapSelected(content: Content, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.MESSAGE) {
-      inject[ConversationController].sendAssetMessage(ContentForUpload(s"photo_${AESKey().str}", content))
-      cameraController.closeCamera(CameraContext.MESSAGE)
+      val convController = inject[ConversationController]
+      convController.rotateImageIfNeeded(content).foreach { photo =>
+        convController.sendAssetMessage(ContentForUpload(s"photo_${AESKey().str}", photo))
+        cameraController.closeCamera(CameraContext.MESSAGE)
+      }
   }
 
   override def onOpenCamera(cameraContext: CameraContext): Unit =

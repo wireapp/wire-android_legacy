@@ -40,6 +40,7 @@ class AndroidImageRecoder extends ImageRecoder {
     val opts = new BitmapFactory.Options()
     opts.inJustDecodeBounds = false
     opts.inSampleSize = scaleFactor
+    opts.inPreferredConfig = com.waz.zclient.utils.BitmapOptions.inPreferredConfig
 
     if (scaleFactor <= 1) {
       val resizingSuccessful = IoUtils.withResource(source()) { in =>
@@ -48,17 +49,16 @@ class AndroidImageRecoder extends ImageRecoder {
         if (success) IoUtils.withResource(target())(resized.compress(compressFormat, 75, _))
         success
       }
-      //TODO What should we do in this case?
-//      if (!resizingSuccessful) {
-//        IoUtils.withResources(source(), target())(IoUtils.copy)
-//      }
+      // if resizing failed we just copy the source to the target
+      if (!resizingSuccessful) {
+        IoUtils.withResources(source(), target())(IoUtils.copy)
+      }
     } else {
       IoUtils.withResources(source(), target()) { (in, out) =>
         val resized = BitmapFactory.decodeStream(in, null, opts)
         resized.compress(compressFormat, 75, out)
       }
     }
-
   }
 
 }

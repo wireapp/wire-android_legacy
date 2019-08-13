@@ -20,7 +20,8 @@ package com.waz.zclient
 import java.util.Locale
 
 import android.graphics.drawable.{Drawable, LayerDrawable}
-import android.graphics.{Canvas, LightingColorFilter, RectF}
+import android.graphics.{Bitmap => AndroidBitmap, _}
+import android.support.media.ExifInterface
 import android.support.v7.preference.Preference
 import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import android.text.{Editable, TextWatcher}
@@ -36,12 +37,12 @@ import com.waz.zclient.paintcode.WireDrawable
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
-
-import scala.concurrent.duration._
-
-import scala.language.implicitConversions
 import io.reactivex.functions.Consumer
 import kotlin.jvm.functions.{Function0, Function1}
+
+import scala.concurrent.duration._
+import scala.language.implicitConversions
+import scala.util.Try
 
 package object utils {
 
@@ -312,5 +313,32 @@ package object utils {
     implicit def toConsumer[T](f: T => Unit): Consumer[T] = new Consumer[T] {
       def accept(t: T): Unit = f(t)
     }
+  }
+
+  def currentRotation(path: String): Int = Try(rotation(new ExifInterface(path))).getOrElse(0)
+
+  def rotate(path: String, rotation: Int): Try[AndroidBitmap] =
+    Try(BitmapFactory.decodeFile(path, BitmapOptions)).map(rotate(_, rotation))
+
+  def rotateIfNeeded(bitmap: AndroidBitmap, path: String): Try[AndroidBitmap] = Try {
+    val cr = currentRotation(path)
+    if (cr == 0) bitmap else rotate(bitmap, cr)
+  }
+
+  private def rotation(exif: ExifInterface): Int = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL) match {
+    case ExifInterface.ORIENTATION_ROTATE_90  => 90
+    case ExifInterface.ORIENTATION_ROTATE_180 => 180
+    case ExifInterface.ORIENTATION_ROTATE_270 => 270
+    case _                                    => 0
+  }
+
+  private def rotate(bitmap: AndroidBitmap, rotation: Int): AndroidBitmap = {
+    val matrix = new Matrix()
+    matrix.postRotate(rotation)
+    AndroidBitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth, bitmap.getHeight, matrix, true)
+  }
+
+  val BitmapOptions: BitmapFactory.Options = returning(new BitmapFactory.Options) {
+    _.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565
   }
 }
