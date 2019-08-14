@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.preferences.pages
 
-import android.app.Activity
+import android.app.{Activity, FragmentTransaction}
 import android.content.pm.PackageManager
 import android.content.{Context, Intent}
 import android.os.Bundle
@@ -27,16 +27,17 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{UiLifeCycle, ZMessaging}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.utils.returning
 import com.waz.zclient.common.views.MenuRowButton
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.preferences.dialogs.BackupPasswordDialog
 import com.waz.zclient.preferences.pages.BackupExportView._
 import com.waz.zclient.utils.{BackStackKey, ContextUtils, ExternalFileSharing, ViewUtils}
-import com.waz.zclient.{BuildConfig, R, SpinnerController, ViewHelper}
+import com.waz.zclient._
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
@@ -56,7 +57,20 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
 
   private val backupButton = findById[MenuRowButton](R.id.backup_button)
 
-  backupButton.setOnClickProcess(backupData, showSpinner = false)
+  //backupButton.setOnClickProcess(backupData, showSpinner = false)
+  backupButton.setOnClickProcess(requestPassword())
+
+  def requestPassword(): Future[Unit] = {
+    val fragment = returning(new BackupPasswordDialog)(_.onPasswordEntered{p => verbose(l"Got password: $p")})
+    context.asInstanceOf[BaseActivity]
+      .getSupportFragmentManager
+      .beginTransaction
+      .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+      .add(fragment, BackupPasswordDialog.FragmentTag)
+      .addToBackStack(BackupPasswordDialog.FragmentTag)
+      .commit
+    Future.successful(())
+  }
 
   private def backupData: Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
@@ -65,7 +79,6 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     val backupProcess = for {
       z                <- zms.head
       Some(accManager) <- z.accounts.activeAccountManager.head
-      _                <- CancellableFuture.delay(2000.millis).future
       res              <- accManager.exportDatabase
       _                <- lifecycle.uiActive.collect{ case true => () }.head
     } yield res
