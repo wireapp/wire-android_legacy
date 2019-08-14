@@ -18,9 +18,7 @@
 package com.waz.zclient.assets2
 
 import android.content.Context
-import android.graphics.Bitmap.CompressFormat
 import android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC
-import com.waz.model.Mime
 import com.waz.model.errors.{NotFoundLocal, NotSupportedError}
 import com.waz.service.assets2.Asset.Video
 import com.waz.service.assets2._
@@ -30,26 +28,19 @@ import scala.concurrent.{ExecutionContext, Future}
 class AssetPreviewServiceImpl(implicit context: Context, ec: ExecutionContext) extends AssetPreviewService {
   import MetadataExtractionUtils._
 
-  override def extractPreview(rawAsset: UploadAsset, content: PreparedContent): Future[Content] = {
+  override def extractPreview(rawAsset: UploadAsset, content: PreparedContent): Future[Content] =
     rawAsset.details match {
       case _: Video => extractVideoPreview(rawAsset, content)
-      case _ => Future.failed(NotSupportedError(s"Preview extraction for $rawAsset not supported"))
+      case _        => Future.failed(NotSupportedError(s"Preview extraction for $rawAsset not supported"))
     }
-  }
 
-  def extractVideoPreview(uploadAsset: UploadAsset, content: PreparedContent): Future[Content] = {
+  def extractVideoPreview(uploadAsset: UploadAsset, content: PreparedContent): Future[Content] =
     Future(asSource(content)).flatMap { source =>
       createMetadataRetriever(source).acquire { retriever =>
         Option(retriever.getFrameAtTime(-1L, OPTION_CLOSEST_SYNC)) match {
-          case None =>
-            Future.failed(NotFoundLocal(s"Can not extract video preview for $uploadAsset"))
-          case Some(frame) =>
-            val compressedFrame = ImageCompressUtils.compress(frame, CompressFormat.JPEG)
-            val content = Content.Bytes(Mime.Image.Jpg, compressedFrame)
-            Future.successful(content)
+          case Some(frame) => Future.successful(ImageCompressUtils.toJpg(frame))
+          case None =>        Future.failed(NotFoundLocal(s"Can not extract video preview for $uploadAsset"))
         }
       }
     }
-  }
-
 }

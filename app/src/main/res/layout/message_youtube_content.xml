@@ -24,7 +24,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <com.waz.zclient.ui.text.GlyphTextView
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:layout_marginStart="@dimen/content__padding_left"
+        android:layout_marginEnd="@dimen/content__padding_right"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        >
+
+        <ImageView
+            android:id="@+id/gtv__youtube_message__preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:visibility="visible"
+            android:adjustViewBounds="true"
+            />
+
+        <com.waz.zclient.ui.text.GlyphTextView
         android:id="@+id/gtv__youtube_message__play"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -34,46 +51,44 @@
         android:text="@string/glyph__play"
         />
 
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__youtube_message__error"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:paddingTop="@dimen/content__youtube__error_text__padding_top"
-        android:textSize="@dimen/wire__text_size__small"
-        android:textColor="@color/content__youtube__error_indicator"
-        android:text="@string/content__youtube__error__text"
-        app:w_font="@string/content__youtube__error__font"
-        app:transform="@string/content__youtube__error__text__transform"
-        />
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__youtube_message__error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:paddingTop="@dimen/content__youtube__error_text__padding_top"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="@color/content__youtube__error_indicator"
+            android:text="@string/content__youtube__error__text"
+            app:w_font="@string/content__youtube__error__font"
+            app:transform="@string/content__youtube__error__text__transform"
+            />
 
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/ttv__youtube_message__title"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="@color/content__youtube__text"
+            android:lines="2"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            app:w_font="@string/wire__typeface__light"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:layout_margin="@dimen/content__youtube__title__padding"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            />
 
-    <ImageView
-        android:id="@+id/youtube_logo"
-        android:src="@drawable/youtube_logo"
-        android:scaleType="fitXY"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="@dimen/content__youtube__logo__padding_top"
-        android:layout_marginRight="@dimen/content__youtube__logo__padding_right"
-        android:layout_width="@dimen/content__youtube__logo__width"
-        android:layout_height="@dimen/content__youtube__logo__height"
-        />
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__youtube_message__title"
-        android:textSize="@dimen/wire__text_size__regular"
-        android:textColor="@color/content__youtube__text"
-        android:lines="2"
-        android:ellipsize="end"
-        android:includeFontPadding="false"
-        app:w_font="@string/wire__typeface__light"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@id/youtube_logo"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:layout_margin="@dimen/content__youtube__logo__padding_top"
-        />
-
+        <ImageView
+            android:id="@+id/youtube_logo"
+            android:src="@drawable/youtube_logo"
+            android:scaleType="fitXY"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="@dimen/content__youtube__logo__padding"
+            android:layout_marginBottom="@dimen/content__youtube__logo__padding"
+            android:layout_width="@dimen/content__youtube__logo__width"
+            android:layout_height="@dimen/content__youtube__logo__height"
+            />
+    </RelativeLayout>
 </merge>
