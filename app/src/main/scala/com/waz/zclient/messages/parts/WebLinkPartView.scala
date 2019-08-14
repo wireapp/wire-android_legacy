@@ -29,7 +29,7 @@ import com.bumptech.glide.request.target.ImageViewTarget
 import com.waz.api.Message.Part
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LinkPreview
-import com.waz.model._
+import com.waz.model.{AssetData, AssetId, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.waz.threading.Threading

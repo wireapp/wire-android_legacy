@@ -23,7 +23,6 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingVersion = "142.0.2337"
     paging_version = "1.0.0"
 
     avsVersion = '5.1.186@aar'
@@ -37,8 +36,6 @@ ext {
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 
-    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + buildSuffixForVersion(zMessagingVersion))
-    zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
 }
 
 if (project.file('user.gradle').exists()) {
@@ -100,6 +97,7 @@ android {
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
+
     }
 
     preBuild.dependsOn(copyCustomResources)
@@ -314,6 +312,8 @@ dependencies {
     implementation "org.scala-lang:scala-reflect:$scalaVersion"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
 
+    implementation "com.chuusai:shapeless_2.11:2.3.3"
+
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
     //don't include wire translations for custom builds
@@ -340,8 +340,8 @@ dependencies {
     //implementation (name:'zmessaging-android', ext:'aar')
 
     implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
-    implementation("com.wire:zmessaging-android:${internal ? zMessagingDevVersion : zMessagingReleaseVersion}") {
-        transitive = true
+    api(project(':wire-android-sync-engine:zmessaging')) {
+        exclude group: 'com.wire', module: 'avs'
     }
 
     //support libraries
@@ -380,7 +380,10 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'com.evernote:android-job:1.2.6'
     implementation 'com.jakewharton.timber:timber:4.7.0'
-    implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'
+    implementation('com.jakewharton.threetenabp:threetenabp:1.1.0') {
+        exclude group: 'org.threeten', module: 'threetenbp'
+    }
+    implementation 'org.threeten:threetenbp:1.3.8'
     implementation 'com.facebook.rebound:rebound:0.3.8'
     implementation 'com.atlassian.commonmark:commonmark:0.11.0'
     implementation 'net.java.dev.jna:jna:4.4.0@aar'
@@ -462,3 +465,4 @@ android.applicationVariants.all { variant ->
         output.outputFileName = new File("../..", newApkName)
     }
 }
+

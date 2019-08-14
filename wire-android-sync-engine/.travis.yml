@@ -1,0 +1,33 @@
+language: android
+android:
+  components:
+      #Tools required twice for versions >= 24 : https://docs.travis-ci.com/user/languages/android/#Overview
+      - tools
+      - platform-tools
+      - tools
+      - android-26
+      - extra-android-support
+      - extra-android-m2repository
+      - extra-google-m2repository
+      - extra-google-google_play_services
+
+jdk:
+  - oraclejdk8
+
+dist: precise
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot
+
+before_cache:
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt -name "*.lock" -delete
+
+before_install:
+  - wget https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.12/sbt-launch.jar
+  - export SBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled"
+
+script: ./travis_large.sh
