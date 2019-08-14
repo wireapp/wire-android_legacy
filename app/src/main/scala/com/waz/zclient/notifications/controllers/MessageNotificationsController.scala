@@ -71,7 +71,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
-  private lazy val userPrefs             = inject[UserPreferences]
+  private lazy val userPrefs             = inject[Signal[UserPreferences]]
 
   override val notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]] =
     for {
@@ -298,7 +298,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       }
       convName <- getConvName(account, n).map(_.getOrElse(Name.Empty))
       userName <- getUserName(account, n).map(_.getOrElse(Name.Empty))
-      messagePreview <- userPrefs.preference(UserPreferences.MessagePreview).apply()
+      messagePreview <- userPrefs.flatMap(_.preference(UserPreferences.MessagePreview).signal).head
     } yield {
       val body = n.msgType match {
         case _ if n.ephemeral && n.isSelfMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
