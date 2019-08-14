@@ -506,9 +506,10 @@ class ConversationFragment extends FragmentHelper {
         })
     }
 
-    override def onSketchOnPreviewPicture(input: Content, method: IDrawingController.DrawingMethod): Unit = {
-      screenController.showSketch ! Sketch.cameraPreview(input, method)
-      extendedCursorContainer.foreach(_.close(true))
+    override def onSketchOnPreviewPicture(input: Content, method: IDrawingController.DrawingMethod): Unit =
+      convController.rotateImageIfNeeded(input).foreach { preparedInput =>
+        screenController.showSketch ! Sketch.cameraPreview(preparedInput, method)
+        extendedCursorContainer.foreach(_.close(true))
     }
 
     override def onSendPictureFromPreview(image: Content): Unit =

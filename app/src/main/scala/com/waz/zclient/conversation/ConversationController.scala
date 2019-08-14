@@ -233,10 +233,12 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                }
     } yield msgs
 
-  def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] = {
-    val content = ContentForUpload(assetName, ImageCompressUtils.toJpg(bitmap))
-    convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
-  }
+  def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] =
+    for {
+      img     <- Future { ImageCompressUtils.toJpg(bitmap) }(Threading.Background)
+      content =  ContentForUpload(assetName, img)
+      data    <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
+    } yield data
 
   def sendAssetMessage(uri:      URI,
                        activity: Activity,
