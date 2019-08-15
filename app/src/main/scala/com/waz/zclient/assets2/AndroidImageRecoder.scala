@@ -47,7 +47,13 @@ class AndroidImageRecoder extends ImageRecoder with DerivedLogTag {
 
       val resized = IoUtils.withResource(source()) { in => BitmapFactory.decodeStream(in, null, opts) }
       IoUtils.withResource(target()) { out => resized.compress(compressFormat, 75, out) }
-    } else
-      IoUtils.copy(source(), target())
+    } else {
+      // If we don't want to downscale the image, we still need to copy it to the target.
+      // It needs to be done in two steps because sometimes the source and the target point to the same data,
+      // so we have to first read it fully and only then write it.
+      // TODO: Fix it. If no change is needed we should be able to simply use the source as the target.
+      val array = IoUtils.withResource(source())(IoUtils.toByteArray)
+      IoUtils.withResource(target()) (_.write(array))
+    }
   }
 }
