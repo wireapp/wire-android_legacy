@@ -21,10 +21,10 @@ import java.util.Timer
 import java.util.concurrent.{Executor, ExecutorService, Executors}
 
 import android.os.{Handler, HandlerThread, Looper}
-import com.waz.log.LogSE._
-import com.waz.api.ZmsVersion
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.LogSE._
 import com.waz.utils.returning
+import com.waz.zms.BuildConfig
 
 import scala.concurrent.{ExecutionContext, Future, Promise, blocking}
 import scala.util.control.NonFatal
@@ -38,7 +38,7 @@ object Threading {
     implicit lazy val BlockingIO: ExecutionContext = Threading.BlockingIO
   }
 
-  var AssertsEnabled = ZmsVersion.DEBUG
+  var AssertsEnabled = BuildConfig.DEBUG
 
   val Cpus = math.max(2, Runtime.getRuntime.availableProcessors())
 

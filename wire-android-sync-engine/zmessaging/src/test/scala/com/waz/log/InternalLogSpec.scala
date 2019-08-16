@@ -19,14 +19,13 @@ package com.waz.log
 
 import java.io.{BufferedReader, File, FileInputStream, InputStreamReader}
 
-import com.waz.api.ZmsVersion
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.IoUtils
+import com.waz.zms.BuildConfig
 import org.scalatest.Ignore
 
-import scala.util.Random
 import scala.collection.JavaConversions._
 
 //TODO Revisit it
@@ -168,7 +167,7 @@ class InternalLogSpec extends AndroidFreeSpec with DerivedLogTag {
   feature("connecting with ZLog") {
 
     scenario("receives logs written to ZLog") {
-      if (ZmsVersion.DEBUG) {
+      if (BuildConfig.DEBUG) {
         val log = new BufferedLogOutput(tempDir)
         InternalLog.add(log)
         log.empty shouldEqual(true)

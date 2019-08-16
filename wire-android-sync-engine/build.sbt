@@ -8,8 +8,6 @@
 //
 //import scala.util.Random
 //
-//val MajorVersion = "142"
-//val MinorVersion = "0" // hotfix release
 //
 //lazy val buildType =
 //    sys.props.getOrElse("build_type", "local").toLowerCase match {
@@ -21,19 +19,8 @@
 //            s"set the sbt flag -Dbuild_type to either 'dev', 'release' or 'pr'. ")
 //    }
 //
-//lazy val buildNumber = sys.props.getOrElse("build_number", "0")
 //lazy val isRelease = buildType == "release"
-//lazy val isDev = buildType == "dev"
-//lazy val isPR = buildType == "pr"
 //lazy val isDebug = !isRelease
-//
-//version in ThisBuild := {
-//    val fullVersion = MajorVersion + "." + MinorVersion + "." + buildNumber
-//    if (isRelease) fullVersion
-//    else if (isDev) fullVersion + "-DEV"
-//    else if (isPR) fullVersion + "-PR"
-//    else fullVersion + "-SNAPSHOT"
-//}
 //
 //crossPaths in ThisBuild := false
 //organization in ThisBuild := "com.wire"
@@ -90,30 +77,29 @@
 //    )
 //
 //lazy val zmessaging = project
-//    .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
-//    .settings(publishSettings: _*)
-//    .dependsOn(macrosupport)
-//    .enablePlugins(AndroidLib)
-//    .settings(
-//        name := "zmessaging-android",
-//        fork := true,
-//        crossPaths := false,
-//        platformTarget := "android-24",
-//        lintDetectors := Seq(ApiDetector.UNSUPPORTED),
-//        lintStrict := true,
-//        libraryProject := true,
-//        typedResources := false,
-//        sourceGenerators in Compile += generateZmsVersion.taskValue,
-//        ndkAbiFilter := Seq("armeabi-v7a", "x86", "arm64-v8a", "x86_64"),
-//        nativeLibs in Global := {
-//            val target = crossTarget.value / "native-libs"
-//            target.mkdirs()
-//            val archives = update.value.select(configurationFilter(Native.name))
-//            archives.foreach { archive =>
-//                Seq("tar", "xzf", archive.absolutePath, "-C", target.absolutePath, "lib", "libs/osx", "libs/x86").!
-//            }
-//            target.listFiles().filter(_.isFile).foreach(_.delete())
-//            IO.move((target ** "lib*.*").pair(f => Some(target / f.getName)))
+//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
+//  .settings(publishSettings: _*)
+//  .dependsOn(macrosupport)
+//  .enablePlugins(AndroidLib)
+//  .settings(
+//    name := "zmessaging-android",
+//    fork := true,
+//    crossPaths := false,
+//    platformTarget := "android-24",
+//    lintDetectors := Seq(ApiDetector.UNSUPPORTED),
+//    lintStrict := true,
+//    libraryProject := true,
+//    typedResources := false,
+//    ndkAbiFilter := Seq("armeabi-v7a", "x86", "arm64-v8a", "x86_64"),
+//    nativeLibs in Global := {
+//      val target = crossTarget.value / "native-libs"
+//      target.mkdirs()
+//      val archives = update.value.select(configurationFilter(Native.name))
+//      archives .foreach { archive =>
+//        Seq("tar", "xzf", archive.absolutePath, "-C", target.absolutePath, "lib", "libs/osx", "libs/x86").!
+//      }
+//      target.listFiles().filter(_.isFile).foreach(_.delete())
+//      IO.move((target ** "lib*.*").pair(f => Some(target / f.getName)))
 //
 //            val jni = collectJni.value.flatMap(d => Seq(d / "x86", d / "osx"))
 //
@@ -203,21 +189,6 @@
 //        )
 //    )
 //
-//generateZmsVersion in zmessaging := {
-//    val file = (sourceManaged in Compile in zmessaging).value / "com" / "waz" / "api" / "ZmsVersion.java"
-//    val content =
-//        """package com.waz.api;
-//          |
-//          |public class ZmsVersion {
-//          |   public static final String ZMS_VERSION = "%s";
-//          |   public static final int ZMS_MAJOR_VERSION = %s;
-//          |   public static final boolean DEBUG = %b;
-//          |}
-//        """.stripMargin.format(version.value, MajorVersion, isDebug)
-//    IO.write(file, content)
-//    Seq(file)
-//}
-//
 //generateDebugMode in macrosupport := {
 //    val file = (sourceManaged in Compile in macrosupport).value / "com" / "waz" / "DebugMode.scala"
 //    val content =
@@ -241,7 +212,6 @@
 //    _ -> GPLv3("2016", "Wire Swiss GmbH")
 //}(collection.breakOut)
 //lazy val androidSdkDir = settingKey[File]("Android sdk dir from ANDROID_HOME")
-//lazy val generateZmsVersion = taskKey[Seq[File]]("generate ZmsVersion.java")
 //lazy val generateDebugMode = taskKey[Seq[File]]("generate DebugMode.scala")
 //lazy val generateCredentials = taskKey[Seq[File]]("generate InternalCredentials.scala")
 //lazy val actorsResources = taskKey[File]("Creates resources zip for remote actor")

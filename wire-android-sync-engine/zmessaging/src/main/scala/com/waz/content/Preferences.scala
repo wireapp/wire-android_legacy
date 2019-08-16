@@ -19,7 +19,6 @@ package com.waz.content
 
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.{Context, SharedPreferences}
-import com.waz.api.ZmsVersion
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.log.BasicLogging.LogTag
@@ -35,6 +34,7 @@ import com.waz.threading.{DispatchQueue, SerialDispatchQueue, Threading}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.{CachedStorageImpl, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
+import com.waz.zms.BuildConfig
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 
@@ -380,7 +380,7 @@ object GlobalPreferences {
 
   lazy val ShouldCreateFullConversation = PrefKey[Boolean]("should_create_full_conv", customDefault = false)
 
-  lazy val LogsEnabled: PrefKey[Boolean] = PrefKey[Boolean]("save_local_logs", customDefault = ZmsVersion.DEBUG)
+  lazy val LogsEnabled: PrefKey[Boolean] = PrefKey[Boolean]("save_local_logs", customDefault = BuildConfig.DEBUG)
 
   lazy val RootDetected: PrefKey[Boolean] = PrefKey[Boolean]("root_detected", customDefault = false)
 
@@ -427,7 +427,6 @@ object UserPreferences {
   lazy val SpotifyRefreshToken              = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
 
   lazy val OtrLastPrekey                    = PrefKey[Int]        ("otr_last_prekey_id")
-  lazy val ClientRegVersion                 = PrefKey[Int]        ("otr_client_reg_version")
   lazy val LastStableNotification           = PrefKey[Option[Uid]]("last_notification_id")
 
   lazy val LastSelfClientsSyncRequestedTime = PrefKey[Long]("last_self_clients_sync_requested")

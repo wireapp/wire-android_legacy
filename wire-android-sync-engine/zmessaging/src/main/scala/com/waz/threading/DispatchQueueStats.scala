@@ -17,14 +17,14 @@
  */
 package com.waz.threading
 
-import com.waz.api.ZmsVersion
+import com.waz.zms.BuildConfig
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
 object DispatchQueueStats {
 
-  val Debug = ZmsVersion.DEBUG
+  val Debug = BuildConfig.DEBUG
 
   val stats = new mutable.HashMap[String, QueueStats]
 

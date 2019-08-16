@@ -18,12 +18,11 @@
 package com.waz.service
 
 import java.io.File
-import java.util.concurrent.Executors
 import java.net.Proxy
+import java.util.concurrent.Executors
 
 import android.content.{Context => AContext}
 import com.softwaremill.macwire._
-import com.waz.api.ZmsVersion
 import com.waz.bitmap.BitmapDecoder
 import com.waz.bitmap.video.VideoTranscoder
 import com.waz.cache.CacheService
@@ -45,8 +44,9 @@ import com.waz.threading.Threading
 import com.waz.ui.MemoryImageCache
 import com.waz.ui.MemoryImageCache.{Entry, Key}
 import com.waz.utils.crypto.{LibSodiumUtils, LibSodiumUtilsImpl}
-import com.waz.utils.{Cache, IoUtils}
 import com.waz.utils.wrappers.{Context, GoogleApi}
+import com.waz.utils.{Cache, IoUtils}
+import com.waz.zms.BuildConfig
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, RequestInterceptor}
 import com.waz.znet2.{HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
@@ -159,8 +159,8 @@ class GlobalModuleImpl(val context:                 AContext,
 
   lazy val urlCreator:          UrlCreator                       = UrlCreator.simpleAppender(() => backend.baseUrl.toString)
   private val customUserAgentHttpInterceptor: Interceptor        = new OkHttpUserAgentInterceptor(metadata)
-  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(Threading.BlockingIO)
-  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = ZmsVersion.DEBUG, timeout = Some(30.seconds), pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
+  implicit lazy val httpClient: HttpClient                       = HttpClientOkHttpImpl(enableLogging = BuildConfig.DEBUG, pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(Threading.BlockingIO)
+  lazy val httpClientForLongRunning: HttpClient                  = HttpClientOkHttpImpl(enableLogging = BuildConfig.DEBUG, timeout = Some(30.seconds), pin = backend.pin, customUserAgentInterceptor = Some(customUserAgentHttpInterceptor), proxy = httpProxy)(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4)))
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 

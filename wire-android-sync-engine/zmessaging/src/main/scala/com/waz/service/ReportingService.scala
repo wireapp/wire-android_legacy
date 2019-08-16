@@ -21,14 +21,13 @@ import java.io._
 import java.util.concurrent.CountDownLatch
 
 import android.content.Context
-import com.waz.log.LogSE._
-import com.waz.api.ZmsVersion
 import com.waz.cache.{CacheService, Expiration}
 import com.waz.content.GlobalPreferences.PushToken
 import com.waz.content.WireContentProvider.CacheUri
 import com.waz.content.{AccountStorage, GlobalPreferences}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.log.{BufferedLogOutput, InternalLog}
 import com.waz.model.{Mime, UserId}
 import com.waz.threading.{SerialDispatchQueue, Threading}
@@ -109,7 +108,6 @@ class GlobalReportingService(context: Context, cache: CacheService, metadata: Me
       writer.println(s"time of log: ${Instant.now}")
       writer.println(s"package: ${ZMessaging.context.getPackageName}")
       writer.println(s"app version: ${metadata.appVersion}")
-      writer.println(s"zms version: ${ZmsVersion.ZMS_VERSION}")
       writer.println(s"device: $MANUFACTURER $PRODUCT | $MODEL | $BRAND | $ID")
       writer.println(s"version: ${VERSION.RELEASE} | ${VERSION.CODENAME}")
     }

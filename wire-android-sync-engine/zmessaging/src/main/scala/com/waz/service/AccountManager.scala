@@ -20,12 +20,11 @@ package com.waz.service
 import java.io._
 import java.util.Locale
 
-import com.waz.log.LogSE._
-import com.waz.api.ZmsVersion
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.model.otr.{Client, ClientId}
@@ -36,14 +35,12 @@ import com.waz.service.backup.BackupManager
 import com.waz.service.otr.OtrService.SessionId
 import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
-import com.waz.sync.client.{InvitationClientImpl, OtrClientImpl}
+import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrClientImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.{Context, URI}
 import com.waz.znet2.http.ResponseCode
-import com.waz.sync.client.ErrorOr
-import com.waz.sync.client.ErrorOrResponse
 import com.waz.znet2.{AuthRequestInterceptor, AuthRequestInterceptorOld}
 
 import scala.collection.immutable.ListMap
@@ -69,7 +66,6 @@ class AccountManager(val userId:   UserId,
     Future.traverse(List(
       SelfClient.str,
       OtrLastPrekey.str,
-      ClientRegVersion.str,
       LastSelfClientsSyncRequestedTime.str,
       LastStableNotification.str,
       ShouldSyncInitial.str
@@ -210,10 +206,8 @@ class AccountManager(val userId:   UserId,
           otrClient.postClient(userId, c, lastKey, keys, if (account.ssoId.isEmpty) account.password else None).future.flatMap {
             case Right(cl) =>
               verbose(l"new client: $cl")
-              for {
-                _    <- userPrefs(ClientRegVersion) := ZmsVersion.ZMS_MAJOR_VERSION
-                _    <- clientsStorage.updateClients(Map(userId -> Seq(c.copy(id = cl.id).updated(cl))))
-              } yield Right(Registered(cl.id))
+              clientsStorage.updateClients(Map(userId -> Seq(c.copy(id = cl.id).updated(cl))))
+                .map(_ => Right(Registered(cl.id)))
             case Left(ErrorResponse(ResponseCode.Forbidden, _, "missing-auth"))     =>
               verbose(l"missing auth")
               Future.successful(Right(PasswordMissing))
