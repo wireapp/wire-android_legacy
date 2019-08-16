@@ -20,7 +20,6 @@
 //    }
 //
 //lazy val isRelease = buildType == "release"
-//lazy val isDebug = !isRelease
 //
 //crossPaths in ThisBuild := false
 //organization in ThisBuild := "com.wire"
@@ -174,45 +173,22 @@
 //    )
 //
 //lazy val macrosupport = project
-//    .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
-//    .settings(publishSettings: _*)
-//    .settings(
-//        version := "3.3",
-//        crossPaths := false,
-//        exportJars := true,
-//        name := "zmessaging-android-macrosupport",
-//        sourceGenerators in Compile += generateDebugMode.taskValue,
-//        bintrayRepository := "releases",
-//        libraryDependencies ++= Seq(
-//            "org.scala-lang" % "scala-reflect" % (scalaVersion in ThisBuild).value % Provided,
-//            "org.robolectric" % "android-all" % RobolectricVersion % Provided
-//        )
+//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
+//  .settings(publishSettings: _*)
+//  .settings(
+//    version := "3.3",
+//    crossPaths := false,
+//    exportJars := true,
+//    name := "zmessaging-android-macrosupport",
+//    bintrayRepository := "releases",
+//    libraryDependencies ++= Seq(
+//      "org.scala-lang" % "scala-reflect" % (scalaVersion in ThisBuild).value % Provided,
+//      "org.robolectric" % "android-all" % RobolectricVersion % Provided
 //    )
+//  )
 //
-//generateDebugMode in macrosupport := {
-//    val file = (sourceManaged in Compile in macrosupport).value / "com" / "waz" / "DebugMode.scala"
-//    val content =
-//        """package com.waz
-//          |
-//          |import scala.reflect.macros.blackbox.Context
-//          |
-//          |object DebugMode {
-//          |  val isEnabled: Boolean = %b
-//          |  def DEBUG(c: Context) = {
-//          |    import c.universe._
-//          |    Literal(Constant(isEnabled))
-//          |  }
-//          |}
-//        """.stripMargin.format(isDebug)
-//    IO.write(file, content)
-//    Seq(file)
-//}
-//
-//lazy val licenseHeaders = HeaderPlugin.autoImport.headers := Set("scala", "java", "rs").map {
-//    _ -> GPLv3("2016", "Wire Swiss GmbH")
-//}(collection.breakOut)
+//lazy val licenseHeaders = HeaderPlugin.autoImport.headers := Set("scala", "java", "rs") .map { _ -> GPLv3("2016", "Wire Swiss GmbH") } (collection.breakOut)
 //lazy val androidSdkDir = settingKey[File]("Android sdk dir from ANDROID_HOME")
-//lazy val generateDebugMode = taskKey[Seq[File]]("generate DebugMode.scala")
 //lazy val generateCredentials = taskKey[Seq[File]]("generate InternalCredentials.scala")
 //lazy val actorsResources = taskKey[File]("Creates resources zip for remote actor")
 //lazy val nativeLibs = taskKey[Classpath]("directories containing native libs for osx and linux build")
