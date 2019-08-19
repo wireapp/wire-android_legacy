@@ -17,9 +17,10 @@
  */
 package com.waz.zclient.security
 
-import android.content.Context
+import android.content.{Context, Intent}
 import android.support.v7.app.AppCompatActivity
 import com.waz.content.GlobalPreferences
+import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
@@ -31,7 +32,9 @@ class SecureActivity extends AppCompatActivity with ActivityHelper {
 
   override def onStart(): Unit = {
     super.onStart()
-    securityChecklist.run()
+    securityChecklist.run().foreach { _ =>
+      if (shouldShowAppLock) showAppLock()
+    }
   }
 
   private def securityChecklist: SecurityChecklist = {
@@ -46,5 +49,15 @@ class SecureActivity extends AppCompatActivity with ActivityHelper {
     }
 
     new SecurityChecklist(checksAndActions.toList)
+  }
+
+  private def shouldShowAppLock: Boolean = {
+    // TODO: Also read this from preferences
+      BuildConfig.FORCE_APP_LOCK && AppLockActivity.isAppLockExpired
+  }
+
+  private def showAppLock(): Unit = {
+    val intent = new Intent(this, classOf[AppLockActivity])
+    startActivity(intent)
   }
 }
