@@ -65,7 +65,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   lazy val establishedConversations = for {
     z          <- zms
-    convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling )
+    convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling)
   } yield convs.values.filter(EstablishedListFilter)
 
   lazy val regularConversationListData = conversationData(ConversationListAdapter.Normal)

@@ -77,7 +77,6 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
     (for {
       mode       <- network
       processing <- longProcess
-//      err        <- websocketError
     } yield (mode, processing)).onUi {
       case (NetworkMode.OFFLINE | NetworkMode.UNKNOWN, _) =>
         loadingIndicatorView.hide()
