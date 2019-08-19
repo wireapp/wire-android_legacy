@@ -90,7 +90,6 @@ class MainActivity extends BaseActivity
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
   private lazy val usersController        = inject[UsersController]
-  private lazy val userPreferences        = inject[Signal[UserPreferences]]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()

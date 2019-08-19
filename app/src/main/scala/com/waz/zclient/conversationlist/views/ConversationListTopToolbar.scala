@@ -28,9 +28,9 @@ import com.waz.service.ZMessaging
 import com.waz.utils.NameParts
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.conversationlist.{ConversationListAdapter, ListSeparatorDrawable}
-import com.waz.zclient.drawables.TeamIconDrawable
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.CircleView
@@ -116,12 +116,12 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
   } yield (user, team)
 
   info.onUi {
-    case (user, Some(team)) =>
-      drawable.picture ! None
-      drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamCorners, selected = false)
+    case (_, Some(team)) =>
+      drawable.setPicture(team.picture)
+      drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamShape, selected = false)
     case (user, _) =>
-      drawable.picture ! user.picture
-      drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserCorners, selected = false)
+      drawable.setPicture(user.picture)
+      drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserShape, selected = false)
   }
   profileButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
   profileButton.setImageDrawable(drawable)

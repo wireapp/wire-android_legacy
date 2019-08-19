@@ -20,15 +20,17 @@ package com.waz.zclient.assets2
 import java.io.{InputStream, OutputStream}
 
 import android.graphics.{Bitmap, BitmapFactory}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.errors.FailedExpectationsError
 import com.waz.model.{Dim2, Mime}
 import com.waz.service.assets2.ImageRecoder
 import com.waz.utils.IoUtils
+import com.waz.zclient.log.LogUI._
 
-class AndroidImageRecoder extends ImageRecoder {
+class AndroidImageRecoder extends ImageRecoder with DerivedLogTag {
 
   override def recode(dim: Dim2, targetMime: Mime, scaleTo: Int, source: () => InputStream, target: () => OutputStream): Unit = {
-    val compressFormat = targetMime match {
+    lazy val compressFormat = targetMime match {
       case Mime.Image.Jpg => Bitmap.CompressFormat.JPEG
       case Mime.Image.Png => Bitmap.CompressFormat.PNG
       case mime => throw FailedExpectationsError(s"We do not expect $mime as target mime.")
@@ -36,29 +38,22 @@ class AndroidImageRecoder extends ImageRecoder {
 
     // Determine how much to scale down the image
     val scaleFactor = Math.max(dim.width / scaleTo, dim.height / scaleTo)
+    verbose(l"scaleFactor is $scaleFactor")
+    if (scaleFactor > 1) {
+      val opts = new BitmapFactory.Options()
+      opts.inJustDecodeBounds = false
+      opts.inSampleSize = scaleFactor
+      opts.inPreferredConfig = com.waz.zclient.utils.BitmapOptions.inPreferredConfig
 
-    val opts = new BitmapFactory.Options()
-    opts.inJustDecodeBounds = false
-    opts.inSampleSize = scaleFactor
-
-    if (scaleFactor <= 1) {
-      val resizingSuccessful = IoUtils.withResource(source()) { in =>
-        val resized = BitmapFactory.decodeStream(in, null, opts)
-        val success = resized != null
-        if (success) IoUtils.withResource(target())(resized.compress(compressFormat, 75, _))
-        success
-      }
-      //TODO What should we do in this case?
-//      if (!resizingSuccessful) {
-//        IoUtils.withResources(source(), target())(IoUtils.copy)
-//      }
+      val resized = IoUtils.withResource(source()) { in => BitmapFactory.decodeStream(in, null, opts) }
+      IoUtils.withResource(target()) { out => resized.compress(compressFormat, 75, out) }
     } else {
-      IoUtils.withResources(source(), target()) { (in, out) =>
-        val resized = BitmapFactory.decodeStream(in, null, opts)
-        resized.compress(compressFormat, 75, out)
-      }
+      // If we don't want to downscale the image, we still need to copy it to the target.
+      // It needs to be done in two steps because sometimes the source and the target point to the same data,
+      // so we have to first read it fully and only then write it.
+      // TODO: Fix it. If no change is needed we should be able to simply use the source as the target.
+      val array = IoUtils.withResource(source())(IoUtils.toByteArray)
+      IoUtils.withResource(target()) (_.write(array))
     }
-
   }
-
 }

@@ -442,7 +442,6 @@
     <string name="pref_advanced_receive_news_and_offers_summary">Receive news and product updates from Wire via email.</string>
 
     <!-- Options -->
-    <string name="pref_options_dark_theme_title">Dark theme</string>
     <string name="pref_options_screen_title">Options</string>
     <string name="pref_options_contacts_title">Share Contacts</string>
     <string name="pref_options_contacts_summary">This helps you connect with others. We anonymize all the information and do not share it with anyone else.</string>
@@ -462,6 +461,9 @@
     <string name="pref_options_ringtones_ping_title">Ping</string>
     <string name="pref_options_ringtones_default_summary">Wire default</string>
     <string name="pref_options_ringtones_silent">Silent</string>
+    <string name="pref_options_dark_theme_title">Dark theme</string>
+    <string name="pref_options_hide_screen_title">Hide screen content</string>
+    <string name="pref_options_hide_screen_summary">Wire\'s contents will not longer be visible in the task switcher</string>
     <string name="pref_options_image_download_title">Download pictures</string>
     <string name="pref_options_image_download_always">Always</string>
     <string name="pref_options_image_download_wifi">Wi-Fi only</string>

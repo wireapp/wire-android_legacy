@@ -21,18 +21,22 @@ import java.io.ByteArrayOutputStream
 
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
+import com.waz.model.Mime
+import com.waz.service.assets2.Content
 
 object ImageCompressUtils {
 
-  def defaultCompressionQuality(format: CompressFormat): Int = format match {
+  private def defaultCompressionQuality(format: CompressFormat): Int = format match {
     case CompressFormat.JPEG => 75
     case _ => 50
   }
 
-  def compress(in: Bitmap, toFormat: CompressFormat, quality: Option[Int] = None): Array[Byte] = {
+  private def compress(in: Bitmap, toFormat: CompressFormat, quality: Option[Int] = None): Array[Byte] = {
     val out = new ByteArrayOutputStream()
     in.compress(toFormat, quality.getOrElse(defaultCompressionQuality(toFormat)), out)
     out.toByteArray
   }
 
+  def toJpg(bitmap: Bitmap): Content.Bytes =
+    Content.Bytes(Mime.Image.Jpg, compress(bitmap, CompressFormat.JPEG))
 }

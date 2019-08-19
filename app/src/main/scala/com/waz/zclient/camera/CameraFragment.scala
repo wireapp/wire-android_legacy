@@ -235,12 +235,11 @@ class CameraFragment extends FragmentHelper
     showCameraFeed()
   }
 
-  override def onSketchOnPreviewPicture(content: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit =
-    screenController.showSketch ! Sketch.cameraPreview(content)
+  override def onSketchOnPreviewPicture(image: Content, method: IDrawingController.DrawingMethod): Unit =
+    screenController.showSketch ! Sketch.cameraPreview(image)
 
-  override def onSendPictureFromPreview(content: Content, source: ImagePreviewLayout.Source): Unit = {
-    cameraController.onBitmapSelected(content, cameraContext)
-  }
+  override def onSendPictureFromPreview(image: Content): Unit =
+    cameraController.onBitmapSelected(image, cameraContext)
 
   private def showPreview(setImage: (ImagePreviewLayout) => Unit) = {
     hideCameraFeed()
@@ -285,7 +284,7 @@ class CameraFragment extends FragmentHelper
   private def processGalleryImage(uri: URI): Unit = {
     hideCameraFeed()
     if (cameraContext != CameraContext.SIGN_UP) previewProgressBar.foreach(_.setVisible(true))
-    showPreview { _.setImage(uri, ImagePreviewLayout.Source.Camera) }
+    showPreview { _.setImage(uri) }
   }
 }
 
@@ -299,5 +298,4 @@ object CameraFragment {
       bundle.putInt(CAMERA_CONTEXT, cameraContext.ordinal)
     })
   }
-
 }

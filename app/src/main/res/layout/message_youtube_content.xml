@@ -64,19 +64,6 @@
             app:transform="@string/content__youtube__error__text__transform"
             />
 
-
-        <ImageView
-            android:id="@+id/youtube_logo"
-            android:src="@drawable/youtube_logo"
-            android:scaleType="fitXY"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginTop="@dimen/content__youtube__logo__padding_top"
-            android:layout_marginRight="@dimen/content__youtube__logo__padding_right"
-            android:layout_width="@dimen/content__youtube__logo__width"
-            android:layout_height="@dimen/content__youtube__logo__height"
-            />
-
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/ttv__youtube_message__title"
             android:textSize="@dimen/wire__text_size__regular"
@@ -86,11 +73,22 @@
             android:includeFontPadding="false"
             app:w_font="@string/wire__typeface__light"
             android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:layout_toLeftOf="@id/youtube_logo"
+            android:layout_alignParentStart="true"
+            android:layout_margin="@dimen/content__youtube__title__padding"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            android:layout_margin="@dimen/content__youtube__title__padding_top"
+            android:layout_width="wrap_content"
+            />
+
+        <ImageView
+            android:id="@+id/youtube_logo"
+            android:src="@drawable/youtube_logo"
+            android:scaleType="fitXY"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="@dimen/content__youtube__logo__padding"
+            android:layout_marginBottom="@dimen/content__youtube__logo__padding"
+            android:layout_width="@dimen/content__youtube__logo__width"
+            android:layout_height="@dimen/content__youtube__logo__height"
             />
     </RelativeLayout>
 </merge>
