@@ -102,28 +102,15 @@
 //
 //            val jni = collectJni.value.flatMap(d => Seq(d / "x86", d / "osx"))
 //
-//            (target +: jni).classpath
-//        },
-//        ndkBuild := {
-//            println("NDK building")
-//            val jni = ndkBuild.value
-//            val jniSrc = sourceDirectory.value / "main" / "jni"
-//            val osx = jni.head / "osx"
-//            osx.mkdirs()
-//
-//            s"sh ${jniSrc.getAbsolutePath}/build_osx.sh".!
-//
-//            jni
-//        },
-//        javaOptions in Test ++= Seq("-Xmx3072M", "-XX:MaxPermSize=3072M", "-XX:+CMSClassUnloadingEnabled", "-Djava.net.preferIPv4Stack=true"),
-//        testGrouping in Test := {
-//            groupByPackage((definedTests in Test).value, (javaOptions in Test).value)
-//        },
-//        javaOptions in Test ++= Seq(libraryPathOption(nativeLibs.value)),
-//        testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-F", (timespanScaleFactor in Test).value.toString),
-//        testOptions in Test <+= (target in Test) map {
-//            t => Tests.Argument(TestFrameworks.ScalaTest, "-o", "-u", t + "/test-reports")
-//        },
+//      (target +: jni).classpath
+//    },
+//    javaOptions in Test ++= Seq("-Xmx3072M", "-XX:MaxPermSize=3072M", "-XX:+CMSClassUnloadingEnabled", "-Djava.net.preferIPv4Stack=true"),
+//    testGrouping in Test := { groupByPackage( (definedTests in Test).value, (javaOptions in Test).value ) },
+//    javaOptions in Test ++= Seq(libraryPathOption(nativeLibs.value)),
+//    testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-F", (timespanScaleFactor in Test).value.toString),
+//    testOptions in Test <+= (target in Test) map {
+//      t => Tests.Argument(TestFrameworks.ScalaTest, "-o", "-u", t + "/test-reports")
+//    },
 //
 //        unmanagedResourceDirectories in Test += baseDirectory.value.getParentFile / "resources",
 //
