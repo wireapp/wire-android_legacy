@@ -23,9 +23,11 @@ import android.app.{Activity, AlertDialog, KeyguardManager}
 import android.content.{Context, DialogInterface, Intent}
 import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, R}
 
-class AppLockActivity extends AppCompatActivity {
+class AppLockActivity extends AppCompatActivity with DerivedLogTag {
   import AppLockActivity._
 
   private lazy val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE).asInstanceOf[KeyguardManager]
@@ -33,13 +35,13 @@ class AppLockActivity extends AppCompatActivity {
   override def onStart(): Unit = {
     super.onStart()
 
-    if (isDeviceSecure) showAuthenticationScreen()
-    else showSetupDialog()
+    if (isDeviceSecure) showAuthenticationScreen() else showSetupDialog()
   }
 
   private def isDeviceSecure: Boolean = keyguardManager.isKeyguardSecure
 
   private def showAuthenticationScreen(): Unit = {
+    info(l"presenting authentication screen")
     val (title, message) = (getString(R.string.app_lock_locked_title), getString(R.string.app_lock_locked_message))
     val intent = keyguardManager.createConfirmDeviceCredentialIntent(title, message)
     startActivityForResult(intent, ConfirmDeviceCredentialsRequestCode)
@@ -64,24 +66,27 @@ class AppLockActivity extends AppCompatActivity {
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
 
-    if (requestCode == ConfirmDeviceCredentialsRequestCode) {
-      if (resultCode == Activity.RESULT_OK) {
-        dateOfLastUnlock = new Date()
-        finish()
-      }
+    if (requestCode == ConfirmDeviceCredentialsRequestCode && resultCode == Activity.RESULT_OK) {
+      info(l"authentication successful")
+      timeEnteredBackground = None
+      finish()
     }
   }
 }
 
-object AppLockActivity {
+object AppLockActivity extends DerivedLogTag {
 
   val ConfirmDeviceCredentialsRequestCode = 1
 
-  private var dateOfLastUnlock = new Date(0)
+  private var timeEnteredBackground: Option[Date] = Some(new Date(0))
+
+  def updateBackgroundEntryTimer(): Unit = {
+    timeEnteredBackground = Some(new Date())
+  }
 
   def isAppLockExpired: Boolean = {
     val now = new Date()
-    val secondsSinceLastUnlock = (now.getTime - dateOfLastUnlock.getTime) / 1000
-    secondsSinceLastUnlock >= BuildConfig.APP_LOCK_TIMEOUT
+    val secondsSinceEnteredBackground = (now.getTime - timeEnteredBackground.getOrElse(now).getTime) / 1000
+    secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
   }
 }

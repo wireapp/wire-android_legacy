@@ -20,21 +20,28 @@ package com.waz.zclient.security
 import android.content.{Context, Intent}
 import android.support.v7.app.AppCompatActivity
 import com.waz.content.GlobalPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
 
-class SecureActivity extends AppCompatActivity with ActivityHelper {
+class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
   private implicit val context: Context = this
 
   override def onStart(): Unit = {
     super.onStart()
+
     securityChecklist.run().foreach { _ =>
       if (shouldShowAppLock) showAppLock()
     }
+  }
+
+  override protected def onPause(): Unit = {
+    super.onPause()
+    AppLockActivity.updateBackgroundEntryTimer()
   }
 
   private def securityChecklist: SecurityChecklist = {
