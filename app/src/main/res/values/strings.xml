@@ -471,6 +471,8 @@
     <string name="pref_options_requested_category_title">By popular demand</string>
     <string name="pref_options_cursor_send_button_title">Send button</string>
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
+    <string name="pref_options_app_lock_title">Lock with Passphrase</string>
+    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
