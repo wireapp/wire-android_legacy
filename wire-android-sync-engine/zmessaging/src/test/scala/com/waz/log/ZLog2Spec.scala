@@ -20,7 +20,10 @@ package com.waz.log
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.specs.ZSpec
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class ZLog2Spec extends ZSpec with DerivedLogTag {
 
   case class Person(name: String, age: Int)

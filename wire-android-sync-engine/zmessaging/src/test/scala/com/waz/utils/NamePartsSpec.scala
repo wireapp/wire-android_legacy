@@ -17,10 +17,13 @@
  */
 package com.waz.utils
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatest.prop.Tables
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class NamePartsSpec extends FeatureSpec with Matchers with Tables {
 
   val muhammadFull = "محمد بن سعيد بن عبد العزيز الفلسطيني"

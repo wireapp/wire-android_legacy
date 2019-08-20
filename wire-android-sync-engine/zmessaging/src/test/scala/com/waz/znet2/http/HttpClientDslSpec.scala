@@ -23,7 +23,10 @@ import com.waz.specs.ZSpec
 import com.waz.znet2.http
 import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http.HttpClient.AutoDerivationOld._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class HttpClientDslSpec extends ZSpec {
   import http.HttpClient.dsl._
 

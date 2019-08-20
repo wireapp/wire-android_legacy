@@ -18,8 +18,11 @@
 package com.waz.utils.events
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import org.junit.runner.RunWith
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class ScanSignalSpec extends FeatureSpec with Matchers with BeforeAndAfter with DerivedLogTag {
 
   implicit val ec: EventContext = EventContext.Global

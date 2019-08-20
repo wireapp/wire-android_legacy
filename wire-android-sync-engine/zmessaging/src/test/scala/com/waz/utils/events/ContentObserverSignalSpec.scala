@@ -21,11 +21,16 @@ import android.content.Context
 import com.waz.RobolectricUtils
 import com.waz.service.ContactsServiceImpl
 import com.waz.utils.returning
+import org.junit.runner.RunWith
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 import org.threeten.bp.Instant
 
 //TODO: Remove roboelectric dependencies
-class ContentObserverSignalSpec extends FeatureSpec with Matchers with OptionValues with BeforeAndAfterAll with RobolectricTests with RobolectricUtils {
+@RunWith(classOf[JUnitRunner])
+class ContentObserverSignalSpec extends FeatureSpec with Matchers with OptionValues with BeforeAndAfterAll
+  with RobolectricTests with RobolectricUtils {
+
   import EventContext.Implicits.global
 
   scenario("Subscribe on signal") {

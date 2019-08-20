@@ -17,14 +17,19 @@
  */
 package com.waz.service
 
+import org.junit.runner.RunWith
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, TableDrivenPropertyChecks}
 
 import scala.language.postfixOps
 
 //TODO: Remove Robolectric dependencies
-class SearchKeySpec extends FeatureSpec with GeneratorDrivenPropertyChecks with TableDrivenPropertyChecks with Matchers with RobolectricTests {
+@RunWith(classOf[JUnitRunner])
+class SearchKeySpec extends FeatureSpec with GeneratorDrivenPropertyChecks with TableDrivenPropertyChecks
+  with Matchers with RobolectricTests {
+
   feature("Search key normalization") {
     scenario("building search keys from known examples") {
       val examples = Table(

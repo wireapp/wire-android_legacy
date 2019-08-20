@@ -17,11 +17,14 @@
  */
 package com.waz.utils
 
+import org.junit.runner.RunWith
 import org.scalacheck.Gen.resultOf
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class BiRelationSpec extends FeatureSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   scenario("Adding and removing single pairs") {

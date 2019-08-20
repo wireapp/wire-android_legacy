@@ -21,10 +21,13 @@ import com.waz.Generators._
 import com.waz.content.Preferences.Preference.PrefCodec._
 import com.waz.model.Uid
 import com.waz.sync.client.AuthenticationManager.AccessToken
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{FeatureSpec, Ignore, Matchers}
 import org.threeten.bp.Instant
 
+@RunWith(classOf[JUnitRunner])
 class KeyValuePrefSpec extends FeatureSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   feature("key value serialization") {

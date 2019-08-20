@@ -20,8 +20,11 @@ package com.waz.utils
 import com.waz.Food
 import com.waz.utils.EnumCodec.injective
 import com.waz.Food._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FeatureSpec, Inspectors, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class EnumCodecSpec extends FeatureSpec with Matchers with Inspectors {
 
   scenario("Decode is the inverse of encode") {

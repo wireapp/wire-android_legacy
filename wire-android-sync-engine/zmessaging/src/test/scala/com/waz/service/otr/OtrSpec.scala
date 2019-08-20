@@ -23,9 +23,12 @@ import UUID.randomUUID
 
 import com.waz.utils.IoUtils
 import com.wire.cryptobox._
+import org.junit.runner.RunWith
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 @Ignore class OtrSpec extends FeatureSpec with Matchers with BeforeAndAfter with BeforeAndAfterAll with GeneratorDrivenPropertyChecks {
 
   val base = new File("target/cryptobox-jni/temp")

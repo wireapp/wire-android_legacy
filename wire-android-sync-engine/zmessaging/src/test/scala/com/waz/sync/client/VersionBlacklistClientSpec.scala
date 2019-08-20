@@ -19,8 +19,11 @@ package com.waz.sync.client
 
 import com.waz.model._
 import org.json.JSONObject
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class VersionBlacklistClientSpec extends FeatureSpec with Matchers {
   val blacklistResponse =
     """

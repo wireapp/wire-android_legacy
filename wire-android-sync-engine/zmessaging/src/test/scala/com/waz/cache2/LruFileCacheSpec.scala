@@ -17,16 +17,19 @@
  */
 package com.waz.cache2
 
-import java.io.{ ByteArrayInputStream, File }
+import java.io.{ByteArrayInputStream, File}
 
 import com.waz.threading.CancellableFuture
 import com.waz.utils.IoUtils
 import com.waz.utils.events.EventContext
-import com.waz.{ FilesystemUtils, TestData, ZIntegrationSpec }
+import com.waz.{FilesystemUtils, TestData, ZIntegrationSpec}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
+@RunWith(classOf[JUnitRunner])
 class LruFileCacheSpec extends ZIntegrationSpec {
 
   private def createLruFileCache(cacheDirectory: File = FilesystemUtils.createDirectoryForTest(),

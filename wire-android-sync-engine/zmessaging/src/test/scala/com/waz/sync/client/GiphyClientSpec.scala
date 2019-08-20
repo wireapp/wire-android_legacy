@@ -21,11 +21,14 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.{AuthenticationConfig, ZIntegrationSpec}
 import com.waz.log.LogSE._
 import com.waz.utils.RichSeq
+import org.junit.runner.RunWith
 import org.scalatest.Ignore
+import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @Ignore
+@RunWith(classOf[JUnitRunner])
 class GiphyClientSpec extends ZIntegrationSpec with AuthenticationConfig with DerivedLogTag {
 
   private lazy val giphyClient = new GiphyClientImpl()

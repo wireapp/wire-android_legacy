@@ -20,9 +20,12 @@ package com.waz.utils
 import android.support.v4.util.LruCache
 import com.waz.ZIntegrationSpec
 import com.waz.utils.StorageTestData._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@RunWith(classOf[JUnitRunner])
 abstract class StorageSpec(storageCreator: () => Storage2[Int, TestObject]) extends ZIntegrationSpec {
   lazy val storageClassName: String = storageCreator().getClass.getName
 

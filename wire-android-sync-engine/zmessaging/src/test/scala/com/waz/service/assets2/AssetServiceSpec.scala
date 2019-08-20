@@ -26,17 +26,19 @@ import com.waz.log.LogSE._
 import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
 import com.waz.model.{AssetId, Mime, Sha256, UploadAssetId}
-import com.waz.service.assets2.Asset.UploadGeneral
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient2.{FileWithSha, Retention}
 import com.waz.sync.client.{AssetClient2, AssetClient2Impl}
 import com.waz.threading.CancellableFuture
 import com.waz.utils.{IoUtils, ReactiveStorageImpl2, UnlimitedInMemoryStorage, returning}
 import com.waz.{AuthenticationConfig, FilesystemUtils, ZIntegrationMockSpec}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.Future
 import scala.util.{Failure, Random, Success}
 
+@RunWith(classOf[JUnitRunner])
 class AssetServiceSpec extends ZIntegrationMockSpec with AuthenticationConfig with DerivedLogTag {
 
   private val assetStorage        = mock[AssetStorage]

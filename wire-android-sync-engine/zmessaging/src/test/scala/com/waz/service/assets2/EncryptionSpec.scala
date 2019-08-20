@@ -22,7 +22,10 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import com.waz.TestData
 import com.waz.specs.ZSpec
 import com.waz.utils.IoUtils
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 abstract class EncryptionSpec(encryption: Encryption) extends ZSpec {
 
   private val unencrypted = TestData.bytes(1024 * 1024)

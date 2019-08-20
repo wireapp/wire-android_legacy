@@ -35,11 +35,14 @@ import com.waz.model._
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync.{SyncCommand, SyncJob}
 import com.waz.utils.{DbLoader, returning}
+import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.threeten.bp.Instant
 
+@RunWith(classOf[JUnitRunner])
 @Ignore class ZMessagingDBSpec extends FeatureSpec with Matchers with Inspectors with GeneratorDrivenPropertyChecks with BeforeAndAfter with RobolectricTests with DbLoader {
   lazy val dbHelper = new ZMessagingDB(Robolectric.application, "test_db", DisabledTrackingService)
 

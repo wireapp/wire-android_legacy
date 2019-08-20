@@ -19,22 +19,25 @@ package com.waz.sync.client
 
 import java.io.ByteArrayInputStream
 
-import com.waz.{AuthenticationConfig, ZIntegrationSpec}
-import com.waz.log.LogSE._
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.{AssetId, MD5, Mime, Sha256}
 import com.waz.service.assets2.{Asset, BlobDetails, NoEncryption}
 import com.waz.sync.client.AssetClient.FileWithSha
 import com.waz.sync.client.AssetClient2.{AssetContent, Metadata, Retention, UploadResponse2}
 import com.waz.utils.{IoUtils, returning}
+import com.waz.{AuthenticationConfig, ZIntegrationSpec}
+import org.junit.runner.RunWith
 import org.scalatest.Ignore
+import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.Future
 import scala.util.Random
 
 //TODO Think about tests resources cleanup
 @Ignore
+@RunWith(classOf[JUnitRunner])
 class AssetClient2Spec extends ZIntegrationSpec with AuthenticationConfig with DerivedLogTag {
 
   private lazy val assetClient = new AssetClient2Impl()

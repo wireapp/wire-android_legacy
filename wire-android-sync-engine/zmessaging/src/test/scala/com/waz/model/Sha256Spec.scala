@@ -21,7 +21,10 @@ import java.io.ByteArrayInputStream
 
 import com.waz.TestData
 import com.waz.specs.ZSpec
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class Sha256Spec extends ZSpec {
 
   feature("Sha256") {

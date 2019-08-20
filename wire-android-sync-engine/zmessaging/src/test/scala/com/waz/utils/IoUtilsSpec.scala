@@ -20,8 +20,11 @@ package com.waz.utils
 import java.io.File.createTempFile
 import java.io.{BufferedOutputStream, File, FileOutputStream, OutputStream}
 
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class IoUtilsSpec extends FeatureSpec with Matchers {
 
   scenario("Copy from stream to file") {

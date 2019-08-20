@@ -18,8 +18,11 @@
 package com.waz.utils
 
 import com.waz.model.EmailAddress
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class EmailAddressSpec extends FeatureSpec with Matchers {
   val atext = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&'*+-/=?^_`{|}~abcdefghijklmnopqrstuvwxyz0123456789"
   val atextLC = "abcdefghijklmnopqrstuvwxyz!#$%&'*+-/=?^_`{|}~abcdefghijklmnopqrstuvwxyz0123456789"

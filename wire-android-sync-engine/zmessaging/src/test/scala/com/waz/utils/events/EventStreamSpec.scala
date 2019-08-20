@@ -19,7 +19,10 @@ package com.waz.utils.events
 
 import com.waz.specs.ZSpec
 import com.waz.utils.returning
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class EventStreamSpec extends ZSpec {
 
   import EventContext.Implicits.global

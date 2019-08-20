@@ -20,8 +20,11 @@ package com.waz.utils
 import java.util.Locale
 
 import com.waz.log.BasicLogging.LogTag
+import org.junit.runner.RunWith
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 @Ignore class LocalesSpec extends FeatureSpec with Matchers with Inspectors with OptionValues {
   feature("BCP-47-compliant language tags") {
     scenario("Built-in") {

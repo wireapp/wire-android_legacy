@@ -20,8 +20,11 @@ package com.waz.utils
 import com.waz.testutils.Matchers._
 import java.io.Closeable
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FeatureSpec, Ignore, Inspectors, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class ManagedSpec extends FeatureSpec with Matchers with Inspectors {
 
   feature("Lazy evaluation") {

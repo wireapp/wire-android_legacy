@@ -22,10 +22,15 @@ import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model._
 import com.waz.utils.DbLoader
 import com.waz.utils.wrappers.DB
+import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 
-class ZGlobalDBSpec extends FeatureSpec with Matchers with OptionValues with Inspectors with BeforeAndAfter with RobolectricTests with DbLoader {
+@RunWith(classOf[JUnitRunner])
+class ZGlobalDBSpec extends FeatureSpec with Matchers with OptionValues with Inspectors with BeforeAndAfter
+  with RobolectricTests with DbLoader {
+
   lazy val dbHelper = new ZGlobalDB(Robolectric.application, tracking = DisabledTrackingService)
 
   after {

@@ -28,10 +28,17 @@ import okhttp3.mockwebserver.{MockResponse, MockWebServer}
 import okio.{Buffer, Okio}
 import org.json.JSONObject
 import com.waz.znet2.http.HttpClient.AutoDerivationOld._
+import org.junit.{After, Before, Test}
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowNetworkSecurityPolicy
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 
+@RunWith(classOf[RobolectricTestRunner])
+@Config(shadows = Array(classOf[ShadowNetworkSecurityPolicy]))
 class HttpClientSpec extends ZSpec {
 
   case class FooError(description: String)
@@ -81,43 +88,42 @@ class HttpClientSpec extends ZSpec {
 
   private implicit val urlCreator: UrlCreator = UrlCreator.create(relativeUrl => mockServer.url(relativeUrl).url())
 
-  override protected def beforeEach(): Unit = {
+  @Before
+  def setUp(): Unit = {
     mockServer = new MockWebServer()
     mockServer.start()
   }
 
-  override protected def afterEach(): Unit = {
+  @After
+  def tearDown(): Unit = {
     mockServer.shutdown()
   }
 
+  @Test
+  def `return_http_response_when_server_is_responding`(): Unit = {   //"return http response when server is responding."
+    val testResponseCode = 201
+    val testBodyStr = "test body"
 
-  feature("Http client") {
+    mockServer.enqueue(
+      new MockResponse()
+        .setResponseCode(testResponseCode)
+        .setHeader("Content-Type", "text/plain")
+        .setBody(testBodyStr)
+    )
 
-    scenario("return http response when server is responding.") {
-      val testResponseCode = 201
-      val testBodyStr = "test body"
+    val client = createClient()
+    val request = Request.Get("/test")
 
-      mockServer.enqueue(
-        new MockResponse()
-          .setResponseCode(testResponseCode)
-          .setHeader("Content-Type", "text/plain")
-          .setBody(testBodyStr)
-      )
+    var response: Response[Array[Byte]] = null
 
-      val client = createClient()
-      val request = Request.Get("/test")
+    noException shouldBe thrownBy { response = result { client.result[EmptyBody, Response[Array[Byte]]](request) } }
 
-      var response: Response[Array[Byte]] = null
-
-      noException shouldBe thrownBy { response = result { client.result[EmptyBody, Response[Array[Byte]]](request) } }
-
-      response.code                       shouldBe testResponseCode
-      new String(response.body)           shouldBe testBodyStr
-    }
-
+    response.code                       shouldBe testResponseCode
+    new String(response.body)           shouldBe testBodyStr
   }
 
-  scenario("return decoded response body [Foo] when server is responding.") {
+  @Test
+  def `return_decoded_response_body_[Foo]_when_server_is_responding`(): Unit = {
     val testResponseCode = 201
     val testResponseObject = Foo(1, "ok")
     val testResponseBodyStr = fooEncoder(testResponseObject).toString
@@ -141,7 +147,8 @@ class HttpClientSpec extends ZSpec {
     responseObject shouldBe testResponseObject
   }
 
-  scenario("return decoded response body [File] when server is responding.") {
+  @Test
+def `return_decoded_response_body_[File]_when_server_is_responding`(): Unit = {
     val testResponseCode = 201
     val testResponseObject = Foo(1, "ok")
     val testResponseBodyStr = fooEncoder(testResponseObject).toString
@@ -167,7 +174,8 @@ class HttpClientSpec extends ZSpec {
     scala.io.Source.fromFile(responseFile).mkString shouldBe testResponseBodyStr
   }
 
-  scenario("return decoded response body [Right[_, Foo]] when response code is successful.") {
+  @Test
+  def `return_decoded_response_body_[Right[_, Foo]]_when_response_code_is_successful`(): Unit = {
     val testResponseCode = 201
     val testResponseObject = Foo(1, "ok")
     val testResponseBodyStr = fooEncoder(testResponseObject).toString
@@ -191,7 +199,8 @@ class HttpClientSpec extends ZSpec {
     responseObject shouldBe Right(testResponseObject)
   }
 
-  scenario("return decoded response body [Left[FooError, _]] when response code is unsuccessful.") {
+  @Test
+  def `return_decoded_response_body_[Left[FooError, _]]_when_response_code_is_unsuccessful`(): Unit = {
     val testResponseCode = 500
     val testResponseObject = FooError("test descr")
     val testResponseBodyStr = fooErrorEncoder(testResponseObject).toString
@@ -215,7 +224,8 @@ class HttpClientSpec extends ZSpec {
     responseObject shouldBe Left(testResponseObject)
   }
 
-  scenario("should execute upload request and call progress callback when server is responding.") {
+  @Test
+  def `should_execute_upload_request_and_call_progress_callback_when_server_is_responding`(): Unit = {
     val testResponseCode = 201
     val testRequestBody = Array.fill[Byte](100000)(1)
 
@@ -243,7 +253,8 @@ class HttpClientSpec extends ZSpec {
     )
   }
 
-  scenario("should execute download request and call progress callback when server is responding.") {
+  @Test
+  def `should_execute_download_request_and_call_progress_callback_when_server_is_responding`(): Unit = {
     val testResponseCode = 200
     val testResponseBody = Array.fill[Byte](100000)(1)
     val buffer = new Buffer()

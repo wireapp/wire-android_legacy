@@ -17,8 +17,11 @@
  */
 package com.waz.utils.events
 
+import org.junit.runner.RunWith
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class EventStreamWithAuxSignalSpec extends FeatureSpec with Matchers with OptionValues {
 
   lazy val e = Publisher[String](None)

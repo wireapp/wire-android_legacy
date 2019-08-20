@@ -18,7 +18,10 @@
 package com.waz.service
 
 import com.waz.specs.ZSpec
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class SSOServiceSpec extends ZSpec {
 
   val service = new SSOService(null)

@@ -22,7 +22,10 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import com.waz.TestData
 import com.waz.specs.ZSpec
 import com.waz.utils.IoUtils
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class LoggingInputStreamSpec extends ZSpec {
 
   feature("LoggingInputStream") {

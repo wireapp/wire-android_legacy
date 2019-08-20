@@ -18,8 +18,11 @@
 package com.waz
 
 import com.waz.utils.returning
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class MacroSpec extends FeatureSpec with Matchers {
   feature("Kestrel (K combinator)") {
     scenario("Anonymous function") {

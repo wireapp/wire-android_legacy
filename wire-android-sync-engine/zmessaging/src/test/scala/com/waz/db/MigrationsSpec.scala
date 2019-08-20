@@ -19,11 +19,14 @@ package com.waz.db
 
 import android.database.sqlite.SQLiteDatabase
 import com.waz.DisabledTrackingService
+import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{BeforeAndAfter, FeatureSpec, Matchers, RobolectricTests}
 
 import scala.collection.mutable.ListBuffer
 
+@RunWith(classOf[JUnitRunner])
 class MigrationsSpec extends FeatureSpec with Matchers with BeforeAndAfter with RobolectricTests {
 
   implicit val tracking = DisabledTrackingService

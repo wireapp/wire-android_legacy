@@ -17,8 +17,11 @@
  */
 package com.waz.utils
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FeatureSpec, Matchers}
 
+@RunWith(classOf[JUnitRunner])
 class PasswordValidatorSpec extends FeatureSpec with Matchers {
 
   private lazy val sut = PasswordValidator.createStrongPasswordValidator(minLength = 8, maxLength = 16)

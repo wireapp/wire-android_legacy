@@ -25,14 +25,18 @@ import com.waz.threading.CancellableFuture.delayed
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.testutils.Uncontended.random
+import org.junit.runner.RunWith
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 import org.threeten.bp.Instant
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 //TODO: Remove roboelectric dependencies
-class ThrottlingSignalSpec extends FeatureSpec with Matchers with Inspectors with BeforeAndAfter with RobolectricTests with RobolectricUtils {
+@RunWith(classOf[JUnitRunner])
+class ThrottlingSignalSpec extends FeatureSpec with Matchers with Inspectors with BeforeAndAfter
+  with RobolectricTests with RobolectricUtils {
 
   feature("Forwarding") {
 

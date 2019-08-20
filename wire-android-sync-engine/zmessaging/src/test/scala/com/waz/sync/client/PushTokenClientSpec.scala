@@ -18,7 +18,10 @@
 package com.waz.sync.client
 
 import com.waz.ZIntegrationSpec
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PushTokenClientSpec extends ZIntegrationSpec {
 
   //TODO reintroduce test when AuthRequestInterceptor2 is introduced

@@ -19,10 +19,13 @@ package com.waz.utils
 
 import com.waz.ZIntegrationMockSpec
 import com.waz.utils.StorageTestData._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+@RunWith(classOf[JUnitRunner])
 class CachedStorageSpec extends ZIntegrationMockSpec {
 
   private val main  = mock[Storage2[Int, TestObject]]

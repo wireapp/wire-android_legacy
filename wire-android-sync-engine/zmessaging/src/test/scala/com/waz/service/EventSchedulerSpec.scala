@@ -27,6 +27,8 @@ import org.scalatest.{FeatureSpec, Matchers, OptionValues, RobolectricTests}
 import org.threeten.bp.Instant
 import com.waz.testutils.Implicits._
 import com.waz.testutils.Matchers._
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 import scala.annotation.tailrec
 import scala.collection.breakOut
@@ -34,6 +36,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Random.nextInt
 
+@RunWith(classOf[JUnitRunner])
 class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues with RobolectricTests {
 
   feature("Creating schedules") {

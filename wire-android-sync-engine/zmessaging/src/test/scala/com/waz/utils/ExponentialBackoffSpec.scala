@@ -17,10 +17,13 @@
  */
 package com.waz.utils
 
-import org.scalatest.{FeatureSpec, Ignore, Matchers}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import org.scalatest.{FeatureSpec, Matchers}
 
 import scala.concurrent.duration._
 
+@RunWith(classOf[JUnitRunner])
 class ExponentialBackoffSpec extends FeatureSpec with Matchers {
 
   scenario("max retries") {

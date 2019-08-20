@@ -18,7 +18,10 @@
 package com.waz.utils.events
 
 import com.waz.specs.ZSpec
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class PartialUpdateSignalSpec extends ZSpec {
 
   import EventContext.Implicits.global

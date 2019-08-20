@@ -33,8 +33,10 @@ import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.utils.wrappers.{Intent, JVMIntentUtil, JavaURIUtil, URI, _}
+import org.junit.runner.RunWith
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
@@ -74,6 +76,7 @@ trait ZSpec extends FeatureSpec
 
 trait ZMockSpec extends ZSpec with MockFactory
 
+@RunWith(classOf[JUnitRunner])
 abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
 
   import AndroidFreeSpec._

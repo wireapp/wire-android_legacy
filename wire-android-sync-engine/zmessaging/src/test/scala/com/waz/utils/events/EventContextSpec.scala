@@ -17,10 +17,15 @@
  */
 package com.waz.utils.events
 
+import org.junit.runner.RunWith
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 
-class EventContextSpec extends FeatureSpec with Matchers with BeforeAndAfter with TableDrivenPropertyChecks { test =>
+@RunWith(classOf[JUnitRunner])
+class EventContextSpec extends FeatureSpec with Matchers with BeforeAndAfter
+  with TableDrivenPropertyChecks { test =>
+
   var received = Seq[Int]()
   val capture = (value: Int) => received = received :+ value
 
