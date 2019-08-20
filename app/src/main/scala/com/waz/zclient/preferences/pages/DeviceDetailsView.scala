@@ -19,18 +19,16 @@ package com.waz.zclient.preferences.pages
 
 import android.app.{Activity, FragmentTransaction}
 import android.content.DialogInterface.OnClickListener
-import android.content.{ClipData, ClipboardManager, Context, DialogInterface}
+import android.content.{ClipData, Context, DialogInterface}
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, ScrollView, Toast}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.ConvId
-import com.waz.model.otr.{ClientId, Location}
+import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.sync.SyncResult
@@ -38,15 +36,17 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.global.{ClientsController, PasswordController}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.preferences.DevicesPreferencesUtil
 import com.waz.zclient.preferences.dialogs.RemoveDeviceDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichClient, RichView, ViewUtils, ZTimeFormatter}
+import com.waz.zclient.utils.Time.TimeStamp
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichClient, RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper, _}
-import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
+import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -58,7 +58,7 @@ trait DeviceDetailsView {
 
   def setName(name: String): Unit
   def setId(cId: String): Unit
-  def setActivated(regTime: Instant, regLocation: Option[Location]): Unit
+  def setActivated(regTime: Instant): Unit
   def setFingerPrint(fingerprint: String): Unit
   def setRemoveOnly(removeOnly: Boolean): Unit
   def setActionsVisible(visible: Boolean): Unit
@@ -72,6 +72,8 @@ trait DeviceDetailsView {
 class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends ScrollView(context, attrs, style) with DeviceDetailsView with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
+
+  private val clipboard = inject[ClipboardUtils]
 
   inflate(R.layout.preferences_device_details_layout)
 
@@ -102,8 +104,8 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     TextViewUtils.boldText(idView)
   }
 
-  override def setActivated(regTime: Instant, regLocation: Option[Location]) = {
-    activatedView.setText(getActivationSummary(context, regTime, regLocation))
+  override def setActivated(regTime: Instant) = {
+    activatedView.setText(getString(R.string.pref_devices_device_activation_summary, TimeStamp(regTime).string))
     TextViewUtils.boldText(activatedView)
   }
 
@@ -123,15 +125,8 @@ class DeviceDetailsViewImpl(context: Context, attrs: AttributeSet, style: Int) e
     resetSessionView.setVisible(!removeOnly)
   }
 
-  private def getActivationSummary(context: Context, regTime: Instant, regLocation: Option[Location]): String = {
-    val now = LocalDateTime.now(ZoneId.systemDefault)
-    val time = ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault), DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
-    context.getString(R.string.pref_devices_device_activation_summary, time, regLocation.fold("?")(_.getName))
-  }
-
   fingerprintView.onClickEvent{ _ =>
-    val clipboard: ClipboardManager = getContext.getSystemService(Context.CLIPBOARD_SERVICE).asInstanceOf[ClipboardManager]
-    val clip: ClipData = ClipData.newPlainText(getContext.getString(R.string.pref_devices_device_fingerprint_copy_description), fingerprint)
+    val clip = ClipData.newPlainText(getContext.getString(R.string.pref_devices_device_fingerprint_copy_description), fingerprint)
     clipboard.setPrimaryClip(clip)
     showToast(R.string.pref_devices_device_fingerprint_copy_toast)
   }
@@ -182,7 +177,9 @@ object DeviceDetailsBackStackKey {
   }
 }
 
-case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
+case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: ClientId)(implicit inj: Injector, ec: EventContext, context: Context)
+  extends Injectable with DerivedLogTag {
+  
   import Threading.Implicits.Background
 
   val zms                = inject[Signal[ZMessaging]]
@@ -201,9 +198,7 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   client.map(_.model).onUi(view.setName)
   client.map(_.displayId).onUi(view.setId)
-  client.map(c => (c.regTime.getOrElse(Instant.EPOCH), c.regLocation)).onUi { case (t, l) =>
-    view.setActivated(t, l)
-  }
+  client.map(_.regTime.getOrElse(Instant.EPOCH)).onUi(view.setActivated)
 
   isCurrentClient.map(!_).onUi(view.setActionsVisible)
   client.map(_.isVerified).onUi(view.setVerified)
@@ -223,27 +218,29 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
 
   private def resetSession(): Unit = {
     zms.head.flatMap { zms =>
-      zms.convsStats.selectedConvIdPref() flatMap { conv =>
-        zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId) flatMap zms.syncRequests.scheduler.await
+      zms.selectedConv.selectedConvIdPref() flatMap { conv =>
+        zms.otrService.resetSession(conv.getOrElse(ConvId(zms.selfUserId.str)), zms.selfUserId, clientId) flatMap zms.syncRequests.await
       }
     }.recover {
-      case e: Throwable => SyncResult.failed()
+      case e: Throwable => SyncResult(e)
     }.map {
-      case SyncResult.Success => view.showToast(R.string.otr__reset_session__message_ok)
-      case SyncResult.Failure(err, _) =>
-        warn(s"session reset failed: $err")
+      case SyncResult.Success      => view.showToast(R.string.otr__reset_session__message_ok)
+      case SyncResult.Failure(err) =>
+        warn(l"session reset failed: $err")
         view.showDialog(R.string.otr__reset_session__message_fail, R.string.otr__reset_session__button_ok, R.string.otr__reset_session__button_fail, onPos = resetSession())
+      case SyncResult.Retry(err)   =>
+        error(l"Await sync result shouldn't return retry: $err")
     }(Threading.Ui)
   }
 
   view.onDeviceRemoved { _ =>
     passwordController.password.head.map {
-      case Some(p) => removeDevice(p)
-      case _ => showRemoveDeviceDialog()
+      case Some(p)       => removeDevice(Some(p))
+      case _                => showRemoveDeviceDialog()
     }
   }
 
-  private def removeDevice(password: Password): Unit = {
+  private def removeDevice(password: Option[Password] = None): Unit = {
     spinnerController.showDimmedSpinner(show = true)
     for {
       am           <- accountManager.head
@@ -251,10 +248,10 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
         case LimitReached => true
         case _ => false
       }
-      _ <- am.deleteClient(clientId, password).map { //TODO use password instead of str
+      _ <- am.deleteClient(clientId, password).map {
         case Right(_) =>
           for {
-            _ <- passwordController.setPassword(password)
+            _ <- password.fold(Future.successful(()))(passwordController.setPassword)
             _ <- if (limitReached) am.getOrRegisterClient() else Future.successful({})
             _ <- Threading.Ui {
               spinnerController.showSpinner(false)
@@ -271,8 +268,8 @@ case class DeviceDetailsViewController(view: DeviceDetailsView, clientId: Client
   }
 
   private def showRemoveDeviceDialog(error: Option[String] = None): Unit = {
-    model.head.map { n =>
-      val fragment = returning(RemoveDeviceDialog.newInstance(n, error))(_.onDelete(removeDevice))
+    Signal(accounts.isActiveAccountSSO, model).head.foreach { case (isSSO, name) =>
+      val fragment = returning(RemoveDeviceDialog.newInstance(name, error, isSSO))(_.onDelete(removeDevice))
       context.asInstanceOf[BaseActivity]
         .getSupportFragmentManager
         .beginTransaction

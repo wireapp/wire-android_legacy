@@ -40,9 +40,6 @@ import android.text.Spanned;
 import android.view.View;
 import android.view.WindowManager;
 
-import net.hockeyapp.android.CrashManagerListener;
-import net.hockeyapp.android.ExceptionHandler;
-
 import java.util.Locale;
 
 import static android.hardware.Camera.getNumberOfCameras;
@@ -53,6 +50,10 @@ import static android.hardware.Camera.getNumberOfCameras;
  TODO(AN-5975): rewrite this class in Scala once we can include the silencer plugin
  */
 public class DeprecationUtils {
+
+    public static int FLAG_TURN_SCREEN_ON = WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
+
+    public static int FLAG_SHOW_WHEN_LOCKED = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
 
     public static int PRIORITY_MAX = Notification.PRIORITY_MAX;
 
@@ -70,10 +71,6 @@ public class DeprecationUtils {
 
     public static Drawable getDrawable(Context context, int resId) {
         return context.getResources().getDrawable(resId);
-    }
-
-    public static void saveException(Throwable t, CrashManagerListener l) {
-        ExceptionHandler.saveException(t, l);
     }
 
     public static String formatNumber(String s) {

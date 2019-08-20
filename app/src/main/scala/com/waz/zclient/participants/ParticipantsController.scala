@@ -18,7 +18,7 @@
 package com.waz.zclient.participants
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -27,13 +27,15 @@ import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.controllers.confirmation.{ConfirmationRequest, IConfirmationController, TwoButtonConfirmationCallback}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.Future
 
-class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext) extends Injectable {
+class ParticipantsController(implicit injector: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
@@ -43,10 +45,13 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   private lazy val confirmationController = inject[IConfirmationController]
   private lazy val screenController       = inject[IConversationScreenController]
 
-  private lazy val selectedParticipant = Signal(Option.empty[UserId])
+  lazy val selectedParticipant = Signal(Option.empty[UserId])
 
   val onShowParticipants = EventStream[Option[String]]() //Option[String] = fragment tag //TODO use type?
-  val onHideParticipants = EventStream[Boolean]() //Boolean represents with or without animations
+  val onLeaveParticipants = EventStream[Boolean]() //Boolean represents with or without animations
+  val onShowParticipantsWithUserId = EventStream[ParticipantRequest]()
+
+  val onShowUser = EventStream[Option[UserId]]()
 
   lazy val otherParticipants = convController.currentConvMembers
   lazy val conv              = convController.currentConv
@@ -54,7 +59,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   lazy val otherParticipantId = otherParticipants.flatMap {
     case others if others.size == 1 => Signal.const(others.headOption)
-    case others                     => selectedParticipant.map(_.flatMap(id => others.find(_ == id)))
+    case others                     => selectedParticipant
   }
 
   lazy val otherParticipant = for {
@@ -63,12 +68,12 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     user     <- z.usersStorage.signal(id)
   } yield user
 
-  lazy val containsGuest = for {
-    z     <- zms
-    ids   <- otherParticipants
-    isGroup <- convController.currentConvIsGroup
-    users <- Signal.sequence(ids.map(z.usersStorage.signal).toSeq:_*)
-  } yield isGroup && users.exists(_.isGuest(z.teamId))
+  lazy val otherParticipantExists = for {
+    z            <- zms
+    groupOrBot   <- isGroupOrBot
+    userId       <- if (groupOrBot) Signal.const(Option.empty[UserId]) else otherParticipantId
+    participant  <- userId.fold(Signal.const(Option.empty[UserData]))(id => z.usersStorage.optSignal(id))
+  } yield groupOrBot || participant.exists(!_.deleted)
 
   lazy val isWithBot = for {
     z       <- zms
@@ -80,6 +85,15 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     group      <- isGroup
     groupOrBot <- if (group) Signal.const(true) else isWithBot
   } yield groupOrBot
+
+  lazy val guestBotGroup = for {
+    z        <- zms
+    ids      <- otherParticipants
+    isGroup  <- isGroup
+    users    <- Signal.sequence(ids.map(z.usersStorage.signal).toSeq:_*)
+    hasGuest =  isGroup && users.exists(u => u.isGuest(z.teamId) && !u.isWireBot)
+    hasBot   <- isWithBot
+  } yield (hasGuest, hasBot, isGroup)
 
   // is the current user a guest in the current conversation
   lazy val isCurrentUserGuest: Signal[Boolean] = for {
@@ -129,4 +143,8 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
       inject[SoundController].playAlert()
     case _ =>
   }(Threading.Ui)
+}
+
+object ParticipantsController {
+  case class ParticipantRequest(userId: UserId, fromDeepLink: Boolean = false)
 }

@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
 import com.waz.utils.wrappers.URI;
@@ -60,12 +61,6 @@ public class AssetIntentsManager {
                 pendingFileUri = new AndroidURI(uri);
             }
         }
-        pm = activity.getPackageManager();
-    }
-
-    public AssetIntentsManager(Activity activity, Callback callback, URI pendingFileUri) {
-        setCallback(callback);
-        this.pendingFileUri = pendingFileUri;
         pm = activity.getPackageManager();
     }
 
@@ -103,6 +98,7 @@ public class AssetIntentsManager {
         Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         pendingFileUri = getOutputMediaFileUri(context, IntentType.VIDEO);
         intent.putExtra(MediaStore.EXTRA_OUTPUT, AndroidURIUtil.unwrap(pendingFileUri));
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
         }
@@ -176,7 +172,7 @@ public class AssetIntentsManager {
      */
     private static URI getOutputMediaFileUri(Context context, IntentType type) {
         File file = getOutputMediaFile(context, type);
-        return file != null ? AndroidURIUtil.fromFile(file) : null;
+        return file != null ? new AndroidURI(FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".fileprovider", file)) : null;
     }
 
     /**

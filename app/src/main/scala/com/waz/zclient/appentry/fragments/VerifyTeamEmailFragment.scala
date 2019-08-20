@@ -1,26 +1,26 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.appentry.fragments
 
 import android.app.Activity
 import android.os.Bundle
 import android.view.View
-import com.waz.ZLog
 import com.waz.content.GlobalPreferences
 import com.waz.model.{ConfirmationCode, EmailAddress}
 import com.waz.service.GlobalModule
@@ -29,6 +29,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.CreateTeamFragment
 import com.waz.zclient.appentry.DialogErrorMessage.EmailError
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.NumberCodeInput
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -70,19 +71,23 @@ case class VerifyTeamEmailFragment() extends CreateTeamFragment{
             Future.successful(Some(getString(EmailError(error).bodyResource)))
           case _ =>
             inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply().flatMap {
-              case true => showConfirmationDialogWithNeutralButton(
-                R.string.receive_news_and_offers_request_title,
-                R.string.receive_news_and_offers_request_body,
-                R.string.app_entry_dialog_privacy_policy,
-                R.string.app_entry_dialog_accept,
-                R.string.app_entry_dialog_not_now
-              )
+              case true =>
+                inject[AccentColorController].accentColor.head.flatMap(color =>
+                  showConfirmationDialog(
+                    getString(R.string.receive_news_and_offers_request_title),
+                    getString(R.string.receive_news_and_offers_request_body),
+                    R.string.app_entry_dialog_accept,
+                    R.string.app_entry_dialog_not_now,
+                    Some(R.string.app_entry_dialog_privacy_policy),
+                    color
+                  )
+                )
               case false => Future.successful(Some(false))
             }.map { confirmed =>
               createTeamController.receiveNewsAndOffers = confirmed
               createTeamController.code = code
               showFragment(SetNameFragment(), SetNameFragment.Tag)
-              if (confirmed.isEmpty) inject[BrowserController].openUrl(getString(R.string.url_privacy_policy))
+              if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
               None
             }
         }
@@ -117,5 +122,5 @@ case class VerifyTeamEmailFragment() extends CreateTeamFragment{
 }
 
 object VerifyTeamEmailFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }

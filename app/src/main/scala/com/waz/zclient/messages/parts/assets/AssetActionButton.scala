@@ -35,7 +35,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.views.GlyphProgressView
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.common.controllers.AssetsController
 
 class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) extends GlyphProgressView(context, attrs, style) with ViewHelper {
@@ -60,7 +59,7 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   private val errorButtonDrawable = getDrawable(R.drawable.selector__icon_button__background__video_message__error)
   private val onCompletedDrawable = if (isFileType) new FileDrawable(asset.map(_._1.mime.extension)) else normalButtonDrawable
 
-  accentController.accentColor.map(_.getColor).on(Threading.Ui)(setProgressColor)
+  accentController.accentColor.map(_.color).on(Threading.Ui)(setProgressColor)
 
   private val text = deliveryState flatMap {
     case Complete if !isFileType  =>

@@ -23,7 +23,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.UserId
 import com.waz.service.NetworkModeService
 import com.waz.utils.returning
-import com.waz.zclient.controllers.navigation.Page
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
@@ -90,7 +90,7 @@ class PendingConnectRequestManagerFragment extends BaseFragment[PendingConnectRe
       else
         Page.PENDING_CONNECT_REQUEST
 
-    navigationController.navController.setRightPage(targetLeftPage, Tag)
+    inject[INavigationController].setRightPage(targetLeftPage, Tag)
   }
 
   override def onAcceptedConnectRequest(userId: UserId): Unit =

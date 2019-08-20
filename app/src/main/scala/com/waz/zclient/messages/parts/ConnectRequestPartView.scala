@@ -17,43 +17,82 @@
  */
 package com.waz.zclient.messages.parts
 
-import com.waz.utils.wrappers.AndroidURIUtil
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
+import com.waz.model.{UserData, UserId}
+import com.waz.service.IntegrationsService
 import com.waz.threading.Threading
+import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.common.views.{ChatheadView, UserDetailsView}
+import com.waz.zclient.common.views._
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
 import com.waz.zclient.ui.utils.TextViewUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
+import scala.concurrent.Future
+
 class ConnectRequestPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
+  import Threading.Implicits.Ui
+
   override val tpe: MsgPart = MsgPart.ConnectRequest
 
-  lazy val chathead     : ChatheadView    = findById(R.id.cv__row_conversation__connect_request__chat_head)
+  lazy val chathead     : ChatHeadView    = findById(R.id.cv__row_conversation__connect_request__chat_head)
   lazy val label        : TextView        = findById(R.id.ttv__row_conversation__connect_request__label)
   lazy val userDetails  : UserDetailsView = findById(R.id.udv__row_conversation__connect_request__user_details)
 
   private val browser = inject[BrowserController]
   private val users   = inject[UsersController]
+  private val integrations = inject[Signal[IntegrationsService]]
 
-  val user = users.getOtherUser(message).collect { case Some(u) => u }
-  user.map(_.id)(chathead.setUserId)
+  val members = message.map(m => m.members + m.userId)
+
+  val user = for {
+    self <- inject[Signal[UserId]]
+    members <-  message.map(m => Set(m.userId) ++ Set(m.recipient).flatten)
+    Some(user) <- members.find(_ != self).fold {
+      Signal.const(Option.empty[UserData])
+    } { uId =>
+      users.user(uId).map(Some(_))
+    }
+  } yield user
+
+
+  val integration = for {
+    usr <- user
+    intService <- integrations
+    integration <- Signal.future((usr.integrationId, usr.providerId) match {
+    case (Some(i), Some(p)) => intService.getIntegration(p, i).map {
+      case Right(integrationData) => Some(integrationData)
+      case Left(_) => None
+    }
+    case _ => Future.successful(None)
+  })
+  } yield integration
+
+  Signal(integration, user.map(_.id)).onUi {
+    case (Some(i), _) => chathead.setIntegration(i)
+    case (_, usr) => chathead.setUserId(usr)
+  }
+
   user.map(_.id)(userDetails.setUserId)
 
-  user.map(_.isAutoConnect).on(Threading.Ui) {
-    case true =>
+  user.map(u => (u.isAutoConnect, u.isWireBot)).on(Threading.Ui) {
+    case (true, _) =>
       label.setText(R.string.content__message__connect_request__auto_connect__footer)
-      TextViewUtils.linkifyText(label, label.getCurrentTextColor, true, true, new Runnable() {
-        override def run() = browser.openUrl(AndroidURIUtil parse getString(R.string.url__help))
+      TextViewUtils.linkifyText(label, getStyledColor(R.attr.wirePrimaryTextColor), true, true, new Runnable() {
+        override def run() = browser.openHelp()
       })
-    case false =>
+    case (false, false) =>
+      label.setTextColor(getStyledColor(R.attr.wirePrimaryTextColor))
       label.setText(R.string.content__message__connect_request__footer)
+    case (_, true) =>
+      label.setTextColor(getColor(R.color.accent_red))
+      label.setText(R.string.generic_service_warning)
   }
 
 }

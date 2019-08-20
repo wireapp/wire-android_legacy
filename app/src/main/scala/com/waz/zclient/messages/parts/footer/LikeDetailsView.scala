@@ -20,19 +20,13 @@ package com.waz.zclient.messages.parts.footer
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.model.UserId
-import com.waz.threading.Threading
+import com.waz.content.{ReactionsStorage, UsersStorage}
+import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.Signal
-import com.waz.zclient.messages.parts.ChatheadsRecyclerView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.zclient.common.controllers.ScreenController
 
 class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
-  import LikeDetailsView._
-
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -40,49 +34,20 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
   setOrientation(LinearLayout.HORIZONTAL)
 
   private val description: TextView = findById(R.id.like__description)
-  private val chatheadContainer: LikersListView = findById(R.id.like_chathead_container)
-  private val gtvMore: TextView = findById(R.id.gtv_more)
 
-  def init(controller: FooterViewController): Unit = {
-    val likedBy = controller.messageAndLikes.map(_.likes)
-
-    def getDisplayNameString(ids: Seq[UserId]): Signal[String] = {
-      if (showAvatars(ids)) Signal const getQuantityString(R.plurals.message_footer__number_of_likes, ids.size, Integer.valueOf(ids.size))
-      else for {
-        zms <- controller.zms
-        names <- Signal.sequence(ids map { controller.signals.displayNameStringIncludingSelf } :_*)
-      } yield
-        if (names.isEmpty) getString(R.string.message_footer__tap_to_like)
-        else names.mkString(", ")
-    }
-
-    def showLikers() = controller.message.map(_.id).head.foreach { mId =>
-      inject[ScreenController].showLikesForMessage ! Some(mId)
-    }(Threading.Ui)
-
-    likedBy.on(Threading.Ui) { ids =>
-      val show = showAvatars(ids)
-      chatheadContainer.setVisible(show)
-      gtvMore.setVisible(show)
-      chatheadContainer.users ! ids.take(if (show) 2 else 0) // setting to 0 to recycle chatheads
-    }
-
-    val displayText = likedBy flatMap getDisplayNameString
-
-    displayText.on(Threading.Ui)(description.setText)
-
-    chatheadContainer.onClick(showLikers())
-    gtvMore.onClick(showLikers())
-  }
+  def init(controller: FooterViewController): Unit =
+    controller.messageAndLikes.flatMap {
+        case MessageAndLikes(_, likes, _, _) if likes.isEmpty =>
+          Signal.const(getString(R.string.message_footer__tap_to_like))
+        case MessageAndLikes(_, likes, _, _) if likes.size > 3 =>
+          Signal.const(getQuantityString(R.plurals.message_footer__number_of_likes, likes.size, Integer.valueOf(likes.size)))
+        case MessageAndLikes(msg, _, _, _) =>
+          for {
+            reactionsStorage <- inject[Signal[ReactionsStorage]]
+            likers           <- reactionsStorage.likes(msg.id).map(_.likers)
+            usersStorage     <- inject[Signal[UsersStorage]]
+            users            <- usersStorage.listSignal(likers.keys)
+          } yield users.sortBy(u => likers(u.id)).map(_.getDisplayName).mkString(", ")
+    }.onUi(description.setText)
 }
 
-object LikeDetailsView {
-  def showAvatars(ids: Seq[UserId]) = ids.size > 2
-}
-
-class LikersListView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ChatheadsRecyclerView {
-  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
-  def this(context: Context) = this(context, null, 0)
-
-  override val chatHeadResId: Int = R.layout.message_like_chathead
-}

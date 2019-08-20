@@ -18,8 +18,8 @@
 package com.waz.zclient.testutils;
 
 import com.waz.api.CoreList;
-import com.waz.api.OtrClient;
 import com.waz.api.UpdateListener;
+import com.waz.sync.client.OtrClient;
 
 import java.util.ArrayList;
 import java.util.HashSet;

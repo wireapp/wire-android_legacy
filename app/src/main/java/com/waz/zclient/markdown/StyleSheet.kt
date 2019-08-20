@@ -17,15 +17,14 @@
  */
 package com.waz.zclient.markdown
 
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Paint
 import android.net.Uri
-import android.support.v4.content.ContextCompat
 import android.support.v4.content.ContextCompat.startActivity
-import android.widget.TextView
 import com.waz.zclient.R
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.commonmark.*
@@ -40,34 +39,6 @@ import org.commonmark.node.*
  */
 public class StyleSheet {
 
-    companion object {
-        fun styleFor(textView: TextView): StyleSheet {
-            val context = textView.context
-            val style = StyleSheet()
-
-            style.baseFontColor = textView.currentTextColor
-            style.baseFontSize = textView.textSize.toInt()
-            style.linkColor = ContextCompat.getColor(context, R.color.accent_blue)
-
-            style.onClickLink = { url: String ->
-                // show dialog to confirm if url should be open
-                ViewUtils.showAlertDialog(context,
-                    context.getString(R.string.markdown_link_dialog_title),
-                    context.getString(R.string.markdown_link_dialog_message, url),
-                    context.getString(R.string.markdown_link_dialog_confirmation),
-                    context.getString(R.string.markdown_link_dialog_cancel),
-                    DialogInterface.OnClickListener { _, _ ->
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        startActivity(context, intent, null)
-                    },
-                    null
-                )
-            }
-
-            return style
-        }
-    }
-
     /**
      * The base font size (in pixels) used for all markdown units unless otherwise specified.
      */
@@ -81,12 +52,12 @@ public class StyleSheet {
     /**
      * The amount of spacing (in points) before a paragraph.
      */
-    public var paragraphSpacingBefore: Int = 16
+    public var paragraphSpacingBefore: Int = 6
 
     /**
      * The amount of spacing (in points) after a paragraph.
      */
-    public var paragraphSpacingAfter: Int = 16
+    public var paragraphSpacingAfter: Int = 6
 
     /**
      * The relative font size multiplers (values) for the various header levels (keys).
@@ -95,19 +66,34 @@ public class StyleSheet {
     public var headingSizeMultipliers = mapOf(1 to 1.7f, 2 to 1.5f, 3 to 1.25f, 4 to 1.25f, 5 to 1.25f, 6 to 1.25f)
 
     /**
-     * The color of a quote (including stripe).
+     * The color of a quote text.
      */
     public var quoteColor: Int = Color.GRAY
 
     /**
+     * The color of a quote stripe.
+     */
+    public var quoteStripeColor: Int = Color.GRAY
+
+    /**
      * The width (in points) of the quote stripe.
      */
-    public var quoteStripeWidth: Int = 4
+    public var quoteStripeWidth: Int = 2
 
     /**
      * The gap width (in points) between the quote stripe and the quote content text.
      */
     public var quoteGapWidth: Int = 16
+
+    /**
+     * The amount of spacing (in points) before a quote.
+     */
+    public var quoteSpacingBefore: Int = 16
+
+    /**
+     * The amount of spacing (in points) after a quote.
+     */
+    public var quoteSpacingAfter: Int = 16
 
     /**
      * The color of list prefixes
@@ -120,6 +106,16 @@ public class StyleSheet {
     public var listPrefixGapWidth: Int = 8
 
     /**
+     * The amount of spacing (in points) before a list item.
+     */
+    public var listItemSpacingBefore: Int = 4
+
+    /**
+     * The amount of spacing (in points) after a list item.
+     */
+    public var listItemSpacingAfter: Int = 4
+
+    /**
      * The color of all monospace code text.
      */
     public var codeColor: Int = Color.GRAY
@@ -127,7 +123,7 @@ public class StyleSheet {
     /**
      * The indentation (in points) from the leading margin of all code blocks.
      */
-    public var codeBlockIndentation: Int = 24
+    public var codeBlockIndentation: Int = 0
 
     /**
      * The color of links.
@@ -159,6 +155,27 @@ public class StyleSheet {
     private val Int.scaled: Int get() = (this * screenDensity).toInt()
 
     /**
+     * Configures the handler when a markdown link is clicked by presenting a confirmation
+     * dialog from the given context.
+     */
+    fun configureLinkHandler(context: Context) {
+        onClickLink = { url: String ->
+            // show dialog to confirm if url should be open
+            ViewUtils.showAlertDialog(context,
+                context.getString(R.string.markdown_link_dialog_title),
+                context.getString(R.string.markdown_link_dialog_message, url),
+                context.getString(R.string.markdown_link_dialog_confirmation),
+                context.getString(R.string.markdown_link_dialog_cancel),
+                DialogInterface.OnClickListener { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    startActivity(context, intent, null)
+                },
+                null
+            )
+        }
+    }
+
+    /**
      * Returns the configured `GroupSpan` for the given node, depending on the node type.
      */
     fun spanFor(node: Node): GroupSpan {
@@ -180,10 +197,11 @@ public class StyleSheet {
             is BlockQuote -> {
                 return BlockQuoteSpan(
                     quoteColor,
+                    quoteStripeColor,
                     quoteStripeWidth,
                     quoteGapWidth,
-                    paragraphSpacingBefore,
-                    paragraphSpacingAfter,
+                    quoteSpacingBefore,
+                    quoteSpacingAfter,
                     screenDensity
                 )
             }
@@ -197,13 +215,28 @@ public class StyleSheet {
                 return ListItemSpan()
             }
             is FencedCodeBlock -> {
-                return FencedCodeBlockSpan(codeColor, codeBlockIndentation.scaled)
+                return FencedCodeBlockSpan(
+                    codeColor,
+                    codeBlockIndentation.scaled,
+                    paragraphSpacingBefore,
+                    paragraphSpacingAfter
+                )
             }
             is IndentedCodeBlock -> {
-                return IndentedCodeBlockSpan(codeColor, codeBlockIndentation.scaled)
+                return IndentedCodeBlockSpan(
+                    codeColor,
+                    codeBlockIndentation.scaled,
+                    paragraphSpacingBefore,
+                    paragraphSpacingAfter
+                )
             }
             is HtmlBlock -> {
-                return HtmlBlockSpan(codeColor, codeBlockIndentation.scaled)
+                return HtmlBlockSpan(
+                    codeColor,
+                    codeBlockIndentation.scaled,
+                    paragraphSpacingBefore,
+                    paragraphSpacingAfter
+                )
             }
             is Link -> {
                 return LinkSpan(node.destination, linkColor, onClickLink)

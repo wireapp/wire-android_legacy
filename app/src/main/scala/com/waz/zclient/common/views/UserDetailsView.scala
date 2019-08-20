@@ -31,8 +31,9 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  private lazy val userNameTextView: TextView = findById(R.id.user_handle)
   inflate(R.layout.user__details, this, addToParent = true)
+  private lazy val userNameTextView: TextView = findById(R.id.user_handle)
+  private lazy val userInfoTextView: TextView = findById(R.id.user_name)
 
   val users = inject[UsersController]
   val userId = Signal[UserId]()
@@ -40,7 +41,9 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
   userId.flatMap(users.userHandle).map {
     case Some(h) => StringUtils.formatHandle(h.string)
     case None => ""
-  }.onUi(userNameTextView.setText)
+  }.onUi(userNameTextView.setText(_))
+
+  userId.flatMap(users.user).map(_.getDisplayName).onUi(userInfoTextView.setText(_))
 
   def setUserId(id: UserId): Unit =
     Option(id).fold(throw new IllegalArgumentException("UserId should not be null"))(userId ! _)

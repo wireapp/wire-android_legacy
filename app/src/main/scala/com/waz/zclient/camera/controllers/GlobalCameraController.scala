@@ -1,20 +1,21 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.camera.controllers
 
 import java.util.concurrent.{Executors, ThreadFactory}
@@ -24,7 +25,7 @@ import android.content.res.Configuration
 import android.graphics.{Rect, SurfaceTexture}
 import android.hardware.Camera
 import android.view.{OrientationEventListener, Surface, WindowManager}
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.images.ImageAssetGenerator
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture
@@ -38,10 +39,9 @@ import timber.log.Timber
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext, eventContext: EventContext) {
-
-  implicit val logTag = ZLog.logTagFor[GlobalCameraController]
-
+class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireContext, eventContext: EventContext)
+  extends DerivedLogTag {
+  
   implicit val cameraExecutionContext = new ExecutionContext {
     private val executor = Executors.newSingleThreadExecutor(new ThreadFactory {
       override def newThread(r: Runnable): Thread = new Thread(r, "CAMERA")
@@ -281,7 +281,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
             DeprecationUtils.setAutoFocusCallback(c, new AutoFocusCallbackDeprecation {
               def onAutoFocus(s: java.lang.Boolean, cam: CameraWrapper): Unit = {
                 if (!s) Timber.w("Focus was unsuccessful - ignoring")
-                promise.success(())
+                promise.trySuccess(())
                 settingFocus = false
               }
             })
@@ -313,12 +313,12 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     PreviewSize(w, h)
   }
 
-  private def getPictureSize(pms: CameraParamsWrapper) = {
-    val (bigger, smaller) = pms.get.getSupportedPictureSizes.asScala.map(new CameraSizeWrapper(_)).partition { size =>
-      size.height >= ImageAssetGenerator.MediumSize
+  private def getPictureSize(pms: CameraParamsWrapper) =
+    pms.get.getSupportedPictureSizes.asScala.map(new CameraSizeWrapper(_)).minBy { s =>
+      val is16_9 = math.abs( (s.width.toDouble / s.height) - GlobalCameraController.Ratio_16_9 ) < 0.01
+      val differenceToHeight = Math.abs(s.height - ImageAssetGenerator.MediumSize)
+      (!is16_9, differenceToHeight) //Ordering[Boolean] considers false < true, so we want to flip the is16_9 check to give them preference
     }
-    if (bigger.nonEmpty) bigger.minBy(_.width) else smaller.maxBy(_.width)
-  }
 
   /**
     * activityRotation is relative to the natural orientation of the device, regardless of how the device is rotated.
@@ -342,6 +342,10 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
   private def supportsFocusMode(pms: CameraParamsWrapper, mode: String) = Option(pms.get.getSupportedFocusModes).fold(false)(_.contains(mode))
 
   private def setFocusMode(pms: CameraParamsWrapper, mode: String) = if (supportsFocusMode(pms, mode)) pms.get.setFocusMode(mode)
+}
+
+object GlobalCameraController {
+  val Ratio_16_9: Double = 16.0 / 9.0
 }
 
 object WireCamera {

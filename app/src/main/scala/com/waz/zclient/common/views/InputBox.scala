@@ -50,12 +50,13 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   private val hintAttr = Option(attributesArray.getString(R.styleable.InputBox_hint))
   private val hasButtonAttr = attributesArray.getBoolean(R.styleable.InputBox_hasButton, true)
   private var shouldDisableOnClick = true
-  private var removeTextOnClick = false
+  private var shouldClearErrorOnClick = false
+  private var shouldClearErrorOnTyping = true
 
   val editText = findById[CursorEditText](R.id.edit_text)
   val hintText = findById[TypefaceTextView](R.id.hint_text)
   val confirmationButton = findById[GlyphButton](R.id.confirmation_button)
-  val errorText = findById[TypefaceTextView](R.id.empty_search_message)
+  val errorText = findById[TypefaceTextView](R.id.error_text)
   val progressBar = findById[ProgressBar](R.id.progress_bar)
   val startText = findById[TypefaceTextView](R.id.start_text)
   val errorLayout = findById[ViewGroup](R.id.error_layout)
@@ -72,7 +73,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   editText.addTextListener { text =>
     this.text ! text
     validate(text)
-    hideErrorMessage()
+    if (shouldClearErrorOnTyping) hideErrorMessage()
     hintText.setVisible(text.isEmpty)
   }
   validate(editText.getText.toString)
@@ -112,7 +113,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
       confirmationButton.setVisible(hasButtonAttr)
       if (shouldDisableOnClick) editText.setEnabled(true)
       confirmationButton.setEnabled(true)
-      if(errorMessage.isEmpty && removeTextOnClick) {
+      if(errorMessage.isEmpty && shouldClearErrorOnClick) {
         editText.setText("")
         validate("")
       }
@@ -126,7 +127,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   }
 
   def showErrorMessage(text: Option[String] = None): Unit = {
-    text.map(_.toUpperCase).foreach(errorText.setText)
+    text.foreach(errorText.setText)
     linkifyError.foreach { errorCallback =>
       TextViewUtils.linkifyText(errorText, Color.BLACK, true, false, new Runnable() {
         override def run() = errorCallback()
@@ -153,7 +154,8 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
 
   def setShouldDisableOnClick(should: Boolean): Unit = shouldDisableOnClick = should
 
-  def setShouldClearTextOnClick(should: Boolean): Unit = removeTextOnClick = should
+  def setShouldClearErrorOnClick(should: Boolean): Unit = shouldClearErrorOnClick = should
+  def setShouldClearErrorOnTyping(should: Boolean): Unit = shouldClearErrorOnTyping = should
 
   def setButtonGlyph(glyph: Int): Unit =
     confirmationButton.setText(glyph)
@@ -166,12 +168,6 @@ object InputBox {
 
   case class Validator(f: String => Boolean) {
     def shouldTrim: Boolean = true
-  }
-
-  object PasswordValidator extends Validator({ t =>
-    t.length >= 8 && t.length <= 101
-  }) {
-    override def shouldTrim: Boolean = false
   }
 
   object NameValidator extends Validator(_.trim.length >= 2)

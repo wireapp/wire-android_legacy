@@ -23,7 +23,6 @@ import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.NetworkMode
 import com.waz.model.{AssetId, Dim2}
 import com.waz.service.NetworkModeService
@@ -32,7 +31,7 @@ import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
-import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
+import com.waz.zclient.messages.{ClickableViewPart, HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.common.views.ImageAssetDrawable
@@ -40,7 +39,10 @@ import com.waz.zclient.common.views.ImageAssetDrawable.State
 import com.waz.zclient.common.views.ImageController.{DataImage, ImageSource, WireImage}
 import com.waz.zclient.{R, ViewHelper}
 
-class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView with EphemeralIndicatorPartView {
+class LocationPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with ClickableViewPart with ViewHelper with EphemeralPartView with EphemeralIndicatorPartView
+    with HighlightViewPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -99,7 +101,7 @@ class LocationPartView(context: Context, attrs: AttributeSet, style: Int) extend
   showPin.on(Threading.Ui) { pinView.setVisible }
   showPlaceholder.on(Threading.Ui) { placeholder.setVisible }
 
-  accentController.accentColor { c => pinView.setTextColor(c.getColor()) }
+  accentController.accentColor.map(_.color) (pinView.setTextColor)
 
   onClicked { _ =>
     expired.head foreach {

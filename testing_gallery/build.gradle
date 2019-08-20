@@ -39,9 +39,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation deps.appcompatv7
-    implementation deps.gson
-    implementation deps.guava
+    implementation "com.android.support:appcompat-v7:27.0.0"
+    implementation 'com.google.code.gson:gson:2.2.4'
+    implementation 'com.google.guava:guava:19.0'
 }
 
 //add pretty naming to apk filename

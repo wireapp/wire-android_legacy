@@ -20,21 +20,23 @@ package com.waz.zclient.conversationlist
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
+import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.conversationlist.ConversationListAdapter.{Incoming, ListMode, Normal}
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
+import com.waz.api.Message
+import com.waz.content.{ConversationStorage, MembersStorage}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class ConversationListController(implicit inj: Injector, ec: EventContext) extends Injectable {
+class ConversationListController(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   import ConversationListController._
 
@@ -64,41 +66,37 @@ class ConversationListController(implicit inj: Injector, ec: EventContext) exten
 
   lazy val establishedConversations = for {
     z          <- zms
-    convs      <- z.convsContent.conversationsSignal.throttle(ConvListUpdateThrottling )
-  } yield convs.conversations.filter(EstablishedListFilter)
+    convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling )
+  } yield convs.values.filter(EstablishedListFilter)
 
-  def conversationListData(listMode: ListMode) = for {
-    z             <- zms
-    processing    <- z.push.processing
-    if !processing
-    conversations <- z.convsStorage.convsSignal
-    incomingConvs = conversations.conversations.filter(Incoming.filter).toSeq
-    members <- Signal.sequence(incomingConvs.map(c => z.membersStorage.activeMembers(c.id).map(_.find(_ != z.selfUserId))):_*)
-  } yield {
-    val regular = conversations.conversations
-      .filter{ conversationData =>
-        listMode.filter(conversationData)
-      }
-      .toSeq
-      .sorted(listMode.sort)
-    val incoming = if (listMode == Normal) (incomingConvs, members.flatten) else (Seq(), Seq())
-    (z.selfUserId, regular, incoming)
-  }
+  lazy val regularConversationListData = conversationData(ConversationListAdapter.Normal)
+  lazy val archiveConversationListData = conversationData(ConversationListAdapter.Archive)
 
-  def nextConversation(convId: ConvId): Future[Option[ConvId]] =
-    conversationListData(Normal).head.map {
-      case (_, regular, _) => regular.lift(regular.indexWhere(_.id == convId) + 1).map(_.id)
-    } (Threading.Background)
+  private def conversationData(listMode: ConversationListAdapter.ListMode) =
+    for {
+      convsStorage  <- inject[Signal[ConversationStorage]]
+      conversations <- convsStorage.contents
+    } yield
+      conversations.values.filter(listMode.filter).toSeq.sorted(listMode.sort)
+
+  lazy val incomingConversationListData =
+    for {
+      selfUserId     <- inject[Signal[UserId]]
+      convsStorage   <- inject[Signal[ConversationStorage]]
+      membersStorage <- inject[Signal[MembersStorage]]
+      conversations  <- convsStorage.contents
+      incomingConvs  =  conversations.values.filter(ConversationListAdapter.Incoming.filter).toSeq
+      members <- Signal.sequence(incomingConvs.map(c => membersStorage.activeMembers(c.id).map(_.find(_ != selfUserId))):_*)
+    } yield (incomingConvs, members.flatten)
 }
 
 object ConversationListController {
 
-  lazy val RegularListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && !c.archived && !c.completelyCleared }
+  lazy val RegularListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && !c.archived}
   lazy val IncomingListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType == ConversationType.Incoming }
   lazy val ArchivedListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.Incoming, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && c.archived && !c.completelyCleared }
   lazy val EstablishedListFilter: (ConversationData => Boolean) = { c => RegularListFilter(c) && c.convType != ConversationType.WaitForConnection }
   lazy val EstablishedArchivedListFilter: (ConversationData => Boolean) = { c => ArchivedListFilter(c) && c.convType != ConversationType.WaitForConnection }
-  lazy val IntegrationFilter: (ConversationData => Boolean) = { c => c.convType == ConversationType.Group && !c.hidden }
 
   // Maintains a short list of members for each conversation.
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.
@@ -124,25 +122,66 @@ object ConversationListController {
     def apply(conv: ConvId) : Signal[Seq[UserId]] = members.map(_.getOrElse(conv, Seq.empty[UserId]))
   }
 
+  case class LastMsgs(lastMsg: Option[MessageData], lastMissedCall: Option[MessageData])
 
-  // Keeps last message for each conversation, this is needed because MessagesStorage is not
+  // Keeps last message and missed call for each conversation, this is needed because MessagesStorage is not
   // supposed to be used for multiple conversations at the same time, as it loads an index of all conv messages.
   // Using MessagesStorage with multiple/all conversations forces it to reload full msgs index on every conv switch.
-  class LastMessageCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext) extends Injectable {
+  class LastMessageCache(zms: ZMessaging)(implicit inj: Injector, ec: EventContext)
+    extends Injectable with DerivedLogTag {
+
+    private implicit val executionContext: ExecutionContext = Threading.Background
 
     private val cache = new mutable.HashMap[ConvId, Signal[Option[MessageData]]]
 
-    private val changeEvents = zms.messagesStorage.onChanged map { msgs => msgs.groupBy(_.convId).mapValues(_.maxBy(_.time)) }
+    private val lastReadCache = new mutable.HashMap[ConvId, Signal[Option[RemoteInstant]]]
 
-    private def updateEvents(conv: ConvId) = changeEvents.map(_.get(conv)).collect { case Some(m) => m }
+    private val changeEvents = zms.messagesStorage.onChanged.map(_.groupBy(_.convId).mapValues(_.maxBy(_.time)))
 
-    private def getLastMessage(conv: ConvId) = CancellableFuture.lift(zms.storage.db.read { MessageData.MessageDataDao.last(conv)(_) })
+    private val convLastReadChangeEvents = zms.convsStorage.onChanged.map(_.groupBy(_.id).mapValues(_.map(_.lastRead).head))
 
-    def apply(conv: ConvId): Signal[Option[MessageData]] = cache.getOrElseUpdate(conv,
-      new AggregatingSignal[MessageData, Option[MessageData]](updateEvents(conv), getLastMessage(conv), {
+    private val missedCallEvents = zms.messagesStorage.onChanged.map(_.filter(_.msgType == Message.Type.MISSED_CALL).groupBy(_.convId).mapValues(_.maxBy(_.time)))
+
+    private def messageUpdateEvents(conv: ConvId) = changeEvents.map(_.get(conv)).collect { case Some(m) => m }
+
+    private def lastReadUpdateEvents(conv: ConvId) = convLastReadChangeEvents.map(_.get(conv)).collect { case Some(m) => m }
+
+    private def missedCallUpdateEvents(conv: ConvId) = missedCallEvents.map(_.get(conv)).collect { case Some(m) => m }
+
+    private def lastMessage(conv: ConvId) = zms.storage.db.read(MessageData.MessageDataDao.last(conv)(_))
+
+    private def lastRead(conv: ConvId) = zms.storage.db.read(ConversationData.ConversationDataDao.getById(conv)(_).map(_.lastRead))
+
+    private def lastUnreadMissedCall(conv: ConvId): Future[Option[MessageData]] =
+      for {
+        lastRead <- lastReadSignal(conv).head
+        missed <-
+          zms.storage.db.read { MessageData.MessageDataDao.findByType(conv, Message.Type.MISSED_CALL)(_).acquire { msgs =>
+              lastRead.flatMap(i => msgs.toSeq.find(_.time.isAfter(i)))
+            }
+          }
+      } yield missed
+
+    def apply(conv: ConvId): Signal[LastMsgs] =
+      Signal(lastMessageSignal(conv), lastMissedCallSignal(conv)).map(LastMsgs.tupled)
+
+    private def lastMessageSignal(conv: ConvId): Signal[Option[MessageData]] = cache.getOrElseUpdate(conv,
+      new AggregatingSignal[MessageData, Option[MessageData]](messageUpdateEvents(conv), lastMessage(conv), {
         case (res @ Some(last), update) if last.time.isAfter(update.time) => res
         case (_, update) => Some(update)
       }))
+
+    private def lastReadSignal(conv: ConvId): Signal[Option[RemoteInstant]] = lastReadCache.getOrElseUpdate(conv,
+      new AggregatingSignal[RemoteInstant, Option[RemoteInstant]](lastReadUpdateEvents(conv), lastRead(conv), {
+        case (res @ Some(last), update) if last.isAfter(update) => res
+        case (_, update) => Some(update)
+      }))
+
+    private def lastMissedCallSignal(conv: ConvId): Signal[Option[MessageData]] =
+      new AggregatingSignal[MessageData, Option[MessageData]](missedCallUpdateEvents(conv), lastUnreadMissedCall(conv), {
+        case (res @ Some(last), update) if last.time.isAfter(update.time) => res
+        case (_, update) => Some(update)
+      })
   }
 
 }

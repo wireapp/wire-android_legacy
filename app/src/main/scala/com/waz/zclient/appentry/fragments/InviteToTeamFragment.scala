@@ -23,13 +23,11 @@ import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.text.InputType
 import android.view.View
 import android.view.View.OnLayoutChangeListener
-import com.waz.ZLog
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, Forbidden, InternalErrorCode}
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.R
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.{CreateTeamFragment, InvitesAdapter}
@@ -54,10 +52,10 @@ case class InviteToTeamFragment() extends CreateTeamFragment {
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    learnMoreButton.foreach(_.onClick(browser.openUrl(AndroidURIUtil.parse(context.getString(R.string.invalid_email_help)))))
+    learnMoreButton.foreach(_.onClick(browser.openInvalidEmailHelp()))
     inputField.foreach { inputField =>
       inputField.setShouldDisableOnClick(false)
-      inputField.setShouldClearTextOnClick(true)
+      inputField.setShouldClearErrorOnClick(true)
       inputField.setValidator(InputBox.SimpleValidator)
       inputField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS | InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT)
       inputField.setButtonGlyph(R.string.glyph__send)
@@ -114,6 +112,6 @@ case class InviteToTeamFragment() extends CreateTeamFragment {
 }
 
 object InviteToTeamFragment {
-  val Tag = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
   trait Container
 }

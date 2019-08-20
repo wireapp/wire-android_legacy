@@ -20,8 +20,8 @@ package com.waz.zclient.messages
 import android.content.Context
 import android.util.AttributeSet
 import android.view.{HapticFeedbackConstants, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.RichOption
@@ -35,7 +35,9 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DateConvertUtils.asZonedDateTime
 import com.waz.zclient.utils._
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
-import org.threeten.bp.Instant
+
+import scala.concurrent.duration._
+import com.waz.utils.RichWireInstant
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int)
     extends MessageViewLayout(context, attrs, style) with ViewHelper {
@@ -71,7 +73,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     } else false
   }
 
-  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
+  def set(mAndL: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions, adapter: MessagesPagedListAdapter): Unit = {
     val animateFooter = msgId == mAndL.message.id && hasFooter != shouldShowFooter(mAndL, opts)
     hasFooter = shouldShowFooter(mAndL, opts)
     data = mAndL
@@ -87,15 +89,24 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
           (if (msg.members.nonEmpty) Seq(PartDesc(MemberChange)) else Seq.empty) ++
           (if (canHaveLink) Seq(PartDesc(WirelessLink)) else Seq.empty)
       }
-      else if (msg.msgType == Message.Type.RICH_MEDIA){
-        if (msg.content.size > 1){
-          Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ (msg.content map { content => PartDesc(MsgPart(content.tpe), Some(content)) }).filter(_.tpe == WebLink)
-        } else {
-          msg.content map { content => PartDesc(MsgPart(content.tpe), Some(content)) }
+      else {
+        val quotePart = (mAndL.quote, mAndL.message.quote) match {
+          case (Some(quote), Some(qInfo)) if qInfo.validity => Seq(PartDesc(Reply(quote.msgType)))
+          case (Some(_), Some(_))                           => Seq(PartDesc(Reply(Unknown))) // the quote is invalid
+          case (None, Some(_))                              => Seq(PartDesc(Reply(Unknown))) // the quote was deleted
+          case _                                            => Seq[PartDesc]()
         }
+
+        quotePart ++
+          (if (msg.msgType == Message.Type.RICH_MEDIA) {
+            val contentWithOG = msg.content.filter(_.openGraph.isDefined)
+            if (contentWithOG.size == 1 && msg.content.size == 1)
+              msg.content.map(content => PartDesc(MsgPart(content.tpe), Some(content)))
+            else
+              Seq(PartDesc(MsgPart(Message.Type.TEXT, isOneToOne))) ++ contentWithOG.map(content => PartDesc(MsgPart(content.tpe), Some(content))).filter(_.tpe == WebLink)
+          }
+          else Seq(PartDesc(MsgPart(msg.msgType, isOneToOne))))
       }
-      else
-        Seq(PartDesc(MsgPart(msg.msgType, isOneToOne)))
     } .filter(_.tpe != MsgPart.Empty)
 
     val parts =
@@ -110,10 +121,6 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
         builder ++= contentParts
 
-//        if (msg.isEphemeral) {
-//          builder += PartDesc(MsgPart.EphemeralDots)
-//        }
-
         if (msg.msgType == Message.Type.ASSET && !areDownloadsAlwaysEnabled)
           builder += PartDesc(MsgPart.WifiWarning)
 
@@ -125,7 +132,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
     val (top, bottom) = if (parts.isEmpty) (0, 0) else getMargins(prev.map(_.msgType), next.map(_.msgType), parts.head.tpe, parts.last.tpe, isOneToOne)
     setPadding(0, top, 0, bottom)
-    setParts(mAndL, parts, opts)
+    setParts(mAndL, parts, opts, adapter)
 
     if (animateFooter)
       getFooter foreach { footer =>
@@ -144,11 +151,11 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     case Message.Type.CONNECT_REQUEST => None
     case _ =>
       prev.fold2(None, { p =>
-        val prevDay = asZonedDateTime(p.time).toLocalDate.atStartOfDay()
-        val curDay = asZonedDateTime(msg.time).toLocalDate.atStartOfDay()
+        val prevDay = asZonedDateTime(p.time.instant).toLocalDate.atStartOfDay()
+        val curDay = asZonedDateTime(msg.time.instant).toLocalDate.atStartOfDay()
 
         if (prevDay.isBefore(curDay)) Some(SeparatorLarge)
-        else if (p.time.isBefore(msg.time.minusSeconds(1800)) || isFirstUnread) Some(Separator)
+        else if (p.time.isBefore(msg.time - 1800.seconds) || isFirstUnread) Some(Separator)
         else None
       })
   }
@@ -164,7 +171,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) = {
     val userChanged = prev.forall(m => m.userId != msg.userId || systemMessage(m))
     val recalled = msg.msgType == Message.Type.RECALLED
-    val edited = msg.editTime != Instant.EPOCH
+    val edited = !msg.editTime.isEpoch
     val knock = msg.msgType == Message.Type.KNOCK
 
     !knock && !systemMessage(msg) && (recalled || edited || userChanged)
@@ -173,14 +180,14 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def shouldShowFooter(mAndL: MessageAndLikes, opts: MsgBindOptions): Boolean = {
     mAndL.likes.nonEmpty ||
       selection.isFocused(mAndL.message.id) ||
-      (opts.isLastSelf && !opts.isGroup) ||
+      opts.isLastSelf ||
       mAndL.message.state == Message.Status.FAILED || mAndL.message.state == Message.Status.FAILED_READ
   }
 
   def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
 }
 
-object MessageView {
+object MessageView extends DerivedLogTag {
 
   import Message.Type._
 
@@ -242,7 +249,8 @@ object MessageView {
              Rename |
              WirelessLink |
              ConversationStart |
-             MessageTimer => SystemLike
+             MessageTimer |
+             ReadReceipts => SystemLike
         case MsgPart.MissedCall => MissedCall
         case _ => Other
       }
@@ -294,7 +302,8 @@ object MessageView {
                             listDimensions: Dim2,
                             isGroup: Boolean,
                             teamId: Option[TeamId],
-                            canHaveLink: Boolean)
+                            canHaveLink: Boolean,
+                            selfId: Option[UserId])
 }
 
 

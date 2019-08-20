@@ -94,6 +94,7 @@
     <attr name="wirePrimaryTextColorReverted" format="color" />
     <attr name="thinDividerColor" format="color" />
     <attr name="backNavigationIcon" format="color" />
+    <attr name="replyBorderColor" format="color" />
 
     <!-- StartUI error labels -->
     <attr name="startUiErrorLabel" format="reference" />
@@ -154,5 +155,15 @@
 
     <!-- Teams -->
     <attr name="roundBackgroundDrawable" format="reference" />
+
+    <!-- Markdown -->
+    <attr name="codeColor" format="reference" />
+    <attr name="quoteColor" format="reference" />
+    <attr name="quoteStripeColor" format="reference" />
+    <attr name="listPrefixColor" format="reference" />
+
+    <attr name="selfMentionBackgroundColor" format="color" />
+    
+    <attr name="dropdownSeparatorBackgroundColor" format="color"/>
 
 </resources>

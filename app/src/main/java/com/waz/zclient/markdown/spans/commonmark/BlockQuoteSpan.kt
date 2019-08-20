@@ -29,6 +29,7 @@ import org.commonmark.node.Node
  */
 class BlockQuoteSpan(
     val color: Int,
+    val stripeColor: Int,
     val stripeWidth: Int,
     val gapWidth: Int,
     val beforeSpacing: Int,
@@ -37,7 +38,7 @@ class BlockQuoteSpan(
 ) : BlockSpan() {
 
     init {
-        add(CustomQuoteSpan(color, stripeWidth, gapWidth, density))
+        add(CustomQuoteSpan(stripeColor, stripeWidth, gapWidth, density, beforeSpacing, afterSpacing))
         add(ParagraphSpacingSpan(beforeSpacing, afterSpacing))
         add(ForegroundColorSpan(color))
     }

@@ -39,16 +39,18 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import android.animation.{Animator, AnimatorListenerAdapter, ValueAnimator}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.ViewHelper
 import com.waz.zclient.R
 import com.waz.zclient.ui.animation.interpolators.penner.Expo
 import com.waz.zclient.utils._
-import com.waz.ZLog.ImplicitTag._
 
 class CursorToolbarContainer(context: Context, attrs: AttributeSet, defStyleAttr: Int)
-    extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
 
   def this(context: Context, attrs: AttributeSet) {this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }

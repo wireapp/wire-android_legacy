@@ -1,20 +1,21 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient
 
 import java.io.File
@@ -26,8 +27,7 @@ import android.os.{Build, Bundle, Environment}
 import android.provider.DocumentsContract._
 import android.provider.MediaStore
 import android.support.v4.app.ShareCompat
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.{verbose, warn}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
@@ -38,9 +38,12 @@ import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
+import com.waz.zclient.Intents.RichIntent
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ShareToMultipleFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
 
+import scala.collection.immutable.ListSet
 import scala.util.control.NonFatal
 
 
@@ -57,7 +60,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
       override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean) = {}
     })
 
-    inject[AccentColorController].accentColor.map(_.getColor).onUi(cm.setButtonColor)
+    inject[AccentColorController].accentColor.map(_.color).onUi(cm.setButtonColor)
     accounts.accountManagers.map(_.isEmpty).onUi(cm.animateToShow)
   }
 
@@ -87,10 +90,10 @@ class ShareActivity extends BaseActivity with ActivityHelper {
   }
 
   private def handleIncomingIntent() =
-    inject[PermissionsService].requestAllPermissions(Set(READ_EXTERNAL_STORAGE)).map {
+    inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
       case true =>
         val intent = getIntent
-        verbose(s"$intent")
+        verbose(l"${RichIntent(intent)}")
         val ir = ShareCompat.IntentReader.from(this)
         if (!ir.isShareIntent) finish()
         else {
@@ -116,7 +119,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
 
 }
 
-object ShareActivity {
+object ShareActivity extends DerivedLogTag {
 
   /*
    * This part (the methods getPath and getDataColumn) of the Wire software are based heavily off of code posted in this
@@ -163,14 +166,14 @@ object ShareActivity {
         case _ if isDocumentUri(context, uri) =>
           getDocumentPath(context, uri).orElse(default)
         case _ =>
-          warn(s"Unrecognised authority for uri: $uri")
+          warn(l"Unrecognised authority for uri: $uri")
           None
       }).orElse(default)
     } else
       (uri.getScheme.toLowerCase match {
         case "content" => getDocumentPath(context, uri).orElse(default)
         case _ =>
-          warn(s"Unreachable content: $uri")
+          warn(l"Unreachable content: $uri")
           default
       }).flatMap { u =>
         //filter out attempts to trick us into sending application/sensitive data
@@ -203,7 +206,7 @@ object ShareActivity {
         if (c.moveToFirst) Option(c.getString(c.getColumnIndexOrThrow(column))) else None
       } catch {
         case NonFatal(e) =>
-          warn("Unable to get data column", e)
+          warn(l"Unable to get data column", e)
           None
       }
     })(_ => cursor.foreach(_.close()))

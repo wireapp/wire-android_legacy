@@ -27,13 +27,13 @@ import android.widget._
 import com.waz.api.AssetStatus._
 import com.waz.threading.Threading
 import com.waz.zclient.R
-import com.waz.zclient.messages.MsgPart
+import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.messages.parts.assets.DeliveryState._
 import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.ZLog.ImplicitTag._
 
-class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ActionableAssetPart with FileLayoutAssetPart { self =>
+class FileAssetPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style) with ActionableAssetPart with FileLayoutAssetPart with HighlightViewPart { self =>
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

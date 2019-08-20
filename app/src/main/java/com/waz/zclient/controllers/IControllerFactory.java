@@ -19,17 +19,12 @@ package com.waz.zclient.controllers;
 
 import android.app.Activity;
 import android.view.View;
-
-import com.waz.zclient.controllers.accentcolor.IAccentColorController;
 import com.waz.zclient.controllers.camera.ICameraController;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
 import com.waz.zclient.controllers.deviceuser.IDeviceUserController;
-import com.waz.zclient.controllers.drawing.IDrawingController;
-import com.waz.zclient.controllers.giphy.IGiphyController;
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController;
 import com.waz.zclient.controllers.location.ILocationController;
 import com.waz.zclient.controllers.navigation.INavigationController;
-import com.waz.zclient.controllers.orientation.IOrientationController;
 import com.waz.zclient.controllers.singleimage.ISingleImageController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.controllers.verification.IVerificationController;
@@ -43,10 +38,6 @@ public interface IControllerFactory {
   IConfirmationController getConfirmationController();
 
   INavigationController getNavigationController();
-
-  IOrientationController getOrientationController();
-
-  IGiphyController getGiphyController();
 
   IPickUserController getPickUserController();
 
@@ -66,8 +57,6 @@ public interface IControllerFactory {
 
   ISlidingPaneController getSlidingPaneController();
 
-  IAccentColorController getAccentColorController();
-
   void setActivity(Activity activity);
 
   IDeviceUserController getDeviceUserController();
@@ -75,6 +64,4 @@ public interface IControllerFactory {
   void tearDown();
 
   ICameraController getCameraController();
-
-  IDrawingController getDrawingController();
 }

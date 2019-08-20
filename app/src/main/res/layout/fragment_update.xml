@@ -41,7 +41,7 @@
             android:layout_gravity="center"
             android:padding="@dimen/forced_update__general_padding"
             android:text="@string/forced_update__header"
-            android:textColor="@color/forced_update__header__font_color"
+            android:textColor="@color/forced_update__header"
             android:textSize="@dimen/forced_update__header__font_size"
             app:w_font="@string/forced_update__header__font"
             />
@@ -52,7 +52,7 @@
             android:layout_gravity="center"
             android:padding="@dimen/forced_update__general_padding"
             android:text="@string/forced_update__sub_header"
-            android:textColor="@color/forced_update__sub_header__font_color"
+            android:textColor="@color/forced_update__sub_header"
             android:textSize="@dimen/forced_update__sub_header__font_size"
             app:w_font="@string/forced_update__sub_header__font"
             />
@@ -65,7 +65,7 @@
             android:layout_margin="@dimen/forced_update__general_padding"
             android:padding="@dimen/forced_update__general_padding"
             android:text="@string/forced_update__download_button"
-            android:textColor="@color/forced_update__button__font_color"
+            android:textColor="@color/forced_update__button"
             app:w_font="@string/forced_update__button__font"
             />
 

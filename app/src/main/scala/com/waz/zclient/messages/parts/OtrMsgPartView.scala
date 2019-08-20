@@ -19,12 +19,12 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.util.AttributeSet
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.utils.wrappers.AndroidURIUtil
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{BrowserController, ScreenController}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.participants.ParticipantsController
@@ -32,7 +32,12 @@ import com.waz.zclient.participants.fragments.SingleParticipantFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
-class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends SystemMessageView(context, attrs, style) with MessageViewPart with ViewHelper {
+class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends SystemMessageView(context, attrs, style)
+    with MessageViewPart
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -46,12 +51,18 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   val accentColor = inject[AccentColorController]
   val users = inject[UsersController]
+  val zms = inject[Signal[ZMessaging]]
 
   val msgType = message.map(_.msgType)
 
   val affectedUserName = message.map(_.userId).flatMap(users.displayName)
 
-  val memberNames = users.memberDisplayNames(message).map(_.toUpperCase)
+  val memberNames = for {
+    zms <- zms
+    msg <- message
+    names <- users.getMemberNamesSplit(msg.members, zms.selfUserId)
+    mainString = users.membersNamesString(names.main, separateLast = names.others.isEmpty && !names.andYou)
+  } yield (mainString, names.others.size, names.andYou)
 
   val memberIsJustSelf = users.memberIsJustSelf(message)
 
@@ -78,10 +89,15 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
     case OTR_UNVERIFIED => memberIsJustSelf.flatMap({
       case true  => Signal const getString(R.string.content__otr__your_unverified_device__message)
       case false => memberNames map {
-        getString(R.string.content__otr__unverified_device__message, _)
+        case (main, _, _) => getString(R.string.content__otr__unverified_device__message, main)
       }
     })
-    case OTR_DEVICE_ADDED => memberNames.map(getString(R.string.content__otr__added_new_device__message, _))
+    case OTR_DEVICE_ADDED => memberNames.map {
+      case (main, 0, true)  => getString(R.string.content__otr__someone_and_you_added_new_device__message, main)
+      case (main, 0, false)  => getString(R.string.content__otr__someone_added_new_device__message, main)
+      case (main, others, true) => getString(R.string.content__otr__someone_others_and_you_added_new_device__message, main, others.toString)
+      case (main, others, false) => getString(R.string.content__otr__someone_and_others_added_new_device__message, main, others.toString)
+    }
     case OTR_MEMBER_ADDED => Signal.const(getString(R.string.content__otr__new_member__message))
     case _                => Signal.const("")
   }
@@ -92,15 +108,15 @@ class OtrMsgPartView(context: Context, attrs: AttributeSet, style: Int) extends 
   }
 
   Signal(message, msgString, accentColor.accentColor, memberIsJustSelf).onUi {
-    case (msg, text, color, isMe) => setTextWithLink(text, color.getColor) {
+    case (msg, text, color, isMe) => setTextWithLink(text, color.color) {
       (msg.msgType, isMe) match {
         case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, true)  => screenController.openOtrDevicePreferences()
-        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.TagDevices)
+        case (OTR_UNVERIFIED | OTR_DEVICE_ADDED | OTR_MEMBER_ADDED, false) => participantsController.onShowParticipants ! Some(SingleParticipantFragment.DevicesTab.str)
         case (STARTED_USING_DEVICE, _)                  => screenController.openOtrDevicePreferences()
-        case (OTR_ERROR, _)                             => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_1))
-        case (OTR_IDENTITY_CHANGED, _)                  => browserController.openUrl(AndroidURIUtil parse getString(R.string.url_otr_decryption_error_2))
+        case (OTR_ERROR, _)                             => browserController.openDecryptionError1()
+        case (OTR_IDENTITY_CHANGED, _)                  => browserController.openDecryptionError2()
         case _ =>
-          info(s"unhandled help link click for $msg")
+          info(l"unhandled help link click for $msg")
       }
     }
   }

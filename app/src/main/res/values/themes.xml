@@ -84,8 +84,8 @@
         <item name="cursorIconButtonVideo">@style/cursor__icon_button__video__dark</item>
         <item name="cursorEditText">@style/cursor__edit_text__dark</item>
         <item name="cursorEditBackground">@color/accent_yellow__8</item>
-        <item name="cursorEditButtons">@color/cursor_edit_buttons_color_dark</item>
-        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_color_disabled_dark</item>
+        <item name="cursorEditButtons">@color/cursor_edit_buttons_dark</item>
+        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_disabled_dark</item>
 
         <!-- User -->
         <item name="userEditText">@style/user__edit_text__dark</item>
@@ -111,6 +111,7 @@
         <item name="wirePrimaryTextColorReverted">@color/text__primary_light</item>
         <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
         <item name="thinDividerColor">@color/white_16</item>
+        <item name="replyBorderColor">@color/white_16</item>
 
         <!-- Start UI -->
         <item name="startUiErrorLabel">@style/start_ui__error_label__dark</item>
@@ -178,6 +179,15 @@
         <!-- Teams -->
         <item name="roundBackgroundDrawable">@drawable/rounded_corner_background_dark</item>
 
+        <!-- Markdown -->
+        <item name="codeColor">@color/white_64</item>
+        <item name="quoteColor">@color/white_64</item>
+        <item name="quoteStripeColor">@color/white_24</item>
+        <item name="listPrefixColor">@color/white_64</item>
+
+        <item name="selfMentionBackgroundColor">@color/self_mention_background_light</item>
+
+        <item name="dropdownSeparatorBackgroundColor">@color/background_graphite</item>
     </style>
 
     <style name="Theme.Light" parent="@style/Theme.Design.Light.NoActionBar">
@@ -244,8 +254,8 @@
         <item name="cursorIconButtonVideo">@style/cursor__icon_button__video__light</item>
         <item name="cursorEditText">@style/cursor__edit_text__light</item>
         <item name="cursorEditBackground">@color/accent_yellow__16</item>
-        <item name="cursorEditButtons">@color/cursor_edit_buttons_color</item>
-        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_color_disabled</item>
+        <item name="cursorEditButtons">@color/cursor_edit_buttons</item>
+        <item name="cursorEditButtonsDisabled">@color/cursor_edit_buttons_disabled</item>
 
         <!-- User -->
         <item name="userEditText">@style/user__edit_text__light</item>
@@ -271,6 +281,7 @@
         <item name="wirePrimaryTextColorReverted">@color/text__primary_dark</item>
         <item name="wireSecondaryTextColor">@color/text__secondary_light</item>
         <item name="thinDividerColor">@color/graphite_8</item>
+        <item name="replyBorderColor">@color/light_graphite_40</item>
 
         <!-- Start UI -->
         <item name="startUiErrorLabel">@style/start_ui__error_label__light</item>
@@ -337,6 +348,15 @@
         <!-- Teams -->
         <item name="roundBackgroundDrawable">@drawable/rounded_corner_background_light</item>
 
+        <!-- Markdown -->
+        <item name="codeColor">@color/graphite_64</item>
+        <item name="quoteColor">@color/graphite_64</item>
+        <item name="quoteStripeColor">@color/graphite_24</item>
+        <item name="listPrefixColor">@color/graphite_64</item>
+
+        <item name="selfMentionBackgroundColor">@color/self_mention_background_dark</item>
+
+        <item name="dropdownSeparatorBackgroundColor">@color/black_4</item>
     </style>
 
     <style name="Theme.Dark.Preferences" parent="@style/Theme.Design.NoActionBar">
@@ -356,6 +376,7 @@
         <item name="wirePrimaryTextColor">@color/text__primary_dark</item>
         <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
         <item name="thinDividerColor">@color/white_16</item>
+        <item name="replyBorderColor">@color/white_16</item>
     </style>
 
     <style name="Theme.Popup" parent="@style/Theme.Design.NoActionBar">
@@ -372,6 +393,7 @@
         <item name="android:windowAnimationStyle">@android:style/Animation</item>
         <item name="windowActionModeOverlay">true</item>
         <item name="thinDividerColor">@color/white_16</item>
+        <item name="replyBorderColor">@color/white_16</item>
     </style>
 
     <style name="Theme.Share" parent="Theme.Dark">

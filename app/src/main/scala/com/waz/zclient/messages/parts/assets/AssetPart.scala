@@ -18,9 +18,9 @@
 package com.waz.zclient.messages.parts.assets
 
 import android.graphics.drawable.Drawable
+import android.view.View.OnLayoutChangeListener
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.{AssetData, Dim2, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
@@ -28,14 +28,13 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.messages.ClickableViewPart
-import com.waz.zclient.messages.MessageView.MsgBindOptions
-import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPartView, ImagePartView}
-import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
-import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{StringUtils, _}
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageController.WireImage
+import com.waz.zclient.messages.ClickableViewPart
+import com.waz.zclient.messages.MessageView.MsgBindOptions
+import com.waz.zclient.messages.parts.assets.DeliveryState.{Downloading, OtherUploading}
+import com.waz.zclient.messages.parts.{EphemeralIndicatorPartView, EphemeralPartView, ImagePartView}
+import com.waz.zclient.utils.{StringUtils, _}
 import com.waz.zclient.{R, ViewHelper}
 
 trait AssetPart extends View with ClickableViewPart with ViewHelper with EphemeralPartView { self =>
@@ -56,8 +55,9 @@ trait AssetPart extends View with ClickableViewPart with ViewHelper with Ephemer
   val deliveryState = DeliveryState(message, asset)
   val completed = deliveryState.map(_ == DeliveryState.Complete)
   val accentColorController = inject[AccentColorController]
+  protected val showDots: Signal[Boolean] = deliveryState.map(state => state == OtherUploading)
 
-  val assetBackground = new AssetBackground(deliveryState.map(state => state == OtherUploading || state == Downloading), expired, accentColorController.accentColor)
+  lazy val assetBackground = new AssetBackground(showDots, expired, accentColorController.accentColor)
 
   //toggle content visibility to show only progress dot background if other side is uploading asset
   val hideContent = for {
@@ -107,12 +107,10 @@ trait FileLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
 trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
   import ImageLayoutAssetPart._
 
-  protected val imageDim = message map { _.imageDimensions.getOrElse(Dim2(1, 1)) }
+  protected val imageDim = message.map(_.imageDimensions).collect { case Some(d) => d}
   protected val maxWidth = Signal[Int]()
   protected val maxHeight = Signal[Int]()
-
-  private lazy val contentPaddingStart = getDimenPx(R.dimen.content__padding_left)
-  private lazy val contentPaddingEnd = getDimenPx(R.dimen.content__padding_right)
+  override protected val showDots = deliveryState.map(state => state == OtherUploading || state == Downloading)
 
   val forceDownload = this match {
     case _: ImagePartView => false
@@ -121,7 +119,12 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
 
   val imageDrawable = new ImageAssetDrawable(message map { m => WireImage(m.assetId) }, forceDownload = forceDownload)
 
-  private lazy val imageContainer = findById[FrameLayout](R.id.image_container)
+  private lazy val imageContainer = returning(findById[FrameLayout](R.id.image_container)) {
+    _.addOnLayoutChangeListener(new OnLayoutChangeListener {
+      override def onLayoutChange(v: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int): Unit =
+        maxWidth ! v.getWidth
+    })
+  }
 
   hideContent.flatMap {
     case true => Signal.const[Drawable](assetBackground)
@@ -130,56 +133,58 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
            ImageAssetDrawable.State.Loading(_) => assetBackground
       case _ => imageDrawable
     } orElse Signal.const[Drawable](imageDrawable)
-  }.on(Threading.Ui)(imageContainer.setBackground)
+  }.on(Threading.Ui)(imageContainer.setBackground(_))
 
   val displaySize = for {
     maxW <- maxWidth
     maxH <- maxHeight
     Dim2(imW, imH) <- imageDim
   } yield {
-    val centered = maxW
-
     val heightToWidth = imH.toDouble / imW.toDouble
 
-    val width = if (imH > imW) centered else maxW
-    val height = heightToWidth * width
+    val height = heightToWidth * maxW
 
     //fit image within view port height-wise (plus the little bit of buffer space), if it's height to width ratio is not too big. For super tall/thin
     //images, we leave them as is otherwise they might become too skinny to be viewed properly
     val scaleDownToHeight = maxH * (1 - scaleDownBuffer)
     val scaleDown = if (height > scaleDownToHeight && heightToWidth < scaleDownUnderRatio) scaleDownToHeight.toDouble / height.toDouble else 1D
 
-    val scaledWidth = width * scaleDown
+    val scaledWidth = maxW * scaleDown
 
     //finally, make sure the width of the now height-adjusted image is either the full view port width, or less than
     //or equal to the centered area (taking left and right margins into consideration). This is important to get the
     //padding right in the next signal
     val finalWidth =
-      if (scaledWidth <= centered) scaledWidth
-      else if (scaledWidth >= maxW) maxW
-      else centered
+      if (scaledWidth <= maxW) scaledWidth
+      else maxW
 
     val finalHeight = heightToWidth * finalWidth
 
     Dim2(finalWidth.toInt, finalHeight.toInt)
   }
 
-  displaySize.map(_.height) { h =>
-    setLayoutParams(returning(getLayoutParams)(_.height = h))
+  displaySize.onUi{ ds =>
+    setLayoutParams(returning(getLayoutParams)(_.height = ds.height))
+  }
+
+  val padding = for {
+    maxW <- maxWidth
+    Dim2(dW, _) <- displaySize
+  } yield
+    if (dW >= maxW) Offset.Empty
+    else Offset(0, 0, maxW - dW, 0)
+
+  padding.onUi { p =>
+    imageDrawable.padding ! p
+    assetBackground.padding ! p
   }
 
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
     opts.foreach { o =>
-      maxWidth.mutateOrDefault(identity, imageContainer.getWidth)
       maxHeight ! o.listDimensions.height
     }
-  }
-
-  override def onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit = {
-    super.onLayout(changed, left, top, right, bottom)
-    maxWidth ! imageContainer.getWidth
   }
 }
 

@@ -22,7 +22,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -105,8 +105,9 @@ case class SettingsBackStackKey(args: Bundle = new Bundle()) extends BackStackKe
   }
 }
 
-class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: EventContext) extends Injectable {
-  import ZLog.ImplicitTag.implicitLogTag
+class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+
   val zms = inject[Signal[ZMessaging]]
   implicit val uiStorage = inject[UiStorage]
 

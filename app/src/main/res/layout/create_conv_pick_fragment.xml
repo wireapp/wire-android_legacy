@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity='center'
-            android:text="@string/add_people_empty_header"
+            android:text="@string/add_participants_empty_header"
             android:textColor="?wirePrimaryTextColor"
             android:textSize="@dimen/wire__text_size__small"
             app:w_font="@string/wire__typeface__medium"/>
@@ -57,39 +57,102 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <FrameLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="?wireBackground">
+        android:orientation="vertical">
 
-        <com.waz.zclient.usersearch.views.SearchEditText
-            android:id="@+id/search_box"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/collections__multi_share_search_height"
-            android:layout_margin="@dimen/wire__padding__8"
-            app:hintText="@string/pick_user_search_hint"
-            />
+            <com.waz.zclient.usersearch.views.SearchEditText
+                android:id="@+id/search_box"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/collections__multi_share_search_height"
+                android:layout_margin="@dimen/wire__padding__8"
+                app:hintText="@string/pick_user_search_hint"
+                />
 
-    </FrameLayout>
+            <android.support.design.widget.TabLayout
+                android:id="@+id/add_users_tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/wire__padding__regular"
+                android:layout_marginEnd="@dimen/wire__padding__regular"
+                app:tabIndicatorColor="@color/white_72"
+                app:tabTextColor="@color/white_32"
+                app:tabMode="fixed"
+                app:tabSelectedTextColor="@color/white"
+                app:tabIndicatorHeight="@dimen/wire__divider__height"
+                >
+
+                <android.support.design.widget.TabItem
+                    android:text="@string/people_picker__search_people"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout="@layout/tab_with_theme_layout"/>
+
+                <android.support.design.widget.TabItem
+                    android:text="@string/people_picker__search_services"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout="@layout/tab_with_theme_layout"/>
+
+            </android.support.design.widget.TabLayout>
+    </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/empty_search_message"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:textColor="@color/teams_headline_text"
-            android:textSize="@dimen/wire__text_size__regular"
-            app:w_font="@string/wire__typeface__medium"
-            android:visibility="gone"/>
+            android:orientation="vertical"
+            android:layout_gravity="center">
+
+
+            <ImageView
+                android:id="@+id/empty_services_icon"
+                android:layout_width="@dimen/services_warning_icon_width"
+                android:layout_height="@dimen/services_warning_icon_height"
+                android:layout_marginBottom="@dimen/wire__padding__16"
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/empty_search_message"
+                android:layout_width="@dimen/services_warning_text_width"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center"
+                android:textColor="?wirePrimaryTextColor"
+                android:textSize="@dimen/wire__text_size__small"
+                app:w_font="@string/wire__typeface__medium"
+                android:visibility="gone"/>
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/empty_services_button"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:paddingTop="@dimen/wire__padding__4"
+                android:paddingBottom="@dimen/wire__padding__4"
+                android:layout_marginTop="@dimen/wire__padding__16"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                app:w_font="@string/wire__typeface__medium"
+                android:text="@string/add_services_button_text"
+                android:textColor="?wirePrimaryTextColor"
+                android:textSize="@dimen/wire__text_size__regular_small"
+                android:gravity="center"
+                android:background="@drawable/invite_button_background"
+                android:visibility="gone"
+            />
+        </LinearLayout>
 
     </FrameLayout>
 

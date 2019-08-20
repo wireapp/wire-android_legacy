@@ -22,8 +22,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.GridLayout
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.CallInfo.CallState.{SelfCalling, SelfConnected, SelfJoining}
@@ -32,15 +31,19 @@ import com.waz.utils.events.{EventStream, Signal, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.CallControlButtonView.ButtonColor
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.async.Async._
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 
-class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends GridLayout(context, attrs, defStyleAttr) with ViewHelper {
+class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends GridLayout(context, attrs, defStyleAttr) with ViewHelper with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
@@ -56,7 +59,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   val onButtonClick: SourceStream[Unit] = EventStream[Unit]
 
   controller.callStateOpt.onUi { state =>
-    verbose(s"callStateOpt: $state")
+    verbose(l"callStateOpt: $state")
   }
 
   private val isVideoBeingSent = controller.videoSendState.map(p => !Set(Stopped, NoCameraPermission).contains(p))
@@ -69,14 +72,14 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   }
 
   returning(findById[CallControlButtonView](R.id.video_call)) { button =>
-    button.set(WireStyleKit.drawCamera, R.string.incoming__controls__ongoing__video, video)
+    button.set(WireStyleKit.drawVideocall, R.string.incoming__controls__ongoing__video, video)
 
     isVideoBeingSent.onUi(button.setActivated)
 
     (for {
       zms            <- controller.callingZms
       conv           <- controller.conversation
-      isGroup        <- Signal.future(zms.conversations.isGroupConversation(conv.id))
+      isGroup        <- zms.conversations.groupConversation(conv.id)
       isTeam         =  zms.teamId.isDefined
       established    <- controller.isCallEstablished
       showVideo      <- controller.isVideoCall
@@ -122,8 +125,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
   private def accept(): Future[Unit] = async {
     onButtonClick ! {}
     val sendingVideo  = await(controller.videoSendState.head) == Started
-    val perms         = await(permissions.requestPermissions(if (sendingVideo) Set(CAMERA, RECORD_AUDIO) else Set(RECORD_AUDIO)))
-    val cameraGranted = perms.exists(p => p.key.equals(CAMERA) && p.granted)
+    val perms         = await(permissions.requestPermissions(if (sendingVideo) ListSet(CAMERA, RECORD_AUDIO) else ListSet(RECORD_AUDIO)))
     val audioGranted  = perms.exists(p => p.key.equals(RECORD_AUDIO) && p.granted)
     val callingConvId = await(controller.callConvId.head)
     val callingZms    = await(controller.callingZms.head)
@@ -134,7 +136,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
       showPermissionsErrorDialog(R.string.calling__cannot_start__title,
         R.string.calling__cannot_start__no_permission__message,
         R.string.calling__cannot_start__cancel__message
-        ).flatMap(_ => callingZms.calling.endCall(callingConvId))
+        ).flatMap(_ => callingZms.calling.endCall(callingConvId, skipTerminating = true))
   }
 
   private def leave(): Unit = {
@@ -154,7 +156,7 @@ class ControlsView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private def video(): Future[Unit] = async {
     onButtonClick ! {}
-    val hasCameraPermissions = await(permissions.requestAllPermissions(Set(CAMERA)))
+    val hasCameraPermissions = await(permissions.requestAllPermissions(ListSet(CAMERA)))
 
     if (!hasCameraPermissions)
       showPermissionsErrorDialog(

@@ -23,7 +23,6 @@ import com.waz.media.manager.context.IntensityLevel
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.preferences.dialogs.SoundLevelDialog._

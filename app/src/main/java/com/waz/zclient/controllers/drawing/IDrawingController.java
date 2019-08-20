@@ -17,31 +17,17 @@
  */
 package com.waz.zclient.controllers.drawing;
 
-import com.waz.api.ImageAsset;
-
 public interface IDrawingController {
 
-    public enum DrawingDestination {
+    enum DrawingDestination {
         SINGLE_IMAGE_VIEW,
         CAMERA_PREVIEW_VIEW,
         SKETCH_BUTTON
     }
 
-    public enum DrawingMethod {
+    enum DrawingMethod {
         DRAW,
         EMOJI,
         TEXT
     }
-
-    void addDrawingObserver(DrawingObserver drawingObserver);
-
-    void removeDrawingObserver(DrawingObserver drawingObserver);
-
-    void showDrawing(ImageAsset image, IDrawingController.DrawingDestination drawingDestination);
-
-    void showDrawing(ImageAsset image, IDrawingController.DrawingDestination drawingDestination, DrawingMethod method);
-
-    void hideDrawing(IDrawingController.DrawingDestination drawingDestination, boolean imageSent);
-
-    void tearDown();
 }

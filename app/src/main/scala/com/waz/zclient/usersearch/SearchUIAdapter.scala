@@ -22,91 +22,97 @@ import android.graphics.Rect
 import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.verbose
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.ZMessaging
-import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController.Theme
-import com.waz.zclient.common.controllers.{IntegrationsController, UserAccountsController}
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.views.{SingleUserRowView, TopUserChathead}
-import com.waz.zclient.paintcode.{CreateGroupIcon, GuestIcon}
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.paintcode.{CreateGroupIcon, GuestIcon, ManageServicesIcon}
+import com.waz.zclient.search.SearchController
+import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.SearchUIAdapter.TopUsersViewHolder.TopUserAdapter
 import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
 
-import scala.concurrent.duration._
-
-class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsController: IntegrationsController)
-                     (implicit injector: Injector) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
+class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[RecyclerView.ViewHolder]
+    with Injectable
+    with DerivedLogTag {
 
   import SearchUIAdapter._
-
-  implicit private val ec = EventContext.Implicits.global
 
   setHasStableIds(true)
 
   private val userAccountsController = inject[UserAccountsController]
+  private val searchController       = new SearchController()
 
   private var mergedResult = Seq[SearchResult]()
   private var collapsedContacts = true
   private var collapsedGroups = true
 
-  private var team = Option.empty[TeamData]
-  private var topUsers = IndexedSeq.empty[UserData]
-  private var localResults = IndexedSeq.empty[UserData]
-  private var conversations = IndexedSeq.empty[ConversationData]
-  private var directoryResults = IndexedSeq.empty[UserData]
-  private var integrations = IndexedSeq.empty[IntegrationData]
-  private var currentUser = Option.empty[UserData]
+  private var team               = Option.empty[TeamData]
+  private var topUsers           = Seq.empty[UserData]
+  private var localResults       = Seq.empty[UserData]
+  private var conversations      = Seq.empty[ConversationData]
+  private var directoryResults   = Seq.empty[UserData]
+  private var integrations       = Seq.empty[IntegrationData]
+  private var currentUser        = Option.empty[UserData]
+  private var currentUserIsAdmin = false
+  private var noServices         = false
 
-  val filter = Signal("")
-
-  val searchResults = for {
-    z        <- inject[Signal[ZMessaging]]
-    filter   <- filter
-    res      <- z.userSearch.search(filter)
-  } yield res
-
-  val peopleOrServices = Signal[Boolean](false)
-
-  peopleOrServices.on(Threading.Ui) { _ => updateMergedResults() }
+  val filter = searchController.filter
+  val tab    = searchController.tab
+  val searchResults = searchController.searchUserOrServices
 
   (for {
-    team <- userAccountsController.teamData
-    res  <- searchResults
-  } yield (team, res)).throttle(500.millis).onUi {
-    case (team, res) =>
-      verbose(res.toString)
-      this.team        = team
-      topUsers         = res.top
-      localResults     = res.local
-      conversations    = res.convs
-      directoryResults = res.dir
-      updateMergedResults()
-  }
+    curUser <- userAccountsController.currentUser
+    team    <- userAccountsController.teamData
+    isAdmin <- userAccountsController.isAdmin
+    res     <- searchResults
+  } yield (curUser, team, isAdmin, res)).onUi {
+    case (curUser, team, isAdmin, res) =>
 
-  integrationsController.searchIntegrations.throttle(500.millis).on(Threading.Ui) {
-    case Some(newIntegrations) =>
-      integrations = newIntegrations
-      updateMergedResults()
-    case _ =>
-  }
+      verbose(l"Search user list state: $res")
+      this.team = team
+      currentUserIsAdmin = isAdmin
+      currentUser = curUser
 
-  userAccountsController.currentUser.on(Threading.Ui){ user =>
-    currentUser = user
-    updateMergedResults()
+      res match {
+        case SearchUserListState.Users(search) =>
+          topUsers         = search.top
+          localResults     = search.local
+          conversations    = search.convs
+          directoryResults = search.dir
+        case _ =>
+          topUsers         = Seq.empty
+          localResults     = Seq.empty
+          conversations    = Seq.empty
+          directoryResults = Seq.empty
+      }
+
+      noServices = res match {
+        case SearchUserListState.NoServices => true
+        case _ => false
+      }
+
+      integrations = res match {
+        case SearchUserListState.Services(svs) => svs.toIndexedSeq.sortBy(_.name)
+        case _ => IndexedSeq.empty
+      }
+
+      updateMergedResults()
   }
 
   private def updateMergedResults(): Unit = {
     mergedResult = Seq()
 
-    val teamName = team.map(_.name).getOrElse("")
+    val teamName = team.map(_.name).getOrElse(Name.Empty)
 
     def addTopPeople(): Unit = {
       if (topUsers.nonEmpty) {
@@ -126,7 +132,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
 
         val shouldCollapse = filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
 
-        contactsSection = contactsSection.sortBy(_.name).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
+        contactsSection = contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
 
         mergedResult = mergedResult ++ contactsSection
         if (shouldCollapse) {
@@ -161,7 +167,6 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
 
     def addIntegrations(): Unit = {
       if (integrations.nonEmpty) {
-        mergedResult = mergedResult ++ Seq(SearchResult(SectionHeader, IntegrationsSection, 0))
         mergedResult = mergedResult ++ integrations.indices.map { i =>
           SearchResult(Integration, IntegrationsSection, i, integrations(i).id.str.hashCode)
         }
@@ -174,11 +179,15 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
     def addGuestRoomCreationButton(): Unit =
       mergedResult = mergedResult ++ Seq(SearchResult(NewGuestRoom, TopUsersSection, 0))
 
+    def addManageServicesButton(): Unit =
+      mergedResult = mergedResult ++ Seq(SearchResult(ManageServices, TopUsersSection, 0))
+
     if (team.isDefined) {
-      if (peopleOrServices.currentValue.contains(true)) {
+      if (tab.currentValue.contains(Tab.Services)) {
+        if (currentUserIsAdmin && !noServices) addManageServicesButton()
         addIntegrations()
       } else {
-        if (filter.currentValue.forall(_.isEmpty)){
+        if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get){
           addGroupCreationButton()
           addGuestRoomCreationButton()
         }
@@ -187,7 +196,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
         addConnections()
       }
     } else  {
-      if (filter.currentValue.forall(_.isEmpty))
+      if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get)
         addGroupCreationButton()
       addTopPeople()
       addContacts()
@@ -198,7 +207,8 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
     notifyDataSetChanged()
   }
 
-  override def getItemCount = mergedResult.size
+  override def getItemCount =
+    mergedResult.size
 
   override def onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = {
     val item = mergedResult(position)
@@ -245,6 +255,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       case Expand            => R.layout.startui_section_expander
       case NewConversation   => R.layout.startui_button
       case NewGuestRoom      => R.layout.startui_button
+      case ManageServices    => R.layout.startui_button
       case _                 => -1
     }, parent, false)
 
@@ -258,15 +269,19 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback, integrationsCon
       case Integration       => new IntegrationViewHolder(view.asInstanceOf[SingleUserRowView], adapterCallback)
       case NewConversation   => new CreateConversationButtonViewHolder(view, adapterCallback)
       case NewGuestRoom      => new NewGuestRoomViewHolder(view, adapterCallback)
+      case ManageServices    => new ManageServicesViewHolder(view, adapterCallback)
       case _                 => null
     }
   }
 
-  override def getItemViewType(position: Int) = mergedResult.lift(position).fold(-1)(_.itemType)
+  override def getItemViewType(position: Int) =
+    mergedResult.lift(position).fold(-1)(_.itemType)
 
-  override def getItemId(position: Int) = mergedResult.lift(position).fold(-1L)(_.id)
+  override def getItemId(position: Int) =
+    mergedResult.lift(position).fold(-1L)(_.id)
 
-  def getSectionIndexForPosition(position: Int) = mergedResult.lift(position).fold(-1)(_.index)
+  def getSectionIndexForPosition(position: Int) =
+    mergedResult.lift(position).fold(-1)(_.index)
 
   private def expandContacts() = {
     collapsedContacts = false
@@ -291,6 +306,7 @@ object SearchUIAdapter {
   val Integration: Int = 6
   val NewConversation: Int = 7
   val NewGuestRoom: Int = 8
+  val ManageServices: Int = 9
 
   //Sections
   val TopUsersSection = 0
@@ -309,14 +325,15 @@ object SearchUIAdapter {
     def onCreateConvClicked(): Unit
     def onCreateGuestRoomClicked(): Unit
     def onConversationClicked(conversation: ConversationData): Unit
+    def onManageServicesClicked(): Unit
   }
 
-  case class SearchResult(itemType: Int, section: Int, index: Int, id: Long, name: String)
+  case class SearchResult(itemType: Int, section: Int, index: Int, id: Long, name: Name)
 
   object SearchResult{
-    def apply(itemType: Int, section: Int, index: Int, id: Long): SearchResult = new SearchResult(itemType, section, index, id, "")
-    def apply(itemType: Int, section: Int, index: Int, name: String): SearchResult = new SearchResult(itemType, section, index, itemType + section + index, name)
-    def apply(itemType: Int, section: Int, index: Int): SearchResult = SearchResult(itemType, section, index, "")
+    def apply(itemType: Int, section: Int, index: Int, id: Long): SearchResult = new SearchResult(itemType, section, index, id, Name.Empty)
+    def apply(itemType: Int, section: Int, index: Int, name: Name): SearchResult = new SearchResult(itemType, section, index, itemType + section + index, name)
+    def apply(itemType: Int, section: Int, index: Int): SearchResult = SearchResult(itemType, section, index, Name.Empty)
   }
 
   class CreateConversationButtonViewHolder(view: View, callback: SearchUIAdapter.Callback) extends RecyclerView.ViewHolder(view) {
@@ -335,6 +352,17 @@ object SearchUIAdapter {
     view.findViewById[TypefaceTextView](R.id.title).setText(R.string.create_guest_room_conversation)
     view.onClick(callback.onCreateGuestRoomClicked())
     view.setId(R.id.create_guest_room_button)
+  }
+
+  class ManageServicesViewHolder(view: View, callback: SearchUIAdapter.Callback) extends RecyclerView.ViewHolder(view) {
+    private implicit val ctx = view.getContext
+    private val iconView  = view.findViewById[View](R.id.icon)
+    iconView.setBackground(returning(ManageServicesIcon(ResColor.fromId(R.color.white))) {
+      _.setPadding(new Rect(iconView.getPaddingLeft, iconView.getPaddingTop, iconView.getPaddingRight, iconView.getPaddingBottom))
+    })
+    view.findViewById[TypefaceTextView](R.id.title).setText(R.string.manage_services)
+    view.onClick(callback.onManageServicesClicked())
+    view.setId(R.id.manage_services_button)
   }
 
   class TopUsersViewHolder(view: View, topUserAdapter: TopUserAdapter, context: Context) extends RecyclerView.ViewHolder(view) {
@@ -415,6 +443,7 @@ object SearchUIAdapter {
     view.showArrow(false)
     view.showCheckbox(false)
     view.setTheme(Theme.Dark, background = false)
+    view.setSeparatorVisible(true)
 
     def bind(integrationData: IntegrationData): Unit = {
       this.integrationData = Some(integrationData)
@@ -436,7 +465,7 @@ object SearchUIAdapter {
     private val sectionHeaderView: TextView = ViewUtils.getView(view, R.id.ttv_startui_section_header)
     private implicit val context = sectionHeaderView.getContext
 
-    def bind(section: Int, teamName: String): Unit = {
+    def bind(section: Int, teamName: Name): Unit = {
       val title = section match {
         case TopUsersSection                                => getString(R.string.people_picker__top_users_header_title)
         case GroupConversationsSection if teamName.isEmpty  => getString(R.string.people_picker__search_result_conversations_header_title)

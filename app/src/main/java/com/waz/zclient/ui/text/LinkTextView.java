@@ -28,8 +28,11 @@ import android.text.style.URLSpan;
 import android.text.util.Linkify;
 import android.util.AttributeSet;
 
+import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
 import com.waz.zclient.markdown.MarkdownTextView;
+
+import timber.log.Timber;
 
 /**
  * This view will automatically linkify the text passed to {@link LinkTextView#setTextLink(String)}, but will not steal
@@ -69,10 +72,8 @@ public class LinkTextView extends MarkdownTextView {
 
     }
 
-    public void setTextLink(String text) {
-        setTransformedText(text);
-        markdown();
-
+    public void setTextLink() {
+        // TODO: remove try/catch blocks when the bug is fixed
         try {
             if (Linkify.addLinks(this, Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS)) {
                 stripUnderlines();
@@ -83,7 +84,14 @@ public class LinkTextView extends MarkdownTextView {
 
         // Linkify.addLinks() removes all existing URLSpan objects, so we need to re-apply
         // the ones added generated through markdown.
-        refreshLinks();
+        try {
+            refreshLinks();
+        } catch(ArrayIndexOutOfBoundsException ex) {
+            Timber.i("Error while refreshing links. text: %s", getText());
+            if (BuildConfig.FLAVOR.equals("internal")) {
+                throw ex;
+            }
+        }
     }
 
     /*

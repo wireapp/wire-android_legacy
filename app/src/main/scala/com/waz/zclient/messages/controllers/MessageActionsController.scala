@@ -24,8 +24,8 @@ import android.content._
 import android.support.v4.app.ShareCompat
 import android.support.v7.app.AlertDialog
 import android.widget.Toast
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -34,28 +34,37 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
+import com.waz.zclient.common.controllers.ScreenController
+import com.waz.zclient.common.controllers.ScreenController.MessageDetailsParams
 import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
+import com.waz.zclient.conversation.{LikesAndReadsFragment, ReplyController}
 import com.waz.zclient.messages.MessageBottomSheetDialog
 import com.waz.zclient.messages.MessageBottomSheetDialog.{MessageAction, Params}
 import com.waz.zclient.notifications.controllers.ImageNotificationsController
+import com.waz.zclient.participants.OptionsMenu
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{ClipboardUtils, Injectable, Injector, R}
 
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Success
 
-class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext) extends Injectable {
+class MessageActionsController(implicit injector: Injector, ctx: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import MessageActionsController._
   import com.waz.threading.Threading.Implicits.Ui
 
   private val context                   = inject[Activity]
   private lazy val keyboardController   = inject[KeyboardController]
   private lazy val userPrefsController  = inject[IUserPreferencesController]
-  private lazy val clipboardManager     = inject[ClipboardManager]
+  private lazy val clipboard            = inject[ClipboardUtils]
   private lazy val permissions          = inject[PermissionsService]
   private lazy val imageNotifications   = inject[ImageNotificationsController]
+  private lazy val replyController      = inject[ReplyController]
+  private lazy val screenController = inject[ScreenController]
 
   private val zms = inject[Signal[ZMessaging]]
 
@@ -64,9 +73,9 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   val onDeleteConfirmed = EventStream[(MessageData, Boolean)]() // Boolean == isRecall(true) or localDelete(false)
   val onAssetSaved = EventStream[AssetData]()
 
-  val messageToReveal = Signal[Option[MessageData]]()
+  val messageToReveal = Signal[Option[MessageData]](None)
 
-  private var dialog = Option.empty[MessageBottomSheetDialog]
+  private var dialog = Option.empty[OptionsMenu]
 
   onMessageAction {
     case (MessageAction.Copy, message)             => copyMessage(message)
@@ -82,6 +91,8 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       }
     case (MessageAction.Unlike, msg) =>
       zms.head.flatMap(_.reactions.unlike(msg.convId, msg.id))
+    case (MessageAction.Reply, message)             => replyMessage(message)
+    case (MessageAction.Details, message)           => showDetails(message)
     case _ => // should be handled somewhere else
   }
 
@@ -91,10 +102,10 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
 
   def showDialog(data: MessageAndLikes, fromCollection: Boolean = false): Boolean = {
     // TODO: keyboard should be handled in more generic way
-    if (keyboardController.hideKeyboardIfVisible()) CancellableFuture.delayed(HideDelay){}.future else Future.successful({}).map { _ =>
+    (if (keyboardController.hideKeyboardIfVisible()) CancellableFuture.delayed(HideDelay){}.future else Future.successful({})).map { _ =>
       dialog.foreach(_.dismiss())
       dialog = Some(
-        returning(new MessageBottomSheetDialog(context, R.style.message__bottom_sheet__base, data.message, Params(collection = fromCollection))) { d =>
+        returning(OptionsMenu(context, new MessageBottomSheetDialog(data.message, Params(collection = fromCollection)))) { d =>
           d.setOnDismissListener(onDismissed)
           d.show()
         }
@@ -104,18 +115,17 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   }
 
   def showDeleteDialog(message: MessageData): Unit = {
-    new MessageBottomSheetDialog(context,
-                                 R.style.message__bottom_sheet__base, message,
+    OptionsMenu(context, new MessageBottomSheetDialog(message,
                                  Params(collection = true, delCollapsed = false),
-                                 Seq(MessageAction.DeleteLocal, MessageAction.DeleteGlobal))
-      .show()
+                                 Seq(MessageAction.DeleteLocal, MessageAction.DeleteGlobal))).show()
+
   }
 
   private def copyMessage(message: MessageData) =
     zms.head.flatMap(_.usersStorage.get(message.userId)) foreach {
       case Some(user) =>
         val clip = ClipData.newPlainText(getString(R.string.conversation__action_mode__copy__description, user.getDisplayName), message.contentString)
-        clipboardManager.setPrimaryClip(clip)
+        clipboard.setPrimaryClip(clip)
         Toast.makeText(context, R.string.conversation__action_mode__copy__toast, Toast.LENGTH_SHORT).show()
       case None =>
         // invalid message, ignoring
@@ -140,6 +150,10 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
       case user if user == message.userId => showDeleteDialog(message)
       case _ => deleteMessage(message)
     }
+
+  private def replyMessage(data: MessageData): Unit = replyController.replyToMessage(data.id, data.convId)
+
+  private def showDetails(data: MessageData): Unit = screenController.showMessageDetails ! Some(MessageDetailsParams(data.id, LikesAndReadsFragment.LikesTab))
 
   private def showDeleteDialog(title: Int)(onSuccess: => Unit) =
     new AlertDialog.Builder(context)
@@ -197,7 +211,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   }
 
   private def saveMessage(message: MessageData) =
-    permissions.requestAllPermissions(Set(WRITE_EXTERNAL_STORAGE)).map {  // TODO: provide explanation dialog - use requiring with message str
+    permissions.requestAllPermissions(ListSet(WRITE_EXTERNAL_STORAGE)).map {  // TODO: provide explanation dialog - use requiring with message str
       case true =>
         if (message.msgType == Message.Type.ASSET) { // TODO: simplify once SE asset v3 is merged, we should be able to handle that without special conditions
 

@@ -18,29 +18,34 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.AccentColor
+import com.waz.content.{MembersStorage, UserPreferences}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.zclient.messages.UsersController.DisplayName
+import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.messages.UsersController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
 
+import com.waz.zclient.log.LogUI._
+
 import scala.concurrent.Future
 
-class UsersController(implicit injector: Injector, context: Context) extends Injectable {
+class UsersController(implicit injector: Injector, context: Context)
+  extends Injectable with DerivedLogTag {
 
-  private val zMessaging = inject[Signal[ZMessaging]]
-  private val tracking   = inject[TrackingService]
+  private lazy val zMessaging = inject[Signal[ZMessaging]]
+  private lazy val tracking   = inject[TrackingService]
+  private lazy val membersStorage = inject[Signal[MembersStorage]]
 
-  lazy val itemSeparator = getString(R.string.content__system__item_separator)
-  lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
+  private lazy val itemSeparator = getString(R.string.content__system__item_separator)
+  private lazy val lastSeparator = getString(R.string.content__system__last_item_separator)
 
   lazy val selfUserId = zMessaging map { _.selfUserId }
 
@@ -49,18 +54,14 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
     zms <- zMessaging
     msg <- message
     conv <- zms.convsStorage.signal(msg.convId)
-    user <- user(UserId(conv.id.str))
-  } yield if (isOneToOne(conv.convType)) Some(user) else None
-
-  def displayNameStringIncludingSelf(id: UserId): Signal[String] =
-    for {
-      zms <- zMessaging
-      user <- user(id)
-    } yield user.getDisplayName
+    members <- membersStorage.flatMap(_.activeMembers(conv.id))
+    userId = if (isOneToOne(conv.convType)) Some(UserId(conv.id.str)) else members.find(_ != zms.selfUserId)
+    user <- userId.fold(Signal.const(Option.empty[UserData]))(uId => user(uId).map(Some(_)))
+  } yield user
 
   def displayName(id: UserId): Signal[DisplayName] = zMessaging.flatMap { zms =>
     if (zms.selfUserId == id) Signal const Me
-    else user(id).map(u => Other(u.getDisplayName))
+    else user(id).map(u => Other(if (u.deleted) getString(R.string.default_deleted_username) else u.getDisplayName))
   }
 
   lazy val availabilityVisible: Signal[Boolean] = for {
@@ -79,11 +80,24 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
     tracking.track(AvailabilityChanged(availability, method))
 
   def updateAvailability(availability: Availability): Future[Unit] = {
-    import Threading.Implicits.Background
+    verbose(l"updateAvailability $availability")
+    import Threading.Implicits.Ui
     for {
-      zms     <- zMessaging.head
-      _       <- zms.users.updateAvailability(availability)
-    } yield ()
+      zms   <- zMessaging.head
+      prefs <- inject[Signal[UserPreferences]].head
+      mask  <- prefs(UserPreferences.StatusNotificationsBitmask).apply()
+    } yield {
+      verbose(l"mask = $mask, bit = ${availability.bitmask}, res = ${mask & availability.bitmask}")
+      if ((mask & availability.bitmask) == 0) {
+        inject[AccentColorController].accentColor.head.foreach { color =>
+          showStatusNotificationWarning(availability, color).foreach {
+            if (_) prefs(UserPreferences.StatusNotificationsBitmask).mutate(_ | availability.bitmask)
+          }
+        }
+      }
+
+      zms.users.updateAvailability(availability)
+    }
   }
 
   def accentColor(id: UserId): Signal[AccentColor] = user(id).map(u => AccentColor(u.accent))
@@ -95,27 +109,30 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
     } yield msg.members.size == 1 && msg.members.contains(zms.selfUserId)
   }
 
-  def memberDisplayNames(message: Signal[MessageData], boldNames: Boolean = false) =
+  def getMemberNames(members: Set[UserId]): Signal[Seq[DisplayName]] = Signal.sequence(members.toSeq.map(displayName): _*)
+
+  def getMemberNamesSplit(members: Set[UserId], self: UserId): Signal[MemberNamesSplit] =
     for {
-      zms <- zMessaging
-      msg <- message
-      names <- Signal.sequence(msg.members.toSeq.sortBy(_.str).map(displayName): _*)
-        .map(_.map {
-          case Me          => getString(R.string.content__system__you)
-          case Other(name) => name
-        }.map(name => if (boldNames) s"[[$name]]" else name))
-    } yield
-      names match {
-        case Seq() => ""
-        case Seq(name) => name
-        case _ =>
-          val n = names.length
-          s"${names.take(n - 1).mkString(itemSeparator + " ")} $lastSeparator ${names.last}"
-      }
+      names          <- getMemberNames(members).map(_.collect { case o @ Other(_) => o }.sortBy(_.name))
+      (main, others) =  if (names.size > MaxStringMembers) names.splitAt(MaxStringMembers - 2) else (names, Seq.empty)
+    } yield MemberNamesSplit(main, others, members.contains(self))
+
+  def membersNamesString(membersNames: Seq[DisplayName], separateLast: Boolean = true, boldNames: Boolean = false): String = {
+    val strings = membersNames.map {
+      case Other(name) => if (boldNames) s"[[$name]]" else name
+      case Me => if (boldNames) s"[[${getString(R.string.content__system__you)}]]" else getString(R.string.content__system__you)
+    }
+    if (separateLast && strings.size > 1)
+      s"${strings.take(strings.size - 1).mkString(itemSeparator + " ")} $lastSeparator ${strings.last}"
+    else
+      strings.mkString(itemSeparator + " ")
+  }
 
   def userHandle(id: UserId): Signal[Option[Handle]] = user(id).map(_.handle)
 
-  def user(id: UserId): Signal[UserData] = zMessaging flatMap { _.usersStorage.signal(id) }
+  def user(id: UserId): Signal[UserData] = zMessaging.flatMap(_.usersStorage.signal(id))
+  def userOpt(id: UserId): Signal[Option[UserData]] = zMessaging.flatMap(_.usersStorage.optSignal(id))
+  def users(ids: Iterable[UserId]): Signal[Vector[UserData]] = zMessaging.flatMap(_.usersStorage.listSignal(ids))
 
   def selfUser: Signal[UserData] = selfUserId.flatMap(user)
 
@@ -139,6 +156,11 @@ class UsersController(implicit injector: Injector, context: Context) extends Inj
 }
 
 object UsersController {
+  val MaxStringMembers: Int = 17
+
+  case class MemberNamesSplit(main: Seq[Other], others: Seq[Other], andYou: Boolean) {
+    val shorten: Boolean = others.nonEmpty
+  }
 
   sealed trait DisplayName
   object DisplayName {

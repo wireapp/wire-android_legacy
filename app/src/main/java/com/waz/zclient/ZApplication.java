@@ -21,7 +21,7 @@ import android.app.Activity;
 import android.graphics.Typeface;
 import android.support.annotation.Nullable;
 import com.jakewharton.threetenabp.AndroidThreeTen;
-import com.waz.api.impl.AccentColors;
+import com.waz.model.AccentColor;
 import com.waz.zclient.controllers.IControllerFactory;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
@@ -98,7 +98,7 @@ public class ZApplication extends WireApplication implements ServiceContainer {
         TypefaceFactory.getInstance().init(typefaceloader);
 
         // refresh
-        AccentColors.setColors(AccentColors.loadArray(getApplicationContext(), R.array.original_accents_color));
+        AccentColor.setColors(AccentColor.loadArray(getApplicationContext(), R.array.original_accents_color));
     }
 
     public static void setLogLevels() {

@@ -1,27 +1,28 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.messages
 
-import com.waz.ZLog._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.MessagesCursor
 import com.waz.content.MessagesCursor.Entry
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.RecyclerCursor.RecyclerNotifier
 import com.waz.utils._
 
@@ -38,7 +39,9 @@ import scala.collection.mutable.ArrayBuffer
   * RecyclerView only cares about notifications for visible elements, so it's enough to
   * keep a small window around current position, and ignore changes outside of it.
   */
-class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int = 100) {
+class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int = 100)
+  extends DerivedLogTag {
+  
   import IndexWindow._
 
   private val ord = implicitly[Ordering[Entry]]
@@ -57,7 +60,7 @@ class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int 
     val size = c.size
     if (size != totalCount) {
       totalCount = size
-      error("MessagesCursor size has changed unexpectedly, will notify data set change.")
+      error(l"MessagesCursor size has changed unexpectedly, will notify data set change.")
       notifier.notifyDataSetChanged()
     }
   }
@@ -73,10 +76,10 @@ class IndexWindow(cursor: RecyclerCursor, notifier: RecyclerNotifier, size: Int 
   def onUpdated(prev: MessageData, current: MessageData) =
     search(Entry(current)) match {
       case Found(pos) =>
-        verbose(s"found, notifying adapter at pos: ${offset + pos}")
+        verbose(l"found, notifying adapter at pos: ${offset + pos}")
         notifier.notifyItemRangeChanged(offset + pos, 1)
       case _ =>
-        verbose("no need to notify about changes outside of window")
+        verbose(l"no need to notify about changes outside of window")
     }
 
   /**

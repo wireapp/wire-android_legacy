@@ -18,20 +18,29 @@
 package com.waz.zclient.markdown;
 
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.os.Build;
 import android.text.SpannableString;
-import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
 
+import com.waz.model.AccentColor;
+import com.waz.zclient.BaseActivity;
+import com.waz.zclient.R;
+import com.waz.zclient.ViewHelper;
+import com.waz.zclient.common.controllers.global.AccentColorCallback;
+import com.waz.zclient.common.controllers.global.AccentColorController;
+import com.waz.zclient.common.views.LinkTextView;
 import com.waz.zclient.markdown.spans.GroupSpan;
 import com.waz.zclient.markdown.spans.commonmark.ImageSpan;
 import com.waz.zclient.markdown.spans.commonmark.LinkSpan;
 import com.waz.zclient.ui.text.TypefaceTextView;
+import com.waz.zclient.utils.ContextUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MarkdownTextView extends TypefaceTextView {
+public class MarkdownTextView extends TypefaceTextView implements ViewHelper {
     public MarkdownTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
@@ -44,22 +53,112 @@ public class MarkdownTextView extends TypefaceTextView {
         super(context);
     }
 
+    private StyleSheet mStyleSheet;
+
+    @Override
+    public void setTextSize(int unit, float size) {
+        super.setTextSize(unit, size);
+        invalidateStyleSheet();
+    }
+
+    @Override
+    public void setTextColor(int color) {
+        super.setTextColor(color);
+        invalidateStyleSheet();
+    }
+
+    private void invalidateStyleSheet() {
+        mStyleSheet = null;
+    }
+
+    /**
+     * This function is taken from this Stackoverflow answer:
+     * https://stackoverflow.com/questions/8276634/android-get-hosting-activity-from-a-view/32973351#32973351
+     */
+    private BaseActivity getActivity() {
+        Context context = getContext();
+        while (context instanceof ContextWrapper) {
+            if (context instanceof BaseActivity) {
+                return (BaseActivity)context;
+            }
+            context = ((ContextWrapper)context).getBaseContext();
+        }
+        return null;
+    }
+
+    /**
+     * Configures the style sheet used for rendering.
+     */
+    private void configureStyleSheet() {
+        mStyleSheet = new StyleSheet();
+        mStyleSheet.setBaseFontColor(getCurrentTextColor());
+        mStyleSheet.setBaseFontSize((int) getTextSize());
+        mStyleSheet.setCodeColor(ContextUtils.getStyledColor(R.attr.codeColor, context()));
+        mStyleSheet.setQuoteColor(ContextUtils.getStyledColor(R.attr.quoteColor, context()));
+        mStyleSheet.setQuoteStripeColor(ContextUtils.getStyledColor(R.attr.quoteStripeColor, context()));
+        mStyleSheet.setListPrefixColor(ContextUtils.getStyledColor(R.attr.listPrefixColor, context()));
+
+        BaseActivity activity;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            activity = getActivity();
+        } else {
+            activity = (BaseActivity) getContext();
+        }
+
+        if (activity != null) {
+            // update the link color whenever the accent color changes
+            activity.injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
+                @Override
+                public void color(AccentColor color) {
+                    mStyleSheet.setLinkColor(color.color());
+                    setLinkTextColor(color.color());
+                    refreshLinks();
+                }
+            }, eventContext());
+        }
+
+        // to make links clickable
+        mStyleSheet.configureLinkHandler(context());
+        setMovementMethod(new LinkTextView.MovementMethod(getContext()));
+
+        setLineSpacing(0f, 1.1f);
+    }
+
+    private void configureQuoteStyleSheet() {
+        mStyleSheet = new StyleSheet();
+        mStyleSheet.setBaseFontColor(getCurrentTextColor());
+        mStyleSheet.setBaseFontSize((int) getTextSize());
+        mStyleSheet.setCodeColor(getCurrentTextColor());
+        mStyleSheet.setQuoteColor(getCurrentTextColor());
+        mStyleSheet.setQuoteStripeColor(getCurrentTextColor());
+        mStyleSheet.setListPrefixColor(getCurrentTextColor());
+        mStyleSheet.setLinkColor(getCurrentTextColor());
+        setLinkTextColor(getCurrentTextColor());
+        setLineSpacing(0f, 1.1f);
+    }
+
     /**
      * Mark down the text currently in the buffer.
      */
     public void markdown() {
-        StyleSheet ss = StyleSheet.Companion.styleFor(this);
+        if (mStyleSheet == null) { configureStyleSheet(); }
+        applyMarkdown();
+    }
 
-        // to make links clickable
-        setMovementMethod(LinkMovementMethod.getInstance());
+    public void markdownQuotes() {
+        if (mStyleSheet == null) { configureQuoteStyleSheet(); }
+        applyMarkdown();
+    }
 
+    private void applyMarkdown() {
         String text = getText().toString();
-        SpannableString result = Markdown.parse(text, ss);
+        SpannableString result = Markdown.parse(text, mStyleSheet);
         setText(result);
     }
 
     /**
-     * Re-applies all LinkSpan and ImageSpan objects.
+     * Re-applies all LinkSpan and ImageSpan objects. Call this method after Linkifying the text
+     * preserve existing markdown links, or after changing the link color in the stylesheet.
      */
     public void refreshLinks() {
         if (!(getText() instanceof SpannableString)) { return; }
@@ -70,17 +169,21 @@ public class MarkdownTextView extends TypefaceTextView {
         List<GroupSpan> allSpans = new ArrayList<>(Arrays.asList(linkSpans));
         allSpans.addAll(Arrays.asList(imageSpans));
 
-
-        for (GroupSpan span: allSpans) {
+        for (GroupSpan span : allSpans) {
             int start = text.getSpanStart(span);
             int end = text.getSpanEnd(span);
             int flags = text.getSpanFlags(span);
 
-            // remove subspans & re-add them
-            for (Object subspan: span.getSpans()) {
-                text.removeSpan(subspan);
-                text.setSpan(subspan, start, end, flags);
-            }
+            // remove the group span & its subspans
+            text.removeSpan(span);
+            for (Object subspan : span.getSpans()) { text.removeSpan(subspan); }
+
+            // generate a new one (link color may have changed)
+            GroupSpan newGroupSpan = mStyleSheet.spanFor(span.toNode(null));
+
+            // add the group span & its subspans
+            text.setSpan(newGroupSpan, start, end, flags);
+            for (Object subspan : newGroupSpan.getSpans()) { text.setSpan(subspan, start, end, flags); }
         }
     }
 }

@@ -43,9 +43,7 @@ class FlatWireButton(context: Context, attrs: AttributeSet, style: Int) extends 
   val onClickEvent = EventStream[View]()
 
   setGravity(Gravity.CENTER)
-  accentColor.onUi{ accentColor =>
-    setBackgroundColor(accentColor.getColor())
-  }
+  accentColor.map(_.color).onUi(setBackgroundColor)
 
   setOnClickListener(new OnClickListener {
     override def onClick(v: View) = onClickEvent ! v

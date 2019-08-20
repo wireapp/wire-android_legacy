@@ -40,7 +40,7 @@ These steps will build only the Wire client UI, pulling in all other Wire framew
 - [Sync Engine](https://github.com/wireapp/wire-android-sync-engine)
 - [Audio Video Signaling](https://github.com/wireapp/avs)
 - [generic-message-proto](https://github.com/wireapp/generic-message-proto)
-- [wiretranslations-android](https://github.com/wireapp/wiretranslations-android)
+- [wire-android-translations](https://github.com/wireapp/wire-android-translations)
 
 ## Android Studio
 When importing project in Android Studio **do not allow** gradle plugin update. Our build setup requires Android Plugin for Gradle version 1.5. 

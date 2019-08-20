@@ -110,11 +110,45 @@
 
     </RelativeLayout>
 
-    <com.waz.zclient.integrations.IntegrationDetailsViewPager
-        android:id="@+id/view_pager"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    xmlns:app="http://schemas.android.com/apk/res-auto"
+                    android:orientation="vertical">
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/integration_description"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/add_remove_service_button"
+            android:layout_alignParentStart="true"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular"
+            android:textColor="?wirePrimaryTextColor"
+            app:w_font="@string/wire__typeface__light"
+            />
+
+        <FrameLayout
+            android:id="@+id/add_remove_service_button"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/add_remove_service_button_height"
+            android:layout_margin="@dimen/wire__padding__big"
+            android:layout_alignParentBottom="true">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/button_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@color/white"
+                android:textAllCaps="true"
+                app:w_font="@string/wire__typeface__light"/>
+
+        </FrameLayout>
+
+
+    </RelativeLayout>
 
 
 </LinearLayout>

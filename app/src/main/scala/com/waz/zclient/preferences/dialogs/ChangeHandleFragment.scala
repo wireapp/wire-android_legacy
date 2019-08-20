@@ -28,9 +28,6 @@ import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.warn
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -38,6 +35,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Try
 
@@ -128,7 +126,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
                     dismiss()
 
                   case Left(err) =>
-                    warn(s"Failed to update username: $err")
+                    warn(l"Failed to update username: $err")
                     setErrorMessage(R.string.pref__account_action__dialog__change_username__error_unknown)
                     enableEditing()
                 }
@@ -240,7 +238,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
 object ChangeHandleFragment {
 
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   private val ArgCancelEnabled = "ARG_CANCEL_ENABLED"
   private val ArgHandle        = "ARG_HANDLE"

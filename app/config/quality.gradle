@@ -26,7 +26,7 @@ task checkstyle(type: Checkstyle) {
 }
 
 checkstyle {
-    toolVersion = rootProject.ext.checkstyleVersion
+    toolVersion = '6.18'
     ignoreFailures = true
 }
 
@@ -35,7 +35,7 @@ dependencies {
 }
 
 pmd {
-    toolVersion = rootProject.ext.pmdVersion
+    toolVersion = '5.4.1'
     ruleSetFiles = files("${project.rootDir}/app/config/pmd-config.xml")
     ignoreFailures = true
     ruleSets = []

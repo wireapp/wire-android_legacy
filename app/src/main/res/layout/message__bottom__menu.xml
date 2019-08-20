@@ -19,10 +19,29 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
               android:orientation="vertical"
               android:paddingTop="@dimen/wire__padding__small"
               android:paddingBottom="@dimen/wire__padding__small"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/wire__padding__small"
+        android:paddingBottom="@dimen/wire__padding__small"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        app:w_font="@string/wire__typeface__regular"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:textColor="@color/text__secondary_light"
+        />
+
+    <LinearLayout android:id="@+id/container"
+                  android:orientation="vertical"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"/>
 
 </LinearLayout>

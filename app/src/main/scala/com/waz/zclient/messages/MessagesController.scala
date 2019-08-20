@@ -18,9 +18,9 @@
 package com.waz.zclient.messages
 
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.model.{ConvId, MessageData, MessageId, SyncId}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.controllers.navigation._
@@ -28,9 +28,13 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.pages.main.conversationpager.controller.{ISlidingPaneController, SlidingPaneObserver}
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{Injectable, Injector, WireContext}
-import org.threeten.bp.Instant
+import com.waz.utils.RichWireInstant
 
-class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext) extends Injectable {
+import scala.concurrent.duration._
+
+class MessagesController()(implicit injector: Injector, cxt: WireContext, ev: EventContext)
+  extends Injectable with DerivedLogTag {
+  
 import com.waz.threading.Threading.Implicits.Background
 
 import scala.concurrent.Future
@@ -85,7 +89,7 @@ import scala.concurrent.Future
   }
 
   @volatile
-  private var lastReadTime = Instant.EPOCH
+  private var lastReadTime = RemoteInstant.Epoch
 
   currentConvIndex.flatMap(_.signals.lastReadTime) { lastReadTime = _ }
 
@@ -93,12 +97,24 @@ import scala.concurrent.Future
 
   def isLastSelf(id: MessageId) = lastSelfMessage.currentValue.exists(_.id == id)
 
+  // Throttling to avoid too many requests for read receipts.
+  // Ideally the sync service would do the merge but the new WorkManager doesn't allow that yet.
+  private val lastReadMessages = Signal(Map[ConvId, MessageData]())
+
+  lastReadMessages.throttle(2.seconds) { messages =>
+    messages.foreach { case (conv, msg) =>
+      zms.head.foreach(_.convsUi.setLastRead(conv, msg))
+    }
+    lastReadMessages ! Map()
+  }
+
   def onMessageRead(msg: MessageData) = {
     if (msg.isEphemeral && !msg.expired)
         zms.head.foreach(_.ephemeral.onMessageRead(msg.id))
 
-    if (msg.time isAfter lastReadTime)
-      zms.head.foreach(_.convsUi.setLastRead(msg.convId, msg))
+    lastReadMessages.mutate { messages =>
+      messages + (msg.convId -> messages.get(msg.convId).fold(msg)(m => if (m.time isAfter msg.time) m else msg))
+    }
 
     if (msg.state == Message.Status.FAILED)
       zms.head.foreach(_.messages.markMessageRead(msg.convId, msg.id))

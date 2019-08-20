@@ -26,24 +26,28 @@ import android.provider.Settings
 import android.support.annotation.StyleableRes
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
+import android.text.format.Formatter
 import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
+import com.waz.model.{AccentColor, Availability}
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
 import com.waz.zclient.ui.utils.ResourceUtils
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.Success
-
 
 object ContextUtils {
   def getColor(resId: Int)(implicit context: Context): Int = ContextCompat.getColor(context, resId)
 
-  def getColorWithTheme(resId: Int, context: Context): Int =
+  def getColorWithThemeJava(resId: Int, context: Context): Int =
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) getColor(resId)(context)
     else context.getResources.getColor(resId, context.getTheme)
+
+  def getColorWithTheme(resId: Int)(implicit context: Context): Int =
+    getColorWithThemeJava(resId, context)
 
   def getColorStateList(resId: Int)(implicit context: Context) = ContextCompat.getColorStateList(context, resId)
 
@@ -184,28 +188,34 @@ object ContextUtils {
     p.future
   }
 
-  def showConfirmationDialog(title:    String,
-                             msg:      String,
-                             positiveRes: Int = android.R.string.ok,
-                             negativeRes: Int = android.R.string.cancel)
-                            (implicit context: Context): Future[Boolean] = {
+  /// Dialog with title, message and ok.
+  def showInfoDialog(title: String, msg: String, positiveRes: Int = android.R.string.ok)
+                    (implicit context: Context): Future[Boolean] = {
+
     val p = Promise[Boolean]()
-    val dialog = new AlertDialog.Builder(context)
+    new AlertDialog.Builder(context)
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(true))
       })
-      .setNegativeButton(negativeRes, new DialogInterface.OnClickListener() {
-        def onClick(dialog: DialogInterface, which: Int): Unit = dialog.cancel()
-      })
-      .setOnCancelListener(new DialogInterface.OnCancelListener {
-        override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(false))
-      })
+      .setCancelable(false)
       .create
-    dialog.show()
+      .show()
     p.future
   }
+
+  //TODO Context has to be an Activity - maybe specify this in the type
+  def showWifiWarningDialog(size: Long, accentColor: AccentColor)
+                           (implicit ex: ExecutionContext, context: Context): Future[Boolean] =
+    showConfirmationDialog(
+      getString(R.string.asset_upload_warning__large_file__title),
+      if (size > 0)
+        getString(R.string.asset_upload_warning__large_file__message, Formatter.formatFileSize(context, size))
+      else
+        getString(R.string.asset_upload_warning__large_file__message_default),
+      color = accentColor
+    )
 
   def showPermissionsErrorDialog(titleRes: Int, msgRes: Int, ackRes: Int = android.R.string.ok)(implicit cxt: Context): Future[Unit] = {
     val p = Promise[Unit]()
@@ -225,31 +235,84 @@ object ContextUtils {
     p.future
   }
 
-  //TODO come up with a tidier way of doing this.
-  def showConfirmationDialogWithNeutralButton(title:          Int,
-                                              msg:            Int,
-                                              neutralRes:     Int,
-                                              positiveRes:    Int = android.R.string.ok,
-                                              negativeRes:    Int = android.R.string.cancel)
-                                             (implicit context: Context): Future[Option[Boolean]] = {
+  def showConfirmationDialog(title: String, msg: String, color: AccentColor)
+                            (implicit ex: ExecutionContext, context: Context): Future[Boolean] =
+    showConfirmationDialog(title, msg, android.R.string.ok, android.R.string.cancel, None, color).map(_.getOrElse(false))
+
+  def showConfirmationDialog(title: String,
+                             msg: String,
+                             positiveRes: Int,
+                             negativeRes: Int,
+                             color: AccentColor)
+                            (implicit ex: ExecutionContext, context: Context): Future[Boolean] =
+    showConfirmationDialog(title, msg, positiveRes, negativeRes, None, color).map(_.getOrElse(false))
+
+  def showConfirmationDialog(title: String,
+                             msg:   String,
+                             positiveRes: Int,
+                             negativeRes: Int,
+                             neutralRes: Option[Int],
+                             color: AccentColor)
+                            (implicit context: Context): Future[Option[Boolean]] = {
     val p = Promise[Option[Boolean]]()
-    val dialog = new AlertDialog.Builder(context)
+
+    val builder = new AlertDialog.Builder(context)
       .setTitle(title)
       .setMessage(msg)
       .setPositiveButton(positiveRes, new DialogInterface.OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int) = p.trySuccess(Some(true))
+        override def onClick(dialog: DialogInterface, which: Int) = p.tryComplete(Success(Some(true)))
       })
       .setNegativeButton(negativeRes, new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int): Unit = dialog.cancel()
       })
-      .setNeutralButton(neutralRes, new DialogInterface.OnClickListener {
+      .setOnCancelListener(new DialogInterface.OnCancelListener {
+        override def onCancel(dialog: DialogInterface) = p.tryComplete(Success(Some(false)))
+      })
+
+    neutralRes.foreach(res =>
+      builder.setNeutralButton(res, new DialogInterface.OnClickListener {
         override def onClick(dialog: DialogInterface, which: Int) = p.trySuccess(None)
       })
-      .setOnCancelListener(new DialogInterface.OnCancelListener {
-        override def onCancel(dialog: DialogInterface) = p.trySuccess(Some(false))
-      })
-      .create
+    )
+
+    val dialog = builder.create()
+
     dialog.show()
+
+    Option(dialog.getButton(DialogInterface.BUTTON_POSITIVE)).foreach { button =>
+      button.setTextColor(color.color)
+      button.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END)
+    }
+    Option(dialog.getButton(DialogInterface.BUTTON_NEGATIVE)).foreach { button =>
+      button.setTextColor(color.color)
+      button.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END)
+    }
+    Option(dialog.getButton(DialogInterface.BUTTON_NEUTRAL)).foreach { button =>
+      button.setTextColor(color.color)
+      button.setTextAlignment(android.view.View.TEXT_ALIGNMENT_TEXT_END)
+    }
+
     p.future
+  }
+
+  def showStatusNotificationWarning(availability: Availability, color: AccentColor)
+                                   (implicit ex: ExecutionContext, context: Context): Future[Boolean] = {
+    val (title, body) = availability match {
+      case Availability.None      =>
+        (R.string.availability_notification_warning_nostatus_title, R.string.availability_notification_warning_nostatus)
+      case Availability.Available =>
+        (R.string.availability_notification_warning_available_title, R.string.availability_notification_warning_available)
+      case Availability.Busy      =>
+        (R.string.availability_notification_warning_busy_title, R.string.availability_notification_warning_busy)
+      case Availability.Away      =>
+        (R.string.availability_notification_warning_away_title, R.string.availability_notification_warning_away)
+    }
+    showConfirmationDialog(
+      title       = getString(title),
+      msg         = getString(body),
+      positiveRes = R.string.availability_notification_dont_show,
+      negativeRes = R.string.availability_notification_ok,
+      color       = color
+    )
   }
 }

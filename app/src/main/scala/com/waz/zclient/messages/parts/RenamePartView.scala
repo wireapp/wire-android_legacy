@@ -20,9 +20,10 @@ package com.waz.zclient.messages.parts
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
+import com.waz.model.Name
 import com.waz.threading.Threading
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
-import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController, SystemMessageView}
+import com.waz.zclient.messages.{MessageViewPart, MsgPart, SystemMessageView, UsersController}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
@@ -55,7 +56,7 @@ class RenamePartView(context: Context, attrs: AttributeSet, style: Int) extends 
 
   message.map(_.name) { name =>
     nameView.setVisible(name.isDefined)
-    nameView.setText(name.getOrElse(""))
+    nameView.setText(name.getOrElse(Name.Empty))
   }
 
 }

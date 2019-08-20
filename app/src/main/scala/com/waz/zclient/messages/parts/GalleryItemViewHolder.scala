@@ -25,12 +25,12 @@ import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.View
 import android.widget.ImageView
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.{AndroidURIUtil, Bitmap, URI}
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
 import com.waz.zclient.utils.{LocalThumbnailCache, RichView}
 import com.waz.zclient.{R, ViewHelper}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.utils.returning
 
 import scala.concurrent.Promise
@@ -48,7 +48,11 @@ class GalleryItemViewHolder(imageView: CursorGalleryItem) extends RecyclerView.V
 
 }
 
-class CursorGalleryItem(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends ImageView(context, attrs, defStyleAttr) with ViewHelper {
+class CursorGalleryItem(context: Context, attrs: AttributeSet, defStyleAttr: Int)
+  extends ImageView(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 

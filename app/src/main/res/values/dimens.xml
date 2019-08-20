@@ -29,6 +29,10 @@
     <dimen name="options_menu_row_top_margin">32dp</dimen>
     <dimen name="options_menu_row_item_total_width">104dp</dimen>
 
+    <!-- Dialogs-->
+    <dimen name="dialog_with_input_message_top_padding">8dp</dimen>
+    <dimen name="dialog_with_input_message_bottom_padding">16dp</dimen>
+
     <!-- Buttons-->
     <dimen name="button__corner_radius_small">2dp</dimen>
     <dimen name="button__corner_radius">4dp</dimen>
@@ -106,7 +110,8 @@
     <dimen name="cursor__open_button__right_margin">30dp</dimen>
     <dimen name="cursor__top_border__height">1dp</dimen>
     <dimen name="cursor__menu_button__diameter">28dp</dimen>
-    <dimen name="cursor__menu_button__padding">4dp</dimen>
+    <dimen name="cursor__menu_button__padding">6dp</dimen>
+    <dimen name="cursor__send_button__padding">10dp</dimen>
     <dimen name="cursor__send_button__width">32dp</dimen>
     <dimen name="cursor__send_button__height">32dp</dimen>
 
@@ -183,6 +188,7 @@
     <dimen name="wire__padding__26">26dp</dimen>
     <dimen name="wire__padding__28">28dp</dimen>
     <dimen name="wire__padding__32">32dp</dimen>
+    <dimen name="wire__padding__50">50dp</dimen>
     <dimen name="wire__padding__regular">16dp</dimen>
     <dimen name="wire__padding__call">18dp</dimen>
     <dimen name="wire__padding__bottom__call">22dp</dimen>
@@ -406,11 +412,11 @@
     <dimen name="participant__image_shift">-32dp</dimen>
     <dimen name="chathead__margin">26dp</dimen>
     <dimen name="chathead__margin_start">18dp</dimen>
-    <dimen name="system_margin_end">32dp</dimen>
+    <dimen name="system_margin_end">24dp</dimen>
     <dimen name="system_margin_start">24dp</dimen>
     <dimen name="error__image__margin">32dp</dimen>
-    <dimen name="profile__image__width_regular">260dp</dimen>
-    <dimen name="profile__image__height_regular">260dp</dimen>
+    <dimen name="profile__image__width_regular">192dp</dimen>
+    <dimen name="profile__image__height_regular">192dp</dimen>
     <dimen name="profile__image__width_small">96dp</dimen>
     <dimen name="profile__image__height_small">96dp</dimen>
     <dimen name="profile__image__width">@dimen/profile__image__width_small</dimen>
@@ -958,5 +964,14 @@
     <dimen name="call_control_icon_size">16dp</dimen>
     <dimen name="hangup_call_icon_size">20dp</dimen>
     <dimen name="calling_profile_margin_side">32dp</dimen>
+    <dimen name="services_warning_icon_width">48dp</dimen>
+    <dimen name="services_warning_icon_height">48dp</dimen>
+    <dimen name="services_warning_text_width">204dp</dimen>
+    <dimen name="user_part_view_bot_size">12dp</dimen>
+    <dimen name="mentions_chathead_size">32dp</dimen>
+    <dimen name="conversation_list__badge__icon_size">14dp</dimen>
 
+    <dimen name="empty_likes_reads_icon_size">140dp</dimen>
+    <dimen name="empty_likes_reads_text_width">224dp</dimen>
+    <dimen name="create_conv_options_height">64dp</dimen>
 </resources>

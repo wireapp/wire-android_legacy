@@ -30,7 +30,7 @@
         android:textSize="@dimen/camera__control__button_text_size"
         android:layout_marginLeft="@dimen/camera__control__button_margin_left"
         android:clickable="true"
-        android:textColor="@color/camera__control__font_color"
+        android:textColor="@color/camera__control"
         />
 
 

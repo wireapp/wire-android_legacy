@@ -73,6 +73,7 @@
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/preferences_account_appearance_header"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 android:text="@string/pref_account_appearance_category_title"
@@ -99,6 +100,25 @@
                 />
 
             <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                android:text="@string/pref__account_privacy"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__16"
+                android:paddingEnd="@dimen/wire__padding__16"
+                android:textColor="@color/accent_blue"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_account_read_receipts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:title="@string/pref__account_send_read_receipts_title"
+                app:subtitle="@string/pref__account_send_read_receipts_summary"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/preference_personal_information_header"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
                 android:text="@string/pref_account_personal_information_category_title"

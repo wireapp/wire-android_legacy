@@ -1,20 +1,21 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.participants.fragments
 
 import android.content.{ClipData, ClipboardManager, Context, DialogInterface}
@@ -24,7 +25,7 @@ import android.widget.{CompoundButton, TextView}
 import com.waz.api.Verification
 import com.waz.model.UserId
 import com.waz.model.otr.ClientId
-import com.waz.sync.SyncResult
+import com.waz.sync.SyncResult._
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -32,6 +33,7 @@ import com.waz.zclient.Intents.ShowDevicesIntent
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.ClientsController.getDeviceClassName
 import com.waz.zclient.common.controllers.global.{AccentColorController, ClientsController}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -51,7 +53,7 @@ class SingleOtrClientFragment extends FragmentHelper {
 
   private lazy val userId      = Option(getArguments).map(args => UserId(args.getString(ArgUser)))
   private lazy val clientId    = Option(getArguments).map(args => ClientId(args.getString(ArgClient)))
-  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor)
+  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
 
   private lazy val client = ((userId, clientId) match {
     case (Some(uId), Some(cId)) => clientsController.client(uId, cId)
@@ -100,7 +102,7 @@ class SingleOtrClientFragment extends FragmentHelper {
     accentColor
       .map(c => getHighlightText(getActivity, getString(R.string.otr__participant__single_device__how_to_link), c, false))
       .onUi(t => vh.foreach(_.setText(t)))
-    vh.onClick(_ => inject[BrowserController].openUrl(getString(R.string.url_otr_learn_how)))
+    vh.onClick(_ => inject[BrowserController].openOtrLearnHow())
     vh.foreach(_.setVisible(userId.isDefined))
   }
 
@@ -179,13 +181,13 @@ class SingleOtrClientFragment extends FragmentHelper {
       clientsController.resetSession(uId, cId).map { res =>
         resetSessionButton.foreach(_.setEnabled(true))
         res match {
-          case SyncResult.Success =>
+          case Success =>
             ViewUtils.showAlertDialog(
               getActivity,
               R.string.empty_string,
               R.string.otr__reset_session__message_ok,
               R.string.otr__reset_session__button_ok, null, true)
-          case SyncResult.Failure(_, _) =>
+          case Failure(_) =>
             ViewUtils.showAlertDialog(
               getActivity,
               R.string.empty_string,
@@ -198,6 +200,8 @@ class SingleOtrClientFragment extends FragmentHelper {
                   resetSession()
                 }
               })
+          case Retry(_) =>
+            error(l"Awaiting a sync job should not return Retry")//TODO return ErrorOr[Unit] from await?
         }
       } (Threading.Ui)
     case _ =>

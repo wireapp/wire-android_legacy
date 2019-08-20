@@ -139,7 +139,7 @@
         <attr name="circle_fill" format="string"/>
     </declare-styleable>
 
-    <declare-styleable name="ChatheadView">
+    <declare-styleable name="ChatHeadView">
         <attr name="glyph_size" format="dimension"/>
         <attr name="initials_font_size" format="dimension"/>
         <attr name="isSelectable" format="boolean"/>

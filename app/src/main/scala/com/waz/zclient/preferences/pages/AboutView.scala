@@ -18,27 +18,35 @@
 package com.waz.zclient.preferences.pages
 
 import android.content.pm.PackageManager
-import android.content.{Context, Intent}
-import android.net.Uri
+import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
-import com.waz.ZLog.ImplicitTag._
 import android.view.View
-import android.widget.{LinearLayout, Toast}
-import com.waz.zclient.preferences.views.TextButton
-import com.waz.zclient.utils.{BackStackKey, DebugUtils}
-import com.waz.zclient.{R, ViewHelper}
-import AboutView._
-import com.waz.service.ZMessaging
+import android.widget.LinearLayout
+import com.waz.api.ZmsVersion
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.{MetaDataService, ZMessaging}
 import com.waz.utils.events.Signal
+import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.preferences.pages.AboutView._
+import com.waz.zclient.preferences.views.TextButton
+import com.waz.zclient.utils.BackStackKey
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.{R, ViewHelper}
 
-class AboutView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+class AboutView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   inflate(R.layout.preferences_about_layout)
 
   private var versionClickCounter: Int = 0
+
+  private lazy val browser = inject[BrowserController]
 
   val websiteButton       = findById[TextButton](R.id.preferences_about_website)
   val termsButton         = findById[TextButton](R.id.preferences_about_terms)
@@ -48,26 +56,39 @@ class AboutView(context: Context, attrs: AttributeSet, style: Int) extends Linea
   val versionTextButton = findById[TextButton](R.id.preferences_about_version)
   val copyrightButton = findById[TextButton](R.id.preferences_about_copyright)
 
-  websiteButton.onClickEvent(_ => openUrl(R.string.pref_about_website_url))
+  websiteButton.onClickEvent { _ => browser.openAboutWebsite() }
   termsButton.onClickEvent { _ =>
-    openUrl(if (inject[Signal[Option[ZMessaging]]].map(_.flatMap(_.teamId)).currentValue.flatten.isDefined) R.string.url_terms_of_service_teams else R.string.url_terms_of_service_personal)
+    if (inject[Signal[Option[ZMessaging]]].map(_.flatMap(_.teamId)).currentValue.flatten.isDefined)
+      browser.openTeamsTermsOfService()
+    else
+      browser.openPersonalTermsOfService()
   }
-  privacyPolicyButton.onClickEvent(_ => openUrl(R.string.url_privacy_policy))
-  licenseButton.onClickEvent(_ => openUrl(R.string.pref_about_licenses_url))
+  privacyPolicyButton.onClickEvent { _ => browser.openPrivacyPolicy() }
+  licenseButton.onClickEvent {_ => browser.openThirdPartyLicenses() }
 
   versionTextButton.onClickEvent{ _ =>
     versionClickCounter += 1
     if (versionClickCounter >= A_BUNCH_OF_CLICKS_TO_PREVENT_ACCIDENTAL_TRIGGERING) {
       versionClickCounter = 0
-      Toast.makeText(context, DebugUtils.getVersion(getContext), Toast.LENGTH_LONG).show()
+      showToast(getVersion)
     }
   }
 
-  private def openUrl(id: Int): Unit ={
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(id))))
-  }
+  def setVersion(version: String) = versionTextButton.setTitle(getString(R.string.pref_about_version_title, version))
 
-  def setVersion(version: String) = versionTextButton.setTitle(context.getString(R.string.pref_about_version_title, version))
+  def getVersion(implicit context: Context): String = {
+    val md = inject[MetaDataService]
+    val translationId = getResources.getIdentifier("wiretranslations_version", "string", context.getPackageName)
+    val translationLibVersion = if(translationId == 0) "n/a" else getString(translationId)
+    s"""
+      |Version:             ${md.versionName} (${md.appVersion}
+      |Sync Engine:         ${ZmsVersion.ZMS_VERSION}
+      |AVS:                 ${getString(R.string.avs_version)}
+      |Audio-notifications: ${getString(R.string.audio_notifications_version)}
+      |Translations:        $translationLibVersion
+      |Locale:              $getLocale
+    """.stripMargin
+  }
 }
 
 object AboutView {

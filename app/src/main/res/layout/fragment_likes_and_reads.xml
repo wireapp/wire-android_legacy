@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_graphite_8"
+    >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:padding="@dimen/wire__padding__8"
+        android:background="?wireBackgroundColor"
+        >
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/message_details_title"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textSize="@dimen/wire__text_size__smaller"
+                android:textColor="?wirePrimaryTextColor"
+                app:w_font="@string/wire__typeface__medium"
+                />
+
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/likes_close_button"
+                android:layout_width="@dimen/wire__icon_button__diameter"
+                android:layout_height="@dimen/wire__icon_button__diameter"
+                android:text="@string/glyph__close"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                android:layout_alignEnd="@id/message_details_title"
+                style="?iconButton"
+                />
+    </RelativeLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?wireBackgroundColor">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/likes_and_reads_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="?wirePrimaryTextColor"
+            app:tabTextColor="?wirePrimaryTextColor"
+            app:tabMode="fixed"
+            app:tabSelectedTextColor="@color/light_graphite"
+            app:tabIndicatorHeight="@dimen/wire__divider__height"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            >
+            <android.support.design.widget.TabItem
+                android:text="@string/tab_title_read"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_with_theme_medium_layout"
+                />
+
+            <android.support.design.widget.TabItem
+                android:text="@string/tab_title_likes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_with_theme_medium_layout"
+                />
+        </android.support.design.widget.TabLayout>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/wire__padding__regular"
+        >
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/reads_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/likes_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
+        <LinearLayout
+            android:id="@+id/empty_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:visibility="gone"
+            android:orientation="vertical"
+            >
+            <com.waz.zclient.paintcode.GenericStyleKitView
+                android:id="@+id/empty_list_icon"
+                android:layout_width="@dimen/empty_likes_reads_icon_size"
+                android:layout_height="@dimen/empty_likes_reads_icon_size"
+                android:gravity="center"
+                />
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/empty_list_text"
+                android:layout_width="@dimen/empty_likes_reads_text_width"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:textColor="@color/light_graphite_40"
+                app:w_font="@string/wire__typeface__medium"
+                />
+        </LinearLayout>
+    </FrameLayout>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/message_timestamp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom|center_horizontal"
+        android:layout_marginBottom="@dimen/wire__padding__8"
+        android:maxLines="2"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__smaller"
+        app:w_font="@string/wire__typeface__light"
+        />
+</LinearLayout>

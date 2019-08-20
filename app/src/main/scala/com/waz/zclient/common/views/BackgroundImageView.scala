@@ -25,7 +25,7 @@ import com.waz.model.Dim2
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import com.waz.zclient.utils.ContextUtils.getColor
+import com.waz.zclient.utils.ContextUtils.{getColor, getNavigationBarHeight}
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{R, ViewHelper}
 
@@ -41,6 +41,6 @@ class BackgroundImageView(val context: Context, val attrs: AttributeSet, val def
   } yield WireImage(picture)
 
   private val configuration = context.getResources.getConfiguration
-  setBackground(new BackgroundDrawable(pictureId, getContext, Dim2(ViewUtils.toPx(context, configuration.screenWidthDp), ViewUtils.toPx(context, configuration.screenHeightDp))))
+  setBackground(new BackgroundDrawable(pictureId, getContext, Dim2(ViewUtils.toPx(context, configuration.screenWidthDp), ViewUtils.toPx(context, configuration.screenHeightDp + getNavigationBarHeight))))
   setImageDrawable(new ColorDrawable(getColor(R.color.black_58)))
 }

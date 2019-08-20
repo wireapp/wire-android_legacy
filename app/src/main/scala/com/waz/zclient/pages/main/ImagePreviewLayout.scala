@@ -22,8 +22,10 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.api.{ImageAsset, ImageAssetFactory}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.Name
+import com.waz.service.assets.AssetService.RawAssetInput
+import com.waz.service.assets.AssetService.RawAssetInput.{ByteInput, UriInput}
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.utils.wrappers.URI
@@ -37,11 +39,16 @@ import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
 
-class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper with ConfirmationMenuListener {
+class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with ViewHelper
+    with ConfirmationMenuListener
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
-  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor)
+  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
   private lazy val convName = inject[ConversationController].currentConv.map(_.displayName)
 
   val sketchShouldBeVisible = Signal(true)
@@ -49,7 +56,7 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 
   private val onDrawClicked = EventStream[IDrawingController.DrawingMethod]()
 
-  private var imageAsset = Option.empty[ImageAsset] // still used for sketches and old Java code
+  private var imageInput = Option.empty[RawAssetInput]
   private var source = Option.empty[ImagePreviewLayout.Source]
 
   private lazy val approveImageSelectionMenu = returning(findViewById[ConfirmationMenu](R.id.cm__cursor_preview)) { menu =>
@@ -75,8 +82,8 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
   private lazy val titleTextView = returning(findViewById[TextView](R.id.ttv__image_preview__title)) { view =>
     (for {
       visible <- titleShouldBeVisible
-      name    <- if (visible) convName else Signal.const("")
-    } yield name).onUi(view.setText)
+      name    <- if (visible) convName else Signal.const(Name.Empty)
+    } yield name).onUi(view.setText(_))
   }
 
   private lazy val sketchMenuContainer = returning(findViewById[View](R.id.ll__preview__sketch)) { container =>
@@ -112,13 +119,13 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
   }
 
   onDrawClicked.onUi { method =>
-    (imageAsset, source, callback) match {
+    (imageInput, source, callback) match {
       case (Some(a), Some(s), Some(c)) => c.onSketchOnPreviewPicture(a, s, method)
       case _ =>
     }
   }
 
-  override def confirm(): Unit = (imageAsset, source, callback) match {
+  override def confirm(): Unit = (imageInput, source, callback) match {
     case (Some(a), Some(s), Some(c)) => c.onSendPictureFromPreview(a, s)
     case _ =>
   }
@@ -129,13 +136,13 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 
   def setImage(imageData: Array[Byte], isMirrored: Boolean): Unit = {
     this.source = Option(ImagePreviewLayout.Source.Camera)
-    this.imageAsset = Option(ImageAssetFactory.getImageAsset(imageData))
+    this.imageInput = Some(ByteInput(imageData))
     imageView.setImageDrawable(ImageAssetDrawable(imageData, isMirrored))
   }
 
   def setImage(uri: URI, source: ImagePreviewLayout.Source): Unit = {
     this.source = Option(source)
-    this.imageAsset = Option(ImageAssetFactory.getImageAsset(uri))
+    this.imageInput = Some(UriInput(uri))
     imageView.setImageDrawable(ImageAssetDrawable(uri, scaleType = ScaleType.CenterInside))
   }
 
@@ -152,9 +159,9 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int) exte
 trait ImagePreviewCallback {
   def onCancelPreview(): Unit
 
-  def onSketchOnPreviewPicture(imageAsset: ImageAsset, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit
+  def onSketchOnPreviewPicture(image: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit
 
-  def onSendPictureFromPreview(imageAsset: ImageAsset, source: ImagePreviewLayout.Source): Unit
+  def onSendPictureFromPreview(imageAsset: RawAssetInput, source: ImagePreviewLayout.Source): Unit
 }
 
 object ImagePreviewLayout {

@@ -1,24 +1,25 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.common.views
 
 import android.app.Activity
-import android.content.{ClipData, ClipboardManager, Context}
+import android.content.Context
 import android.content.res.ColorStateList
 import android.os.Build
 import android.text.{Editable, TextWatcher}
@@ -32,7 +33,7 @@ import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.{ContextUtils, _}
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
 
 import scala.concurrent.Future
 
@@ -41,6 +42,8 @@ class NumberCodeInput(context: Context, attrs: AttributeSet, style: Int) extends
   def this(context: Context) = this(context, null, 0)
 
   inflate(R.layout.code_input)
+
+  private val clipboard = inject[ClipboardUtils]
 
   val inputCount = 6
   val errorText = findById[TypefaceTextView](R.id.empty_search_message)
@@ -116,10 +119,10 @@ class NumberCodeInput(context: Context, attrs: AttributeSet, style: Int) extends
     } (Threading.Ui)
   }
 
-  private def getClipboardCode: Option[String] = {
-    val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE).asInstanceOf[ClipboardManager]
-    val clipOpt = if (clipboardManager.hasPrimaryClip) Option(clipboardManager.getPrimaryClip) else None
-    val clipItem = clipOpt.flatMap(clip => if (clip.getItemCount > 0) Some(clip.getItemAt(0)) else Option.empty[ClipData.Item])
-    clipItem.map(_.coerceToText(context).toString).filter(_.matches("^[0-9]{6}$"))
-  }
+  private def getClipboardCode: Option[String] =
+    clipboard
+      .getPrimaryClipItemsAsText.headOption
+      .map(_.toString)
+      .filter(_.matches("^[0-9]{6}$"))
+
 }

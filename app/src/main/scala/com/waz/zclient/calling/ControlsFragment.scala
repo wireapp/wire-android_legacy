@@ -24,13 +24,12 @@ import android.os.Bundle
 import android.support.annotation.Nullable
 import android.support.v4.app.Fragment
 import android.view._
-import com.waz.ZLog.ImplicitTag.implicitLogTag
-import com.waz.ZLog.verbose
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState
 import com.waz.utils.events.Subscription
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.calling.views.{CallingHeader, CallingMiddleLayout, ControlsView}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, MainActivity, R}
@@ -50,7 +49,7 @@ class ControlsFragment extends FragmentHelper {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    controller.allVideoReceiveStates.map(_.values.exists(_ == VideoState.Started)).onUi {
+    controller.allVideoReceiveStates.map(_.values.exists(Set(VideoState.Started, VideoState.ScreenShare).contains)).onUi {
       case true => getView.setBackgroundColor(getColor(R.color.calling_video_overlay))
       case false => getView.setBackgroundColor(Color.TRANSPARENT)
     }
@@ -64,13 +63,6 @@ class ControlsFragment extends FragmentHelper {
 
     callingControls
     callingMiddle // initializing it later than the header and controls to reduce the number of height recalculations
-
-    controller.isCallActive.onUi {
-      case false =>
-        verbose("call no longer exists, finishing activity")
-        getActivity.finish()
-      case _ =>
-    }
 
     (for {
       state                 <- controller.callState
@@ -117,7 +109,7 @@ class ControlsFragment extends FragmentHelper {
 
     callingControls.foreach(controls =>
       subs += controls.onButtonClick.onUi { _ =>
-        verbose("button clicked")
+        verbose(l"button clicked")
         controller.controlsClick(true)
       }
     )

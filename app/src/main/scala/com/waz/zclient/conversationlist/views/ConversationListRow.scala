@@ -19,17 +19,18 @@ package com.waz.zclient.conversationlist.views
 
 import android.animation.ObjectAnimator
 import android.content.Context
+import android.support.constraint.ConstraintLayout
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
+import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
-import android.widget.{FrameLayout, LinearLayout}
-import com.waz.ZLog.verbose
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.call.CallInfo
+import com.waz.service.call.CallInfo.CallState.SelfCalling
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
@@ -40,6 +41,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.views.ConversationBadge.OngoingCall
 import com.waz.zclient.conversationlist.views.ConversationListRow._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.conversationlist.views.row.MenuIndicatorView
@@ -56,11 +58,14 @@ import scala.collection.Set
 
 trait ConversationListRow extends FrameLayout
 
-class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style)
+class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
     with ConversationListRow
     with ViewHelper
     with SwipeListView.SwipeListRow
-    with MoveToAnimateable {
+    with MoveToAnimateable
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -81,7 +86,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   private val conversationId = Signal[Option[ConvId]]()
 
-  val container = ViewUtils.getView(this, R.id.conversation_row_container).asInstanceOf[LinearLayout]
+  val container = ViewUtils.getView(this, R.id.conversation_row_container).asInstanceOf[ConstraintLayout]
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val subtitle = ViewUtils.getView(this, R.id.conversation_subtitle).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
@@ -98,12 +103,13 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val members = conversationId.collect { case Some(convId) => convId } flatMap controller.members
 
   val conversationName = conversation map { conv =>
-    if (conv.displayName == "") {
+    if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated
-      zms.head foreach {_.conversations.forceNameUpdate(conv.id) }
-    }
-    conv.displayName
+      zms.head.foreach {_.conversations.forceNameUpdate(conv.id) }
+      Name(getString(R.string.default_deleted_username))
+    } else
+      conv.displayName
   }
 
   val userTyping = for {
@@ -117,37 +123,44 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     z              <- zms
     conv           <- conversation
     typing         <- userTyping.map(_.nonEmpty)
-    availableCalls <- z.calling.availableCalls
+    availableCalls <- z.calling.joinableCalls
     call           <- z.calling.currentCall
     callDuration   <- call.filter(_.convId == conv.id).fold(Signal.const(""))(_.durationFormatted)
-  } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount.messages, typing, availableCalls, callDuration))
+    isGroupConv    <- z.conversations.groupConversation(conv.id)
+    lastMessage    <- controller.lastMessage(conv.id)
+    selfId         <- selfId
+  } yield (conv.id, badgeStatusForConversation(conv, conv.unreadCount, typing, availableCalls, callDuration, isGroupConv))
 
   val subtitleText = for {
     z <- zms
     conv <- conversation
-    lastMessage <- controller.lastMessage(conv.id)
+    lastMessage <- controller.lastMessage(conv.id).map(_.lastMsg)
     lastUnreadMessage = lastMessage.filter(_.userId != z.selfUserId).filter(_ => conv.unreadCount.total > 0)
     lastUnreadMessageUser <- lastUnreadMessage.fold2(Signal.const(Option.empty[UserData]), message => UserSignal(message.userId).map(Some(_)))
     lastUnreadMessageMembers <- lastUnreadMessage.fold2(Signal.const(Vector[UserData]()), message => UserSetSignal(message.members).map(_.toVector))
     typingUser <- userTyping
     ms <- members
     otherUser <- userData(ms.headOption)
-  } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId))
+    isGroupConv <- z.conversations.groupConversation(conv.id)
+    missedCallerId <- controller.lastMessage(conv.id).map(_.lastMissedCall.map(_.userId))
+    userName <- missedCallerId.fold2(Signal.const(Option.empty[Name]), u => z.usersStorage.signal(u).map(d => Some(d.getDisplayName)))
+  } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId, isGroupConv, userName))
 
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
 
   val avatarInfo = for {
     z <- zms
     conv <- conversation
+    isGroup <- z.conversations.groupConversation(conv.id)
     memberIds <- members
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)):_*)
   } yield {
     val opacity =
-      if ((memberIds.isEmpty && conv.convType == ConversationType.Group) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
+      if ((memberIds.isEmpty && isGroup) || conv.convType == ConversationType.WaitForConnection || !conv.isActive)
         getResourceFloat(R.dimen.conversation_avatar_alpha_inactive)
       else
         getResourceFloat(R.dimen.conversation_avatar_alpha_active)
-    (conv.id, conv.convType, memberSeq.filter(_.id != z.selfUserId), opacity)
+    (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), opacity)
   }
 
   def setSubtitle(text: String): Unit = {
@@ -165,44 +178,40 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     name <- conversationName
     Some(convId) <- conversationId
     av <- controller.availability(convId)
-  } yield (name, av)).on(Threading.Ui) { case (name, av) =>
+  } yield (name, av)).onUi { case (name, av) =>
     title.setText(name)
     AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 
-  subtitleText.on(Threading.Ui) {
+  subtitleText.onUi {
     case (convId, text) if conversationData.forall(_.id == convId) =>
       setSubtitle(text)
     case _ =>
-      verbose("Outdated conversation subtitle")
+      verbose(l"Outdated conversation subtitle")
     }
 
-  badgeInfo.on(Threading.Ui) {
+  badgeInfo.onUi {
     case (convId, status) if conversationData.forall(_.id == convId) =>
       badge.setStatus(status)
     case _ =>
-      verbose("Outdated badge status")
+      verbose(l"Outdated badge status")
   }
 
   avatarInfo.on(Threading.Background){
-    case (convId, convType, members, alpha) if conversationData.forall(_.id == convId) =>
-      val cType =
-      if (convType == ConversationType.Group && members.size == 1 && conversationData.exists(_.team.nonEmpty))
-        ConversationType.OneToOne
-      else
-        convType
+    case (convId, isGroup, members, alpha) if conversationData.forall(_.id == convId) =>
+      val cType = if (isGroup) ConversationType.Group else ConversationType.OneToOne
       avatar.setMembers(members.map(_.id), convId, cType)
     case _ =>
-      verbose("Outdated avatar info")
+      verbose(l"Outdated avatar info")
   }
-  avatarInfo.on(Threading.Ui){
-    case (convId, convType, members, alpha) if conversationData.forall(_.id == convId) =>
-      if (convType == ConversationType.Group && members.size == 1 && conversationData.exists(_.team.nonEmpty)) {
+  avatarInfo.onUi{
+    case (convId, isGroup, _, alpha) if conversationData.forall(_.id == convId) =>
+      if (!isGroup) {
         avatar.setConversationType(ConversationType.OneToOne)
       }
       avatar.setAlpha(alpha)
     case _ =>
-      verbose("Outdated avatar info")
+      verbose(l"Outdated avatar info")
   }
 
   badge.onClickEvent {
@@ -228,14 +237,14 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
     this.conversationData = Some(conversationData)
-    title.setText(conversationData.displayName)
+    title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
     badge.setStatus(ConversationBadge.Empty)
     subtitle.setText("")
     avatar.setConversationType(conversationData.convType)
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
-    conversationId.publish(Some(conversationData.id), Threading.Background)
+    conversationId.publish(Some(conversationData.id), Threading.Ui)
     closeImmediate()
   }
 
@@ -332,43 +341,46 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
 object ConversationListRow {
 
-  def formatSubtitle(content: String, user: String, group: Boolean): String = {
-    val groupSubtitle =  "[[%s]]: %s"
-    val singleSubtitle =  "%s"
-    if (group) {
-      String.format(groupSubtitle, user, content)
+  def formatSubtitle(content: String, user: String, group: Boolean, isEphemeral: Boolean = false, replyPrefix: Boolean = false, quotePrefix: Boolean = false)(implicit context: Context): String = {
+    val groupSubtitle = if(quotePrefix) R.string.conversation_list__group_with_quote else R.string.conversation_list__group_without_quote
+    val singleSubtitle = if(quotePrefix) R.string.conversation_list__single_with_quote else R.string.conversation_list__single_without_quote
+    if (group && !isEphemeral) {
+      getString(groupSubtitle, user, content)
     } else {
-      String.format(singleSubtitle, content)
+      getString(singleSubtitle, content)
     }
   }
 
-  def badgeStatusForConversation(conversationData: ConversationData,
-                                 unreadCount:      Int,
-                                 typing:           Boolean,
-                                 availableCalls:   Map[ConvId, CallInfo],
-                                 callDuration:     String): ConversationBadge.Status = {
-
+  def badgeStatusForConversation(conversationData:        ConversationData,
+                                 unreadCount:             ConversationData.UnreadCount,
+                                 typing:                  Boolean,
+                                 availableCalls:          Map[ConvId, CallInfo],
+                                 callDuration:            String,
+                                 isGroupConv:             Boolean
+                                ): ConversationBadge.Status = {
     if (callDuration.nonEmpty) {
       ConversationBadge.OngoingCall(Some(callDuration))
     } else if (availableCalls.contains(conversationData.id)) {
       availableCalls(conversationData.id).state match {
-        case Some(CallInfo.CallState.SelfCalling) => OngoingCall(None)
-        case _                                    => ConversationBadge.IncomingCall
+        case SelfCalling => OngoingCall(None)
+        case _           => ConversationBadge.IncomingCall
       }
     } else if (conversationData.convType == ConversationType.WaitForConnection || conversationData.convType == ConversationType.Incoming) {
       ConversationBadge.WaitingConnection
-    } else if (conversationData.muted) {
+    } else if (unreadCount.mentions > 0 && !conversationData.muted.isAllMuted) {
+      ConversationBadge.Mention
+    } else if (unreadCount.quotes > 0 && !conversationData.muted.isAllMuted) {
+      ConversationBadge.Quote
+    } else if (!conversationData.muted.isAllAllowed) {
       ConversationBadge.Muted
     } else if (typing) {
       ConversationBadge.Typing
-    } else if (conversationData.incomingKnockMessage.nonEmpty) {
-      ConversationBadge.Ping
     } else if (conversationData.missedCallMessage.nonEmpty) {
       ConversationBadge.MissedCall
-    } else if (unreadCount == 0) {
-      ConversationBadge.Empty
-    } else if (unreadCount > 0) {
-      ConversationBadge.Count(unreadCount)
+    } else if (conversationData.incomingKnockMessage.nonEmpty) {
+      ConversationBadge.Ping
+    } else if (unreadCount.messages > 0) {
+      ConversationBadge.Count(unreadCount.messages)
     } else {
       ConversationBadge.Empty
     }
@@ -378,44 +390,56 @@ object ConversationListRow {
                                    user:        Option[UserData],
                                    members:     Vector[UserData],
                                    isGroup:     Boolean,
-                                   selfId:      UserId)
+                                   selfId:      UserId,
+                                   isQuote:     Boolean
+                                  )
                                   (implicit context: Context): String = {
 
-    lazy val senderName = user.fold(getString(R.string.conversation_list__someone))(_.getDisplayName)
-    lazy val memberName = members.headOption.fold2(getString(R.string.conversation_list__someone), _.getDisplayName)
+    lazy val senderName = user.map(_.getDisplayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
+    lazy val memberName = members.headOption.map(_.getDisplayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
 
-    if (messageData.isEphemeral) formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup)
-    messageData.msgType match {
-      case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
-        formatSubtitle(messageData.contentString, senderName, isGroup)
-      case Message.Type.ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup)
-      case Message.Type.ANY_ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__file), senderName, isGroup)
-      case Message.Type.VIDEO_ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__video), senderName, isGroup)
-      case Message.Type.AUDIO_ASSET =>
-        formatSubtitle(getString(R.string.conversation_list__shared__audio), senderName, isGroup)
-      case Message.Type.LOCATION =>
-        formatSubtitle(getString(R.string.conversation_list__shared__location), senderName, isGroup)
-      case Message.Type.MISSED_CALL =>
-        formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup)
-      case Message.Type.KNOCK =>
-        formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup)
-      case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
-        members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
-      case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
-        getString(R.string.conversation_list__added_you, senderName)
-      case Message.Type.MEMBER_JOIN if members.length > 1=>
-        getString(R.string.conversation_list__added, memberName)
-      case Message.Type.MEMBER_JOIN =>
-        getString(R.string.conversation_list__added, memberName)
-      case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
-        getString(R.string.conversation_list__left_you, senderName)
-      case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
-        getString(R.string.conversation_list__removed_you, senderName)
-      case _ =>
-        ""
+    if (messageData.isEphemeral) {
+      if (messageData.hasMentionOf(selfId)) {
+        if (isGroup) formatSubtitle(getString(R.string.conversation_list__group_eph_and_mention), senderName, isGroup, isEphemeral = true)
+        else formatSubtitle(getString(R.string.conversation_list__single_eph_and_mention), senderName, isGroup, isEphemeral = true)
+      } else if (isQuote) {
+        if (isGroup) formatSubtitle(getString(R.string.conversation_list__group_eph_and_quote), senderName, isGroup, isEphemeral = true)
+        else formatSubtitle(getString(R.string.conversation_list__single_eph_and_quote), senderName, isGroup, isEphemeral = true)
+      } else
+        formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup, isEphemeral = true)
+    } else {
+      messageData.msgType match {
+        case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
+          formatSubtitle(messageData.contentString, senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.ANY_ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__file), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.VIDEO_ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__video), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.AUDIO_ASSET =>
+          formatSubtitle(getString(R.string.conversation_list__shared__audio), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.LOCATION =>
+          formatSubtitle(getString(R.string.conversation_list__shared__location), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.MISSED_CALL =>
+          formatSubtitle(getString(R.string.conversation_list__missed_call), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.KNOCK =>
+          formatSubtitle(getString(R.string.conversation_list__pinged), senderName, isGroup, quotePrefix = isQuote)
+        case Message.Type.CONNECT_ACCEPTED | Message.Type.MEMBER_JOIN if !isGroup =>
+          members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
+        case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
+          getString(R.string.conversation_list__added_you, senderName)
+        case Message.Type.MEMBER_JOIN if members.length > 1=>
+          getString(R.string.conversation_list__added, memberName)
+        case Message.Type.MEMBER_JOIN =>
+          getString(R.string.conversation_list__added, memberName)
+        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) && user.exists(_.id == selfId) =>
+          getString(R.string.conversation_list__left_you, senderName)
+        case Message.Type. MEMBER_LEAVE if members.exists(_.id == selfId) =>
+          getString(R.string.conversation_list__removed_you, senderName)
+        case _ =>
+          ""
+      }
     }
   }
 
@@ -427,21 +451,35 @@ object ConversationListRow {
                                     lastUnreadMessageUser:    Option[UserData],
                                     lastUnreadMessageMembers: Vector[UserData],
                                     typingUser:               Option[UserData],
-                                    selfId:                   UserId)
+                                    selfId:                   UserId,
+                                    isGroupConv:              Boolean,
+                                    userName:                 Option[Name])
                                    (implicit context: Context): String = {
-
-    if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && conv.convType == ConversationType.OneToOne)) {
+    if (conv.convType == ConversationType.WaitForConnection || (lastMessage.exists(_.msgType == Message.Type.MEMBER_JOIN) && !isGroupConv)) {
       otherMember.flatMap(_.handle.map(_.string)).fold("")(StringUtils.formatHandle)
     } else if (memberIds.count(_ != selfId) == 0 && conv.convType == ConversationType.Group) {
       ""
     } else if (conv.unreadCount.total == 0 && !conv.isActive) {
       getString(R.string.conversation_list__left_you)
-    } else if ((conv.muted || conv.incomingKnockMessage.nonEmpty || conv.missedCallMessage.nonEmpty) && typingUser.isEmpty) {
+    } else if (
+      ( conv.muted.isAllMuted ||
+        conv.incomingKnockMessage.nonEmpty ||
+        conv.missedCallMessage.nonEmpty ||
+        conv.unreadCount.mentions > 1 ||
+        conv.unreadCount.quotes > 1 ||
+        (conv.unreadCount.mentions == 1 && (conv.unreadCount.messages > 0 || conv.unreadCount.quotes > 0)) ||
+        (conv.unreadCount.quotes == 1 && conv.unreadCount.messages > 0) ||
+        (conv.muted.onlyMentionsAllowed && (conv.unreadCount.mentions > 1 || conv.unreadCount.quotes > 1 || conv.unreadCount.total - conv.unreadCount.mentions - conv.unreadCount.quotes > 0))
+      )
+      && typingUser.isEmpty) {
+
       val normalMessageCount = conv.unreadCount.normal
       val missedCallCount = conv.unreadCount.call
       val pingCount = conv.unreadCount.ping
-      val likesCount = 0//TODO: There is no good way to get this so far
+      val likesCount = 0 //TODO: There is no good way to get this so far
       val unsentCount = conv.failedCount
+      val mentionsCount = conv.unreadCount.mentions
+      val quotesCount = conv.unreadCount.quotes
 
       val unsentString =
         if (unsentCount > 0)
@@ -452,12 +490,27 @@ object ConversationListRow {
         else
           ""
       val strings = Seq(
-        if (normalMessageCount > 0)
-          context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
-        if (missedCallCount > 0)
-          context.getResources.getQuantityString(R.plurals.conversation_list__missed_calls_count, missedCallCount, missedCallCount.toString) else "",
+        if (mentionsCount > 0)
+          context.getResources.getQuantityString(R.plurals.conversation_list__mentions_count, mentionsCount, mentionsCount.toString) else "",
+        if (quotesCount > 0)
+          context.getResources.getQuantityString(R.plurals.conversation_list__quotes_count, quotesCount, quotesCount.toString) else "",
+        if (missedCallCount > 0) {
+          if (isGroupConv) {
+            if (conv.unreadCount.total > 1 || conv.isAllMuted || conv.onlyMentionsAllowed)
+              getQuantityString(R.plurals.conversation_list__missed_calls_plural, missedCallCount, missedCallCount.toString)
+            else
+              getString(R.string.conversation_list__missed_calls_count_group, userName.get)
+          } else {
+            if (conv.unreadCount.total > 1 || conv.isAllMuted || conv.onlyMentionsAllowed)
+              getQuantityString(R.plurals.conversation_list__missed_calls_plural, missedCallCount, missedCallCount.toString)
+            else
+              getString(R.string.conversation_list__missed_calls_count)
+          }
+        } else "",
         if (pingCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__pings_count, pingCount, pingCount.toString) else "",
+        if (normalMessageCount > 0)
+          context.getResources.getQuantityString(R.plurals.conversation_list__new_message_count, normalMessageCount, normalMessageCount.toString) else "",
         if (likesCount > 0)
           context.getResources.getQuantityString(R.plurals.conversation_list__new_likes_count, likesCount, likesCount.toString) else ""
       ).filter(_.nonEmpty)
@@ -467,10 +520,11 @@ object ConversationListRow {
         lastUnreadMessage.fold {
           ""
         } { msg =>
-          subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, conv.convType == ConversationType.Group, selfId)
+          // if we are here, it means there is only one unread message, so if the number of quotes > 0, it means this unread message is a quote
+          subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, isGroupConv, selfId, conv.unreadCount.quotes > 0)
         }
       } { usr =>
-        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, conv.convType == ConversationType.Group)
+        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, isGroupConv)
       }
     }
   }

@@ -21,18 +21,25 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.LeadingMarginSpan
 import android.text.style.TypefaceSpan
 import com.waz.zclient.markdown.spans.BlockSpan
+import com.waz.zclient.markdown.spans.custom.ParagraphSpacingSpan
 import org.commonmark.node.FencedCodeBlock
 import org.commonmark.node.Node
 
 /**
  * The span corresponding to the Commonmark "FencedCodeBlock" node.
  */
-class FencedCodeBlockSpan(val color: Int, val indentation: Int) : BlockSpan() {
+class FencedCodeBlockSpan(
+    val color: Int,
+    val indentation: Int,
+    val beforeSpacing: Int,
+    val afterSpacing: Int
+) : BlockSpan() {
 
     init {
         add(TypefaceSpan("monospace"))
         add(LeadingMarginSpan.Standard(indentation))
         add(ForegroundColorSpan(color))
+        add(ParagraphSpacingSpan(beforeSpacing, afterSpacing))
     }
 
     override fun toNode(literal: String?): Node {

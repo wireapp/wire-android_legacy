@@ -4,7 +4,6 @@ Android Wheel Control - https://code.google.com/p/android-wheel/ - Apache 2.0
 WebRTC 
 Commons IO - http://commons.apache.org/proper/commons-io/ - Apache 2.0
 Gson - https://code.google.com/p/google-gson/ - Apache 2.0
-Hockeyapp SDK - http://support.hockeyapp.net/kb/client-integration-android-other-platforms/hockeyapp-for-android-sdk
 Joda Time - http://www.joda.org/joda-time/ - Apache 2.0
 Libphonenumber - https://code.google.com/p/libphonenumber/ - Apache 2.0
 SnakeYAML - https://code.google.com/p/snakeyaml/ - Apache 2.0

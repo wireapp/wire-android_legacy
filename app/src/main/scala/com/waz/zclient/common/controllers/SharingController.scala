@@ -18,89 +18,54 @@
 package com.waz.zclient.common.controllers
 
 import android.app.Activity
-import android.content.DialogInterface
-import android.text.format.Formatter
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api._
-import com.waz.model.ConvId
-import com.waz.service.ZMessaging
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{AccentColor, ConvId}
+import com.waz.service.assets.AssetService.RawAssetInput.UriInput
+import com.waz.service.conversation.ConversationsUiService
 import com.waz.threading.SerialDispatchQueue
-import com.waz.utils.RichFuture
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.Intents._
 import com.waz.zclient.common.controllers.SharingController._
-import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{Injectable, Injector, R, WireContext}
+import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.utils.ContextUtils.showWifiWarningDialog
+import com.waz.zclient.{Injectable, Injector, WireContext}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext) extends Injectable{
+class SharingController(implicit injector: Injector, wContext: WireContext, eventContext: EventContext)
+  extends Injectable with DerivedLogTag {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "SharingController")
 
-  private lazy val zms = inject[Signal[ZMessaging]]
-
   val sharableContent     = Signal(Option.empty[SharableContent])
-  val targetConvs         = Signal(Set.empty[ConvId])
+  val targetConvs         = Signal(Seq.empty[ConvId])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])
 
-  val sendEvent = EventStream[(SharableContent, Set[ConvId], Option[FiniteDuration])]()
+  val sendEvent = EventStream[(SharableContent, Seq[ConvId], Option[FiniteDuration])]()
 
-  private def assetErrorHandler(activity: Activity): MessageContent.Asset.ErrorHandler = new MessageContent.Asset.ErrorHandler() {
-    def noWifiAndFileIsLarge(sizeInBytes: Long, net: NetworkMode, answer: MessageContent.Asset.Answer): Unit = {
-      Option(activity) match {
-        case None => answer.ok()
-        case Some(_) =>
-          val dialog =
-            ViewUtils.showAlertDialog(activity,
-              R.string.asset_upload_warning__large_file__title,
-              R.string.asset_upload_warning__large_file__message_default,
-              R.string.asset_upload_warning__large_file__button_accept,
-              R.string.asset_upload_warning__large_file__button_cancel,
-              new DialogInterface.OnClickListener() {
-                def onClick(dialog: DialogInterface, which: Int): Unit = {
-                  answer.ok()
-                }
-              }, new DialogInterface.OnClickListener() {
-                def onClick(dialog: DialogInterface, which: Int): Unit = {
-                  answer.cancel()
-                }
-              })
-          dialog.setCancelable(false)
-          if (sizeInBytes > 0) {
-            val fileSize: String = Formatter.formatFileSize(activity, sizeInBytes)
-            dialog.setMessage(activity.getString(R.string.asset_upload_warning__large_file__message, fileSize))
-          }
-      }
-    }
-  }
-
-  def onContentShared(activity: Activity, convs: Set[ConvId]): Unit = {
+  def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
     Option(activity).foreach(_.startActivity(SharingIntent(wContext)))
   }
 
-  def sendContent(activity: Activity): Future[Unit] = {
-    def send(content: SharableContent, convs: Set[ConvId], expiration: Option[FiniteDuration]): Future[Boolean] = {
+  def sendContent(activity: Activity): Future[Seq[ConvId]] = {
+    def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration], color: AccentColor) = {
       sendEvent ! (content, convs, expiration)
-      content match {
-        case TextContent(t) =>
-          zms.head.flatMap(z => RichFuture.traverseSequential(convs.toSeq){ convId =>
-            z.convsUi.setEphemeral(convId, expiration).flatMap(_ =>
-              z.convsUi.sendMessage(convId, new MessageContent.Text(t)))
-          }).map(_ => true)
-
-        case uriContent =>
-          RichFuture.traverseSequential(convs.toSeq) { conv =>
-            RichFuture.traverseSequential(uriContent.uris) { uri =>
-              zms.head.flatMap(z =>
-                z.convsUi.setEphemeral(conv, expiration).flatMap(_ =>
-                  z.convsUi.sendMessage(conv, new MessageContent.Asset(AssetFactory.fromContentUri(uri), assetErrorHandler(activity)))))
-            }
-          }.map (_ => true)
+      inject[Signal[ConversationsUiService]].head.flatMap { convsUi =>
+        content match {
+          case TextContent(t) =>
+            convsUi.sendTextMessages(convs, t, Nil, expiration)
+          case uriContent =>
+            convsUi.sendAssetMessages(
+              convs,
+              uriContent.uris.map(UriInput),
+              (s: Long) => showWifiWarningDialog(s, color)(dispatcher, activity),
+              expiration
+            )
+        }
       }
     }
 
@@ -108,8 +73,10 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
       Some(content) <- sharableContent.head
       convs         <- targetConvs.head
       expiration    <- ephemeralExpiration.head
-      sent          <- send(content, convs, expiration)
-    } yield if (sent) resetContent()
+      color         <- inject[AccentColorController].accentColor.head
+      _             <- send(content, convs, expiration, color)
+      _             = resetContent()
+    } yield convs
   }
 
   def getSharedText(convId: ConvId): String = sharableContent.currentValue.flatten match {
@@ -118,15 +85,9 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   }
 
   private def resetContent() = {
-    sharableContent.publish(None, dispatcher)
-    targetConvs.publish(Set.empty, dispatcher)
-    ephemeralExpiration.publish(None, dispatcher)
-  }
-
-  def clearSharingFor(convId: ConvId) = if (convId != null) {
-    targetConvs.currentValue.foreach { convs =>
-      if (convs.contains(convId)) resetContent()
-    }
+    sharableContent     ! None
+    targetConvs         ! Seq.empty
+    ephemeralExpiration ! None
   }
 
   def publishTextContent(text: String): Unit =

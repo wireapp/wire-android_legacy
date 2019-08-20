@@ -24,38 +24,81 @@
               android:layout_height="match_parent"
               android:orientation="vertical"
               android:gravity="center_horizontal"
+              android:background="@color/light_graphite_8"
     >
-
-    <TextView
-        android:id="@+id/user_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/wire__text_size__medium"
-        android:textColor="?wirePrimaryTextColor"
-        android:visibility="gone"
-        />
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/user_handle"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__small"
         android:textColor="?wireSecondaryTextColor"
         android:textSize="@dimen/wire__text_size__small"
         app:w_font="@string/wire__typeface__light"
+        android:gravity="center"
+        android:background="?wireBackgroundColor"
+        android:paddingBottom="@dimen/wire__padding__regular"
         />
 
-    <com.waz.zclient.ui.views.tab.TabIndicatorLayout
-        android:id="@+id/til_single_participant_tabs"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/wire__padding__regular"
-        />
+        android:background="?wireBackgroundColor">
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/vp_single_participant_viewpager"
+        <android.support.design.widget.TabLayout
+            android:id="@+id/details_and_devices_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="?wirePrimaryTextColor"
+            app:tabTextColor="?wirePrimaryTextColor"
+            app:tabMode="fixed"
+            app:tabSelectedTextColor="@color/light_graphite"
+            app:tabIndicatorHeight="@dimen/wire__divider__height"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            >
+            <android.support.design.widget.TabItem
+                android:text="@string/otr__participant__tab_details"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_with_theme_medium_layout"
+                />
+
+            <android.support.design.widget.TabItem
+                android:text="@string/otr__participant__tab_devices"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout="@layout/tab_with_theme_medium_layout"
+                />
+        </android.support.design.widget.TabLayout>
+
+    </FrameLayout>
+
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/wire__padding__regular"
+        >
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/details_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
 
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/devices_recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
+    </FrameLayout>
+
+    <!-- Footer with left & right actions -->
+    <com.waz.zclient.views.menus.FooterMenu
+        android:id="@+id/fm__footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom|center_horizontal"
+        android:background="?wireBackgroundColor"
+        />
 </LinearLayout>

@@ -24,9 +24,8 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.view.{View, ViewGroup}
 import android.widget.FrameLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView, RelativeLayout}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.AccentColors
 import com.waz.content.{AccountStorage, TeamsStorage}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.AccountsService
 import com.waz.threading.Threading
@@ -40,7 +39,11 @@ import com.waz.zclient.ui.views.CircleView
 import com.waz.zclient.utils.{RichView, UiStorage, UserSignal}
 import com.waz.zclient.{R, ViewHelper}
 
-class AccountTabButton(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
+class AccountTabButton(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
@@ -72,7 +75,7 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
     else
       getResources.getDimensionPixelSize(R.dimen.teams_tab_default_height)
 
-  private var selectedColor = AccentColors.defaultColor.getColor()
+  private var selectedColor = AccentColor.defaultColor.color
 
   private val accountId = Signal[UserId]()
 
@@ -130,10 +133,10 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
   unreadIndicatorName.setAlpha(0f)
 
   accentColor.on(Threading.Ui){ accentColor =>
-    selectedColor = accentColor.getColor()
-    drawable.setBorderColor(accentColor.getColor())
-    unreadIndicatorIcon.setAccentColor(accentColor.getColor())
-    unreadIndicatorName.setAccentColor(accentColor.getColor())
+    selectedColor = accentColor.color
+    drawable.setBorderColor(accentColor.color)
+    unreadIndicatorIcon.setAccentColor(accentColor.color)
+    unreadIndicatorName.setAccentColor(accentColor.color)
   }
 
   def setAccount(id: UserId) = accountId ! id

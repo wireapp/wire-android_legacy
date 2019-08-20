@@ -55,15 +55,19 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.waz.model.AccentColor;
 import com.waz.api.MessageContent;
 import com.waz.model.ConversationData;
 import com.waz.permissions.PermissionsService;
 import com.waz.service.ZMessaging;
 import com.waz.service.tracking.ContributionEvent;
+import com.waz.utils.events.EventContext;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
+import com.waz.zclient.common.controllers.global.AccentColorCallback;
+import com.waz.zclient.common.controllers.global.AccentColorController;
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController;
 import com.waz.zclient.conversation.ConversationController;
 import com.waz.zclient.pages.BaseFragment;
@@ -88,7 +92,6 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                                                                                           GoogleApiClient.OnConnectionFailedListener,
                                                                                           OnMapReadyCallback,
                                                                                           OnBackPressedListener,
-                                                                                          AccentColorObserver,
                                                                                           View.OnClickListener {
 
     public static final String TAG = LocationFragment.class.getName();
@@ -133,6 +136,8 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     private Handler backgroundHandler;
     private HandlerThread handlerThread;
     private Geocoder geocoder;
+
+    private int accentColor;
 
     private final Runnable updateCurrentLocationBubbleRunnable = new Runnable() {
         @Override
@@ -204,6 +209,17 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
         backgroundHandler = new Handler(handlerThread.getLooper());
         geocoder = new Geocoder(getContext(), Locale.getDefault());
         zoom = true;
+
+        // retrieve the accent color to be used for the paint
+        accentColor = AccentColor.defaultColor().color();
+        ((BaseActivity) getContext()).injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
+            @Override
+            public void color(AccentColor color) {
+                selectedLocationPin.setTextColor(color.color());
+                marker = null;
+                accentColor = color.color();
+            }
+        }, EventContext.Implicits$.MODULE$.global());
     }
 
     @Nullable
@@ -268,7 +284,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                 inject(ConversationController.class).withConvLoaded(change.toConvId(), new Callback<ConversationData>() {
                     @Override
                     public void callback(ConversationData conversationData) {
-                        toolbarTitle.setText(conversationData.displayName());
+                        toolbarTitle.setText(conversationData.displayName().str());
                     }
                 });
             }
@@ -278,7 +294,6 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     @Override
     public void onStart() {
         super.onStart();
-        getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         if (hasLocationPermission()) {
             updateLastKnownLocation();
             if (!isLocationServicesEnabled()) {
@@ -332,7 +347,6 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onStop() {
-        getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
         inject(ConversationController.class).removeConvChangedCallback(callback);
         super.onStop();
     }
@@ -629,7 +643,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
         Canvas canvas = new Canvas(bitmap);
 
         Paint paint = new Paint();
-        paint.setColor(getControllerFactory().getAccentColorController().getColor());
+        paint.setColor(accentColor);
         paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.FILL);
         paint.setAlpha(getResources().getInteger(R.integer.share_location__current_location_marker__outer_ring_alpha));
@@ -650,14 +664,6 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
         getControllerFactory().getLocationController().hideShareLocation(null);
         return true;
     }
-
-    @Override
-    public void onAccentColorHasChanged(int color) {
-        selectedLocationPin.setTextColor(color);
-        marker = null;
-    }
-
-
 
     @Override
     public void onConnected(Bundle bundle) {

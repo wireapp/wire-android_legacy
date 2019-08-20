@@ -21,17 +21,13 @@ import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.{Injectable, Injector}
 
-class NavigationController(implicit injector: Injector) extends Injectable {
-
-  val navController = inject[INavigationController]
+class NavigationController(implicit injector: Injector) extends  Injectable {
 
   val visiblePage = Signal[Page]()
 
-  val messageStreamOpen = visiblePage.map(_ == Page.MESSAGE_STREAM)
-
   val mainActivityActive: SourceSignal[Int] = Signal(0)
 
-  navController.addNavigationControllerObserver(new NavigationControllerObserver {
+  inject[INavigationController].addNavigationControllerObserver(new NavigationControllerObserver {
     override def onPageVisible(page: Page): Unit = visiblePage ! page
   })
 

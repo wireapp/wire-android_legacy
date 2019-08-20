@@ -20,11 +20,10 @@ package com.waz.zclient.calling.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.service.call.CallInfo.CallState.{OtherCalling, SelfConnected}
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.utils.ContextUtils.getDimenPx
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{R, ViewHelper}
@@ -39,22 +38,25 @@ class CallingMiddleLayout(val context: Context, val attrs: AttributeSet, val def
   inflate(R.layout.calling_middle_layout, this)
 
   private lazy val controller   = inject[CallController]
-  private lazy val chathead     = findById[ChatheadView](R.id.call_chathead)
+  private lazy val chathead     = findById[ChatHeadView](R.id.call_chathead)
   private lazy val participants = findById[CallParticipantsView](R.id.call_participants)
 
   lazy val onShowAllClicked: EventStream[Unit] = participants.onShowAllClicked
 
   Signal(controller.callStateCollapseJoin, controller.isVideoCall, controller.isGroupCall).map {
     case (_,                   false, false) => CallDisplay.Chathead
-    case (Some(OtherCalling),  false, true)  => CallDisplay.Chathead
-    case (Some(SelfConnected), _,     true)  => CallDisplay.Participants
+    case (OtherCalling,  false, true)  => CallDisplay.Chathead
+    case (SelfConnected, _,     true)  => CallDisplay.Participants
     case _                                   => CallDisplay.Empty
   }.onUi { display =>
     chathead.setVisible(display == CallDisplay.Chathead)
     participants.setVisible(display == CallDisplay.Participants)
   }
 
-  controller.callerId.onUi(chathead.setUserId)
+  controller.memberForPicture.onUi {
+    case Some(uId) => chathead.setUserId(uId)
+    case _         => chathead.clearUser()
+  }
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {
     super.onLayout(changed, l, t, r, b)

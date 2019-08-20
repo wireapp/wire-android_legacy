@@ -21,28 +21,23 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.MessageContent
 import com.waz.service.downloads.AssetLoader.DownloadOnWifiOnlyException
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.zclient.common.controllers.AssetsController
-import com.waz.zclient.controllers.drawing.IDrawingController.DrawingMethod
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.parts.assets.ImageLayoutAssetPart
-import com.waz.zclient.messages.{MessageViewPart, MsgPart}
+import com.waz.zclient.messages.{HighlightViewPart, MessageViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.common.views.ImageAssetDrawable.State.Failed
 import com.waz.zclient.{R, ViewHelper}
 
-class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ImageLayoutAssetPart {
+class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ImageLayoutAssetPart with HighlightViewPart {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
   override val tpe: MsgPart = MsgPart.Image
-
-  private val selection = inject[ConversationController].messages
 
   private lazy val assets = inject[AssetsController]
 
@@ -57,9 +52,6 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int) extends F
     noW  <- noWifi
     hide <- hideContent
   } yield !hide && noW).on(Threading.Ui)(imageIcon.setVisible)
-
-  private def openDrawingFragment(drawingMethod: DrawingMethod) =
-    message.currentValue foreach (assets.openDrawingFragment(_, drawingMethod))
 
   onClicked { _ => message.head.map(assets.showSingleImage(_, this))(Threading.Ui) }
 
@@ -77,7 +69,7 @@ class WifiWarningPartView(context: Context, attrs: AttributeSet, style: Int) ext
 
   //A little bit hacky - but we can safely rely on the fact there should be an ImagePartView for each WifiWarningPartView
   //def to ensure we only get the ImagePartView after the view is attached to the window (the parent will be null otherwise)
-  def imagePart = Option(getParent).map(_.asInstanceOf[ViewGroup]).flatMap { p =>
+  def imagePart: Option[ImagePartView] = Option(getParent).map(_.asInstanceOf[ViewGroup]).flatMap { p =>
     (0 until p.getChildCount).map(p.getChildAt).collectFirst {
       case v: ImagePartView => v
     }

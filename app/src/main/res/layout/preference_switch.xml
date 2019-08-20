@@ -26,11 +26,11 @@
     >
 
     <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/preference_icon_start"
         android:layout_width="@dimen/preference_button_image_size"
         android:layout_height="@dimen/preference_button_image_size"
         android:layout_centerVertical="true"
         android:layout_alignParentStart="true"
-        android:id="@+id/preference_icon_start"
         android:layout_marginStart="@dimen/preference_button_padding"
         />
 
@@ -39,21 +39,36 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_centerVertical="true"
-        android:layout_toStartOf="@+id/preference_switch"
-        android:layout_toEndOf="@+id/preference_icon_start"
-        android:layout_marginStart="@dimen/preference_button_padding"
-        android:layout_marginEnd="@dimen/preference_button_padding"
-        >
+        android:layout_toEndOf="@id/preference_icon_start">
 
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/preference_title"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/wire__text_size__regular"
-            android:ellipsize="end"
-            android:textColor="@color/white"
-            app:w_font="@string/wire__typeface__light"
-            />
+            android:orientation="horizontal">
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:id="@+id/preference_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:ellipsize="end"
+                android:textColor="@color/white"
+                app:w_font="@string/wire__typeface__light"
+                android:layout_marginStart="@dimen/preference_button_padding"
+                android:layout_marginEnd="@dimen/preference_button_padding"
+                android:layout_gravity="center"
+                />
+
+            <Switch
+                android:id="@+id/preference_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/preference_button_padding"
+                android:layout_gravity="center"
+                />
+
+        </LinearLayout>
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/preference_subtitle"
@@ -64,17 +79,10 @@
             android:visibility="visible"
             android:textColor="@color/light_graphite"
             app:w_font="@string/wire__typeface__light"
+            android:layout_marginStart="@dimen/preference_button_padding"
+            android:layout_marginEnd="@dimen/preference_button_padding"
             />
 
     </LinearLayout>
-
-    <Switch
-        android:id="@+id/preference_switch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="@dimen/preference_button_padding"
-        />
 
 </merge>

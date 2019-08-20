@@ -54,5 +54,6 @@ public enum Page {
     COLLECTION,
     ARCHIVE,
     INTEGRATION_DETAILS,
-    CREATE_CONV
+    CREATE_CONV,
+    GIPHY
 }

@@ -31,7 +31,9 @@ class CustomQuoteSpan(
     color: Int,
     val stripeWidth: Int,
     val gapWidth: Int,
-    private val density: Float = 1f
+    private val density: Float = 1f,
+    val beforeSpacing: Int = 0,
+    val afterSpacing: Int = 0
 ) : QuoteSpan(color) {
 
     override fun getLeadingMargin(first: Boolean): Int {
@@ -42,11 +44,21 @@ class CustomQuoteSpan(
         c: Canvas?, p: Paint?, x: Int, dir: Int, top: Int, baseline: Int, bottom: Int,
         text: CharSequence?, start: Int, end: Int, first: Boolean, layout: Layout?
     ) {
-        // ensure this span is attached to the text
         val spanned = text as Spanned
-        if (!(spanned.getSpanStart(this) == start && spanned.getSpanEnd(this) == end)) return
+        val spanStart = spanned.getSpanStart(this)
+        val spanEnd = spanned.getSpanEnd(this)
 
+        // ensure this span is attached to the text
+        if (!(spanStart <= start && spanEnd >= end)) return
         if (c == null || p == null) return
+
+        // we want to top and bottom of the stripe to align with the top and bottom of the text.
+        // if there is before and after spacing applied, then we must counter it by offsetting
+        // 'top' and 'bottom'.
+        var topOffset = 0f
+        var bottomOffset = 0f
+        if (spanStart == start) { topOffset += beforeSpacing * density }
+        if (spanEnd == end + 1) { bottomOffset -= afterSpacing * density }
 
         // save paint state
         val style = p.style
@@ -54,7 +66,7 @@ class CustomQuoteSpan(
 
         p.style = Paint.Style.FILL
         p.color = this.color
-        c.drawRect(x.toFloat(), top.toFloat(), (x + dir * stripeWidth * density).toFloat(), bottom.toFloat(), p)
+        c.drawRect(x.toFloat(), top.toFloat() + topOffset, (x + dir * stripeWidth * density), bottom.toFloat() + bottomOffset, p)
 
         // reset paint
         p.style = style

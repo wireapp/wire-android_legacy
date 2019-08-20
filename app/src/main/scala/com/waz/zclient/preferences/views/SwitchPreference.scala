@@ -23,19 +23,24 @@ import android.util.AttributeSet
 import android.widget.CompoundButton.OnCheckedChangeListener
 import android.widget.{CompoundButton, Switch}
 import com.waz.content.Preferences.PrefKey
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils.RichView
-import com.waz.ZLog.ImplicitTag._
 
 trait Switchable {
   val onCheckedChange: EventStream[Boolean]
   def setChecked(checked: Boolean, disableListener: Boolean = false): Unit
 }
 
-class SwitchPreference(context: Context, attrs: AttributeSet, style: Int) extends TextButton(context, attrs, style) with Switchable with ViewHelper {
+class SwitchPreference(context: Context, attrs: AttributeSet, style: Int)
+  extends TextButton(context, attrs, style)
+    with Switchable
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

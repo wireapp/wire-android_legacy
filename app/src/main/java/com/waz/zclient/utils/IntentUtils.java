@@ -39,6 +39,7 @@ public class IntentUtils {
     public static final String WIRE_SCHEME = "wire";
     public static final String PASSWORD_RESET_SUCCESSFUL_HOST_TOKEN = "password-reset-successful";
     public static final String EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION = "EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION";
+    public static final String EXTRA_CONTENT_URI = "EXTRA_CONTENT_URI";
     private static final String GOOGLE_MAPS_INTENT_URI = "geo:0,0?q=%s,%s";
     private static final String GOOGLE_MAPS_WITH_LABEL_INTENT_URI = "geo:0,0?q=%s,%s(%s)";
     private static final String GOOGLE_MAPS_INTENT_PACKAGE = "com.google.android.apps.maps";
@@ -63,13 +64,15 @@ public class IntentUtils {
         galleryIntent.setDataAndTypeAndNormalize(androidUri, IMAGE_MIME_TYPE);
         galleryIntent.setClipData(new ClipData(null, new String[] {IMAGE_MIME_TYPE}, new ClipData.Item(androidUri)));
         galleryIntent.putExtra(Intent.EXTRA_STREAM, androidUri);
+        galleryIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         return PendingIntent.getActivity(context, 0, galleryIntent, 0);
     }
 
     public static PendingIntent getPendingShareIntent(Context context, URI uri) {
         Intent shareIntent = new Intent(context, ShareSavedImageActivity.class);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, AndroidURIUtil.unwrap(uri));
         shareIntent.putExtra(IntentUtils.EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION, true);
+        shareIntent.putExtra(IntentUtils.EXTRA_CONTENT_URI, uri.toString());
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         return PendingIntent.getActivity(context, 0, shareIntent, 0);
     }
 
@@ -87,7 +90,7 @@ public class IntentUtils {
         if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             to = new String[]{"android@wire.com"};
         } else {
-            to = new String[]{"support@wire.com"};
+            to = new String[]{BuildConfig.SUPPORT_EMAIL};
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.putExtra(Intent.EXTRA_EMAIL, to);
@@ -104,13 +107,15 @@ public class IntentUtils {
         shareIntent.putExtra(Intent.EXTRA_STREAM, androidUri);
         shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         shareIntent.setDataAndTypeAndNormalize(androidUri, IMAGE_MIME_TYPE);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         return Intent.createChooser(shareIntent,
                                     context.getString(R.string.notification__image_saving__action__share));
     }
 
     public static boolean isLaunchFromSaveImageNotificationIntent(@Nullable Intent intent) {
         return intent != null &&
-               intent.getBooleanExtra(EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION, false);
+               intent.getBooleanExtra(EXTRA_LAUNCH_FROM_SAVE_IMAGE_NOTIFICATION, false) &&
+               intent.hasExtra(EXTRA_CONTENT_URI);
     }
 
     public static Intent getGoogleMapsIntent(Context context, float lat, float lon, int zoom, String name) {

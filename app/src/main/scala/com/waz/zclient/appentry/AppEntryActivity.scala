@@ -17,17 +17,18 @@
  */
 package com.waz.zclient.appentry
 
-import android.content.Intent
+import android.app.FragmentManager
 import android.content.res.Configuration
+import android.content.{Context, Intent}
 import android.os.Bundle
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.view.View
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.{AccountsService, GlobalModule}
+import com.waz.sync.client.CustomBackendClient
+import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -35,14 +36,19 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
+import com.waz.zclient.deeplinks.DeepLinkService.Error.{InvalidToken, UserLoggedIn}
+import com.waz.zclient.deeplinks.DeepLinkService.{DoNotOpenDeepLink, OpenDeepLink}
+import com.waz.zclient.deeplinks.{DeepLink, DeepLinkService}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.country.CountryController
-import com.waz.zclient.preferences.PreferencesController
-import com.waz.zclient.tracking.CrashController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog}
+import com.waz.zclient.utils.{BackendController, ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
-import net.hockeyapp.android.NativeCrashManager
 
 import scala.collection.JavaConverters._
 
@@ -69,10 +75,16 @@ object AppEntryActivity {
 
 class AppEntryActivity extends BaseActivity {
 
+  import Threading.Implicits.Ui
+
+  implicit def ctx: Context = this
+
   private lazy val progressView = ViewUtils.getView(this, R.id.liv__progress).asInstanceOf[LoadingIndicatorView]
   private lazy val countryController: CountryController = new CountryController(this)
   private lazy val invitesController = inject[InvitationsController]
   private lazy val spinnerController  = inject[SpinnerController]
+  private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val deepLinkService: DeepLinkService = inject[DeepLinkService]
   private var createdFromSavedInstance: Boolean = false
   private var isPaused: Boolean = false
 
@@ -80,12 +92,21 @@ class AppEntryActivity extends BaseActivity {
   private lazy val attachedFragment = Signal[String]()
 
   private lazy val closeButton = returning(ViewUtils.getView(this, R.id.close_button).asInstanceOf[GlyphTextView]) { v =>
+    val fragmentTags = Set(
+      SignInFragment.Tag,
+      FirstLaunchAfterLoginFragment.Tag,
+      VerifyEmailWithCodeFragment.Tag,
+      VerifyPhoneFragment.Tag,
+      CountryDialogFragment.TAG,
+      PhoneSetNameFragment.Tag,
+      InviteToTeamFragment.Tag
+    )
+
     Signal(accountsService.zmsInstances.map(_.nonEmpty), attachedFragment).map {
-      case (false, _) => View.GONE
-      case (true, fragment) if Set(SignInFragment.Tag, FirstLaunchAfterLoginFragment.Tag, VerifyEmailWithCodeFragment.Tag,
-          VerifyPhoneFragment.Tag, CountryDialogFragment.TAG, PhoneSetNameFragment.Tag, InviteToTeamFragment.Tag).contains(fragment) => View.GONE
-      case _ => View.VISIBLE
-    }.onUi(v.setVisibility(_))
+      case (false, _)                                          => View.GONE
+      case (true, fragment) if fragmentTags.contains(fragment) => View.GONE
+      case _                                                   => View.VISIBLE
+    }.onUi(v.setVisibility)
   }
 
   private lazy val skipButton = returning(findById[TypefaceTextView](R.id.skip_button)) { v =>
@@ -95,12 +116,7 @@ class AppEntryActivity extends BaseActivity {
     }.onUi(t => v.setText(t))
   }
 
-  ZMessaging.currentGlobal.blacklist.upToDate.onUi {
-    case false =>
-      startActivity(new Intent(this, classOf[ForceUpdateActivity]))
-      finish()
-    case _ =>
-  }
+  ForceUpdateActivity.checkBlacklist(this)
 
   override def onBackPressed(): Unit = {
     getSupportFragmentManager.getFragments.asScala.find {
@@ -119,15 +135,7 @@ class AppEntryActivity extends BaseActivity {
 
     closeButton.onClick(abortAddAccount())
 
-    withFragmentOpt(AppLaunchFragment.Tag) {
-      case Some(_) =>
-      case None =>
-        Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
-          case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
-          case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
-          case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-      }
-    }
+    showFragment()
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
@@ -145,21 +153,105 @@ class AppEntryActivity extends BaseActivity {
       case Hide(Some(message)) => progressView.hideWithMessage(message, 750)
       case Hide(_) => progressView.hide()
     }
+
+    deepLinkService.deepLink.collect { case Some(result) => result } onUi {
+      case OpenDeepLink(UserToken(_), _) | DoNotOpenDeepLink(DeepLink.User, _) =>
+        showErrorDialog(R.string.deep_link_user_error_title, R.string.deep_link_user_error_message)
+        deepLinkService.deepLink ! None
+
+      case OpenDeepLink(ConversationToken(_), _) | DoNotOpenDeepLink(DeepLink.Conversation, _) =>
+        showErrorDialog(R.string.deep_link_conversation_error_title, R.string.deep_link_conversation_error_message)
+        deepLinkService.deepLink ! None
+
+      case OpenDeepLink(CustomBackendToken(configUrl), _) =>
+        verbose(l"got custom backend url: $configUrl")
+        deepLinkService.deepLink ! None
+
+        inject[AccentColorController].accentColor.head.flatMap { color =>
+          showConfirmationDialog(
+            title       = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+            msg         = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+            positiveRes = R.string.custom_backend_dialog_connect,
+            negativeRes = android.R.string.cancel,
+            color       = color
+          )
+        }.foreach {
+        case false =>
+          verbose(l"cancelling backend switch")
+        case true =>
+          enableProgress(true)
+          inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+            case Left(errorResponse) =>
+              error(l"error trying to download backend config.", errorResponse)
+              enableProgress(false)
+
+              showErrorDialog(
+                  R.string.custom_backend_dialog_network_error_title,
+                  R.string.custom_backend_dialog_network_error_message)
+
+            case Right(config) =>
+              verbose(l"got config response: $config")
+              enableProgress(false)
+
+              inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
+              verbose(l"switched backend")
+
+              // re-present fragment for updated ui.
+              getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+              showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+          }
+        }
+
+      case DoNotOpenDeepLink(Access, UserLoggedIn) =>
+        verbose(l"do not open, Access, user logged in")
+        showErrorDialog(
+          R.string.custom_backend_dialog_logged_in_error_title,
+          R.string.custom_backend_dialog_logged_in_error_message)
+        deepLinkService.deepLink ! None
+
+      case DoNotOpenDeepLink(Access, InvalidToken) =>
+        verbose(l"do not open, Access, invalid token")
+        showErrorDialog(
+          R.string.custom_backend_dialog_network_error_title,
+          R.string.custom_backend_dialog_network_error_message)
+        deepLinkService.deepLink ! None
+
+      case _ =>
+    }
   }
 
-  override protected def onResume(): Unit = {
+  // It is possible to open the app through intents with deep links. If that happens, we can't just
+  // show the fragment that was opened previously - we have to take the user to the fragment specified
+  // by the intent (at this point the information about it should be already stored somewhere).
+  // If this is the case, in `onResume` we can pop back the stack and show the new fragment.
+  override def onResume(): Unit = {
     super.onResume()
-
-    val trackingEnabled: Boolean = injectJava(classOf[PreferencesController]).isAnalyticsEnabled
-    if (trackingEnabled) {
-      //TODO move to new preferences
-      CrashController.checkForCrashes(getApplicationContext, getControllerFactory.getUserPreferencesController.getDeviceId)
-    }
-    else {
-      CrashController.deleteCrashReports(getApplicationContext)
-      NativeCrashManager.deleteDumpFiles(getApplicationContext)
-    }
+    // if the SSO token is present we use it to log in the user
+    userAccountsController.ssoToken.head.foreach {
+      case Some(_) =>
+        getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+      case _ =>
+    }(Threading.Ui)
   }
+
+  private def showFragment(): Unit = withFragmentOpt(AppLaunchFragment.Tag) {
+    case Some(_) =>
+    case None =>
+      userAccountsController.ssoToken.head.foreach {
+        case Some(_) =>
+        // if the SSO token is present we will handle it in onResume
+        case _ =>
+          Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
+            case Some(LoginArgVal) =>      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+            case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
+            case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
+              showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
+            case _ =>                      showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+          }
+      }(Threading.Ui)
+  }
+
 
   override def onAttachFragment(fragment: Fragment): Unit = {
     super.onAttachFragment(fragment)
@@ -177,7 +269,7 @@ class AppEntryActivity extends BaseActivity {
   }
 
   override protected def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
-    info(s"OnActivity result: $requestCode, $resultCode")
+    info(l"OnActivity result: $requestCode, $resultCode")
     super.onActivityResult(requestCode, resultCode, data)
     getSupportFragmentManager.findFragmentById(R.id.fl_main_content).onActivityResult(requestCode, resultCode, data)
   }
@@ -234,7 +326,7 @@ class AppEntryActivity extends BaseActivity {
   def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
     val transaction = getSupportFragmentManager.beginTransaction()
     if (animated) setDefaultAnimation(transaction)
-      transaction
+    transaction
       .replace(R.id.fl_main_content, f, tag)
       .addToBackStack(tag)
       .commit

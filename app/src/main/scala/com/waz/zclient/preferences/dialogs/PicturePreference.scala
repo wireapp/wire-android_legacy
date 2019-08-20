@@ -18,6 +18,7 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.content.Context
+import android.support.v7.preference.Preference
 import android.util.AttributeSet
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
@@ -26,10 +27,9 @@ import com.waz.zclient._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
-import net.xpece.android.support.preference.Preference
 
 class PicturePreference(context: Context, attrs: AttributeSet, defStyleAttr: Int, defStyleRes: Int) extends Preference(context, attrs, defStyleAttr, defStyleRes) with PreferenceHelper {
-  def this(context: Context, attrs: AttributeSet, defStyleAttr: Int) = this(context, attrs, defStyleAttr, R.style.Preference_Material)
+  def this(context: Context, attrs: AttributeSet, defStyleAttr: Int) = this(context, attrs, defStyleAttr, R.style.Preference)
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, R.attr.preferenceStyle)
   def this(context: Context) = this(context, null)
 

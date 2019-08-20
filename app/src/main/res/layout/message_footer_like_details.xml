@@ -34,20 +34,4 @@
         android:layout_weight="1"
         />
 
-    <com.waz.zclient.messages.parts.footer.LikersListView
-        android:id="@+id/like_chathead_container"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        />
-
-    <com.waz.zclient.ui.text.GlyphTextView
-        android:id="@+id/gtv_more"
-        android:gravity="center_vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/content__footer__chathead__size"
-        android:paddingEnd="@dimen/content__padding_right"
-        android:text="@string/glyph__more"
-    />
 </merge>

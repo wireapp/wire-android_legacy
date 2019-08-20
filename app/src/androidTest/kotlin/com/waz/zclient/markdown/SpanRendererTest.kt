@@ -24,6 +24,7 @@ import android.text.style.TabStopSpan
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.commonmark.*
 import com.waz.zclient.markdown.spans.custom.ListPrefixSpan
+import com.waz.zclient.markdown.spans.custom.ParagraphSpacingSpan
 import com.waz.zclient.markdown.visitors.SpanRenderer
 import org.commonmark.node.Node
 import org.commonmark.parser.Parser
@@ -959,9 +960,18 @@ class SpanRendererTest {
             assertEquals( stylesheet.listItemContentMargin, tabStopSpans.first().tabStop)
         }
 
-        // finally check that each prefix has a span
+        // check that each prefix has a span
         val prefixResults = result.spanResults(ListPrefixSpan::class.java)
         check(prefixResults, "1.", "2.", "3.", "•", "•")
+
+        // lastly, check for paragraph spacing spans on each item. These ranges represent
+        // each item (excluding nested lists from items)
+        for (range in listOf(0..13, 13..26, 26..38, 38..50, 50..64)) {
+            val spacingSpans = result.spansInRange(range, ParagraphSpacingSpan::class.java)
+            assertEquals(1, spacingSpans.size)
+            assertEquals(stylesheet.listItemSpacingBefore, spacingSpans.first().before)
+            assertEquals(stylesheet.listItemSpacingAfter, spacingSpans.first().after)
+        }
     }
 
     @Test
@@ -1060,9 +1070,18 @@ class SpanRendererTest {
             assertEquals( stylesheet.listItemContentMargin, tabStopSpans.first().tabStop)
         }
 
-        // finally check that each prefix has a span
+        // check that each prefix has a span
         val prefixResults = result.spanResults(ListPrefixSpan::class.java)
         check(prefixResults, "1.", "2.", "•", "•", "•")
+
+        // lastly, check for paragraph spacing spans on each item. These ranges represent
+        // each item (excluding nested lists from items)
+        for (range in listOf(0..12, 12..24, 24..37, 37..50, 50..63)) {
+            val spacingSpans = result.spansInRange(range, ParagraphSpacingSpan::class.java)
+            assertEquals(1, spacingSpans.size)
+            assertEquals(stylesheet.listItemSpacingBefore, spacingSpans.first().before)
+            assertEquals(stylesheet.listItemSpacingAfter, spacingSpans.first().after)
+        }
     }
 
     @Test
@@ -1267,6 +1286,15 @@ class SpanRendererTest {
         // it should have indentation for the all lines
         assertEquals(stylesheet.listItemContentMargin, spans.first().getLeadingMargin(true))
         assertEquals(stylesheet.listItemContentMargin, spans.first().getLeadingMargin(false))
+
+        // lastly, check for paragraph spacing spans on each item. These ranges represent
+        // each item (excluding nested lists from items)
+        for (range in listOf(0..12, 12..41, 42..65, 65..87, 87..99)) {
+            val spacingSpans = result.spansInRange(range, ParagraphSpacingSpan::class.java)
+            assertEquals(1, spacingSpans.size)
+            assertEquals(stylesheet.listItemSpacingBefore, spacingSpans.first().before)
+            assertEquals(stylesheet.listItemSpacingAfter, spacingSpans.first().after)
+        }
     }
 
     @Test

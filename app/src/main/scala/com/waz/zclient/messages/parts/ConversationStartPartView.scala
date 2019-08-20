@@ -21,6 +21,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.waz.model.Name
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
 import com.waz.zclient.participants.ParticipantsController
@@ -50,7 +51,7 @@ class ConversationStartPartView(context: Context, attrs: AttributeSet, style: In
   }
 
   subtitleText.onUi { subtitleView.setText }
-  message.map(_.name).onUi { name => titleView.setText(name.getOrElse("")) }
+  message.map(_.name).onUi { name => titleView.setText(name.getOrElse(Name.Empty)) }
 }
 
 class WirelessLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with MessageViewPart with ViewHelper {

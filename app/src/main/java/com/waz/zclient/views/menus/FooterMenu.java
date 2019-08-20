@@ -151,4 +151,14 @@ public class FooterMenu extends FrameLayout {
             });
         }
     }
+
+    public void setLeftActionEnabled(Boolean enabled) {
+        leftActionContainerView.setEnabled(enabled);
+        leftActionContainerView.setAlpha(enabled ? 1.0f : 0.25f);
+    }
+
+    public void setRightActionEnabled(Boolean enabled) {
+        rightActionContainerView.setEnabled(enabled);
+        rightActionContainerView.setAlpha(enabled ? 1.0f : 0.25f);
+    }
 }

@@ -71,11 +71,11 @@
     </LinearLayout>
 
     <com.waz.zclient.ui.text.GlyphTextView
+        android:id="@+id/preference_icon_end"
         android:layout_width="@dimen/preference_button_image_size"
         android:layout_height="@dimen/preference_button_image_size"
         android:layout_centerVertical="true"
         android:layout_alignParentEnd="true"
-        android:id="@+id/preference_icon_end"
         android:layout_marginEnd="@dimen/preference_button_padding"
         />
 

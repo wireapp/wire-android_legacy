@@ -18,8 +18,9 @@
 package com.waz.zclient.messages
 
 import com.waz.api.Message
+import com.waz.log.LogShow.SafeToLog
 
-sealed trait MsgPart
+sealed trait MsgPart extends SafeToLog
 sealed trait SeparatorPart extends MsgPart
 
 object MsgPart {
@@ -47,8 +48,28 @@ object MsgPart {
   case object EphemeralDots extends MsgPart
   case object WifiWarning extends MsgPart
   case object MessageTimer extends MsgPart
+  case object ReadReceipts extends MsgPart
   case object Empty extends MsgPart
   case object Unknown extends MsgPart
+
+  case class Reply(replyType: MsgPart) extends MsgPart
+
+  object Reply {
+    def apply(msgType: Message.Type): Reply = {
+      import Message.Type._
+      Reply(msgType match {
+        case TEXT
+             | TEXT_EMOJI_ONLY
+             | RICH_MEDIA => Text
+        case ASSET        => Image
+        case ANY_ASSET    => FileAsset
+        case VIDEO_ASSET  => VideoAsset
+        case AUDIO_ASSET  => AudioAsset
+        case LOCATION     => Location
+        case _            => Unknown
+      })
+    }
+  }
 
   def apply(msgType: Message.Type, isOneToOne: Boolean): MsgPart = {
     import Message.Type._
@@ -70,6 +91,7 @@ object MsgPart {
       case CONNECT_ACCEPTED => Empty // those are never used in messages (only in notifications)
       case RICH_MEDIA => Empty // RICH_MEDIA will be handled separately
       case MESSAGE_TIMER => MessageTimer
+      case READ_RECEIPTS_ON | READ_RECEIPTS_OFF => if (isOneToOne) Empty else ReadReceipts
       case UNKNOWN => Unknown
     }
   }

@@ -25,9 +25,10 @@ import android.view.View
 import android.widget.LinearLayout
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences.LastStableNotification
+import com.waz.jobs.PushTokenCheckJob
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.model.Uid
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.utils.events.Signal
@@ -43,7 +44,12 @@ import scala.concurrent.Future
 
 trait DevSettingsView
 
-class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with DevSettingsView with ViewHelper {
+class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with DevSettingsView
+    with ViewHelper
+    with DerivedLogTag {
+  
   import com.waz.threading.Threading.Implicits.Ui
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
@@ -62,10 +68,6 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) ext
     v.setPreference(PushEnabledKey, global = true)
   }
 
-  val webSocketForegroundServiceSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_websocket_service)) { v =>
-    v.setPreference(WsForegroundKey, global = true)
-  }
-
   val randomLastIdButton = findById[TextButton](R.id.preferences_dev_generate_random_lastid)
 
   val slowSyncButton = returning(findById[TextButton](R.id.preferences_dev_slow_sync)) {
@@ -81,7 +83,11 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) ext
   }
 
   val createFullConversationSwitch = returning(findById[SwitchPreference](R.id.preferences_dev_full_conv)) { v =>
-    v.setPreference(ShouldCreateFullConversation)
+    v.setPreference(ShouldCreateFullConversation, global = true)
+  }
+
+  val checkPushTokenButton = returning(findById[TextButton](R.id.preferences_dev_check_push_tokens)) { v =>
+    v.onClickEvent(_ => PushTokenCheckJob())
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {

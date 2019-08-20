@@ -19,19 +19,24 @@ package com.waz.zclient.messages
 
 import android.content.Context
 import android.graphics.Rect
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View.MeasureSpec
 import android.view.ViewGroup.{LayoutParams, MarginLayoutParams}
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.FrameLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageContent
 import com.waz.service.messages.MessageAndLikes
+import com.waz.utils.events.EventContext
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
+import com.waz.zclient.messages.parts.ReplyPartView
 
-abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int) extends ViewGroup(context, attrs, style) {
+abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: Int)
+  extends ViewGroup(context, attrs, style) with DerivedLogTag {
+  
   protected val factory: MessageViewFactory
 
   protected var listParts = Seq.empty[MessageViewPart]
@@ -42,8 +47,8 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
 
   setClipChildren(false)
 
-  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions): Unit = {
-    verbose(s"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
+  protected def setParts(msg: MessageAndLikes, parts: Seq[PartDesc], opts: MsgBindOptions, adapter: MessagesPagedListAdapter)(implicit ec: EventContext): Unit = {
+    verbose(l"setParts: opts: $opts, parts: ${parts.map(_.tpe)}")
 
     // recycle views in reverse order, recycled views are stored in a Stack, this way we will get the same views back if parts are the same
     // XXX: once views get bigger, we may need to optimise this, we don't need to remove views that will get reused, currently this seems to be fast enough
@@ -51,14 +56,27 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
       case pv: MessageViewPart => factory.recycle(pv)
       case _ =>
     }
-    removeAllViewsInLayout() // TODO: avoid removing views if not really needed, compute proper diff with previous state
 
     val views = parts.zipWithIndex map { case (PartDesc(tpe, content), index) =>
       val view = factory.get(tpe, this)
       view.setVisibility(View.VISIBLE)
       view.set(msg, content, opts)
-      addViewInLayout(view, index, Option(view.getLayoutParams).getOrElse(defaultLayoutParams))
+      (view, msg.quote) match {
+        case (v: ReplyPartView, Some(quote)) if msg.message.quote.exists(_.validity) =>
+          v.setQuote(quote)
+          v.onQuoteClick.onUi { _ =>
+            adapter.positionForMessage(quote.id).foreach { pos =>
+              if (pos >= 0) adapter.onScrollRequested ! (quote, pos)
+            }
+          }
+        case _ =>
+      }
+      if (view.getParent == null) addViewInLayout(view, index, Option(view.getLayoutParams).getOrElse(defaultLayoutParams))
       view
+    }
+
+    (0 until getChildCount).map(getChildAt).foreach { v =>
+      if (!views.contains(v)) removeView(v)
     }
 
     val (fps, lps) = views.partition {
@@ -78,30 +96,37 @@ abstract class MessageViewLayout(context: Context, attrs: AttributeSet, style: I
     factory.recycle(view)
   }
 
+  private def measureChildWithMargins(child: View, parentWidthMeasureSpec: Int, parentHeightMeasureSpec: Int): Unit =
+    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.N) { // Android 7.0 may throw an exception here in rare cases
+      try {
+        measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
+      } catch {
+        case ex: ArrayIndexOutOfBoundsException =>
+          error(l"Measure error, parentWidthMeasureSpec: $parentWidthMeasureSpec, parentHeightMeasureSpec: $parentHeightMeasureSpec", ex)
+      }
+    } else
+      measureChildWithMargins(child, parentWidthMeasureSpec, 0, parentHeightMeasureSpec, 0)
+
   override def onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit = {
-    val w = View.getDefaultSize(getSuggestedMinimumWidth, widthMeasureSpec)
     var h = getPaddingTop + getPaddingBottom
     separatorHeight = 0
-    listParts foreach { v =>
-      if (v.getVisibility != View.GONE) {
-        measureChildWithMargins(v, widthMeasureSpec, 0, heightMeasureSpec, 0)
-        val m = getMargin(v.getLayoutParams)
-        h += v.getMeasuredHeight + m.top + m.bottom
+    listParts.filter(_.getVisibility != View.GONE).foreach { v =>
+      measureChildWithMargins(v, widthMeasureSpec, heightMeasureSpec)
+      val m = getMargin(v.getLayoutParams)
+      val additionalHeight = v.getMeasuredHeight + m.top + m.bottom
+      h += additionalHeight
 
-        if (v.tpe.isInstanceOf[SeparatorPart])
-          separatorHeight += v.getMeasuredHeight + m.top + m.bottom
-      }
+      if (v.tpe.isInstanceOf[SeparatorPart]) separatorHeight += additionalHeight
     }
 
-    val hSpec = MeasureSpec.makeMeasureSpec(h - separatorHeight, MeasureSpec.AT_MOST)
-    frameParts foreach { v =>
-      if (v.getVisibility != View.GONE) {
-        measureChildWithMargins(v, widthMeasureSpec, 0, hSpec, 0)
-        h = math.max(h, v.getMeasuredHeight + separatorHeight + getPaddingTop + getPaddingBottom)
-      }
+    lazy val hSpec = MeasureSpec.makeMeasureSpec(h - separatorHeight, MeasureSpec.AT_MOST)
+    lazy val additionalSeparatorHeight = separatorHeight + getPaddingTop + getPaddingBottom
+    frameParts.filter(_.getVisibility != View.GONE).foreach { v =>
+      measureChildWithMargins(v, widthMeasureSpec, hSpec)
+      h = math.max(h, v.getMeasuredHeight + additionalSeparatorHeight)
     }
 
-    setMeasuredDimension(w, h)
+    setMeasuredDimension(View.getDefaultSize(getSuggestedMinimumWidth, widthMeasureSpec), h)
   }
 
   override def onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int): Unit = {

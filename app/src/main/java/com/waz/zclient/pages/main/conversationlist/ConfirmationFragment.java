@@ -21,16 +21,20 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.waz.model.AccentColor;
+import com.waz.utils.events.EventContext;
+import com.waz.zclient.BaseActivity;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
+import com.waz.zclient.common.controllers.global.AccentColorCallback;
+import com.waz.zclient.common.controllers.global.AccentColorController;
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback;
 import com.waz.zclient.pages.BaseFragment;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.menus.ConfirmationMenu;
 
-public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Container> implements OnBackPressedListener,
-                                                                                                  AccentColorObserver {
+public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Container> implements OnBackPressedListener {
 
     public static final String FIELD_TITLE = "title";
     public static final String FIELD_MESSAGE = "message";
@@ -90,6 +94,14 @@ public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Cont
             }
         });
 
+        // update the button color whenever the accent color changes
+        ((BaseActivity) getContext()).injectJava(AccentColorController.class).accentColorForJava(new AccentColorCallback() {
+            @Override
+            public void color(AccentColor color) {
+                confirmationMenu.setButtonColor(color.color());
+            }
+        }, EventContext.Implicits$.MODULE$.global());
+
         return view;
     }
 
@@ -97,15 +109,7 @@ public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Cont
     public void onStart() {
         super.onStart();
 
-        getControllerFactory().getAccentColorController().addAccentColorObserver(this);
         confirmationMenu.animateToShow(true);
-    }
-
-    @Override
-    public void onStop() {
-        getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
-
-        super.onStop();
     }
 
     @Override
@@ -119,11 +123,6 @@ public class ConfirmationFragment extends BaseFragment<ConfirmationFragment.Cont
         confirmationMenu.animateToShow(false);
         getContainer().onDialogCancel(dialogId);
         return true;
-    }
-
-    @Override
-    public void onAccentColorHasChanged(int color) {
-        confirmationMenu.setButtonColor(color);
     }
 
     public interface Container {

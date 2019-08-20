@@ -18,13 +18,13 @@
 package com.waz.zclient.calling
 
 import android.content.{Context, Intent}
-import android.os.Bundle
+import android.os.{Build, Bundle}
 import android.view.WindowManager
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.DeprecationUtils
 
 class CallingActivity extends BaseActivity {
@@ -33,26 +33,35 @@ class CallingActivity extends BaseActivity {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    verbose("Creating CallingActivity")
+    verbose(l"Creating CallingActivity")
 
     setContentView(R.layout.calling_layout)
     getSupportFragmentManager
       .beginTransaction()
       .replace(R.id.calling_layout, CallingFragment(), CallingFragment.Tag)
       .commit
+
+    controller.isCallActive.filter(_ == false).onUi { _ =>
+      verbose(l"call no longer exists, finishing activity")
+      finish()
+    }
   }
 
   override def onAttachedToWindow(): Unit = {
     getWindow.addFlags(
-        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-        DeprecationUtils.FLAG_DISMISS_KEYGUARD
-    )
+        DeprecationUtils.FLAG_DISMISS_KEYGUARD)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+      setShowWhenLocked(true)
+      setTurnScreenOn(true)
+    } else {
+      getWindow.addFlags(DeprecationUtils.FLAG_TURN_SCREEN_ON | DeprecationUtils.FLAG_SHOW_WHEN_LOCKED)
+    }
   }
 
   override def onBackPressed() = {
-    verbose("onBackPressed")
+    verbose(l"onBackPressed")
 
     Option(getSupportFragmentManager.findFragmentById(R.id.calling_layout)).foreach {
       case f: OnBackPressedListener if f.onBackPressed() => //
@@ -73,7 +82,7 @@ class CallingActivity extends BaseActivity {
   override def getBaseTheme: Int = R.style.Theme_Calling
 }
 
-object CallingActivity extends Injectable {
+object CallingActivity extends Injectable with DerivedLogTag {
 
   def start(context: Context): Unit = {
     val intent = new Intent(context, classOf[CallingActivity])

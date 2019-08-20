@@ -29,9 +29,8 @@ import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.ImageAsset
 import com.waz.content.UserPreferences
+import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -42,7 +41,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.views.AccountTabsView
 import com.waz.zclient.controllers.camera.{CameraActionObserver, ICameraController}
 import com.waz.zclient.pages.main.profile.camera.CameraContext
-import com.waz.zclient.preferences.pages.{DevicesBackStackKey, OptionsView, ProfileBackStackKey}
+import com.waz.zclient.preferences.pages.{AdvancedBackStackKey, DevicesBackStackKey, OptionsView, ProfileBackStackKey}
 import com.waz.zclient.utils.{BackStackNavigator, RingtoneUtils, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.{BaseActivity, R, _}
@@ -77,8 +76,9 @@ class PreferencesActivity extends BaseActivity
       backStackNavigator.setup(findViewById(R.id.content).asInstanceOf[ViewGroup])
 
       getIntent.page match {
-        case Some(Page.Devices) => backStackNavigator.goTo(DevicesBackStackKey())
-        case _                  => backStackNavigator.goTo(ProfileBackStackKey())
+        case Some(Page.Devices)  => backStackNavigator.goTo(DevicesBackStackKey())
+        case Some(Page.Advanced) => backStackNavigator.goTo(AdvancedBackStackKey())
+        case _                   => backStackNavigator.goTo(ProfileBackStackKey())
       }
 
       Signal(backStackNavigator.currentState, ZMessaging.currentAccounts.accountsWithManagers.map(_.toSeq.length)).on(Threading.Ui){
@@ -94,8 +94,7 @@ class PreferencesActivity extends BaseActivity
     }
 
     accentColor.on(Threading.Ui) { color =>
-      getControllerFactory.getUserPreferencesController.setLastAccentColor(color.getColor())
-      getControllerFactory.getAccentColorController.setColor(color.getColor())
+      getControllerFactory.getUserPreferencesController.setLastAccentColor(color.color)
     }
 
     accountTabs.onTabClick.onUi { account =>
@@ -178,10 +177,10 @@ class PreferencesActivity extends BaseActivity
   }
 
   //TODO do we need to check internet connectivity here?
-  override def onBitmapSelected(imageAsset: ImageAsset, cameraContext: CameraContext): Unit =
+  override def onBitmapSelected(input: RawAssetInput, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.SETTINGS) {
       inject[Signal[ZMessaging]].head.map { zms =>
-        zms.users.updateSelfPicture(imageAsset)
+        zms.users.updateSelfPicture(input)
       } (Threading.Background)
       getSupportFragmentManager.popBackStack(CameraFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }

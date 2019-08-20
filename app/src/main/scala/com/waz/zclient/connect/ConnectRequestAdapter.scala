@@ -20,17 +20,21 @@ package com.waz.zclient.connect
 import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversationlist.ConversationListAdapter.Incoming
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.ZLog.ImplicitTag._
 
 import scala.util.Try
 
-class ConnectRequestAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ConnectRequestAdapter.ViewHolder] with Injectable {
+class ConnectRequestAdapter(context: Context)(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[ConnectRequestAdapter.ViewHolder]
+    with Injectable
+    with DerivedLogTag {
+
   import ConnectRequestAdapter._
   import com.waz.threading.Threading.Implicits.Background
 
@@ -40,7 +44,7 @@ class ConnectRequestAdapter(context: Context)(implicit injector: Injector, event
 
   lazy val incomingRequests = for {
     z             <- zms
-    conversations <- z.convsStorage.convsSignal.map(_.conversations.filter(Incoming.filter).toSeq)
+    conversations <- z.convsStorage.contents.map(_.values.filter(Incoming.filter).toSeq)
     members       <- Signal.sequence(conversations.map(c => z.membersStorage.activeMembers(c.id).map(_.find(_ != z.selfUserId))):_*)
   } yield members.flatten
 

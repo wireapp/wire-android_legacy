@@ -25,7 +25,8 @@ import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.pages.BaseDialogFragment
 import com.waz.zclient.ui.views.ZetaButton
-import com.waz.zclient.utils.{ContextUtils, RichView}
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.RichView
 
 class OtrDeviceLimitFragment extends BaseDialogFragment[OtrDeviceLimitFragment.Container] with FragmentHelper {
 
@@ -37,12 +38,12 @@ class OtrDeviceLimitFragment extends BaseDialogFragment[OtrDeviceLimitFragment.C
   private lazy val logoutButton = returning(view[ZetaButton](R.id.zb__otr_device_limit__logout)) ( _.foreach { button =>
     button.setIsFilled(false)
     button.onClick { getContainer.logout() }
-    button.setAccentColor(ContextUtils.getColorWithTheme(R.color.text__primary_dark, getContext))
+    button.setAccentColor(getColorWithTheme(R.color.text__primary_dark))
   })
 
   private lazy val manageDevicesButton = returning(view[ZetaButton](R.id.zb__otr_device_limit__manage_devices)) ( _.foreach { button =>
     button.setIsFilled(true)
-    button.setAccentColor(ContextUtils.getColorWithTheme(R.color.text__primary_dark, getContext))
+    button.setAccentColor(getColorWithTheme(R.color.text__primary_dark))
   })
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {

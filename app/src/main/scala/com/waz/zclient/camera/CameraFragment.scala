@@ -26,14 +26,15 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
-import com.waz.api.ImageAsset
+import com.waz.service.assets.AssetService.RawAssetInput
 import com.waz.utils.returning
 import com.waz.utils.wrappers.URI
 import com.waz.zclient.camera.views.CameraPreviewTextureView
+import com.waz.zclient.common.controllers.ScreenController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.drawing.IDrawingController
-import com.waz.zclient.controllers.orientation.OrientationControllerObserver
+import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 import com.waz.zclient.pages.main.profile.camera.controls.{CameraBottomControl, CameraTopControl}
 import com.waz.zclient.pages.main.profile.camera.{CameraContext, CameraFocusView, ProfileToCameraAnimation}
@@ -48,7 +49,6 @@ import scala.concurrent.duration._
 
 class CameraFragment extends FragmentHelper
   with CameraPreviewObserver
-  with OrientationControllerObserver
   with ImagePreviewCallback
   with CameraTopControl.CameraTopControlCallback
   with CameraBottomControl.CameraBottomControlCallback {
@@ -57,7 +57,7 @@ class CameraFragment extends FragmentHelper
 
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val cameraController      = inject[ICameraController]
-  private lazy val drawingController     = inject[IDrawingController]
+  private lazy val screenController      = inject[ScreenController]
 
   //TODO allow selection of a camera 'facing' for different cameraContexts
   private lazy val cameraPreview = returning(view[CameraPreviewTextureView](R.id.cptv__camera_preview)) {
@@ -82,14 +82,14 @@ class CameraFragment extends FragmentHelper
 
   private lazy val focusView = returning(view[CameraFocusView](R.id.cfv__focus)) { vh =>
     accentColorController.accentColor.onUi { color =>
-      vh.foreach(_.setColor(color.getColor))
+      vh.foreach(_.setColor(color.color))
     }
   }
 
   private lazy val imagePreviewContainer = view[FrameLayout](R.id.fl__preview_container)
   private lazy val previewProgressBar = returning(view[ProgressView](R.id.pv__preview)) { vh =>
     accentColorController.accentColor.onUi { color =>
-      vh.foreach(_.setTextColor(color.getColor))
+      vh.foreach(_.setTextColor(color.color))
     }
   }
 
@@ -128,8 +128,8 @@ class CameraFragment extends FragmentHelper
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
 
-    cameraTopControl
-    cameraBottomControl
+    cameraTopControl.foreach(_.setConfigOrientation(SquareOrientation.PORTRAIT_STRAIGHT))
+    cameraBottomControl.foreach(_.setConfigOrientation(SquareOrientation.PORTRAIT_STRAIGHT))
 
     imagePreviewContainer
     previewProgressBar
@@ -240,12 +240,11 @@ class CameraFragment extends FragmentHelper
     showCameraFeed()
   }
 
-  override def onSketchOnPreviewPicture(imageAsset: ImageAsset, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
-    drawingController.showDrawing(imageAsset, IDrawingController.DrawingDestination.CAMERA_PREVIEW_VIEW)
-  }
+  override def onSketchOnPreviewPicture(input: RawAssetInput, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit =
+    screenController.showSketch ! Sketch.cameraPreview(input)
 
-  override def onSendPictureFromPreview(imageAsset: ImageAsset, source: ImagePreviewLayout.Source): Unit = {
-    cameraController.onBitmapSelected(imageAsset, cameraContext)
+  override def onSendPictureFromPreview(input: RawAssetInput, source: ImagePreviewLayout.Source): Unit = {
+    cameraController.onBitmapSelected(input, cameraContext)
   }
 
   private def showPreview(setImage: (ImagePreviewLayout) => Unit) = {
@@ -281,11 +280,6 @@ class CameraFragment extends FragmentHelper
   private def hideCameraFeed(): Unit = {
     cameraTopControl.foreach(_.fadeOut(cameraControlAnimationDuration))
     cameraPreview.foreach(_.setVisibility(View.GONE))
-  }
-
-  override def onOrientationHasChanged(squareOrientation: SquareOrientation): Unit = {
-    cameraTopControl.foreach(_.setConfigOrientation(squareOrientation))
-    cameraBottomControl.foreach(_.setConfigOrientation(squareOrientation))
   }
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {

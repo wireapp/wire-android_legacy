@@ -22,7 +22,7 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
-import com.waz.ZLog.ImplicitTag.implicitLogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events._
 import com.waz.zclient.ViewHelper.inflate
 import com.waz.zclient.calling.controllers.CallController
@@ -30,13 +30,16 @@ import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
-import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIconWithColor}
+import com.waz.zclient.paintcode.ForwardNavigationIcon
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString, getStyledColor}
+import com.waz.zclient.utils.ContextUtils.{getColor, getDrawable, getString}
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{Injectable, Injector, R}
 
-class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector) extends RecyclerView.Adapter[ViewHolder] with Injectable {
+class CallParticipantsAdapter(implicit context: Context, eventContext: EventContext, inj: Injector)
+  extends RecyclerView.Adapter[ViewHolder]
+    with Injectable
+    with DerivedLogTag {
 
   import CallParticipantsAdapter._
 
@@ -58,15 +61,9 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
     notifyDataSetChanged()
   }
 
-  callController.participantInfos(
-    if (maxRows.exists(_ < numOfParticipants)) maxRows.map(_ - 1) else maxRows
-  ).onUi { v =>
-    items = v
-    notifyDataSetChanged()
-  }
-
-  callController.others.map(_.size).onUi { size =>
-    numOfParticipants = size
+  callController.participantInfos().onUi { v =>
+    numOfParticipants = v.size
+    items = maxRows.filter(_ < numOfParticipants).fold(v)(m => v.take(m - 1))
     notifyDataSetChanged()
   }
 
@@ -86,7 +83,7 @@ class CallParticipantsAdapter(implicit context: Context, eventContext: EventCont
 
   override def getItemId(position: Int): Long =
     if (maxRows.contains(position) && maxRows.exists(_ < numOfParticipants)) 0
-    else items(position).userId.hashCode()
+    else items.lift(position).map(_.userId.hashCode().toLong).getOrElse(0)
 
   setHasStableIds(true)
 
@@ -121,7 +118,6 @@ case class CallParticipantViewHolder(view: SingleUserRowView) extends ViewHolder
 
 case class ShowAllButtonViewHolder(view: View) extends ViewHolder(view) {
   private implicit val ctx: Context = view.getContext
-  view.findViewById[ImageView](R.id.icon).setImageDrawable(GuestIconWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
   view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
   view.setMarginTop(0)
   private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)

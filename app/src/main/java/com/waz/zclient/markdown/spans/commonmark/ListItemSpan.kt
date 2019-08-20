@@ -24,7 +24,7 @@ import org.commonmark.node.Node
 /**
  * The span corresponding to the markdown "ListItem" unit.
  */
-class ListItemSpan : BlockSpan() {
+class ListItemSpan() : BlockSpan() {
 
     override fun toNode(literal: String?): Node = ListItem()
 }

@@ -1,44 +1,27 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  *//**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.pages.main.connect
 
 import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -61,7 +44,7 @@ import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 
 object BlockedUserProfileFragment {
-  val Tag: String = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
   val ARGUMENT_USER_ID = "ARGUMENT_USER_ID"
   val ARGUMENT_USER_REQUESTER = "ARGUMENT_USER_REQUESTER"
   val STATE_IS_SHOWING_FOOTER_MENU = "STATE_IS_SHOWING_FOOTER_MENU"
@@ -101,13 +84,13 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
   private var goToConversationWithUser = false
 
   private lazy val unblockButton = returning(view[ZetaButton](R.id.zb__connect_request__unblock_button)) { vh =>
-    accentColor.onUi(color => vh.foreach(_.setAccentColor(color.getColor)))
+    accentColor.map(_.color).onUi(color => vh.foreach(_.setAccentColor(color)))
   }
   private lazy val cancelButton = returning(view[ZetaButton](R.id.zb__connect_request__ignore_button)) { vh =>
-    accentColor.onUi(color => vh.foreach(_.setAccentColor(color.getColor)))
+    accentColor.map(_.color).onUi(color => vh.foreach(_.setAccentColor(color)))
   }
   private lazy val smallUnblockButton = returning(view[ZetaButton](R.id.zb__connect_request__accept_button)) { vh =>
-    accentColor.onUi(color => vh.foreach(_.setAccentColor(color.getColor)))
+    accentColor.map(_.color).onUi(color => vh.foreach(_.setAccentColor(color)))
   }
   private lazy val unblockMenu = view[LinearLayout](R.id.ll__connect_request__accept_menu)
   private lazy val footerMenu = view[FooterMenu](R.id.fm__footer)
@@ -167,6 +150,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
         menu.setCallback(new FooterMenuCallback() {
           override def onLeftActionClicked(): Unit = toggleUnblockAndFooterMenu(false)
           override def onRightActionClicked(): Unit = getContainer.showRemoveConfirmation(userId)
+
         })
       }
       cancelButton.foreach { btn =>

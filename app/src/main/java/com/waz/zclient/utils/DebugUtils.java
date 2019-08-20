@@ -17,22 +17,11 @@
  */
 package com.waz.zclient.utils;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import com.waz.api.BugReporter;
 import com.waz.api.ReportListener;
-import com.waz.api.ZmsVersion;
 import com.waz.utils.wrappers.URI;
-import com.waz.zclient.R;
-import timber.log.Timber;
-
-import java.util.Locale;
 
 public class DebugUtils {
 
@@ -46,38 +35,6 @@ public class DebugUtils {
                 }
             }
         });
-    }
-
-    @SuppressLint("DefaultLocale")
-    public static String getVersion(Context context) {
-        final StringBuilder versionText = new StringBuilder();
-        try {
-            final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
-            versionText.append(String.format("Version %s (%d)", packageInfo.versionName, packageInfo.versionCode));
-        } catch (PackageManager.NameNotFoundException e) {
-            Timber.e(e, "Failed getting app version name.");
-        }
-        versionText.append("\nSync Engine ").append(ZmsVersion.ZMS_VERSION)
-                   .append("\nAVS ").append(context.getString(R.string.avs_version))
-                   .append("\nAudio-notifications ").append(context.getString(R.string.audio_notifications_version))
-                   .append("\nTranslations ").append(context.getString(R.string.wiretranslations_version))
-                   .append("\nLocale ").append(getLocale(context));
-
-        return versionText.toString();
-    }
-
-    @TargetApi(Build.VERSION_CODES.N)
-    private static Locale getLocale(Context context) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                return context.getResources().getConfiguration().getLocales().get(0);
-            } else {
-                //noinspection deprecation
-                return context.getResources().getConfiguration().locale;
-            }
-        } catch (Exception e) {
-            return null;
-        }
     }
 
 }

@@ -85,7 +85,7 @@ public class ExtendedCursorContainer extends FrameLayout implements KeyboardHeig
     public ExtendedCursorContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         sharedPreferences = getContext().getSharedPreferences(PREF__NAME, Context.MODE_PRIVATE);
-        accentColor = ContextUtils.getColorWithTheme(R.color.accent_blue, context);
+        accentColor = ContextUtils.getColorWithThemeJava(R.color.accent_blue, context);
         isExpanded = false;
         type = Type.NONE;
         initKeyboardHeight();

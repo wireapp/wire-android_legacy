@@ -56,6 +56,8 @@ class LinkTextView(context: Context, attrs: AttributeSet, defStyle: Int) extends
 }
 
 object LinkTextView {
+  
+  val LongPressTimeout = 500
 
   class MovementMethod(context: Context) extends LinkMovementMethod {
 
@@ -89,12 +91,13 @@ object LinkTextView {
           }
           current.isDefined
         case MotionEvent.ACTION_UP =>
-          current foreach { _ onClick widget }
+          if (SystemClock.uptimeMillis() - startTime < LongPressTimeout)
+            current foreach { _ onClick widget }
           returning(current.isDefined) { _ => current = None }
         case MotionEvent.ACTION_MOVE =>
           if (current.isDefined) {
             val dst = math.max(math.abs(event.getX - startPosition._1), math.abs(event.getY - startPosition._2))
-            if (dst > touchSlop || SystemClock.uptimeMillis() - startTime > 750) {
+            if (dst > touchSlop || SystemClock.uptimeMillis() - startTime > LongPressTimeout) {
               current = None
             }
           }

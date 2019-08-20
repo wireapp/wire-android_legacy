@@ -21,15 +21,13 @@ import android.app.Activity
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
-import android.net.Uri
 import android.os.{Bundle, Parcel, Parcelable}
 import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.AccentColor
-import com.waz.model.{EmailAddress, PhoneNumber}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -41,11 +39,14 @@ import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.preferences.dialogs._
-import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, TextButton}
+import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
 import com.waz.zclient.ui.utils.TextViewUtils._
+import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
+import com.waz.zclient.BuildConfig
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -59,6 +60,7 @@ trait AccountView {
   val onDeleteClick:        EventStream[Unit]
   val onBackupClick:        EventStream[Unit]
   val onDataUsageClick:     EventStream[Unit]
+  val onReadReceiptSwitch:  EventStream[Boolean]
 
   def setName(name: String): Unit
   def setHandle(handle: String): Unit
@@ -67,10 +69,14 @@ trait AccountView {
   def setPictureDrawable(drawable: Drawable): Unit
   def setAccentDrawable(drawable: Drawable): Unit
   def setDeleteAccountEnabled(enabled: Boolean): Unit
+  def setEmailEnabled(enabled: Boolean): Unit
   def setPhoneNumberEnabled(enabled: Boolean): Unit
+  def setReadReceipt(enabled: Boolean): Unit
+  def setResetPasswordEnabled(enabled: Boolean): Unit
+  def setAccountLocked(locked: Boolean): Unit
 }
 
-class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper {
+class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with AccountView with ViewHelper with DerivedLogTag {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -87,6 +93,15 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val deleteAccountButton = findById[TextButton](R.id.preferences_account_delete)
   val backupButton        = findById[TextButton](R.id.preferences_backup)
   val dataUsageButton     = findById[TextButton](R.id.preferences_data_usage_permissions)
+  val readReceiptsSwitch  = findById[SwitchPreference](R.id.preferences_account_read_receipts)
+  val personalInformationHeaderLabel = findById[TypefaceTextView](R.id.preference_personal_information_header)
+  val appearanceHeader = findById[TypefaceTextView](R.id.preferences_account_appearance_header)
+
+  // Hide data usage section if there is nothing to show in there
+  val showPersonalInformationSection = BuildConfig.SUBMIT_CRASH_REPORTS || BuildConfig.ALLOW_MARKETING_COMMUNICATION
+  dataUsageButton.setVisible(showPersonalInformationSection)
+  personalInformationHeaderLabel.setVisible(showPersonalInformationSection)
+
 
   override val onNameClick          = nameButton.onClickEvent.map(_ => ())
   override val onHandleClick        = handleButton.onClickEvent.map(_ => ())
@@ -99,6 +114,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override val onDeleteClick        = deleteAccountButton.onClickEvent.map(_ => ())
   override val onBackupClick        = backupButton.onClickEvent.map(_ => ())
   override val onDataUsageClick     = dataUsageButton.onClickEvent.map(_ => ())
+  override val onReadReceiptSwitch  = readReceiptsSwitch.onCheckedChange
 
   override def setName(name: String) = nameButton.setTitle(name)
 
@@ -114,8 +130,25 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def setDeleteAccountEnabled(enabled: Boolean) = deleteAccountButton.setVisible(enabled)
 
+  override def setEmailEnabled(enabled: Boolean) = emailButton.setVisible(enabled)
+
   override def setPhoneNumberEnabled(enabled: Boolean) = phoneButton.setVisible(enabled)
 
+  override def setReadReceipt(enabled: Boolean) = readReceiptsSwitch.setChecked(enabled, disableListener = true)
+
+  override def setResetPasswordEnabled(enabled: Boolean) = resetPasswordButton.setVisible(enabled)
+
+  override def setAccountLocked(locked: Boolean): Unit = {
+    nameButton.setEnabled(!locked)
+    handleButton.setEnabled(!locked)
+    emailButton.setEnabled(!locked)
+    phoneButton.setEnabled(!locked)
+    pictureButton.setEnabled(!locked)
+    colorButton.setEnabled(!locked)
+    appearanceHeader.setVisible(!locked)
+    pictureButton.setVisible(!locked)
+    colorButton.setVisible(!locked)
+  }
 }
 
 case class AccountBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -140,7 +173,8 @@ object AccountBackStackKey {
   }
 }
 
-class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context) extends Injectable {
+class AccountViewController(view: AccountView)(implicit inj: Injector, ec: EventContext, context: Context)
+  extends Injectable with DerivedLogTag {
 
   val zms                = inject[Signal[ZMessaging]]
   val self               = zms.flatMap(_.users.selfUser)
@@ -154,12 +188,15 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   val phone = self.map(_.phone)
   val email = self.map(_.email)
 
-  val isPhoneNumberEnabled = for {
-    p      <- phone
-    isTeam <- isTeam
-  } yield p.isDefined || !isTeam
+  val isPhoneNumberEnabled = isTeam.map(!_)
 
   val selfPicture: Signal[ImageSource] = self.map(_.picture).collect{case Some(pic) => WireImage(pic)}
+
+  private val accountIsLocked: Signal[Boolean] = self.map(_.isReadOnlyProfile)
+
+  accountIsLocked.onUi { locked =>
+    view.setAccountLocked(locked)
+  }
 
   view.setPictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
@@ -171,7 +208,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       val paint = new Paint()
 
       override def draw(canvas: Canvas) = {
-        paint.setColor(AccentColor(self.accent).getColor)
+        paint.setColor(AccentColor(self.accent).color)
         canvas.drawCircle(getBounds.centerX(), getBounds.centerY(), getBounds.width() / 2, paint)
       }
 
@@ -186,8 +223,14 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   phone.onUi(view.setPhone)
   email.onUi(view.setEmail)
 
-  isTeam.onUi(t => view.setDeleteAccountEnabled(!t))
+  Signal(isTeam, accounts.isActiveAccountSSO)
+    .map { case (team, sso) => team || sso }
+    .onUi(t => view.setDeleteAccountEnabled(!t))
 
+  accounts.isActiveAccountSSO.onUi { sso =>
+    view.setEmailEnabled(!sso)
+    view.setResetPasswordEnabled(!sso)
+  }
   isPhoneNumberEnabled.onUi(view.setPhoneNumberEnabled)
 
   view.onNameClick.onUi { _ =>
@@ -203,10 +246,11 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } (Threading.Ui)
   }
 
-  view.onEmailClick.onUi { _ =>
+  view.onEmailClick.filter( _ => BuildConfig.ALLOW_CHANGE_OF_EMAIL).onUi { _ =>
     import Threading.Implicits.Ui
     accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
-      case Left(ex) => val (h, b) = DialogErrorMessage.genericError(ex.code)
+      case Left(ex) =>
+        val (h, b) = DialogErrorMessage.genericError(ex.code)
         showErrorDialog(h, b)
       case Right(hasPass) =>
         showPrefDialog(
@@ -257,9 +301,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     }(Threading.Ui)
   }
 
-  view.onPasswordResetClick.onUi { _ =>
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_password_reset))))
-  }
+  view.onPasswordResetClick.onUi { _ => inject[BrowserController].openForgotPassword() }
 
   view.onLogoutClick.onUi { _ =>
     showAlertDialog(context, null,
@@ -306,8 +348,9 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
   }
 
   view.onBackupClick.onUi { _ =>
-    email.head.map {
-      case Some(_) => navigator.goTo(BackupExportKey())
+    Signal(accounts.isActiveAccountSSO, email).head.map {
+      case (true, _)        => navigator.goTo(BackupExportKey())
+      case (false, Some(_)) => navigator.goTo(BackupExportKey())
       case _ =>
         showAlertDialog(context,
           R.string.pref_account_backup_warning_title,
@@ -331,5 +374,11 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       .add(f, tag)
       .addToBackStack(tag)
       .commit
+  }
+
+  inject[UserAccountsController].readReceiptsEnabled.onUi(view.setReadReceipt)
+
+  view.onReadReceiptSwitch { enabled =>
+    zms.head.flatMap(_.propertiesService.setReadReceiptsEnabled(enabled))(Threading.Background)
   }
 }

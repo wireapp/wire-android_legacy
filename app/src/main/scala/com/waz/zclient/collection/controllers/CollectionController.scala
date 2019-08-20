@@ -21,8 +21,8 @@ import java.lang.Math.min
 
 import android.text.SpannableString
 import android.text.style.BackgroundColorSpan
-import com.waz.ZLog._
 import com.waz.api.{ContentSearchQuery, IConversation, Message, TypeFilter}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.SerialDispatchQueue
@@ -32,9 +32,8 @@ import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{Injectable, Injector}
 
-class CollectionController(implicit injector: Injector) extends Injectable {
-
-  private implicit val tag: LogTag = logTagFor[CollectionController]
+class CollectionController(implicit injector: Injector)
+  extends Injectable with DerivedLogTag {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "CollectionController")
 

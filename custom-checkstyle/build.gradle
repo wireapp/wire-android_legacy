@@ -5,5 +5,5 @@ targetCompatibility = rootProject.ext.targetCompatibilityVersion
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation deps.checkstyleapi
+    implementation 'com.puppycrawl.tools:checkstyle:6.18'
 }

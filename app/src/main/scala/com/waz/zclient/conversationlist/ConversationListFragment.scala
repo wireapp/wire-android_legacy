@@ -25,8 +25,7 @@ import android.view.View.{GONE, VISIBLE}
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
@@ -37,6 +36,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.views.{ArchiveTopToolbar, ConversationListTopToolbar, NormalTopToolbar}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -77,12 +77,22 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
     userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
-    convListController.conversationListData(adapterMode).onUi {
-      case (aId, regular, incoming) => a.setData(regular, incoming)
+    adapterMode match {
+      case ConversationListAdapter.Normal =>
+        (for {
+          regular  <- convListController.regularConversationListData
+          incoming <- convListController.incomingConversationListData
+        } yield (regular, incoming)).onUi { case (regular, incoming) =>
+          a.setData(regular, incoming)
+        }
+      case ConversationListAdapter.Archive =>
+        convListController.archiveConversationListData.onUi { archive =>
+          a.setData(archive, (Seq.empty, Seq.empty))
+        }
     }
 
     a.onConversationClick { conv =>
-      verbose(s"handleItemClick, switching conv to $conv")
+      verbose(l"handleItemClick, switching conv to $conv")
       conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
     }
 
@@ -172,6 +182,8 @@ class NormalConversationFragment extends ConversationListFragment {
     clients <- z.otrClientsStorage.incomingClientsSignal(z.selfUserId, z.clientId)
   } yield clients
 
+  private lazy val readReceiptsChanged = zms.flatMap(_.userPrefs(UserPreferences.ReadReceiptsRemotelyChanged).signal)
+
   private lazy val unreadCount = (for {
     Some(accountId) <- accounts.activeAccountId
     count  <- userAccountsController.unreadCount.map(_.filterNot(_._1 == accountId).values.sum)
@@ -179,25 +191,26 @@ class NormalConversationFragment extends ConversationListFragment {
 
   lazy val hasConversationsAndArchive = for {
     z <- zms
-    convs <- z.convsStorage.convsSignal
+    convs <- z.convsStorage.contents
   } yield {
-    (convs.conversations.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
-    convs.conversations.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
+    (convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
+    convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
   }
 
   lazy val archiveEnabled = hasConversationsAndArchive.map(_._2)
 
   private val waitingAccount = Signal[Option[UserId]](None)
 
-  lazy val loading = for {
+  private lazy val loading = for {
     Some(waitingAcc) <- waitingAccount
-    adapterAccount <- convListController.conversationListData(ConversationListAdapter.Normal).map(_._1)
-  } yield waitingAcc != adapterAccount
+    z                <- zms
+    processing       <- z.push.processing
+  } yield processing || waitingAcc != z.selfUserId
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
-    accentColor.map(_.getColor).onUi(color => vh.foreach(_.setIndicatorColor(color)))
-    Signal(unreadCount, incomingClients).onUi {
-      case (count, clients) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0))
+    accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
+    Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
+      case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
   }
 
@@ -245,7 +258,7 @@ class NormalConversationFragment extends ConversationListFragment {
     super.onViewCreated(v, savedInstanceState)
 
     for {
-      convList <- conversationListView
+      convList    <- conversationListView
       actionsList <- listActionsView
     } yield {
       convList.addOnScrollListener(listActionsScrollListener)
@@ -289,7 +302,6 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 
   private def showLoading(): Unit = {
-    conversationListView.foreach(_.setVisibility(View.INVISIBLE))
     loadingListView.foreach { lv =>
       lv.setAlpha(1f)
       lv.setVisibility(VISIBLE)
@@ -299,16 +311,12 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 
   private def hideLoading(): Unit = {
-    conversationListView.foreach { lv =>
-      if (lv.getVisibility != VISIBLE) {
-        lv.setVisibility(VISIBLE)
-        lv.setAlpha(0f)
-        lv.animate().alpha(1f).setDuration(500)
-      }
-    }
     listActionsView.foreach(_.animate().alpha(1f).setDuration(500))
-    loadingListView.foreach(_.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
-      override def run() = loadingListView.foreach(_.setVisibility(GONE))
+    loadingListView.foreach(v => v.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
+      override def run() = {
+        if (NormalConversationFragment.this != null)
+          v.setVisibility(GONE)
+      }
     }))
 
     topToolbar.foreach(_.setLoading(false))

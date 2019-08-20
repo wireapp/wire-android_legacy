@@ -30,7 +30,7 @@
     <com.waz.zclient.ui.text.TypefaceTextView
         android:layout_width="match_parent"
         android:gravity="left"
-        android:textColor="@color/framework_confirmation_menu_text_font_color_disabled"
+        android:textColor="@color/framework_confirmation_menu_text_disabled"
         android:textSize="@dimen/framework_confirmation_menu_text_font_size"
         app:w_font="@string/framework_confirmation_menu_text_font"
         android:layout_height="wrap_content"

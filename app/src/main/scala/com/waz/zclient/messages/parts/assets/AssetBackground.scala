@@ -19,7 +19,7 @@ package com.waz.zclient.messages.parts.assets
 
 import android.graphics._
 import android.graphics.drawable.Drawable
-import com.waz.api.AccentColor
+import com.waz.model.AccentColor
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.views.ProgressDotsDrawable
@@ -54,7 +54,7 @@ class AssetBackground(showDots: Signal[Boolean], expired: Signal[Boolean], accen
       _showDots = dots
       _padding = pad
 
-      if (exp) backgroundPaint.setColor(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(context), acc.getColor))
+      if (exp) backgroundPaint.setColor(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(context), acc.color))
       else backgroundPaint.setColor(defColor)
 
       invalidateSelf()

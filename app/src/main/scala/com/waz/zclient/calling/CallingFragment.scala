@@ -23,9 +23,8 @@ import android.os.Bundle
 import android.support.v7.widget.{CardView, GridLayout}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.avs.{VideoPreview, VideoRenderer}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Dim2, UserId}
 import com.waz.service.call.Avs.VideoState
 import com.waz.threading.{SerialDispatchQueue, Threading}
@@ -35,6 +34,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.{ThemeController, ThemeControllingFrameLayout}
 import com.waz.zclient.common.views.BackgroundDrawable
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode.{GenericStyleKitView, WireStyleKit}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
@@ -68,11 +68,24 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
     _.setBackgroundColor(getColor(R.color.black_16))
   }
 
-  protected def registerHandler(view: View) =
+  protected def registerHandler(view: View) = {
     controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
       case _                 => view.fadeIn()
     }
+    view match {
+      case vr: VideoRenderer =>
+        controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
+          case VideoState.ScreenShare =>
+            vr.setShouldFill(false)
+            vr.setFillRatio(1.5f)
+          case _ =>
+            vr.setShouldFill(true)
+            vr.setFillRatio(1.0f)
+        }
+      case _ =>
+    }
+  }
 
   Signal(controller.controlsVisible, shouldShowInfo, controller.isCallIncoming).onUi {
     case (_, true, true) |
@@ -89,7 +102,9 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
   val shouldShowInfo: Signal[Boolean]
 }
 
-class SelfVideoView(context: Context, userId: UserId) extends UserVideoView(context, userId) {
+class SelfVideoView(context: Context, userId: UserId)
+  extends UserVideoView(context, userId) with DerivedLogTag {
+
   protected val muteIcon = returning(findById[GenericStyleKitView](R.id.mute_icon)) { icon =>
     icon.setOnDraw(WireStyleKit.drawMute)
   }
@@ -146,14 +161,14 @@ class CallingFragment extends FragmentHelper {
       vh.foreach { v =>
         val videoUsers = vrs.toSeq.collect {
           case (userId, _) if userId == selfId && videoCall && incoming => userId
-          case (userId, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission) => userId
+          case (userId, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => userId
         }
         val views = videoUsers.map { uId => viewMap.getOrElse(uId, createView(uId))}
 
         viewMap.get(selfId).foreach { selfView =>
           previewCardView.foreach { cardView =>
             if (views.size == 2 && isVideoBeingSent) {
-              verbose("Showing card preview")
+              verbose(l"Showing card preview")
               cardView.removeAllViews()
               v.removeView(selfView)
               selfView.setLayoutParams(
@@ -165,7 +180,7 @@ class CallingFragment extends FragmentHelper {
               cardView.addView(selfView)
               cardView.setVisibility(View.VISIBLE)
             } else {
-              verbose("Hiding card preview")
+              verbose(l"Hiding card preview")
               cardView.removeAllViews()
               cardView.setVisibility(View.GONE)
             }
@@ -233,7 +248,7 @@ class CallingFragment extends FragmentHelper {
   }
 
   override def onBackPressed() = {
-    withFragmentOpt(R.id.controls_layout) {
+    withChildFragmentOpt(R.id.controls_layout) {
       case Some(f: FragmentHelper) if f.onBackPressed()               => true
       case Some(_) if getChildFragmentManager.popBackStackImmediate() => true
       case _ => super.onBackPressed()
@@ -247,6 +262,6 @@ class CallingFragment extends FragmentHelper {
 }
 
 object CallingFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
   def apply(): CallingFragment = new CallingFragment()
 }

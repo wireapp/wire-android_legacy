@@ -22,8 +22,8 @@ import android.graphics.drawable.{ColorDrawable, Drawable}
 import android.graphics.{Canvas, Paint, RectF}
 import android.view.View
 import android.widget.{ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.AccentColor
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.AccentColor
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.returning
@@ -54,7 +54,7 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
     typeface { textView.setTypeface }
     color {
       case Left(csl) => textView.setTextColor(csl)
-      case Right(ac) => textView.setTextColor(ac.getColor())
+      case Right(ac) => textView.setTextColor(ac.color)
     }
   }
 
@@ -63,7 +63,7 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
       hide <- expired
       acc <- accentController.accentColor
     } yield
-      if (hide) new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(getContext), acc.getColor()))
+      if (hide) new ColorDrawable(ColorUtils.injectAlpha(ThemeUtils.getEphemeralBackgroundAlpha(getContext), acc.color))
       else drawable
 
   def registerEphemeral(view: View, background: Drawable): Unit =
@@ -73,7 +73,10 @@ trait EphemeralPartView extends MessageViewPart { self: ViewHelper =>
     ephemeralDrawable(imageDrawable).on(Threading.Ui) { imageView.setImageDrawable }
 }
 
-trait EphemeralIndicatorPartView extends MessageViewPart with ViewHelper {
+trait EphemeralIndicatorPartView
+  extends MessageViewPart
+    with ViewHelper
+    with DerivedLogTag {
 
   private val paint = returning(new Paint(Paint.ANTI_ALIAS_FLAG))(_.setColor(getColor(R.color.white_80)))
   private val bgPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG))(_.setColor(getColor(R.color.light_graphite)))

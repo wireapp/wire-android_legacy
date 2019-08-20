@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.ImageView
-import com.waz.ZLog.ImplicitTag._
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -35,25 +34,28 @@ import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.WireImage
 import com.waz.zclient.connect.PendingConnectRequestFragment.ArgUserRequester
+import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.connect.UserProfileContainer
+import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.participants.ProfileAnimation
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{GuestUtils, StringUtils, RichView}
+import com.waz.zclient.utils.{GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
-class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment.Container]
-  with FragmentHelper {
+class SendConnectRequestFragment
+  extends BaseFragment[SendConnectRequestFragment.Container] with FragmentHelper {
 
   import SendConnectRequestFragment._
   import Threading.Implicits.Ui
@@ -70,6 +72,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val themeController = inject[ThemeController]
+  private lazy val navController = inject[INavigationController]
 
   private lazy val user = usersController.user(userToConnectId)
 
@@ -78,11 +81,18 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
     permission <- userAccountsController.hasRemoveConversationMemberPermission(convId)
   } yield permission && userRequester == UserRequester.PARTICIPANTS
 
+  private lazy val returnPage =
+    if (userRequester == UserRequester.PARTICIPANTS || userRequester == UserRequester.DEEP_LINK)
+      Page.CONVERSATION_LIST
+    else
+      Page.PICK_USER
+
   private lazy val connectButton = returning(view[ZetaButton](R.id.zb__send_connect_request__connect_button)) { vh =>
-    accentColorController.accentColor.onUi { color => vh.foreach(_.setAccentColor(color.getColor)) }
+    accentColorController.accentColor.map(_.color).onUi { color => vh.foreach(_.setAccentColor(color)) }
     vh.onClick { _ =>
       usersController.connectToUser(userToConnectId).foreach(_.foreach { _ =>
         keyboardController.hideKeyboardIfVisible()
+        navController.setLeftPage(returnPage, SendConnectRequestFragment.Tag)
         getContainer.onConnectRequestWasSentToUser()
       })
     }
@@ -98,7 +108,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
       }
     }
     removeConvMemberFeatureEnabled.map {
-      case true => getString(R.string.glyph__minus)
+      case true => getString(R.string.glyph__more)
       case _ => ""
     }.onUi(text => vh.foreach(_.setRightActionText(text)))
   }
@@ -132,7 +142,7 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
       expires <- user.map(_.expiresAt)
       clock <- if (expires.isDefined) ClockSignal(5.minutes) else Signal.const(Instant.EPOCH)
     } yield expires match {
-      case Some(expiresAt) => GuestUtils.timeRemainingString(expiresAt, clock)
+      case Some(expiresAt) => GuestUtils.timeRemainingString(expiresAt.instant, clock)
       case _ => ""
     }).onUi(t => text.foreach(_.setText(t)))
   }
@@ -191,12 +201,17 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
 
     footerMenu.foreach(_.setCallback(new FooterMenuCallback {
       override def onLeftActionClicked(): Unit = user.map(_.expiresAt.isDefined).head.foreach {
-        case false => showConnectButtonInsteadOfFooterMenu()
+        case false =>
+          showConnectButtonInsteadOfFooterMenu()
         case _ =>
       }
 
-      override def onRightActionClicked(): Unit = removeConvMemberFeatureEnabled.head foreach {
-        case true => getContainer.showRemoveConfirmation(userToConnectId)
+      override def onRightActionClicked(): Unit = removeConvMemberFeatureEnabled.head.foreach {
+        case true =>
+          conversationController.currentConv.head.foreach { conv =>
+            if (conv.isActive)
+              inject[IConversationScreenController].showConversationMenu(false, conv.id)
+          }
         case _ =>
       }
     }))
@@ -214,6 +229,12 @@ class SendConnectRequestFragment extends BaseFragment[SendConnectRequestFragment
       connectButton.setVisibility(View.VISIBLE)
       connectButton.fadeIn(FiniteDuration(getInt(R.integer.framework_animation_duration_long), MILLISECONDS))
     }
+  }
+
+  override def onBackPressed(): Boolean = {
+    navController.setLeftPage(returnPage, SendConnectRequestFragment.Tag)
+    inject[IPickUserController].hideUserProfile()
+    true
   }
 }
 

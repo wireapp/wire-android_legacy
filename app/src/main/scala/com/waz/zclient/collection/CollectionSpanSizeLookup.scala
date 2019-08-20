@@ -21,15 +21,14 @@ import android.annotation.TargetApi
 import android.os.Build
 import android.support.v7.widget.{GridLayoutManager, RecyclerView}
 import android.util.SparseArray
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning
 import com.waz.zclient.collection.adapters.CollectionAdapter
 
-class CollectionSpanSizeLookup(val spanCount: Int, val adapter: CollectionAdapter)(implicit eventContext: EventContext) extends GridLayoutManager.SpanSizeLookup {
-
-  private implicit val tag: LogTag = logTagFor[CollectionSpanSizeLookup]
-
+class CollectionSpanSizeLookup(val spanCount: Int, val adapter: CollectionAdapter)(implicit eventContext: EventContext)
+  extends GridLayoutManager.SpanSizeLookup with DerivedLogTag {
+  
   private val spanIndexCache = new SparseArray[Int]()
   private val spanSizeCache = new SparseArray[Int]()
 

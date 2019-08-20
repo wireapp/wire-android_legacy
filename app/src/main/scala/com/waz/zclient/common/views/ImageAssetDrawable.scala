@@ -21,8 +21,8 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.graphics._
 import android.graphics.drawable.Drawable
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetData.{IsImage, IsVideo}
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model._
@@ -47,7 +47,10 @@ class ImageAssetDrawable(src: Signal[ImageSource],
                          background: Option[Drawable] = None,
                          animate: Boolean = true,
                          forceDownload: Boolean = true)
-                        (implicit inj: Injector, eventContext: EventContext) extends Drawable with Injectable {
+                        (implicit inj: Injector, eventContext: EventContext)
+  extends Drawable
+    with Injectable
+    with DerivedLogTag {
 
   val images = inject[ImageController]
 
@@ -108,15 +111,6 @@ class ImageAssetDrawable(src: Signal[ImageSource],
 
   override def draw(canvas: Canvas): Unit = {
 
-    // will only use fadeIn if we previously displayed an empty bitmap
-    // this way we can avoid animating if view was recycled
-    def resetAnimation(state: State) = {
-      animator.cancel()
-      if (state.bmp.nonEmpty && prev.exists(_.bmp.isEmpty)) {
-        animator.start()
-      }
-    }
-
     def updateMatrix(b: Bitmap) = {
       val bounds = fixedBounds.currentValue.flatten.fold(getBounds)(b => b)
       val p = padding.currentValue.getOrElse(Offset.Empty)
@@ -124,14 +118,20 @@ class ImageAssetDrawable(src: Signal[ImageSource],
       matrix.postTranslate(bounds.left + p.l, bounds.top + p.t)
     }
 
-    def updateDrawingState(state: State) = {
-      state.bmp foreach updateMatrix
-      if (prev.forall(p => p.src != state.src || p.bmp.isEmpty != state.bmp.isEmpty)) resetAnimation(state)
-    }
+    // will only use fadeIn if we previously displayed an empty bitmap
+    // this way we can avoid animating if view was recycled
+    def updateAnimationState(state: State) =
+      if (prev.forall(p => p.src != state.src || p.bmp.isEmpty != state.bmp.isEmpty)) {
+        animator.cancel()
+        if (state.bmp.nonEmpty && prev.exists(_.bmp.isEmpty)) {
+          animator.start()
+        }
+      }
 
     _state foreach { st =>
+      st.bmp foreach updateMatrix
       if (!prev.contains(st)) {
-        updateDrawingState(st)
+        updateAnimationState(st)
         prev = Some(st)
       }
 
@@ -206,6 +206,16 @@ object ImageAssetDrawable {
         matrix.postTranslate(dx, dy)
       }
     }
+    case object StartInside extends ScaleType {
+      override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
+        val scale = math.min(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
+        val dx = - (w * scale - viewSize.width) / 2
+        val dy = - (h * scale - viewSize.height) / 2
+
+        matrix.setScale(scale, scale)
+        matrix.postTranslate(0, dy)
+      }
+    }
     case object CenterXCrop extends ScaleType {
       override def apply(matrix: Matrix, w: Int, h: Int, viewSize: Dim2): Unit = {
         val scale = math.max(viewSize.width.toFloat / w, viewSize.height.toFloat / h)
@@ -247,7 +257,7 @@ object ImageAssetDrawable {
     val asset = AssetData.newImageAsset(tag = Medium).copy(sizeInBytes = imageData.length, data = Some(imageData))
     new ImageAssetDrawable(
       Signal.const(DataImage(asset)),
-      scaleType = ScaleType.CenterCrop,
+      scaleType = ScaleType.CenterInside,
       request = if (isMirrored) RequestBuilder.RegularMirrored else RequestBuilder.Regular
     )
   }
@@ -286,45 +296,50 @@ class IntegrationAssetDrawable (
                                   animate: Boolean = true
                                 )(implicit inj: Injector, eventContext: EventContext) extends ImageAssetDrawable(src, scaleType, request, background, animate) {
 
-  private val StrokeWidth = 2f
-  private val StrokeAlpha = 20
-
-  val drawHelper = IntegrationSquareDrawHelper()
+  val drawHelper = IntegrationSquareDrawHelper(scaleType)
 
   override protected def drawBitmap(canvas: Canvas, bm: Bitmap, matrix: Matrix, bitmapPaint: Paint): Unit =
     drawHelper.draw(canvas, bm, getBounds, matrix, bitmapPaint)
 }
 
-case class IntegrationSquareDrawHelper() {
+case class IntegrationSquareDrawHelper(scaleType: ScaleType ) {
 
-  private val StrokeWidth = 2f
   private val StrokeAlpha = 20
+  private val padding = 0.1f
 
   private lazy val whitePaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)){ _.setColor(Color.WHITE) }
   private lazy val borderPaint = returning(new Paint(Paint.ANTI_ALIAS_FLAG)) { paint =>
     paint.setStyle(Paint.Style.STROKE)
     paint.setColor(Color.BLACK)
     paint.setAlpha(StrokeAlpha)
-    paint.setStrokeWidth(StrokeWidth)
   }
 
   def cornerRadius(size: Float) = size * 0.2f
+  def strokeWidth(size: Float) = size * 5f / 500f
 
   def draw(canvas: Canvas, bm: Bitmap, bounds: Rect, matrix: Matrix, bitmapPaint: Paint): Unit = {
-    val tempBm = Bitmap.createBitmap(bounds.width, bounds.height, Bitmap.Config.ARGB_8888)
+
+    val strokeW = strokeWidth(bounds.width)
+
+    borderPaint.setStrokeWidth(strokeW)
+    val outerRect = new RectF(strokeW, strokeW, bounds.width - strokeW, bounds.height - strokeW)
+    val backgroundRect = new RectF(strokeW, strokeW, bounds.width - strokeW, bounds.height - strokeW)
+    val innerRect = new RectF(padding * bounds.width, padding * bounds.height, bounds.width - padding * bounds.width, bounds.height - padding * bounds.height)
+
+    val matrix2 = new Matrix()
+    scaleType(matrix2, bm.getWidth, bm.getHeight, Dim2(innerRect.width.toInt, innerRect.height.toInt))
+    matrix2.postTranslate(innerRect.left, innerRect.top)
+
+    val tempBm = Bitmap.createBitmap(bounds.width, bounds.height(), Bitmap.Config.ARGB_8888)
     val tempCanvas = new Canvas(tempBm)
-
-    tempCanvas.drawBitmap(bm, matrix, null)
-
+    tempCanvas.drawBitmap(bm, matrix2, null)
     val shader = new BitmapShader(tempBm, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-    val outerRect = new RectF(StrokeWidth, StrokeWidth, bounds.width - StrokeWidth, bounds.height - StrokeWidth)
-    val innerRect = new RectF(StrokeWidth * 2, StrokeWidth * 2, bounds.width - StrokeWidth * 2, bounds.height - StrokeWidth * 2)
 
     val radius = cornerRadius(bounds.width)
 
     bitmapPaint.setShader(shader)
-    canvas.drawRoundRect(innerRect, radius, radius, whitePaint)
-    canvas.drawRoundRect(innerRect, radius, radius, bitmapPaint)
+    canvas.drawRoundRect(backgroundRect, radius, radius, whitePaint)
+    canvas.drawRoundRect(innerRect, 0, 0, bitmapPaint)
     canvas.drawRoundRect(outerRect, radius, radius, borderPaint)
   }
 }
@@ -333,20 +348,19 @@ class ImageController(implicit inj: Injector) extends Injectable {
 
   val zMessaging = inject[Signal[ZMessaging]]
 
-  def imageData(id: AssetId) = zMessaging.flatMap {
-    zms => zms.assetsStorage.signal(id).flatMap {
+  def imageData(id: AssetId, zms: ZMessaging) =
+    zms.assetsStorage.signal(id).flatMap {
       case a@IsImage() => Signal.const(a)
       case a@IsVideo() => a.previewId.fold(Signal.const(AssetData.Empty))(zms.assetsStorage.signal)
       case _ => Signal.const(AssetData.Empty)
     }
-  }
 
   def imageSignal(id: AssetId, req: BitmapRequest, forceDownload: Boolean): Signal[BitmapResult] =
     zMessaging.flatMap(imageSignal(_, id, req, forceDownload))
 
   def imageSignal(zms: ZMessaging, id: AssetId, req: BitmapRequest, forceDownload: Boolean = true): Signal[BitmapResult] =
     for {
-      data <- imageData(id)
+      data <- imageData(id, zms)
       res <- BitmapSignal(data, req, zms.imageLoader, zms.network, zms.assetsStorage.get, zms.userPrefs.preference(UserPreferences.DownloadImagesAlways).signal, forceDownload)
     } yield res
 

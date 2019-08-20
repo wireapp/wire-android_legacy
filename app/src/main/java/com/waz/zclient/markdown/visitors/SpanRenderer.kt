@@ -23,6 +23,7 @@ import android.text.style.LeadingMarginSpan
 import android.text.style.TabStopSpan
 import com.waz.zclient.markdown.StyleSheet
 import com.waz.zclient.markdown.spans.custom.ListPrefixSpan
+import com.waz.zclient.markdown.spans.custom.ParagraphSpacingSpan
 import com.waz.zclient.markdown.utils.*
 import org.commonmark.internal.renderer.text.BulletListHolder
 import org.commonmark.internal.renderer.text.ListHolder
@@ -40,7 +41,6 @@ import org.commonmark.renderer.NodeRenderer
  */
 class SpanRenderer(private val styleSheet: StyleSheet) : AbstractVisitor(), NodeRenderer {
 
-    // TODO: make this an option
     val softBreaksAsHardBreaks = true
     val spannableString: SpannableString get() = writer.spannableString.trim() as SpannableString
 
@@ -275,6 +275,9 @@ class SpanRenderer(private val styleSheet: StyleSheet) : AbstractVisitor(), Node
             writer.set(LeadingMarginSpan.Standard(indentation + standardPrefixWidth), b1, b2)
         }
 
+        // before and after spacing, from item start up to nested list or item end
+        writer.set(ParagraphSpacingSpan(styleSheet.listItemSpacingBefore, styleSheet.listItemSpacingAfter), start, b2 ?: b1)
+
         // finally, the span for the whole item
         writer.set(styleSheet.spanFor(listItem), start)
     }
@@ -297,6 +300,7 @@ class SpanRenderer(private val styleSheet: StyleSheet) : AbstractVisitor(), Node
         if (htmlBlock == null) return
         writer.saveCursor()
         writer.write(htmlBlock.literal)
+        writeLineIfNeeded(htmlBlock)
         writer.set(styleSheet.spanFor(htmlBlock), writer.retrieveCursor())
     }
 
@@ -309,7 +313,6 @@ class SpanRenderer(private val styleSheet: StyleSheet) : AbstractVisitor(), Node
 
     override fun visit(image: Image?) {
         if (image == null) return
-        // TODO: write raw input b/c this is unsupported
         writer.saveCursor()
         visitChildren(image)
         writer.set(styleSheet.spanFor(image), writer.retrieveCursor())
@@ -377,8 +380,7 @@ class SpanRenderer(private val styleSheet: StyleSheet) : AbstractVisitor(), Node
             is Paragraph -> if (!node.isOuterMost) return
             else -> { }
         }
-
-        // TODO: we might want to prohibit adding newline if it is the last node
+        
         writer.lineIfNeeded()
     }
 }

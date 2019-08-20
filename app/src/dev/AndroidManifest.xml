@@ -23,8 +23,6 @@
         android:name="com.waz.zclient.StethoApplication"
         tools:replace="android:name">
 
-        <activity android:name="net.hockeyapp.android.UpdateActivity" />
-
         <receiver tools:ignore="ExportedReceiver" android:name="com.waz.zclient.PreferenceReceiver" android:enabled="true" android:exported="true">
             <intent-filter>
                 <action android:name="${applicationId}.intent.action.AUTO_ANSWER_CALL" />
@@ -42,11 +40,10 @@
                 <action android:name="${applicationId}.intent.action.DISABLE_TRACKING" />
                 <action android:name="${applicationId}.intent.action.HIDE_GDPR_POPUPS" />
                 <action android:name="${applicationId}.intent.action.FULL_CONVERSATION_INTENT" />
+                <action android:name="${applicationId}.intent.action.SELECT_STAGING_BE" />
+                <action android:name="${applicationId}.intent.action.SELECT_PROD_BE" />
             </intent-filter>
         </receiver>
 
-        <!--<meta-data-->
-            <!--android:name="com.mixpanel.android.MPConfig.EnableDebugLogging"-->
-            <!--android:value="true" />-->
     </application>
 </manifest>

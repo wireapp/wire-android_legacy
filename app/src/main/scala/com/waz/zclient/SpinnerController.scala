@@ -25,7 +25,7 @@ class SpinnerController(implicit inj: Injector, cxt: WireContext, eventContext: 
 
   val spinnerShowing: SourceSignal[SpinnerParameters] = Signal(Hide())
 
-  def showSpinner(animationType: AnimationType = Spinner, forcedTheme: Option[Boolean] = None): Unit = spinnerShowing ! Show(animationType, forcedTheme)
+  def showSpinner(animationType: AnimationType = Spinner, forcedIsDarkTheme: Option[Boolean] = None): Unit = spinnerShowing ! Show(animationType, forcedIsDarkTheme)
 
   def hideSpinner(message: Option[String] = None): Unit = spinnerShowing ! Hide(message)
 
@@ -35,6 +35,6 @@ class SpinnerController(implicit inj: Injector, cxt: WireContext, eventContext: 
 
 object SpinnerController {
   sealed trait SpinnerParameters
-  case class Show(animationType: AnimationType, forcedTheme: Option[Boolean] = None) extends SpinnerParameters
+  case class Show(animationType: AnimationType, forcedIsDarkTheme: Option[Boolean] = None) extends SpinnerParameters
   case class Hide(message: Option[String] = None) extends SpinnerParameters
 }

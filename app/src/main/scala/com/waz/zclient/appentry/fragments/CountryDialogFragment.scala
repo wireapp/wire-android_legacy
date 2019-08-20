@@ -42,7 +42,7 @@ class CountryDialogFragment extends DialogFragment with FragmentHelper with Adap
     val listView = findById[ListView](view, R.id.lv__country_code)
     listView.setAdapter(countryAdapter)
     listView.setOnItemClickListener(this)
-    listView.setDivider(new ColorDrawable(ContextCompat.getColor(getActivity, R.color.country_divider_color)))
+    listView.setDivider(new ColorDrawable(ContextCompat.getColor(getActivity, R.color.country_divider)))
     listView.setDividerHeight(ViewUtils.toPx(getActivity, 1))
 
     new AlertDialog.Builder(getActivity).setView(view).setCancelable(true).create

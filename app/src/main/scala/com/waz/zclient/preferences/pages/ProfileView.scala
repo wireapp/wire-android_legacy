@@ -20,25 +20,20 @@ package com.waz.zclient.preferences.pages
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.AccentColor
 import com.waz.content.UserPreferences
 import com.waz.model.otr.Client
-import com.waz.model.{AccountDataOld, Availability}
+import com.waz.model.{AccentColor, Availability, UserPermissions}
 import com.waz.service.tracking.TrackingService
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
@@ -46,13 +41,19 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.preferences.views.TextButton
 import com.waz.zclient.tracking.OpenedManageTeam
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal, ZTimeFormatter}
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.Time.TimeStamp
+import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views.AvailabilityView
-import org.threeten.bp.{LocalDateTime, ZoneId}
+import ProfileViewController.MaxAccountsCount
+import BuildConfig.ACCOUNT_CREATION_ENABLED
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.appentry.AppEntryActivity
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
   val onManageTeamClick: EventStream[Unit]
+  val onReadReceiptsDismissed: EventStream[Unit]
 
   def setUserName(name: String): Unit
   def setAvailability(visible: Boolean, availability: Availability): Unit
@@ -63,6 +64,8 @@ trait ProfileView {
   def showNewDevicesDialog(devices: Seq[Client]): Unit
   def setManageTeamEnabled(enabled: Boolean): Unit
   def setAddAccountEnabled(enabled: Boolean): Unit
+  def showReadReceiptsChanged(current: Boolean): Unit
+  def clearDialog(): Unit
 }
 
 class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ProfileView with ViewHelper {
@@ -83,17 +86,24 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val settingsButton = findById[TextButton](R.id.profile_settings)
 
   override val onDevicesDialogAccept = EventStream[Unit]()
+  override val onReadReceiptsDismissed = EventStream[Unit]()
   override val onManageTeamClick: EventStream[Unit] = teamButton.onClickEvent.map(_ => ())
 
-  private var deviceDialog = Option.empty[AlertDialog]
+  private var dialog = Option.empty[AlertDialog]
 
-  teamButton.onClickEvent.on(Threading.Ui) { _ =>
-    context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(R.string.pref_manage_team_url)))) }
+  teamButton.onClickEvent.on(Threading.Ui) { _ => inject[BrowserController].openPrefsManageTeam() }
   teamButton.setVisible(false)
   teamDivider.setVisible(false)
 
-  newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
-    new ProfileBottomSheetDialog(context, R.style.message__bottom_sheet__base).show()
+  if(MaxAccountsCount > 1 && ACCOUNT_CREATION_ENABLED) {
+    newTeamButton.setVisible(true)
+    newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
+      // We want to go directly to the landing page.
+      val intent = new Intent(getContext, classOf[AppEntryActivity])
+      getContext.startActivity(intent)
+    }
+  } else {
+    newTeamButton.setVisible(false)
   }
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
@@ -134,12 +144,16 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     teamDivider.setVisibility(if (enabled) View.VISIBLE else View.INVISIBLE)
   }
 
+  def clearDialog(): Unit = {
+    dialog.foreach(_.dismiss())
+    dialog = None
+  }
+
   override def showNewDevicesDialog(devices: Seq[Client]) = {
-    deviceDialog.foreach(_.dismiss())
-    deviceDialog = None
+    clearDialog()
     if (devices.nonEmpty) {
       val builder = new AlertDialog.Builder(context)
-      deviceDialog = Option(builder.setTitle(R.string.new_devices_dialog_title)
+      dialog = Option(builder.setTitle(R.string.new_devices_dialog_title)
         .setMessage(getNewDevicesMessage(devices))
         .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener {
           override def onClick(dialog: DialogInterface, which: Int) = {
@@ -157,20 +171,34 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     }
   }
 
+  override def showReadReceiptsChanged(current: Boolean): Unit = {
+    clearDialog()
+    val builder = new AlertDialog.Builder(context)
+    builder
+      .setTitle(if (current) R.string.read_receipts_remotely_enabled_title else R.string.read_receipts_remotely_disabled_title)
+      .setMessage(getString(R.string.read_receipts_remotely_changed_message))
+      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int) = {
+          dialog.dismiss()
+          onReadReceiptsDismissed ! (())
+        }
+      })
+      .setCancelable(false)
+
+    dialog = Option(builder.show())
+  }
+
   override def setAddAccountEnabled(enabled: Boolean): Unit = {
     newTeamButton.setEnabled(enabled)
     newTeamButton.setAlpha(if (enabled) 1f else 0.5f)
   }
 
   private def getNewDevicesMessage(devices: Seq[Client]): String = {
-    val now = LocalDateTime.now(ZoneId.systemDefault)
-
     val deviceNames = devices.map { device =>
       val time =
         device.regTime match {
           case Some(regTime) =>
-            ZTimeFormatter.getSeparatorTime(context, now, LocalDateTime.ofInstant(regTime, ZoneId.systemDefault),
-              DateFormat.is24HourFormat(context), ZoneId.systemDefault, false)
+            TimeStamp(regTime).string
           case _ =>
             ""
         }
@@ -184,7 +212,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
 }
 object ProfileView {
-  val Tag = ZLog.logTagFor[ProfileView]
+  val Tag: String = getClass.getSimpleName
 }
 
 case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey(args) {
@@ -204,7 +232,9 @@ case class ProfileBackStackKey(args: Bundle = new Bundle()) extends BackStackKey
   }
 }
 
-class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext) extends Injectable {
+class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import ProfileViewController._
 
   implicit val uiStorage = inject[UiStorage]
@@ -214,6 +244,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   lazy val tracking        = inject[TrackingService]
   lazy val usersController = inject[UsersController]
   lazy val usersAccounts   = inject[UserAccountsController]
+  private lazy val userPrefs = zms.map(_.userPrefs)
 
   val currentUser = accounts.activeAccountId.collect { case Some(id) => id }
 
@@ -235,16 +266,15 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   view.setProfilePictureDrawable(new ImageAssetDrawable(selfPicture, scaleType = ScaleType.CenterInside, request = RequestBuilder.Round))
 
   self.on(Threading.Ui) { self =>
-    view.setAccentColor(AccentColor(self.accent).getColor())
+    view.setAccentColor(AccentColor(self.accent).color)
     self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
     view.setUserName(self.getDisplayName)
   }
 
   for {
     userId    <- currentUser
-    avVisible <- usersController.availabilityVisible
     av <- usersController.availability(userId)
-  } yield (av)
+  } yield av
 
   usersController.availabilityVisible.zip(self.map(_.availability)).on(Threading.Ui) {
     case (visible, availability) => view.setAvailability(visible, availability)
@@ -252,21 +282,45 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
 
   team.on(Threading.Ui) { team => view.setTeamName(team.map(_.name)) }
 
-  incomingClients.onUi { clients => view.showNewDevicesDialog(clients) }
+  type DialogInfo = Either[Seq[Client], Boolean]
+
+  private val dialogInfo: Signal[Option[DialogInfo]] = for {
+    clients <- incomingClients
+    rrChanged <- userPrefs.flatMap(_(UserPreferences.ReadReceiptsRemotelyChanged).signal)
+    currentRR <- usersAccounts.readReceiptsEnabled
+  } yield if (clients.nonEmpty)
+      Some(Left(clients))
+    else if (rrChanged)
+      Some(Right(currentRR))
+    else
+      None
+
+  dialogInfo.onUi {
+    case Some(Left(clients)) => view.showNewDevicesDialog(clients)
+    case Some(Right(currentRR)) => view.showReadReceiptsChanged(currentRR)
+    case _ => view.clearDialog()
+  }
 
   view.onDevicesDialogAccept.on(Threading.Background) { _ =>
     zms.head.flatMap(z => z.otrClientsService.updateUnknownToUnverified(z.selfUserId))(Threading.Background)
   }
 
+  view.onReadReceiptsDismissed.on(Threading.Background) { _ =>
+    userPrefs.head.flatMap(prefs => prefs(UserPreferences.ReadReceiptsRemotelyChanged) := false)(Threading.Background)
+  }
+
   usersAccounts.selfPermissions
-    .map(_.contains(AccountDataOld.Permission.AddTeamMember))
+    .map(_.contains(UserPermissions.Permission.AddTeamMember))
     .onUi(view.setManageTeamEnabled)
 
-  ZMessaging.currentAccounts.accountsWithManagers.map(_.size < MaxAccountsCount).onUi(view.setAddAccountEnabled)
+
+  if (ACCOUNT_CREATION_ENABLED) {
+    ZMessaging.currentAccounts.accountsWithManagers.map(_.size < MaxAccountsCount).onUi(view.setAddAccountEnabled)
+  }
 
   view.onManageTeamClick { _ => tracking.track(OpenedManageTeam(), currentUser.currentValue) }
 }
 
 object ProfileViewController {
-  val MaxAccountsCount = 2
+  val MaxAccountsCount = BuildConfig.MAX_ACCOUNTS
 }

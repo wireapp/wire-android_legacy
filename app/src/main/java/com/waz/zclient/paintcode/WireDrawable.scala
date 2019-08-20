@@ -24,6 +24,7 @@ import com.waz.model.EphemeralDuration.TimeUnit
 import com.waz.utils.returning
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.paintcode.WireStyleKit._
+import com.waz.zclient.utils.ResColor
 
 trait WireDrawable extends Drawable {
 
@@ -109,6 +110,11 @@ case class CreateGroupIcon(colorRes: Int)(implicit context: Context) extends Wir
   override def draw(canvas: Canvas) = drawGroupIcon(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
 }
 
+case class ManageServicesIcon(color: ResColor)(implicit context: Context) extends WireDrawable {
+  setColor(color.resolve)
+  override def draw(canvas: Canvas) = drawServiceIcon(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
+}
+
 case class GuestIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
   setColor(getColor(colorRes))
   override def draw(canvas: Canvas) = drawGuestIcon(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
@@ -119,9 +125,19 @@ case class GuestIconWithColor(color: Int)(implicit context: Context) extends Wir
   override def draw(canvas: Canvas) = drawGuestIcon(canvas, new RectF(canvas.getClipBounds), ResizingBehavior.AspectFit, paint.getColor)
 }
 
+case class ViewWithColor(color: Int)(implicit context: Context) extends WireDrawable {
+  setColor(color)
+  override def draw(canvas: Canvas) = drawView(canvas, new RectF(canvas.getClipBounds), ResizingBehavior.AspectFit, paint.getColor)
+}
+
 case class ForwardNavigationIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
   setColor(getColor(colorRes))
   override def draw(canvas: Canvas) = drawNavigationArrow(canvas, new RectF(canvas.getClipBounds), ResizingBehavior.AspectFit, paint.getColor)
+}
+
+case class DropdownIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
+  setColor(getColor(colorRes))
+  override def draw(canvas: Canvas) = drawDropdown(canvas, new RectF(canvas.getClipBounds), ResizingBehavior.AspectFit, paint.getColor)
 }
 
 case class BackupRestoreIcon(color: Int)(implicit context: Context) extends WireDrawable {
@@ -137,6 +153,11 @@ case class VideoIcon(colorRes: Int)(implicit context: Context) extends WireDrawa
 case class ConversationIcon(colorRes: Int)(implicit context: Context) extends WireDrawable {
   setColor(getColor(colorRes))
   override def draw(canvas: Canvas) = drawConversation(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
+}
+
+case class NotificationsIcon(color: Int)(implicit context: Context) extends WireDrawable {
+  setColor(color)
+  override def draw(canvas: Canvas) = drawAlerts(canvas, getDrawingRect, ResizingBehavior.AspectFit, paint.getColor)
 }
 
 case class EphemeralIcon(color: Int, timeUnit: TimeUnit)(implicit context: Context) extends WireDrawable {

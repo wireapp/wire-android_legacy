@@ -24,7 +24,6 @@ import android.util.AttributeSet
 import android.view.{Gravity, View, ViewGroup}
 import android.view.View.OnClickListener
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
-import com.waz.ZLog.ImplicitTag.implicitLogTag
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
@@ -46,7 +45,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
   inflate(R.layout.single_user_row_view)
   setTheme(Theme.Light, background = true)
 
-  private lazy val chathead = findById[ChatheadView](R.id.chathead)
+  private lazy val chathead = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView = findById[TypefaceTextView](R.id.name_text)
   private lazy val subtitleView = findById[TypefaceTextView](R.id.username_text)
   private lazy val checkbox = findById[AppCompatCheckBox](R.id.checkbox)
@@ -75,10 +74,12 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     nameView.setText(text)
   }
 
-  def setSubtitle(text: Option[String]): Unit = text.fold(subtitleView.setVisibility(View.GONE)) { t =>
-    subtitleView.setVisibility(View.VISIBLE)
-    subtitleView.setText(t)
-  }
+  def setSubtitle(text: String): Unit =
+    if (text.isEmpty) subtitleView.setVisibility(View.GONE)
+    else {
+      subtitleView.setVisibility(View.VISIBLE)
+      subtitleView.setText(text)
+    }
 
   def setChecked(checked: Boolean): Unit = checkbox.setChecked(checked)
 
@@ -95,15 +96,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     videoIndicator.setVisibility(if (user.isVideoEnabled) View.VISIBLE else View.GONE)
   }
 
-  def setUserData(userData: UserData, teamId: Option[TeamId], showSubtitle: Boolean = true): Unit = {
+  def setUserData(userData: UserData, teamId: Option[TeamId], createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.setUserId(userData.id)
     setTitle(userData.getDisplayName)
     if (teamId.isDefined) setAvailability(userData.availability)
     setVerified(userData.isVerified)
-    val handle = userData.handle.map(h => StringUtils.formatHandle(h.string))
-    val expiration = userData.expiresAt.map(GuestUtils.timeRemainingString(_, Instant.now))
-    if (showSubtitle) setSubtitle(expiration.orElse(handle)) else subtitleView.setVisibility(View.GONE)
-    setIsGuest(userData.isGuest(teamId))
+    setSubtitle(createSubtitle(userData))
+    setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
   }
 
   def setIntegration(integration: IntegrationData): Unit = {
@@ -111,7 +110,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
     setTitle(integration.name)
     setAvailability(Availability.None)
     setVerified(false)
-    setSubtitle(Some(integration.summary))
+    setSubtitle(integration.summary)
   }
 
   def setIsGuest(guest: Boolean): Unit = guestIndicator.setVisibility(if (guest) View.VISIBLE else View.GONE)
@@ -127,7 +126,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
       case _ => throw new IllegalArgumentException
     }
     nameView.forceTheme(Some(theme))
-    separator.setBackgroundColor(getStyledColor(R.attr.thinDividerColor))
+    separator.setBackgroundColor(getStyledColor(R.attr.thinDividerColor, inject[ThemeController].getTheme(theme)))
     setBackground(backgroundDrawable)
     checkbox.setButtonDrawable(returning(getDrawable(checkboxDrawable))(_.setLevel(1)))
   }
@@ -144,5 +143,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int) exten
       v.setLayoutParams(params)
       auxContainer.addView(v)
     }
+  }
+}
+
+object SingleUserRowView {
+  def defaultSubtitle(user: UserData)(implicit context: Context): String = {
+    val handle = user.handle.map(h => StringUtils.formatHandle(h.string))
+    val expiration = user.expiresAt.map(ea => GuestUtils.timeRemainingString(ea.instant, Instant.now))
+    expiration.orElse(handle).getOrElse("")
   }
 }

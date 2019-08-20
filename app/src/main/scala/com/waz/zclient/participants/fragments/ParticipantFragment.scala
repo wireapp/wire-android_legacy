@@ -20,10 +20,9 @@ package com.waz.zclient.participants.fragments
 import android.content.Context
 import android.os.Bundle
 import android.support.annotation.Nullable
+import android.support.v4.app.Fragment
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
@@ -34,13 +33,16 @@ import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.IntegrationDetailsFragment
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
-import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, ParticipantsController}
+import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, ParticipantsController, UserRequester}
+import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
+import com.waz.api.User.ConnectionStatus._
 
 import scala.concurrent.Future
 
@@ -65,8 +67,9 @@ class ParticipantFragment extends ManagerFragment
   private lazy val screenController       = inject[IConversationScreenController]
   private lazy val singleImageController  = inject[ISingleImageController]
   private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val convScreenController   = inject[IConversationScreenController]
 
-  private lazy val headerFragment = ParticipantHeaderFragment.newInstance
+  private lazy val headerFragment = ParticipantHeaderFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg))
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation =
     if (nextAnim == 0 || getParentFragment == null)
@@ -82,21 +85,26 @@ class ParticipantFragment extends ManagerFragment
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     returning(inflater.inflate(R.layout.fragment_participant, container, false)) { _ =>
-      withFragment(R.id.fl__participant__overlay)(getChildFragmentManager.beginTransaction.remove(_).commit)
+      withChildFragment(R.id.fl__participant__overlay)(getChildFragmentManager.beginTransaction.remove(_).commit)
     }
 
   override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
+    verbose(l"onViewCreated.")
 
-    withFragmentOpt(R.id.fl__participant__container) {
+    withChildFragmentOpt(R.id.fl__participant__container) {
       case Some(_) => //no action to take, view was already set
       case _ =>
         (getStringArg(PageToOpenArg) match {
-          case Some(GuestOptionsFragment.Tag) => Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
-          case Some(SingleParticipantFragment.TagDevices) => Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.TagDevices)), SingleParticipantFragment.Tag))
+          case Some(GuestOptionsFragment.Tag) =>
+            Future.successful((new GuestOptionsFragment, GuestOptionsFragment.Tag))
+          case Some(SingleParticipantFragment.DevicesTab.str) =>
+            Future.successful((SingleParticipantFragment.newInstance(Some(SingleParticipantFragment.DevicesTab.str)), SingleParticipantFragment.Tag))
           case _ =>
             participantsController.isGroupOrBot.head.map {
-              case true => (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
-              case false => (SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+              case true if getStringArg(UserToOpenArg).isEmpty =>
+                (GroupParticipantsFragment.newInstance(), GroupParticipantsFragment.Tag)
+              case _ =>
+                (SingleParticipantFragment.newInstance(fromDeepLink = getBooleanArg(FromDeepLinkArg)), SingleParticipantFragment.Tag)
             }
         }).map {
           case (f, tag) =>
@@ -110,6 +118,11 @@ class ParticipantFragment extends ManagerFragment
 
     bodyContainer
     participantsContainerView
+
+    participantsController.onShowUser {
+      case Some(userId) => showUser(userId)
+      case _ =>
+    }
   }
 
   override def onStart(): Unit = {
@@ -128,29 +141,33 @@ class ParticipantFragment extends ManagerFragment
   }
 
   override def onBackPressed(): Boolean = {
-    withFragmentOpt(R.id.fl__participant__overlay) {
+    withChildFragmentOpt(R.id.fl__participant__overlay) {
       case Some(f: SingleOtrClientFragment) if f.onBackPressed() => true
       case _ =>
         withContentFragment {
           case _ if screenController.isShowingUser =>
-            verbose(s"onBackPressed with screenController.isShowingUser")
+            verbose(l"onBackPressed with screenController.isShowingUser")
             screenController.hideUser()
             participantsController.unselectParticipant()
             true
           case Some(f: FragmentHelper) if f.onBackPressed() => true
           case Some(_: FragmentHelper) =>
-            if (getChildFragmentManager.getBackStackEntryCount <= 1) participantsController.onHideParticipants ! true
+            if (getChildFragmentManager.getBackStackEntryCount <= 1) participantsController.onLeaveParticipants ! true
             else getChildFragmentManager.popBackStack()
             true
           case _ =>
-            warn("OnBackPressed was not handled anywhere")
+            warn(l"OnBackPressed was not handled anywhere")
             false
         }
     }
   }
 
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
-    if (!inConvList) OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Mode.Normal(inConvList))).show()
+    if (!inConvList) {
+      val fromDeepLink = getBooleanArg(FromDeepLinkArg)
+      val controller = new ConversationOptionsMenuController(convId, Mode.Normal(inConvList), fromDeepLink)
+      OptionsMenu(getContext, controller).show()
+    }
 
   def showOtrClient(userId: UserId, clientId: ClientId): Unit =
     getChildFragmentManager
@@ -185,7 +202,7 @@ class ParticipantFragment extends ManagerFragment
       .commit
 
   // TODO: AN-5980
-  def showIntegrationDetails(pId: ProviderId, iId: IntegrationId): Unit = {
+  def showIntegrationDetails(service: IntegrationData, convId: ConvId, userId: UserId): Unit = {
     getChildFragmentManager
       .beginTransaction
       .setCustomAnimations(
@@ -196,11 +213,51 @@ class ParticipantFragment extends ManagerFragment
       )
       .replace(
         R.id.fl__participant__overlay,
-        IntegrationDetailsFragment.newInstance(pId, iId, isTransparent = false),
+        IntegrationDetailsFragment.newRemovingInstance(service, convId, userId),
         IntegrationDetailsFragment.Tag
       )
       .addToBackStack(IntegrationDetailsFragment.Tag)
       .commit
+  }
+
+  private def showUser(userId: UserId): Unit = {
+    convScreenController.showUser(userId)
+    participantsController.selectParticipant(userId)
+
+    def openUserProfileFragment(fragment: Fragment, tag: String) = {
+      getChildFragmentManager.beginTransaction
+        .setCustomAnimations(
+          R.anim.fragment_animation_second_page_slide_in_from_right,
+          R.anim.fragment_animation_second_page_slide_out_to_left,
+          R.anim.fragment_animation_second_page_slide_in_from_left,
+          R.anim.fragment_animation_second_page_slide_out_to_right)
+        .replace(R.id.fl__participant__container, fragment, tag)
+        .addToBackStack(tag)
+        .commit
+    }
+
+    KeyboardUtils.hideKeyboard(getActivity)
+
+    for {
+      userOpt      <- participantsController.getUser(userId)
+      isTeamMember <- userAccountsController.isTeamMember(userId).head
+    } userOpt match {
+      case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
+        openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
+
+      case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
+        import com.waz.zclient.connect.PendingConnectRequestFragment._
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
+
+      case Some(user) if user.connection == BLOCKED =>
+        import BlockedUserProfileFragment._
+        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+
+      case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
+        import com.waz.zclient.connect.SendConnectRequestFragment._
+        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+      case _ =>
+    }
   }
 
   override def onHideUser(): Unit = if (screenController.isShowingUser) {
@@ -216,7 +273,7 @@ class ParticipantFragment extends ManagerFragment
 
   override def onAcceptedConnectRequest(userId: UserId): Unit = {
     screenController.hideUser()
-    verbose(s"onAcceptedConnectRequest $userId")
+    verbose(l"onAcceptedConnectRequest $userId")
     userAccountsController.getConversationId(userId).flatMap { convId =>
       convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
     }
@@ -224,7 +281,7 @@ class ParticipantFragment extends ManagerFragment
 
   override def onUnblockedUser(restoredConversationWithUser: ConvId): Unit = {
     screenController.hideUser()
-    verbose(s"onUnblockedUser $restoredConversationWithUser")
+    verbose(l"onUnblockedUser $restoredConversationWithUser")
     convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
   }
 
@@ -237,12 +294,22 @@ class ParticipantFragment extends ManagerFragment
 object ParticipantFragment {
   val TAG: String = classOf[ParticipantFragment].getName
   private val PageToOpenArg = "ARG__FIRST__PAGE"
+  private val UserToOpenArg = "ARG__USER"
+  private val FromDeepLinkArg = "ARG__FROM__DEEP__LINK"
 
   def newInstance(page: Option[String]): ParticipantFragment =
     returning(new ParticipantFragment) { f =>
       page.foreach { p =>
         f.setArguments(returning(new Bundle)(_.putString(PageToOpenArg, p)))
       }
+    }
+
+  def newInstance(userId: UserId, fromDeepLink: Boolean = false): ParticipantFragment =
+    returning(new ParticipantFragment) { f =>
+      f.setArguments(returning(new Bundle) { b =>
+        b.putString(UserToOpenArg, userId.str)
+        b.putBoolean(FromDeepLinkArg, fromDeepLink)
+      })
     }
 
 }

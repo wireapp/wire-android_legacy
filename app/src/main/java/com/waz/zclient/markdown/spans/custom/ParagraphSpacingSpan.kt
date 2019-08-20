@@ -26,6 +26,9 @@ import android.text.style.LineHeightSpan
  * ParagraphSpacingSpan allows the spacing before and after a paragraph to be specified.
  * Note: like all paragraph spans, it must be spanned over the first and last characters
  * in the paragraph.
+ *
+ * Initial idea from: https://stackoverflow.com/questions/25776082/paragraph-spacings-using-spannablestringbuilder-in-textview
+ * by Durgadass S
  */
 class ParagraphSpacingSpan(val before: Int, val after: Int) : LineHeightSpan.WithDensity {
 
@@ -42,6 +45,8 @@ class ParagraphSpacingSpan(val before: Int, val after: Int) : LineHeightSpan.Wit
         spanstartv: Int, v: Int, fm: Paint.FontMetricsInt?, paint: TextPaint?
     ) {
         if (text !is Spanned) return
+
+        val density = paint?.density ?: 1f
 
         // store the initial values
         if (firstTime && fm != null) {
@@ -65,16 +70,16 @@ class ParagraphSpacingSpan(val before: Int, val after: Int) : LineHeightSpan.Wit
         // if first line
         if (spanStart == start) {
             fm?.let {
-                fm.ascent -= before
-                fm.top -= before
+                fm.ascent -= (density * before).toInt()
+                fm.top -= (density * before).toInt()
             }
         }
 
         // if last line
         if (spanEnd == end) {
             fm?.let {
-                fm.descent += after
-                fm.bottom += after
+                fm.descent += (density * after).toInt()
+                fm.bottom += (density * after).toInt()
             }
         }
     }

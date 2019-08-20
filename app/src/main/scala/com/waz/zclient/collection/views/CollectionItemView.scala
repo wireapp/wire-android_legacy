@@ -19,14 +19,12 @@ package com.waz.zclient.collection.views
 
 import android.content.Context
 import android.support.v7.widget.{CardView, RecyclerView}
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.View.OnClickListener
 import android.webkit.URLUtil
 import android.widget.TextView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.impl.AccentColor
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -38,16 +36,15 @@ import com.waz.zclient.common.views.ImageAssetDrawable.RequestBuilder
 import com.waz.zclient.common.views.ImageController.{ImageSource, WireImage}
 import com.waz.zclient.common.views.{ImageAssetDrawable, ProgressDotsDrawable, RoundedImageAssetDrawable}
 import com.waz.zclient.messages.controllers.MessageActionsController
-import com.waz.zclient.messages.parts.{EphemeralPartView, WebLinkPartView}
 import com.waz.zclient.messages.parts.assets.FileAssetPartView
+import com.waz.zclient.messages.parts.{EphemeralPartView, WebLinkPartView}
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
-import com.waz.zclient.utils.ZTimeFormatter._
-import com.waz.zclient.utils.{RichView, ViewUtils, _}
+import com.waz.zclient.utils.Time.TimeStamp
+import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{R, ViewHelper}
-import org.threeten.bp.{LocalDateTime, ZoneId}
 
-trait CollectionItemView extends ViewHelper with EphemeralPartView {
+trait CollectionItemView extends ViewHelper with EphemeralPartView with DerivedLogTag {
   protected lazy val civZms = inject[Signal[ZMessaging]]
   protected lazy val messageActions = inject[MessageActionsController]
   protected lazy val collectionController = inject[CollectionController]
@@ -79,14 +76,13 @@ trait CollectionNormalItemView extends CollectionItemView with ClickableViewPart
   messageData.flatMap(msg => civZms.map(_.usersStorage).flatMap(_.signal(msg.userId))).on(Threading.Ui) {
     user =>
       messageUser.setText(user.name)
-      messageUser.setTextColor(AccentColor(user.accent).getColor())
+      messageUser.setTextColor(AccentColor(user.accent).color)
   }
 
-  messageData.on(Threading.Ui) {
-    md =>
-      val timeStr = getSeparatorTime(getContext, LocalDateTime.now, DateConvertUtils.asLocalDateTime(md.time), DateFormat.is24HourFormat(getContext), ZoneId.systemDefault, true, false)
-      messageTime.setText(timeStr)
-  }
+  messageData
+      .map(_.time.instant)
+      .map(TimeStamp(_, showWeekday = false).string)
+      .onUi(messageTime.setText)
 
   messageAndLikesResolver.on(Threading.Ui) { mal => set(mal, content) }
 

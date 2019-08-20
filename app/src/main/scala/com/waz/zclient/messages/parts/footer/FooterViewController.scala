@@ -18,12 +18,12 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
 import com.waz.api.Message.Status
-import com.waz.model.MessageData
-import com.waz.service.ZMessaging
-import com.waz.service.messages.MessageAndLikes
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{LocalInstant, MessageData, ReadReceipt}
+import com.waz.service.messages.{MessageAndLikes, MessagesService}
+import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
 import com.waz.utils.events.{ClockSignal, EventContext, Signal}
@@ -32,24 +32,29 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{LikesController, UsersController}
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.ZTimeFormatter
+import com.waz.zclient.utils.Time.SameDayTimeStamp
 import com.waz.zclient.{Injectable, Injector, R}
-import org.threeten.bp.{DateTimeUtils, Instant}
+import org.threeten.bp.Instant
 
 import scala.concurrent.duration._
 
 /**
   * Be warned - the timestamp/footer logic and when to display what has more edges than a tetrahedron.
   */
-class FooterViewController(implicit inj: Injector, context: Context, ec: EventContext) extends Injectable {
+class FooterViewController(implicit inj: Injector, context: Context, ec: EventContext)
+  extends Injectable with DerivedLogTag {
+  
   import com.waz.threading.Threading.Implicits.Ui
 
-  val zms                    = inject[Signal[ZMessaging]]
   val accents                = inject[AccentColorController]
   val selection              = inject[ConversationController].messages
   val signals                = inject[UsersController]
   val likesController        = inject[LikesController]
+
+  val readReceiptsStorage = inject[Signal[ZMessaging]].map(_.readReceiptsStorage)
   val conversationController = inject[ConversationController]
+
+  private lazy val zms = inject[Signal[ZMessaging]]
 
   val opts            = Signal[MsgBindOptions]()
   val messageAndLikes = Signal[MessageAndLikes]()
@@ -57,8 +62,9 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   val message =
     for {
+      z   <- zms
       id  <- messageAndLikes.map(_.message.id)
-      msg <- zms.flatMap(_.messagesStorage.signal(id))
+      msg <- z.messagesStorage.signal(id)
     } yield msg
 
   val isLiked     = messageAndLikes.map(_.likes.nonEmpty)
@@ -90,10 +96,10 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
 
   val ephemeralTimeout: Signal[Option[FiniteDuration]] = message.map(_.expiryTime) flatMap {
     case None => Signal const None
-    case Some(expiry) if expiry <= Instant.now => Signal const None
+    case Some(expiry) if expiry <= LocalInstant.Now => Signal const None
     case Some(expiry) =>
       ClockSignal(1.second) map { now =>
-        Some(now.until(expiry).asScala).filterNot(_.isNegative)
+        Some(now.until(expiry.instant).asScala).filterNot(_.isNegative)
       }
   }
 
@@ -102,46 +108,68 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
   val timestampText = for {
     selfUserId  <- signals.selfUserId
     convId      <- conv.map(_.id)
-    isGroup     <- Signal.future(conversationController.isGroup(convId))
+    isGroup     <- conversationController.groupConversation(convId)
+    isTeamConv  <- conv.map(_.team.nonEmpty)
     msg         <- message
     timeout     <- ephemeralTimeout
+    reads       <- readReceiptsStorage.flatMap(_.receipts(msg.id))
+    isOffline   <- inject[NetworkModeService].isOnline.map(!_)
   } yield {
-    val timestamp = ZTimeFormatter.getSingleMessageTime(context, DateTimeUtils.toDate(msg.time))
+    val timestamp = SameDayTimeStamp(msg.time.instant).string
+    val editedTimestamp = SameDayTimeStamp(msg.editTime.instant).string
+    val finalTimestamp = if (msg.editTime.isEpoch) timestamp else getString(R.string.message_footer__status__edited, editedTimestamp)
     timeout match {
-      case Some(t)                          => ephemeralTimeoutString(timestamp, t)
-      case None if selfUserId == msg.userId => statusString(timestamp, msg, isGroup)
+      case Some(t)                          => ephemeralTimeoutString(timestamp, t, isGroup, reads, isTeamConv)
+      case None if selfUserId == msg.userId => statusString(finalTimestamp, msg, isGroup, isOffline, reads, isTeamConv)
       case None                             => timestamp
     }
   }
 
   val linkColor = expiring flatMap {
-    case true => accents.accentColor.map(_.getColor())
+    case true => accents.accentColor.map(_.color)
     case false => Signal const getColor(R.color.accent_red);
   }
 
   val linkCallback = new Runnable() {
-    def run() = for (z <- zms.head; m <- message.head) {
+    def run() = for {
+      msgs <- inject[Signal[MessagesService]].head
+      m    <- message.head
+    } yield {
       if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) {
-        z.messages.retryMessageSending(m.convId, m.id)
+        msgs.retryMessageSending(m.convId, m.id)
       }
     }
   }
 
   def onLikeClicked() = messageAndLikes.head.map { likesController.onLikeButtonClicked ! _ }
 
-  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean) =
-    m.state match {
-      case Status.PENDING              => getString(R.string.message_footer__status__sending)
-      case Status.SENT                 => getString(R.string.message_footer__status__sent, timestamp)
-      case Status.DELIVERED if isGroup => getString(R.string.message_footer__status__sent, timestamp)
-      case Status.DELIVERED            => getString(R.string.message_footer__status__delivered, timestamp)
-      case Status.DELETED              => getString(R.string.message_footer__status__deleted, timestamp)
-      case Status.FAILED |
-           Status.FAILED_READ          => getString(R.string.message_footer__status__failed)
-      case _                           => timestamp
+  private def timestampAndReads(timestamp: String, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean): Option[String] = {
+    if (reads.nonEmpty && isGroup && isTeamConv) {
+      Some(getString(R.string.message_footer__status__read_group, timestamp, reads.size.toString))
+    } else if (reads.nonEmpty && !isGroup){
+      val readTimestampString = SameDayTimeStamp(reads.head.timestamp.instant).string
+      Some(getString(R.string.message_footer__status__read, timestamp, readTimestampString))
+    } else {
+      None
     }
+  }
 
-  private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration) = {
+  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) = {
+    timestampAndReads(timestamp, isGroup, reads, isTeamConv)
+      .getOrElse(m.state match {
+        case Status.PENDING if isOffline => getString(R.string.message_footer__status__waiting_for_connection)
+        case Status.PENDING              => getString(R.string.message_footer__status__sending)
+        case Status.SENT                 => getString(R.string.message_footer__status__sent, timestamp)
+        case Status.DELIVERED if isGroup => getString(R.string.message_footer__status__sent, timestamp)
+        case Status.DELIVERED            => getString(R.string.message_footer__status__delivered, timestamp)
+        case Status.DELETED              => getString(R.string.message_footer__status__deleted, timestamp)
+        case Status.FAILED |
+             Status.FAILED_READ          => getString(R.string.message_footer__status__failed)
+        case _                           => timestamp
+      })
+  }
+
+  private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) = {
 
     def unitString(resId: Int, quantity: Long) =
       getQuantityString(resId, quantity.toInt, quantity.toString)
@@ -164,6 +192,6 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
       else if (remaining > 1.minute) getString(R.string.ephemeral_message_footer_single_unit, minutes)
       else                           getString(R.string.ephemeral_message_footer_single_unit, seconds)
 
-    s"$timestamp \u30FB $remainingTimeStamp"
+    s"${timestampAndReads(timestamp, isGroup, reads, isTeamConv).getOrElse(timestamp)} \u30FB $remainingTimeStamp"
   }
 }

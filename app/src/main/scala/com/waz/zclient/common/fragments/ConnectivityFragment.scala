@@ -67,7 +67,7 @@ class ConnectivityFragment extends Fragment with FragmentHelper with Connectivit
     loadingIndicatorView
     noInternetIndicator
 
-    accentColor.map(_.getColor()).onUi(loadingIndicatorView.setColor)
+    accentColor.map(_.color).onUi(loadingIndicatorView.setColor)
 
     network.map(_ == NetworkMode.OFFLINE).onUi {
       case true  => noInternetIndicator.show()

@@ -51,6 +51,22 @@
             app:w_font="@string/wire__typeface__medium"
             />
 
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/participants__header__username"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/participants_details_header_title"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="?wirePrimaryTextColor"
+            android:visibility="gone"
+            app:w_font="@string/wire__typeface__medium"
+            />
+
         <FrameLayout android:layout_width="wrap_content"
                      android:layout_height="wrap_content"
                      android:layout_gravity="end|center_vertical">

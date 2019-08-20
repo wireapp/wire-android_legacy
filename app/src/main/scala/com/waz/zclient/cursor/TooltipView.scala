@@ -28,14 +28,18 @@ import com.waz.zclient.utils._
 import com.waz.utils._
 import ContextUtils._
 import android.view.View
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import org.threeten.bp.Instant
-import com.waz.ZLog.ImplicitTag._
 
 import concurrent.duration._
 
-class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int) extends TypefaceTextView(context, attrs, defStyleAttr) with ViewHelper { view =>
+class TooltipView(context: Context, attrs: AttributeSet, defStyleAttr: Int)
+  extends TypefaceTextView(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag { view =>
+  
   def this(context: Context, attrs: AttributeSet) { this(context, attrs, 0) }
   def this(context: Context) { this(context, null) }
 

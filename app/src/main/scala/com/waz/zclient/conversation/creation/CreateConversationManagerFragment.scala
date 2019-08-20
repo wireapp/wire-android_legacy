@@ -25,8 +25,6 @@ import android.support.v7.widget.Toolbar
 import android.view.View.OnClickListener
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog
-import com.waz.ZLog.ImplicitTag._
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -38,7 +36,7 @@ import com.waz.zclient.conversation.creation.CreateConversationManagerFragment._
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getInt}
-import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, R}
 
@@ -51,24 +49,28 @@ class CreateConversationManagerFragment extends FragmentHelper {
   private lazy val keyboard               = inject[KeyboardController]
   private lazy val themeController        = inject[ThemeController]
 
-  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor)
+  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
 
   private lazy val currentPage = Signal[Int]()
 
   lazy val confButtonText = for {
     currentPage <- currentPage
     users       <- ctrl.users
+    integrations <- ctrl.integrations
   } yield currentPage match {
     case SettingsPage                 => R.string.next_button
-    case PickerPage if users.nonEmpty => R.string.done_button
+    case PickerPage if users.nonEmpty || integrations.nonEmpty => R.string.done_button
     case PickerPage                   => R.string.skip_button
   }
 
   lazy val confButtonEnabled = for {
     currentPage <- currentPage
     name        <- ctrl.name
+    memberCount <- ctrl.users.map(_.size)
+    integrationsCount <- ctrl.integrations.map(_.size)
   } yield currentPage match {
     case SettingsPage if name.trim.isEmpty  => false
+    case _ if memberCount + integrationsCount >= ConversationController.MaxParticipants => false
     case _ => true
   }
 
@@ -80,10 +82,11 @@ class CreateConversationManagerFragment extends FragmentHelper {
   private lazy val headerText = for {
     currentPage <- currentPage
     userCount   <- ctrl.users.map(_.size)
+    integrationsCount <- ctrl.integrations.map(_.size)
   } yield currentPage match {
     case SettingsPage                 => getString(R.string.new_group_header)
-    case PickerPage if userCount == 0 => getString(R.string.add_people_empty_header)
-    case PickerPage                   => getString(R.string.add_people_count_header, userCount.toString)
+    case PickerPage if userCount == 0 && integrationsCount == 0 => getString(R.string.add_participants_empty_header)
+    case PickerPage                   => getString(R.string.add_participants_count_header, (userCount + integrationsCount).toString)
   }
 
   private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>
@@ -137,6 +140,15 @@ class CreateConversationManagerFragment extends FragmentHelper {
           case _ =>
         } (Threading.Background)
       case _ =>
+    }
+
+    ctrl.users.zip(ctrl.integrations).map { case (users, integrations) => users.size + integrations.size >= ConversationController.MaxParticipants }.onUi{
+      case true =>
+        ViewUtils.showAlertDialog(getContext,
+          R.string.max_participants_alert_title,
+          R.string.max_participants_create_alert_message,
+          android.R.string.ok, null, true)
+      case _=>
     }
 
     getChildFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
@@ -230,7 +242,7 @@ object CreateConversationManagerFragment {
 
   def newInstance: CreateConversationManagerFragment = new CreateConversationManagerFragment
 
-  val Tag = ZLog.ImplicitTag.implicitLogTag
+  val Tag: String = getClass.getSimpleName
 
   val SettingsPage = 0
   val PickerPage = 1

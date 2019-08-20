@@ -1,48 +1,45 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.messages
 
 import android.content.Context
-import android.os.Bundle
-import android.support.design.widget.BottomSheetDialog
-import android.view.{View, ViewGroup}
-import android.widget.{LinearLayout, TextView}
 import com.waz.api.{AssetStatus, Message}
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.messages.MessageBottomSheetDialog.{Actions, MessageAction, Params}
 import com.waz.zclient.messages.controllers.MessageActionsController
-import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{DialogHelper, R}
+import com.waz.zclient.participants.OptionsMenuController
+import com.waz.zclient.participants.OptionsMenuController.MenuItem
+import com.waz.zclient.{Injectable, Injector, R}
 
-class MessageBottomSheetDialog(val context: Context,
-                               theme: Int,
-                               message: MessageData,
+class MessageBottomSheetDialog(message: MessageData,
                                params: Params,
-                               operations: Seq[MessageAction] = Seq.empty)
-  extends BottomSheetDialog(context, theme) with DialogHelper {
+                               operations: Seq[MessageAction] = Seq.empty)(implicit injector: Injector, context: Context, ec: EventContext)
+  extends OptionsMenuController with Injectable {
 
   lazy val zmessaging = inject[Signal[ZMessaging]]
   lazy val messageActionsController = inject[MessageActionsController]
 
-  lazy val actions = zmessaging flatMap { zms =>
+  override val title: Signal[Option[String]] = Signal.const(None)
+  override val optionItems: Signal[Seq[OptionsMenuController.MenuItem]] =
+    zmessaging.flatMap { zms =>
     val all = if (operations.isEmpty) Actions else operations
     Signal.sequence(all.map { action =>
       action.enabled(message, zms, params) map {
@@ -52,31 +49,13 @@ class MessageBottomSheetDialog(val context: Context,
     } :_*).map(_.flatten)
   }
 
-  override def onCreate(savedInstanceState: Bundle): Unit = {
-    super.onCreate(savedInstanceState)
+  override val onMenuItemClicked: SourceStream[OptionsMenuController.MenuItem] = EventStream()
+  override val selectedItems: Signal[Set[OptionsMenuController.MenuItem]] = Signal.const(Set())
 
-    val view = getLayoutInflater.inflate(R.layout.message__bottom__menu, null).asInstanceOf[LinearLayout]
-    setContentView(view)
-
-    actions.on(Threading.Ui) { acts =>
-      view.removeAllViews()
-      acts foreach { action =>
-        val row = getLayoutInflater.inflate(R.layout.message__bottom__menu__row, view, false).asInstanceOf[LinearLayout]
-        row.setId(action.resId)
-        val icon = row.getChildAt(0).asInstanceOf[TextView]
-        icon.setText(action.glyphResId)
-        val label = row.getChildAt(1).asInstanceOf[TextView]
-        label.setText(action.stringId)
-        row.setOnClickListener(new View.OnClickListener() {
-          override def onClick(v: View): Unit = {
-            messageActionsController.onMessageAction ! (action, message)
-            dismiss()
-          }
-        })
-        val params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewUtils.toPx(getContext, 48))
-        view.addView(row, params)
-      }
-    }
+  onMenuItemClicked {
+    case action: MessageAction =>
+      messageActionsController.onMessageAction ! (action, message)
+    case _ =>
   }
 }
 
@@ -88,7 +67,7 @@ object MessageBottomSheetDialog {
   // all possible actions
   val Actions = {
     import MessageAction._
-    Seq(Copy, OpenFile, Edit, Like, Unlike, Save, Forward, Delete, DeleteLocal, DeleteGlobal, Reveal)
+    Seq(Copy, OpenFile, Edit, Like, Unlike, Reply, Details, Save, Forward, Delete, DeleteLocal, DeleteGlobal, Reveal)
   }
 
   case class Params(collection: Boolean = false, delCollapsed: Boolean = true)
@@ -108,7 +87,13 @@ object MessageBottomSheetDialog {
       case None => false
     }
 
-  abstract class MessageAction(val resId: Int, val glyphResId: Int, val stringId: Int) {
+  //TODO: Remove glyphId
+  abstract class MessageAction(val resId: Int, val glyphResId: Int, val stringId: Int) extends MenuItem {
+
+    override val titleId: Int = stringId
+    override val iconId: Option[Int] = Some(resId)
+    override val colorId: Option[Int] = None
+
     def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean]
   }
 
@@ -133,7 +118,7 @@ object MessageBottomSheetDialog {
     case object Copy extends MessageAction(R.id.message_bottom_menu_item_copy, R.string.glyph__copy, R.string.message_bottom_menu_action_copy) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] =
         msg.msgType match {
-          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if !msg.isEphemeral => Signal.const(true)
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA if zms.selfUserId == msg.userId || !msg.isEphemeral => Signal.const(true)
           case _ => Signal.const(false)
         }
     }
@@ -224,6 +209,27 @@ object MessageBottomSheetDialog {
           case _ =>
             Signal const false
         }
+    }
+
+    case object Reply extends MessageAction(R.id.message_bottom_menu_item_reply, R.string.glyph__undo, R.string.message_bottom_menu_action_reply) {
+      override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] = msg.msgType match {
+        case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+          isMemberOfConversation(msg.convId, zms)
+        case _ =>
+          Signal.const(false)
+      }
+    }
+
+    case object Details extends MessageAction(R.id.message_bottom_menu_item_details, R.string.glyph__view, R.string.message_bottom_menu_action_details) {
+      override def enabled(msg: MessageData, zms: ZMessaging, p: Params): Signal[Boolean] = msg.msgType match {
+        case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+          for {
+            isGroup <- zms.conversations.groupConversation(msg.convId)
+            isMember <- isMemberOfConversation(msg.convId, zms)
+          } yield isGroup && isMember && !p.collection
+        case _ =>
+          Signal.const(false)
+      }
     }
 
   }

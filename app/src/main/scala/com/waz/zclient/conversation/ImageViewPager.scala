@@ -26,8 +26,8 @@ import android.util.AttributeSet
 import android.view.View.OnLongClickListener
 import android.view.ViewGroup.LayoutParams
 import android.view.{View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.MessageFilter
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, MessageData}
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
@@ -181,7 +181,11 @@ class ImageSwipeAdapter(context: Context)(implicit injector: Injector, ev: Event
   override def getCount: Int = recyclerCursor.fold(0)(_.count)
 }
 
-class SwipeImageView(context: Context, attrs: AttributeSet, style: Int) extends TouchImageView(context, attrs, style) with ViewHelper {
+class SwipeImageView(context: Context, attrs: AttributeSet, style: Int)
+  extends TouchImageView(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 

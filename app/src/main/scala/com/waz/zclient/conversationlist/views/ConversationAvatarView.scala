@@ -29,7 +29,7 @@ import android.widget.FrameLayout.LayoutParams
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.events.Signal
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.common.views.ImageController.{ImageSource, NoImage}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils
@@ -46,14 +46,14 @@ class ConversationAvatarView (context: Context, attrs: AttributeSet, style: Int)
 
   private val groupBackgroundDrawable = getDrawable(R.drawable.conversation_group_avatar_background)
 
-  private val avatarStartTop = ViewUtils.getView(this, R.id.conversation_avatar_start_top).asInstanceOf[ChatheadView]
-  private val avatarEndTop = ViewUtils.getView(this, R.id.conversation_avatar_end_top).asInstanceOf[ChatheadView]
-  private val avatarStartBottom = ViewUtils.getView(this, R.id.conversation_avatar_start_bottom).asInstanceOf[ChatheadView]
-  private val avatarEndBottom = ViewUtils.getView(this, R.id.conversation_avatar_end_bottom).asInstanceOf[ChatheadView]
+  private val avatarStartTop = ViewUtils.getView(this, R.id.conversation_avatar_start_top).asInstanceOf[ChatHeadView]
+  private val avatarEndTop = ViewUtils.getView(this, R.id.conversation_avatar_end_top).asInstanceOf[ChatHeadView]
+  private val avatarStartBottom = ViewUtils.getView(this, R.id.conversation_avatar_start_bottom).asInstanceOf[ChatHeadView]
+  private val avatarEndBottom = ViewUtils.getView(this, R.id.conversation_avatar_end_bottom).asInstanceOf[ChatHeadView]
 
-  private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatheadView]
+  private val avatarSingle = ViewUtils.getView(this, R.id.avatar_single).asInstanceOf[ChatHeadView]
   private val avatarGroup = ViewUtils.getView(this, R.id.avatar_group).asInstanceOf[View]
-  private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatheadView]
+  private val avatarGroupSingle = ViewUtils.getView(this, R.id.conversation_avatar_single_group).asInstanceOf[ChatHeadView]
 
   private val imageSources = Seq.fill(4)(Signal[ImageSource]())
 

@@ -40,11 +40,11 @@ class ListPrefixSpan(
     }
 
     override fun draw(canvas: Canvas?, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint?) {
+        if (canvas == null || text == null || paint == null) return
+
         // ensure this span is attached to the text
         val spanned = text as Spanned
         if (!(spanned.getSpanStart(this) == start && spanned.getSpanEnd(this) == end)) return
-
-        if (canvas == null || text == null || paint == null) return
 
         // the list prefix
         val prefix = text.subSequence(start until end)

@@ -21,97 +21,74 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.support.annotation.Nullable
-import android.support.v4.app.{Fragment, FragmentManager, FragmentPagerAdapter}
-import android.support.v4.view.ViewPager
-import android.util.AttributeSet
+import android.support.v4.app.FragmentManager
 import android.view._
 import android.widget.ImageView
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog.warn
-import com.waz.model.{IntegrationId, ProviderId}
+import com.waz.api.impl.ErrorResponse
+import com.waz.model
+import com.waz.model._
+import com.waz.service.IntegrationsService
 import com.waz.service.tracking.{IntegrationAdded, TrackingService}
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.{IntegrationsController, ThemeController}
+import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
-import com.waz.zclient.common.views.ImageController.{ImageSource, NoImage, WireImage}
+import com.waz.zclient.common.views.ImageController.{NoImage, WireImage}
 import com.waz.zclient.common.views.IntegrationAssetDrawable
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
-import com.waz.zclient.conversation.creation.CreateConversationController
-import com.waz.zclient.integrations.IntegrationDetailsViewPager._
+import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.ServicePlaceholderDrawable
+import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.usersearch.SearchUIFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.{FragmentHelper, R, ViewHelper}
+import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+
+import scala.concurrent.Future
 
 class IntegrationDetailsFragment extends FragmentHelper {
 
+  import IntegrationDetailsFragment._
+  import com.waz.threading.Threading.Implicits.Ui
   implicit def ctx: Context = getActivity
 
-  private lazy val integrationDetailsController = inject[IntegrationDetailsController]
-  private lazy val integrationsController       = inject[IntegrationsController]
-  private lazy val themeController              = inject[ThemeController]
-  private lazy val tracking                     = inject[TrackingService]
-  private lazy val createConvControlelr         = inject[CreateConversationController]
+  private lazy val integrationsService    = inject[Signal[IntegrationsService]]
+  private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val themeController        = inject[ThemeController]
+  private lazy val tracking               = inject[TrackingService]
+  private lazy val convController         = inject[ConversationController]
+  private lazy val spinner                = inject[SpinnerController]
 
-  private lazy val providerId              = ProviderId(getArguments.getString(IntegrationDetailsFragment.ProviderId))
-  private lazy val integrationId           = IntegrationId(getArguments.getString(IntegrationDetailsFragment.IntegrationId))
-  private lazy val isBackgroundTransparent = getArguments.getBoolean(IntegrationDetailsFragment.IsTransparent)
+  private lazy val serviceId   = getStringArg(ServiceId).map(IntegrationId)
+  private lazy val providerId  = getStringArg(ProviderId).map(model.ProviderId) //only defined when adding to a conversation
+  private lazy val name        = getStringArg(Name)
+  private lazy val description = getStringArg(Description)
+  private lazy val summary     = getStringArg(Summary)
+  private lazy val assetId     = getStringArg(Asset).map(AssetId)
 
-  private lazy val pictureAssetId               = integrationDetailsController.currentIntegration.map(_.asset)
-  private lazy val picture: Signal[ImageSource] = pictureAssetId.map(_.map(WireImage).getOrElse(NoImage()))
-  private lazy val name                         = integrationDetailsController.currentIntegration.map(_.name)
+  //will only be defined if removing from a conversation
+  private lazy val fromConv    = getStringArg(RemoveFromConv).map(ConvId)
+  private lazy val serviceUser = getStringArg(ServiceUser).map(UserId)
+
+  private lazy val isBackgroundTransparent = getBooleanArg(IsTransparent)
 
   private lazy val drawable = new IntegrationAssetDrawable(
-    src          = picture,
+    src          = Signal.const(assetId.map(WireImage).getOrElse(NoImage())),
     scaleType    = ScaleType.CenterInside,
     request      = RequestBuilder.Regular,
     background   = Some(ServicePlaceholderDrawable(getDimenPx(R.dimen.wire__padding__regular))),
     animate      = true
   )
 
-  private lazy val viewPager = view[IntegrationDetailsViewPager](R.id.view_pager)
-
-  private lazy val title = returning(view[TypefaceTextView](R.id.integration_title)) { title =>
-    name.map(_.toUpperCase).onUi { name => title.foreach(_.setText(name)) }
-  }
-
-  private lazy val nameView = returning(view[TypefaceTextView](R.id.integration_name)){ nv =>
-    name.onUi { name => nv.foreach(_.setText(name)) }
-  }
-
-  private lazy val summaryView = returning(view[TypefaceTextView](R.id.integration_summary)){ sv =>
-    integrationDetailsController.currentIntegration.map(_.summary).onUi { summary => sv.foreach(_.setText(summary)) }
-  }
-
-  override def onCreate(savedInstanceState: Bundle): Unit = {
-    super.onCreate(savedInstanceState)
-    integrationDetailsController.currentIntegrationId ! (providerId, integrationId)
-    integrationDetailsController.onAddServiceClick { _ =>
-
-      integrationDetailsController.addingToConversation.fold {
-        viewPager.foreach(_.goToConversations)
-      } { convId =>
-        integrationsController.addBot(convId, providerId, integrationId).map {
-          case Left(e) =>
-            warn(s"Failed to add bot to conversation: $e")
-            showToast(integrationsController.errorMessage(e))
-            close()
-          case Right(_) =>
-            tracking.integrationAdded(integrationId, convId, IntegrationAdded.ConversationDetails)
-            close()
-        } (Threading.Ui)
-      }
-    }
-  }
+  private lazy val addRemoveButton = view[View](R.id.add_remove_service_button)
+  private lazy val addRemoveButtonText = view[TypefaceTextView](R.id.button_text)
 
   override def onCreateView(inflater: LayoutInflater, viewContainer: ViewGroup, savedInstanceState: Bundle): View = {
     val localInflater =
-      if (integrationDetailsController.addingToConversation.isEmpty && integrationDetailsController.removingFromConversation.isEmpty)
+      if (fromConv.isEmpty)
         inflater.cloneInContext(new ContextThemeWrapper(getActivity, R.style.Theme_Dark))
       else
         inflater
@@ -122,15 +99,60 @@ class IntegrationDetailsFragment extends FragmentHelper {
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
-    returning(findById[GlyphTextView](R.id.integration_close)) { closeButton =>
-      if (integrationDetailsController.removingFromConversation.isDefined || integrationDetailsController.addingToConversation.isDefined)
-        closeButton.setVisibility(View.GONE)
-      else
-        closeButton.onClick(close())
+    returning(findById[GlyphTextView](R.id.integration_close)) { v =>
+      v.onClick(close())
     }
 
     returning(findById[GlyphTextView](R.id.integration_back))(_.onClick(goBack()))
+
+    returning(findById[TypefaceTextView](R.id.integration_title))(v => name.foreach(v.setText(_)))
+    returning(findById[TypefaceTextView](R.id.integration_name))(v => name.foreach(v.setText(_)))
     returning(findById[ImageView](R.id.integration_picture))(_.setImageDrawable(drawable))
+    returning(findById[TypefaceTextView](R.id.integration_summary))(v => summary.foreach(v.setText(_)))
+    returning(findById[TypefaceTextView](R.id.integration_description))(v => description.foreach(v.setText(_)))
+
+    fromConv.fold(userAccountsController.hasPermissionToAddService)(userAccountsController.hasPermissionToRemoveService).foreach {
+      case true =>
+        addRemoveButtonText.foreach { v =>
+          v.setText(if (isRemovingFromConv) R.string.remove_service_button_text else R.string.open_service_conversation_button_text)
+        }
+        addRemoveButton.foreach { v =>
+          v.setBackground(getDrawable(if (isRemovingFromConv) R.drawable.red_button else R.drawable.blue_button))
+          v.onClick {
+            setLoading(true)
+            fromConv.fold {
+              for { sId <- serviceId; pId <- providerId } {
+                integrationsService.head.flatMap(_.getOrCreateConvWithService(pId, sId)).foreach { res =>
+                  setLoading(false)
+                  res match {
+                    case Left(err) => showToast(errorMessage(err))
+                    case Right(convId) =>
+                      close()
+                      tracking.integrationAdded(sId, convId, IntegrationAdded.StartUi)
+                      convController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST)
+                  }
+                }
+              }
+            } { convId =>
+              for { uId <- serviceUser; sId <- serviceId } {
+                integrationsService.head.flatMap(_.removeBotFromConversation(convId, uId)).foreach { res =>
+                  setLoading(false)
+                  res match {
+                    case Right(_) =>
+                      getParentFragment.getFragmentManager.popBackStack()
+                      tracking.integrationRemoved(sId)
+                    case Left(e) => Future.successful(showToast(errorMessage(e)))
+                  }
+                }
+              }
+            }
+          }
+        }
+
+      case false =>
+        addRemoveButton.foreach(_.setVisibility(View.GONE))
+        addRemoveButtonText.foreach(_.setVisibility(View.GONE))
+    }
 
     // TODO: AN-5980
     if (!isBackgroundTransparent)
@@ -138,13 +160,21 @@ class IntegrationDetailsFragment extends FragmentHelper {
         if (themeController.isDarkTheme) themeController.getThemeDependentOptionsTheme.getOverlayColor
         else Color.WHITE
       )
-
-    title
-    summaryView
-    nameView
-
-    viewPager.foreach(_.setAdapter(IntegrationDetailsAdapter(getChildFragmentManager, providerId, integrationId)))
   }
+
+  private def setLoading(loading: Boolean): Unit = {
+    addRemoveButton.foreach { v =>
+      v.setEnabled(!loading)
+      if (loading) spinner.showSpinner(forcedIsDarkTheme = Option(true)) else spinner.hideSpinner()
+    }
+  }
+
+  private def errorMessage(e: ErrorResponse): String =
+    getString((e.code, e.label) match {
+      case (403, "too-many-members") => R.string.conversation_errors_full
+      //      case (419, "too-many-bots")    => R.string.integrations_errors_add_service //TODO ???
+      case (_, _)                    => R.string.integrations_errors_service_unavailable
+    })
 
   override def onBackPressed(): Boolean = {
     super.onBackPressed()
@@ -152,75 +182,66 @@ class IntegrationDetailsFragment extends FragmentHelper {
   }
 
   def goBack(): Boolean = {
-    viewPager.foreach(_.getCurrentItem match {
-      case IntegrationDetailsViewPager.ConvListPage =>
-        viewPager.foreach(_.goToDetails)
-      case _ =>
-        getFragmentManager.popBackStack()
-        if (integrationDetailsController.addingToConversation.nonEmpty) {
-          inject[INavigationController].setRightPage(Page.PICK_USER, IntegrationDetailsFragment.Tag)
-        } else if (integrationDetailsController.removingFromConversation.isEmpty) {
-          inject[INavigationController].setLeftPage(Page.PICK_USER, IntegrationDetailsFragment.Tag)
-        }
-    })
+    getFragmentManager.popBackStack()
     true
   }
 
-  def close(): Boolean = {
-    getFragmentManager.popBackStack(SearchUIFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-    if (integrationDetailsController.addingToConversation.nonEmpty) {
-      createConvControlelr.onShowCreateConversation ! false
-      inject[INavigationController].setRightPage(Page.PARTICIPANT, IntegrationDetailsFragment.Tag)
-    } else {
+  //TODO - move navigation logic out of this fragment
+  def close(): Boolean =
+  if (isRemovingFromConv) {
+    inject[ParticipantsController].onLeaveParticipants ! true
+    true
+  } else {
+    Option(getFragmentManager).foreach { fm =>
+      fm.popBackStack(SearchUIFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       inject[IPickUserController].hidePickUser()
       inject[INavigationController].setLeftPage(Page.CONVERSATION_LIST, IntegrationDetailsFragment.Tag)
     }
     true
   }
+
+  private def isRemovingFromConv: Boolean =
+    fromConv.isDefined
 }
 
 object IntegrationDetailsFragment {
 
   val Tag = classOf[IntegrationDetailsFragment].getName
 
-  val IntegrationId = "ARG_INTEGRATION_ID"
-  val ProviderId    = "ARG_PROVIDER_ID"
-  val IsTransparent = "ARG_IS_TRANSPARENT"
+  val Name            = "ARG_SERVICE_NAME"
+  val Description     = "ARG_SERVICE_DESCRIPTION"
+  val Summary         = "ARG_SERVICE_SUMMARY"
+  val Asset           = "ARG_SERVICE_ASSET"
+  val RemoveFromConv  = "ARG_REMOVE_FROM_CONV"
+  val ServiceUser     = "ARG_SERVICE_USER"
+  val ServiceId       = "ARG_SERVICE_ID"
+  val ProviderId      = "ARG_PROVIDER_ID"
+  val IsTransparent   = "ARG_IS_TRANSPARENT"
 
-  def newInstance(providerId: ProviderId, integrationId: IntegrationId, isTransparent: Boolean = true) = returning(new IntegrationDetailsFragment) {
-    _.setArguments(returning(new Bundle){ b =>
-      b.putString(ProviderId, providerId.str)
-      b.putString(IntegrationId, integrationId.str)
-      b.putBoolean(IsTransparent, isTransparent)
-    })
-  }
-}
-
-object IntegrationDetailsViewPager {
-  val DetailsPage = 0
-  val ConvListPage = 1
-}
-
-case class IntegrationDetailsViewPager (context: Context, attrs: AttributeSet) extends ViewPager(context, attrs) with ViewHelper {
-  def this(context: Context) = this(context, null)
-
-  def goToDetails       = setCurrentItem(DetailsPage)
-  def goToConversations = setCurrentItem(ConvListPage)
-
-  override def onInterceptTouchEvent(ev: MotionEvent): Boolean = false
-  override def onTouchEvent(ev: MotionEvent): Boolean = false
-}
-
-case class IntegrationDetailsAdapter(fm: FragmentManager, providerId: ProviderId, integrationId: IntegrationId) extends FragmentPagerAdapter(fm) {
-
-  override def getItem(position: Int): Fragment = {
-    position match {
-      case DetailsPage =>
-        new IntegrationDetailsSummaryFragment()
-      case ConvListPage =>
-        new IntegrationConversationSearchFragment()
+  def newAddingInstance(service: IntegrationData): IntegrationDetailsFragment =
+    returning(new IntegrationDetailsFragment) {
+      _.setArguments(returning(new Bundle) { b =>
+        b.putString(Name, service.name)
+        b.putString(Description, service.description)
+        b.putString(Summary, service.summary)
+        b.putString(ServiceId, service.id.str)
+        b.putString(ProviderId, service.provider.str)
+        service.asset.map(_.str).foreach(b.putString(Asset, _))
+        b.putBoolean(IsTransparent, true)
+      })
     }
-  }
 
-  override def getCount: Int = 2
+  def newRemovingInstance(service: IntegrationData, convId: ConvId, userId: UserId) =
+    returning(new IntegrationDetailsFragment) {
+      _.setArguments(returning(new Bundle) { b =>
+        b.putString(Name, service.name)
+        b.putString(Description, service.description)
+        b.putString(Summary, service.summary)
+        b.putString(ServiceId, service.id.str)
+        service.asset.map(_.str).foreach(b.putString(Asset, _))
+        b.putString(RemoveFromConv, convId.str)
+        b.putString(ServiceUser, userId.str)
+        b.putBoolean(IsTransparent, false)
+      })
+    }
 }

@@ -83,17 +83,8 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="@dimen/drawing__border_line__height"
-            android:background="@color/drawing__border_line__color"
+            android:background="@color/drawing__border_line"
             />
-
-        <!--
-        // TODO Fix layout issue AN-4649
-        <com.waz.zclient.ui.colorpicker.ColorPickerScrollView
-            android:id="@+id/cpsb__color_picker_scrollbar"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/drawing__border_scroll_bar__height"
-            />
-            -->
 
     </FrameLayout>
 
@@ -117,7 +108,8 @@
                 android:id="@+id/v__tip_background"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/drawing__tip__background_color"
+                android:background="@color/drawing__tip__background"
+                android:visibility="invisible"
                 />
 
 
@@ -129,7 +121,7 @@
                 android:gravity="center"
                 android:text="@string/drawing__tip__message"
                 android:textSize="@dimen/drawing__tip__font__size"
-                android:textColor="@color/drawing__tip__font__color"
+                android:textColor="@color/drawing__tip"
                 app:w_font="@string/wire__typeface__light"
                 />
 
@@ -162,7 +154,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="@dimen/drawing__border_line__height"
-        android:background="@color/drawing__border_line__color"
+        android:background="@color/drawing__border_line"
         />
 
     <FrameLayout
@@ -224,13 +216,14 @@
         </LinearLayout>
         <com.waz.zclient.ui.views.CursorIconButton
             android:id="@+id/tv__send_button"
+            android:clickable="false"
             android:layout_width="@dimen/cursor__menu_button__diameter"
             android:layout_height="@dimen/cursor__menu_button__diameter"
             android:layout_gravity="center_vertical|end"
             android:gravity="center"
             android:padding="@dimen/cursor__menu_button__padding"
             android:text="@string/glyph__send"
-            android:textColor="@color/drawing__icon__text_color"
+            android:textColor="@color/drawing__icon"
             />
 
     </FrameLayout>

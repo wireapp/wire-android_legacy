@@ -31,7 +31,7 @@ local.properties
 app/api-keys.properties
 app/*.keystore
 app/signing.gradle
-user.gradle
+*user.gradle
 testing-gallery/*.keystore
 testing-gallery/signing.gradle
 
@@ -72,3 +72,6 @@ lint-warning.png
 testapp
 
 testui
+
+# custom config file
+custom

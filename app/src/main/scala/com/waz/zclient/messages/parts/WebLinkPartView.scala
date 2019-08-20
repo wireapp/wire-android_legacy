@@ -21,11 +21,9 @@ import android.content.Context
 import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.Message.Part
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GenericContent.LinkPreview
-import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
@@ -33,6 +31,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.views.ProgressDotsDrawable
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.utils._
@@ -41,7 +40,13 @@ import com.waz.zclient.common.views.ImageController.{DataImage, ImageUri}
 import com.waz.zclient.common.views.ImageAssetDrawable
 import com.waz.zclient.{R, ViewHelper}
 
-class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends CardView(context, attrs, style) with ClickableViewPart with ViewHelper with EphemeralPartView {
+class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int)
+  extends CardView(context, attrs, style)
+    with ClickableViewPart
+    with ViewHelper
+    with EphemeralPartView
+    with DerivedLogTag {
+
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -64,10 +69,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
   } yield {
     val index = msg.content.indexOf(ct)
     val linkIndex = msg.content.take(index).count(_.tpe == Part.Type.WEB_LINK)
-    msg.protos.lastOption flatMap {
-      case TextMessage(_, _, previews) if index >= 0 && previews.size > linkIndex => Some(previews(linkIndex))
-      case _ => None
-    }
+    if (index >= 0 && msg.links.size > linkIndex) Some(msg.links(linkIndex)) else None
   }
 
   val image = for {
@@ -121,7 +123,7 @@ class WebLinkPartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   override def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions]): Unit = {
     super.set(msg, part, opts)
-    verbose(s"set $part")
+    verbose(l"set $part")
     part foreach { content ! _ }
   }
 }

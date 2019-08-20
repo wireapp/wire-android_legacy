@@ -20,5 +20,5 @@
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="@color/teams_create_button"/>
+    <solid android:color="@color/teams_create_team_button"/>
 </shape>

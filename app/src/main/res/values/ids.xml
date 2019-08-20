@@ -22,18 +22,6 @@
     xmlns:tools="http://schemas.android.com/tools">
     <item name="conversation_pager" type="id"/>
 
-    <!-- Adding placeholder to satisfy lint, otherwise lint thinks files are not used -->
-    <drawable name="placeholder1" tools:ignore="UnusedResources">@drawable/ic_launcher_wire</drawable>
-    <drawable name="placeholder2" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_internal</drawable>
-    <drawable name="placeholder3" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_dev</drawable>
-    <drawable name="placeholder4" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_candidate</drawable>
-    <drawable name="placeholder5" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_playground</drawable>
-    <drawable name="placeholder6" tools:ignore="UnusedResources">@drawable/ic_launcher_wire_qa</drawable>
-
-    <item name="cursor" type="id">666</item>
-    <item name="cursor_menu_item_left_margin" type="id" />
-    <item name="cursor_menu_item_participant" type="id" />
-    <item name="cursor_menu_item_calling" type="id" />
     <item name="cursor_menu_item_video" type="id" />
     <item name="cursor_menu_item_camera" type="id" />
     <item name="cursor_menu_item_draw" type="id" />
@@ -47,6 +35,7 @@
     <item name="cursor_menu_item_more" type="id" />
     <item name="cursor_menu_item_less" type="id" />
     <item name="cursor_menu_item_send" type="id" />
+    <item name="cursor_menu_item_mention" type="id" />
     <item name="cursor_menu_item_dummy" type="id" />
 
     <item name="message_bottom_menu_item_forward" type="id" />
@@ -59,10 +48,9 @@
     <item name="message_bottom_menu_item_unlike" type="id" />
     <item name="message_bottom_menu_item_save" type="id" />
     <item name="message_bottom_menu_item_open_file" type="id" />
-    <item name="message_bottom_menu_item_forward_multiple" type="id" />
     <item name="message_bottom_menu_item_reveal" type="id" />
-
-    <item name="video_calling_view" type="id" />
+    <item name="message_bottom_menu_item_reply" type="id" />
+    <item name="message_bottom_menu_item_details" type="id" />
 
     <item name="emoji_keyboard_item" type="id" />
 
@@ -74,8 +62,11 @@
     <item name="services_section" type="id" />
     <item name="guest_options" type="id" />
     <item name="timed_messages_options" type="id" />
+    <item name="notifications_options" type="id" />
+    <item name="read_receipts_options" type="id" />
 
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>
+    <item name="manage_services_button" type="id"/>
 
 </resources>

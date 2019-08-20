@@ -20,8 +20,7 @@ package com.waz.zclient.conversationlist
 import android.support.v7.widget.RecyclerView
 import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -29,10 +28,14 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListAdapter._
 import com.waz.zclient.conversationlist.views.{IncomingConversationListRow, NormalConversationListRow}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 
-class ConversationListAdapter(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[ConversationRowViewHolder] with Injectable {
+class ConversationListAdapter(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[ConversationRowViewHolder]
+    with Injectable
+    with DerivedLogTag {
 
   setHasStableIds(true)
 
@@ -50,7 +53,7 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
   def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
     _conversations = convs
     _incomingRequests = incoming
-    verbose(s"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
+    verbose(l"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
     notifyDataSetChanged()
   }
 
@@ -72,7 +75,7 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
     holder match {
       case normalViewHolder: NormalConversationRowViewHolder =>
         getItem(position).fold {
-          error(s"Conversation not found at position: $position")
+          error(l"Conversation not found at position: $position")
         } { item =>
           normalViewHolder.bind(item)
         }
@@ -151,11 +154,6 @@ object ConversationListAdapter {
   case object Incoming extends ListMode {
     override lazy val nameId = R.string.conversation_list__header__archive_title
     override val filter = ConversationListController.IncomingListFilter
-  }
-
-  case object Integration extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = ConversationListController.IntegrationFilter
   }
 
   trait ConversationRowViewHolder extends RecyclerView.ViewHolder

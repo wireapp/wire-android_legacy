@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.controllers.camera;
 
-import com.waz.api.ImageAsset;
+import com.waz.service.assets.AssetService;
 import com.waz.zclient.pages.main.profile.camera.CameraContext;
 
 import java.util.HashSet;
@@ -55,9 +55,9 @@ public class CameraController implements ICameraController {
     }
 
     @Override
-    public void onBitmapSelected(ImageAsset imageAsset, CameraContext cameraContext) {
+    public void onBitmapSelected(AssetService.RawAssetInput input, CameraContext cameraContext) {
         for (CameraActionObserver cameraActionObserver : cameraActionObservers) {
-            cameraActionObserver.onBitmapSelected(imageAsset, cameraContext);
+            cameraActionObserver.onBitmapSelected(input, cameraContext);
         }
     }
 

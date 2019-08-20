@@ -69,7 +69,6 @@ case class Placeholders(
                         useAudioLink: Boolean = false,
                         internalFeatures: Boolean = true,
                         localyticsAppKey: String = "88294647e42fd68a78d6743-9ba13640-414c-11e3-3d6b-00a426b17dd8",
-                        hockeyAppKey: String = "1f5602987d1617ab35573c2202438aaf"
                        ) {
 
 
@@ -83,7 +82,6 @@ case class Placeholders(
     "use_audio_link"    -> useAudioLink.toString,
     "internal_features" -> internalFeatures.toString,
     "localyticsAppKey"  -> localyticsAppKey,
-    "hockeyAppKey"      -> hockeyAppKey
   )
 }
 
@@ -95,7 +93,6 @@ object Placeholders {
     applicationLabel = "Wire Candidate",
     applicationIcon = "@drawable/ic_launcher_wire_candidate",
     internalFeatures = false,
-    hockeyAppKey = "58bc68003dedd15498f4a772caf23966"
   )
 
   lazy val Prod = Placeholders(
@@ -105,32 +102,27 @@ object Placeholders {
     applicationIcon = "@drawable/ic_launcher_wire",
     sharedUserId = "com.waz.userid",
     localyticsAppKey = "87df1d933d5d95b1a057ba2-4e213c38-756b-11e4-a7de-009c5fda0a25",
-    hockeyAppKey = "189d00945f69a08e1605e0b44227fe4d"
   )
 
   lazy val Internal = Placeholders(
     applicationLabel = "Wire Internal",
     applicationIcon = "@drawable/ic_launcher_wire_internal",
-    hockeyAppKey = "b0759466abc3757e339e89a733ad604e"
   )
 
   lazy val Avs = Placeholders(
     applicationLabel = "Wire AVS",
     internalFeatures = false,
     applicationIcon = "@drawable/ic_launcher_wire_playground",
-    hockeyAppKey = "f20c645784bf28e3aec68269566c388f"
   )
 
   lazy val QA = Placeholders(
     applicationLabel = "Wire QA",
     internalFeatures = false,
     applicationIcon = "@drawable/ic_launcher_wire_qa",
-    hockeyAppKey = "76c0b10e19e596ccd2dc021123fbf562"
   )
 
   lazy val Experimental = Placeholders(
     applicationLabel = "Wire Exp",
     applicationIcon = "@drawable/ic_launcher_wire_playground",
-    hockeyAppKey = "85c334bad6f64ba1bed31de65fc3a94a"
   )
 }

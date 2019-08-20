@@ -30,6 +30,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/fm__participants__footer"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/wire__padding__24"
         />
 
     <!-- Footer with left & right actions -->
@@ -39,7 +41,7 @@
         android:layout_height="wrap_content"
         app:leftActionText="@string/glyph__add_people"
         app:rightActionText="@string/glyph__more"
-        app:leftActionLabelText="@string/conversation__action__add_people"
+        app:leftActionLabelText="@string/conversation__action__add_participants"
         android:layout_alignParentBottom="true"
         style="?wireBackground"
         />

@@ -53,7 +53,7 @@
         android:paddingEnd="@dimen/list_right_indicator_right_padding"
         android:paddingStart="@dimen/list_indicator_between_padding"
         android:textSize="@dimen/wire__icon_button__text_size"
-        android:textColor="@color/list_menu_icon_color"
+        android:textColor="@color/list_menu_icon"
         android:text="@string/glyph__microphone_off"
         />
 

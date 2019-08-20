@@ -26,19 +26,18 @@ import android.support.v4.content.ContextCompat
 import android.transition._
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, LinearLayout}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.{EmailAddress, PhoneNumber}
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
+import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
-import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
+import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment}
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.TabPages
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
@@ -52,7 +51,10 @@ import com.waz.zclient.ui.views.tab.TabIndicatorLayout.Callback
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 
-class SignInFragment extends FragmentHelper
+import scala.concurrent.Future
+
+class SignInFragment
+  extends SSOFragment
   with View.OnClickListener
   with CountryController.Observer {
 
@@ -74,7 +76,10 @@ class SignInFragment extends FragmentHelper
       case Some(Email.str) => Email
       case _               => Phone
     }
-    Signal(SignInMethod(sign, input))
+
+    val onlyLogin = getBooleanArg(OnlyLoginArg)
+
+    Signal(SignInMethod(sign, input, onlyLogin))
   }
 
   private val email    = Signal("")
@@ -87,22 +92,30 @@ class SignInFragment extends FragmentHelper
 
   private lazy val nameValidator = new NameValidator()
   private lazy val emailValidator = EmailValidator.newInstance()
-  private lazy val passwordValidator = PasswordValidator.instance(context)
-  private lazy val legacyPasswordValidator = PasswordValidator.instanceLegacy(context)
+
+  // This validator is only for enabling/disabling the confirmation button.
+  private lazy val passwordValidator = PasswordValidator.instance()
+
+  // This is used when setting a password once the confirmation button is clicked.
+  private val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
+  private val maxPasswordLength = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
+
+  private lazy val strongPasswordValidator =
+    StrongValidator.createStrongPasswordValidator(minPasswordLength, maxPasswordLength)
 
   lazy val isValid: Signal[Boolean] = uiSignInState.flatMap {
-    case SignInMethod(Login, Email) =>
+    case SignInMethod(Login, Email, _) =>
       for {
-        email <- email
+        email    <- email
         password <- password
-      } yield emailValidator.validate(email) && legacyPasswordValidator.validate(password)
-    case SignInMethod(Register, Email) =>
+      } yield emailValidator.validate(email) && passwordValidator.validate(password)
+    case SignInMethod(Register, Email, false) =>
       for {
-        name <- name
-        email <- email
+        name     <- name
+        email    <- email
         password <- password
       } yield nameValidator.validate(name) && emailValidator.validate(email) && passwordValidator.validate(password)
-    case SignInMethod(_, Phone) =>
+    case SignInMethod(_, Phone, false) =>
       phone.map(_.nonEmpty)
     case _ => Signal.empty[Boolean]
   }
@@ -132,11 +145,19 @@ class SignInFragment extends FragmentHelper
 
   def confirmationButton = Option(findById[PhoneConfirmationButton](R.id.pcb__signin__email))
 
+  def passwordPolicyHint = Option(findById[TypefaceTextView](R.id.password_policy_hint))
   def termsOfService = Option(findById[TypefaceTextView](R.id.terms_of_service_text))
 
   def forgotPasswordButton = Option(findById[View](getView, R.id.ttv_signin_forgot_password))
+  def companyLoginButton = Option(findById[View](getView, R.id.ttv_signin_sso))
 
-  def setupViews(): Unit = {
+  def setupViews(onlyLogin: Boolean): Unit = {
+
+    tabSelector.foreach(_.setVisible(!onlyLogin))
+    emailButton.foreach(_.setVisible(!onlyLogin))
+    phoneButton.foreach(_.setVisible(!onlyLogin))
+
+    companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -149,7 +170,10 @@ class SignInFragment extends FragmentHelper
       field.setValidator(passwordValidator)
       field.setResource(R.layout.guided_edit_text_sign_in__password)
       field.setText(password.currentValue.getOrElse(""))
-      field.getEditText.addTextListener(password ! _)
+      field.getEditText.addTextListener { text =>
+        password ! text
+        passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.white)))
+      }
     }
 
     nameField.foreach { field =>
@@ -159,14 +183,22 @@ class SignInFragment extends FragmentHelper
       field.getEditText.addTextListener(name ! _)
     }
 
-    phoneField.foreach { field =>
-      field.setText(phone.currentValue.getOrElse(""))
-      field.addTextListener(phone ! _)
+    phoneField.foreach(field =>
+      if (onlyLogin) field.setVisible(false)
+      else {
+        field.setText(phone.currentValue.getOrElse(""))
+        field.addTextListener(phone ! _)
+      }
+    )
+
+    passwordPolicyHint.foreach { textView =>
+      textView.setText(getString(R.string.password_policy_hint, minPasswordLength))
+      textView.setTextColor(getColor(R.color.white))
     }
 
     termsOfService.foreach { text =>
       TextViewUtils.linkifyText(text, getColor(R.color.white), true, new Runnable {
-        override def run(): Unit = browserController.openUrl(getString(R.string.url_terms_of_service_personal))
+        override def run(): Unit = browserController.openPersonalTermsOfService()
       })
     }
     countryButton.foreach(_.setOnClickListener(this))
@@ -175,6 +207,7 @@ class SignInFragment extends FragmentHelper
     confirmationButton.foreach(_.setAccentColor(Color.WHITE))
     setConfirmationButtonActive(isValid.currentValue.getOrElse(false))
     forgotPasswordButton.foreach(_.setOnClickListener(this))
+    companyLoginButton.foreach(_.setOnClickListener(this))
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -184,7 +217,6 @@ class SignInFragment extends FragmentHelper
     }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-
     phoneButton.foreach(_.setOnClickListener(this))
     emailButton.foreach(_.setOnClickListener(this))
     closeButton.foreach(_.setOnClickListener(this))
@@ -202,7 +234,7 @@ class SignInFragment extends FragmentHelper
             case TabPages.SIGN_IN =>
               tabSelector.setSelected(TabPages.SIGN_IN)
               uiSignInState.mutate {
-                case SignInMethod(Register, _) => SignInMethod(Login, Email)
+                case SignInMethod(Register, _, _) => SignInMethod(Login, Email)
                 case other => other
               }
             case _ =>
@@ -212,8 +244,9 @@ class SignInFragment extends FragmentHelper
     }
 
     uiSignInState.head.map {
-      case SignInMethod(Login, _) => tabSelector.foreach(_.setSelected(TabPages.SIGN_IN))
-      case SignInMethod(Register, _) => tabSelector.foreach(_.setSelected(TabPages.CREATE_ACCOUNT))
+      case SignInMethod(Login, _, _) => tabSelector.foreach(_.setSelected(TabPages.SIGN_IN))
+      case SignInMethod(Register, _, false) => tabSelector.foreach(_.setSelected(TabPages.CREATE_ACCOUNT))
+      case _ =>
     } (Threading.Ui)
   }
 
@@ -229,24 +262,24 @@ class SignInFragment extends FragmentHelper
 
     uiSignInState.onUi { state =>
       state match {
-        case SignInMethod(Login, Email) =>
+        case SignInMethod(Login, Email, onlyLogin) =>
           switchScene(0)
-          setupViews()
+          setupViews(onlyLogin)
           setEmailButtonSelected()
           emailField.foreach(_.getEditText.requestFocus())
-        case SignInMethod(Login, Phone) =>
+        case SignInMethod(Login, Phone, false) =>
           switchScene(1)
-          setupViews()
+          setupViews(onlyLogin = false)
           setPhoneButtonSelected()
           phoneField.foreach(_.requestFocus())
-        case SignInMethod(Register, Email) =>
+        case SignInMethod(Register, Email, false) =>
           switchScene(2)
-          setupViews()
+          setupViews(onlyLogin = false)
           setEmailButtonSelected()
           nameField.foreach(_.getEditText.requestFocus())
-        case SignInMethod(Register, Phone) =>
+        case SignInMethod(Register, Phone, false) =>
           switchScene(3)
-          setupViews()
+          setupViews(onlyLogin = false)
           setPhoneButtonSelected()
           phoneField.foreach(_.requestFocus())
       }
@@ -289,12 +322,10 @@ class SignInFragment extends FragmentHelper
     }
   }
 
-
   override def onResume() = {
     super.onResume()
     countryController.addObserver(this)
   }
-
 
   override def onPause() = {
     super.onPause()
@@ -303,15 +334,18 @@ class SignInFragment extends FragmentHelper
 
   override def onClick(v: View) = {
     v.getId match {
+      case R.id.ttv_signin_sso =>
+        extractTokenAndShowSSODialog(showIfNoToken = true)
+
       case R.id.ttv__new_reg__sign_in__go_to__email =>
         uiSignInState.mutate {
-          case SignInMethod(x, Phone) => SignInMethod(x, Email)
+          case SignInMethod(x, Phone, _) => SignInMethod(x, Email)
           case other => other
         }
 
       case R.id.ttv__new_reg__sign_in__go_to__phone =>
         uiSignInState.mutate {
-          case SignInMethod(x, Email) => SignInMethod(x, Phone)
+          case SignInMethod(x, Email, false) => SignInMethod(x, Phone)
           case other => other
         }
 
@@ -320,8 +354,6 @@ class SignInFragment extends FragmentHelper
 
       case R.id.pcb__signin__email => //TODO rename!
         implicit val ec = Threading.Ui
-        KeyboardUtils.closeKeyboardIfShown(getActivity)
-        activity.enableProgress(true)
 
         def onResponse[A](req: Either[ErrorResponse, A], method: SignInMethod) = {
           tracking.onEnteredCredentials(req, method)
@@ -335,24 +367,35 @@ class SignInFragment extends FragmentHelper
         }
 
         uiSignInState.head.flatMap {
-          case m@SignInMethod(Login, Email) =>
+          case m@SignInMethod(Login, Email, _) =>
+            activity.enableProgress(true)
+
             for {
               email     <- email.head
               password  <- password.head
               req       <- accountsService.loginEmail(email, password)
             } yield onResponse(req, m).right.foreach { id =>
+              KeyboardUtils.closeKeyboardIfShown(getActivity)
               activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
             }
-          case m@SignInMethod(Register, Email) =>
+          case m@SignInMethod(Register, Email, false) =>
             for {
               email     <- email.head
               password  <- password.head
               name      <- name.head
               req       <- accountsService.requestEmailCode(EmailAddress(email))
-            } yield onResponse(req, m).right.foreach { _ =>
-              activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+            } yield {
+              if (strongPasswordValidator.isValidPassword(password)) {
+                onResponse(req, m).right.foreach { _ =>
+                  KeyboardUtils.closeKeyboardIfShown(getActivity)
+                  activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                }
+              } else { // Invalid password
+                passwordPolicyHint.foreach(_.setTextColor(getColor(R.color.teams_error_red)))
+              }
             }
-          case m@SignInMethod(method, Phone) =>
+
+          case m@SignInMethod(method, Phone, false) =>
             val isLogin = method == Login
             activity.enableProgress(true)
             for {
@@ -361,13 +404,17 @@ class SignInFragment extends FragmentHelper
               phone = PhoneNumber(s"+${country.getCountryCode}$phoneStr")
               req <- accountsService.requestPhoneCode(phone, login = isLogin)
             } yield onResponse(req, m).right.foreach { _ =>
+              KeyboardUtils.closeKeyboardIfShown(getActivity)
               activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
             }
+          case SignInMethod(_, _, true) =>
+            error(l"Invalid sign in state")
+            Future.successful({})
           case _ => throw new NotImplementedError("Only login with email works right now") //TODO
         }
 
       case R.id.ttv_signin_forgot_password =>
-        browserController.openUrl(getString(R.string.url_password_reset))
+        browserController.openForgotPassword()
       case R.id.close_button =>
         activity.abortAddAccount()
       case _ =>
@@ -391,26 +438,27 @@ class SignInFragment extends FragmentHelper
       false
     }
 
-  def activity = getActivity.asInstanceOf[AppEntryActivity]
+  override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 }
 
 object SignInFragment {
 
   val SignTypeArg = "SIGN_IN_TYPE"
   val InputTypeArg = "INPUT_TYPE"
+  val OnlyLoginArg = "ONLY_LOGIN"
 
   def apply() = new SignInFragment
 
-  def apply(signInMethod: SignInMethod): SignInFragment = {
+  def apply(signInMethod: SignInMethod): SignInFragment =
     returning(new SignInFragment()) {
       _.setArguments(returning(new Bundle) { b =>
           b.putString(SignTypeArg, signInMethod.signType.str)
           b.putString(InputTypeArg, signInMethod.inputType.str)
+          b.putBoolean(OnlyLoginArg, signInMethod.onlyLogin)
       })
     }
-  }
 
-  val Tag = logTagFor[SignInFragment]
+  val Tag: String = getClass.getSimpleName
 
   sealed trait SignType{
     val str: String
@@ -424,7 +472,9 @@ object SignInFragment {
   object Email extends InputType { override val str = "Email" }
   object Phone extends InputType { override val str = "Phone" }
 
-  case class SignInMethod(signType: SignType, inputType: InputType)
+  case class SignInMethod(signType: SignType, inputType: InputType = Email, onlyLogin: Boolean = false)
+
+  val SignInOnlyLogin = SignInMethod(Login, Email, onlyLogin = true)
 }
 
 class AutoTransition2 extends TransitionSet {

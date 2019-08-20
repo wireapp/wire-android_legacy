@@ -136,14 +136,14 @@ class LoadingIndicatorView(context: Context, attrs: AttributeSet, defStyle: Int)
     indeterminateGlyph.setTextColor(getColor(R.color.text__primary_light))
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
       indeterminateSpinner.setIndeterminateTintList(getColorStateList(R.color.text__primary_light))
-    backgroundColor = getColorWithTheme(R.color.text__primary_disabled_dark, getContext)
+    backgroundColor = getColorWithTheme(R.color.text__primary_disabled_dark)
   }
 
   def applyDarkTheme(): Unit = {
     indeterminateGlyph.setTextColor(getColor(R.color.text__primary_dark))
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
       indeterminateSpinner.setIndeterminateTintList(getColorStateList(R.color.text__primary_dark))
-    backgroundColor = getColorWithTheme(R.color.black_80, getContext)
+    backgroundColor = getColorWithTheme(R.color.black_80)
   }
 
 }

@@ -30,18 +30,20 @@ import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import android.widget.TextView
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.FragmentHelper.getNextAnimationDuration
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.ui.text.GlyphTextView
 import com.waz.zclient.utils.{ContextUtils, RichView}
 
 import scala.language.implicitConversions
 
-object WireContext {
-  private implicit val tag: LogTag = logTagFor[WireContext]
+object WireContext extends DerivedLogTag {
 
   implicit def apply(context: Context): WireContext = context match {
     case ctx: WireContext => ctx
@@ -54,9 +56,10 @@ trait WireContext extends Context {
 
   def eventContext: EventContext
 
-  implicit lazy val injector: Injector = {
+  private lazy val _injector =
     WireApplication.APP_INSTANCE.contextModule(this) :: getApplicationContext.asInstanceOf[WireApplication].module
-  }
+
+  implicit def injector: Injector = _injector
 }
 
 trait ViewFinder {
@@ -84,7 +87,7 @@ trait ViewHelper extends View with ViewFinder with Injectable with ViewEventCont
   @SuppressLint(Array("com.waz.ViewUtils"))
   def findById[V <: View](id: Int): V = findViewById(id).asInstanceOf[V]
 
-  def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = "ViewHelper") =
+  def inflate(layoutResId: Int, group: ViewGroup = ViewHelper.viewGroup(this), addToParent: Boolean = true)(implicit tag: LogTag = LogTag("ViewHelper")) =
     ViewHelper.inflate[View](layoutResId, group, addToParent)
 }
 
@@ -100,7 +103,7 @@ object ViewHelper {
       case e: Throwable =>
         var cause = e
         while (cause.getCause != null) cause = cause.getCause
-        error("inflate failed with root cause:", cause)
+        error(l"inflate failed with root cause:", cause)
         throw e
     }
 
@@ -127,8 +130,13 @@ trait ServiceHelper extends Service with Injectable with WireContext with EventC
 }
 
 
-
-trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder with Injectable with EventContext {
+trait FragmentHelper
+  extends Fragment
+    with OnBackPressedListener 
+    with ViewFinder
+    with EventContext
+    with Injectable
+    with DerivedLogTag {
 
   implicit def currentAndroidContext: Context = getContext
   lazy implicit val injector: Injector = getActivity.asInstanceOf[WireContext].injector
@@ -180,14 +188,31 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
   def withFragmentOpt[A](tag: String)(f: Option[Fragment] => A): A =
     f(Option(getChildFragmentManager.findFragmentByTag(tag)))
 
-  def findFragment(@IdRes id: Int): Option[Fragment] =
-    Option(getChildFragmentManager.findFragmentById(id))
+  @inline
+  private def findFragment[T <: Fragment](tag: String, manager: FragmentManager): Option[T] =
+    Option(manager.findFragmentByTag(tag)).map(_.asInstanceOf[T])
 
-  def withFragmentOpt[A](@IdRes id: Int)(f: Option[Fragment] => A): A =
-    f(findFragment(id))
+  @inline
+  private def findFragment[T <: Fragment](@IdRes id: Int, manager: FragmentManager): Option[T] =
+    Option(manager.findFragmentById(id)).map(_.asInstanceOf[T])
 
-  def withFragment(@IdRes id: Int)(f: Fragment => Unit): Unit =
-    findFragment(id).foreach(f)
+  @inline
+  def findFragment[T <: Fragment](tag: String): Option[T] =
+    findFragment(tag, getFragmentManager)
+
+  @inline
+  def findChildFragment[T <: Fragment](tag: String): Option[T] =
+    findFragment(tag, getChildFragmentManager)
+
+  @inline
+  def findChildFragment[T <: Fragment](@IdRes id: Int): Option[T] =
+    findFragment(id, getChildFragmentManager)
+
+  def withChildFragmentOpt[A](@IdRes id: Int)(f: Option[Fragment] => A): A =
+    f(findChildFragment(id))
+
+  def withChildFragment(@IdRes id: Int)(f: Fragment => Unit): Unit =
+    findChildFragment(id).foreach(f)
 
   def findById[V <: View](parent: View, id: Int): V =
     parent.findViewById(id).asInstanceOf[V]
@@ -198,28 +223,42 @@ trait FragmentHelper extends Fragment with OnBackPressedListener with ViewFinder
     h
   }
 
+  def slideFragmentInFromRight(f: Fragment, tag: String): Unit =
+    getFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_out_to_left,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_out_to_right)
+      .replace(R.id.fl__participant__container, f, tag)
+      .addToBackStack(tag)
+      .commit
+
   def getStringArg(key: String): Option[String] =
     Option(getArguments).flatMap(a => Option(a.getString(key)))
 
   def getBooleanArg(key: String, default: Boolean = false): Boolean =
     Option(getArguments).map(_.getBoolean(key, default)).getOrElse(default)
 
+  def getIntArg(key: String): Option[Int] =
+    Option(getArguments).flatMap(a => Option(a.getInt(key)))
+
   override def onBackPressed(): Boolean = {
-    verbose(s"onBackPressed")(getClass.getSimpleName)
+    verbose(l"onBackPressed")(LogTag(getClass.getSimpleName))
     false
   }
 
-  override def onResume() = {
+  override def onResume(): Unit = {
     super.onResume()
     views.foreach(_.onResume())
   }
 
-  override def onPause() = {
+  override def onPause(): Unit = {
     views.foreach(_.onPause())
     super.onPause()
   }
 
-  override def onDestroyView() = {
+  override def onDestroyView(): Unit = {
     views foreach(_.clear())
     super.onDestroyView()
   }
@@ -274,13 +313,13 @@ trait ManagerFragment extends FragmentHelper {
 
     getChildFragmentManager.addOnBackStackChangedListener(new FragmentManager.OnBackStackChangedListener {
       override def onBackStackChanged(): Unit =
-        currentContent ! withFragmentOpt(contentId)(_.map(_.getTag)).map(Page(_, getChildFragmentManager.getBackStackEntryCount <= 1))
+        currentContent ! withChildFragmentOpt(contentId)(_.map(_.getTag)).map(Page(_, getChildFragmentManager.getBackStackEntryCount <= 1))
     })
   }
 
   def getContentFragment: Option[Fragment] = withContentFragment(identity)
 
-  def withContentFragment[A](f: Option[Fragment] => A): A = withFragmentOpt(contentId)(f)
+  def withContentFragment[A](f: Option[Fragment] => A): A = withChildFragmentOpt(contentId)(f)
 }
 
 object ManagerFragment {
@@ -352,8 +391,9 @@ trait CallingBannerActivity extends ActivityHelper {
   lazy val callBanner = returning(findById[View](R.id.call_banner)) { v =>
     v.onClick(CallingActivity.startIfCallIsActive(this))
   }
-  lazy val callBannerStatus   = findById[TextView](R.id.call_banner_status)
-  lazy val callBannerDuration = findById[TextView](R.id.call_banner_duration)
+  lazy val callBannerStatus = findById[TextView](R.id.call_banner_status)
+  lazy val mutedGlyph       = findById[GlyphTextView](R.id.muted_glyph)
+  lazy val spacerGlyph      = findById[GlyphTextView](R.id.spacer_glyph)
 
   override def onCreate(savedInstanceState: Bundle) = {
     super.onCreate(savedInstanceState)
@@ -364,11 +404,20 @@ trait CallingBannerActivity extends ActivityHelper {
       callBanner.setVisibility(if (est) View.VISIBLE else View.GONE)
     }
 
+    Signal(callController.isMuted, callController.isCallEstablished).onUi {
+      case (true, true) =>
+        mutedGlyph.setVisibility(View.VISIBLE)
+        spacerGlyph.setVisibility(View.INVISIBLE)
+      case _ =>
+        mutedGlyph.setVisibility(View.GONE)
+        spacerGlyph.setVisibility(View.GONE)
+    }
+
     callController.callBannerText.onUi(callBannerStatus.setText)
-    callController.duration.onUi(callBannerDuration.setText)
   }
 }
 
+//TODO add a withFilter method for for comprehensions
 class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
   private var view = Option.empty[T]
   private var onClickListener = Option.empty[OnClickListener]
@@ -376,7 +425,9 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
   def get: T = view.getOrElse { returning(finder.findById[T](id)) { t => view = Some(t) } }
 
   @inline
-  def opt: Option[T] = Option(get)
+  def opt: Option[T] =
+    if(finder != null) Option(get)
+    else None
 
   def clear() =
     view = Option.empty
@@ -390,6 +441,8 @@ class ViewHolder[T <: View](id: Int, finder: ViewFinder) {
   def flatMap[A](f: T => Option[A]): Option[A] = opt.flatMap(f)
 
   def filter(p: T => Boolean): Option[T] = opt.filter(p)
+
+  def exists(p: T => Boolean): Boolean = opt.exists(p(_))
 
   def onResume() = onClickListener.foreach(l => foreach(_.setOnClickListener(l)))
 

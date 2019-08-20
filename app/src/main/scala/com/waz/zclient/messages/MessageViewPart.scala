@@ -1,50 +1,53 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.messages
 
+import android.animation.ValueAnimator
+import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
-import android.graphics.{Canvas, Paint}
-import android.text.format.DateFormat
+import android.graphics.{Canvas, Color, Paint}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, RelativeLayout}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.Message
-import com.waz.api.impl.AccentColor
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.utils.returning
+import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.messages.MessageView.MsgBindOptions
+import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils
-import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
-import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
+import com.waz.zclient.utils.Time.TimeStamp
+import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getString}
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
-import org.threeten.bp.{Instant, LocalDateTime, ZoneId}
 
 trait MessageViewPart extends View {
-  val tpe: MsgPart
+  def tpe: MsgPart
   protected val messageAndLikes = Signal[MessageAndLikes]()
   protected val message = messageAndLikes.map(_.message)
   message.disableAutowiring() //important to ensure the signal keeps updating itself in the absence of any listeners
@@ -69,7 +72,7 @@ trait MessageViewPart extends View {
   *
   * Check the message view as well - it has further filtering on which views
   */
-trait ClickableViewPart extends MessageViewPart with ViewHelper {
+trait ClickableViewPart extends MessageViewPart with ViewHelper with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Ui
   val zms = inject[Signal[ZMessaging]]
   val likes = inject[LikesController]
@@ -92,20 +95,50 @@ trait ClickableViewPart extends MessageViewPart with ViewHelper {
   this.onLongClick(getParent.asInstanceOf[View].performLongClick())
 }
 
+trait HighlightViewPart extends MessageViewPart with ViewHelper {
+  private lazy val accentColorController = inject[AccentColorController]
+  private lazy val collectionController = inject[CollectionController]
+  private val animAlpha = Signal(0f)
+
+  private val animator = ValueAnimator.ofFloat(1, 0).setDuration(1500)
+
+  animator.addUpdateListener(new AnimatorUpdateListener {
+    override def onAnimationUpdate(animation: ValueAnimator): Unit =
+      animAlpha ! Math.min(animation.getAnimatedValue.asInstanceOf[Float], 0.5f)
+  })
+
+  private val bgColor = for {
+    accent <- accentColorController.accentColor
+    alpha  <- animAlpha
+  } yield
+    if (alpha <= 0) Color.TRANSPARENT
+    else ColorUtils.injectAlpha(alpha, accent.color)
+
+  private val isHighlighted = for {
+    msg           <- message
+    Some(focused) <- collectionController.focusedItem
+  } yield focused.id == msg.id
+
+  bgColor.on(Threading.Ui) { setBackgroundColor }
+
+  isHighlighted.on(Threading.Ui) {
+    case true  => animator.start()
+    case false => animator.end()
+  }
+
+  def stopHighlight(): Unit = animator.end()
+}
+
 // Marker for view parts that should be laid out as in FrameLayout (instead of LinearLayout)
 trait FrameLayoutPart extends MessageViewPart
 
 trait TimeSeparator extends MessageViewPart with ViewHelper {
 
-  val is24HourFormat = DateFormat.is24HourFormat(getContext)
-
   lazy val timeText: TypefaceTextView = findById(R.id.separator__time)
   lazy val unreadDot: UnreadDot = findById(R.id.unread_dot)
 
-  val time = Signal[Instant]()
-  val text = time map { t =>
-    getSeparatorTime(getContext, LocalDateTime.now, DateConvertUtils.asLocalDateTime(t), is24HourFormat, ZoneId.systemDefault, true)
-  }
+  val time = Signal[RemoteInstant]()
+  val text = time.map(_.instant).map(TimeStamp(_).string)
 
   text.on(Threading.Ui)(timeText.setTransformedText)
 
@@ -134,7 +167,11 @@ class SeparatorViewLarge(context: Context, attrs: AttributeSet, style: Int) exte
 
 }
 
-class UnreadDot(context: Context, attrs: AttributeSet, style: Int) extends View(context, attrs, style) with ViewHelper {
+class UnreadDot(context: Context, attrs: AttributeSet, style: Int)
+  extends View(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -145,7 +182,7 @@ class UnreadDot(context: Context, attrs: AttributeSet, style: Int) extends View(
   val dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG)
 
   accent { color =>
-    dotPaint.setColor(color.getColor())
+    dotPaint.setColor(color.color)
     postInvalidate()
   }
 
@@ -163,9 +200,9 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   inflate(R.layout.message_user_content)
 
-  private val chathead: ChatheadView = findById(R.id.chathead)
+  private val chathead: ChatHeadView = findById(R.id.chathead)
   private val tvName: TypefaceTextView = findById(R.id.tvName)
-  private val isBot: TypefaceTextView = findById(R.id.is_bot)
+  private val isBot: View = returning(findById[View](R.id.is_bot))(_.setBackground(ManageServicesIcon(ResColor.fromId(R.color.light_graphite))))
   private val tvStateGlyph: GlyphTextView = findById(R.id.gtvStateGlyph)
 
   private val zms = inject[Signal[ZMessaging]]
@@ -177,13 +214,13 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   private val stateGlyph = message map {
     case m if m.msgType == Message.Type.RECALLED => Some(R.string.glyph__trash)
-    case m if m.editTime != Instant.EPOCH => Some(R.string.glyph__edit)
+    case m if !m.editTime.isEpoch => Some(R.string.glyph__edit)
     case _ => None
   }
 
   userId(chathead.setUserId)
 
-  user.map(_.getDisplayName).on(Threading.Ui)(tvName.setTransformedText)
+  user.map(u => if (u.isWireBot) u.name else if (u.deleted) Name(getString(R.string.default_deleted_username)) else u.getDisplayName).onUi(tvName.setTransformedText(_))
   user.map(_.isWireBot).on(Threading.Ui) { isBot.setVisible }
 
   user.map(_.accent).on(Threading.Ui) { a =>
@@ -217,7 +254,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
       case 7 => 0.64f
       case _ => 1f
     }
-    ColorUtils.injectAlpha(alpha, AccentColor(accent).getColor())
+    ColorUtils.injectAlpha(alpha, AccentColor(accent).color)
   }
 }
 

@@ -19,15 +19,16 @@ package com.waz.zclient.conversation.toolbar
 
 import android.Manifest.permission.RECORD_AUDIO
 import android.animation.{ObjectAnimator, ValueAnimator}
+import android.app.Activity
 import android.content.{Context, DialogInterface}
 import android.graphics.LightingColorFilter
 import android.graphics.drawable.LayerDrawable
 import android.util.AttributeSet
 import android.view.View.{GONE, INVISIBLE, VISIBLE}
-import android.view.{LayoutInflater, MotionEvent, View}
+import android.view.{LayoutInflater, MotionEvent, View, WindowManager}
 import android.widget.{FrameLayout, SeekBar, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.api.{AudioAssetForUpload, MessageContent, NetworkMode, PlaybackControls}
+import com.waz.api.{AudioAssetForUpload, PlaybackControls}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetId
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -36,7 +37,6 @@ import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.{RichThreetenBPDuration, returning}
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
@@ -45,19 +45,23 @@ import com.waz.zclient.core.api.scala.ModelObserver
 import com.waz.zclient.ui.utils.CursorUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{RichView, StringUtils, ViewUtils}
+import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Duration.between
 import org.threeten.bp.Instant.now
 import org.threeten.bp.{Duration, Instant}
 
-import scala.concurrent.Future
+import scala.collection.immutable.ListSet
 import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
-class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ViewHelper {
+class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
   import AudioMessageRecordingView._
-  import Threading.Implicits.Background
 
   LayoutInflater.from(getContext).inflate(R.layout.audio_quick_record_controls, this, true)
 
@@ -125,7 +129,7 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     })
   }
 
-  inject[AccentColorController].accentColor.map(_.getColor).onUi { color =>
+  inject[AccentColorController].accentColor.map(_.color).onUi { color =>
     Option(recordingSeekBar.getProgressDrawable  ).foreach { drawable =>
       val filter = new LightingColorFilter(0xFF000000, color)
 
@@ -216,14 +220,14 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   }
 
   def show() = {
-    permissions.permissions(Set(RECORD_AUDIO)).map(_.headOption.exists(_.granted)).head.map {
+    permissions.permissions(ListSet(RECORD_AUDIO)).map(_.headOption.exists(_.granted)).head.map {
       case true =>
         setVisibility(VISIBLE)
         slideControlState ! Recording
         inject[SoundController].shortVibrate()
         record()
       case false =>
-        permissions.requestAllPermissions(Set(RECORD_AUDIO)).map {
+        permissions.requestAllPermissions(ListSet(RECORD_AUDIO)).map {
           case false =>
             showToast(R.string.audio_message_error__missing_audio_permissions)
           case _ =>
@@ -231,9 +235,19 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
     } (Threading.Ui)
   }
 
+  private def setWakeLock(enabled: Boolean): Unit = {
+    val activity: Activity = this.getContext.asInstanceOf[Activity]
+    if(enabled) {
+      activity.getWindow.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    } else {
+      activity.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+  }
+
   private def record() = {
       val key = AssetMediaKey(AssetId())
       currentAssetKey = Some(key)
+      setWakeLock(true)
       recordingService.record(key, 25.minutes).flatMap { case (start, futureAsset) =>
         startTime ! Some(start)
         futureAsset.map {
@@ -260,24 +274,20 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
             }
           case RecordingCancelled => throw new CancelException("Recording cancelled")
         } (Threading.Ui)
-      }(Threading.Ui).onFailure {
-        case NonFatal(_) =>
-          playbackControlsModelObserver.clear()
-          playbackControls = None
+      }(Threading.Ui)
+      .andThen { case e =>
+        setWakeLock(false)
+        e
+      }(Threading.Ui)
+      .onFailure {
+      case NonFatal(_) =>
+        playbackControlsModelObserver.clear()
+        playbackControls = None
       } (Threading.Ui)
   }
 
-  private def sendAudioAsset(asset: AudioAssetForUpload) = {
-    (asset match {
-      case asset: com.waz.api.impl.AudioAssetForUpload =>
-        convController.currentConvId.head.flatMap { convId =>
-          convController.sendMessage(convId, asset, new MessageContent.Asset.ErrorHandler() {
-            override def noWifiAndFileIsLarge(sizeInBytes: Long, net: NetworkMode, answer: MessageContent.Asset.Answer): Unit = answer.ok()
-          })
-        }
-      case _ => Future.successful({})
-    }).map(_ => hide())(Threading.Ui)
-  }
+  private def sendAudioAsset(asset: AudioAssetForUpload) =
+    convController.sendMessage(asset, getContext.asInstanceOf[Activity]).map(_ => hide())(Threading.Ui)
 
   def onMotionEventFromAudioMessageButton(motionEvent: MotionEvent) = {
     motionEvent.getAction match {

@@ -24,7 +24,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.AttributeSet
 import android.view._
-import com.waz.ZLog
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.threading.CancellableFuture.CancelException
 import com.waz.threading.Threading
@@ -37,12 +37,15 @@ import com.waz.zclient.{R, ViewHelper}
 import timber.log.Timber
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.ListSet
 import scala.util.{Failure, Success}
 
-class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends TextureView(cxt, attrs, defStyleAttr) with ViewHelper with TextureView.SurfaceTextureListener {
-
-  implicit val logTag = ZLog.logTagFor[CameraPreviewTextureView]
-
+class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends TextureView(cxt, attrs, defStyleAttr)
+    with ViewHelper
+    with TextureView.SurfaceTextureListener
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
   def this(context: Context) = this(context, null)
@@ -106,7 +109,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
   }
 
   override def onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) = {
-    permissions.requestAllPermissions(Set(CAMERA)).map {
+    permissions.requestAllPermissions(ListSet(CAMERA)).map {
       case true =>
         currentTexture = Some((texture, width, height))
         startLoading(texture, width, height)
@@ -115,7 +118,7 @@ class CameraPreviewTextureView(val cxt: Context, val attrs: AttributeSet, val de
           cxt,
           R.string.camera_permissions_denied_title,
           R.string.camera_permissions_denied_message,
-          R.string.permissions_denied_dialog_acknowledge,
+          android.R.string.ok,
           R.string.permissions_denied_dialog_settings,
           new DialogInterface.OnClickListener() {
             override def onClick(dialog: DialogInterface, which: Int): Unit = ()

@@ -1,37 +1,44 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.qa
 
 import android.app.Activity
 import android.content.{BroadcastReceiver, Context, Intent}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.content.GlobalPreferences._
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.UserPreferences._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController._
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController._
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.{BuildConfig, WireApplication}
+import com.waz.zclient.utils.BackendController
+import com.waz.zclient.{Backend, BuildConfig, WireApplication}
 
-trait AbstractPreferenceReceiver extends BroadcastReceiver {
+/**
+  * to test, fire an intent using:
+  * adb shell am broadcast -a com.waz.zclient.dev.intent.action.ENABLE_TRACKING
+  */
+trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
 
   import AbstractPreferenceReceiver._
   import com.waz.threading.Threading.Implicits.Background
@@ -51,7 +58,7 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
   }
 
   override def onReceive(context: Context, intent: Intent) = {
-
+    verbose(l"onReceive: ${redactedString(intent.getAction)}")
     intent.getAction match {
       case AUTO_ANSWER_CALL_INTENT =>
         setGlobalPref(AutoAnswerCallPrefKey, intent.getBooleanExtra(AUTO_ANSWER_CALL_INTENT_EXTRA_KEY, false))
@@ -87,6 +94,18 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
             setResultData("")
             setResultCode(Activity.RESULT_CANCELED)
         }
+      case SELECT_STAGING_BE =>
+        // Note, the app must be terminated for this to work.
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.StagingBackend)
+        setResultCode(Activity.RESULT_OK)
+      case SELECT_PROD_BE =>
+        // Note, the app must be terminated for this to work.
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.ProdBackend)
+        setResultCode(Activity.RESULT_OK)
       case _ =>
         setResultData("Unknown Intent!")
         setResultCode(Activity.RESULT_CANCELED)
@@ -96,20 +115,22 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver {
 }
 
 object AbstractPreferenceReceiver {
-  val AUTO_ANSWER_CALL_INTENT_EXTRA_KEY = "AUTO_ANSWER_CALL_EXTRA_KEY"
-  private val packageName = BuildConfig.APPLICATION_ID
-  private val AUTO_ANSWER_CALL_INTENT = packageName + ".intent.action.AUTO_ANSWER_CALL"
-  private val ENABLE_GCM_INTENT = packageName + ".intent.action.ENABLE_GCM"
-  private val DISABLE_GCM_INTENT = packageName + ".intent.action.DISABLE_GCM"
-  private val ENABLE_TRACKING_INTENT = packageName + ".intent.action.ENABLE_TRACKING"
-  private val DISABLE_TRACKING_INTENT = packageName + ".intent.action.DISABLE_TRACKING"
-  private val SILENT_MODE = packageName + ".intent.action.SILENT_MODE"
-  private val NO_CONTACT_SHARING = packageName + ".intent.action.NO_CONTACT_SHARING"
-  private val TRACKING_ID_INTENT = packageName + ".intent.action.TRACKING_ID"
-  private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
-  private val FULL_CONVERSATION_VALUE = "FULL_CONVERSATION_VALUE"
+  private val AUTO_ANSWER_CALL_INTENT_EXTRA_KEY = "AUTO_ANSWER_CALL_EXTRA_KEY"
+  private val FULL_CONVERSATION_VALUE           = "FULL_CONVERSATION_VALUE"
 
-  private final val HIDE_GDPR_POPUPS = packageName + ".intent.action.HIDE_GDPR_POPUPS"
+  private val packageName = BuildConfig.APPLICATION_ID
+  private val AUTO_ANSWER_CALL_INTENT  = packageName + ".intent.action.AUTO_ANSWER_CALL"
+  private val ENABLE_GCM_INTENT        = packageName + ".intent.action.ENABLE_GCM"
+  private val DISABLE_GCM_INTENT       = packageName + ".intent.action.DISABLE_GCM"
+  private val ENABLE_TRACKING_INTENT   = packageName + ".intent.action.ENABLE_TRACKING"
+  private val DISABLE_TRACKING_INTENT  = packageName + ".intent.action.DISABLE_TRACKING"
+  private val SILENT_MODE              = packageName + ".intent.action.SILENT_MODE"
+  private val NO_CONTACT_SHARING       = packageName + ".intent.action.NO_CONTACT_SHARING"
+  private val TRACKING_ID_INTENT       = packageName + ".intent.action.TRACKING_ID"
+  private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
+  private val HIDE_GDPR_POPUPS         = packageName + ".intent.action.HIDE_GDPR_POPUPS"
+  private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"
+  private val SELECT_PROD_BE           = packageName + ".intent.action.SELECT_PROD_BE"
 
   private lazy val DeveloperAnalyticsEnabled = PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
 }

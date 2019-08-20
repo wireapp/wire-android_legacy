@@ -35,10 +35,20 @@
             android:orientation="vertical"
             >
 
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_enable_logs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_advanced_enable_logs_title"
+                app:subtitle="@string/pref_advanced_enable_logs_subtitle"
+                />
+
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_debug_report"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 app:subtitle="@string/pref_advanced_debug_report_summary"
                 app:title="@string/pref_advanced_debug_report_title"
                 />
@@ -46,9 +56,26 @@
             <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_reset_push"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/preference_button_height"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
                 app:subtitle="@string/pref_advanced_reset_push_summary"
                 app:title="@string/pref_advanced_reset_push_title"
+            />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_websocket_service"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                app:title="@string/pref_advanced_ws_foreground_title"
+                app:subtitle="@string/pref_advanced_ws_foreground_summary"
+            />
+
+            <TextView
+                android:id="@+id/preferences_notifications_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
             />
 
         </LinearLayout>

@@ -1,20 +1,21 @@
 /**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.waz.zclient.tracking
 
 import com.waz.model.Availability
@@ -27,9 +28,9 @@ import org.json.JSONObject
 
 case class EnteredCredentialsEvent(method: SignInMethod, error: Option[(Int, String)]) extends TrackingEvent {
   override val name = method match {
-    case SignInMethod(Register, Phone) => "registration.entered_phone"
-    case SignInMethod(Register, Email) => "registration.entered_email_and_password"
-    case SignInMethod(Login, _) => "account.entered_login_credentials"
+    case SignInMethod(Register, Phone, _) => "registration.entered_phone"
+    case SignInMethod(Register, Email, _) => "registration.entered_email_and_password"
+    case SignInMethod(Login, _, _)        => "account.entered_login_credentials"
   }
   override val props = Some(returning(new JSONObject()) { o =>
     o.put("context", if (method.inputType == Email) "email" else "phone")
@@ -43,9 +44,9 @@ case class EnteredCredentialsEvent(method: SignInMethod, error: Option[(Int, Str
 
 case class EnteredCodeEvent(method: SignInMethod, error: Option[(Int, String)]) extends TrackingEvent {
   override val name = method match {
-    case SignInMethod(Register, Phone)=> "registration.verified_phone"
-    case SignInMethod(Register, Email)=> "registration.verified_email"
-    case SignInMethod(Login, _)=> "account.entered_login_code"
+    case SignInMethod(Register, Phone, _) => "registration.verified_phone"
+    case SignInMethod(Register, Email, _) => "registration.verified_email"
+    case SignInMethod(Login, _, _)        => "account.entered_login_code"
   }
   override val props = Some(returning(new JSONObject()) { o =>
     val outcome = error.fold2("success", _ => "fail")
@@ -90,11 +91,11 @@ case class RegistrationSuccessfulEvent(inputType: InputType) extends TrackingEve
 
 case class ResendVerificationEvent(method: SignInMethod, isCall: Boolean, error: Option[(Int, String)]) extends TrackingEvent {
   override val name = method match {
-    case SignInMethod(Login, Phone) if isCall => "account.requested_login_verification_call"
-    case SignInMethod(Login, Phone) => "account.resent_login_verification"
-    case SignInMethod(Register, Phone) if isCall => "registration.requested_phone_verification_call"
-    case SignInMethod(Register, Phone) => "registration.resent_phone_verification"
-    case SignInMethod(Register, Email) => "registration.resent_email_verification"
+    case SignInMethod(Login, Phone, _) if isCall    => "account.requested_login_verification_call"
+    case SignInMethod(Login, Phone, _)              => "account.resent_login_verification"
+    case SignInMethod(Register, Phone, _) if isCall => "registration.requested_phone_verification_call"
+    case SignInMethod(Register, Phone, _)           => "registration.resent_phone_verification"
+    case SignInMethod(Register, Email, _)           => "registration.resent_email_verification"
     case _ => ""
   }
   override val props = Some(returning(new JSONObject()) { o =>
@@ -109,8 +110,8 @@ case class ResendVerificationEvent(method: SignInMethod, isCall: Boolean, error:
 
 case class SignUpScreenEvent(method: SignInMethod) extends TrackingEvent {
   override val name = method match {
-    case SignInMethod(Register, _) => "start.opened_personal_registration"
-    case SignInMethod(Login, _) => "start.opened_login"
+    case SignInMethod(Register, _, _) => "start.opened_personal_registration"
+    case SignInMethod(Login, _, _)    => "start.opened_login"
   }
 
   override val props = None

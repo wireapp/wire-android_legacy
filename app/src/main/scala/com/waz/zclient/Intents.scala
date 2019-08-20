@@ -19,6 +19,7 @@ package com.waz.zclient
 
 import android.app.PendingIntent
 import android.content.{Context, Intent}
+import android.os.Bundle
 import com.waz.model.{ConvId, UserId}
 import com.waz.utils.returning
 import com.waz.zclient.calling.CallingActivity
@@ -26,18 +27,19 @@ import com.waz.zclient.preferences.PreferencesActivity
 
 object Intents {
 
-  private lazy val FromNotificationExtra = "from_notification"
-  private lazy val FromSharingExtra      = "from_sharing"
-  private lazy val StartCallExtra        = "start_call"
-  private lazy val AccountIdExtra        = "account_id"
-  private lazy val ConvIdExtra           = "conv_id"
+  private val FromNotificationExtra = "from_notification"
+  private val FromSharingExtra      = "from_sharing"
+  private val StartCallExtra        = "start_call"
+  private val AccountIdExtra        = "account_id"
+  private val ConvIdExtra           = "conv_id"
 
-  private lazy val OpenPageExtra         = "open_page"
+  private val OpenPageExtra         = "open_page"
 
   type Page = String
   object Page {
-    lazy val Settings = "Settings"
-    lazy val Devices  = "Devices"
+    val Settings = "Settings"
+    val Advanced = "Advanced"
+    val Devices  = "Devices"
   }
 
   def CallIntent(userId: UserId, convId: ConvId, requestCode: Int = System.currentTimeMillis().toInt)(implicit context: Context) =
@@ -67,6 +69,9 @@ object Intents {
   def ShowDevicesIntent(implicit context: Context) =
     new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Devices)
 
+  def ShowAdvancedSettingsIntent(implicit context: Context) =
+    new Intent(context, classOf[PreferencesActivity]).putExtra(OpenPageExtra, Page.Advanced)
+
   def OpenSettingsIntent(implicit context: Context) =
     new Intent(context, classOf[PreferencesActivity])
 
@@ -85,16 +90,24 @@ object Intents {
   }
 
   implicit class RichIntent(val intent: Intent) extends AnyVal {
-    def fromNotification = Option(intent).exists(_.getBooleanExtra(FromNotificationExtra, false))
-    def fromSharing      = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
 
-    def startCall        = Option(intent).exists(_.getBooleanExtra(StartCallExtra, false))
-    def accountId        = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId)
-    def convId           = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
+    // To handle cases where null is returned
+    def getAction: Option[String] = Option(intent).flatMap(i => Option(i.getAction))
+    def getFlags: Option[Int] = Option(intent).map(_.getFlags)
+    def getExtras: Option[Bundle] = Option(intent).flatMap(i => Option(i.getExtras))
+    def getDataString: Option[String] = Option(intent).map(_.getDataString)
 
-    def page             = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)
 
-    def clearExtras() = Option(intent).foreach { i =>
+    def fromNotification: Boolean = Option(intent).exists(_.getBooleanExtra(FromNotificationExtra, false))
+    def fromSharing: Boolean = Option(intent).exists(_.getBooleanExtra(FromSharingExtra, false))
+
+    def startCall: Boolean = Option(intent).exists(_.getBooleanExtra(StartCallExtra, false))
+    def accountId: Option[UserId] = Option(intent).map(_.getStringExtra(AccountIdExtra)).filter(_ != null).map(UserId)
+    def convId: Option[ConvId] = Option(intent).map(_.getStringExtra(ConvIdExtra)).filter(_ != null).map(ConvId)
+
+    def page: Option[Page] = Option(intent).map(_.getStringExtra(OpenPageExtra)).filter(_ != null)
+
+    def clearExtras(): Unit = Option(intent).foreach { i =>
       i.removeExtra(FromNotificationExtra)
       i.removeExtra(FromSharingExtra)
       i.removeExtra(StartCallExtra)
@@ -103,15 +116,14 @@ object Intents {
       i.removeExtra(OpenPageExtra)
     }
 
-    def log =
-      s"""NofiticationIntent:
-          |FromNotification: $fromNotification
-          |FromSharing:      $fromSharing
-          |Start call:       $startCall
-          |Account id:       $accountId
-          |Conv id:          $convId
-          |Page:             $page
-        """.stripMargin
+    def ssoToken: Option[String] = Option(intent.getDataString).flatMap { str =>
+      import SSOIntent._
+      if (str.startsWith(Prefix) && str.length > Prefix.length)
+        Some(str.substring(SchemeAndHost.length))
+      else None
+    }
+
+    def clearData(): Unit = intent.setData(null)
   }
 
   object NotificationIntent {
@@ -128,5 +140,11 @@ object Intents {
     def unapply(i: Intent): Option[Page] = i.page
   }
 
+  object SSOIntent {
+    val Scheme        = "wire"
+    val Host          = "start-sso"
+    val Prefix        = s"$Scheme://$Host/wire-"
+    val SchemeAndHost = s"$Scheme://$Host/"
+  }
 
 }

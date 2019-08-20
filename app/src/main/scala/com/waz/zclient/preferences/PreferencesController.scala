@@ -17,22 +17,20 @@
  */
 package com.waz.zclient.preferences
 
-import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.UserPreferences
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.{Injectable, Injector}
 
 //So that java can access the new preferences from the SE
-class PreferencesController(implicit inj: Injector, ec: EventContext) extends Injectable {
+class PreferencesController(implicit inj: Injector, ec: EventContext)
+  extends Injectable with DerivedLogTag {
 
   private val zms = inject[Signal[ZMessaging]]
   private val userPrefs = zms.map(_.userPrefs)
-  private val globalPrefs = zms.map(_.userPrefs)
 
   val sendButtonEnabled = userPrefs.flatMap(_.preference(UserPreferences.SendButtonEnabled).signal).disableAutowiring()
-  val analyticsEnabled  = globalPrefs.flatMap(_.preference(GlobalPreferences.AnalyticsEnabled).signal).disableAutowiring()
 
   def isSendButtonEnabled: Boolean = sendButtonEnabled.currentValue.getOrElse(true)
-  def isAnalyticsEnabled: Boolean = analyticsEnabled.currentValue.getOrElse(true)
 }

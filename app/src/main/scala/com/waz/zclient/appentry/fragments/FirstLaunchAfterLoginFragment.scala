@@ -26,7 +26,6 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
@@ -34,7 +33,7 @@ import com.waz.service.AccountsService
 import com.waz.service.BackupManager.InvalidMetadata
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
-import com.waz.utils.{RichFuture, returning, _}
+import com.waz.utils.{returning, _}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment._
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager
@@ -42,19 +41,21 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
-import scala.concurrent.duration._
 
 import scala.async.Async.{async, await}
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 object FirstLaunchAfterLoginFragment {
   val Tag: String = classOf[FirstLaunchAfterLoginFragment].getName
   val UserIdArg = "user_id_arg"
+  val SSOHadDBArg = "sso_had_db_arg"
 
-  def apply(): Fragment = new FirstLaunchAfterLoginFragment
-  def apply(userId: UserId): Fragment = returning(new FirstLaunchAfterLoginFragment) { f =>
+  def apply(userId: UserId, ssoHadDB: Boolean = true): Fragment = returning(new FirstLaunchAfterLoginFragment) { f =>
     val bundle = new Bundle()
     bundle.putString(UserIdArg, userId.str)
+    bundle.putBoolean(SSOHadDBArg, ssoHadDB)
     f.setArguments(bundle)
   }
 }
@@ -101,7 +102,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       restoreButton.setIsFilled(false)
       restoreButton.setAccentColor(ContextCompat.getColor(getContext, R.color.text__primary_dark))
     }
-    if (databaseExists) {
+    if (databaseExists && getBooleanArg(SSOHadDBArg)) {
       infoTitle.foreach(_.setText(R.string.second_launch__header))
       infoText.foreach(_.setText(R.string.second_launch__sub_header))
     }
@@ -121,7 +122,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
 
   private def importBackup(): Unit = {
     def openBackupChooser() = {
-      permissions.requestAllPermissions(Set(READ_EXTERNAL_STORAGE)).foreach { granted =>
+      permissions.requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).foreach { granted =>
         if (granted) assetIntentsManager.foreach(_.openBackupImport())
         else {
           //todo show something???
@@ -140,7 +141,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       null
     )
 
-    if (databaseExists) showBackupConfirmationDialog
+    if (databaseExists && getBooleanArg(SSOHadDBArg)) showBackupConfirmationDialog
     else openBackupChooser()
   }
 
@@ -174,7 +175,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
           case _ => activity.onEnterApplication(openSettings = false)
         }
       }
-    } logFailure() recover {
+    }.recover {
       case InvalidMetadata.UserId =>
         spinnerController.showSpinner(false)
         displayError(R.string.backup_import_error_wrong_account_title, R.string.backup_import_error_wrong_account)

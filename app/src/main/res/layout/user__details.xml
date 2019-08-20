@@ -28,17 +28,17 @@
               android:gravity="center">
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/user_handle"
+        android:id="@+id/user_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textColor="?wireSecondaryTextColor"
-        android:textSize="@dimen/wire__text_size__small"
-        app:w_font="@string/wire__typeface__light"
+        android:textColor="?wirePrimaryTextColor"
+        android:textSize="@dimen/wire__text_size__regular"
+        app:w_font="@string/wire__typeface__regular"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/ttv__user_details__user_info"
+        android:id="@+id/user_handle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"

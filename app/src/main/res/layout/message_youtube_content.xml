@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:textSize="@dimen/content__youtube__play_button__size"
-        android:textColor="@color/content__youtube__text__color"
+        android:textColor="@color/content__youtube__text"
         android:text="@string/glyph__play"
         />
 
@@ -41,7 +41,7 @@
         android:layout_centerInParent="true"
         android:paddingTop="@dimen/content__youtube__error_text__padding_top"
         android:textSize="@dimen/wire__text_size__small"
-        android:textColor="@color/content__youtube__error_indicator__color"
+        android:textColor="@color/content__youtube__error_indicator"
         android:text="@string/content__youtube__error__text"
         app:w_font="@string/content__youtube__error__font"
         app:transform="@string/content__youtube__error__text__transform"
@@ -63,7 +63,7 @@
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/ttv__youtube_message__title"
         android:textSize="@dimen/wire__text_size__regular"
-        android:textColor="@color/content__youtube__text__color"
+        android:textColor="@color/content__youtube__text"
         android:lines="2"
         android:ellipsize="end"
         android:includeFontPadding="false"

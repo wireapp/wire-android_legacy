@@ -112,7 +112,7 @@ public class VoiceFilterGridLayout extends FrameLayout implements
 
                 if (c < numCols - 1) {
                     View view = new View(getContext());
-                    view.setBackgroundColor(ContextUtils.getColorWithTheme(R.color.white_16, getContext()));
+                    view.setBackgroundColor(ContextUtils.getColorWithThemeJava(R.color.white_16, getContext()));
                     row.addView(view,
                                 new LayoutParams(ViewUtils.toPx(getContext(), 0.5f),
                                                  ViewGroup.LayoutParams.MATCH_PARENT));
@@ -124,7 +124,7 @@ public class VoiceFilterGridLayout extends FrameLayout implements
             container.addView(row, params);
             if (r < numRows - 1) {
                 View view = new View(getContext());
-                view.setBackgroundColor(ContextUtils.getColorWithTheme(R.color.white_16, getContext()));
+                view.setBackgroundColor(ContextUtils.getColorWithThemeJava(R.color.white_16, getContext()));
                 container.addView(view,
                                   new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                    ViewUtils.toPx(getContext(), 0.5f)));
@@ -227,7 +227,7 @@ public class VoiceFilterGridLayout extends FrameLayout implements
 
     private void setSelectedView(GlyphTextView glyphTextView) {
         if (selectedView != null) {
-            selectedView.setTextColor(ContextUtils.getColorWithTheme(R.color.text__primary_dark, getContext()));
+            selectedView.setTextColor(ContextUtils.getColorWithThemeJava(R.color.text__primary_dark, getContext()));
         }
         glyphTextView.setTextColor(accentColor);
         selectedView = glyphTextView;

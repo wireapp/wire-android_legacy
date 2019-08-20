@@ -27,7 +27,7 @@
     <FrameLayout
         android:layout_height="wrap_content"
         android:layout_width="@dimen/content__padding_left">
-        <com.waz.zclient.common.views.ChatheadView
+        <com.waz.zclient.common.views.ChatHeadView
             android:id="@+id/chathead"
             app:show_border="false"
             android:layout_width="@dimen/content__separator__chathead__size"
@@ -44,19 +44,13 @@
         android:layout_gravity="center_vertical"
     />
 
-    <com.waz.zclient.ui.text.TypefaceTextView
+    <View
         android:id="@+id/is_bot"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/integrations_conv_bot"
+        android:layout_width="@dimen/user_part_view_bot_size"
+        android:layout_height="@dimen/user_part_view_bot_size"
         android:layout_gravity="center_vertical"
-        android:textColor="@color/light_graphite"
-        android:textSize="@dimen/wire__text_size__small"
-        app:w_font="@string/wire__typeface__light"
-        android:textAllCaps="true"
-        android:includeFontPadding="false"
         android:visibility="gone"
-        android:layout_marginStart="@dimen/wire__padding__4"
+        android:layout_marginStart="@dimen/wire__padding__8"
         />
 
     <com.waz.zclient.ui.text.GlyphTextView

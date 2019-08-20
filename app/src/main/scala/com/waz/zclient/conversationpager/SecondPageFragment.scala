@@ -20,8 +20,6 @@ package com.waz.zclient.conversationpager
 import android.content.Intent
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
 import com.waz.api.IConversation.Type
 import com.waz.model.UserId
 import com.waz.threading.Threading
@@ -30,6 +28,7 @@ import com.waz.zclient.connect.{ConnectRequestFragment, PendingConnectRequestMan
 import com.waz.zclient.controllers.navigation.{INavigationController, Page, PagerControllerObserver}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.ui.utils.MathUtils
@@ -69,7 +68,7 @@ class SecondPageFragment extends FragmentHelper
   }
 
   private def open(tag: String, other: Option[UserId]): Unit = {
-    info(s"open ($tag, $other)")
+    info(l"open (${showString(tag)}, $other)")
     val (fragment, page) = (tag, other) match {
       case (ConnectRequestFragment.Tag, Some(userId)) =>
         (ConnectRequestFragment.newInstance(userId), Page.CONNECT_REQUEST_INBOX)
@@ -109,7 +108,7 @@ class SecondPageFragment extends FragmentHelper
     pageDetails.onUi {
       case (tag, other) if connectionRequestTags.contains(tag) => open(tag, other)
       case (tag, other) =>
-        withFragmentOpt(R.id.fl__second_page_container) {
+        withChildFragmentOpt(R.id.fl__second_page_container) {
           case Some(f) if f.getTag == tag => //already showing the correct fragment - nothing to do
           case _                          => open(tag, other)
         }
@@ -118,7 +117,7 @@ class SecondPageFragment extends FragmentHelper
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
-    withFragment(R.id.fl__second_page_container)(_.onActivityResult(requestCode, resultCode, data))
+    withChildFragment(R.id.fl__second_page_container)(_.onActivityResult(requestCode, resultCode, data))
   }
 
   override def onBackPressed(): Boolean = {
@@ -132,14 +131,14 @@ class SecondPageFragment extends FragmentHelper
   }
 
   override def onAcceptedConnectRequest(userId: UserId): Unit = {
-    info(s"onAcceptedConnectRequest $userId")
+    info(l"onAcceptedConnectRequest $userId")
     userAccountsController.getConversationId(userId).flatMap { convId =>
       conversationController.selectConv(convId, ConversationChangeRequester.CONVERSATION_LIST)
     }
   }
 
   override def dismissInboxFragment(): Unit = {
-    info("dismissInboxFragment")
+    info(l"dismissInboxFragment")
     navigationController.setVisiblePage(Page.CONVERSATION_LIST, Tag)
   }
 

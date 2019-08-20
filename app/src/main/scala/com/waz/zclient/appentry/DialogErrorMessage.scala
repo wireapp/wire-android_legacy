@@ -34,7 +34,7 @@ object DialogErrorMessage {
         //TODO (403 password-exists) ??
       case (404, "invalid-code"       ) => (R.string.invalid_code_header,              R.string.wrong_code_message)
       case (409, "key-exists"         ) => (R.string.email_exists_header,              R.string.email_exists_message)
-      case (429, "client-error"       ) => (R.string.too_many_attempts_header,         R.string.login_later_message)
+      case (429, "client-error"       ) => (R.string.too_many_attempts_header,         R.string.email_login_later_message)
       case _ => genericError(err.code)
     }
   }
@@ -49,7 +49,7 @@ object DialogErrorMessage {
       //TODO handle (403, pending-activation) and (403, suspended) ??
       case (404, "invalid-code"          ) => (R.string.incorrect_code_header,         R.string.wrong_code_message)
       case (409, "key-exists"            ) => (R.string.phone_exists_header,           R.string.phone_exists_message)
-      case (429, "client-error"          ) => (R.string.too_many_attempts_header,      R.string.login_later_message)
+      case (429, "client-error"          ) => (R.string.too_many_attempts_header,      R.string.phone_login_later_message)
       case _ => genericError(err.code)
     }
   }
@@ -58,6 +58,11 @@ object DialogErrorMessage {
     case 598 => (R.string.internet_connectivity_error_header, R.string.internet_connectivity_error_message)
     case 600 => (R.string.generic_error_header,               R.string.internet_connectivity_error_message)
     case _   => (R.string.generic_error_header,               R.string.generic_error_message)
+  }
+
+  case class GenericDialogErrorMessage(code: Int) extends DialogErrorMessage {
+    override val headerResource: Int = genericError(code)._1
+    override val bodyResource: Int = genericError(code)._2
   }
 }
 

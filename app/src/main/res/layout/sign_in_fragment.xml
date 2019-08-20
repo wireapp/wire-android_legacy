@@ -23,17 +23,6 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-    <ImageView
-        android:id="@+id/iv__reg__logo"
-        android:layout_width="@dimen/first_time__logo__width"
-        android:layout_height="@dimen/first_time__logo__height"
-        android:layout_marginStart="@dimen/first_time__logo__padding_left"
-        android:layout_marginTop="@dimen/wire_logo_margin_top"
-        android:scaleType="fitCenter"
-        android:src="@drawable/wire"
-        android:layout_gravity="top|start"
-        />
-
     <com.waz.zclient.ui.text.GlyphTextView
         android:id="@+id/close_button"
         android:layout_width="wrap_content"
@@ -110,6 +99,6 @@
         <FrameLayout
             android:id="@+id/sign_in_container"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/phone_sign_in_container_height"/>
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 </FrameLayout>

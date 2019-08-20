@@ -20,27 +20,30 @@ package com.waz.zclient.preferences.pages
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.content.{Context, Intent}
-import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.ShareCompat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.views.MenuRowButton
-import com.waz.zclient.utils.{BackStackKey, ContextUtils, ViewUtils}
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.preferences.pages.BackupExportView._
+import com.waz.zclient.utils.{BackStackKey, ContextUtils, ExternalFileSharing, ViewUtils}
 import com.waz.zclient.{BuildConfig, R, SpinnerController, ViewHelper}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
-import BackupExportView._
 
-class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
+  
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -49,6 +52,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
   private val zms                = inject[Signal[ZMessaging]]
   private val spinnerController  = inject[SpinnerController]
   private val lifecycle          = inject[UiLifeCycle]
+  private val sharing            = inject[ExternalFileSharing]
 
   private val backupButton = findById[MenuRowButton](R.id.backup_button)
 
@@ -69,7 +73,8 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
     backupProcess.onComplete {
       case Success(file) =>
         if (isShown) {
-          val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("application/octet-stream").setStream(Uri.fromFile(file)).getIntent
+          val fileUri = sharing.getUriForFile(file)
+          val intent = ShareCompat.IntentBuilder.from(context.asInstanceOf[Activity]).setType("application/octet-stream").setStream(fileUri).getIntent
           if (BuildConfig.DEVELOPER_FEATURES_ENABLED && !context.getPackageManager.queryIntentActivities(new Intent(TestingGalleryPackage), PackageManager.MATCH_ALL).isEmpty) {
             intent.setPackage(TestingGalleryPackage)
           }
@@ -79,7 +84,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int) extend
           spinnerController.hideSpinner()
         }
       case Failure(err) =>
-        error("Error while exporting database", err)
+        error(l"Error while exporting database", err)
         ViewUtils.showAlertDialog(getContext, R.string.export_generic_error_title, R.string.export_generic_error_text, android.R.string.ok, null, true)
     }
 

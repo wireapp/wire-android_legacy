@@ -22,7 +22,6 @@ import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.FrameLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView}
-import com.waz.api.impl.AccentColor
 import com.waz.content.{AccountStorage, TeamsStorage}
 import com.waz.model._
 import com.waz.service.AccountsService
@@ -84,7 +83,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
     count  <- userAccountsController.unreadCount.map(_.get(accountId))
   } yield count.getOrElse(0)
 
-  private val accentColor = teamAndUser.map(tau => AccentColor(tau._1.accent).getColor())
+  private val accentColor = teamAndUser.map(tau => AccentColor(tau._1.accent).color)
 
   private val picture = teamAndUser.map{
     case (user, Some(team)) =>
@@ -123,7 +122,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
   teamAndUser.map {
     case (userData, None) => userData.getDisplayName
     case (userData, Some(team)) => team.name
-  }.onUi { setContentDescription }
+  }.onUi { setContentDescription(_) }
 
   def setAccount(id: UserId) = accountId ! id
 

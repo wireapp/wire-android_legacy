@@ -18,40 +18,41 @@
 package com.waz.zclient.usersearch.views
 
 import android.content.Context
-import android.text.format.DateFormat
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
-import com.waz.ZLog._
 import com.waz.api.ContentSearchQuery
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.ChatheadView
+import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.messages.MessageBottomSheetDialog.MessageAction
 import com.waz.zclient.messages.MsgPart.Text
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, TextViewUtils}
-import com.waz.zclient.utils.ZTimeFormatter._
+import com.waz.zclient.utils.Time.TimeStamp
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
-import org.threeten.bp.{LocalDateTime, ZoneId}
 
 trait SearchResultRowView extends MessageViewPart with ViewHelper {
   val searchedQuery = Signal[ContentSearchQuery]()
 }
 
-class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with SearchResultRowView{
+class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
+  extends LinearLayout(context, attrs, style)
+    with SearchResultRowView
+    with DerivedLogTag {
+
   import TextSearchResultRowView._
   import Threading.Implicits.Ui
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
-
-  private implicit val tag: LogTag = logTagFor[TextSearchResultRowView]
+  
   override val tpe: MsgPart = Text
 
   inflate(R.layout.search_text_result_row)
@@ -66,7 +67,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
   lazy val infoTextView = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
-  lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatheadView]
+  lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatHeadView]
   lazy val resultsCount = ViewUtils.getView(this, R.id.search_result_count).asInstanceOf[TypefaceTextView]
 
   val contentSignal = for{
@@ -78,7 +79,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   contentSignal.on(Threading.Ui){
     case (msg, query, color, Some(normalizedContent)) =>
-      val spannableString = CollectionUtils.getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.getColor()), StartEllipsisThreshold)
+      val spannableString = CollectionUtils.getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.color), StartEllipsisThreshold)
       contentTextView.setText(spannableString._1)
       resultsCount.setText(s"${spannableString._2}")
       if (spannableString._2 <= 1) {
@@ -97,10 +98,9 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
     u <- usersController.user(m.userId)
   } yield (m, u)
 
-  infoSignal.on(Threading.Ui){
+  infoSignal.onUi {
     case (msg, user) =>
-      val timeStr = getSeparatorTime(getContext, LocalDateTime.now, DateConvertUtils.asLocalDateTime(msg.time), DateFormat.is24HourFormat(getContext), ZoneId.systemDefault, true, false)
-      infoTextView.setText(TextViewUtils.getBoldText(getContext, s"[[${user.name}]] $timeStr"))
+      infoTextView.setText(TextViewUtils.getBoldText(getContext, s"[[${user.name}]] ${TimeStamp(msg.time.instant, showWeekday = false).string}"))
       chatheadView.setUserId(msg.userId)
     case _ =>
   }

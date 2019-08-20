@@ -5,9 +5,94 @@ apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
+
 repositories {
     flatDir {
         dirs 'libs'
+    }
+}
+
+ext {
+    majorVersion = "3.33."
+
+    scalaMajorVersion = '2.11'
+    scalaVersion = scalaMajorVersion + '.12'
+
+    supportLibVersion = '27.1.1'
+    playServicesVersion = '15.0.1'
+    audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
+    stethoVersion = '1.5.0'
+    zMessagingVersion = "141.0.2277"
+    paging_version = "1.0.0"
+
+    avsVersion = '4.9.12@aar'
+    avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
+    avsName = 'avs'
+    avsGroup = 'com.wire'
+
+    // proprietary avs artifact configuration
+    customAvsVersion = '4.9.12@aar'
+    customAvsInternalVersion = customAvsVersion
+    customAvsName = 'avs'
+    customAvsGroup = 'com.wearezeta.avs'
+
+    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '-DEV')
+    zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
+
+}
+
+if (project.file('user.gradle').exists()) {
+    apply from: "user.gradle"
+}
+
+task copyCustomResources(type: Copy) {
+    if (!customConfig.exists() || gradle.startParameter.taskNames.contains("clean")) {
+        return
+    }
+
+    def iconFolder = (config.iconFolder ?: 'icons')
+    def targetResFolder = "$rootDir/app/src/main/res"
+    def iconSubfolders = [
+            'ldpi': 'drawable-ldpi',
+            'mdpi': 'drawable-mdpi',
+            'hdpi': 'drawable-hdpi',
+            'xhdpi': 'drawable-xhdpi',
+            'xxhdpi': 'drawable-xxhdpi',
+            'xxxhdpi': 'drawable-xxxhdpi'
+    ]
+
+    def resources = [
+            "ic_launcher_wire.png" : (config.launcherIcon ?: '')
+    ]
+
+    resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
+            .collectEntries { targetFileName, sourceFileName ->
+                iconSubfolders.collectEntries { sourceSub, targetSub ->
+                    [(customDir + '/' + iconFolder + '/' + sourceSub + '/' + sourceFileName) : [(targetResFolder + '/' + targetSub),  targetFileName]]
+                }
+            }
+            .each { sourcePath, targetPath ->
+                def source = file(sourcePath)
+                assert source.exists()
+                copy {
+                    from source
+                    rename { String filename -> return targetPath[1] }
+                    into file(targetPath[0])
+                }
+                project.logger.info("Copied $sourcePath to ${targetPath[0]}/${targetPath[1]}")
+            }
+
+    copy {
+        from file(customDir + '/strings/strings.xml') into file(targetResFolder + '/values')
+        from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
+    }
+
+    config.languages.each { code ->
+        def targetStringDir = "$targetResFolder/values-$code"
+        copy {
+            mkdir targetStringDir
+            from file("$customDir/strings/$code/strings.xml") into file(targetStringDir)
+        }
     }
 }
 
@@ -17,16 +102,39 @@ android {
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
     }
 
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    preBuild.dependsOn(copyCustomResources)
+
+    compileSdkVersion = 27
+    buildToolsVersion = '28.0.3'
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
-        versionName rootProject.ext.majorVersion + android.defaultConfig.versionCode
+        versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.waz.background.TestRunner"
+        manifestPlaceholders = [customURLScheme: config.custom_url_scheme]
+
+        buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
+        buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
+        buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
+        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
+        buildConfigField 'boolean',  'ALLOW_SSO',                    "$config.allowSSO"
+        buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
+        buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
+        buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
+        buildConfigField 'boolean', 'ENABLE_BLACKLIST',           "$config.enableBlacklist"
+        buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',       "$config.submitCrashReports"
+        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
+        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',          "\"$config.custom_url_scheme\""
+        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH', "$config.new_password_minimum_length"
+        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH', "$config.new_password_maximum_length"
     }
 
     packagingOptions {
@@ -57,6 +165,7 @@ android {
             }
         }
     }
+
     compileOptions {
         compileSdkVersion rootProject.ext.compileSdkVersion
         buildToolsVersion rootProject.ext.buildToolsVersion
@@ -83,7 +192,7 @@ android {
 
         debug {
             // To get debugging properly working again - https://code.google.com/p/android/issues/detail?id=177480
-            testCoverageEnabled = System.getenv("JOB_NAME").equals("full-test-coverage")
+            testCoverageEnabled = System.getenv("JOB_NAME") == "full-test-coverage"
             versionNameSuffix = " " + getDate()
             multiDexEnabled true
             manifestPlaceholders = [applicationVmSafeMode: "true",
@@ -101,12 +210,10 @@ android {
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
                                     applicationIcon        : "@drawable/ic_launcher_wire_dev",
                                     sharedUserId           : "",
-                                    internal_features      : "true",
-                                    hockeyAppKey           : getApiKey("hockeyAppKey")]
-
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
+                                    internal_features      : "true"]
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
         }
 
         candidate {
@@ -115,25 +222,23 @@ android {
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
                                     applicationIcon        : "@drawable/ic_launcher_wire_candidate",
                                     sharedUserId           : "",
-                                    internal_features      : "false",
-                                    hockeyAppKey           : getApiKey("hockeyAppKeyCand")]
+                                    internal_features      : "false"]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         prod {
-            applicationId "com.wire"
-            manifestPlaceholders = [applicationLabel       : "@string/app_name",
+            applicationId config.applicationId
+            manifestPlaceholders = [applicationLabel       : config.appName,
                                     applicationIcon        : "@drawable/ic_launcher_wire",
-                                    sharedUserId           : "com.waz.userid",
-                                    internal_features      : "false",
-                                    hockeyAppKey           : getApiKey("hockeyAppKeyProd")]
+                                    sharedUserId           : config.userId,
+                                    internal_features      : "false"]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'false'
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'false'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenProd")}\""
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         internal {
@@ -142,41 +247,11 @@ android {
             manifestPlaceholders = [applicationLabel : "Wire Internal",
                                     applicationIcon  : "@drawable/ic_launcher_wire_internal",
                                     sharedUserId     : "",
-                                    internal_features: "true",
-                                    hockeyAppKey     : getApiKey("hockeyAppKeyInternal")]
+                                    internal_features: "true"]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'false'
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
-        }
-
-        avs {
-            applicationId "com.wire.avs"
-            versionName majorVersion + android.defaultConfig.versionCode + "-avs"
-            manifestPlaceholders = [applicationLabel       : "Wire AVS",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_playground",
-                                    sharedUserId           : "",
-                                    internal_features      : "true",
-                                    hockeyAppKey           : getApiKey("hockeyAppKeyAvs")]
-
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            'null'
-        }
-
-        qa {
-            minSdkVersion 21
-            applicationId "com.wire.qa"
-            versionName majorVersion + android.defaultConfig.versionCode + "-qa"
-            manifestPlaceholders = [applicationLabel       : "Wire QA",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_qa",
-                                    sharedUserId           : "",
-                                    internal_features      : "true",
-                                    hockeyAppKey           : getApiKey("hockeyAppKeyQa")]
-
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            "\"${getApiKey("mixpanelAppTokenInternal")}\""
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         experimental {
@@ -185,12 +260,11 @@ android {
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
                                     applicationIcon        : "@drawable/ic_launcher_wire_playground",
                                     sharedUserId           : "",
-                                    internal_features      : "true",
-                                    hockeyAppKey           : getApiKey("hockeyAppKeyExperimental")]
+                                    internal_features      : "true"]
 
-            buildConfigField 'boolean', 'USE_HOCKEY_UPDATE',             'true'
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'String',  'MIXPANEL_APP_TOKEN',            'null'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
     }
 
@@ -217,6 +291,7 @@ android {
         exclude 'APK_LICENSE.txt'
         exclude 'LICENSE.txt'
     }
+
 }
 
 dexinfo {
@@ -225,90 +300,105 @@ dexinfo {
 
 dependencies {
     implementation project(':lintlib')
+
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation deps.scala
-    compileOnly deps.scalaReflect
-    implementation deps.kotlin
-    implementation deps.multidex
-    implementation deps.timber
-    implementation deps.supportv4
-    implementation deps.supportv13
-    implementation deps.supportdesign
-    implementation deps.appcompatv7
-    implementation deps.supportannotations
-    implementation deps.recyclerview
-    implementation deps.threetenabp
-    implementation deps.hockey
-    implementation deps.audioNotifications
-    implementation deps.mixpanel
-    implementation deps.rebound
-    implementation deps.preferences
-    implementation deps.commonmark
-    implementation(deps.supportpreferences) {
-        exclude group: 'com.android.support', module: 'appcompat-v7'
+    implementation "org.scala-lang:scala-library:$scalaVersion"
+    implementation "org.scala-lang:scala-reflect:$scalaVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+
+    //wire libraries:
+    implementation "com.wire:audio-notifications:$audioVersion"
+    //don't include wire translations for custom builds
+    if (customRepository.isEmpty() || token.isEmpty()) {
+        implementation 'com.wire:wiretranslations:1.+'
     }
-    implementation deps.gridlayout
-    //noinspection GradleDynamicVersion
-    implementation deps.psBase
-    implementation deps.fcm
-    implementation deps.psMaps
-    implementation deps.psLocation
-    implementation deps.cardview
-    //Be careful not to include in production!!
-    devImplementation deps.stetho
-    experimentalImplementation deps.stetho
-    qaImplementation deps.stetho
-    internalImplementation deps.stetho
-    // Test dependencies
-    testImplementation deps.junit
-    testImplementation(deps.testutils) {
-        exclude module: 'aspectjrt'
-        exclude module: 'isoparser'
-        exclude module: 'zmessaging-android'
-    }
-    testImplementation(deps.scalatest) {
-        exclude module: 'scala-library'
-    }
-    testImplementation deps.espressoIntents
-    testImplementation deps.hamcrestCore
-    testImplementation deps.hamcrestLib
-    testImplementation deps.hamcrestIntegration
-    testImplementation deps.mockitoCore
-    testImplementation deps.espresso
-    testImplementation deps.supportannotations
-    //AndroidTest dependencies
-    androidTestImplementation fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestImplementation deps.junit
-    androidTestImplementation deps.espressoIntents
-    androidTestImplementation deps.testRunner
-    androidTestImplementation deps.testRules
-    androidTestImplementation deps.espresso
-    androidTestImplementation deps.supportannotations
-    androidTestImplementation deps.mockitoCore
-    androidTestImplementation deps.dexmaker
-    androidTestImplementation deps.dexmakerDx
-    androidTestImplementation deps.dexmakerMockito
-    //Translations
-    implementation deps.translations
-    implementation deps.jna
+
     // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
+
     // TODO  (I know, it sucks, will think of a better way to do this, and we need this
+
     // TODO   when there are different SE APIs in dev vs internal/prod)
     boolean internal = true
     for (String taskName : gradle.startParameter.taskNames) {
-        if (taskName.contains("Prod") || taskName.contains("Candidate")) {
-            internal = false;
-            break;
+        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
+            internal = false
+            break
         }
     }
+
     // For using local files in app/libs
     //implementation (name:'avs', ext:'aar')
     //implementation (name:'audio-notifications', ext:'aar')
     //implementation (name:'zmessaging-android', ext:'aar')
+
     implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
     implementation("com.wire:zmessaging-android:${internal ? zMessagingDevVersion : zMessagingReleaseVersion}") {
         transitive = true
     }
+
+    //support libraries
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation "com.android.support:support-v4:$supportLibVersion"
+    implementation "com.android.support:support-v13:$supportLibVersion"
+    implementation "com.android.support:design:$supportLibVersion"
+    implementation "com.android.support:appcompat-v7:$supportLibVersion"
+    implementation "com.android.support:recyclerview-v7:$supportLibVersion"
+    implementation "com.android.support:preference-v7:$supportLibVersion"
+    implementation "com.android.support:cardview-v7:$supportLibVersion"
+    implementation "com.android.support:gridlayout-v7:$supportLibVersion"
+    implementation "com.android.support:support-annotations:$supportLibVersion"
+    implementation "com.android.support:cardview-v7:$supportLibVersion"
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation "android.arch.paging:runtime:$paging_version"
+
+    // Play services
+    implementation "com.google.android.gms:play-services-base:$playServicesVersion"
+    implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
+    implementation "com.google.android.gms:play-services-location:$playServicesVersion"
+    implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
+    implementation ('com.google.firebase:firebase-messaging:17.3.0') {
+        exclude group: 'com.google.firebase', module: 'firebase-analytics'
+        exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
+    }
+
+    //WorkManager
+    def work_version = "1.0.0-alpha13"
+    implementation "android.arch.work:work-runtime:$work_version"
+
+    //third party libraries
+    implementation 'com.evernote:android-job:1.2.6'
+    implementation 'com.jakewharton.timber:timber:4.7.0'
+    implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'
+    implementation 'com.facebook.rebound:rebound:0.3.8'
+    implementation 'com.atlassian.commonmark:commonmark:0.11.0'
+    implementation 'net.java.dev.jna:jna:4.4.0@aar'
+    devImplementation "com.facebook.stetho:stetho:$stethoVersion"
+    experimentalImplementation "com.facebook.stetho:stetho:$stethoVersion"
+    internalImplementation "com.facebook.stetho:stetho:$stethoVersion"
+
+    // Test dependencies
+    testImplementation 'junit:junit:4.12'
+    testImplementation("org.scalatest:scalatest_$scalaMajorVersion:2.2.6") {
+        exclude module: 'scala-library'
+    }
+    testImplementation 'org.mockito:mockito-core:1.10.19'
+    //The dexmaker stuff is needed for Mockito to work completely
+    testImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
+    testImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
+    testImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
+    testImplementation "android.arch.paging:common:$paging_version"
+
+    androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation 'org.mockito:mockito-core:1.10.19'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+
+    //The dexmaker stuff is needed for Mockito to work completely
+    androidTestImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
+    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
+    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
+    androidTestImplementation "android.arch.work:work-testing:$work_version"
+
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true
     ScalaCompileOptions.metaClass.useAnt = false
@@ -337,8 +427,6 @@ def getApiKey(String property) {
         Properties properties = new Properties()
         properties.load(new FileInputStream("$projectDir/api-keys.properties"))
         return properties.getProperty(property)
-    } else if (property.startsWith("mixpanel")) {
-        return ""
     } else {
         return UUID.randomUUID().toString().replaceAll("-", "")
     }
@@ -356,7 +444,7 @@ android.applicationVariants.all { variant ->
 
     variant.outputs.each { output ->
         def newApkName
-        newApkName = "${appName}-${output.baseName}-${rootProject.ext.majorVersion}${android.defaultConfig.versionCode}.apk"
+        newApkName = "${appName}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
 
         output.outputFileName = new File("../..", newApkName)
     }

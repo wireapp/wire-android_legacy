@@ -23,7 +23,6 @@ import android.graphics.{Color, PorterDuff}
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, RelativeLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.{Message, NetworkMode}
 import com.waz.model.MessageContent
 import com.waz.model.messages.media.MediaAssetData
@@ -66,7 +65,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   val media = content map { _.richMedia.getOrElse(MediaAssetData.empty(Message.Part.Type.YOUTUBE)) }
   val image = media.flatMap { _.artwork.fold2(Signal.empty[ImageSource], id => Signal.const[ImageSource](WireImage(id))) }
-  val imageDrawable = new ImageAssetDrawable(image, background = Some(new ColorDrawable(getColor(R.color.content__youtube__background_color))))
+  val imageDrawable = new ImageAssetDrawable(image, background = Some(new ColorDrawable(getColor(R.color.content__youtube__background))))
 
   val loadingFailed = imageDrawable.state.map {
     case State.Failed(_, _) => true
@@ -91,7 +90,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int) extends
 
   loadingFailed { failed =>
     glyphView.setText(getString(if (failed) R.string.glyph__movie else R.string.glyph__play))
-    glyphView.setTextColor(getColor(if (failed) R.color.content__youtube__error_indicator__color else R.color.content__youtube__text__color))
+    glyphView.setTextColor(getColor(if (failed) R.color.content__youtube__error_indicator else R.color.content__youtube__text))
   }
 
   height { h =>

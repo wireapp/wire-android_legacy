@@ -20,7 +20,6 @@ package com.waz.zclient.calling.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.views.GlyphButton
 import com.waz.zclient.utils.ContextUtils.getString
@@ -41,7 +40,7 @@ class CallingHeader(val context: Context, val attrs: AttributeSet, val defStyleA
   inflate(R.layout.calling_header, this)
 
   controller.subtitleText.onUi(subtitleView.setText)
-  controller.conversationName.onUi(nameView.setText)
+  controller.conversationName.onUi(nameView.setText(_))
 
   controller.cbrEnabled.map {
     case true  => getString(R.string.audio_message__constant_bit_rate)

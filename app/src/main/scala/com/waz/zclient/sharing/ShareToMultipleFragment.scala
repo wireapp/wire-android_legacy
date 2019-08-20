@@ -29,8 +29,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout.LayoutParams
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
-import com.waz.ZLog.ImplicitTag._
 import com.waz.api.impl.ContentUriAssetForUpload
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{MessageContent => _, _}
@@ -45,7 +45,7 @@ import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views.ImageAssetDrawable.{RequestBuilder, ScaleType}
 import com.waz.zclient.common.views.ImageController.DataImage
 import com.waz.zclient.common.views._
-import com.waz.zclient.cursor.EphemeralLayout
+import com.waz.zclient.cursor.{EphemeralLayout, EphemeralTimerButton}
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
@@ -53,6 +53,7 @@ import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
 import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast}
 import com.waz.zclient.utils.{RichView, ViewUtils}
+import com.waz.utils.RichWireInstant
 
 import scala.util.Success
 
@@ -67,7 +68,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
   lazy val messagesController = inject[MessagesController]
   lazy val sharingController = inject[SharingController]
   lazy val usersController = inject[UsersController]
-  lazy val accentColor = inject[AccentColorController].accentColor.map(_.getColor)
+  lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
 
   lazy val filterText = Signal[String]("")
 
@@ -86,7 +87,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
   lazy val convList = view[RecyclerView](R.id.lv__conversation_list)
   lazy val accountTabs = view[AccountTabsView](R.id.account_tabs)
   lazy val bottomContainer = view[AnimatedBottomContainer](R.id.ephemeral_container)
-  lazy val ephemeralIcon = view[EphemeralCursorButton](R.id.ephemeral_toggle)
+  lazy val ephemeralIcon = view[EphemeralTimerButton](R.id.ephemeral_toggle)
 
   lazy val sendButton = returning(view[CursorIconButton](R.id.cib__send_button)) { vh =>
     (for {
@@ -102,9 +103,9 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
     (for {
       z        <- zms
-      convs    <- z.convsContent.conversationsSignal
+      convs    <- z.convsStorage.contents
       selected <- Signal.wrap(adapter.conversationSelectEvent)
-    } yield (convs.conversations.find(c => c.id == selected._1).map(PickableConversation), selected._2)).onUi {
+    } yield (convs.get(selected._1).map(PickableConversation), selected._2)).onUi {
       case (Some(convData), true)  => vh.foreach(_.addElement(convData))
       case (Some(convData), false) => vh.foreach(_.removeElement(convData))
       case _ =>
@@ -195,7 +196,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
             returning(getLayoutInflater.inflate(R.layout.ephemeral_keyboard_layout, null, false).asInstanceOf[EphemeralLayout]) { l =>
               sharingController.ephemeralExpiration.foreach(l.setSelectedExpiration)
               l.expirationSelected.onUi { case (exp, close) =>
-                icon.ephemeralExpiration ! exp
+                icon.ephemeralExpiration ! exp.map(MessageExpiry)
                 sharingController.ephemeralExpiration ! exp
                 if (close) bc.closedAnimated()
               }
@@ -258,12 +259,16 @@ case class PickableConversation(conversationData: ConversationData) extends Pick
   override def name = conversationData.displayName
 }
 
-class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit injector: Injector, eventContext: EventContext) extends RecyclerView.Adapter[RecyclerView.ViewHolder] with Injectable {
+class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit injector: Injector, eventContext: EventContext)
+  extends RecyclerView.Adapter[RecyclerView.ViewHolder]
+    with Injectable
+    with DerivedLogTag {
+
   setHasStableIds(true)
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val conversations = for{
     z <- zms
-    conversations <- Signal.future(z.convsContent.storage.getAllConvs)
+    conversations <- Signal.future(z.convsContent.storage.list)
     f <- filter
   } yield
     conversations
@@ -274,16 +279,14 @@ class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit 
     _ => notifyDataSetChanged()
   }
 
-  val selectedConversations: SourceSignal[Set[ConvId]] = Signal(Set())
+  val selectedConversations: SourceSignal[Seq[ConvId]] = Signal(Seq.empty)
 
   val conversationSelectEvent = EventStream[(ConvId, Boolean)]()
-  conversationSelectEvent.on(Threading.Ui){ event =>
-    if (event._2) {
-      selectedConversations.mutate( _ + event._1)
-    } else {
-      selectedConversations.mutate( _ - event._1)
-    }
-    notifyDataSetChanged()
+
+  conversationSelectEvent.onUi {
+    case (conv, add) =>
+      selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv))
+      notifyDataSetChanged()
   }
 
   private val checkBoxListener = new CompoundButton.OnCheckedChangeListener {
@@ -315,7 +318,11 @@ class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit 
   override def getItemViewType(position: Int): Int = 1
 }
 
-case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(implicit eventContext: EventContext, injector: Injector) extends RecyclerView.ViewHolder(view) with Injectable{
+case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(implicit eventContext: EventContext, injector: Injector)
+  extends RecyclerView.ViewHolder(view)
+    with Injectable
+    with DerivedLogTag {
+  
   lazy val zms = inject[Signal[ZMessaging]]
 
   val conversationId = Signal[ConvId]()
@@ -323,8 +330,8 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
   val convSignal = for {
     z <- zms
     cid <- conversationId
-    conversations <- z.convsStorage.convsSignal
-    conversation <- Signal(conversations.conversations.find(_.id == cid))
+    conversations <- z.convsStorage.contents
+    conversation <- Signal(conversations.get(cid))
   } yield conversation
 
   convSignal.on(Threading.Ui){

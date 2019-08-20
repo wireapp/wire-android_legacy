@@ -20,8 +20,7 @@ package com.waz.zclient.participants.fragments
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{LinearLayout, RelativeLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.model.ConvExpiry
+import com.waz.model.{ConvExpiry, ConvId}
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -77,7 +76,7 @@ class EphemeralOptionsFragment extends FragmentHelper {
               spinner.showSpinner(true)
               (for {
                 z <- zms.head
-                Some(convId) <- z.convsStats.selectedConversationId.head
+                Some(convId) <- inject[Signal[Option[ConvId]]].head
                 _ <- z.convsUi.setEphemeralGlobal(convId, option)
               } yield {
               }).onComplete { res =>
@@ -102,6 +101,6 @@ class EphemeralOptionsFragment extends FragmentHelper {
 }
 
 object EphemeralOptionsFragment {
-  val Tag = implicitLogTag
+  val Tag: String = getClass.getSimpleName
 }
 

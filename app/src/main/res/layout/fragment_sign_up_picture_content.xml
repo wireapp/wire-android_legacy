@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/wire__text_size__regular"
-            android:textColor="@color/sign_up__photo_guidance__text_color"
+            android:textColor="@color/sign_up__photo_guidance"
             android:text="@string/sign_up__set_picture__guidance"
             android:includeFontPadding="false"
             app:w_font="@string/wire__typeface__medium"

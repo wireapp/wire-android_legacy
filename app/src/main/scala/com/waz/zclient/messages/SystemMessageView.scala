@@ -23,7 +23,6 @@ import android.graphics.{Canvas, Paint}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.RelativeLayout
-import com.waz.ZLog.ImplicitTag._
 import com.waz.utils.returning
 import com.waz.zclient.common.views.LinkTextView
 import com.waz.zclient.ui.text.GlyphTextView
@@ -92,11 +91,13 @@ class SystemMessageView(context: Context, attrs: AttributeSet, style: Int) exten
   def setIconGlyph(glyph: String) = {
     iconView.setBackground(null)
     iconView.setText(glyph)
+    iconView.setTextColor(getColor(R.color.light_graphite))
   }
 
   def setIconGlyph(resId: Int) = {
     iconView.setBackground(null)
     iconView.setText(resId)
+    iconView.setTextColor(getColor(R.color.light_graphite))
   }
 
   override def onDraw(canvas: Canvas): Unit = {

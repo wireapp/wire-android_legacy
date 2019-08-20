@@ -22,7 +22,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
-import com.waz.zclient.BuildConfig;
 import timber.log.Timber;
 
 import java.io.File;
@@ -30,10 +29,6 @@ import java.io.File;
 public class BuildConfigUtils {
 
     public static final String TAG = BuildConfigUtils.class.getName();
-
-    public static boolean isHockeyUpdateEnabled() {
-        return BuildConfig.USE_HOCKEY_UPDATE && !fileExists("disableHockeyUpdates");
-    }
 
     public static boolean isLocalBuild(Context context) {
         boolean localVersionCode = false;

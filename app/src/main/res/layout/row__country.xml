@@ -42,7 +42,7 @@
         android:id="@+id/ttv_new_reg__signup__phone__country__row_code"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/new_reg__country_code__text_color"
+        android:textColor="@color/new_reg__country_code__text"
         android:padding="@dimen/framework__general__left_padding"
         app:w_font="@string/wire__typeface__light"
         android:textSize="@dimen/country_box__text_size"

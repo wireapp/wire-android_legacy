@@ -20,15 +20,18 @@ package com.waz.zclient.messages.parts.footer
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.{FrameLayout, TextView}
-import com.waz.ZLog.ImplicitTag._
-import com.waz.ZLog._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
 
 //TODO button animation
-class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends FrameLayout(context, attrs, style) with ViewHelper {
+class LikeButton(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+    with ViewHelper
+    with DerivedLogTag {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
 
@@ -52,7 +55,7 @@ class LikeButton(context: Context, attrs: AttributeSet, style: Int) extends Fram
     }
 
     likeButtonConstant onClick {
-      verbose("Like button clicked")
+      verbose(l"Like button clicked")
       controller.onLikeClicked()
     }
   }

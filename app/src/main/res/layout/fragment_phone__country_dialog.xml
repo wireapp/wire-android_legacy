@@ -48,7 +48,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="@dimen/framework_divider_height"
-            android:background="@color/country_divider_color"
+            android:background="@color/country_divider"
             android:layout_gravity="bottom"
             />
     </FrameLayout>
