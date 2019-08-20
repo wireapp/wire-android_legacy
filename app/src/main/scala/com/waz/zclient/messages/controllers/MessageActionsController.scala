@@ -28,6 +28,7 @@ import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.service.assets2.Asset.Image
+import com.waz.service.assets2.AssetService
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.CancellableFuture
 import com.waz.utils._
@@ -40,7 +41,6 @@ import com.waz.zclient.controllers.userpreferences.IUserPreferencesController
 import com.waz.zclient.conversation.{LikesAndReadsFragment, ReplyController}
 import com.waz.zclient.messages.MessageBottomSheetDialog
 import com.waz.zclient.messages.MessageBottomSheetDialog.{MessageAction, Params}
-import com.waz.zclient.notifications.controllers.ImageNotificationsController
 import com.waz.zclient.participants.OptionsMenu
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ExternalFileSharing
@@ -61,7 +61,6 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
   private lazy val userPrefsController  = inject[IUserPreferencesController]
   private lazy val clipboard            = inject[ClipboardUtils]
   private lazy val permissions          = inject[PermissionsService]
-  private lazy val imageNotifications   = inject[ImageNotificationsController]
   private lazy val replyController      = inject[ReplyController]
   private lazy val screenController = inject[ScreenController]
   private lazy val externalFileSharing = inject[ExternalFileSharing]
@@ -215,19 +214,17 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
     intentBuilder.startChooser()
   }
 
-  private def saveMessage(message: MessageData): Unit = {
-    val assetId = message.assetId collect { case id: AssetId => id }
-    if (assetId.isEmpty) return
-
-    for {
-      assets <- zms.head.map(_.assetService)
-      asset <- assets.getAsset(assetId.get)
-    } {
-      asset.details match {
-        case details: Image => assetsController.saveImageToGallery(asset.copy(details = details))
-        case _ => assetsController.saveToDownloads(asset)
+  private def saveMessage(message: MessageData): Unit =
+    message.assetId.collect { case id: AssetId => id }.foreach { assetId =>
+      for {
+        assets <- inject[Signal[AssetService]].head
+        asset  <- assets.getAsset(assetId)
+      } {
+        asset.details match {
+          case _: Image => assetsController.saveImageToGallery(asset)
+          case _        => assetsController.saveToDownloads(asset)
+        }
       }
-    }
   }
 
   private def revealMessageInConversation(message: MessageData) = {
