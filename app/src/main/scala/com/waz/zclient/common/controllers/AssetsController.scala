@@ -250,20 +250,18 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     dialog.show()
   }
 
-  private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] = {
+  private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] =
     for {
-      p <- permissions.head
-      _ <- p.ensurePermissions(ListSet(WRITE_EXTERNAL_STORAGE))
-      a <- assets.head
-      is <- a.loadContent(asset).future
-      targetFile = getTargetFile(asset, targetDir)
-      _ = IoUtils.copy(is, new FileOutputStream(targetFile))
+      permissions <- permissions.head
+      _           <- permissions.ensurePermissions(ListSet(WRITE_EXTERNAL_STORAGE))
+      assets      <- assets.head
+      is          <- assets.loadContent(asset).future
+      targetFile  =  getTargetFile(asset, targetDir)
+      _           =  IoUtils.copy(is, new FileOutputStream(targetFile))
     } yield targetFile
-  }
 
-  def saveImageToGallery(asset: Asset): Unit = {
-    val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-    saveAssetContentToFile(asset, targetDir).onComplete {
+  def saveImageToGallery(asset: Asset): Unit =
+    saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).onComplete {
       case Success(file) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
@@ -271,11 +269,9 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       case _ =>
         Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
     }
-  }
 
-  def saveToDownloads(asset: Asset): Unit = {
-    val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-    saveAssetContentToFile(asset, targetDir).onComplete {
+  def saveToDownloads(asset: Asset): Unit =
+    saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
       case Success(file) =>
         val uri = URIWrapper.fromFile(file)
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE).asInstanceOf[DownloadManager]
@@ -290,8 +286,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         Toast.makeText(context, R.string.content__file__action__save_completed, Toast.LENGTH_SHORT).show()
         context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(URIWrapper.unwrap(uri))))
       case _ =>
-    }(Threading.Ui)
-  }
+        Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
+    }
 
   def assetForSharing(id: AssetId): Future[AssetForShare] = {
 
@@ -318,7 +314,8 @@ object AssetsController {
   def getTargetFile(asset: Asset, directory: File): File = {
     def file(prefix: String = "") = {
       val prefixPart = if (prefix.isEmpty) "" else prefix + "_"
-      val namePart = if (asset.name.contains('.')) asset.name else s"${asset.name}.${asset.mime.extension}"
+      val name = asset.name.replaceAll("/","_")
+      val namePart = if (name.contains('.')) name else s"$name.${asset.mime.extension}"
       new File(directory, prefixPart + namePart)
     }
 
