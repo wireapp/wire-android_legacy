@@ -18,6 +18,7 @@
 package com.waz.zclient
 
 import java.io.File
+import java.net.{InetSocketAddress, Proxy}
 import java.util.Calendar
 
 import android.app.{Activity, ActivityManager, NotificationManager}
@@ -95,6 +96,7 @@ import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
 
 import scala.concurrent.Future
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object WireApplication extends DerivedLogTag {
@@ -182,6 +184,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
     bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
     bind [Signal[AssetStorage]]                  to inject[Signal[ZMessaging]].map(_.assetsStorage)
+    bind [Signal[AssetService]]                  to inject[Signal[ZMessaging]].map(_.assetService)
     bind [Signal[MessagesStorage]]               to inject[Signal[ZMessaging]].map(_.messagesStorage)
     bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
@@ -314,7 +317,7 @@ object WireApplication extends DerivedLogTag {
     bind[SecurityPolicyService] to new SecurityPolicyService()
   }
 
-  protected def clearOldVideoFiles(context: Context): Unit = {
+  def clearOldVideoFiles(context: Context): Unit = {
     val oneWeekAgo = Calendar.getInstance
     oneWeekAgo.add(Calendar.DAY_OF_YEAR, -7)
     Option(context.getExternalCacheDir).foreach { dir =>
@@ -426,6 +429,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     ZMessaging.onCreate(
       this,
       backend,
+      parseProxy(BuildConfig.HTTP_PROXY_URL, BuildConfig.HTTP_PROXY_PORT),
       prefs,
       googleApi,
       null, //TODO: Use sync engine's version for now
@@ -443,6 +447,16 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+  }
+
+  private def parseProxy(url: String, port: String): Option[Proxy] = {
+    val proxyHost = if(!url.equalsIgnoreCase("none")) Some(url) else None
+    val proxyPort = Try(Integer.parseInt(port)).toOption
+    (proxyHost, proxyPort) match {
+      case (Some(h), Some(p)) => Some(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(h, p)))
+      case proxyInfo => None
+    }
+
   }
 
   private def checkForPlayServices(prefs: GlobalPreferences, googleApi: GoogleApi): Unit = {

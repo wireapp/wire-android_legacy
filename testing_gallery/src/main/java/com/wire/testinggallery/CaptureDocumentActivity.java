@@ -39,6 +39,8 @@ public class CaptureDocumentActivity extends AppCompatActivity {
             return resolver.getImageUri();
         } else if (mime.startsWith("video")) {
             return resolver.getVideoUri();
+        } else if (mime.equals("application/octet-stream")) {
+            return resolver.getBackupUri();
         } else {
             return resolver.getDocumentUri();
         }

@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.jobs.PushTokenCheckJob
@@ -33,12 +34,13 @@ import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, Pas
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
+import com.waz.zclient.security._
 import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils.showToast
-import com.waz.zclient.{BaseActivity, R, ViewHelper}
 
 import scala.concurrent.Future
 
@@ -70,12 +72,6 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val randomLastIdButton = findById[TextButton](R.id.preferences_dev_generate_random_lastid)
 
-  val slowSyncButton = returning(findById[TextButton](R.id.preferences_dev_slow_sync)) {
-    _.onClickEvent { _ =>
-      zms.head.flatMap(_.sync.performFullSync())
-    }
-  }
-
   val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) { v =>
     v.onClickEvent { v =>
       registerClient(v)
@@ -88,6 +84,17 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val checkPushTokenButton = returning(findById[TextButton](R.id.preferences_dev_check_push_tokens)) { v =>
     v.onClickEvent(_ => PushTokenCheckJob())
+  }
+
+  val checkDeviceRootedButton = returning(findById[TextButton](R.id.preferences_dev_check_rooted_device)) { v =>
+    v.onClickEvent(_ => checkIfDeviceIsRooted())
+  }
+
+  private def checkIfDeviceIsRooted(): Unit = {
+    val preferences = inject[GlobalPreferences]
+    RootDetectionCheck(preferences).isSatisfied.foreach { notRooted =>
+      showToast(s"Device is ${if (notRooted) "not" else ""} rooted")
+    }
   }
 
   private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {

@@ -24,9 +24,7 @@ import android.support.test.filters.MediumTest
 import android.support.test.rule.GrantPermissionRule
 import android.support.test.runner.AndroidJUnit4
 import com.waz.model.Mime
-import com.waz.model.errors._
-import com.waz.service.assets2.Asset.{Audio, Image, Video}
-import com.waz.service.assets2.Content
+import com.waz.service.assets2.{AudioDetails, Content, ImageDetails, VideoDetails}
 import com.waz.utils.IoUtils
 import com.waz.zclient.TestUtils._
 import com.waz.zclient.dev.test.R
@@ -49,91 +47,73 @@ class AssetDetailsServiceTest {
     GrantPermissionRule.grant(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
   @Test
-  def extractForImageUri(): Unit = asyncTest {
+  def extractForImageUri(): Unit = {
     val uri = getResourceUri(getContext, R.raw.test_img)
-    for {
-      errorOrDetails <- detailsService.extract(Mime.Image.Png, Content.Uri(uri)).modelToEither
-    } yield {
-      lazy val errorMsg = s"Extracted details: $errorOrDetails"
-      assert(errorOrDetails.isRight, errorMsg)
-      val details = errorOrDetails.right.get
-
-      assert(details.isInstanceOf[Image], errorMsg)
-      val imageDetails = details.asInstanceOf[Image]
-      assert(imageDetails.dimensions.width > 0 && imageDetails.dimensions.height > 0, errorMsg)
-    }
+    val (details, mime) = detailsService.extract(Content.Uri(uri))
+    assert(Mime.Image.Png == mime, s"the mime type should be Png, but is $mime")
+    assert(details.isInstanceOf[ImageDetails], s"the details should be ImageDetails, but is ${details.getClass.getName}")
+    val imageDetails = details.asInstanceOf[ImageDetails]
+    assert(
+      imageDetails.dimensions.width > 0 && imageDetails.dimensions.height > 0,
+      s"the image dimensions should be >0, are $imageDetails"
+    )
   }
 
   @Test
-  def extractForVideoUri(): Unit = asyncTest {
+  def extractForVideoUri(): Unit = {
     val uri = getResourceUri(getContext, R.raw.test_video)
-    for {
-      errorOrDetails <- detailsService.extract(Mime.Video.MP4, Content.Uri(uri)).modelToEither
-    } yield {
-      lazy val errorMsg = s"Extracted details: $errorOrDetails"
-      assert(errorOrDetails.isRight, errorMsg)
-      val details = errorOrDetails.right.get
-
-      assert(details.isInstanceOf[Video], errorMsg)
-      val videoDetails = details.asInstanceOf[Video]
-      assert(videoDetails.dimensions.width > 0 && videoDetails.dimensions.height > 0 && !videoDetails.duration.isZero, errorMsg)
-    }
+    val (details, mime) = detailsService.extract(Content.Uri(uri))
+    assert(Mime.Video.MP4 == mime, s"the mime type should be MP4, but is $mime")
+    assert(details.isInstanceOf[VideoDetails], s"the details should be VideoDetails, but is ${details.getClass.getName}")
+    val videoDetails = details.asInstanceOf[VideoDetails]
+    assert(
+      videoDetails.dimensions.width > 0 && videoDetails.dimensions.height > 0 && !videoDetails.duration.isZero,
+      s"the video dimensions and duration should be >0 , are $videoDetails"
+    )
   }
 
   @Test
-  def extractForVideoFile(): Unit = asyncTest {
+  def extractForVideoFile(): Unit = {
     val uri = getResourceUri(getContext, R.raw.test_video)
     val file = new File(getContext.getExternalCacheDir, "test_video")
     IoUtils.copy(uriHelper.openInputStream(uri).get,  new FileOutputStream(file))
-
-    for {
-      errorOrDetails <- detailsService.extract(Mime.Video.MP4, Content.File(Mime.Video.MP4, file)).modelToEither
-    } yield {
-      lazy val errorMsg = s"Extracted details: $errorOrDetails"
-      assert(errorOrDetails.isRight, errorMsg)
-      val details = errorOrDetails.right.get
-
-      assert(details.isInstanceOf[Video], errorMsg)
-      val videoDetails = details.asInstanceOf[Video]
-      assert(videoDetails.dimensions.width > 0 && videoDetails.dimensions.height > 0 && !videoDetails.duration.isZero, errorMsg)
-    }
+    val (details, mime) = detailsService.extract(Content.File(Mime.Video.MP4, file))
+    assert(Mime.Video.MP4 == mime, s"the mime type should be MP4, but is $mime")
+    assert(details.isInstanceOf[VideoDetails], s"the details should be VideoDetails, but is ${details.getClass.getName}")
+    val videoDetails = details.asInstanceOf[VideoDetails]
+    assert(
+      videoDetails.dimensions.width > 0 && videoDetails.dimensions.height > 0 && !videoDetails.duration.isZero,
+      s"the video dimensions and duration should be >0 , are $videoDetails"
+    )
   }
 
   @Test
-  def extractForAudioUri(): Unit = asyncTest {
+  def extractForAudioUri(): Unit = {
     val uri = getResourceUri(getContext, R.raw.test_audio)
-    for {
-      errorOrDetails <- detailsService.extract(Mime.Audio.WAV, Content.Uri(uri)).modelToEither
-    } yield {
-      lazy val errorMsg = s"Extracted details: $errorOrDetails"
-      assert(errorOrDetails.isRight, errorMsg)
-      val details = errorOrDetails.right.get
-
-      assert(details.isInstanceOf[Audio], errorMsg)
-      val audioDetails = details.asInstanceOf[Audio]
-      assert(audioDetails.loudness.levels.nonEmpty && !audioDetails.duration.isZero, errorMsg)
-    }
+    val (details, mime) = detailsService.extract(Content.Uri(uri))
+    assert(Mime.Audio.WAV == mime, s"the mime type should be WAV, but is $mime")
+    assert(details.isInstanceOf[AudioDetails], s"the details should be AudioDetails, but is ${details.getClass.getName}")
+    val audioDetails = details.asInstanceOf[AudioDetails]
+    assert(
+      audioDetails.loudness.levels.nonEmpty && !audioDetails.duration.isZero,
+      s"the audio lludness and duration should be >0 , are $audioDetails"
+    )
   }
 
   @Test
-  def extractForAudioFile(): Unit = asyncTest {
+  def extractForAudioFile(): Unit = {
     val uri = getResourceUri(getContext, R.raw.test_audio)
     val testAudio = new File(getInstrumentation.getContext.getExternalCacheDir, "test_audio")
     testAudio.createNewFile()
     IoUtils.copy(uriHelper.openInputStream(uri).get, new FileOutputStream(testAudio))
-
-    for {
-      errorOrDetails <- detailsService.extract(Mime.Audio.WAV, Content.File(Mime.Audio.WAV, testAudio)).modelToEither
-    } yield {
-      lazy val errorMsg = s"Extracted details: ${errorOrDetails.left.get.cause.get.toString}"
-      assert(errorOrDetails.isRight, errorMsg)
-      val details = errorOrDetails.right.get
-
-      assert(details.isInstanceOf[Audio], errorMsg)
-      val audioDetails = details.asInstanceOf[Audio]
-      assert(audioDetails.loudness.levels.nonEmpty && !audioDetails.duration.isZero, errorMsg)
-    }
+    val (details, mime) = detailsService.extract(Content.File(Mime.Audio.WAV, testAudio))
+    assert(Mime.Audio.WAV == mime, s"the mime type should be WAV, but is $mime")
+    assert(details.isInstanceOf[AudioDetails], s"the details should be AudioDetails, but is ${details.getClass.getName}")
+    val audioDetails = details.asInstanceOf[AudioDetails]
+    assert(
+      audioDetails.loudness.levels.nonEmpty && !audioDetails.duration.isZero,
+      s"the audio lludness and duration should be >0 , are $audioDetails"
+    )
   }
-
 
 }

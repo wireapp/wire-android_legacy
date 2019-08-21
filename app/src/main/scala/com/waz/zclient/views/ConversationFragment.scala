@@ -194,7 +194,7 @@ class ConversationFragment extends FragmentHelper {
 
   override def onCreate(@Nullable savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback, savedInstanceState))
+    assetIntentsManager = Option(new AssetIntentsManager(getActivity, assetIntentsManagerCallback))
 
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
@@ -260,6 +260,9 @@ class ConversationFragment extends FragmentHelper {
 
       case _ =>
     }
+
+    guestsBanner
+    guestsBannerText
 
     accountsController.isTeam.flatMap {
       case true  => participantsController.guestBotGroup
@@ -441,7 +444,6 @@ class ConversationFragment extends FragmentHelper {
 
   override def onSaveInstanceState(outState: Bundle): Unit = {
     super.onSaveInstanceState(outState)
-    assetIntentsManager.foreach { _.onSaveInstanceState(outState) }
     previewShown.head.foreach { isShown => outState.putBoolean(SAVED_STATE_PREVIEW, isShown) }
   }
 
@@ -504,17 +506,19 @@ class ConversationFragment extends FragmentHelper {
         })
     }
 
-    override def onSketchOnPreviewPicture(input: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit = {
-      screenController.showSketch ! Sketch.cameraPreview(input, method)
-      extendedCursorContainer.foreach(_.close(true))
+    override def onSketchOnPreviewPicture(input: Content, method: IDrawingController.DrawingMethod): Unit =
+      convController.rotateImageIfNeeded(input).foreach { preparedInput =>
+        screenController.showSketch ! Sketch.cameraPreview(preparedInput, method)
+        extendedCursorContainer.foreach(_.close(true))
     }
 
-    override def onSendPictureFromPreview(image: Content, source: ImagePreviewLayout.Source): Unit = {
-      convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", image))
-      extendedCursorContainer.foreach(_.close(true))
-      onCancelPreview()
+    override def onSendPictureFromPreview(image: Content): Unit =
+      convController.rotateImageIfNeeded(image).foreach { preparedImage =>
+        convController.sendAssetMessage(ContentForUpload(s"camera_preview_${AESKey().str}", preparedImage))
+        extendedCursorContainer.foreach(_.close(true))
+        onCancelPreview()
+      }
     }
-  }
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
     override def onDataReceived(intentType: AssetIntentsManager.IntentType, uri: URIWrapper): Unit = intentType match {
@@ -533,7 +537,7 @@ class ConversationFragment extends FragmentHelper {
             )
         }
       case AssetIntentsManager.IntentType.GALLERY =>
-        showImagePreview { _.setImage(uri, ImagePreviewLayout.Source.DeviceGallery) }
+        showImagePreview { _.setImage(uri) }
       case _ =>
         convController.sendAssetMessage(URIWrapper.toJava(uri), getActivity, None)
         navigationController.setRightPage(Page.MESSAGE_STREAM, TAG)
@@ -621,19 +625,13 @@ class ConversationFragment extends FragmentHelper {
 
           override def onGalleryPictureSelected(uri: URIWrapper): Unit = {
             previewShown ! true
-            showImagePreview {
-              _.setImage(uri, ImagePreviewLayout.Source.InAppGallery)
-            }
+            showImagePreview { _.setImage(uri) }
           }
 
-          override def openGallery(): Unit = assetIntentsManager.foreach {
-            _.openGallery()
-          }
+          override def openGallery(): Unit = assetIntentsManager.foreach { _.openGallery() }
 
           override def onPictureTaken(imageData: Array[Byte], isMirrored: Boolean): Unit =
-            showImagePreview {
-              _.setImage(imageData, isMirrored)
-            }
+            showImagePreview { _.setImage(imageData, isMirrored) }
         }))
       case _ =>
         verbose(l"openExtendedCursor(unknown)")
@@ -643,8 +641,8 @@ class ConversationFragment extends FragmentHelper {
   private def captureVideoAskPermissions() = for {
     _ <- inject[GlobalCameraController].releaseCamera() //release camera so the camera app can use it
     _ <- permissions.requestAllPermissions(ListSet(CAMERA, WRITE_EXTERNAL_STORAGE)).map {
-      case true => assetIntentsManager.foreach(_.captureVideo(getContext.getApplicationContext))
-      case false => //
+      case true  => assetIntentsManager.foreach(_.captureVideo())
+      case false =>
     }(Threading.Ui)
   } yield {}
 
@@ -707,7 +705,14 @@ class ConversationFragment extends FragmentHelper {
         case true  => participantsController.guestBotGroup.head
         case false => Future.successful((false, false, false))
       }.foreach {
-        case (hasGuest, hasBot, isGroup) => updateGuestsBanner(hasGuest, hasBot, isGroup)
+        case (hasGuest, hasBot, isGroup) =>
+          val backStackSize = getFragmentManager.getBackStackEntryCount
+          if (backStackSize > 0) {
+            // update the guests' banner only if the conversation's fragment is on top
+            if (getFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
+              updateGuestsBanner(hasGuest, hasBot, isGroup)
+          } else
+            updateGuestsBanner(hasGuest, hasBot, isGroup)
       }
       inflateCollectionIcon()
       cursorView.foreach(_.enableMessageWriting())

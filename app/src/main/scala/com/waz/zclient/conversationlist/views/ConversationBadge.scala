@@ -50,9 +50,9 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
 
   inflate(R.layout.conv_badge)
 
-  val textView = findById[TypefaceTextView](R.id.status_pill_text)
-  val glyphView = findById[GlyphTextView](R.id.status_pill_glyph)
-  val styleKitView = findById[ConversationBadgeStyleKitView](R.id.status_pill_style_kit)
+  private lazy val textView = findById[TypefaceTextView](R.id.status_pill_text)
+  private lazy val glyphView = findById[GlyphTextView](R.id.status_pill_glyph)
+  private lazy val styleKitView = findById[ConversationBadgeStyleKitView](R.id.status_pill_style_kit)
 
   val onClickEvent = EventStream[Status]()
 
@@ -137,6 +137,7 @@ class ConversationBadge(context: Context, attrs: AttributeSet, style: Int) exten
         setHidden()
     }
   }
+
 }
 
 class ConversationBadgeStyleKitView(context: Context, attrs: AttributeSet, style: Int) extends GenericStyleKitView(context, attrs, style) {

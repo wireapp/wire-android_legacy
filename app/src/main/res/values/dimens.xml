@@ -275,8 +275,8 @@
     <dimen name="content__youtube__error_text__padding_top">9dp</dimen>
     <dimen name="content__youtube__logo__width">40dp</dimen>
     <dimen name="content__youtube__logo__height">16dp</dimen>
-    <dimen name="content__youtube__logo__padding_top">12dp</dimen>
-    <dimen name="content__youtube__logo__padding_right">24dp</dimen>
+    <dimen name="content__youtube__logo__padding">5dp</dimen>
+    <dimen name="content__youtube__title__padding">5dp</dimen>
     <dimen name="content__image__progress_size">40dp</dimen>
     <dimen name="content__image__button_size">40dp</dimen>
     <dimen name="content__image__progress_circle_padding">4dp</dimen>
@@ -896,7 +896,6 @@
     <dimen name="unread_indicator_name_size">6dp</dimen>
     <dimen name="unread_indicator_name_margin">-10dp</dimen>
 
-    <dimen name="team_tab_drawable_diameter">18dp</dimen>
     <dimen name="team_tab_drawable_gap">2dp</dimen>
     <dimen name="team_tab_drawable_border">1.5dp</dimen>
 

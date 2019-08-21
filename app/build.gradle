@@ -14,7 +14,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.35."
+    majorVersion = "3.36."
 
     scalaMajorVersion = '2.11'
     scalaVersion = scalaMajorVersion + '.12'
@@ -23,16 +23,16 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingVersion = "142.0.2297"
+    zMessagingVersion = "142.0.2320"
     paging_version = "1.0.0"
 
-    avsVersion = '4.9.170@aar'
+    avsVersion = '5.1.186@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.0.28@aar'
+    customAvsVersion = '5.0.35@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -116,28 +116,34 @@ android {
         testInstrumentationRunner "com.waz.background.TestRunner"
         manifestPlaceholders = [customURLScheme: config.custom_url_scheme]
 
-        buildConfigField 'Integer', 'MAX_ACCOUNTS',               "$config.maxAccounts"
-        buildConfigField 'String',  'BACKEND_URL',                "\"$config.backendUrl\""
-        buildConfigField 'String',  'WEBSOCKET_URL',              "\"$config.websocketUrl\""
-        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',   "$config.allow_account_creation"
-        buildConfigField 'boolean',  'ALLOW_SSO',                    "$config.allowSSO"
-        buildConfigField 'String',  'SUPPORT_EMAIL',              "\"$config.supportEmail\""
-        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',    "\"$config.firebasePushSenderId\""
-        buildConfigField 'String',  'FIREBASE_APP_ID',            "\"$config.firebaseAppId\""
-        buildConfigField 'String',  'FIREBASE_API_KEY',           "\"$config.firebaseApiKey\""
-        buildConfigField 'boolean', 'ENABLE_BLACKLIST',           "$config.enableBlacklist"
-        buildConfigField 'String',  'BLACKLIST_HOST',             "\"$config.blacklistHost\""
-        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',     "\"$config.certificatePin.domain\""
-        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',      "\"$config.certificatePin.certificate\""
-        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',       "$config.submitCrashReports"
+        buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$config.maxAccounts"
+        buildConfigField 'String',  'BACKEND_URL',                   "\"$config.backendUrl\""
+        buildConfigField 'String',  'WEBSOCKET_URL',                 "\"$config.websocketUrl\""
+        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',      "$config.allow_account_creation"
+        buildConfigField 'boolean', 'ALLOW_SSO',                     "$config.allowSSO"
+        buildConfigField 'String',  'SUPPORT_EMAIL',                 "\"$config.supportEmail\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',       "\"$config.firebasePushSenderId\""
+        buildConfigField 'String',  'FIREBASE_APP_ID',               "\"$config.firebaseAppId\""
+        buildConfigField 'String',  'FIREBASE_API_KEY',              "\"$config.firebaseApiKey\""
+        buildConfigField 'boolean', 'ENABLE_BLACKLIST',              "$config.enableBlacklist"
+        buildConfigField 'String',  'BLACKLIST_HOST',                "\"$config.blacklistHost\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',        "\"$config.certificatePin.domain\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',         "\"$config.certificatePin.certificate\""
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',          "$config.submitCrashReports"
         buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
-        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',      "$config.allowChangeOfEmail"
-        buildConfigField 'String',  'CUSTOM_URL_SCHEME',          "\"$config.custom_url_scheme\""
-        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH', "$config.new_password_minimum_length"
-        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH', "$config.new_password_maximum_length"
-        buildConfigField 'String',  'TEAMS_URL',                   "\"$config.teamsUrl\""
-        buildConfigField 'String',  'ACCOUNTS_URL',                "\"$config.accountsUrl\""
-        buildConfigField 'String',  'WEBSITE_URL',                 "\"$config.websiteUrl\""
+        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',         "$config.allowChangeOfEmail"
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',             "\"$config.custom_url_scheme\""
+        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH',   "$config.new_password_minimum_length"
+        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH',   "$config.new_password_maximum_length"
+        buildConfigField 'String',  'TEAMS_URL',                     "\"$config.teamsUrl\""
+        buildConfigField 'String',  'ACCOUNTS_URL',                  "\"$config.accountsUrl\""
+        buildConfigField 'String',  'WEBSITE_URL',                   "\"$config.websiteUrl\""
+        buildConfigField 'String',  'HTTP_PROXY_URL',                "\"$config.http_proxy_url\""
+        buildConfigField 'String',  'HTTP_PROXY_PORT',               "\"$config.http_proxy_port\""
+        buildConfigField 'boolean', 'BLOCK_ON_JAILBREAK_OR_ROOT',    "$config.block_on_jailbreak_or_root"
+        buildConfigField 'boolean', 'FORCE_HIDE_SCREEN_CONTENT',     "$config.force_hide_screen_content"
+        buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$config.force_app_lock"
+        buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$config.app_lock_timeout"
     }
 
     packagingOptions {
@@ -150,11 +156,9 @@ android {
         exclude 'lib/mips/librs.decode.so'
         exclude 'lib/mips/librsjni.so'
         exclude 'lib/mips/libRSSupport.so'
-        exclude 'lib/arm64-v8a/libjnidispatch.so'
         exclude 'lib/armeabi/libjnidispatch.so'
         exclude 'lib/mips/libjnidispatch.so'
         exclude 'lib/mips64/libjnidispatch.so'
-        exclude 'lib/x86_64/libjnidispatch.so'
     }
 
     testOptions {

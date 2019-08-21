@@ -42,6 +42,7 @@ import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
+import com.waz.content.GlobalPreferences.AppLockEnabled
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit
@@ -68,13 +69,15 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.preferences_options_layout)
 
-  val contactsSwitch       = findById[SwitchPreference](R.id.preferences_contacts)
-  val vbrSwitch            = findById[SwitchPreference](R.id.preferences_vbr)
-  val vibrationSwitch      = findById[SwitchPreference](R.id.preferences_vibration)
-  val darkThemeSwitch      = findById[SwitchPreference](R.id.preferences_dark_theme)
-  val sendButtonSwitch     = findById[SwitchPreference](R.id.preferences_send_button)
-  val soundsButton         = findById[TextButton](R.id.preferences_sounds)
-  val downloadImagesSwitch = findById[SwitchPreference](R.id.preferences_options_image_download)
+  val contactsSwitch          = findById[SwitchPreference](R.id.preferences_contacts)
+  val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
+  val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
+  val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
+  val sendButtonSwitch        = findById[SwitchPreference](R.id.preferences_send_button)
+  val appLockSwitch           = findById[SwitchPreference](R.id.preferences_app_lock)
+  val soundsButton            = findById[TextButton](R.id.preferences_sounds)
+  val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
+  val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
 
   val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
   val textToneButton         = findById[TextButton](R.id.preference_sounds_text)
@@ -93,14 +96,26 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   contactsSwitch.setPreference(ShareContacts)
   darkThemeSwitch.setPreference(DarkTheme)
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
+  hideScreenContentSwitch.setPreference(HideScreenContent)
   vbrSwitch.setPreference(VBREnabled)
-
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
+
+  appLockSwitch.setPreference(AppLockEnabled, global = true)
+  appLockSwitch.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
+
+  if (BuildConfig.FORCE_APP_LOCK) {
+    appLockSwitch.setVisibility(View.GONE)
+  }
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     soundsButton.setVisible(false)
     vibrationSwitch.setTitle(getString(R.string.pref_options_vibration_title_o))
+  }
+
+  if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
+    hideScreenContentSwitch.setDisabled(true)
+    hideScreenContentSwitch.pref.foreach(_ := true)
   }
 
   private def openNotificationSettings(channelId: String) = {

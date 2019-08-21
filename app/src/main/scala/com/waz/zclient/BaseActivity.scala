@@ -22,7 +22,8 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
+import android.view.WindowManager
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.InternalLog
 import com.waz.permissions.PermissionsService
@@ -30,20 +31,21 @@ import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.services.websocket.WebSocketService
 import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
+import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.SecureActivity
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.log.LogUI._
 
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
 import scala.concurrent.duration._
 
-
-class BaseActivity extends AppCompatActivity
+class BaseActivity extends SecureActivity
   with ServiceContainer
   with ActivityHelper
   with PermissionProvider
@@ -54,6 +56,7 @@ class BaseActivity extends AppCompatActivity
   lazy val themeController          = inject[ThemeController]
   lazy val globalTrackingController = inject[GlobalTrackingController]
   lazy val permissions              = inject[PermissionsService]
+  lazy val userPreferences          = inject[Signal[UserPreferences]]
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
@@ -81,6 +84,20 @@ class BaseActivity extends AppCompatActivity
     verbose(l"onResume")
     super.onResume()
     onBaseActivityResume()
+    setScreenContentHiding()
+  }
+
+  private def setScreenContentHiding(): Unit = {
+    //FLAG_SECURE prevents all kinds of screenshots, not just in task switcher
+    import WindowManager.LayoutParams.FLAG_SECURE
+    userPreferences.currentValue.foreach { p =>
+      p.preference(UserPreferences.HideScreenContent).apply().foreach {
+        case true => verbose(l"Adding secure flag")
+          getWindow.addFlags(FLAG_SECURE)
+        case false => verbose(l"Removing secure flag")
+          getWindow.clearFlags(FLAG_SECURE)
+      }(Threading.Ui)
+    }
   }
 
   def onBaseActivityResume(): Unit =

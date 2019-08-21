@@ -51,15 +51,6 @@
                 />
 
             <com.waz.zclient.preferences.views.TextButton
-                android:id="@+id/preferences_dev_slow_sync"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/wire__padding__20"
-                app:title="@string/pref_dev_random_full_sync_title"
-                app:subtitle="@string/pref_dev_random_full_sync_summary"
-            />
-
-            <com.waz.zclient.preferences.views.TextButton
                 android:id="@+id/preferences_dev_generate_random_lastid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -125,6 +116,15 @@
                 app:subtitle="@string/pref_dev_check_push_token_summary"
             />
 
+            <com.waz.zclient.preferences.views.TextButton
+                android:id="@+id/preferences_dev_check_rooted_device"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/wire__padding__20"
+                android:layout_marginBottom="@dimen/wire__padding__20"
+                app:title="@string/pref_dev_check_check_rooted_device_title"
+                app:subtitle="@string/pref_dev_check_check_rooted_device_summary"
+                />
         </LinearLayout>
 
     </ScrollView>

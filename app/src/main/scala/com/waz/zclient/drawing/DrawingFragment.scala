@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.drawing
 
+import java.io.File
 import java.net.URI
 
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
@@ -27,12 +28,9 @@ import android.os.Bundle
 import android.support.v7.widget.Toolbar
 import android.view._
 import android.widget.{FrameLayout, TextView}
-import cats.data.OptionT
-import cats.instances.future._
 import com.waz.api.MemoryImageCache
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.ZMessaging
 import com.waz.service.assets2.{AssetService, Content, UriHelper}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -59,17 +57,22 @@ import scala.concurrent.Future
 
 object DrawingFragment {
   val Tag: String = classOf[DrawingFragment].getName
-  private val SAVED_INSTANCE_BITMAP = "SAVED_INSTANCE_BITMAP"
+  private val SavedInstanceBitmap     = "SAVED_INSTANCE_BITMAP"
+  private val ArgDrawingDestination   = "ARGUMENT_DRAWING_DESTINATION"
+  private val ArgDrawingMethod        = "ARGUMENT_DRAWING_METHOD"
 
-  private val ArgDrawingDestination = "ARGUMENT_DRAWING_DESTINATION"
-  private val ArgDrawingMethod      = "ARGUMENT_DRAWING_METHOD"
+  private val ContentMimeArg          = "CONTENT_MIME"
+  private val BytesInputArg           = "BYTES_INPUT"
+  private val UriInputArg             = "URI_INPUT"
+  private val FileInputArg            = "FILE_INPUT"
+  private val AssetInputArg           = "ASSET_INPUT"
 
   private val TextAlphaInvisible      = 0F
   private val TextAlphaMove           = 0.2F
   private val TextAlphaVisible        = 1F
   private val SendButtonDisabledAlpha = 102
 
-  def newInstance(sketch: Sketch): DrawingFragment = {
+  def newInstance(sketch: Sketch): DrawingFragment =
     returning(new DrawingFragment) { f =>
       f.setArguments(returning(new Bundle) { b =>
         putInputToBundle(b, sketch.input)
@@ -77,7 +80,6 @@ object DrawingFragment {
         b.putString(ArgDrawingMethod, sketch.method.toString)
       })
     }
-  }
 
   case class Sketch(input: Option[Either[Content, AssetId]], dest: DrawingDestination, method: DrawingMethod)
 
@@ -86,42 +88,36 @@ object DrawingFragment {
     import DrawingMethod._
 
     val BlankSketch = Sketch(None, SKETCH_BUTTON, DRAW)
-    def cameraPreview(input: Content, method: DrawingMethod = DRAW) =
-      Sketch(Some(Left(input)), CAMERA_PREVIEW_VIEW, method)
-    def singleImage(input: Content, method: DrawingMethod = DRAW) =
-      Sketch(Some(Left(input)), SINGLE_IMAGE_VIEW, method)
-    def asset(assetId: AssetId, method: DrawingMethod = DRAW) =
-      Sketch(Some(Right(assetId)), SINGLE_IMAGE_VIEW, method)
+
+    def cameraPreview(input: Content, method: DrawingMethod = DRAW) = Sketch(Some(Left(input)), CAMERA_PREVIEW_VIEW, method)
+    def asset(assetId: AssetId, method: DrawingMethod = DRAW)       = Sketch(Some(Right(assetId)), SINGLE_IMAGE_VIEW, method)
   }
 
-  private val ContentMimeArg  = "CONTENT_MIME"
-  private val BytesInputArg   = "BYTES_INPUT"
-  private val UriInputArg     = "URI_INPUT"
-  private val FileInputArg    = "FILE_INPUT"
-  private val AssetInputArg   = "ASSET_INPUT"
-
-  def putInputToBundle(b: Bundle, input: Option[Either[Content, AssetId]]): Unit = {
-//    input match {
-//      case Some(Left(content)) => b.putString(ContentMimeArg, content.mime.str)
-//      case _ =>
-//    }
-//    input match {
-//      case Some(Left(Content.Bytes(_, bytes))) => b.putByteArray(BytesInputArg, bytes)
-//      case Some(Left(Content.Uri(_, uri))) => b.putString(UriInputArg, uri.toString)
-//      case Some(Left(Content.File(_, file))) => b.putString(FileInputArg, file.getAbsolutePath)
-//      case Some(Right(assetId)) => b.putString(AssetInputArg, assetId.str)
-//      case _ =>
-//    }
+  def putInputToBundle(b: Bundle, input: Option[Either[Content, AssetId]]): Unit = input match {
+    case Some(Left(Content.Bytes(mime, bytes))) =>
+      b.putByteArray(BytesInputArg, bytes)
+      b.putString(ContentMimeArg, mime.str)
+    case Some(Left(Content.Uri(uri))) =>
+      b.putString(UriInputArg, uri.toString)
+    case Some(Left(Content.File(mime, file))) =>
+      b.putString(FileInputArg, file.getAbsolutePath)
+      b.putString(ContentMimeArg, mime.str)
+    case Some(Right(assetId)) =>
+      b.putString(AssetInputArg, assetId.str)
+    case _ =>
   }
 
-  def getInputFromBundle(b: Bundle): Option[Either[Content, AssetId]] = {
-    None
-//    Option(b.getString(UriInputArg)).map(URI.create).map(Content.Uri).map(Left.apply)
-//      .orElse(Option(b.getByteArray(BytesInputArg)).map(Content.Bytes).map(Left.apply))
-//      .orElse(Option(b.getString(FileInputArg)).map(new File(_)).map(Content.File).map(Left.apply))
-//      .orElse(Option(b.getString(AssetInputArg)).map(AssetId.apply).map(Right.apply))
-  }
-
+  def getInputFromBundle(b: Bundle): Option[Either[Content, AssetId]] =
+    if (b.containsKey(UriInputArg)) Some(Left(Content.Uri(URI.create(b.getString(UriInputArg)))))
+    else if (b.containsKey(AssetInputArg)) Some(Right(AssetId(b.getString(AssetInputArg))))
+    else if (b.containsKey(ContentMimeArg)) {
+      val mime = if (b.containsKey(ContentMimeArg)) Mime.Image.supported.find { _.str == b.getString(ContentMimeArg) } else None
+      mime.flatMap { m =>
+        if (b.containsKey(BytesInputArg)) Some(Left(Content.Bytes(m, b.getByteArray(BytesInputArg))))
+        else if (b.containsKey(FileInputArg)) Some(Left(Content.File(m, new File(b.getString(FileInputArg)))))
+        else None
+      }
+    } else None
 }
 
 class DrawingFragment extends FragmentHelper
@@ -139,10 +135,7 @@ class DrawingFragment extends FragmentHelper
   private lazy val userPrefController = inject[IUserPreferencesController] //TODO replace with SE prefs
   private lazy val sensorManager      = inject[SensorManager]
   private lazy val uriHelper          = inject[UriHelper]
-  private lazy val assetService       = inject[AssetService]
-
-  private lazy val accentColor = inject[Signal[AccentColor]].map(_.color)
-
+  private lazy val accentColor        = inject[Signal[AccentColor]].map(_.color)
   private lazy val drawingDestination = getStringArg(ArgDrawingDestination).map(DrawingDestination.valueOf)
 
   private var imageInput             = Option.empty[Either[Content, AssetId]]
@@ -220,9 +213,9 @@ class DrawingFragment extends FragmentHelper
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-    imageInput = getInputFromBundle(getArguments)
-    drawingMethod = getStringArg(ArgDrawingMethod).map(DrawingMethod.valueOf)
-    assetIntentsManager = new AssetIntentsManager(getActivity, this, savedInstanceState)
+    imageInput          = getInputFromBundle(getArguments)
+    drawingMethod       = getStringArg(ArgDrawingMethod).map(DrawingMethod.valueOf)
+    assetIntentsManager = new AssetIntentsManager(getActivity, this)
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -255,9 +248,7 @@ class DrawingFragment extends FragmentHelper
       v.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
         override def onMenuItemClick(item: MenuItem): Boolean =
           item.getItemId match {
-            case R.id.close =>
-              drawingDestination.foreach(inject[ScreenController].hideSketch ! _)
-              true
+            case R.id.close => onClose()
             case _ => false
           }
       })
@@ -313,7 +304,7 @@ class DrawingFragment extends FragmentHelper
     }
 
     // Use saved background image if exists
-    Option(savedInstanceState).flatMap(b => Option(b.getParcelable(SAVED_INSTANCE_BITMAP))) match {
+    Option(savedInstanceState).flatMap(b => Option(b.getParcelable(SavedInstanceBitmap))) match {
       case Some(bm) => drawingCanvasView.foreach(_.setBackgroundBitmap(bm))
       case _ => setBackgroundBitmap(true)
     }
@@ -383,6 +374,14 @@ class DrawingFragment extends FragmentHelper
       v.setBackground(ColorUtils.getRoundedTextBoxBackground(getContext, color, v.getHeight))
       if (MathUtils.floatEqual(v.getAlpha, TextAlphaInvisible)) drawSketchEditText()
     }
+  }
+
+  override def onBackPressed(): Boolean = onClose()
+
+  private def onClose(): Boolean = {
+    drawingDestination.foreach(inject[ScreenController].hideSketch ! _)
+    keyboardController.hideKeyboardIfVisible()
+    true
   }
 
   private def onEmojiClick(): Unit =
@@ -570,9 +569,6 @@ class DrawingFragment extends FragmentHelper
       })
     }
 
-  private def getBitmapDrawing =
-    drawingCanvasView.map(_.getBitmap)
-
   private def getFinalSketchBitmap: Option[Bitmap] =
     drawingCanvasView.map { v =>
       try {
@@ -598,28 +594,25 @@ class DrawingFragment extends FragmentHelper
     }
   }
 
-  def setBackgroundBitmap(showHint: Boolean): Unit = {
-    drawingViewTip.foreach { v =>
-      if (showHint) v.setText(getString(R.string.drawing__tip__picture__message))
-      else hideTip()
-    }
-
+  private def setBackgroundBitmap(showHint: Boolean): Unit = imageInput.foreach { input =>
     for {
-      z      <- OptionT.liftF(inject[Signal[ZMessaging]].head)
-      input  <- OptionT.fromOption(imageInput)
       is     <- input match {
-        case Left(content) => OptionT.liftF(Future.fromTry(content.openInputStream(uriHelper)))
-        case Right(assetId) => OptionT.liftF(assetService.loadContentById(assetId).future)
-      }
-      bitmap = BitmapFactory.decodeStream(is)
-    } yield for {
-      cv  <- drawingCanvasView
-      tip <- drawingViewTip
-      bg  <- drawingTipBackground
+                  case Left(content)  =>
+                    Future.fromTry(content.openInputStream(uriHelper))
+                  case Right(assetId) =>
+                    inject[Signal[AssetService]].head.flatMap(_.loadContentById(assetId).future)
+                }
+      bitmap =  BitmapFactory.decodeStream(is)
+      cv     <- drawingCanvasView
+      tip    <- drawingViewTip
+      bg     <- drawingTipBackground
     } {
       includeBackgroundImage = true
       bg.setVisibility(if (showHint) View.VISIBLE else View.INVISIBLE)
-      tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
+      if (showHint) {
+        tip.setText(getString(R.string.drawing__tip__picture__message))
+        tip.setTextColor(getColorWithTheme(R.color.drawing__tip__image))
+      } else hideTip()
       cv.setBackgroundBitmap(bitmap)
       drawingMethod match {
         case Some(DrawingMethod.EMOJI) => onEmojiClick()
@@ -627,7 +620,6 @@ class DrawingFragment extends FragmentHelper
         case _ =>
       }
     }
-
   }
 
   override def onScrollWidthChanged(width: Int): Unit = {}
@@ -640,3 +632,4 @@ class DrawingFragment extends FragmentHelper
 
   override def onScrollChanged(): Unit = {}
 }
+

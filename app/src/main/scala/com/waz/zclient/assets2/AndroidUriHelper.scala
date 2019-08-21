@@ -78,6 +78,8 @@ class AndroidUriHelper(context: Context) extends UriHelper with DerivedLogTag {
   }
 
   private def cursor(uri: URI): Managed[Cursor] =
-    Managed.create(context.getContentResolver.query(androidUri(uri), null, null, null, null))(_.close())
+    Managed.create(
+      context.getContentResolver.query(androidUri(uri), null, null, null, null)
+    )(_.close())
 
 }

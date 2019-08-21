@@ -28,7 +28,7 @@ import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.api.Message
 import com.waz.model.messages.media.{ArtistData, MediaAssetData}
-import com.waz.model.{AssetId, MessageContent}
+import com.waz.model.{GeneralAssetId, MessageContent}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils._
 import com.waz.utils.events.Signal
@@ -65,8 +65,8 @@ class SoundMediaPartView(context: Context, attrs: AttributeSet, style: Int)
     case Some(richMedia) => richMedia
   }}
 
-  private val image = media.flatMap {
-    _.artwork.fold2(Signal.empty[AssetId], id => Signal.const(id))
+  private val image: Signal[GeneralAssetId] = media.flatMap {
+    _.artwork.fold2(Signal.empty[GeneralAssetId], id => Signal.const(id))
   }
 
   image.onUi { id =>

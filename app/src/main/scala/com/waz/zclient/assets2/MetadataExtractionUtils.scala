@@ -66,10 +66,9 @@ object MetadataExtractionUtils {
     }
 
   def retrieve[A](key: Int, tag: String, convert: String => A)
-                 (implicit retriever: MediaMetadataRetriever): Either[String, A] =
-    for {
-      s <- Option(retriever.extractMetadata(key)).toRight(s"$tag ($key) is null")
-      result <- Try(convert(s)).toRight(t => s"unable to convert $tag ($key) of value '$s': ${t.getMessage}")
-    } yield result
-
+                 (implicit retriever: MediaMetadataRetriever): Option[A] =
+    Option(retriever.extractMetadata(key)) match {
+      case None    => None
+      case Some(s) => Try(convert(s)).toOption
+    }
 }

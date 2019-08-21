@@ -5,7 +5,7 @@
   "_comment": "appName must match the value of 'app_name' in strings.xml",
   "appName": "Wire",
   "backendUrl": "https://prod-nginz-https.wire.com",
-  "websocketUrl": "https://prod-nginz-ssl.wire.com/await",
+  "websocketUrl": "https://prod-nginz-ssl.wire.com",
   "allow_account_creation": true,
   "allowSSO": true,
   "supportEmail": "support@wire.com",
@@ -27,5 +27,11 @@
   "loggingEnabled": false,
   "custom_url_scheme": "wire",
   "new_password_minimum_length": 8,
-  "new_password_maximum_length": 120
+  "new_password_maximum_length": 120,
+  "http_proxy_url": "none",
+  "http_proxy_port": "8888",
+  "block_on_jailbreak_or_root": false,
+  "force_hide_screen_content": true,
+  "force_app_lock": false,
+  "app_lock_timeout": 10
 }

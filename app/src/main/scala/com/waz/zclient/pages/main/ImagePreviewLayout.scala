@@ -59,7 +59,6 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   private val onDrawClicked = EventStream[IDrawingController.DrawingMethod]()
 
   private var imageInput = Option.empty[Content]
-  private var source = Option.empty[ImagePreviewLayout.Source]
 
   private lazy val approveImageSelectionMenu = returning(findViewById[ConfirmationMenu](R.id.cm__cursor_preview)) { menu =>
     menu.setWireTheme(new OptionsDarkTheme(getContext))
@@ -121,15 +120,14 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   }
 
   onDrawClicked.onUi { method =>
-    (imageInput, source, callback) match {
-      case (Some(content), Some(s), Some(c)) => c.onSketchOnPreviewPicture(content, s, method)
+    (imageInput, callback) match {
+      case (Some(input), Some(c)) => c.onSketchOnPreviewPicture(input, method)
       case _ =>
     }
   }
 
-  override def confirm(): Unit = (imageInput, source, callback) match {
-    case (Some(content), Some(s), Some(c)) =>
-      c.onSendPictureFromPreview(content, s)
+  override def confirm(): Unit = (imageInput, callback) match {
+    case (Some(input), Some(c)) => c.onSendPictureFromPreview(input)
     case _ =>
   }
 
@@ -138,16 +136,15 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setImage(imageData: Array[Byte], isMirrored: Boolean): Unit = {
-    this.source = Option(ImagePreviewLayout.Source.Camera)
     this.imageInput = Some(Content.Bytes(Mime.Image.Jpg, imageData))
     val request = WireGlide(context).load(imageData)
     if (isMirrored) request.apply(new RequestOptions().transform(new ScaleTransformation(-1f, 1f)))
     request.into(imageView)
   }
 
-  def setImage(uri: URIWrapper, source: ImagePreviewLayout.Source): Unit = {
-    this.source = Option(source)
+  def setImage(uri: URIWrapper): Unit = {
     this.imageInput = Some(Content.Uri(URI.create(uri.toString)))
+
     WireGlide(context).load(URIWrapper.unwrap(uri))
       .apply(new RequestOptions().centerInside()).into(imageView)
   }
@@ -165,25 +162,12 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
 trait ImagePreviewCallback {
   def onCancelPreview(): Unit
 
-  def onSketchOnPreviewPicture(image: Content, source: ImagePreviewLayout.Source, method: IDrawingController.DrawingMethod): Unit
+  def onSketchOnPreviewPicture(image: Content, method: IDrawingController.DrawingMethod): Unit
 
-  def onSendPictureFromPreview(image: Content, source: ImagePreviewLayout.Source): Unit
+  def onSendPictureFromPreview(image: Content): Unit
 }
 
 object ImagePreviewLayout {
-  sealed trait Source
-
-  object Source {
-
-    case object InAppGallery extends Source
-
-    case object DeviceGallery extends Source
-
-    case object Camera extends Source
-
-  }
-
-  def CAMERA(): ImagePreviewLayout.Source = ImagePreviewLayout.Source.Camera // for java
 
   def newInstance(context: Context, container: ViewGroup, callback: ImagePreviewCallback): ImagePreviewLayout =
     returning(LayoutInflater.from(context).inflate(R.layout.fragment_cursor_images_preview, container, false).asInstanceOf[ImagePreviewLayout]) {

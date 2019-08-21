@@ -23,48 +23,38 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
+
+import com.waz.utils.IoUtils;
 import com.waz.utils.wrappers.AndroidURI;
 import com.waz.utils.wrappers.AndroidURIUtil;
 import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
-import timber.log.Timber;
+import com.waz.zclient.Intents;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-public class AssetIntentsManager {
-    public static final String SAVED_STATE_PENDING_URI = "SAVED_STATE_PENDING_URI";
+import timber.log.Timber;
 
+public class AssetIntentsManager {
     private static final String INTENT_GALLERY_TYPE = "image/*";
-    private final PackageManager pm;
+    private final Context context;
+    private final Callback callback;
 
     @TargetApi(19)
     private static String openDocumentAction() {
         return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) ? Intent.ACTION_OPEN_DOCUMENT : Intent.ACTION_GET_CONTENT;
     }
 
-    private URI pendingFileUri;
-    private Callback callback;
-
-    public AssetIntentsManager(Activity activity, Callback callback, Bundle savedInstanceState) {
-        setCallback(callback);
-
-        if (savedInstanceState != null) {
-            Uri uri = savedInstanceState.getParcelable(SAVED_STATE_PENDING_URI);
-            if (uri != null) {
-                pendingFileUri = new AndroidURI(uri);
-            }
-        }
-        pm = activity.getPackageManager();
-    }
-
-    public void setCallback(Callback callback) {
+    public AssetIntentsManager(Context context, Callback callback) {
+        this.context = context;
         this.callback = callback;
     }
 
@@ -73,7 +63,7 @@ public class AssetIntentsManager {
             // trying to load file from testing gallery,
             // this is needed because we are not able to override DocumentsUI on some android versions.
             Intent intent = new Intent("com.wire.testing.GET_DOCUMENT").setType(mimeType);
-            if (!pm.queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
+            if (!context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL).isEmpty()) {
                 callback.openIntent(intent, tpe);
                 return;
             }
@@ -91,18 +81,20 @@ public class AssetIntentsManager {
     }
 
     public void openBackupImport() {
-        openDocument("*/*", IntentType.BACKUP_IMPORT, false);
+        openDocument("application/octet-stream", IntentType.BACKUP_IMPORT, false);
     }
 
-    public void captureVideo(Context context) {
+    public void captureVideo() {
         Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-        pendingFileUri = getOutputMediaFileUri(context, IntentType.VIDEO);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, AndroidURIUtil.unwrap(pendingFileUri));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
         }
-        callback.openIntent(intent, IntentType.VIDEO);
+
+        if (intent.resolveActivity(this.context.getPackageManager()) != null) {
+            callback.openIntent(intent, IntentType.VIDEO);
+        }
     }
 
     public void openGallery() {
@@ -114,13 +106,7 @@ public class AssetIntentsManager {
     }
 
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        if (callback == null) {
-            throw new IllegalStateException("A callback must be set!");
-        }
-
         IntentType type = IntentType.get(requestCode);
-
         if (type == IntentType.UNKNOWN) {
             return false;
         }
@@ -130,57 +116,45 @@ public class AssetIntentsManager {
             return true;
         }
 
-        if (resultCode != Activity.RESULT_OK) {
+        if (resultCode != Activity.RESULT_OK || data == null) {
             callback.onFailed(type);
             return true;
         }
 
-        File possibleFile = null;
-        if (pendingFileUri != null) {
-            possibleFile = new File(pendingFileUri.getPath());
-        }
-        if ((type == IntentType.CAMERA || type == IntentType.VIDEO) &&
-            possibleFile != null &&
-            possibleFile.exists() &&
-            possibleFile.length() > 0) {
-                callback.onDataReceived(type, pendingFileUri);
-            pendingFileUri = null;
-        } else if (data != null) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-                callback.onDataReceived(type, AndroidURIUtil.parse(data.getDataString()));
-            } else if(data.getClipData() != null) {
-                ClipData clipData = data.getClipData();
-                for (int i = 0; i < clipData.getItemCount(); i++) {
-                    callback.onDataReceived(type, new AndroidURI(clipData.getItemAt(i).getUri()));
-                }
-            } else if (data.getData() != null) {
-                callback.onDataReceived(type, new AndroidURI(data.getData()));
-            } else {
-                callback.onFailed(type);
-            }
-        } else {
-            callback.onFailed(type);
+        Timber.d("onActivityResult - data: %s", Intents.RichIntent(data).toString());
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            callback.onDataReceived(type, AndroidURIUtil.parse(data.getDataString()));
+            return true;
         }
 
+        if(data.getClipData() != null) {
+            ClipData clipData = data.getClipData();
+            for (int i = 0; i < clipData.getItemCount(); i++) {
+                callback.onDataReceived(type, new AndroidURI(clipData.getItemAt(i).getUri()));
+            }
+            return true;
+        }
+
+        if (data.getData() == null) {
+            callback.onFailed(type);
+            return false;
+        }
+
+        URI uri = new AndroidURI(data.getData());
+        Timber.d("uri is %s", uri);
+        if (type == IntentType.VIDEO) {
+            uri = copyVideoToCache(uri);
+        }
+
+        if (uri != null) {
+            callback.onDataReceived(type, uri);
+        }
         return true;
     }
 
-    /**
-     * Create a file Uri for saving an image or video
-     *
-     * @param type
-     */
-    private static URI getOutputMediaFileUri(Context context, IntentType type) {
-        File file = getOutputMediaFile(context, type);
-        return file != null ? new AndroidURI(FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".fileprovider", file)) : null;
-    }
-
-    /**
-     * Create a File for saving an image or video
-     *
-     * @param type
-     */
-    private static File getOutputMediaFile(Context context, IntentType type) {
+    @Nullable
+    private URI copyVideoToCache(URI uri) {
         File mediaStorageDir = context.getExternalCacheDir();
         if (mediaStorageDir == null || !mediaStorageDir.exists()) {
             return null;
@@ -188,14 +162,29 @@ public class AssetIntentsManager {
 
         java.util.Date date = new java.util.Date();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(date.getTime());
+        File targetFile = new File(mediaStorageDir.getPath() + File.separator + "VID_" + timeStamp + ".mp4");
+        Timber.d("target file is %s", targetFile.getAbsolutePath());
 
-        switch (type) {
-            case VIDEO:
-                return new File(mediaStorageDir.getPath() + File.separator + "VID_" + timeStamp + ".mp4");
-            case CAMERA:
-                return new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
+        if (targetFile.exists()) {
+            targetFile.delete();
         }
-        return null;
+        try {
+            targetFile.createNewFile();
+            InputStream inputStream = context.getContentResolver().openInputStream(AndroidURIUtil.unwrap(uri));
+            if (inputStream != null) {
+                IoUtils.copy(inputStream, targetFile);
+            } else {
+                Timber.e("Input stream is null for %s", uri);
+            }
+        } catch (IOException e) {
+            Timber.e("Unable to save the file! %s", targetFile.getAbsolutePath());
+            Timber.e(e);
+            return null;
+        } finally {
+            context.getContentResolver().delete(AndroidURIUtil.unwrap(uri), null, null);
+        }
+
+        return new AndroidURI(FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".fileprovider", targetFile));
     }
 
     public enum IntentType {
@@ -214,7 +203,6 @@ public class AssetIntentsManager {
         }
 
         public static IntentType get(int requestCode) {
-
             if (requestCode == GALLERY.requestCode) {
                 return GALLERY;
             }
@@ -240,12 +228,6 @@ public class AssetIntentsManager {
             }
 
             return UNKNOWN;
-        }
-    }
-
-    public void onSaveInstanceState(Bundle outState) {
-        if (pendingFileUri != null) {
-            outState.putParcelable(SAVED_STATE_PENDING_URI, AndroidURIUtil.unwrap(pendingFileUri));
         }
     }
 

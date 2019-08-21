@@ -24,7 +24,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
-import com.waz.content.{TeamsStorage, UserPreferences}
+import com.waz.content.{GlobalPreferences, TeamsStorage, UserPreferences}
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
@@ -90,7 +90,6 @@ class MainActivity extends BaseActivity
   private lazy val passwordController     = inject[PasswordController]
   private lazy val deepLinkService        = inject[DeepLinkService]
   private lazy val usersController        = inject[UsersController]
-  private lazy val userPreferences        = inject[Signal[UserPreferences]]
 
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
@@ -141,6 +140,9 @@ class MainActivity extends BaseActivity
         startActivity(returning(new Intent(this, classOf[AppEntryActivity]))(_.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK)))
       case false =>
     }
+
+    // TODO: remove after release 3.36
+    warnAndroid4UsersIfNeeded()
 
     for {
       Some(self) <- userAccountsController.currentUser.head
@@ -475,6 +477,7 @@ class MainActivity extends BaseActivity
       }
 
       case _ =>
+        verbose(l"unknown intent $intent")
         setIntent(intent)
         Future.successful(false)
     }
@@ -528,6 +531,30 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
+
+  // TODO: remove after release 3.36
+  def warnAndroid4UsersIfNeeded(): Unit = {
+    def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
+      getString(R.string.android_4_warning_title),
+      getString(R.string.android_4_warning_message),
+      R.string.android_4_warning_action_dont_show_again,
+      R.string.android_4_warning_action_ok,
+      accentColor)
+
+    val prefs = inject[GlobalPreferences]
+
+    for {
+      shouldWarn <- prefs(GlobalPreferences.ShouldWarnAndroid4Users).apply()
+      isAndroid4User = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
+      color <- accentColorController.accentColor.head
+    } yield {
+      if (isAndroid4User && shouldWarn) {
+        showDialog(color).foreach { dontShowAgain =>
+          prefs(GlobalPreferences.ShouldWarnAndroid4Users) := !dontShowAgain
+        }
+      }
+    }
+  }
 }
 
 object MainActivity {
