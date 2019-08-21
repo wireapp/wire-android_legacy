@@ -471,6 +471,8 @@
     <string name="pref_options_requested_category_title">By popular demand</string>
     <string name="pref_options_cursor_send_button_title">Send button</string>
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
+    <string name="pref_options_app_lock_title">Lock with Passphrase</string>
+    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
@@ -1353,6 +1355,11 @@
     <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
     <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
+    
+    <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
+    <string name="app_lock_locked_message">Please enter your device credentials.</string>
+    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
+    <string name="app_lock_setup_dialog_button">Open settings</string>
     
     <!--TODO: remove after release 3.36-->
     <string name="android_4_warning_title">Wire 3.36 is the last version that can be installed on Android 4.</string>

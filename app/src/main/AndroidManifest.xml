@@ -105,6 +105,11 @@
             android:name=".security.SecureActivity"
             android:launchMode="singleTask"
             />
+
+        <activity
+            android:name=".security.AppLockActivity"
+            android:launchMode="singleTask" />
+
         <activity
             android:name="com.waz.zclient.calling.CallingActivity"
             android:hardwareAccelerated="true"

@@ -17,34 +17,62 @@
  */
 package com.waz.zclient.security
 
-import android.content.Context
+import android.content.{Context, Intent}
 import android.support.v7.app.AppCompatActivity
 import com.waz.content.GlobalPreferences
+import com.waz.content.GlobalPreferences.AppLockEnabled
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 
-class SecureActivity extends AppCompatActivity with ActivityHelper {
+class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
 
   private implicit val context: Context = this
 
+  private lazy val globalPreferences = inject[GlobalPreferences]
+
   override def onStart(): Unit = {
     super.onStart()
-    securityChecklist.run()
+
+    for {
+      _ <- securityChecklist.run()
+      shouldShowAppLock <- shouldShowAppLock
+    } yield {
+      if (shouldShowAppLock) showAppLock()
+    }
+  }
+
+  override protected def onPause(): Unit = {
+    super.onPause()
+    AppLockActivity.updateBackgroundEntryTimer()
   }
 
   private def securityChecklist: SecurityChecklist = {
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      val preferences = inject[GlobalPreferences]
-      checksAndActions += RootDetectionCheck(preferences) -> List(
+      checksAndActions += RootDetectionCheck(globalPreferences) -> List(
         new WipeDataAction(),
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
     }
 
     new SecurityChecklist(checksAndActions.toList)
+  }
+
+  private def shouldShowAppLock: Future[Boolean] = {
+    globalPreferences(AppLockEnabled).apply().map { preferenceEnabled =>
+      val appLockEnabled = preferenceEnabled || BuildConfig.FORCE_APP_LOCK
+      appLockEnabled && AppLockActivity.isAppLockExpired
+    }
+  }
+
+  private def showAppLock(): Unit = {
+    val intent = new Intent(this, classOf[AppLockActivity])
+    startActivity(intent)
   }
 }
