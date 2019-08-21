@@ -101,10 +101,12 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
-  appLockSwitch.setPreference(AppLockEnabled)
+  appLockSwitch.setPreference(AppLockEnabled, global = true)
   appLockSwitch.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
-  appLockSwitch.setDisabled(BuildConfig.FORCE_APP_LOCK)
-  appLockSwitch.pref.foreach(_ := BuildConfig.FORCE_APP_LOCK)
+
+  if (BuildConfig.FORCE_APP_LOCK) {
+    appLockSwitch.setVisibility(View.GONE)
+  }
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     soundsButton.setVisible(false)
