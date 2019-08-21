@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.security
 
-import java.util.Date
-
 import android.app.{Activity, AlertDialog, KeyguardManager}
 import android.content.{Context, DialogInterface, Intent}
 import android.provider.Settings
@@ -26,6 +24,8 @@ import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, R}
+import org.threeten.bp.Instant
+import org.threeten.bp.temporal.ChronoUnit
 
 class AppLockActivity extends AppCompatActivity with DerivedLogTag {
   import AppLockActivity._
@@ -78,15 +78,15 @@ object AppLockActivity extends DerivedLogTag {
 
   val ConfirmDeviceCredentialsRequestCode = 1
 
-  private var timeEnteredBackground: Option[Date] = Some(new Date(0))
+  private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
 
   def updateBackgroundEntryTimer(): Unit = {
-    timeEnteredBackground = Some(new Date())
+    timeEnteredBackground = Some(Instant.now())
   }
 
   def isAppLockExpired: Boolean = {
-    val now = new Date()
-    val secondsSinceEnteredBackground = (now.getTime - timeEnteredBackground.getOrElse(now).getTime) / 1000
+    val now = Instant.now()
+    val secondsSinceEnteredBackground = timeEnteredBackground.getOrElse(now).until(now, ChronoUnit.SECONDS)
     secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
   }
 }
