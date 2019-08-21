@@ -59,7 +59,6 @@ trait MessageViewPart extends View {
   def set(msg: MessageAndLikes, part: Option[MessageContent], opts: Option[MsgBindOptions] = None): Unit =
     messageAndLikes.publish(msg, Threading.Ui)
 
-
   //By default disable clicks for all view types. There are fewer that need click functionality than those that don't
   this.onClick {}
   this.onLongClick(false)
