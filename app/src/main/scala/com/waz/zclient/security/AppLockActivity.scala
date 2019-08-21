@@ -76,7 +76,7 @@ class AppLockActivity extends AppCompatActivity with DerivedLogTag {
 
 object AppLockActivity extends DerivedLogTag {
 
-  val ConfirmDeviceCredentialsRequestCode = 1
+  final val ConfirmDeviceCredentialsRequestCode = 1
 
   private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
 
