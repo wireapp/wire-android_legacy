@@ -92,14 +92,13 @@ object AppLockActivity extends DerivedLogTag {
   def updateBackgroundEntryTimer(): Unit = {
     timeEnteredBackground = Some(Instant.now())
   }
-  
+
   private def updateLockState(): Unit = {
     if (isAppLockExpired) isAppLocked = true
   }
 
  private def isAppLockExpired: Boolean = {
-    val now = Instant.now()
-    val secondsSinceEnteredBackground = timeEnteredBackground.getOrElse(now).until(now, ChronoUnit.SECONDS)
-    secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
+   val secondsSinceEnteredBackground = timeEnteredBackground.fold(0L)(_.until(Instant.now(), ChronoUnit.SECONDS))
+   secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
   }
 }
