@@ -94,7 +94,7 @@ object AppLockActivity extends DerivedLogTag {
   }
 
   private def updateLockState(): Unit = {
-    if (isAppLockExpired) isAppLocked = true
+    isAppLocked |= isAppLockExpired
   }
 
  private def isAppLockExpired: Boolean = {
