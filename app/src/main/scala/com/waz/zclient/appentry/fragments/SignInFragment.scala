@@ -371,7 +371,7 @@ class SignInFragment
           }
         }
 
-        if(!secPolicyManager.checkSecurityPolicyIsEnabled(getContext, prefs)) {
+        if(!secPolicyManager.isSecurityPolicyEnabled(getContext)) {
           displayDeviceAdminRequestDialog()
         } else if(!secPolicyManager.isPasswordCompliant(getContext)) {
           displayPasswordInadequateDialog()

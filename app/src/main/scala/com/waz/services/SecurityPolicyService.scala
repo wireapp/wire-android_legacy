@@ -41,7 +41,7 @@ class SecurityPolicyService
     setPasswordPolicy(context)
   }
 
-  def checkSecurityPolicyIsEnabled(context: Context, prefs: GlobalPreferences): Boolean = {
+  def isSecurityPolicyEnabled(context: Context): Boolean = {
     val secPolicy = new ComponentName(context, classOf[SecurityPolicyService])
     getManager(context).isAdminActive(secPolicy)
   }
