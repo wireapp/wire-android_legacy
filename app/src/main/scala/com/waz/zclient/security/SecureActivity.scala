@@ -46,8 +46,8 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
     }
   }
 
-  override protected def onPause(): Unit = {
-    super.onPause()
+  override def onStop(): Unit = {
+    super.onStop()
     AppLockActivity.updateBackgroundEntryTimer()
   }
 
@@ -67,7 +67,7 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
   private def shouldShowAppLock: Future[Boolean] = {
     globalPreferences(AppLockEnabled).apply().map { preferenceEnabled =>
       val appLockEnabled = preferenceEnabled || BuildConfig.FORCE_APP_LOCK
-      appLockEnabled && AppLockActivity.isAppLockExpired
+      appLockEnabled && AppLockActivity.needsAuthentication
     }
   }
 
