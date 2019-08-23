@@ -25,6 +25,6 @@ class DevicePasswordComplianceCheck(securityPolicyService: SecurityPolicyService
   extends SecurityChecklist.Check {
 
   override def isSatisfied: Future[Boolean] = {
-    Future.successful(securityPolicyService.isPasswordCompliant(context))
+    Future.successful(securityPolicyService.isPasswordCompliant)
   }
 }

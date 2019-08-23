@@ -21,6 +21,7 @@ import android.app.admin.{DeviceAdminReceiver, DevicePolicyManager}
 import android.content.{ComponentName, Context, Intent}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.Injectable
+import com.waz.zclient.log.LogUI._
 
 /**
   * This class performs two functions, firstly it serves as the required DeviceAdminReceived instance
@@ -33,23 +34,14 @@ import com.waz.zclient.Injectable
 class SecurityPolicyService
   extends DeviceAdminReceiver with DerivedLogTag with Injectable {
 
-  import com.waz.zclient.log.LogUI._
-
   override def onEnabled(context: Context, intent: Intent): Unit = {
     verbose(l"admin rights enabled, setting policy")
     setPasswordPolicy(context)
   }
 
-  def isSecurityPolicyEnabled(context: Context): Boolean = {
+  private def setPasswordPolicy(context: Context): Unit = {
+    val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE).asInstanceOf[DevicePolicyManager]
     val secPolicy = new ComponentName(context, classOf[SecurityPolicyService])
-    getManager(context).isAdminActive(secPolicy)
-  }
-
-  def isPasswordCompliant(context: Context): Boolean = getManager(context).isActivePasswordSufficient
-
-  private def setPasswordPolicy(cxt: Context): Unit = {
-    val dpm = cxt.getSystemService(Context.DEVICE_POLICY_SERVICE).asInstanceOf[DevicePolicyManager]
-    val secPolicy = new ComponentName(cxt, classOf[SecurityPolicyService])
     /**
     We must set the password quality to some minimum quality, PASSWORD_QUALITY_SOMETHING and
      PASSWORD_QUALITY_UNSPECIFIED both result in our minimum length requirement not being enforced.
@@ -64,4 +56,10 @@ class SecurityPolicyService
     dpm.setPasswordMinimumLength(secPolicy, 12)
   }
 
+  def isSecurityPolicyEnabled(implicit context: Context): Boolean = {
+    val secPolicy = new ComponentName(context, classOf[SecurityPolicyService])
+    getManager(context).isAdminActive(secPolicy)
+  }
+
+  def isPasswordCompliant(implicit context: Context): Boolean = getManager(context).isActivePasswordSufficient
 }

@@ -26,6 +26,6 @@ class DeviceAdminCheck(securityPolicyService: SecurityPolicyService)(implicit co
   extends SecurityChecklist.Check {
 
   override def isSatisfied: Future[Boolean] = {
-    Future.successful(securityPolicyService.isSecurityPolicyEnabled(context))
+    Future.successful(securityPolicyService.isSecurityPolicyEnabled)
   }
 }
