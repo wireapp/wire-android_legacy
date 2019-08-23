@@ -17,13 +17,17 @@
  */
 package com.waz.zclient.security
 
-import android.content.{Context, Intent}
+import android.app.admin.DevicePolicyManager
+import android.content.{ComponentName, Context, Intent}
+import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.services.SecurityPolicyService
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
+import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
@@ -33,14 +37,15 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
   private implicit val context: Context = this
 
+  private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences = inject[GlobalPreferences]
 
   override def onStart(): Unit = {
     super.onStart()
 
     for {
-      _ <- securityChecklist.run()
-      shouldShowAppLock <- shouldShowAppLock
+      allChecksPassed <- securityChecklist.run()
+      shouldShowAppLock <- shouldShowAppLock if allChecksPassed
     } yield {
       if (shouldShowAppLock) showAppLock()
     }
@@ -60,6 +65,33 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
     }
+    
+    checksAndActions += new DeviceAdminCheck(securityPolicyService) -> List(
+      ShowDialogAction(
+        R.string.security_policy_auth_dialog_title,
+        R.string.security_policy_auth_dialog_message,
+        android.R.string.ok,
+        action = { () =>
+          val secPolicy = new ComponentName(this, classOf[SecurityPolicyService])
+          val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+            .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+            .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_desc))
+
+          startActivity(intent)
+        }
+      )
+    )
+
+    checksAndActions += new DevicePasswordComplianceCheck(securityPolicyService) -> List(
+      ShowDialogAction(
+        R.string.security_policy_pass_dialog_title,
+        R.string.security_policy_pass_dialog_message,
+        R.string.app_lock_setup_dialog_button,
+        action = { () =>
+          startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))
+        }
+      )
+    )
 
     new SecurityChecklist(checksAndActions.toList)
   }
