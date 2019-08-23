@@ -38,7 +38,7 @@ import com.waz.zclient._
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
-import com.waz.zclient.security._
+import com.waz.zclient.security.checks.RootDetectionCheck
 import com.waz.zclient.utils.BackStackKey
 import com.waz.zclient.utils.ContextUtils.showToast
 

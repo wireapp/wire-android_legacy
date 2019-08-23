@@ -15,16 +15,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.security
+package com.waz.zclient.security.actions
+
 import android.content.Context
-import com.waz.services.SecurityPolicyService
+import com.waz.service.ZMessaging
+import com.waz.threading.Threading.Implicits.Background
+import com.waz.zclient.WireApplication
+import com.waz.zclient.security.SecurityChecklist
 
 import scala.concurrent.Future
 
-class DevicePasswordComplianceCheck(securityPolicyService: SecurityPolicyService)(implicit context: Context)
-  extends SecurityChecklist.Check {
-
-  override def isSatisfied: Future[Boolean] = {
-    Future.successful(securityPolicyService.isPasswordCompliant)
+class WipeDataAction()(implicit context: Context) extends SecurityChecklist.Action {
+  override def execute(): Future[Unit] = ZMessaging.currentAccounts.isWiped.flatMap {
+    case true  => Future.successful(())
+    case false =>
+      ZMessaging.currentAccounts.wipeData().map { _ =>
+        WireApplication.clearOldVideoFiles(context)
+        context.getCacheDir.delete()
+      }
   }
 }

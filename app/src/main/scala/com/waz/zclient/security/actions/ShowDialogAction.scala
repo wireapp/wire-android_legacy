@@ -15,34 +15,51 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.security
+package com.waz.zclient.security.actions
 
 import android.app.AlertDialog
-import android.content.Context
+import android.content.{Context, DialogInterface}
 import com.waz.threading.Threading.Implicits.Ui
+import com.waz.zclient.security.SecurityChecklist
+import com.waz.zclient.utils.ContextUtils.getString
 
 import scala.concurrent.Future
 
-class BlockWithDialogAction(title: String, message: String)(implicit context: Context) extends SecurityChecklist.Action {
+class ShowDialogAction(title: String,
+                       message: String,
+                       actionTitle: String,
+                       action: () => Unit)
+                      (implicit context: Context) extends SecurityChecklist.Action {
 
   override def execute(): Future[Unit] = {
     Future {
+      val listener = new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = action()
+      }
+
       new AlertDialog.Builder(context)
         .setTitle(title)
         .setMessage(message)
         .setCancelable(false)
+        .setPositiveButton(actionTitle, listener)
         .create()
         .show()
     }
   }
 }
 
-object BlockWithDialogAction {
-  import com.waz.zclient.utils.ContextUtils.getString
+object ShowDialogAction {
 
-  def apply(titleResId: Int, messageResId: Int)(implicit context: Context): BlockWithDialogAction = {
+  def apply(titleResId: Int,
+            messageResId: Int,
+            actionTitleResId: Int,
+            action: () => Unit)
+           (implicit context: Context): ShowDialogAction = {
+
     val title = getString(titleResId)
     val message = getString(messageResId)
-    new BlockWithDialogAction(title, message)
+    val actionTitle = getString(actionTitleResId)
+    new ShowDialogAction(title, message, actionTitle, action)
   }
 }
+

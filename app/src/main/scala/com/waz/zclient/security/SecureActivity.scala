@@ -27,6 +27,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.services.SecurityPolicyService
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
+import com.waz.zclient.security.actions._
+import com.waz.zclient.security.checks._
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
