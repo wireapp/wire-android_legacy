@@ -70,14 +70,14 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
     checksAndActions += new DeviceAdminCheck(securityPolicyService) -> List(
       ShowDialogAction(
-        R.string.security_policy_auth_dialog_title,
-        R.string.security_policy_auth_dialog_message,
-        android.R.string.ok,
+        R.string.security_policy_setup_dialog_title,
+        R.string.security_policy_setup_dialog_message,
+        R.string.security_policy_setup_dialog_button,
         action = { () =>
           val secPolicy = new ComponentName(this, classOf[SecurityPolicyService])
           val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
             .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
-            .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_desc))
+            .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
 
           startActivity(intent)
         }
@@ -86,12 +86,10 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
     checksAndActions += new DevicePasswordComplianceCheck(securityPolicyService) -> List(
       ShowDialogAction(
-        R.string.security_policy_pass_dialog_title,
-        R.string.security_policy_pass_dialog_message,
-        R.string.app_lock_setup_dialog_button,
-        action = { () =>
-          startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))
-        }
+        R.string.security_policy_invalid_password_dialog_title,
+        R.string.security_policy_invalid_password_dialog_message,
+        R.string.security_policy_setup_dialog_button,
+        action = { () => startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS)) }
       )
     )
 

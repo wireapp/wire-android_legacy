@@ -223,7 +223,7 @@
 
         <receiver android:name="com.waz.services.SecurityPolicyService"
             android:label="@string/security_policy_title"
-            android:description="@string/security_policy_desc"
+            android:description="@string/security_policy_description"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                 android:resource="@xml/device_admin" />
