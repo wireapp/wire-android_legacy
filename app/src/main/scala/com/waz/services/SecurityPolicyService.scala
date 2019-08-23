@@ -19,7 +19,6 @@ package com.waz.services
 
 import android.app.admin.{DeviceAdminReceiver, DevicePolicyManager}
 import android.content.{ComponentName, Context, Intent}
-import com.waz.content.GlobalPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.Injectable
 

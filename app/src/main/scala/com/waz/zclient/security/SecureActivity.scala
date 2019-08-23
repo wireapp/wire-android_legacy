@@ -65,7 +65,7 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
     }
-    
+
     checksAndActions += new DeviceAdminCheck(securityPolicyService) -> List(
       ShowDialogAction(
         R.string.security_policy_auth_dialog_title,
