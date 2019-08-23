@@ -371,18 +371,18 @@ class SignInFragment
             activity.enableProgress(true)
 
             for {
-              email <- email.head
+              email    <- email.head
               password <- password.head
-              req <- accountsService.loginEmail(email, password)
+              req      <- accountsService.loginEmail(email, password)
             } yield onResponse(req, m).right.foreach { id =>
               KeyboardUtils.closeKeyboardIfShown(getActivity)
               activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
             }
           case m@SignInMethod(Register, Email, false) =>
             for {
-              email <- email.head
+              email    <- email.head
               password <- password.head
-              name <- name.head
+              name     <- name.head
             } yield {
               if (strongPasswordValidator.isValidPassword(password)) {
                 accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
