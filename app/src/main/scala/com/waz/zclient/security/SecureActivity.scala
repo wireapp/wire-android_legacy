@@ -62,13 +62,17 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions += RootDetectionCheck(globalPreferences) -> List(
+      val rootDetectionCheck = RootDetectionCheck(globalPreferences)
+      val rootDetectionActions = List(
         new WipeDataAction(),
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
+
+      checksAndActions += rootDetectionCheck ->  rootDetectionActions
     }
 
-    checksAndActions += new DeviceAdminCheck(securityPolicyService) -> List(
+    val deviceAdminCheck = new DeviceAdminCheck(securityPolicyService)
+    val deviceAdminActions = List(
       ShowDialogAction(
         R.string.security_policy_setup_dialog_title,
         R.string.security_policy_setup_dialog_message,
@@ -84,7 +88,10 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
       )
     )
 
-    checksAndActions += new DevicePasswordComplianceCheck(securityPolicyService) -> List(
+    checksAndActions += deviceAdminCheck -> deviceAdminActions
+
+    val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
+    val devicePasswordComplianceActions =  List(
       ShowDialogAction(
         R.string.security_policy_invalid_password_dialog_title,
         R.string.security_policy_invalid_password_dialog_message,
@@ -92,6 +99,8 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
         action = { () => startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS)) }
       )
     )
+
+    checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
 
     new SecurityChecklist(checksAndActions.toList)
   }
