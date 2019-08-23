@@ -71,38 +71,48 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
       checksAndActions += rootDetectionCheck ->  rootDetectionActions
     }
 
-    val deviceAdminCheck = new DeviceAdminCheck(securityPolicyService)
-    val deviceAdminActions = List(
-      ShowDialogAction(
-        R.string.security_policy_setup_dialog_title,
-        R.string.security_policy_setup_dialog_message,
-        R.string.security_policy_setup_dialog_button,
-        action = { () =>
-          val secPolicy = new ComponentName(this, classOf[SecurityPolicyService])
-          val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-            .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
-            .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
-
-          startActivity(intent)
-        }
+    if (BuildConfig.BLOCK_ON_PASSWORD_POLICY) {
+      val deviceAdminCheck = new DeviceAdminCheck(securityPolicyService)
+      val deviceAdminActions = List(
+        ShowDialogAction(
+          R.string.security_policy_setup_dialog_title,
+          R.string.security_policy_setup_dialog_message,
+          R.string.security_policy_setup_dialog_button,
+          action = showDeviceAdminScreen
+        )
       )
-    )
 
-    checksAndActions += deviceAdminCheck -> deviceAdminActions
+      checksAndActions += deviceAdminCheck -> deviceAdminActions
 
-    val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
-    val devicePasswordComplianceActions =  List(
-      ShowDialogAction(
-        R.string.security_policy_invalid_password_dialog_title,
-        R.string.security_policy_invalid_password_dialog_message,
-        R.string.security_policy_setup_dialog_button,
-        action = { () => startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS)) }
+      val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
+      val devicePasswordComplianceActions =  List(
+        ShowDialogAction(
+          R.string.security_policy_invalid_password_dialog_title,
+          R.string.security_policy_invalid_password_dialog_message,
+          R.string.security_policy_setup_dialog_button,
+          action = showSecuritySettings
+        )
       )
-    )
 
-    checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
+      checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
+    }
+
 
     new SecurityChecklist(checksAndActions.toList)
+  }
+
+  private def showDeviceAdminScreen(): Unit = {
+    val secPolicy = new ComponentName(this, classOf[SecurityPolicyService])
+    val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+      .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+      .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
+
+    startActivity(intent)
+  }
+
+  private def showSecuritySettings(): Unit = {
+    val intent = new Intent(Settings.ACTION_SECURITY_SETTINGS)
+    startActivity(intent)
   }
 
   private def shouldShowAppLock: Future[Boolean] = {
