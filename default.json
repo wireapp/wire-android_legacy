@@ -33,5 +33,6 @@
   "block_on_jailbreak_or_root": false,
   "force_hide_screen_content": false,
   "force_app_lock": false,
-  "app_lock_timeout": 10
+  "app_lock_timeout": 10,
+  "block_on_password_policy": false
 }

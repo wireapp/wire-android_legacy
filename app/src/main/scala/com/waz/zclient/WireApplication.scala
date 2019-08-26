@@ -48,6 +48,7 @@ import com.waz.service.conversation.{ConversationsService, ConversationsUiServic
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
 import com.waz.service.tracking.TrackingService
+import com.waz.services.SecurityPolicyService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
@@ -312,6 +313,8 @@ object WireApplication extends DerivedLogTag {
     bind [UiTrackingController]    to new UiTrackingController()
 
     bind[MessagePagedListController] to new MessagePagedListController()
+
+    bind[SecurityPolicyService] to new SecurityPolicyService()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {

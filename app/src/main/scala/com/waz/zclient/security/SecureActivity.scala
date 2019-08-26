@@ -17,13 +17,19 @@
  */
 package com.waz.zclient.security
 
-import android.content.{Context, Intent}
+import android.app.admin.DevicePolicyManager
+import android.content.{ComponentName, Context, Intent}
+import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.services.SecurityPolicyService
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
+import com.waz.zclient.security.actions._
+import com.waz.zclient.security.checks._
+import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{ActivityHelper, BuildConfig, R}
 
 import scala.collection.mutable.ListBuffer
@@ -33,14 +39,15 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
   private implicit val context: Context = this
 
+  private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences = inject[GlobalPreferences]
 
   override def onStart(): Unit = {
     super.onStart()
 
     for {
-      _ <- securityChecklist.run()
-      shouldShowAppLock <- shouldShowAppLock
+      allChecksPassed <- securityChecklist.run()
+      shouldShowAppLock <- shouldShowAppLock if allChecksPassed
     } yield {
       if (shouldShowAppLock) showAppLock()
     }
@@ -55,13 +62,57 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      checksAndActions += RootDetectionCheck(globalPreferences) -> List(
+      val rootDetectionCheck = RootDetectionCheck(globalPreferences)
+      val rootDetectionActions = List(
         new WipeDataAction(),
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
+
+      checksAndActions += rootDetectionCheck ->  rootDetectionActions
     }
 
+    if (BuildConfig.BLOCK_ON_PASSWORD_POLICY) {
+      val deviceAdminCheck = new DeviceAdminCheck(securityPolicyService)
+      val deviceAdminActions = List(
+        ShowDialogAction(
+          R.string.security_policy_setup_dialog_title,
+          R.string.security_policy_setup_dialog_message,
+          R.string.security_policy_setup_dialog_button,
+          action = showDeviceAdminScreen
+        )
+      )
+
+      checksAndActions += deviceAdminCheck -> deviceAdminActions
+
+      val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
+      val devicePasswordComplianceActions =  List(
+        ShowDialogAction(
+          R.string.security_policy_invalid_password_dialog_title,
+          R.string.security_policy_invalid_password_dialog_message,
+          R.string.security_policy_setup_dialog_button,
+          action = showSecuritySettings
+        )
+      )
+
+      checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
+    }
+
+
     new SecurityChecklist(checksAndActions.toList)
+  }
+
+  private def showDeviceAdminScreen(): Unit = {
+    val secPolicy = new ComponentName(this, classOf[SecurityPolicyService])
+    val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+      .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+      .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
+
+    startActivity(intent)
+  }
+
+  private def showSecuritySettings(): Unit = {
+    val intent = new Intent(Settings.ACTION_SECURITY_SETTINGS)
+    startActivity(intent)
   }
 
   private def shouldShowAppLock: Future[Boolean] = {
