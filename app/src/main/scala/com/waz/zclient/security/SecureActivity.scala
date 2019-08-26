@@ -86,10 +86,10 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
       val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
       val devicePasswordComplianceActions =  List(
-        ShowDialogAction(
-          R.string.security_policy_invalid_password_dialog_title,
-          R.string.security_policy_invalid_password_dialog_message,
-          R.string.security_policy_setup_dialog_button,
+        new ShowDialogAction(
+          ContextUtils.getString(R.string.security_policy_invalid_password_dialog_title),
+          ContextUtils.getString(R.string.security_policy_invalid_password_dialog_message, SecurityPolicyService.PasswordMinimumLength.toString),
+          ContextUtils.getString(R.string.security_policy_setup_dialog_button),
           action = showSecuritySettings
         )
       )

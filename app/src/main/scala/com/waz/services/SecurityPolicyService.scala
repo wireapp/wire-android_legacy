@@ -52,8 +52,8 @@ class SecurityPolicyService
      PASSWORD_QUALITY_NUMERIC , PASSWORD_QUALITY_NUMERIC_COMPLEX, PASSWORD_QUALITY_ALPHABETIC,
      PASSWORD_QUALITY_ALPHANUMERIC, or PASSWORD_QUALITY_COMPLEX with setPasswordQuality(ComponentName, int)"
       **/
-    dpm.setPasswordQuality(secPolicy, DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC)
-    dpm.setPasswordMinimumLength(secPolicy, 12)
+    dpm.setPasswordQuality(secPolicy, DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+    dpm.setPasswordMinimumLength(secPolicy, SecurityPolicyService.PasswordMinimumLength)
   }
 
   def isSecurityPolicyEnabled(implicit context: Context): Boolean = {
@@ -62,4 +62,8 @@ class SecurityPolicyService
   }
 
   def isPasswordCompliant(implicit context: Context): Boolean = getManager(context).isActivePasswordSufficient
+}
+
+object SecurityPolicyService {
+  val PasswordMinimumLength: Int = 8
 }
