@@ -143,15 +143,15 @@ class MainActivity extends BaseActivity
 
     for {
       Some(self) <- userAccountsController.currentUser.head
-      teamName   <- self.teamId.fold(
-                      Future.successful(Option.empty[Name])
-                    )(teamId =>
-                      inject[TeamsStorage].get(teamId).map(_.map(_.name))
-                    )
-      prefs      <- userPreferences.head
+      teamName <- self.teamId.fold(
+        Future.successful(Option.empty[Name])
+      )(teamId =>
+        inject[TeamsStorage].get(teamId).map(_.map(_.name))
+      )
+      prefs <- userPreferences.head
       shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).apply()
-      avVisible  <- usersController.availabilityVisible.head
-      color      <- accentColorController.accentColor.head
+      avVisible <- usersController.availabilityVisible.head
+      color <- accentColorController.accentColor.head
     } yield {
       (shouldWarn && avVisible, self.availability, teamName) match {
         case (true, Availability.Away, Some(name)) =>
@@ -180,9 +180,9 @@ class MainActivity extends BaseActivity
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
     spinnerController.spinnerShowing.onUi {
-      case Show(animation, forcedIsDarkTheme)=>
+      case Show(animation, forcedIsDarkTheme) =>
         themeController.darkThemeSet.head.foreach(theme => loadingIndicator.show(animation, forcedIsDarkTheme.getOrElse(theme), 300))(Threading.Ui)
-      case Hide(Some(message))=> loadingIndicator.hideWithMessage(message, 750)
+      case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
 

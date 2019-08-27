@@ -19,32 +19,31 @@ package com.waz.zclient.security
 
 import android.app.{Activity, AlertDialog, KeyguardManager}
 import android.content.{Context, DialogInterface, Intent}
+import android.os.Bundle
 import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.{BuildConfig, R}
-import org.threeten.bp.Instant
-import org.threeten.bp.temporal.ChronoUnit
+import com.waz.zclient.{ActivityHelper, R}
 
-class AppLockActivity extends AppCompatActivity with DerivedLogTag {
+class AppLockActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
   import AppLockActivity._
 
-  private lazy val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE).asInstanceOf[KeyguardManager]
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    verbose(l"onCreate, isDeviceSecure: $isDeviceSecure")
 
-  override def onStart(): Unit = {
-    super.onStart()
-
-    if (isDeviceSecure) showAuthenticationScreen()
-    else showSetupDialog()
+    if (isDeviceSecure) showAuthenticationScreen() else showSetupDialog()
   }
 
-  private def isDeviceSecure: Boolean = keyguardManager.isKeyguardSecure
+  private def isDeviceSecure: Boolean =
+    getSystemService(Context.KEYGUARD_SERVICE).asInstanceOf[KeyguardManager].isKeyguardSecure
 
   private def showAuthenticationScreen(): Unit = {
-    info(l"presenting authentication screen")
     val (title, message) = (getString(R.string.app_lock_locked_title), getString(R.string.app_lock_locked_message))
-    val intent = keyguardManager.createConfirmDeviceCredentialIntent(title, message)
+    val intent =
+      getSystemService(Context.KEYGUARD_SERVICE).asInstanceOf[KeyguardManager]
+      .createConfirmDeviceCredentialIntent(title, message)
     startActivityForResult(intent, ConfirmDeviceCredentialsRequestCode)
   }
 
@@ -69,36 +68,12 @@ class AppLockActivity extends AppCompatActivity with DerivedLogTag {
 
     if (requestCode == ConfirmDeviceCredentialsRequestCode && resultCode == Activity.RESULT_OK) {
       info(l"authentication successful")
-      timeEnteredBackground = None
-      isAppLocked = false
+      inject[SecurityPolicyChecker].clearBackgroundEntryTimer()
       finish()
     }
   }
 }
 
 object AppLockActivity extends DerivedLogTag {
-
-  final val ConfirmDeviceCredentialsRequestCode = 1
-
-  private var isAppLocked: Boolean = true
-
-  private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
-
-  def needsAuthentication: Boolean = {
-    updateLockState()
-    isAppLocked
-  }
-
-  def updateBackgroundEntryTimer(): Unit = {
-    timeEnteredBackground = Some(Instant.now())
-  }
-
-  private def updateLockState(): Unit = {
-    isAppLocked |= isAppLockExpired
-  }
-
- private def isAppLockExpired: Boolean = {
-   val secondsSinceEnteredBackground = timeEnteredBackground.fold(0L)(_.until(Instant.now(), ChronoUnit.SECONDS))
-   secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
-  }
+  val ConfirmDeviceCredentialsRequestCode = 1
 }

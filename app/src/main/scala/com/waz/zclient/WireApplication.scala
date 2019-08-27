@@ -21,11 +21,11 @@ import java.io.File
 import java.net.{InetSocketAddress, Proxy}
 import java.util.Calendar
 
-import android.app.{Activity, ActivityManager, NotificationManager}
+import android.app.{Activity, ActivityManager, Application, NotificationManager}
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
-import android.os.{Build, PowerManager, Vibrator}
+import android.os.{Build, Bundle, PowerManager, Vibrator}
 import android.renderscript.RenderScript
 import android.support.multidex.MultiDexApplication
 import android.support.v4.app.{FragmentActivity, FragmentManager}
@@ -89,6 +89,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneContr
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
+import com.waz.zclient.security.SecurityPolicyChecker
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
@@ -269,6 +270,8 @@ object WireApplication extends DerivedLogTag {
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
 
+    bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
+
     KotlinServices.INSTANCE.init(ctx)
   }
 
@@ -334,7 +337,7 @@ object WireApplication extends DerivedLogTag {
   }
 }
 
-class WireApplication extends MultiDexApplication with WireContext with Injectable {
+class WireApplication extends MultiDexApplication with WireContext with Injectable with Application.ActivityLifecycleCallbacks {
   type NetworkSignal = Signal[NetworkMode]
   import WireApplication._
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -382,6 +385,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     enableTLS12OnOldDevices()
 
     controllerFactory = new ControllerFactory(getApplicationContext)
+
+    registerActivityLifecycleCallbacks(this)
 
     ensureInitialized()
   }
@@ -486,5 +491,25 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     super.onTerminate()
   }
+
+  private var activitiesStarted = 0
+
+  override def onActivityStarted(activity: Activity): Unit = synchronized {
+    activitiesStarted += 1
+    verbose(l"onActivityStarted, activities started now: $activitiesStarted")
+    if (activitiesStarted == 1) inject[SecurityPolicyChecker].run(activity)
+  }
+
+  override def onActivityStopped(activity: Activity): Unit = synchronized {
+    activitiesStarted -= 1
+    verbose(l"onActivityStopped, activities still started: $activitiesStarted")
+    if (activitiesStarted == 0) inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
+  }
+
+  override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
+  override def onActivityDestroyed(activity: Activity): Unit = {}
+  override def onActivityPaused(activity: Activity): Unit = {}
+  override def onActivityResumed(activity: Activity): Unit = {}
+  override def onActivitySaveInstanceState(activity: Activity, bundle: Bundle): Unit = {}
 }
 
