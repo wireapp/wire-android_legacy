@@ -2,11 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'jp.leafytree.android-scala'
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
 }
 
 dependencies {
-    compileOnly "org.scala-lang:scala-reflect:2.11.12"
-    compileOnly "org.robolectric:android-all:5.0.0_r2-robolectric-1"
+    compileOnly "org.scala-lang:scala-reflect:$rootProject.ext.scalaVersion"
+    compileOnly "$rootProject.deps.robolectric_android_all"
 }

@@ -48,15 +48,15 @@ allprojects {
 
 task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
     source = fileTree(dir: getRootDir()).include([
-            "**/*.java",
-            "**/*.scala",
-            "**/*.gradle",
-            "**/*.xml",
+        "**/*.java",
+        "**/*.scala",
+        "**/*.gradle",
+        "**/*.xml",
     ]).exclude([
-            "**/*build*",
-            "**/*target*",
-            "**/*gen*",
-            "**/*generated*",
+        "**/*build*",
+        "**/*target*",
+        "**/*gen*",
+        "**/*generated*",
     ])
 }
 licenseFormat.dependsOn licenseFormatAndroid
@@ -71,6 +71,21 @@ ext {
     buildToolsVersion = '28.0.3'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_8
     targetCompatibilityVersion = JavaVersion.VERSION_1_8
+
+    scalaMajorVersion = 2.11
+    scalaVersion = scalaMajorVersion + '.12'
+
+    versions = [
+        supportLib: "27.1.1",
+        threetenbp: "1.3.8",
+        junit     : "4.12",
+    ]
+
+    deps = [
+        scalaTest              : "org.scalatest:scalatest_$ext.scalaMajorVersion:3.0.5",
+        libphonenumber         : "com.googlecode.libphonenumber:libphonenumber:7.1.1", // 7.2.x breaks protobuf
+        robolectric_android_all: "org.robolectric:android-all:5.0.0_r2-robolectric-1"
+    ]
 
     // directory where customization files live
     wireConfig = new File("$rootDir/default.json")
@@ -117,12 +132,12 @@ allprojects {
 }
 
 task ci(dependsOn: [
-                    ':app:assembleDevDebug',
-                    ':app:lintDevDebug',
-                    // By default on whole app
-                    //':app:checkstyle',
-                    ':app:pmd'
-                    ]) {
+    ':app:assembleDevDebug',
+    ':app:lintDevDebug',
+    // By default on whole app
+    //':app:checkstyle',
+    ':app:pmd'
+]) {
 
     doLast {
         def lintReportsPattern = /\/?(.*)\/build\/outputs\/lint-results\-(devDebug|debug)\.xml/
@@ -180,12 +195,12 @@ task ci(dependsOn: [
                 def count = 0;
                 for (def file : entry.value.entrySet()) {
                     issues.append("> ${file.value.size()} in ${file.key}\n")
-                    file.value.each { issues.append("\t${it}\n")}
+                    file.value.each { issues.append("\t${it}\n") }
                     count += file.value.size()
                 }
                 message.append("${entry.key}: ${count} issue${count == 1 ? '' : 's'}\n")
-                        .append(issues.toString())
-                        .append('\n')
+                    .append(issues.toString())
+                    .append('\n')
             }
             throw new Exception(message.toString())
         } else {

@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'jp.leafytree.android-scala'
 
 android {
-    compileSdkVersion 24
+    compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
@@ -49,60 +49,60 @@ tasks.withType(ScalaCompile) {
                                                 "-deprecation", "-encoding", "UTF-8", "-Xmax-classfile-name", "128"]
 }
 
-def circeVersion = "0.9.3"
-def RobolectricVersion = "5.0.0_r2-robolectric-1"
+def versions = [
+        okHttp : "3.10.0",
+        circe : "0.9.3",
+]
 
 dependencies {
 
     api project(':wire-android-sync-engine:macrosupport')
 
-    api "org.scala-lang.modules:scala-async_2.11:0.9.7"
-    implementation "com.squareup.okhttp3:okhttp:3.10.0"
+    api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
+    implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
-    api "com.googlecode.libphonenumber:libphonenumber:7.1.1" // 7.2.x breaks protobuf
+    implementation "$rootProject.deps.libphonenumber"
     implementation "com.wire:cryptobox-android:1.1.2"
     api "com.wire:generic-message-proto:1.23.0"
     implementation "com.wire:backend-api-proto:1.1"
-    implementation "io.circe:circe-core_2.11:$circeVersion"
-    implementation "io.circe:circe-generic_2.11:$circeVersion"
-    implementation "io.circe:circe-parser_2.11:$circeVersion"
+    implementation "io.circe:circe-core_$rootProject.ext.scalaMajorVersion:$versions.circe"
+    implementation "io.circe:circe-generic_$rootProject.ext.scalaMajorVersion:$versions.circe"
+    implementation "io.circe:circe-parser_$rootProject.ext.scalaMajorVersion:$versions.circe"
     implementation "com.wire:icu4j-shrunk:57.1"
     implementation "com.googlecode.mp4parser:isoparser:1.1.7"
     implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
 
     //Provided dependencies
-    compileOnly "com.softwaremill.macwire:macros_2.11:2.3.3"
-    compileOnly "com.softwaremill.macwire:macrosakka_2.11:2.3.3"
-    compileOnly "com.softwaremill.macwire:util_2.11:2.3.3"
-    compileOnly "com.softwaremill.macwire:proxy_2.11:2.3.3"
+    compileOnly "com.softwaremill.macwire:macros_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:macrosakka_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
     compileOnly("com.google.android.gms:play-services-base:11.0.0") {
         exclude(group: "com.android.support", module: "support-v4")
     }
     compileOnly "com.wire:avs:3.4.100"
-    compileOnly "com.android.support:support-v4:24.2.1"
-    compileOnly "org.threeten:threetenbp:1.3.8"
+    compileOnly "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    compileOnly "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
-    compileOnly "org.robolectric:android-all:$RobolectricVersion"
+    compileOnly "$rootProject.deps.robolectric_android_all"
 
     //Test dependencies
-    testImplementation("org.scalatest:scalatest_2.11:3.0.5") {
+    testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
     }
-    testImplementation "org.scalamock:scalamock_2.11:4.1.0"
-    testImplementation "org.scalacheck:scalacheck_2.11:1.14.0"
-    testImplementation("com.wire:robotest_2.11:0.7") {
+    testImplementation "org.scalamock:scalamock_$rootProject.ext.scalaMajorVersion:4.1.0"
+    testImplementation "org.scalacheck:scalacheck_$rootProject.ext.scalaMajorVersion:1.14.0"
+    testImplementation("com.wire:robotest_$rootProject.ext.scalaMajorVersion:0.7") {
         exclude(group: "org.scalatest", module: "scalatest")
     }
-    testImplementation "org.robolectric:android-all:$RobolectricVersion"
-    testImplementation "junit:junit:4.8.2"             //to override version included in robolectric
-    testImplementation "com.squareup.okhttp3:mockwebserver:3.10.0"
+    testImplementation "$rootProject.deps.robolectric_android_all"
+    testImplementation "junit:junit:$rootProject.ext.versions.junit"             //to override version included in robolectric
+    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
     //should match okhttp version.
     testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
-    testImplementation "com.typesafe.akka:akka-http_2.11:10.1.8"
-    testImplementation "com.typesafe.akka:akka-actor_2.11:2.5.22"
-    testImplementation "com.typesafe.akka:akka-stream_2.11:2.5.22"
-//      "com.wire.cryptobox" % "cryptobox-jni" % cryptoboxVersion % Test % Native classifier "darwin-x86_64",
-//      "com.wire.cryptobox" % "cryptobox-jni" % cryptoboxVersion  % Test % Native classifier "linux-x86_64",
+    testImplementation "com.typesafe.akka:akka-http_$rootProject.ext.scalaMajorVersion:10.1.8"
+    testImplementation "com.typesafe.akka:akka-actor_$rootProject.ext.scalaMajorVersion:2.5.22"
+    testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
 }
 
 
