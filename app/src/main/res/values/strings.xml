@@ -1360,12 +1360,6 @@
     <string name="app_lock_locked_message">Please enter your device credentials.</string>
     <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
     <string name="app_lock_setup_dialog_button">Open settings</string>
-    
-    <!--TODO: remove after release 3.36-->
-    <string name="android_4_warning_title">Wire 3.36 is the last version that can be installed on Android 4.</string>
-    <string name="android_4_warning_message">To be able to install later versions, please update to Android 5 or higher.</string>
-    <string name="android_4_warning_action_ok">OK</string>
-    <string name="android_4_warning_action_dont_show_again">Don\'t show again</string>
 
     <string name="security_policy_title">Wire Security Policy</string>
     <string name="security_policy_description">Allow Wire to make your device more secure.</string>
