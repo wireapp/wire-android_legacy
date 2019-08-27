@@ -53,27 +53,17 @@
 //val circeVersion = "0.9.3"
 //
 //lazy val root = Project("zmessaging-android", file("."))
-//    .aggregate(macrosupport, zmessaging)
-//    .settings(
-//        //TODO these changes don't publish macrosupport, which can lead to some subtle issues if you're not aware of that
-//        //We should think of a better way to do it
-//        aggregate in publish := false,
-//        aggregate in publishLocal := false,
-//        aggregate in publishM2 := false,
-//        publish := {
-//            (publish in zmessaging).value
-//        },
-//        publishLocal := {
-//            (publishLocal in zmessaging).value
-//        },
-//        publishM2 := {
-//            (publishM2 in zmessaging).value
-//        },
-//        libraryDependencies ++= Seq(
-//            compilerPlugin("com.github.ghik" %% "silencer-plugin" % "0.6"),
-//            "com.github.ghik" %% "silencer-lib" % "0.6"
-//        )
-//    )
+//  .aggregate(macrosupport, zmessaging)
+//  .settings(
+//    //TODO these changes don't publish macrosupport, which can lead to some subtle issues if you're not aware of that
+//    //We should think of a better way to do it
+//    aggregate in publish      := false,
+//    aggregate in publishLocal := false,
+//    aggregate in publishM2    := false,
+//    publish := { (publish in zmessaging).value },
+//    publishLocal := { (publishLocal in zmessaging).value },
+//    publishM2 := { (publishM2 in zmessaging).value },
+//  )
 //
 //lazy val zmessaging = project
 //  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
@@ -117,47 +107,45 @@
 //        ivyConfigurations += Native,
 //        testFrameworks := Seq(TestFrameworks.ScalaTest),
 //
-//        timespanScaleFactor in Test := 1.0,
-//        libraryDependencies ++= Seq(
-//            compilerPlugin("com.github.ghik" %% "silencer-plugin" % "0.6"),
+//    timespanScaleFactor in Test := 1.0,
+//    libraryDependencies ++= Seq(
 //
-//            "org.scala-lang.modules" %% "scala-async" % "0.9.7",
-//            "com.squareup.okhttp3" % "okhttp" % "3.10.0", // should match okhttp3's mockserver version (see test dependencies)
-//            "com.googlecode.libphonenumber" % "libphonenumber" % "7.1.1", // 7.2.x breaks protobuf
-//            "com.wire" % "cryptobox-android" % "1.1.2",
-//            "com.wire" % "generic-message-proto" % "1.23.0",
-//            "com.wire" % "backend-api-proto" % "1.1",
-//            "io.circe" %% "circe-core" % circeVersion,
-//            "io.circe" %% "circe-generic" % circeVersion,
-//            "io.circe" %% "circe-parser" % circeVersion,
-//            "com.wire" % "icu4j-shrunk" % "57.1",
-//            "com.googlecode.mp4parser" % "isoparser" % "1.1.7",
-//            "com.github.ghik" %% "silencer-lib" % "0.6",
-//            "com.github.joshjdevl.libsodiumjni" % "libsodium-jni-aar" % "2.0.2",
+//      "org.scala-lang.modules"        %% "scala-async"           % "0.9.7",
+//      "com.squareup.okhttp3"          %  "okhttp"                % "3.10.0", // should match okhttp3's mockserver version (see test dependencies)
+//      "com.googlecode.libphonenumber" %  "libphonenumber"        % "7.1.1", // 7.2.x breaks protobuf
+//      "com.wire"                      %  "cryptobox-android"     % "1.1.2",
+//      "com.wire"                      %  "generic-message-proto" % "1.23.0",
+//      "com.wire"                      %  "backend-api-proto"     % "1.1",
+//      "io.circe"                      %% "circe-core"            % circeVersion,
+//      "io.circe"                      %% "circe-generic"         % circeVersion,
+//      "io.circe"                      %% "circe-parser"          % circeVersion,
+//      "com.wire"                      %  "icu4j-shrunk"          % "57.1",
+//      "com.googlecode.mp4parser"      %  "isoparser"             % "1.1.7",
+//      "com.github.joshjdevl.libsodiumjni" % "libsodium-jni-aar" % "2.0.2",
 //
-//            //Provided dependencies
-//            "com.softwaremill.macwire" %% "macros" % "2.2.2" % Provided,
-//            "com.google.android.gms" % "play-services-base" % "11.0.0" % Provided exclude("com.android.support", "support-v4"),
-//            "com.wire" % "avs" % "3.4.100" % Provided,
-//            "com.android.support" % "support-v4" % "26.0.1" % Provided,
-//            "org.threeten" % "threetenbp" % "1.3.+" % Provided,
-//            "net.java.dev.jna" % "jna" % "4.4.0" % Provided,
-//            "org.robolectric" % "android-all" % RobolectricVersion % Provided,
+//      //Provided dependencies
+//      "com.softwaremill.macwire"      %% "macros"                % "2.2.2"            % Provided,
+//      "com.google.android.gms"        %  "play-services-base"    % "11.0.0"           % Provided exclude("com.android.support", "support-v4"),
+//      "com.wire"                      %  "avs"                   % "3.4.100"          % Provided,
+//      "com.android.support"           %  "support-v4"            % "26.0.1"           % Provided,
+//      "org.threeten"                  %  "threetenbp"            % "1.3.+"            % Provided,
+//      "net.java.dev.jna"              %  "jna"                   % "4.4.0"            % Provided,
+//      "org.robolectric"               %  "android-all"           % RobolectricVersion % Provided,
 //
-//            //Test dependencies
-//            "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-//            "org.scalamock" %% "scalamock" % "4.1.0" % Test,
-//            "org.scalacheck" %% "scalacheck" % "1.14.0" % Test,
-//            "com.wire" %% "robotest" % "0.7" % Test exclude("org.scalatest", "scalatest"),
-//            "org.robolectric" % "android-all" % RobolectricVersion % Test,
-//            "junit" % "junit" % "4.8.2" % Test, //to override version included in robolectric
-//            "com.squareup.okhttp3" % "mockwebserver" % "3.10.0" % Test, //should match okhttp version.
-//            "org.apache.httpcomponents" % "httpclient" % "4.5.3" % Test,
-//            "com.typesafe.akka" %% "akka-http" % "10.1.8" % Test,
-//            "com.typesafe.akka" %% "akka-actor" % "2.5.22" % Test,
-//            "com.typesafe.akka" %% "akka-stream" % "2.5.22" % Test
-//        )
+//      //Test dependencies
+//      "org.scalatest"                 %% "scalatest"             % "3.0.5"            % Test,
+//      "org.scalamock"                 %% "scalamock"             % "4.1.0"            % Test,
+//      "org.scalacheck"                %% "scalacheck"            % "1.14.0"           % Test,
+//      "com.wire"                      %% "robotest"              % "0.7"              % Test exclude("org.scalatest", "scalatest"),
+//      "org.robolectric"               %  "android-all"           % RobolectricVersion % Test,
+//      "junit"                         %  "junit"                 % "4.8.2"            % Test, //to override version included in robolectric
+//      "com.squareup.okhttp3"          %  "mockwebserver"         % "3.10.0"           % Test, //should match okhttp version.
+//      "org.apache.httpcomponents"     %  "httpclient"            % "4.5.3"            % Test,
+//      "com.typesafe.akka"             %% "akka-http"             % "10.1.8"           % Test,
+//      "com.typesafe.akka"             %% "akka-actor"            % "2.5.22"           % Test,
+//      "com.typesafe.akka"             %% "akka-stream"           % "2.5.22"           % Test
 //    )
+//  )
 //
 //lazy val macrosupport = project
 //  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)

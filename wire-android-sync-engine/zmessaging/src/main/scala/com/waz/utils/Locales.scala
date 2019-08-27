@@ -26,7 +26,6 @@ import android.annotation.TargetApi
 import android.content.res.Configuration
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.{JELLY_BEAN_MR2, LOLLIPOP}
-import com.github.ghik.silencer.silent
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -47,7 +46,7 @@ object Locales extends DerivedLogTag {
 
   lazy val bcp47 = if (SDK_INT >= LOLLIPOP) AndroidLanguageTags.create else FallbackLanguageTags.create
 
-  @silent def localeOptFromConfig(config: Configuration): Option[Locale] = Option(config.locale)
+  def localeOptFromConfig(config: Configuration): Option[Locale] = Option(config.locale)
 
   // the underlying native collator shows no signs of being thread-safe & locale might change – that's why this is a def instead of a val
   def currentLocaleOrdering: Ordering[String] = new Ordering[String] {

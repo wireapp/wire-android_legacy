@@ -19,7 +19,6 @@ package com.waz.service
 
 import android.content.Context
 import android.telephony.TelephonyManager
-import com.github.ghik.silencer.silent
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.google.i18n.phonenumbers.Phonenumber.{PhoneNumber => GooglePhoneNumber}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -47,7 +46,7 @@ class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService with D
 
   private val qaShortcutRegex = "^\\+0\\d+$".r
 
-  @silent def getLocale(context: Context): Option[String] =
+  def getLocale(context: Context): Option[String] =
     Option(context.getResources.getConfiguration.locale.getCountry)
 
   def myPhoneNumber: Future[Option[PhoneNumber]] =

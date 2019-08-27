@@ -68,7 +68,6 @@ dependencies {
     implementation "io.circe:circe-parser_2.11:$circeVersion"
     implementation "com.wire:icu4j-shrunk:57.1"
     implementation "com.googlecode.mp4parser:isoparser:1.1.7"
-    implementation "com.github.ghik:silencer-lib_2.11:0.6"
     implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
 
     //Provided dependencies
