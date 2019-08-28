@@ -1150,7 +1150,7 @@
     <string name="action_button_state_pause">pause</string>
     <string name="action_button_state_close">close</string>
     <string name="action_button_state_redo">redo</string>
-    <string name="action_button_state_none">redo</string>
+    <string name="action_button_state_none">none</string>
 
     <string name="pick_user_teams_invite">Invite people to join the team</string>
     <string name="teams_invitations_skip">SKIP</string>
