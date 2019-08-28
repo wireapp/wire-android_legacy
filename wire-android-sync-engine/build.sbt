@@ -33,8 +33,6 @@
 //
 //platformTarget in ThisBuild := "android-24"
 //
-//licenses in ThisBuild += ("GPL-3.0", url("https://opensource.org/licenses/GPL-3.0"))
-//
 //resolvers in ThisBuild ++= Seq(
 //    Resolver.mavenLocal,
 //    Resolver.jcenterRepo,
@@ -66,7 +64,6 @@
 //  )
 //
 //lazy val zmessaging = project
-//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
 //  .settings(publishSettings: _*)
 //  .dependsOn(macrosupport)
 //  .enablePlugins(AndroidLib)
@@ -148,7 +145,6 @@
 //  )
 //
 //lazy val macrosupport = project
-//  .enablePlugins(AutomateHeaderPlugin).settings(licenseHeaders)
 //  .settings(publishSettings: _*)
 //  .settings(
 //    version := "3.3",
@@ -162,7 +158,6 @@
 //    )
 //  )
 //
-//lazy val licenseHeaders = HeaderPlugin.autoImport.headers := Set("scala", "java", "rs") .map { _ -> GPLv3("2016", "Wire Swiss GmbH") } (collection.breakOut)
 //lazy val androidSdkDir = settingKey[File]("Android sdk dir from ANDROID_HOME")
 //lazy val generateCredentials = taskKey[Seq[File]]("generate InternalCredentials.scala")
 //lazy val actorsResources = taskKey[File]("Creates resources zip for remote actor")
