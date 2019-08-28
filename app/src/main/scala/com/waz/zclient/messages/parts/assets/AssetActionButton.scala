@@ -46,15 +46,16 @@ class AssetActionButton(context: Context, attrs: AttributeSet, style: Int) exten
   private def onCompletedDrawable(ext: String) = if (isFileType) new FileDrawable(Signal.const(ext)) else normalButtonDrawable
 
   def setStatus(status: AssetStatus, extension: String, playing: Boolean): Unit = {
-    val (icon, drawable) = status match {
-      case DownloadAssetStatus.InProgress | UploadAssetStatus.InProgress => (R.string.glyph__close, normalButtonDrawable)
-      case DownloadAssetStatus.Failed | DownloadAssetStatus.Cancelled =>    (R.string.glyph__redo, errorButtonDrawable)
-      case UploadAssetStatus.Failed | UploadAssetStatus.Cancelled =>        (R.string.glyph__redo, errorButtonDrawable)
-      case AssetStatus.Done if playing =>                                   (R.string.glyph__pause, onCompletedDrawable(extension))
-      case AssetStatus.Done if !playing =>                                  (R.string.glyph__play, onCompletedDrawable(extension))
-      case _ =>                                                             (0, null)
+    val (icon, drawable, stateText) = status match {
+      case DownloadAssetStatus.InProgress | UploadAssetStatus.InProgress => (R.string.glyph__close, normalButtonDrawable, R.string.action_button_state_close)
+      case DownloadAssetStatus.Failed | DownloadAssetStatus.Cancelled =>    (R.string.glyph__redo, errorButtonDrawable, R.string.action_button_state_redo)
+      case UploadAssetStatus.Failed | UploadAssetStatus.Cancelled =>        (R.string.glyph__redo, errorButtonDrawable, R.string.action_button_state_redo)
+      case AssetStatus.Done if playing =>                                   (R.string.glyph__pause, onCompletedDrawable(extension), R.string.action_button_state_pause)
+      case AssetStatus.Done if !playing =>                                  (R.string.glyph__play, onCompletedDrawable(extension), R.string.action_button_state_play)
+      case _ =>                                                             (0, null, R.string.action_button_state_none)
     }
 
+    setContentDescription(getString(stateText)) //Set content description for tests
     setBackground(drawable)
     setText(icon match {
       case 0 => ""

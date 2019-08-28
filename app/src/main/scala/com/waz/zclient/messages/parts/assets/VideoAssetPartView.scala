@@ -38,7 +38,10 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   private val controls = findById[View](R.id.controls)
   private val image = findById[ImageView](R.id.image)
 
-  hideContent.map(!_).on(Threading.Ui)(controls.setVisible)
+  hideContent.map(!_).onUi { visible =>
+    controls.setVisible(visible)
+    image.setVisible(visible)
+  }
 
   previewAssetId.onUi {
     case Some(aId) => WireGlide(context).load(aId).into(image)
