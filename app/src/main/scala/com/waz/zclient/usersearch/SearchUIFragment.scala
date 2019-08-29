@@ -475,7 +475,7 @@ object SearchUIFragment {
   val TAG: String = classOf[SearchUIFragment].getName
 
   private val SHOW_KEYBOARD_THRESHOLD = 10
-  private val PERFORM_SEARCH_DELAY = 750.millis
+  private val PERFORM_SEARCH_DELAY = 500.millis
 
   def newInstance(): SearchUIFragment = new SearchUIFragment
 
