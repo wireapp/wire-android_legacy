@@ -26,6 +26,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.AccountData.Password
 import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -61,7 +62,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
   backupButton.setOnClickProcess(requestPassword())
 
   def requestPassword(): Future[Unit] = {
-    val fragment = returning(new BackupPasswordDialog)(_.onPasswordEntered{p => verbose(l"Got password: $p")})
+    val fragment = returning(new BackupPasswordDialog)(_.onPasswordEntered{p => verbose(l"Got password: $p");backupData(p)})
     context.asInstanceOf[BaseActivity]
       .getSupportFragmentManager
       .beginTransaction
@@ -72,14 +73,14 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     Future.successful(())
   }
 
-  private def backupData: Future[Unit] = {
+  private def backupData(password: Option[Password]): Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
     import Threading.Implicits.Ui
 
     val backupProcess = for {
       z                <- zms.head
       Some(accManager) <- z.accounts.activeAccountManager.head
-      res              <- accManager.exportDatabase
+      res              <- accManager.exportDatabase(password)
       _                <- lifecycle.uiActive.collect{ case true => () }.head
     } yield res
 
