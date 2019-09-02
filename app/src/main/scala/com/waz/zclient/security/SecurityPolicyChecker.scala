@@ -117,7 +117,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
   private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH) // this ensures asking for password when the app is first opened
   val authenticationNeeded = Signal(false)
 
-  private def needsAuthentication: Boolean = {
+  private def timerExpired: Boolean = {
     val secondsSinceEnteredBackground = timeEnteredBackground.fold(0L)(_.until(Instant.now(), ChronoUnit.SECONDS))
     verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground")
     secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
@@ -132,7 +132,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
 
   def authenticateIfNeeded(parentActivity: Activity): Unit = {
     authenticationNeeded.mutate {
-      case false if needsAuthentication => true
+      case false if timerExpired => true
       case b => b
     }
 
