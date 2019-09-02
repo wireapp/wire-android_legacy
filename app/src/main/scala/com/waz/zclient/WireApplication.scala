@@ -270,6 +270,8 @@ object WireApplication extends DerivedLogTag {
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
 
+    bind[SecurityPolicyService] to new SecurityPolicyService()
+
     bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
 
     KotlinServices.INSTANCE.init(ctx)
@@ -316,8 +318,6 @@ object WireApplication extends DerivedLogTag {
     bind [UiTrackingController]    to new UiTrackingController()
 
     bind[MessagePagedListController] to new MessagePagedListController()
-
-    bind[SecurityPolicyService] to new SecurityPolicyService()
   }
 
   def clearOldVideoFiles(context: Context): Unit = {
@@ -387,8 +387,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
     controllerFactory = new ControllerFactory(getApplicationContext)
 
-    registerActivityLifecycleCallbacks(new SecurityLifecycleCallback())
-
     ensureInitialized()
   }
 
@@ -453,6 +451,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+    
+    registerActivityLifecycleCallbacks(new SecurityLifecycleCallback())
   }
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {
