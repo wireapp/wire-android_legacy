@@ -23,7 +23,7 @@ ext {
     playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
     stethoVersion = '1.5.0'
-    zMessagingVersion = "142.0.2319"
+    zMessagingVersion = "142.0.2321"
     paging_version = "1.0.0"
 
     avsVersion = '5.1.186@aar'
@@ -32,7 +32,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.0.35@aar'
+    customAvsVersion = '5.0.37@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -142,6 +142,9 @@ android {
         buildConfigField 'String',  'HTTP_PROXY_PORT',               "\"$config.http_proxy_port\""
         buildConfigField 'boolean', 'BLOCK_ON_JAILBREAK_OR_ROOT',    "$config.block_on_jailbreak_or_root"
         buildConfigField 'boolean', 'FORCE_HIDE_SCREEN_CONTENT',     "$config.force_hide_screen_content"
+        buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$config.force_app_lock"
+        buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$config.app_lock_timeout"
+        buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$config.block_on_password_policy"
     }
 
     packagingOptions {

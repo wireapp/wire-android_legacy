@@ -471,6 +471,8 @@
     <string name="pref_options_requested_category_title">By popular demand</string>
     <string name="pref_options_cursor_send_button_title">Send button</string>
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
+    <string name="pref_options_app_lock_title">Lock with Passphrase</string>
+    <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
@@ -1148,6 +1150,12 @@
     <string name="app_entry_sso_dialog_message">Enter the company SSO access code.</string>
     <string name="app_entry_sso_input_hint"></string>
 
+    <string name="action_button_state_play">play</string>
+    <string name="action_button_state_pause">pause</string>
+    <string name="action_button_state_close">close</string>
+    <string name="action_button_state_redo">redo</string>
+    <string name="action_button_state_none">none</string>
+
     <string name="pick_user_teams_invite">Invite people to join the team</string>
     <string name="teams_invitations_skip">SKIP</string>
     <string name="teams_invitations_done">DONE</string>
@@ -1354,10 +1362,16 @@
     <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
     
-    <!--TODO: remove after release 3.36-->
-    <string name="android_4_warning_title">Wire 3.36 is the last version that can be installed on Android 4.</string>
-    <string name="android_4_warning_message">To be able to install later versions, please update to Android 5 or higher.</string>
-    <string name="android_4_warning_action_ok">OK</string>
-    <string name="android_4_warning_action_dont_show_again">Don\'t show again</string>
+    <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
+    <string name="app_lock_locked_message">Please enter your device credentials.</string>
+    <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
+    <string name="app_lock_setup_dialog_button">Open settings</string>
 
+    <string name="security_policy_title">Wire Security Policy</string>
+    <string name="security_policy_description">Allow Wire to make your device more secure.</string>
+    <string name="security_policy_setup_dialog_title">Enable Security Policy</string>
+    <string name="security_policy_setup_dialog_message">Wire needs admin privileges to set security policies.</string>
+    <string name="security_policy_setup_dialog_button">Open settings</string>
+    <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
+    <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
 </resources>

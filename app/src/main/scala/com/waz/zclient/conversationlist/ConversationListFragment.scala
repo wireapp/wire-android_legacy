@@ -274,9 +274,9 @@ class NormalConversationFragment extends ConversationListFragment {
     }
 
     topToolbar.foreach { toolbar =>
-      subs += toolbar.onRightButtonClick(_ =>
+      subs += toolbar.onRightButtonClick { _ =>
         getActivity.startActivityForResult(PreferencesActivity.getDefaultIntent(getContext), PreferencesActivity.SwitchAccountCode)
-      )
+      }
     }
 
 

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.security
+package com.waz.zclient.security.checks
 
 import java.io.File
 
@@ -26,6 +26,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.zclient.Injectable
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.SecurityChecklist
 
 import scala.concurrent.Future
 import scala.util.Try

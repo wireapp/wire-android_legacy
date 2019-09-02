@@ -24,7 +24,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
-import com.waz.content.{GlobalPreferences, TeamsStorage, UserPreferences}
+import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
@@ -141,20 +141,17 @@ class MainActivity extends BaseActivity
       case false =>
     }
 
-    // TODO: remove after release 3.36
-    warnAndroid4UsersIfNeeded()
-
     for {
       Some(self) <- userAccountsController.currentUser.head
-      teamName   <- self.teamId.fold(
-                      Future.successful(Option.empty[Name])
-                    )(teamId =>
-                      inject[TeamsStorage].get(teamId).map(_.map(_.name))
-                    )
-      prefs      <- userPreferences.head
+      teamName <- self.teamId.fold(
+        Future.successful(Option.empty[Name])
+      )(teamId =>
+        inject[TeamsStorage].get(teamId).map(_.map(_.name))
+      )
+      prefs <- userPreferences.head
       shouldWarn <- prefs(UserPreferences.ShouldWarnStatusNotifications).apply()
-      avVisible  <- usersController.availabilityVisible.head
-      color      <- accentColorController.accentColor.head
+      avVisible <- usersController.availabilityVisible.head
+      color <- accentColorController.accentColor.head
     } yield {
       (shouldWarn && avVisible, self.availability, teamName) match {
         case (true, Availability.Away, Some(name)) =>
@@ -183,9 +180,9 @@ class MainActivity extends BaseActivity
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
     spinnerController.spinnerShowing.onUi {
-      case Show(animation, forcedIsDarkTheme)=>
+      case Show(animation, forcedIsDarkTheme) =>
         themeController.darkThemeSet.head.foreach(theme => loadingIndicator.show(animation, forcedIsDarkTheme.getOrElse(theme), 300))(Threading.Ui)
-      case Hide(Some(message))=> loadingIndicator.hideWithMessage(message, 750)
+      case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
 
@@ -531,30 +528,6 @@ class MainActivity extends BaseActivity
       .commit
 
   override def onUsernameSet(): Unit = replaceMainFragment(new MainPhoneFragment, MainPhoneFragment.Tag, addToBackStack = false)
-
-  // TODO: remove after release 3.36
-  def warnAndroid4UsersIfNeeded(): Unit = {
-    def showDialog(accentColor: AccentColor): Future[Boolean] = showConfirmationDialog(
-      getString(R.string.android_4_warning_title),
-      getString(R.string.android_4_warning_message),
-      R.string.android_4_warning_action_dont_show_again,
-      R.string.android_4_warning_action_ok,
-      accentColor)
-
-    val prefs = inject[GlobalPreferences]
-
-    for {
-      shouldWarn <- prefs(GlobalPreferences.ShouldWarnAndroid4Users).apply()
-      isAndroid4User = Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP
-      color <- accentColorController.accentColor.head
-    } yield {
-      if (isAndroid4User && shouldWarn) {
-        showDialog(color).foreach { dontShowAgain =>
-          prefs(GlobalPreferences.ShouldWarnAndroid4Users) := !dontShowAgain
-        }
-      }
-    }
-  }
 }
 
 object MainActivity {

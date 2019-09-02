@@ -48,6 +48,7 @@ import com.waz.service.conversation.{ConversationsService, ConversationsUiServic
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
 import com.waz.service.tracking.TrackingService
+import com.waz.services.SecurityPolicyService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
@@ -88,6 +89,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneContr
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
+import com.waz.zclient.security.{SecurityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
@@ -268,6 +270,10 @@ object WireApplication extends DerivedLogTag {
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
 
+    bind[SecurityPolicyService] to new SecurityPolicyService()
+
+    bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
+
     KotlinServices.INSTANCE.init(ctx)
   }
 
@@ -334,6 +340,7 @@ object WireApplication extends DerivedLogTag {
 class WireApplication extends MultiDexApplication with WireContext with Injectable {
   type NetworkSignal = Signal[NetworkMode]
   import WireApplication._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   WireApplication.APP_INSTANCE = this
@@ -444,6 +451,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+    
+    registerActivityLifecycleCallbacks(new SecurityLifecycleCallback())
   }
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {

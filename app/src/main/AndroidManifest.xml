@@ -105,6 +105,11 @@
             android:name=".security.SecureActivity"
             android:launchMode="singleTask"
             />
+
+        <activity
+            android:name=".security.AppLockActivity"
+            android:launchMode="singleTask" />
+
         <activity
             android:name="com.waz.zclient.calling.CallingActivity"
             android:hardwareAccelerated="true"
@@ -213,6 +218,17 @@
             >
             <intent-filter>
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.waz.services.SecurityPolicyService"
+            android:label="@string/security_policy_title"
+            android:description="@string/security_policy_description"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
 

@@ -22,6 +22,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
 import android.view.WindowManager
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -37,7 +38,6 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.SecureActivity
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
 
@@ -45,7 +45,7 @@ import scala.collection.breakOut
 import scala.collection.immutable.ListSet
 import scala.concurrent.duration._
 
-class BaseActivity extends SecureActivity
+class BaseActivity extends AppCompatActivity
   with ServiceContainer
   with ActivityHelper
   with PermissionProvider
@@ -53,10 +53,9 @@ class BaseActivity extends SecureActivity
 
   import BaseActivity._
 
-  lazy val themeController          = inject[ThemeController]
-  lazy val globalTrackingController = inject[GlobalTrackingController]
-  lazy val permissions              = inject[PermissionsService]
-  lazy val userPreferences          = inject[Signal[UserPreferences]]
+  protected lazy val themeController = inject[ThemeController]
+  protected lazy val permissions     = inject[PermissionsService]
+  protected lazy val userPreferences = inject[Signal[UserPreferences]]
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
@@ -81,7 +80,6 @@ class BaseActivity extends SecureActivity
   }
 
   override protected def onResume(): Unit = {
-    verbose(l"onResume")
     super.onResume()
     onBaseActivityResume()
     setScreenContentHiding()
@@ -142,7 +140,7 @@ class BaseActivity extends SecureActivity
 
   override def onDestroy() = {
     verbose(l"onDestroy")
-    globalTrackingController.flushEvents()
+    inject[GlobalTrackingController].flushEvents()
     permissions.unregisterProvider(this)
     super.onDestroy()
   }
