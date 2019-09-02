@@ -75,6 +75,8 @@ class ImagePartView(context: Context, attrs: AttributeSet, style: Int)
     }
   }
 
+  hideContent.onUi { hide => imageView.setVisible(!hide) }
+
   override def onInflated(): Unit = {}
 }
 

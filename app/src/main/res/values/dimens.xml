@@ -896,7 +896,6 @@
     <dimen name="unread_indicator_name_size">6dp</dimen>
     <dimen name="unread_indicator_name_margin">-10dp</dimen>
 
-    <dimen name="team_tab_drawable_diameter">18dp</dimen>
     <dimen name="team_tab_drawable_gap">2dp</dimen>
     <dimen name="team_tab_drawable_border">1.5dp</dimen>
 

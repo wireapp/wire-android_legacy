@@ -32,6 +32,8 @@ import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security._
+import com.waz.zclient.security.checks._
+import com.waz.zclient.security.actions.WipeDataAction
 import com.waz.zclient.{BuildConfig, WireApplication}
 import org.json
 import org.threeten.bp.Instant
