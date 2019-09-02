@@ -1373,6 +1373,5 @@
     <string name="security_policy_setup_dialog_message">Wire needs admin privileges to set security policies.</string>
     <string name="security_policy_setup_dialog_button">Open settings</string>
     <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
-    <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum 12 characters.</string>
-
+    <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
 </resources>

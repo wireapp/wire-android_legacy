@@ -89,6 +89,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneContr
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
+import com.waz.zclient.security.{SecurityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
@@ -269,6 +270,8 @@ object WireApplication extends DerivedLogTag {
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
 
+    bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
+
     KotlinServices.INSTANCE.init(ctx)
   }
 
@@ -337,6 +340,7 @@ object WireApplication extends DerivedLogTag {
 class WireApplication extends MultiDexApplication with WireContext with Injectable {
   type NetworkSignal = Signal[NetworkMode]
   import WireApplication._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   WireApplication.APP_INSTANCE = this
@@ -382,6 +386,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     enableTLS12OnOldDevices()
 
     controllerFactory = new ControllerFactory(getApplicationContext)
+
+    registerActivityLifecycleCallbacks(new SecurityLifecycleCallback())
 
     ensureInitialized()
   }

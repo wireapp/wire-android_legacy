@@ -183,7 +183,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     downloadImagesSwitch.setSubtitle(if (wifiOnly) names.head else names.last)
   }
 
-
   override def setShareEnabled(enabled: Boolean) = contactsSwitch.setVisible(enabled)
 
   private def showPrefDialog(f: Fragment, tag: String) = {

@@ -17,51 +17,49 @@
  */
 package com.waz.zclient.security
 
+import android.app.Activity
 import android.app.admin.DevicePolicyManager
 import android.content.{ComponentName, Context, Intent}
 import android.provider.Settings
-import android.support.v7.app.AppCompatActivity
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.services.SecurityPolicyService
-import com.waz.threading.Threading.Implicits.Ui
+import com.waz.utils.events.Signal
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
 import com.waz.zclient.security.checks._
 import com.waz.zclient.utils.ContextUtils
-import com.waz.zclient.{ActivityHelper, BuildConfig, R}
+import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.zclient.log.LogUI._
+import org.threeten.bp.Instant
+import org.threeten.bp.temporal.ChronoUnit
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
-
-  private implicit val context: Context = this
+class SecurityPolicyChecker(implicit injector: Injector, context: Context) extends Injectable with DerivedLogTag {
+  import com.waz.threading.Threading.Implicits.Ui
 
   private lazy val securityPolicyService = inject[SecurityPolicyService]
-  private lazy val globalPreferences = inject[GlobalPreferences]
+  private lazy val globalPreferences     = inject[GlobalPreferences]
 
-  override def onStart(): Unit = {
-    super.onStart()
-
+  def run(activity: Activity): Unit = {
     for {
-      allChecksPassed <- securityChecklist.run()
-      shouldShowAppLock <- shouldShowAppLock if allChecksPassed
+      allChecksPassed  <- securityChecklist.run()
+      isAppLockEnabled <- if (allChecksPassed) appLockEnabled else Future.successful(false)
+      _ = verbose(l"all checks passed: $allChecksPassed, is app lock enabled: $isAppLockEnabled")
     } yield {
-      if (shouldShowAppLock) showAppLock()
+      if (isAppLockEnabled) authenticateIfNeeded(activity)
     }
   }
 
-  override def onStop(): Unit = {
-    super.onStop()
-    AppLockActivity.updateBackgroundEntryTimer()
-  }
-
   private def securityChecklist: SecurityChecklist = {
+    verbose(l"securityChecklist")
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
       val rootDetectionCheck = RootDetectionCheck(globalPreferences)
       val rootDetectionActions = List(
         new WipeDataAction(),
@@ -72,6 +70,7 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
     }
 
     if (BuildConfig.BLOCK_ON_PASSWORD_POLICY) {
+      verbose(l"check BLOCK_ON_PASSWORD_POLICY")
       val deviceAdminCheck = new DeviceAdminCheck(securityPolicyService)
       val deviceAdminActions = List(
         ShowDialogAction(
@@ -86,10 +85,10 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
       val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
       val devicePasswordComplianceActions =  List(
-        ShowDialogAction(
-          R.string.security_policy_invalid_password_dialog_title,
-          R.string.security_policy_invalid_password_dialog_message,
-          R.string.security_policy_setup_dialog_button,
+        new ShowDialogAction(
+          ContextUtils.getString(R.string.security_policy_invalid_password_dialog_title),
+          ContextUtils.getString(R.string.security_policy_invalid_password_dialog_message, SecurityPolicyService.PasswordMinimumLength.toString),
+          ContextUtils.getString(R.string.security_policy_setup_dialog_button),
           action = showSecuritySettings
         )
       )
@@ -97,33 +96,49 @@ class SecureActivity extends AppCompatActivity with ActivityHelper with DerivedL
       checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
     }
 
-
     new SecurityChecklist(checksAndActions.toList)
   }
 
   private def showDeviceAdminScreen(): Unit = {
-    val secPolicy = new ComponentName(this, classOf[SecurityPolicyService])
+    val secPolicy = new ComponentName(context, classOf[SecurityPolicyService])
     val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
       .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
       .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
 
-    startActivity(intent)
+    context.startActivity(intent)
   }
 
-  private def showSecuritySettings(): Unit = {
-    val intent = new Intent(Settings.ACTION_SECURITY_SETTINGS)
-    startActivity(intent)
+  private def showSecuritySettings(): Unit =
+    context.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))
+
+  def appLockEnabled: Future[Boolean] =
+    if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences(AppLockEnabled).apply()
+
+  private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH) // this ensures asking for password when the app is first opened
+  val authenticationNeeded = Signal(false)
+
+  private def timerExpired: Boolean = {
+    val secondsSinceEnteredBackground = timeEnteredBackground.fold(0L)(_.until(Instant.now(), ChronoUnit.SECONDS))
+    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground")
+    secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
   }
 
-  private def shouldShowAppLock: Future[Boolean] = {
-    globalPreferences(AppLockEnabled).apply().map { preferenceEnabled =>
-      val appLockEnabled = preferenceEnabled || BuildConfig.FORCE_APP_LOCK
-      appLockEnabled && AppLockActivity.needsAuthentication
+  def updateBackgroundEntryTimer(): Unit = timeEnteredBackground = Some(Instant.now())
+
+  def clearBackgroundEntryTimer(): Unit = {
+    timeEnteredBackground = None
+    authenticationNeeded ! false
+  }
+
+  def authenticateIfNeeded(parentActivity: Activity): Unit = {
+    authenticationNeeded.mutate {
+      case false if timerExpired => true
+      case b => b
     }
-  }
 
-  private def showAppLock(): Unit = {
-    val intent = new Intent(this, classOf[AppLockActivity])
-    startActivity(intent)
+    authenticationNeeded.head.foreach {
+      case true => parentActivity.startActivity(new Intent(parentActivity, classOf[AppLockActivity]))
+      case _ =>
+    }
   }
 }
