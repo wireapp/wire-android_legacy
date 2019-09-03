@@ -78,6 +78,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val soundsButton            = findById[TextButton](R.id.preferences_sounds)
   val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
   val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
+  val messagePreviewSwitch = findById[SwitchPreference](R.id.preferences_message_previews)
 
   val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
   val textToneButton         = findById[TextButton](R.id.preference_sounds_text)
@@ -98,6 +99,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
   hideScreenContentSwitch.setPreference(HideScreenContent)
   vbrSwitch.setPreference(VBREnabled)
+  messagePreviewSwitch.setPreference(MessagePreview)
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 

@@ -471,6 +471,8 @@
     <string name="pref_options_requested_category_title">By popular demand</string>
     <string name="pref_options_cursor_send_button_title">Send button</string>
     <string name="pref_options_cursor_send_button_summary">Disable to send via the keyboard.</string>
+    <string name="pref_options_message_previews">Message Previews</string>
+    <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
     <string name="pref_options_app_lock_title">Lock with Passphrase</string>
     <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
 
@@ -615,6 +617,7 @@
     <string name="notification__message__one_to_one__shared_video">Shared a video</string>
     <string name="notification__message__one_to_one__shared_audio">Shared an audio message</string>
     <string name="notification__message__one_to_one__shared_location">Shared a location</string>
+    <string name="notification__message_one_to_one_message_preview">Sent a message</string>
 
     <!-- %1$s == username, %2$s == conversation -->
     <string name="notification__message__group__prefix__other">%1$s in %2$s \u0020</string>

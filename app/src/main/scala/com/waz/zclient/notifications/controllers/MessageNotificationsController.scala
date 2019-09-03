@@ -47,6 +47,7 @@ import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
+import com.waz.content.UserPreferences
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -70,6 +71,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val userStorage           = inject[Signal[UsersStorage]]
   private lazy val teamsStorage          = inject[TeamsStorage]
+  private lazy val userPrefs             = inject[Signal[UserPreferences]]
 
   override val notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]] =
     for {
@@ -296,12 +298,13 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       }
       convName <- getConvName(account, n).map(_.getOrElse(Name.Empty))
       userName <- getUserName(account, n).map(_.getOrElse(Name.Empty))
+      messagePreview <- userPrefs.flatMap(_.preference(UserPreferences.MessagePreview).signal).head
     } yield {
       val body = n.msgType match {
         case _ if n.ephemeral && n.isSelfMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
         case _ if n.ephemeral && n.isReply => ResString(R.string.notification__message_with_quote__ephemeral)
         case _ if n.ephemeral => ResString(R.string.notification__message__ephemeral)
-        case TEXT             => ResString(message)
+        case TEXT             => if (messagePreview) ResString(message) else ResString(R.string.notification__message_one_to_one_message_preview)
         case MISSED_CALL      => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
         case KNOCK            => ResString(R.string.notification__message__one_to_one__pinged)
         case ANY_ASSET        => ResString(R.string.notification__message__one_to_one__shared_file)
@@ -309,7 +312,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         case VIDEO_ASSET      => ResString(R.string.notification__message__one_to_one__shared_video)
         case AUDIO_ASSET      => ResString(R.string.notification__message__one_to_one__shared_audio)
         case LOCATION         => ResString(R.string.notification__message__one_to_one__shared_location)
-        case RENAME           => ResString(R.string.notification__message__group__renamed_conversation, convName)
+        case RENAME           => if (messagePreview) ResString(R.string.notification__message__group__renamed_conversation, convName) else ResString("")
         case MEMBER_LEAVE     => ResString(R.string.notification__message__group__remove)
         case MEMBER_JOIN      => ResString(R.string.notification__message__group__add)
         case LIKE if n.likedContent.nonEmpty =>
