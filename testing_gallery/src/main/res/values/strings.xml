@@ -34,4 +34,5 @@
     <string name="stay_awake_check">Stay Awake:</string>
     <string name="default_video_recorder">Default Video recorder:</string>
     <string name="default_document_receiver">Default doc receiver:</string>
+    <string name="file_provider_authority" translatable="false">com.wire.testinggallery.fileprovider</string>
 </resources>

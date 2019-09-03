@@ -15,7 +15,7 @@ android {
         minSdkVersion 21
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
-        versionName "6.1." + versionCode
+        versionName "6.3." + versionCode
     }
 
     buildTypes {
