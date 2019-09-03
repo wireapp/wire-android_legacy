@@ -87,7 +87,7 @@ public class SharingCommandReceiver extends BroadcastReceiver {
     }
 
     private void shareFileToPackage(Context context, String requestedPackage, File file) {
-        Intent shareIntent = createFileShareIntent(requestedPackage, file);
+        Intent shareIntent = createFileShareIntent(requestedPackage, file, context);
         context.startActivity(shareIntent);
     }
 
@@ -107,9 +107,9 @@ public class SharingCommandReceiver extends BroadcastReceiver {
     }
 
     @NonNull
-    private Intent createFileShareIntent(String requestedPackage, File file) {
+    private Intent createFileShareIntent(String requestedPackage, File file, Context context) {
         Intent shareIntent = createShareIntent(requestedPackage);
-        Uri fileUri = FileProvider.getUriForFile(MainActivity.context, MainActivity.context.getString(R.string.file_provider_authority), file);
+        Uri fileUri = FileProvider.getUriForFile(context, context.getString(R.string.file_provider_authority), file);
         shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
         return shareIntent;
     }

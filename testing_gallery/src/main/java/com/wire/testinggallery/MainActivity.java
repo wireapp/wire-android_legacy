@@ -20,7 +20,6 @@ package com.wire.testinggallery;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -59,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog alertDialog = null;
     private Map<Integer, Supplier<Boolean>> checkMap;
     private Map<Integer, Supplier<Void>> fixMap;
-    public static Context context;
 
     @Override
     protected void onCreate(Bundle bundle) {
@@ -69,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
         requestSilentlyRights(this);
         mapTableHandlers();
         checkPreconditions();
-        this.context = getApplicationContext();
     }
 
     private void showInfoUi() {
