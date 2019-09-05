@@ -20,22 +20,30 @@ package com.waz.zclient.security
 import android.app.{Activity, Application}
 import android.os.Bundle
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, LaunchActivity}
 import com.waz.zclient.log.LogUI._
 
 class SecurityLifecycleCallback(implicit injector: Injector) extends Application.ActivityLifecycleCallbacks with Injectable with DerivedLogTag {
   private var activitiesStarted = 0
 
   override def onActivityStarted(activity: Activity): Unit = synchronized {
-    activitiesStarted += 1
-    verbose(l"onActivityStarted, activities started now: $activitiesStarted")
-    if (activitiesStarted == 1) inject[SecurityPolicyChecker].run(activity)
+    activity match {
+      case _: LaunchActivity =>
+      case _ =>
+        activitiesStarted += 1
+        verbose(l"onActivityStarted, activities active now: $activitiesStarted, ${activity.getClass.getName}")
+        if (activitiesStarted == 1) inject[SecurityPolicyChecker].run(activity)
+    }
   }
 
   override def onActivityStopped(activity: Activity): Unit = synchronized {
-    activitiesStarted -= 1
-    verbose(l"onActivityStopped, activities still started: $activitiesStarted")
-    if (activitiesStarted == 0) inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
+    activity match {
+      case _: LaunchActivity =>
+      case _ =>
+        activitiesStarted -= 1
+        verbose(l"onActivityStopped, activities still active: $activitiesStarted, ${activity.getClass.getName}")
+        if (activitiesStarted == 0) inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
+    }
   }
 
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}

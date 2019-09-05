@@ -451,9 +451,13 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
-    
-    registerActivityLifecycleCallbacks(new SecurityLifecycleCallback())
+
+    // we're unable to check if the callback is already registered - we have to re-register it to be sure
+    unregisterActivityLifecycleCallbacks(securityCallback)
+    registerActivityLifecycleCallbacks(securityCallback)
   }
+
+  private lazy val securityCallback = new SecurityLifecycleCallback()
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {
     val proxyHost = if(!url.equalsIgnoreCase("none")) Some(url) else None
