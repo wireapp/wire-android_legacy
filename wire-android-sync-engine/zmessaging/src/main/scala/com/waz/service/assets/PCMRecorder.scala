@@ -30,7 +30,6 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.threading.Threading
 import com.waz.threading.Threading.BlockingIO
 import com.waz.utils._
-import libcore.io.SizeOf
 
 import scala.annotation.tailrec
 import scala.concurrent.Future

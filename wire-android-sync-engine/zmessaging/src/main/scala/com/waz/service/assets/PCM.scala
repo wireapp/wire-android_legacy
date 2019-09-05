@@ -18,7 +18,7 @@
 package com.waz.service.assets
 
 import android.media.AudioFormat._
-import libcore.io.SizeOf
+import com.waz.utils.SizeOf
 import org.threeten.bp.Duration
 
 object PCM {

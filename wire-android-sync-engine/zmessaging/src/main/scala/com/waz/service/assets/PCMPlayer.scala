@@ -29,7 +29,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent}
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import libcore.io.SizeOf
+import com.waz.utils.SizeOf
 import org.threeten.bp
 
 import scala.annotation.tailrec

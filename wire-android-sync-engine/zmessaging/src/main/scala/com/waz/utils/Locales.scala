@@ -67,6 +67,7 @@ object Locales extends DerivedLogTag {
 
   def transliteration(id: String) = Transliteration.chooseImplementation(id)
 
+  //fixme: possibly unstable dependency due to reflection
   def indexing(locale: Locale = currentLocale): Indexing = Try(Class.forName("libcore.icu.AlphabeticIndex")).flatMap(
     _ => Try(LibcoreIndexing.create(locale))).getOrElse(FallbackIndexing.instance)
 }
@@ -118,6 +119,7 @@ trait Transliteration {
 object Transliteration extends DerivedLogTag {
   private val id = "Any-Latin; Latin-ASCII; Lower; [^\\ 0-9a-z] Remove"
   def chooseImplementation(id: String = id): Transliteration = {
+    //fixme: unstable dependency: on API >=24, this fallbacks to ICU4j, o/w uses libcore via reflection
     verbose(l"chooseImplementation: ${showString(id)}")
     if (!utils.isTest && Try(Class.forName("libcore.icu.Transliterator")).isSuccess) LibcoreTransliteration.create(id)
     else ICU4JTransliteration.create(id)
