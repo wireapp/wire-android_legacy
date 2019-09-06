@@ -29,7 +29,6 @@ import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model.MsgDeletion.MsgDeletionDao
-import com.waz.model.SearchQueryCache.SearchQueryCacheDao
 import com.waz.model.UserData.UserDataDao
 import com.waz.model._
 import com.waz.model.sync.SyncJob.SyncJobDao
@@ -166,15 +165,6 @@ import org.threeten.bp.Instant
         if (m.msgType == Message.Type.KNOCK) m.protos should have size 1
         m.editTime shouldEqual Instant.EPOCH
       }
-    }
-
-    scenario("Inline search results in 75") {
-      implicit val db = loadDb("/db/zmessaging_60.db")
-      dbHelper.onUpgrade(db, 60, 75)
-
-      val cachedQuery = SearchQueryCache(SearchQuery.Recommended("meep moop"), Instant.now, Some(Vector(UserId("a"), UserId("b"))))
-      SearchQueryCacheDao.insertOrIgnore(cachedQuery)
-      SearchQueryCacheDao.list shouldEqual Vector(cachedQuery)
     }
 
     scenario("Drop excludeFromPYMK and search from sync jobs in 75") {

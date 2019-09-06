@@ -46,6 +46,8 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 import com.waz.content.UsersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.SearchQuery
 
 //TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
 class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
@@ -54,7 +56,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
                           showArrow: Boolean = true,
                           createSubtitle: Option[(UserData) => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[ViewHolder] with Injectable {
+  extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
 
   private lazy val usersStorage = inject[Signal[UsersStorage]]
@@ -89,7 +91,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     userIds       <- userIds
     users         <- usersStorage.listSignal(userIds)
     f             <- filter
-    filteredUsers = users.filter(_.matchesFilter(f))
+    filteredUsers =  users.filter(_.matchesQuery(SearchQuery(f)))
   } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot)).sortBy(_.userData.getDisplayName.str)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
