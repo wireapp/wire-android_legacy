@@ -168,7 +168,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
     }
   }
 
-  private def enter(backup: Option[URI], password: Option[Password]): Future[Unit] = {
+  private def enter(backup: Option[URI], backupPassword: Option[Password]): Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, if (backup.isDefined) getString(R.string.restore_progress) else "")
     async {
       val userId = getStringArg(UserIdArg).map(UserId(_))
@@ -182,7 +182,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
           file
         }
 
-        val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true), password = password))
+        val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true), backupPassword = backupPassword))
         backupFile.foreach(_.delete())
         await { accountsService.setAccount(userId) }
         val registrationState = await { accountManager.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient()) }

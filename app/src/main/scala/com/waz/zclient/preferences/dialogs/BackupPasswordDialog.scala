@@ -44,7 +44,7 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper {
     dismiss()
   }
 
-  private lazy val passwordEditText = returning(findById[EditText](root, R.id.acet__backup_password_field)) { v =>
+  private lazy val passwordEditText = returning(findById[EditText](root, R.id.backup_password_field)) { v =>
     v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
         actionId match {
@@ -56,7 +56,7 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper {
     })
   }
 
-  private lazy val textInputLayout = findById[TextInputLayout](root, R.id.til__backup_password)
+  private lazy val textInputLayout = findById[TextInputLayout](root, R.id.backup_password_title)
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
     new AlertDialog.Builder(getActivity)

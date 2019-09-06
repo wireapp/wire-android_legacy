@@ -58,11 +58,12 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
 
   private val backupButton = findById[MenuRowButton](R.id.backup_button)
 
-  //backupButton.setOnClickProcess(backupData, showSpinner = false)
   backupButton.setOnClickProcess(requestPassword())
 
   def requestPassword(): Future[Unit] = {
-    val fragment = returning(new BackupPasswordDialog)(_.onPasswordEntered{p => verbose(l"Got password: $p");backupData(p)})
+    val fragment = returning(new BackupPasswordDialog)(
+      _.onPasswordEntered { p => verbose(l"Got password: $p"); backupData(p) }
+    )
     context.asInstanceOf[BaseActivity]
       .getSupportFragmentManager
       .beginTransaction
@@ -73,18 +74,16 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     Future.successful(())
   }
 
-  private def backupData(password: Option[Password]): Future[Unit] = {
+  private def backupData(password: Option[Password]): Unit = {
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
     import Threading.Implicits.Ui
 
-    val backupProcess = for {
+    (for {
       z                <- zms.head
       Some(accManager) <- z.accounts.activeAccountManager.head
       res              <- accManager.exportDatabase(password)
       _                <- lifecycle.uiActive.collect{ case true => () }.head
-    } yield res
-
-    backupProcess.onComplete {
+    } yield res).onComplete {
       case Success(file) =>
         if (isShown) {
           val fileUri = sharing.getUriForFile(file)
@@ -94,15 +93,13 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
           }
           context.startActivity(intent)
           spinnerController.hideSpinner(Some(ContextUtils.getString(R.string.back_up_progress_complete)))
-        } else {
+        } else
           spinnerController.hideSpinner()
-        }
+
       case Failure(err) =>
         error(l"Error while exporting database", err)
         ViewUtils.showAlertDialog(getContext, R.string.export_generic_error_title, R.string.export_generic_error_text, android.R.string.ok, null, true)
     }
-
-    backupProcess.map(_ => ())
   }
 }
 
