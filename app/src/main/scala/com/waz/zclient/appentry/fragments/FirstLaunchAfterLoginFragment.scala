@@ -21,26 +21,29 @@ package com.waz.zclient.appentry.fragments
 import java.io.{File, FileOutputStream}
 
 import android.Manifest.permission._
+import android.app.FragmentTransaction
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.api.impl.ErrorResponse
+import com.waz.model.AccountData.Password
 import com.waz.model.UserId
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService
-import com.waz.service.BackupManager.InvalidMetadata
+import com.waz.service.backup.BackupManager.InvalidMetadata
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{returning, _}
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment._
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager
+import com.waz.zclient.preferences.dialogs.BackupPasswordDialog
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ViewUtils
-import com.waz.zclient.{FragmentHelper, R, SpinnerController}
+import com.waz.zclient.{BaseActivity, FragmentHelper, R, SpinnerController}
 
 import scala.async.Async.{async, await}
 import scala.collection.immutable.ListSet
@@ -75,7 +78,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
 
   private val assetIntentsManagerCallback = new AssetIntentsManager.Callback {
     override def onDataReceived(`type`: AssetIntentsManager.IntentType, uri: URI): Unit = {
-      enter(Some(uri))
+      requestPassword(Some(uri))
     }
     override def onCanceled(`type`: AssetIntentsManager.IntentType): Unit = {}
     override def onFailed(`type`: AssetIntentsManager.IntentType): Unit = {}
@@ -115,7 +118,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
 
   def onClick(view: View): Unit = {
     view.getId match {
-      case R.id.zb__first_launch__confirm => enter(None)
+      case R.id.zb__first_launch__confirm => enter(None, None)
       case R.id.restore_button => importBackup()
     }
   }
@@ -148,7 +151,24 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private def displayError(title: Int, text: Int) =
     ViewUtils.showAlertDialog(getContext, title, text, android.R.string.ok, null, true)
 
-  private def enter(backup: Option[URI]) = {
+  private def requestPassword(backup: Option[URI]): Future[Unit] = {
+    backup match {
+      case Some(_) =>
+        val fragment = returning(new BackupPasswordDialog) { _.onPasswordEntered(p => enter(backup, p))}
+        getActivity.asInstanceOf[BaseActivity]
+          .getSupportFragmentManager
+          .beginTransaction
+          .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+          .add(fragment, BackupPasswordDialog.FragmentTag)
+          .addToBackStack(BackupPasswordDialog.FragmentTag)
+          .commit
+        Future.successful(())
+      case _ =>
+        enter(backup, None)
+    }
+  }
+
+  private def enter(backup: Option[URI], backupPassword: Option[Password]): Future[Unit] = {
     spinnerController.showDimmedSpinner(show = true, if (backup.isDefined) getString(R.string.restore_progress) else "")
     async {
       val userId = getStringArg(UserIdArg).map(UserId(_))
@@ -162,7 +182,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
           file
         }
 
-        val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true)))
+        val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true), backupPassword = backupPassword))
         backupFile.foreach(_.delete())
         await { accountsService.setAccount(userId) }
         val registrationState = await { accountManager.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient()) }
@@ -182,7 +202,8 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
       case _: InvalidMetadata =>
         spinnerController.showSpinner(false)
         displayError(R.string.backup_import_error_unsupported_version_title, R.string.backup_import_error_unsupported_version)
-      case _ =>
+      case e =>
+        println(s"Got error: ${e.getMessage}")
         spinnerController.showSpinner(false)
         displayError(R.string.backup_import_error_unknown_title, R.string.backup_import_error_unknown)
     }

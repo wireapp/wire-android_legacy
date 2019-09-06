@@ -1248,6 +1248,10 @@
     <string name="backup_description">Create a backup to preserve your conversation history. You can use this to restore history if you lose your device or switch to a new one.
         \nThe backup file is not protected by Wire end-to-end encryption, so store it in a safe place.</string>
     <string name="pref_account_backup_title">Back up conversations</string>
+    <string name="backup_password_dialog_title">Enter a backup password</string>
+    <string name="backup_password_dialog_message">Leave the field blank to use no password</string>
+    <string name="backup_password_dialog_ok">Ok</string>
+    <string name="backup_password_dialog_no_password">Cancel</string>
 
     <string name="add_email_address">Add your email address</string>
     <string name="set_a_password">Set a password</string>
