@@ -18,15 +18,15 @@
 package com.waz.zclient.search
 
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{IntegrationData, UserData}
 import com.waz.service.{IntegrationsService, SearchQuery, SearchResults, UserSearchService}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.log.LogUI._
 
-import scala.concurrent.duration._
-
-class SearchController(implicit inj: Injector, eventContext: EventContext) extends Injectable {
+class SearchController(implicit inj: Injector, eventContext: EventContext) extends Injectable with DerivedLogTag {
 
   import SearchController._
 
@@ -41,7 +41,8 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
   lazy val addUserOrServices: Signal[AddUserListState] = {
     import AddUserListState._
     for {
-      filter  <- filter.throttle(500.millis)
+      filter  <- filter
+      _ = verbose(l"SR filter add user or services: $filter")
       tab     <- tab
       res     <- tab match {
         case Tab.People =>
@@ -75,15 +76,16 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
   lazy val searchUserOrServices: Signal[SearchUserListState] = {
     import SearchUserListState._
     for {
-      filter  <- filter.throttle(500.millis)
+      filter  <- filter
+      _ = verbose(l"SR filter search user or services: $filter")
       tab     <- tab
       res     <- tab match {
         case Tab.People =>
           for {
             search      <- searchService
             results     <- search.search(filter)
+            _ = verbose(l"SR search results: $results")
           } yield
-          //TODO make isEmpty method on SE?
             if (results.isEmpty)
               if (filter.isEmpty) NoUsers else NoUsersFound
             else Users(results)

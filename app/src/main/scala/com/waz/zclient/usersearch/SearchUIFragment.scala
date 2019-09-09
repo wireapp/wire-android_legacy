@@ -109,6 +109,8 @@ class SearchUIFragment extends BaseFragment[Container]
     }.onUi(vis => vh.foreach(_.setVisible(vis)))
   }
 
+  private var scheduledSearchQuery = Option.empty[CancellableFuture[Unit]]
+
   private lazy val searchBox = returning(view[SearchEditText](R.id.sbv__search_box)) { vh =>
     accentColor.onUi(color => vh.foreach(_.setCursorColor(color)))
 
@@ -118,13 +120,15 @@ class SearchUIFragment extends BaseFragment[Container]
 
       override def onClearButton(): Unit = closeStartUI()
 
-      private var c = Option.empty[CancellableFuture[Unit]]
-
       override def afterTextChanged(s: String): Unit = {
-        c.foreach(_.cancel())
-        c = Option(CancellableFuture.delay(PERFORM_SEARCH_DELAY).map { _ =>
-          vh.foreach(adapter.filter ! _.getSearchFilter) // should be safe; if the fragment is destroyed, vh will be None
-          c = None
+        scheduledSearchQuery.foreach(_.cancel())
+        scheduledSearchQuery = Option(CancellableFuture.delay(PERFORM_SEARCH_DELAY).map { _ =>
+          verbose(l"SR sending search query, filter is ${vh.map(_.getSearchFilter)}, s is $s")
+          vh.foreach { view =>
+            val filter = view.getSearchFilter
+            if (filter != "@") adapter.filter ! filter
+          } // should be safe; if the fragment is destroyed, vh will be None
+          scheduledSearchQuery = None
         })
       }
     }))

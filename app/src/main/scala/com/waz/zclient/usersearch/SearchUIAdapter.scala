@@ -78,7 +78,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   } yield (curUser, team, isAdmin, res)).onUi {
     case (curUser, team, isAdmin, res) =>
 
-      verbose(l"Search user list state: $res")
+      verbose(l"SR Search user list state: $res")
       this.team = team
       currentUserIsAdmin = isAdmin
       currentUser = curUser
