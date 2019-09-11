@@ -17,7 +17,7 @@ android {
 
     externalNativeBuild {
         ndkBuild {
-            path "$rootProject.projectDir/wire-android-sync-engine/zmessagign/src/main/jni/Android.mk"
+            path "$rootProject.projectDir/wire-android-sync-engine/zmessaging/src/main/jni/Android.mk"
         }
     }
 
