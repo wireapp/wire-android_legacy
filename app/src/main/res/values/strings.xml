@@ -1246,11 +1246,11 @@
     <string name="guest_time_left_hours_minutes">%1$s.%2$sh left</string>
     <string name="guest_time_left_minutes">Less than %1$sm left</string>
     <string name="backup_description">Create a backup to preserve your conversation history. You can use this to restore history if you lose your device or switch to a new one.
-        \nThe backup file is not protected by Wire end-to-end encryption, so store it in a safe place.</string>
+        \n\nChoose a strong password to protect the backup file.</string>
     <string name="pref_account_backup_title">Back up conversations</string>
-    <string name="backup_password_dialog_title">Enter a backup password</string>
-    <string name="backup_password_dialog_message">Leave the field blank to use no password</string>
-    <string name="backup_password_dialog_ok">Ok</string>
+    <string name="backup_password_dialog_title">Set password</string>
+    <string name="backup_password_dialog_message">The backup will be compressed, and if you set a password, also encrypted. Make sure to store it in a secure place.</string>
+    <string name="backup_password_dialog_ok">OK</string>
     <string name="backup_password_dialog_no_password">Cancel</string>
 
     <string name="add_email_address">Add your email address</string>
