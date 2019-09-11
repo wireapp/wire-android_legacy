@@ -103,6 +103,11 @@ dependencies {
     testImplementation "com.typesafe.akka:akka-http_$rootProject.ext.scalaMajorVersion:10.1.8"
     testImplementation "com.typesafe.akka:akka-actor_$rootProject.ext.scalaMajorVersion:2.5.22"
     testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
+    testImplementation "com.wire:avs:3.4.100"
+    testImplementation "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    testImplementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    testImplementation "net.java.dev.jna:jna:4.4.0@aar"
+
 }
 
 
