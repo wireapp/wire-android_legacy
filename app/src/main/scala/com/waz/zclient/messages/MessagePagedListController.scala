@@ -84,6 +84,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
   lazy val pagedListData: Signal[(MessageAdapterData, PagedListWrapper[MessageAndLikes], Option[MessageId])] = for {
     z                       <- zms
+    false                   <- z.push.processing
     (cId, cTeam, teamOnly)  <- convController.currentConv.map(c => (c.id, c.team, c.isTeamOnly))
     isGroup                 <- Signal.future(z.conversations.isGroupConversation(cId))
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
@@ -93,14 +94,6 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     lastRead                <- convController.currentConv.map(_.lastRead)
     messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))
   } yield (MessageAdapterData(cId, lastRead, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)
-
-  val messageToCurrentConvAdded: EventStream[Seq[MessageData]] = (for {
-    z <- zms
-    conv <- convController.currentConvId
-    added <- Signal.wrap(z.messagesStorage.onAdded.map(_.filter(_.convId == conv)).filter(_.nonEmpty))
-  } yield added).onChanged
-
-  Threading.Ui
 }
 
 object MessagePagedListController {
