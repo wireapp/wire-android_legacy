@@ -28,7 +28,6 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Dim2, MessageData}
 import com.waz.service.assets2.AssetStatus
-import com.waz.utils._
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -197,26 +196,25 @@ case class MessageViewHolder(view: MessageView, adapter: MessagesPagedListAdapte
     }
   }
 
-  // mark message as read if message is bound while list is visible
-  msgsController.fullyVisibleMessagesList.flatMap {
-    case Some(convId) =>
-      message.filter(_.convId == convId) flatMap {
-        case msg if msg.isAssetMessage && msg.state == Message.Status.SENT =>
-          // received asset message is considered read when its asset is available,
-          // this is especially needed for ephemeral messages, only start the counter when message is downloaded
-          msg.assetId.fold2(Signal.empty, assets.assetStatusSignal) flatMap {
-            case (AssetStatus.Done, _) if msg.msgType == Message.Type.ASSET =>
-              // image assets are considered read only once fully downloaded
-              Signal const msg
-//            case (_, AssetStatus.UPLOAD_DONE | AssetStatus.UPLOAD_CANCELLED | AssetStatus.UPLOAD_FAILED) if msg.msgType != Message.Type.ASSET =>
-//              // for other assets it's enough when upload is done, download is user triggered here
-//              Signal const msg
-            case _ => Signal.empty[MessageData]
-          }
-        case msg => Signal const msg
-      }
-    case None => Signal.empty[MessageData]
-  }(msgsController.onMessageRead)
+  private val messageRead = for {
+    Some(convId) <- msgsController.fullyVisibleMessagesList
+    msg          <- message.filter(_.convId == convId)
+    isSentAsset  =  msg.isAssetMessage && msg.state == Message.Status.SENT
+    status       <- if (isSentAsset)
+                      msg.assetId
+                         .fold(Signal.const(Option.empty[AssetStatus]))(aId => assets.assetStatusSignal(aId).map { case (status, _) => Some(status) })
+                    else
+                      Signal.const(Option.empty[AssetStatus])
+  } yield (isSentAsset, status) match {
+    case (false, _)                     => Some(msg)
+    case (true, Some(AssetStatus.Done)) => Some(msg)
+    case _                              => None
+  }
+
+  messageRead.onUi {
+    case Some(msg) => msgsController.onMessageRead(msg)
+    case None      =>
+  }
 
   def bind(msg: MessageAndLikes, prev: Option[MessageData], next: Option[MessageData], opts: MsgBindOptions): Unit = {
     view.set(msg,prev, next, opts, adapter)

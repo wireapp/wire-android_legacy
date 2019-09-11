@@ -43,7 +43,7 @@ import com.waz.service.assets2.Asset.{Audio, Video}
 import com.waz.service.assets2.{AssetStatus, _}
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.utils.{IoUtils, returning, sha2}
 import com.waz.zclient.controllers.singleimage.ISingleImageController
@@ -83,11 +83,6 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   //TODO make a preference controller for handling UI preferences in conjunction with SE preferences
   val downloadsAlwaysEnabled =
     zms.flatMap(_.userPrefs.preference(DownloadImagesAlways).signal).disableAutowiring()
-
-  val onFileOpened = EventStream[AssetData]()
-  val onFileSaved = EventStream[AssetData]()
-  val onVideoPlayed = EventStream[AssetData]()
-  val onAudioPlayed = EventStream[AssetData]()
 
   messageActionsController.onMessageAction
     .collect { case (MessageAction.OpenFile, msg) => msg.assetId } {
