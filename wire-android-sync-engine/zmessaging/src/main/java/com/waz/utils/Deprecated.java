@@ -22,7 +22,6 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
-import android.os.Build;
 
 import java.nio.ByteBuffer;
 

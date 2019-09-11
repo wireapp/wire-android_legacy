@@ -51,14 +51,24 @@ public interface MessageContent {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             Location location = (Location) o;
 
-            if (Float.compare(location.longitude, longitude) != 0) return false;
-            if (Float.compare(location.latitude, latitude) != 0) return false;
-            if (zoom != location.zoom) return false;
+            if (Float.compare(location.longitude, longitude) != 0) {
+                return false;
+            }
+            if (Float.compare(location.latitude, latitude) != 0) {
+                return false;
+            }
+            if (zoom != location.zoom) {
+                return false;
+            }
             return name != null ? name.equals(location.name) : location.name == null;
         }
 

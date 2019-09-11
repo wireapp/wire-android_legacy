@@ -19,12 +19,10 @@ package org.robolectric.shadows;
 
 import android.accounts.Account;
 import android.content.ContentProvider;
-import android.content.ContentProviderClient;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.IContentProvider;
 import android.content.OperationApplicationException;
 import android.content.PeriodicSync;
 import android.database.ContentObserver;
@@ -41,6 +39,7 @@ import org.robolectric.annotation.Resetter;
 import org.robolectric.internal.NamedStream;
 import org.robolectric.res.ContentProviderData;
 import org.robolectric.tester.android.database.TestCursor;
+
 import scala.Function0;
 
 import java.io.IOException;
@@ -58,7 +57,8 @@ public class ShadowContentResolver2 {
     private int nextDatabaseIdForInserts;
     private int nextDatabaseIdForUpdates;
 
-    @RealObject ContentResolver realContentResolver;
+    @RealObject
+    ContentResolver realContentResolver;
 
     private TestCursor cursor;
     private final List<InsertStatement> insertStatements = new ArrayList<InsertStatement>();
@@ -70,10 +70,10 @@ public class ShadowContentResolver2 {
     private final Map<String, ArrayList<ContentProviderOperation>> contentProviderOperations = new HashMap<String, ArrayList<ContentProviderOperation>>();
     private ContentProviderResult[] contentProviderResults;
 
-    private final Map<Uri, ContentObserver> contentObservers = new HashMap<Uri,ContentObserver>();
+    private final Map<Uri, ContentObserver> contentObservers = new HashMap<Uri, ContentObserver>();
 
-    private static final Map<String, Map<Account, Status>>  syncableAccounts =
-            new HashMap<String, Map<Account, Status>>();
+    private static final Map<String, Map<Account, Status>> syncableAccounts =
+        new HashMap<String, Map<Account, Status>>();
     private static final Map<String, ContentProvider> providers = new HashMap<String, ContentProvider>();
     private static boolean masterSyncAutomatically;
 
@@ -170,7 +170,7 @@ public class ShadowContentResolver2 {
             }
 
             returnCursor.setQuery(uri, projection, selection, selectionArgs,
-                    sortOrder);
+                sortOrder);
             return returnCursor;
         }
     }
@@ -288,11 +288,11 @@ public class ShadowContentResolver2 {
 
         // TODO does not support multiple observers for a URI
         ContentObserver obs = contentObservers.get(uri);
-        if ( obs != null && obs != observer  ) {
-            obs.dispatchChange( false, uri );
+        if (obs != null && obs != observer) {
+            obs.dispatchChange(false, uri);
         }
-        if ( observer != null && observer.deliverSelfNotifications() ) {
-            observer.dispatchChange( true, uri );
+        if (observer != null && observer.deliverSelfNotifications()) {
+            observer.dispatchChange(true, uri);
         }
     }
 
@@ -302,6 +302,7 @@ public class ShadowContentResolver2 {
     }
 
     @Implementation
+    @SuppressWarnings("PMD.LooseCoupling")
     public ContentProviderResult[] applyBatch(String authority, ArrayList<ContentProviderOperation> operations) throws OperationApplicationException {
         ContentProvider provider = getProvider(authority);
         if (provider != null) {
@@ -359,7 +360,9 @@ public class ShadowContentResolver2 {
     public static void removePeriodicSync(Account account, String authority, Bundle extras) {
         validateSyncExtrasBundle(extras);
         Status status = getStatus(account, authority);
-        if (status != null) status.syncs.clear();
+        if (status != null) {
+            status.syncs.clear();
+        }
     }
 
     @Implementation
@@ -367,6 +370,7 @@ public class ShadowContentResolver2 {
         return getStatus(account, authority, true).syncs;
     }
 
+    @SuppressWarnings("PMD.IfStmtsMustUseBraces")
     @Implementation
     public static void validateSyncExtrasBundle(Bundle extras) {
         for (String key : extras.keySet()) {
@@ -379,8 +383,7 @@ public class ShadowContentResolver2 {
             if (value instanceof Double) continue;
             if (value instanceof String) continue;
             if (value instanceof Account) continue;
-            throw new IllegalArgumentException("unexpected value type: "
-                    + value.getClass().getName());
+            throw new IllegalArgumentException("unexpected value type: " + value.getClass().getName());
         }
     }
 
@@ -478,10 +481,11 @@ public class ShadowContentResolver2 {
         return notifiedUris;
     }
 
-    public ArrayList<ContentProviderOperation> getContentProviderOperations(String authority) {
+    public List<ContentProviderOperation> getContentProviderOperations(String authority) {
         ArrayList<ContentProviderOperation> operations = contentProviderOperations.get(authority);
-        if (operations == null)
+        if (operations == null) {
             return new ArrayList<ContentProviderOperation>();
+        }
         return operations;
     }
 
@@ -490,9 +494,9 @@ public class ShadowContentResolver2 {
     }
 
     @Implementation
-    public void registerContentObserver( Uri uri, boolean notifyForDescendents, ContentObserver observer) {
+    public void registerContentObserver(Uri uri, boolean notifyForDescendents, ContentObserver observer) {
         // TODO does not support multiple observers for a URI
-        contentObservers.put( uri, observer );
+        contentObservers.put(uri, observer);
     }
 
     @Implementation
@@ -501,13 +505,13 @@ public class ShadowContentResolver2 {
     }
 
     @Implementation
-    public void unregisterContentObserver( ContentObserver observer ) {
-        if ( observer != null && contentObservers.containsValue( observer ) ) {
-            Set<Entry<Uri,ContentObserver>> entries = contentObservers.entrySet();
-            for ( Entry<Uri,ContentObserver> e : entries ) {
+    public void unregisterContentObserver(ContentObserver observer) {
+        if (observer != null && contentObservers.containsValue(observer)) {
+            Set<Entry<Uri, ContentObserver>> entries = contentObservers.entrySet();
+            for (Entry<Uri, ContentObserver> e : entries) {
                 ContentObserver other = e.getValue();
-                if ( observer == other || observer.equals(other) ) {
-                    contentObservers.remove( e.getKey() );
+                if (observer == other || observer.equals(other)) {
+                    contentObservers.remove(e.getKey());
                     return;
                 }
             }
@@ -525,10 +529,11 @@ public class ShadowContentResolver2 {
     /**
      * Non-Android accessor.  Returns the content observer registered with
      * the given URI, or null if none registered.
+     *
      * @param uri
      * @return
      */
-    public ContentObserver getContentObserver( Uri uri ) {
+    public ContentObserver getContentObserver(Uri uri) {
         return contentObservers.get(uri);
     }
 

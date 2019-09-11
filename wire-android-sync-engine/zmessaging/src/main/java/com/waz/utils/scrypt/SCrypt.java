@@ -53,10 +53,16 @@ public class SCrypt {
      * @throws GeneralSecurityException when HMAC_SHA256 is not available.
      */
     public static byte[] scrypt(byte[] passwd, byte[] salt, int N, int r, int p, int dkLen) throws GeneralSecurityException {
-        if (N < 2 || (N & (N - 1)) != 0) throw new IllegalArgumentException("N must be a power of 2 greater than 1");
+        if (N < 2 || (N & (N - 1)) != 0) {
+            throw new IllegalArgumentException("N must be a power of 2 greater than 1");
+        }
 
-        if (N > MAX_VALUE / 128 / r) throw new IllegalArgumentException("Parameter N is too large");
-        if (r > MAX_VALUE / 128 / p) throw new IllegalArgumentException("Parameter r is too large");
+        if (N > MAX_VALUE / 128 / r) {
+            throw new IllegalArgumentException("Parameter N is too large");
+        }
+        if (r > MAX_VALUE / 128 / p) {
+            throw new IllegalArgumentException("Parameter r is too large");
+        }
 
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(passwd, "HmacSHA256"));
@@ -158,7 +164,9 @@ public class SCrypt {
             x[14] ^= R(x[13]+x[12],13);  x[15] ^= R(x[14]+x[13],18);
         }
 
-        for (i = 0; i < 16; ++i) B32[i] = x[i] + B32[i];
+        for (i = 0; i < 16; ++i) {
+            B32[i] = x[i] + B32[i];
+        }
 
         for (i = 0; i < 16; i++) {
             B[i * 4 + 0] = (byte) (B32[i] >> 0  & 0xff);

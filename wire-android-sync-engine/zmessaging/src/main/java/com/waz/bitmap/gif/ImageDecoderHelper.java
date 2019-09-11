@@ -24,6 +24,7 @@ package com.waz.bitmap.gif;
 // Kevin Weiner explicitly does not assert any copyright on the implementation
 // (see also http://show.docjava.com/book/cgij/exportToHTML/ip/gif/stills/GifDecoder.java.html).
 
+//todo: no usages?
 public class ImageDecoderHelper {
 
     static final int MAX_STACK_SIZE = 4096;
@@ -40,9 +41,6 @@ public class ImageDecoderHelper {
      */
     public void decodeBitmapData(final DataSource input, int width, int height, PixelConsumer consumer) {
 
-        byte[] block = input.block();
-
-        final int npix = width * height;
         int available, clear, code_mask, code_size, end_of_information, in_code, old_code, bits, code, count, i, datum, data_size, first, top, bi;
 
         // Initialize GIF data stream decoder.
@@ -53,11 +51,16 @@ public class ImageDecoderHelper {
         old_code = NULL_CODE;
         code_size = data_size + 1;
         code_mask = (1 << code_size) - 1;
-        if (clear >= MAX_STACK_SIZE) return;
+        if (clear >= MAX_STACK_SIZE) {
+            return;
+        }
         for (code = 0; code < clear; code++) {
             prefix[code] = 0; // XXX ArrayIndexOutOfBoundsException
             suffix[code] = (byte)code;
         }
+
+        final int npix = width * height;
+        byte[] block = input.block();
 
         // Decode GIF pixel stream.
         datum = bits = count = first = top = bi = 0;
@@ -82,7 +85,9 @@ public class ImageDecoderHelper {
             code = datum & code_mask;
             datum >>= code_size;
             bits -= code_size;
-            if (code >= MAX_STACK_SIZE) return;
+            if (code >= MAX_STACK_SIZE) {
+                return;
+            }
             // Interpret the code
             if (code == end_of_information) {
                 break;
@@ -107,7 +112,9 @@ public class ImageDecoderHelper {
                 code = old_code;
             }
             while (code > clear) {
-                if (top >= PIXEL_STACK_SIZE) return;
+                if (top >= PIXEL_STACK_SIZE) {
+                    return;
+                }
                 pixelStack[top++] = suffix[code];
                 code = prefix[code];
             }

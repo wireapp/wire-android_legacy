@@ -30,6 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /*
  * Overwrites internal robolectric implementation to fix listeners concurrent modification issues.
  */
+//todo: no usages?
 public class TestSharedPreferences implements SharedPreferences {
 
     public Map<String, Map<String, Object>> content;
@@ -103,15 +104,16 @@ public class TestSharedPreferences implements SharedPreferences {
 
     @Override
     public void registerOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
-        if(!listeners.contains(listener))
+        if(!listeners.contains(listener)) {
             listeners.add(listener);
+        }
     }
 
     @Override
-    public void unregisterOnSharedPreferenceChangeListener(
-            OnSharedPreferenceChangeListener listener) {
-        if(listeners.contains(listener))
+    public void unregisterOnSharedPreferenceChangeListener(OnSharedPreferenceChangeListener listener) {
+        if(listeners.contains(listener)) {
             listeners.remove(listener);
+        }
     }
 
     public boolean hasListener(OnSharedPreferenceChangeListener listener) {

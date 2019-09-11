@@ -18,13 +18,14 @@
 package com.waz.api;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public enum OtrClientType {
     PHONE("phone"), TABLET("tablet"), DESKTOP("desktop");
 
     public final String deviceClass;
 
-    private static HashMap<String, OtrClientType> classMap = new HashMap<>();
+    private static Map<String, OtrClientType> classMap = new HashMap<>();
     static {
         classMap.put(PHONE.deviceClass, PHONE);
         classMap.put(TABLET.deviceClass, TABLET);
