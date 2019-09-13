@@ -47,7 +47,6 @@ import static android.hardware.Camera.getNumberOfCameras;
 @SuppressWarnings("Deprecation")
 /*
  This class exists to facilitate fine-grained warning deprecation, not possible in Scala
- TODO(AN-5975): rewrite this class in Scala once we can include the silencer plugin
  */
 public class DeprecationUtils {
 

@@ -1,0 +1,121 @@
+apply plugin: 'com.android.library'
+apply plugin: 'jp.leafytree.android-scala'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+
+        ndk {
+            abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
+        }
+
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path file('src/main/jni/Android.mk')
+        }
+    }
+
+    testOptions {
+        unitTests.all {
+            forkEvery 1
+            jvmArgs "-Xmx4096M", "-XX:MaxPermSize=4096M", "-XX:+CMSClassUnloadingEnabled",
+                "-Djava.net.preferIPv4Stack=true", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n"
+        }
+    }
+
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    google()
+    maven { url "http://repo1.maven.org/maven2" }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/releases"
+    }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven { url "https://dl.bintray.com/wire-android/releases/" }
+    maven { url "https://dl.bintray.com/wire-android/snapshots/" }
+    maven { url "https://dl.bintray.com/wire-android/third-party/" }
+}
+
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ["-source", "1.7", "-target", "1.7", "-encoding", "UTF-8"]
+}
+
+tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ["-feature", "-target:jvm-1.7", "-Xfuture", //"-Xfatal-warnings",
+                                                "-deprecation", "-encoding", "UTF-8", "-Xmax-classfile-name", "128"]
+}
+
+def versions = [
+        okHttp : "3.10.0",
+        circe : "0.9.3",
+]
+
+dependencies {
+
+    api project(':wire-android-sync-engine:macrosupport')
+
+    api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
+    implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
+    // should match okhttp3's mockserver version (see test dependencies)
+    implementation "$rootProject.deps.libphonenumber"
+    implementation "com.wire:cryptobox-android:1.1.2"
+    api "com.wire:generic-message-proto:1.23.0"
+    implementation "com.wire:backend-api-proto:1.1"
+    implementation "io.circe:circe-core_$rootProject.ext.scalaMajorVersion:$versions.circe"
+    implementation "io.circe:circe-generic_$rootProject.ext.scalaMajorVersion:$versions.circe"
+    implementation "io.circe:circe-parser_$rootProject.ext.scalaMajorVersion:$versions.circe"
+    implementation "com.wire:icu4j-shrunk:57.1"
+    implementation "com.googlecode.mp4parser:isoparser:1.1.7"
+    implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
+
+    //Provided dependencies
+    compileOnly "com.softwaremill.macwire:macros_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:macrosakka_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly("com.google.android.gms:play-services-base:11.0.0") {
+        exclude(group: "com.android.support", module: "support-v4")
+    }
+    compileOnly "com.wire:avs:3.4.100"
+    compileOnly "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    compileOnly "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    compileOnly "net.java.dev.jna:jna:4.4.0@aar"
+    compileOnly "$rootProject.deps.robolectric_android_all"
+
+    //Test dependencies
+    testImplementation("$rootProject.deps.scalaTest") {
+        exclude module: 'scala-library'
+    }
+    testImplementation "org.scalamock:scalamock_$rootProject.ext.scalaMajorVersion:4.1.0"
+    testImplementation "org.scalacheck:scalacheck_$rootProject.ext.scalaMajorVersion:1.14.0"
+    testImplementation("com.wire:robotest_$rootProject.ext.scalaMajorVersion:0.7") {
+        exclude(group: "org.scalatest", module: "scalatest")
+    }
+    testImplementation "$rootProject.deps.robolectric_android_all"
+    testImplementation "junit:junit:$rootProject.ext.versions.junit"             //to override version included in robolectric
+    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
+    //should match okhttp version.
+    testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
+    testImplementation "com.typesafe.akka:akka-http_$rootProject.ext.scalaMajorVersion:10.1.8"
+    testImplementation "com.typesafe.akka:akka-actor_$rootProject.ext.scalaMajorVersion:2.5.22"
+    testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
+    testImplementation "com.wire:avs:3.4.100"
+    testImplementation "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    testImplementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    testImplementation "net.java.dev.jna:jna:4.4.0@aar"
+
+}
+
+

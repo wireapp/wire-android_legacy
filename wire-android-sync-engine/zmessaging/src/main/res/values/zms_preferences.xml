@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <string name="zms_auto_answer_key">PREF_KEY_AUTO_ANSWER_ENABLED</string>
+    <string name="zms_push_enabled">PUSH_ENABLED</string>
+    <string name="zms_v31_assets_enabled">PREF_V31_ASSETS_ENABLED</string>
+    <string name="zms_ws_foreground_service_enabled">PREF_KEY_WS_FOREGROUND_SERVICE_ENABLED</string>
+
+    <!-- typeface version -->
+    <string name="pref_current_typeface_version_key">PREF_CURRENT_TYPEFACE_VERSION</string>
+    <integer name="required_typeface_version">-1</integer>
+</resources>

@@ -16,15 +16,7 @@ repositories {
 ext {
     majorVersion = "3.38."
 
-    scalaMajorVersion = '2.11'
-    scalaVersion = scalaMajorVersion + '.12'
-
-    supportLibVersion = '27.1.1'
-    playServicesVersion = '15.0.1'
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
-    stethoVersion = '1.5.0'
-    zMessagingVersion = "142.0.2337"
-    paging_version = "1.0.0"
 
     avsVersion = '5.1.186@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
@@ -37,8 +29,6 @@ ext {
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
 
-    zMessagingDevVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + buildSuffixForVersion(zMessagingVersion))
-    zMessagingReleaseVersion = System.getenv("LOCAL_ZMESSAGING_VERSION") ?: ((System.getenv("ZMESSAGING_VERSION") ?: zMessagingVersion) + '@aar')
 }
 
 if (project.file('user.gradle').exists()) {
@@ -100,11 +90,12 @@ android {
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
+
     }
 
     preBuild.dependsOn(copyCustomResources)
 
-    compileSdkVersion = 27
+    compileSdkVersion = rootProject.ext.compileSdkVersion
     buildToolsVersion = '28.0.3'
 
     defaultConfig {
@@ -306,6 +297,14 @@ dexinfo {
     maxDepth 2
 }
 
+def versions = [
+    playServices : "15.0.1", //TODO can be independent now.
+    stetho: "1.5.0",
+    work_manager : "1.0.0-alpha13",
+    paging : "1.0.0",
+    dexmaker : "1.4"
+]
+
 dependencies {
     implementation project(':lintlib')
 
@@ -313,6 +312,8 @@ dependencies {
     implementation "org.scala-lang:scala-library:$scalaVersion"
     implementation "org.scala-lang:scala-reflect:$scalaVersion"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+
+    implementation "com.chuusai:shapeless_$rootProject.ext.scalaMajorVersion:2.3.3"
 
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
@@ -340,83 +341,81 @@ dependencies {
     //implementation (name:'zmessaging-android', ext:'aar')
 
     implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
-    implementation("com.wire:zmessaging-android:${internal ? zMessagingDevVersion : zMessagingReleaseVersion}") {
-        transitive = true
+    api(project(':wire-android-sync-engine:zmessaging')) {
+        exclude group: 'com.wire', module: 'avs'
     }
+    implementation "$rootProject.deps.libphonenumber"
 
     //support libraries
     implementation 'com.android.support:multidex:1.0.3'
-    implementation "com.android.support:support-v4:$supportLibVersion"
-    implementation "com.android.support:support-v13:$supportLibVersion"
-    implementation "com.android.support:design:$supportLibVersion"
-    implementation "com.android.support:appcompat-v7:$supportLibVersion"
-    implementation "com.android.support:recyclerview-v7:$supportLibVersion"
-    implementation "com.android.support:preference-v7:$supportLibVersion"
-    implementation "com.android.support:cardview-v7:$supportLibVersion"
-    implementation "com.android.support:gridlayout-v7:$supportLibVersion"
-    implementation "com.android.support:support-annotations:$supportLibVersion"
-    implementation "com.android.support:cardview-v7:$supportLibVersion"
+    implementation "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:support-v13:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:design:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:appcompat-v7:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:recyclerview-v7:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:preference-v7:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:cardview-v7:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:gridlayout-v7:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:support-annotations:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:cardview-v7:$rootProject.ext.versions.supportLib"
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation "android.arch.paging:runtime:$paging_version"
-    implementation "com.android.support:exifinterface:$supportLibVersion"
-    implementation "com.android.support:support-media-compat:$supportLibVersion"
+    implementation "android.arch.paging:runtime:$versions.paging"
+    implementation "com.android.support:exifinterface:$rootProject.ext.versions.supportLib"
+    implementation "com.android.support:support-media-compat:$rootProject.ext.versions.supportLib"
 
     // Play services
-    implementation "com.google.android.gms:play-services-base:$playServicesVersion"
-    implementation "com.google.android.gms:play-services-maps:$playServicesVersion"
-    implementation "com.google.android.gms:play-services-location:$playServicesVersion"
-    implementation "com.google.android.gms:play-services-gcm:$playServicesVersion"
+    implementation "com.google.android.gms:play-services-base:$versions.playServices"
+    implementation "com.google.android.gms:play-services-maps:$versions.playServices"
+    implementation "com.google.android.gms:play-services-location:$versions.playServices"
+    implementation "com.google.android.gms:play-services-gcm:$versions.playServices"
     implementation ('com.google.firebase:firebase-messaging:17.3.0') {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
 
     //WorkManager
-    def work_version = "1.0.0-alpha13"
-    implementation "android.arch.work:work-runtime:$work_version"
+    implementation "android.arch.work:work-runtime:$versions.work_manager"
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'com.evernote:android-job:1.2.6'
     implementation 'com.jakewharton.timber:timber:4.7.0'
-    implementation 'com.jakewharton.threetenabp:threetenabp:1.1.0'
+    implementation('com.jakewharton.threetenabp:threetenabp:1.1.0') {
+        exclude group: 'org.threeten', module: 'threetenbp'
+    }
+    implementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
     implementation 'com.facebook.rebound:rebound:0.3.8'
     implementation 'com.atlassian.commonmark:commonmark:0.11.0'
     implementation 'net.java.dev.jna:jna:4.4.0@aar'
-    devImplementation "com.facebook.stetho:stetho:$stethoVersion"
-    experimentalImplementation "com.facebook.stetho:stetho:$stethoVersion"
-    internalImplementation "com.facebook.stetho:stetho:$stethoVersion"
+    devImplementation "com.facebook.stetho:stetho:$versions.stetho"
+    experimentalImplementation "com.facebook.stetho:stetho:$versions.stetho"
+    internalImplementation "com.facebook.stetho:stetho:$versions.stetho"
     implementation "com.github.bumptech.glide:glide:4.8.0"
     annotationProcessor 'com.github.bumptech.glide:compiler:4.8.0'
 
     // Test dependencies
-    testImplementation 'junit:junit:4.12'
-    testImplementation("org.scalatest:scalatest_$scalaMajorVersion:2.2.6") {
+    testImplementation "junit:junit:$rootProject.ext.versions.junit"
+    testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
     }
     testImplementation 'org.mockito:mockito-core:1.10.19'
     //The dexmaker stuff is needed for Mockito to work completely
-    testImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
-    testImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
-    testImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-    testImplementation "android.arch.paging:common:$paging_version"
+    testImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
+    testImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
+    testImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
+    testImplementation "android.arch.paging:common:$versions.paging"
 
-    androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
     androidTestImplementation 'org.mockito:mockito-core:1.10.19'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
 
     //The dexmaker stuff is needed for Mockito to work completely
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker:1.4'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
-    androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-    androidTestImplementation "android.arch.work:work-testing:$work_version"
-
-    androidTestImplementation 'junit:junit:4.12'
-    androidTestImplementation 'org.mockito:mockito-core:1.10.19'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+    androidTestImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
+    androidTestImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
+    androidTestImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
+    androidTestImplementation "android.arch.work:work-testing:$versions.work_manager"
 
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true
@@ -462,3 +461,4 @@ android.applicationVariants.all { variant ->
         output.outputFileName = new File("../..", newApkName)
     }
 }
+

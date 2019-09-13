@@ -18,8 +18,8 @@
 package com.waz.zclient.glide
 
 import com.waz.model.UserData.Picture
-import com.waz.model._
 import com.waz.api.MessageContent.Location
+import com.waz.model.{AssetId, GeneralAssetId, UploadAssetId}
 import com.waz.service.assets2.Asset
 
 sealed trait AssetRequest {
