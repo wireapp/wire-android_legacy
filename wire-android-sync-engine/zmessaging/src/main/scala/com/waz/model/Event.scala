@@ -98,6 +98,8 @@ case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
 
 case class CreateConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId, data: ConversationResponse) extends ConversationStateEvent
 
+case class DeleteConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId) extends ConversationStateEvent
+
 case class MessageTimerEvent(convId: RConvId, time: RemoteInstant, from: UserId, duration: Option[FiniteDuration]) extends MessageEvent with ConversationStateEvent
 
 case class RenameConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId, name: Name) extends MessageEvent with ConversationStateEvent
@@ -248,6 +250,7 @@ object ConversationEvent extends DerivedLogTag {
 
       decodeString('type) match {
         case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
+        case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
         case "conversation.member-join"          => MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeString('id).startsWith("1."))
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))

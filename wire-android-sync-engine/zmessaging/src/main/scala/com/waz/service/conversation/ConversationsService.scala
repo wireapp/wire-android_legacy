@@ -164,6 +164,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
+    case DeleteConversationEvent(_, _, _) => deleteConversation(conv.id)
+
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
     case MemberJoinEvent(_, _, _, userIds, _) =>
@@ -330,6 +332,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- convsStorage.remove(convId)
     _ <- membersStorage.delete(convId)
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
+    //todo: delete assets & read receipts also
   } yield ()
 
   def forceNameUpdate(id: ConvId, defaultName: String) = {
