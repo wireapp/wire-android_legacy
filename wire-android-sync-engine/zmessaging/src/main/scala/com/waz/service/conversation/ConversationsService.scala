@@ -333,6 +333,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- membersStorage.delete(convId)
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
     //todo: delete assets & read receipts also
+    _ <- if (selectedConv.selectedConversationId.currentValue.flatten.getOrElse(None) == convId) {
+      selectedConv.selectConversation(None)
+    } else {
+      Future.successful(())
+    }
   } yield ()
 
   def forceNameUpdate(id: ConvId, defaultName: String) = {

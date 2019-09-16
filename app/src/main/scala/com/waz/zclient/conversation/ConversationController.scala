@@ -112,12 +112,19 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     members        <- membersStorage.activeMembers(conv)
   } yield members.filter(_ != selfUserId)
 
-  currentConvId { convId =>
-    conversations.head.foreach(_.forceNameUpdate(convId, getString(R.string.default_deleted_username)))
-    if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
-      verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
-      convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
-      lastConvId = Option(convId)
+  currentConvIdOpt {
+    case Some(convId) => {
+      conversations.head.foreach(_.forceNameUpdate(convId, getString(R.string.default_deleted_username)))
+      if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
+        verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
+        convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
+        lastConvId = Option(convId)
+      }
+    }
+    case None => {
+      // conversation is deleted
+      convChanged ! ConversationChange(from = lastConvId, to = None, requester = ConversationChangeRequester.DELETE_CONVERSATION)
+      lastConvId = None
     }
   }
 
