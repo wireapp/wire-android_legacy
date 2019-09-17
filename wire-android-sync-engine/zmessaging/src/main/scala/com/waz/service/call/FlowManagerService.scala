@@ -18,6 +18,7 @@
 package com.waz.service.call
 
 import android.content.Context
+import android.os.Build
 import android.view.View
 import com.waz.log.LogSE._
 import com.waz.call._
@@ -62,9 +63,17 @@ class DefaultFlowManagerService(context:      Context,
   }
 
   lazy val flowManager: Option[FlowManager] = Try {
-    val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
-    fm.addListener(flowListener)
-    fm
+    Build.PRODUCT match {
+      case "sdk_gphone_x86" =>
+        warn(l"Emulator detected, skipping FlowManager initialization")
+        null
+      case _ =>
+        verbose(l"FlowManager initialization, detected PRODUCT ${Build.PRODUCT} MODEL ${Build.MODEL}")
+        val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
+        fm.addListener(flowListener)
+        fm
+    }
+
   } .toOption
 
   private val flowListener = new FlowManagerListener {
