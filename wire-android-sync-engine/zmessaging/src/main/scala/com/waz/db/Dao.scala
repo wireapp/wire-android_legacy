@@ -114,6 +114,8 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
 
   def iterating(c: => DBCursor): Managed[Iterator[T]] = iteratingWithReader(this)(c)
 
+  def iteratingMultiple(cursors: => Seq[DBCursor]): Managed[Iterator[T]] = iteratingMultipleWithReader(this)(cursors)
+
   def single(c: DBCursor, close: Boolean = true): Option[T] = try { if (c.moveToFirst()) Option(apply(c)) else None } finally { if (close) c.close() }
 
   def list(c: DBCursor, close: Boolean = true, filter: T => Boolean = { _ => true }): Vector[T] =
@@ -129,7 +131,13 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
 
   def find[A](col: Column[A], value: A)(implicit db: DB): DBCursor = db.query(table.name, null, s"${col.name} = ?", Array(col(value)), null, null, null)
 
-  def findInSet[A](col: Column[A], values: Set[A])(implicit db: DB): DBCursor = db.query(table.name, null, s"${col.name} IN (${values.iterator.map(_ => "?").mkString(", ")})", values.map(col(_))(breakOut): Array[String], null, null, null)
+  def findInSet[A](col: Column[A], values: Set[A])(implicit db: DB): Seq[DBCursor] = {
+    // Android throws an SQLiteException if the number of variables in a query exceeds ~999.
+    // To avoid this we make batched queries, returning the a list of cursors.
+    values.sliding(500).map { chunk =>
+      db.query(table.name, null, s"${col.name} IN (${chunk.iterator.map(_ => "?").mkString(", ")})", chunk.map(col(_))(breakOut): Array[String], null, null, null)
+    }.toList
+  }
 
   def delete[A](col: Column[A], value: A)(implicit db: DB): Int = db.delete(table.name, s"${col.name} = ?", Array(col(value)))
 

@@ -30,6 +30,8 @@ package object db {
 
   def iteratingWithReader[A](reader: Reader[A])(c: => DBCursor): Managed[Iterator[A]] = Managed(c).map(new CursorIterator(_)(reader))
 
+  def iteratingMultipleWithReader[A](reader: Reader[A])(cursors: Seq[DBCursor]): Managed[Iterator[A]] = Managed(cursors).map(new MultiplexCursorIterator(_)(reader))
+
   class CursorIterator[A](c: DBCursor)(implicit read: Reader[A]) extends Iterator[A] {
     c.moveToFirst()
     override def next(): A = returning(read(c)){ _ => c.moveToNext() }
@@ -45,6 +47,15 @@ package object db {
     c.moveToLast()
     override def next(): A = returning(read(c)){ _ => c.moveToPrevious() }
     override def hasNext: Boolean = !c.isClosed && !c.isBeforeFirst
+  }
+
+  class MultiplexCursorIterator[A](cursors: Seq[DBCursor])(implicit read: Reader[A]) extends Iterator[A] {
+    private val iterator = cursors
+      .map(c => new CursorIterator(c))
+      .fold(Iterator[A]())((acc, next) => acc ++ next)
+
+    override def next(): A = iterator.next
+    override def hasNext: Boolean = iterator.hasNext
   }
 
   def bind[A: DbTranslator](value: A, index: Int, stmt: DBProgram) = implicitly[DbTranslator[A]].bind(value, index, stmt)

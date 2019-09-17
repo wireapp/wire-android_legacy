@@ -39,6 +39,6 @@ object ReadReceipt {
     override def apply(implicit c:  DBCursor): ReadReceipt = ReadReceipt(Message, User, Timestamp)
 
     def findForMessage(message: MessageId)(implicit db: DB): Managed[Iterator[ReadReceipt]] = iterating(find(Message, message))
-    def findForMessages(messages: Set[MessageId])(implicit db: DB): Managed[Iterator[ReadReceipt]] = iterating(findInSet(Message, messages))
+    def findForMessages(messages: Set[MessageId])(implicit db: DB): Managed[Iterator[ReadReceipt]] = iteratingMultiple(findInSet(Message, messages))
   }
 }
