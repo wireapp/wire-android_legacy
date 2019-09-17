@@ -423,7 +423,7 @@ object MessageData extends
     def findLatestUpTo(convId: ConvId, time: RemoteInstant)(implicit db: DB) =
       single(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${Time.name} < ${time.toEpochMilli}", null, null, null, s"${Time.name} DESC", "1"))
 
-    def findMessages(conv: ConvId)(implicit db: DB) = db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC")
+    def findMessages(conv: ConvId)(implicit db: DB) = iterating(db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC"))
 
     def findMessagesFrom(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' and ${Time.name} >= ${time.toEpochMilli}", null, null, null, s"${Time.name} ASC"))

@@ -52,6 +52,7 @@ trait AssetService {
 
   def save(asset: GeneralAsset): Future[Unit]
   def delete(id: GeneralAssetId): Future[Unit]
+  def deleteAll(ids: Seq[GeneralAssetId]): Future[Unit]
 
   def loadContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[InputStream]
   def loadContent(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[InputStream]
@@ -140,6 +141,10 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     case id: AssetId => assetsStorage.deleteByKey(id)
     case id: UploadAssetId => uploadAssetStorage.deleteByKey(id)
     case id: DownloadAssetId => downloadAssetStorage.deleteByKey(id)
+  }
+
+  override def deleteAll(ids: Seq[GeneralAssetId]): Future[Unit] = {
+    Future(ids.foreach(delete))
   }
 
   private def loadFromBackend(asset: Asset, callback: Option[ProgressCallback]): CancellableFuture[InputStream] = {

@@ -18,26 +18,26 @@
 package com.waz.service.conversation
 
 import com.softwaremill.macwire._
-import com.waz.log.LogSE._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
 import com.waz.service._
+import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
 import com.waz.service.tracking.{GuestsAllowedToggled, TrackingService}
-import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationResponse
+import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.sync.client.ErrorOr
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future
@@ -87,7 +87,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                tracking:        TrackingService,
                                client:          ConversationsClient,
                                selectedConv:    SelectedConversationService,
-                               syncReqService:  SyncRequestService) extends ConversationsService with DerivedLogTag {
+                               syncReqService:  SyncRequestService,
+                               assetService:    AssetService,
+                               receiptsStorage: ReadReceiptsStorage) extends ConversationsService with DerivedLogTag {
 
   private implicit val ev = EventContext.Global
   import Threading.Implicits.Background
@@ -329,10 +331,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def deleteConversation(convId: ConvId) = for {
+    convMessages <- messages.findMessages(convId)
+    _ <- assetService.deleteAll(convMessages.flatMap(_.assetId))
     _ <- convsStorage.remove(convId)
     _ <- membersStorage.delete(convId)
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
-    //todo: delete assets & read receipts also
+    _ <- receiptsStorage.removeAllForMessages(convMessages.map(_.id).toSet)
     _ <- if (selectedConv.selectedConversationId.currentValue.flatten.getOrElse(None) == convId) {
       selectedConv.selectConversation(None)
     } else {
