@@ -99,7 +99,7 @@ class DefaultFlowManagerService(context:      Context,
   // This is the preview of the outgoing video stream.
   // Call this from the callback telling us to.
   def setVideoPreview(view: View): Future[Unit] = schedule { fm =>
-    debug(l"setVideoPreview(${showString(view.toString)}")
+    debug(l"setVideoPreview")
     cameraFailedSig ! false //reset this signal since we are trying to start the capture again
     fm.setVideoPreview(null, view)
   }
@@ -108,7 +108,7 @@ class DefaultFlowManagerService(context:      Context,
   // partId is the participant id (for group calls, can be null for now).
   // Call this from the callback telling us to.
   def setVideoView(id: RConvId, partId: Option[UserId], view: View): Future[Unit] = schedule { fm =>
-    debug(l"setVideoView($id, $partId, ${showString(view.toString)}")
+    debug(l"setVideoView($id, $partId)")
     fm.setVideoView(id.str, partId.map(_.str).orNull, view)
   }
 
