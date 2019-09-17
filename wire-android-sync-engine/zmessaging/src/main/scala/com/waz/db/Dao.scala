@@ -102,6 +102,8 @@ abstract class DaoIdOps[T] extends BaseDao[T] {
 }
 
 abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
+  import BaseDao._
+
   val table: Table[T]
 
   def onCreate(db: DB) = db.execSQL(table.createSql)
@@ -134,7 +136,7 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
   def findInSet[A](col: Column[A], values: Set[A])(implicit db: DB): Seq[DBCursor] = {
     // Android throws an SQLiteException if the number of variables in a query exceeds ~999.
     // To avoid this we make batched queries, returning the a list of cursors.
-    values.sliding(500).map { chunk =>
+    values.sliding(MaxQueryVariables, MaxQueryVariables).map { chunk =>
       db.query(table.name, null, s"${col.name} IN (${chunk.iterator.map(_ => "?").mkString(", ")})", chunk.map(col(_))(breakOut): Array[String], null, null, null)
     }.toList
   }
@@ -183,4 +185,8 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
   final implicit class colToColumn[A](col: Col[A]) {
     def apply(extractor: T => A): Column[A] = ColBinder[A, T](col, extractor)
   }
+}
+
+object BaseDao {
+  val MaxQueryVariables = 500
 }
