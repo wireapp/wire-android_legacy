@@ -31,6 +31,7 @@ import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
 import com.waz.model.{AccentColor, Availability}
+import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
@@ -314,5 +315,13 @@ object ContextUtils {
       negativeRes = R.string.availability_notification_ok,
       color       = color
     )
+  }
+
+  def showLogoutWarningIfNeeded(reason: LogoutReason)(implicit context: Context): Future[Unit] = {
+    if (reason == InvalidCookie || reason == ClientDeleted) {
+      showErrorDialog(R.string.invalid_cookie_dialog_title, R.string.invalid_cookie_dialog_message)
+    } else {
+      Future.successful(())
+    }
   }
 }

@@ -31,6 +31,7 @@ import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security._
 import com.waz.zclient.security.checks._
 import com.waz.zclient.security.actions.WipeDataAction
@@ -39,6 +40,7 @@ import org.json
 import org.threeten.bp.Instant
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.util.Try
 
@@ -52,12 +54,31 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
   lazy val accounts = ZMessaging.currentAccounts
   lazy val tracking = ZMessaging.currentGlobal.trackingService
 
-  private val securityChecklist: SecurityChecklist = if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+  private val securityChecklist: SecurityChecklist = {
     implicit val context: Context = this
-    val preferences = ZMessaging.currentGlobal.prefs
-    new SecurityChecklist(List(RootDetectionCheck(preferences) -> List(new WipeDataAction())))
-  } else {
-    new SecurityChecklist(List.empty)
+    val checksAndActions = new ListBuffer[(Check, List[Action])]()
+
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
+      val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
+      val rootDetectionActions = List(new WipeDataAction())
+
+      checksAndActions += rootDetectionCheck ->  rootDetectionActions
+    }
+
+    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
+      verbose(l"check WIPE_ON_COOKIE_INVALID")
+
+      accounts.activeAccountManager.head.foreach {
+        case Some(am) =>
+          val cookieCheck = new CookieValidationCheck(am.auth)
+          val cookieActions = List(new WipeDataAction())
+          checksAndActions += cookieCheck -> cookieActions
+        case None =>
+      }
+    }
+
+    new SecurityChecklist(checksAndActions.toList)
   }
 
   override def onNewToken(s: String): Unit = {

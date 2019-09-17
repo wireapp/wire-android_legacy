@@ -24,14 +24,15 @@ import android.provider.Settings
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.AccountManager
 import com.waz.services.SecurityPolicyService
 import com.waz.utils.events.Signal
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
 import com.waz.zclient.security.checks._
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
-import com.waz.zclient.log.LogUI._
 import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
@@ -43,6 +44,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
 
   private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences     = inject[GlobalPreferences]
+  private lazy val accountManager        = inject[Signal[AccountManager]]
 
   def run(activity: Activity): Unit = {
     for {
@@ -94,6 +96,16 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
       )
 
       checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
+    }
+
+    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
+      verbose(l"check WIPE_ON_COOKIE_INVALID")
+
+      accountManager.head.foreach { am =>
+        val cookieCheck = new CookieValidationCheck(am.auth)
+        val cookieActions = List(new WipeDataAction())
+        checksAndActions += cookieCheck -> cookieActions
+      }
     }
 
     new SecurityChecklist(checksAndActions.toList)

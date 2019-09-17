@@ -23,6 +23,7 @@ import com.waz.content._
 import com.waz.model.AccountData.Password
 import com.waz.model.UserData.{ConnectionStatus, Picture}
 import com.waz.model.{AccentColor, _}
+import com.waz.service.AccountsService.UserDeleted
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserSearchService.UserSearchEntry
 import com.waz.service.UserService._
@@ -148,7 +149,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override val userDeleteEventsStage: Stage.Atomic = EventScheduler.Stage[UserDeleteEvent] { (c, e) =>
     //TODO handle deleting db and stuff?
-    Future.sequence(e.map(event => accounts.logout(event.user))).flatMap { _ =>
+    Future.sequence(e.map(event => accounts.logout(event.user, reason = UserDeleted))).flatMap { _ =>
       usersStorage.updateAll2(e.map(_.user)(breakOut), _.copy(deleted = true))
     }
   }

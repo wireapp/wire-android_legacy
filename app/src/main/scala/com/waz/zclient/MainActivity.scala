@@ -24,12 +24,13 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
 import android.support.v4.app.{Fragment, FragmentTransaction}
-import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.content.UserPreferences._
+import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus.{apply => _}
 import com.waz.model._
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
+import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
@@ -130,6 +131,12 @@ class MainActivity extends BaseActivity
         startActivity(getIntent)
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
       case _ =>
+    }
+
+    userAccountsController.lastLoggedOutAccount.onUi {
+      case Some((_, reason)) =>
+        showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.lastLoggedOutAccount ! None)
+      case None =>
     }
 
     userAccountsController.onAllLoggedOut.onUi {
@@ -489,7 +496,7 @@ class MainActivity extends BaseActivity
   }
 
   override def logout(): Unit = {
-    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({}))(accountsService.logout)).map { _ =>
+    accountsService.activeAccountId.head.flatMap(_.fold(Future.successful({})){ id => accountsService.logout(id, reason = UserInitiated) }).map { _ =>
       startFirstFragment()
     } (Threading.Ui)
   }

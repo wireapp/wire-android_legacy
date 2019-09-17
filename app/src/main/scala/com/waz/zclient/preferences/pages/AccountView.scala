@@ -33,6 +33,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.Picture
 import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
+import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
@@ -330,7 +331,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
       new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int) = {
           import Threading.Implicits.Ui
-          zms.map(_.selfUserId).head.flatMap(accounts.logout)
+          zms.map(_.selfUserId).head.flatMap { id => accounts.logout(id, reason = UserInitiated) }
             .flatMap(_ => accounts.accountsWithManagers.head.map(_.isEmpty)).map {
             case true =>
               context.startActivity(new Intent(context, classOf[AppEntryActivity]))

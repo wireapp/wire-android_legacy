@@ -69,7 +69,7 @@ class ZMessagingFactory(global: GlobalModule) {
 
   def baseStorage(userId: UserId) = new StorageModule(global.context, userId, global.prefs, global.trackingService)
 
-  def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsStorage, global.loginClient, tracking)
+  def auth(userId: UserId) = new AuthenticationManager(userId, global.accountsService, global.accountsStorage, global.loginClient, tracking)
 
   def credentialsClient(urlCreator: UrlCreator, httpClient: HttpClient, authRequestInterceptor: AuthRequestInterceptor) =
     new CredentialsUpdateClientImpl()(urlCreator, httpClient, authRequestInterceptor)

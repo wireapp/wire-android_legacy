@@ -136,6 +136,7 @@ android {
         buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$config.force_app_lock"
         buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$config.app_lock_timeout"
         buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$config.block_on_password_policy"
+        buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$config.wipe_on_cookie_invalid"
     }
 
     packagingOptions {
