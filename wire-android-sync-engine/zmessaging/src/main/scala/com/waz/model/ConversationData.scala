@@ -318,10 +318,10 @@ object ConversationData {
       list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""), null))
     }
 
-    def findByTeams(teams: Set[TeamId])(implicit db: DB) = iterating(findInSet(Team, teams.map(Option(_))))
+    def findByTeams(teams: Set[TeamId])(implicit db: DB) = iteratingMultiple(findInSet(Team, teams.map(Option(_))))
 
     def findByRemoteId(remoteId: RConvId)(implicit db: DB) = iterating(find(RemoteId, remoteId))
-    def findByRemoteIds(remoteIds: Set[RConvId])(implicit db: DB) = iterating(findInSet(RemoteId, remoteIds))
+    def findByRemoteIds(remoteIds: Set[RConvId])(implicit db: DB) = iteratingMultiple(findInSet(RemoteId, remoteIds))
   }
 }
 
@@ -342,8 +342,8 @@ object ConversationMemberData {
     }
 
     def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
-    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iterating(findInSet(ConvId, convs))
+    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs))
     def findForUser(userId: UserId)(implicit db: DB) = iterating(find(UserId, userId))
-    def findForUsers(users: Set[UserId])(implicit db: DB) = iterating(findInSet(UserId, users))
+    def findForUsers(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(UserId, users))
   }
 }

@@ -57,4 +57,5 @@ object Cleanup {
   val empty: Cleanup[Any] = create(_ => ())
 
   implicit lazy val CloseableCleanup: Cleanup[Closeable] = create(_.close())
+  implicit lazy val SeqCloseableCleanup: Cleanup[Seq[Closeable]] = create(_.foreach(_.close()))
 }

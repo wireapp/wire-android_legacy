@@ -56,7 +56,7 @@ class FCMNotificationsRepositoryImpl(implicit db: Database) extends FCMNotificat
   override def deleteAllWithId(id: Uid): Future[Unit] = db.apply(deleteEvery(everyStage.map((id, _)))(_))
 
   def exists(ids: Set[Uid]): Future[Set[Uid]] = db.read { implicit db =>
-    iterating(FCMNotificationsDao.findInSet(Id, ids)).acquire(_.map(_.id).toSet)
+    iteratingMultiple(FCMNotificationsDao.findInSet(Id, ids)).acquire(_.map(_.id).toSet)
   }
 
   override def trimExcessRows(): Future[Unit] =

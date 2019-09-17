@@ -303,7 +303,7 @@ class MessagesStorageImpl(context:     Context,
 
   private def deleteUnsentMessages(convId: ConvId)(implicit storage: DB): Unit = {
     val unsentMessages = MessageDataDao.listUnsentMsgs(convId)
-    MessageDataDao.iterating(unsentMessages).foreach(_.foreach(delete))
+    MessageDataDao.iteratingMultiple(unsentMessages).foreach(_.foreach(delete))
   }
 }
 
