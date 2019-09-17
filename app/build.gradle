@@ -14,7 +14,7 @@ repositories {
 }
 
 ext {
-    majorVersion = "3.38."
+    majorVersion = "3.39."
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
 
