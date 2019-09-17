@@ -24,7 +24,7 @@ android {
     testOptions {
         unitTests.all {
             forkEvery 1
-            jvmArgs "-Xmx4096M", "-XX:MaxPermSize=4096M", "-XX:+CMSClassUnloadingEnabled",
+            jvmArgs "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled",
                 "-Djava.net.preferIPv4Stack=true", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n"
         }
     }
