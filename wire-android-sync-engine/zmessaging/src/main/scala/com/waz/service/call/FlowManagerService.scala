@@ -62,19 +62,17 @@ class DefaultFlowManagerService(context:      Context,
     doWithFlowManager(_.networkChanged())
   }
 
-  lazy val flowManager: Option[FlowManager] = Try {
-    FlowManagerService.isEmulator match {
-      case true =>
-        warn(l"Emulator detected, skipping FlowManager initialization")
-        null
-      case _ =>
-        verbose(l"FlowManager initialization, detected PRODUCT ${Build.PRODUCT} MODEL ${Build.MODEL}")
-        val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
-        fm.addListener(flowListener)
-        fm
-    }
-
-  } .toOption
+  lazy val flowManager: Option[FlowManager] = if (FlowManagerService.isEmulator) {
+    warn(l"Emulator detected, skipping FlowManager initialization")
+    None
+  } else {
+    Try {
+      verbose(l"FlowManager initialization, detected non-emulator build")
+      val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
+      fm.addListener(flowListener)
+      fm
+    }.toOption
+  }
 
   private val flowListener = new FlowManagerListener {
     override def cameraFailed(): Unit = {
