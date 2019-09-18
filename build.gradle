@@ -103,6 +103,10 @@ class BuildtimeConfiguration {
         this.configuration = configuration
         this.customResourcesPath = customResourcesPath
     }
+
+    def isCustomBuild() {
+        return customResourcesPath != null
+    }
 }
 
 // Will check out custom repo, if any, and load its configuration, merging it on top of the default configuration

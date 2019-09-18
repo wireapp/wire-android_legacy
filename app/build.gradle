@@ -456,7 +456,12 @@ android.applicationVariants.all { variant ->
 
     variant.outputs.each { output ->
         def newApkName
-        newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
+        if(buildtimeConfiguration.isCustomBuild()) {
+            newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
+        } else {
+            newApkName = "${appName}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
+        }
+
 
         output.outputFileName = new File("../..", newApkName)
     }
