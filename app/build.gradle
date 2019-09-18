@@ -36,11 +36,11 @@ if (project.file('user.gradle').exists()) {
 }
 
 task copyCustomResources(type: Copy) {
-    if (!customConfig.exists() || gradle.startParameter.taskNames.contains("clean")) {
+    if (buildtimeConfiguration.customResourcesPath == null) {
         return
     }
 
-    def iconFolder = (config.iconFolder ?: 'icons')
+    def iconFolder = (buildtimeConfiguration.configuration.iconFolder ?: 'icons')
     def targetResFolder = "$rootDir/app/src/main/res"
     def iconSubfolders = [
             'ldpi': 'drawable-ldpi',
@@ -52,9 +52,9 @@ task copyCustomResources(type: Copy) {
     ]
 
     def resources = [
-            "ic_launcher_wire.png" : (config.launcherIcon ?: '')
+            "ic_launcher_wire.png" : (buildtimeConfiguration.configuration.launcherIcon ?: '')
     ]
-
+    def customDir = buildtimeConfiguration.customResourcesPath
     resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
             .collectEntries { targetFileName, sourceFileName ->
                 iconSubfolders.collectEntries { sourceSub, targetSub ->
@@ -77,7 +77,7 @@ task copyCustomResources(type: Copy) {
         from file(customDir + '/strings/strings_no_translate.xml') into file(targetResFolder + '/values')
     }
 
-    config.languages.each { code ->
+    buildtimeConfiguration.configuration.languages.each { code ->
         def targetStringDir = "$targetResFolder/values-$code"
         copy {
             mkdir targetStringDir
@@ -105,37 +105,37 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
-        manifestPlaceholders = [customURLScheme: config.custom_url_scheme]
+        manifestPlaceholders = [customURLScheme: buildtimeConfiguration.configuration.custom_url_scheme]
 
-        buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$config.maxAccounts"
-        buildConfigField 'String',  'BACKEND_URL',                   "\"$config.backendUrl\""
-        buildConfigField 'String',  'WEBSOCKET_URL',                 "\"$config.websocketUrl\""
-        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',      "$config.allow_account_creation"
-        buildConfigField 'boolean', 'ALLOW_SSO',                     "$config.allowSSO"
-        buildConfigField 'String',  'SUPPORT_EMAIL',                 "\"$config.supportEmail\""
-        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',       "\"$config.firebasePushSenderId\""
-        buildConfigField 'String',  'FIREBASE_APP_ID',               "\"$config.firebaseAppId\""
-        buildConfigField 'String',  'FIREBASE_API_KEY',              "\"$config.firebaseApiKey\""
-        buildConfigField 'boolean', 'ENABLE_BLACKLIST',              "$config.enableBlacklist"
-        buildConfigField 'String',  'BLACKLIST_HOST',                "\"$config.blacklistHost\""
-        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',        "\"$config.certificatePin.domain\""
-        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',         "\"$config.certificatePin.certificate\""
-        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',          "$config.submitCrashReports"
-        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$config.allowMarketingCommunication"
-        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',         "$config.allowChangeOfEmail"
-        buildConfigField 'String',  'CUSTOM_URL_SCHEME',             "\"$config.custom_url_scheme\""
-        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH',   "$config.new_password_minimum_length"
-        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH',   "$config.new_password_maximum_length"
-        buildConfigField 'String',  'TEAMS_URL',                     "\"$config.teamsUrl\""
-        buildConfigField 'String',  'ACCOUNTS_URL',                  "\"$config.accountsUrl\""
-        buildConfigField 'String',  'WEBSITE_URL',                   "\"$config.websiteUrl\""
-        buildConfigField 'String',  'HTTP_PROXY_URL',                "\"$config.http_proxy_url\""
-        buildConfigField 'String',  'HTTP_PROXY_PORT',               "\"$config.http_proxy_port\""
-        buildConfigField 'boolean', 'BLOCK_ON_JAILBREAK_OR_ROOT',    "$config.block_on_jailbreak_or_root"
-        buildConfigField 'boolean', 'FORCE_HIDE_SCREEN_CONTENT',     "$config.force_hide_screen_content"
-        buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$config.force_app_lock"
-        buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$config.app_lock_timeout"
-        buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$config.block_on_password_policy"
+        buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
+        buildConfigField 'String',  'BACKEND_URL',                   "\"$buildtimeConfiguration.configuration.backendUrl\""
+        buildConfigField 'String',  'WEBSOCKET_URL',                 "\"$buildtimeConfiguration.configuration.websocketUrl\""
+        buildConfigField 'boolean', 'ACCOUNT_CREATION_ENABLED',      "$buildtimeConfiguration.configuration.allow_account_creation"
+        buildConfigField 'boolean', 'ALLOW_SSO',                     "$buildtimeConfiguration.configuration.allowSSO"
+        buildConfigField 'String',  'SUPPORT_EMAIL',                 "\"$buildtimeConfiguration.configuration.supportEmail\""
+        buildConfigField 'String',  'FIREBASE_PUSH_SENDER_ID',       "\"$buildtimeConfiguration.configuration.firebasePushSenderId\""
+        buildConfigField 'String',  'FIREBASE_APP_ID',               "\"$buildtimeConfiguration.configuration.firebaseAppId\""
+        buildConfigField 'String',  'FIREBASE_API_KEY',              "\"$buildtimeConfiguration.configuration.firebaseApiKey\""
+        buildConfigField 'boolean', 'ENABLE_BLACKLIST',              "$buildtimeConfiguration.configuration.enableBlacklist"
+        buildConfigField 'String',  'BLACKLIST_HOST',                "\"$buildtimeConfiguration.configuration.blacklistHost\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_DOMAIN',        "\"$buildtimeConfiguration.configuration.certificatePin.domain\""
+        buildConfigField 'String',  'CERTIFICATE_PIN_BYTES',         "\"$buildtimeConfiguration.configuration.certificatePin.certificate\""
+        buildConfigField 'boolean', 'SUBMIT_CRASH_REPORTS',          "$buildtimeConfiguration.configuration.submitCrashReports"
+        buildConfigField 'boolean', 'ALLOW_MARKETING_COMMUNICATION', "$buildtimeConfiguration.configuration.allowMarketingCommunication"
+        buildConfigField 'boolean', 'ALLOW_CHANGE_OF_EMAIL',         "$buildtimeConfiguration.configuration.allowChangeOfEmail"
+        buildConfigField 'String',  'CUSTOM_URL_SCHEME',             "\"$buildtimeConfiguration.configuration.custom_url_scheme\""
+        buildConfigField 'Integer', 'NEW_PASSWORD_MINIMUM_LENGTH',   "$buildtimeConfiguration.configuration.new_password_minimum_length"
+        buildConfigField 'Integer', 'NEW_PASSWORD_MAXIMUM_LENGTH',   "$buildtimeConfiguration.configuration.new_password_maximum_length"
+        buildConfigField 'String',  'TEAMS_URL',                     "\"$buildtimeConfiguration.configuration.teamsUrl\""
+        buildConfigField 'String',  'ACCOUNTS_URL',                  "\"$buildtimeConfiguration.configuration.accountsUrl\""
+        buildConfigField 'String',  'WEBSITE_URL',                   "\"$buildtimeConfiguration.configuration.websiteUrl\""
+        buildConfigField 'String',  'HTTP_PROXY_URL',                "\"$buildtimeConfiguration.configuration.http_proxy_url\""
+        buildConfigField 'String',  'HTTP_PROXY_PORT',               "\"$buildtimeConfiguration.configuration.http_proxy_port\""
+        buildConfigField 'boolean', 'BLOCK_ON_JAILBREAK_OR_ROOT',    "$buildtimeConfiguration.configuration.block_on_jailbreak_or_root"
+        buildConfigField 'boolean', 'FORCE_HIDE_SCREEN_CONTENT',     "$buildtimeConfiguration.configuration.force_hide_screen_content"
+        buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$buildtimeConfiguration.configuration.force_app_lock"
+        buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$buildtimeConfiguration.configuration.app_lock_timeout"
+        buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$buildtimeConfiguration.configuration.block_on_password_policy"
     }
 
     packagingOptions {
@@ -224,19 +224,19 @@ android {
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
         prod {
-            applicationId config.applicationId
-            manifestPlaceholders = [applicationLabel       : config.appName,
+            applicationId buildtimeConfiguration.configuration.applicationId
+            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
                                     applicationIcon        : "@drawable/ic_launcher_wire",
-                                    sharedUserId           : config.userId,
+                                    sharedUserId           : buildtimeConfiguration.configuration.userId,
                                     internal_features      : "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$config.loggingEnabled"
+            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
             buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
         }
 
@@ -318,7 +318,7 @@ dependencies {
     //wire libraries:
     implementation "com.wire:audio-notifications:$audioVersion"
     //don't include wire translations for custom builds
-    if (customRepository.isEmpty() || token.isEmpty()) {
+    if (buildtimeConfiguration.customResourcesPath == null) {
         implementation 'com.wire:wiretranslations:1.+'
     }
 
