@@ -66,10 +66,15 @@ class AppLockActivity extends AppCompatActivity with ActivityHelper with Derived
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
 
-    if (requestCode == ConfirmDeviceCredentialsRequestCode && resultCode == Activity.RESULT_OK) {
-      info(l"authentication successful")
-      inject[SecurityPolicyChecker].clearBackgroundEntryTimer()
-      finish()
+    if (requestCode == ConfirmDeviceCredentialsRequestCode) {
+      if (resultCode == Activity.RESULT_OK) {
+        info(l"authentication successful")
+        inject[SecurityPolicyChecker].clearBackgroundEntryTimer()
+        finish()
+      } else {
+        info(l"authentication cancelled. Representing authentication screen.")
+        showAuthenticationScreen()
+      }
     }
   }
 }

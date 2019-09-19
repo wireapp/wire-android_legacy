@@ -19,7 +19,7 @@ package com.waz.zclient.security
 
 import android.app.Activity
 import android.app.admin.DevicePolicyManager
-import android.content.{ComponentName, Context, Intent}
+import android.content.{ComponentName, Intent}
 import android.provider.Settings
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.AppLockEnabled
@@ -39,7 +39,7 @@ import org.threeten.bp.temporal.ChronoUnit
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class SecurityPolicyChecker(implicit injector: Injector, context: Context) extends Injectable with DerivedLogTag {
+class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Ui
 
   private lazy val securityPolicyService = inject[SecurityPolicyService]
@@ -48,7 +48,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
 
   def run(activity: Activity): Unit = {
     for {
-      allChecksPassed  <- securityChecklist.run()
+      allChecksPassed  <- securityChecklist(activity).run()
       isAppLockEnabled <- if (allChecksPassed) appLockEnabled else Future.successful(false)
       _ = verbose(l"all checks passed: $allChecksPassed, is app lock enabled: $isAppLockEnabled")
     } yield {
@@ -56,7 +56,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
     }
   }
 
-  private def securityChecklist: SecurityChecklist = {
+  private def securityChecklist(implicit parentActivity: Activity): SecurityChecklist = {
     verbose(l"securityChecklist")
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 
@@ -79,7 +79,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
           R.string.security_policy_setup_dialog_title,
           R.string.security_policy_setup_dialog_message,
           R.string.security_policy_setup_dialog_button,
-          action = showDeviceAdminScreen
+          action = { () => showDeviceAdminScreen(parentActivity) }
         )
       )
 
@@ -91,7 +91,7 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
           ContextUtils.getString(R.string.security_policy_invalid_password_dialog_title),
           ContextUtils.getString(R.string.security_policy_invalid_password_dialog_message, SecurityPolicyService.PasswordMinimumLength.toString),
           ContextUtils.getString(R.string.security_policy_setup_dialog_button),
-          action = showSecuritySettings
+          action = { () => showSecuritySettings(parentActivity) }
         )
       )
 
@@ -111,17 +111,17 @@ class SecurityPolicyChecker(implicit injector: Injector, context: Context) exten
     new SecurityChecklist(checksAndActions.toList)
   }
 
-  private def showDeviceAdminScreen(): Unit = {
-    val secPolicy = new ComponentName(context, classOf[SecurityPolicyService])
+  private def showDeviceAdminScreen(implicit parentActivity: Activity): Unit = {
+    val secPolicy = new ComponentName(parentActivity, classOf[SecurityPolicyService])
     val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
       .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
       .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
 
-    context.startActivity(intent)
+    parentActivity.startActivity(intent)
   }
 
-  private def showSecuritySettings(): Unit =
-    context.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))
+  private def showSecuritySettings(implicit parentActivity: Activity): Unit =
+    parentActivity.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))
 
   def appLockEnabled: Future[Boolean] =
     if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences(AppLockEnabled).apply()
