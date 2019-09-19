@@ -18,6 +18,7 @@
 package com.waz.service.call
 
 import android.content.Context
+import android.os.Build
 import android.view.View
 import com.waz.log.LogSE._
 import com.waz.call._
@@ -61,11 +62,17 @@ class DefaultFlowManagerService(context:      Context,
     doWithFlowManager(_.networkChanged())
   }
 
-  lazy val flowManager: Option[FlowManager] = Try {
-    val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
-    fm.addListener(flowListener)
-    fm
-  } .toOption
+  lazy val flowManager: Option[FlowManager] = if (FlowManagerService.isEmulator) {
+    warn(l"Emulator detected, skipping FlowManager initialization")
+    None
+  } else {
+    Try {
+      verbose(l"FlowManager initialization, detected non-emulator build")
+      val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
+      fm.addListener(flowListener)
+      fm
+    }.toOption
+  }
 
   private val flowListener = new FlowManagerListener {
     override def cameraFailed(): Unit = {
@@ -135,4 +142,14 @@ class DefaultFlowManagerService(context:      Context,
 
 object FlowManagerService {
   case class VideoCaptureDevice(id: String, name: String)
+
+  def isEmulator =
+    Build.FINGERPRINT.startsWith("generic") ||
+      Build.FINGERPRINT.startsWith("unknown") ||
+      Build.MODEL.contains("google_sdk") ||
+      Build.MODEL.contains("Emulator") ||
+      Build.MODEL.contains ("Android SDK built for x86") ||
+      Build.MANUFACTURER.contains ("Genymotion") ||
+      (Build.BRAND.startsWith ("generic") && Build.DEVICE.startsWith ("generic") ) ||
+      "google_sdk" == Build.PRODUCT
 }
