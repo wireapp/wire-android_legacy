@@ -55,7 +55,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   val ssoToken = Signal(Option.empty[String])
 
-  val onAllLoggedOut = Signal(false)
+  val allAccountsLoggedOut = Signal(false)
   lazy val lastLoggedOutAccount = Signal[Option[(UserId, LogoutReason)]]
   lazy val onAccountLoggedOut: EventStream[(UserId, LogoutReason)] = accountsService.onAccountLoggedOut
   private var numberOfLoggedInAccounts = 0
@@ -160,7 +160,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   private def observeLogoutEvents(): Unit = {
     accounts.map(_.size).onUi { numberOfAccounts =>
-      onAllLoggedOut ! (numberOfAccounts == 0 && numberOfLoggedInAccounts > 0)
+      allAccountsLoggedOut ! (numberOfAccounts == 0 && numberOfLoggedInAccounts > 0)
       numberOfLoggedInAccounts = numberOfAccounts
     }
 

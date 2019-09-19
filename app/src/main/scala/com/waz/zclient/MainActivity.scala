@@ -139,7 +139,7 @@ class MainActivity extends BaseActivity
       case None =>
     }
 
-    userAccountsController.onAllLoggedOut.onUi {
+    userAccountsController.allAccountsLoggedOut.onUi {
       case true =>
         getControllerFactory.getPickUserController.hideUserProfile()
         getControllerFactory.getNavigationController.resetPagerPositionToDefault()
