@@ -111,9 +111,11 @@ class BuildtimeConfiguration {
 
 // Will check out custom repo, if any, and load its configuration, merging it on top of the default configuration
 def prepareCustomizationEnvironment() {
-
     def properties = new Properties()
-    properties.load(project.rootProject.file("local.properties").newDataInputStream())
+    def localProperties = project.rootProject.file("local.properties")
+    if (localProperties.exists()) {
+        properties.load(localProperties.newDataInputStream())
+    }
 
     def jsonReader = new JsonSlurper()
     def wireConfigFile = new File("$rootDir/default.json")
