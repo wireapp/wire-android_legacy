@@ -56,7 +56,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   val ssoToken = Signal(Option.empty[String])
 
   val allAccountsLoggedOut = Signal(false)
-  lazy val lastLoggedOutAccount = Signal[Option[(UserId, LogoutReason)]]
+  lazy val mostRecentLoggedOutAccount = Signal[Option[(UserId, LogoutReason)]]
   lazy val onAccountLoggedOut: EventStream[(UserId, LogoutReason)] = accountsService.onAccountLoggedOut
   private var numberOfLoggedInAccounts = 0
 
@@ -176,7 +176,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
         if (cookieIsInvalid && BuildConfig.WIPE_ON_COOKIE_INVALID) accountsService.wipeData(userId)
         else Future.successful(())
         ).foreach{ _ =>
-        lastLoggedOutAccount ! Some(account)
+        mostRecentLoggedOutAccount ! Some(account)
       }
     }
   }

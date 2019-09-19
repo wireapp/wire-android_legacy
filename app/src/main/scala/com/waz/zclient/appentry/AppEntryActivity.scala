@@ -219,9 +219,9 @@ class AppEntryActivity extends BaseActivity {
       case _ =>
     }
 
-    userAccountsController.lastLoggedOutAccount.onUi {
+    userAccountsController.mostRecentLoggedOutAccount.onUi {
       case Some((_, reason)) =>
-        showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.lastLoggedOutAccount ! None)
+        showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.mostRecentLoggedOutAccount ! None)
       case None =>
     }
   }
