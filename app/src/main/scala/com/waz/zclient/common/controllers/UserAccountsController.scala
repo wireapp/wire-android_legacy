@@ -167,7 +167,6 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     accountsService.onAccountLoggedOut.onUi { case account @ (userId, reason) =>
       verbose(l"User $userId logged out due to $reason")
 
-      // TODO: After SE migration we can do this check in AccountsService
       val cookieIsInvalid = reason match {
         case InvalidCookie | ClientDeleted | UserInitiated => true
         case _ => false
