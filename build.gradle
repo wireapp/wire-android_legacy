@@ -112,22 +112,25 @@ class BuildtimeConfiguration {
 // Will check out custom repo, if any, and load its configuration, merging it on top of the default configuration
 def prepareCustomizationEnvironment() {
 
+    def properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
     def jsonReader = new JsonSlurper()
     def wireConfigFile = new File("$rootDir/default.json")
     def defaultConfig = jsonReader.parseText(wireConfigFile.text)
 
-    def customRepository = System.getenv("CUSTOM_REPOSITORY") ?: ''
+    def customRepository = System.getenv("CUSTOM_REPOSITORY") ?: properties.getProperty("CUSTOM_REPOSITORY") ?: ''
     if (customRepository.isEmpty()) {
         project.logger.quiet("This is not a custom build (no custom repo)")
         return new BuildtimeConfiguration(defaultConfig, null)
     }
 
-    def customFolder = System.getenv("CUSTOM_FOLDER") ?: ''
+    def customFolder = System.getenv("CUSTOM_FOLDER") ?: properties.getProperty("CUSTOM_FOLDER") ?: ''
     if(customFolder.isEmpty()) {
         throw new GradleException('Custom repo specified, but not custom folder')
     }
 
-    def gitHubToken = System.getenv("GITHUB_API_TOKEN") ?: ''
+    def gitHubToken = System.getenv("GITHUB_API_TOKEN") ?: properties.getProperty("GITHUB_API_TOKEN") ?: ''
     if (gitHubToken.isEmpty()) {
         throw new GradleException('Custom repo specified, but no GitHub API token provided')
     }
