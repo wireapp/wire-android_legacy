@@ -364,6 +364,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   def logout(userId: UserId, reason: LogoutReason): Future[Unit] = {
     verbose(l"logout: $userId")
     for {
+      isLoggedIn    <- storage.flatMap(_.get(userId)).map(_.isDefined) if isLoggedIn
       current       <- activeAccountId.head
       otherAccounts <- accountsWithManagers.head.map(_.filter(userId != _))
       _             <- if (current.contains(userId)) setAccount(otherAccounts.headOption) else Future.successful(())
@@ -373,7 +374,6 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
       Serialized.future(AccountManagersKey)(Future[Unit](accountManagers.mutate(_.filterNot(_.userId == userId))))
       onAccountLoggedOut ! (userId -> reason)
     }
-
   }
 
   /**
