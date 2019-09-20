@@ -30,6 +30,7 @@ import com.waz.model._
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
 import com.waz.service.UserService.UnsplashUrl
+import com.waz.service.AccountsService.ClientDeleted
 import com.waz.service.assets2.Content
 import com.waz.service.backup.BackupManager
 import com.waz.service.otr.OtrService.SessionId
@@ -143,7 +144,6 @@ class AccountManager(val userId:   UserId,
   otrCurrentClient.map(_.isDefined) { exists =>
     if (hasClient && !exists) {
       info(l"client has been removed on backend, logging out")
-      global.trackingService.loggedOut(LoggedOutEvent.RemovedClient, userId)
       logoutAndResetClient()
     }
     hasClient = exists
@@ -279,7 +279,7 @@ class AccountManager(val userId:   UserId,
 
   private def logoutAndResetClient() =
     for {
-      _ <- accounts.logout(userId)
+      _ <- accounts.logout(userId, ClientDeleted)
       _ <- cryptoBox.deleteCryptoBox()
       _ <- userPrefs(SelfClient) := Unregistered
     } yield ()

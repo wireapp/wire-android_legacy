@@ -28,6 +28,7 @@ import com.waz.content.UserPreferences.{PendingEmail, PendingPassword}
 import com.waz.model.AccountData.Password
 import com.waz.model.EmailAddress
 import com.waz.service.AccountManager.ClientRegistrationState.LimitReached
+import com.waz.service.AccountsService.{InvalidCredentials, UserInitiated}
 import com.waz.service.{AccountManager, AccountsService}
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.threading.{CancellableFuture, Threading}
@@ -106,7 +107,7 @@ class AddEmailFragment extends CredentialsFragment {
       for {
         am <- am.head
         _  <- am.storage.userPrefs(PendingEmail) := None
-        _  <- accounts.logout(am.userId)
+        _  <- accounts.logout(am.userId, UserInitiated)
       } yield activity.startFirstFragment() // send user back to login screen
     }
   }
@@ -332,7 +333,7 @@ class SetOrRequestPasswordFragment extends CredentialsFragment {
               case Right(_) =>
                 activity.startFirstFragment()
               case Left(err) if err.code == ResponseCode.Forbidden =>
-                accounts.logout(am.userId).map(_ => activity.startFirstFragment())
+                accounts.logout(am.userId, InvalidCredentials).map(_ => activity.startFirstFragment())
               case Left(err) =>
                 showError(err)
             }

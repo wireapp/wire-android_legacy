@@ -46,7 +46,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.country.CountryController
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.utils.KeyboardUtils
-import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog}
+import com.waz.zclient.utils.ContextUtils.{showConfirmationDialog, showErrorDialog, showLogoutWarningIfNeeded}
 import com.waz.zclient.utils.{BackendController, ContextUtils, RichView, ViewUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 
@@ -217,6 +217,12 @@ class AppEntryActivity extends BaseActivity {
         deepLinkService.deepLink ! None
 
       case _ =>
+    }
+
+    userAccountsController.mostRecentLoggedOutAccount.onUi {
+      case Some((_, reason)) =>
+        showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.mostRecentLoggedOutAccount ! None)
+      case None =>
     }
   }
 

@@ -24,6 +24,8 @@ import com.waz.api.impl.ErrorResponse.Cancelled
 import com.waz.content.{AccountStorage, AccountStorage2}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.model.{AccountData, UserId}
+import com.waz.service.AccountsService
+import com.waz.service.AccountsService.{InvalidCookie, InvalidCredentials, LogoutReason, UserInitiated}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.AccessToken
@@ -49,7 +51,11 @@ trait AccessTokenProvider {
  * Manages authentication token, and dispatches login requests when needed.
  * Will retry login request if unsuccessful.
  */
-class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: LoginClient, tracking: TrackingService) extends AccessTokenProvider {
+class AuthenticationManager(id: UserId,
+                            accountsService: AccountsService,
+                            accountStorage: AccountStorage,
+                            client: LoginClient,
+                            tracking: TrackingService) extends AccessTokenProvider {
 
   implicit val tag: LogTag = accountTag[AuthenticationManager](id)
 
@@ -61,7 +67,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
   private def cookie = withAccount(_.cookie)
 
   private def withAccount[A](f: AccountData => A): Future[A] = {
-    accStorage.get(id).map {
+    accountStorage.get(id).map {
       case Some(acc) => f(acc)
       case _         => throw LoggedOutException
     }
@@ -70,17 +76,19 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
   //Only performs safe update - never wipes either the cookie or the token.
   private def updateCredentials(token: Option[AccessToken] = None, cookie: Option[Cookie] = None) = {
     verbose(l"updateCredentials: $token, $cookie")
-    accStorage.update(id, acc => acc.copy(accessToken = if (token.isDefined) token else acc.accessToken, cookie = cookie.getOrElse(acc.cookie)))
+    accountStorage.update(id, acc => acc.copy(accessToken = if (token.isDefined) token else acc.accessToken, cookie = cookie.getOrElse(acc.cookie)))
   }
 
-  private def wipeCredentials(): Future[Unit] = {
-    verbose(l"wipe credentials")
-    accStorage.remove(id)
+  private def logout(reason: LogoutReason): Future[Unit] = {
+    verbose(l"logging out user $id. Reason: $reason")
+    accountsService.logout(id, reason)
   }
 
   def invalidateToken(): Future[Unit] = token.map(_.foreach(t => updateCredentials(Some(t.copy(expiresAt = Instant.EPOCH)))))
 
   def isExpired(token: AccessToken): Boolean = (token.expiresAt - ExpireThreshold) isBefore clock.instant()
+
+  def isCookieValid: Future[Boolean] = cookie.map(_.isValid)
 
   /**
    * Returns current token if not expired or performs access request. Failing that, the user gets logged out
@@ -97,7 +105,7 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
           case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
             verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
             tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
-            wipeCredentials().map(_ => Left(resp))
+            logout(reason = InvalidCookie).map(_ => Left(resp))
         }
       }
     }
@@ -118,12 +126,12 @@ class AuthenticationManager(id: UserId, accStorage: AccountStorage, client: Logi
               case Some(credentials) =>
                 client.login(credentials).flatMap {
                   case Right(LoginResult(token, c, _)) => updateCredentials(Some(token), c).map(_ => Right(token))
-                  case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, _, _)) => wipeCredentials().map(_ => Left(resp)) //credentials didn't match - log user out
+                  case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, _, _)) => logout(reason = InvalidCredentials).map(_ => Left(resp))
                   case Left(err) => Future.successful(Left(err))
                 }
               case None =>
                 verbose(l"Cookie is now invalid, and no credentials were supplied. The user will now be logged out")
-                wipeCredentials().map(_ => Left(resp))
+                logout(reason = InvalidCookie).map(_ => Left(resp))
             }
         }.map(_.right.map(_ => ()))
       }

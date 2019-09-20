@@ -1381,4 +1381,7 @@
     <string name="security_policy_setup_dialog_button">Open settings</string>
     <string name="security_policy_invalid_password_dialog_title">Password strength insufficient</string>
     <string name="security_policy_invalid_password_dialog_message">Your device must have a password with minimum %1$s characters, at least one each of digit, uppercase, lowercase, and special symbol.</string>
+
+    <string name="invalid_cookie_dialog_title">Your session expired</string>
+    <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
 </resources>

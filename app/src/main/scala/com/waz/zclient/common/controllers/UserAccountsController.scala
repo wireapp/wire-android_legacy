@@ -24,13 +24,14 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserPermissions.Permission._
 import com.waz.model.UserPermissions._
 import com.waz.model._
-import com.waz.service.{AccountsService, ZMessaging}
+import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason, UserInitiated}
+import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.utils.{ConversationSignal, UiStorage}
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
@@ -40,24 +41,24 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   
   import Threading.Implicits.Ui
 
+  observeLogoutEvents()
+
   private implicit val uiStorage   = inject[UiStorage]
   private lazy val zms             = inject[Signal[ZMessaging]]
   private lazy val accountsService = inject[AccountsService]
   private lazy val prefs           = inject[Signal[UserPreferences]]
   private lazy val convCtrl        = inject[ConversationController]
 
-  lazy val accounts = accountsService.accountManagers.map(_.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.userId.str)))
-
-  private var numberOfLoggedInAccounts = 0
-
-  val onAllLoggedOut = Signal(false)
-
-  accounts.map(_.size).onUi { accsNumber =>
-    onAllLoggedOut ! (accsNumber == 0 && numberOfLoggedInAccounts > 0)
-    numberOfLoggedInAccounts = accsNumber
+  lazy val accounts: Signal[Seq[AccountManager]] = accountsService.accountManagers.map {
+    _.toSeq.sortBy(acc => (acc.teamId.isDefined, acc.userId.str))
   }
 
   val ssoToken = Signal(Option.empty[String])
+
+  val allAccountsLoggedOut = Signal(false)
+  lazy val mostRecentLoggedOutAccount = Signal[Option[(UserId, LogoutReason)]]
+  lazy val onAccountLoggedOut: EventStream[(UserId, LogoutReason)] = accountsService.onAccountLoggedOut
+  private var numberOfLoggedInAccounts = 0
 
   lazy val currentUser = for {
     zms     <- zms
@@ -157,5 +158,26 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     } yield tId.isDefined && ps.contains(AddConversationMember)
   }
 
+  private def observeLogoutEvents(): Unit = {
+    accounts.map(_.size).onUi { numberOfAccounts =>
+      allAccountsLoggedOut ! (numberOfAccounts == 0 && numberOfLoggedInAccounts > 0)
+      numberOfLoggedInAccounts = numberOfAccounts
+    }
 
+    accountsService.onAccountLoggedOut.onUi { case account @ (userId, reason) =>
+      verbose(l"User $userId logged out due to $reason")
+
+      val cookieIsInvalid = reason match {
+        case InvalidCookie | ClientDeleted | UserInitiated => true
+        case _ => false
+      }
+
+      (
+        if (cookieIsInvalid && BuildConfig.WIPE_ON_COOKIE_INVALID) accountsService.wipeData(userId)
+        else Future.successful(())
+        ).foreach{ _ =>
+        mostRecentLoggedOutAccount ! Some(account)
+      }
+    }
+  }
 }

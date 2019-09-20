@@ -105,6 +105,7 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
+        
         manifestPlaceholders = [customURLScheme: buildtimeConfiguration.configuration.custom_url_scheme]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
@@ -136,6 +137,7 @@ android {
         buildConfigField 'boolean', 'FORCE_APP_LOCK',                "$buildtimeConfiguration.configuration.force_app_lock"
         buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$buildtimeConfiguration.configuration.app_lock_timeout"
         buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$buildtimeConfiguration.configuration.block_on_password_policy"
+        buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
     }
 
     packagingOptions {
