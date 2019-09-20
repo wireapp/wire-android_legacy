@@ -76,3 +76,4 @@ testui
 # custom config file
 custom
 local_variables.sh
+/local.properties*
