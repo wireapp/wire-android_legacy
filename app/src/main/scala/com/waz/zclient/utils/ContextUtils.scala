@@ -31,7 +31,7 @@ import android.util.{AttributeSet, DisplayMetrics, TypedValue}
 import android.view.WindowManager
 import android.widget.Toast
 import com.waz.model.{AccentColor, Availability}
-import com.waz.service.AccountsService.{ClientDeleted, DataWiped, InvalidCookie, LogoutReason}
+import com.waz.service.AccountsService.{ClientDeleted, InvalidCookie, LogoutReason}
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.appentry.DialogErrorMessage
