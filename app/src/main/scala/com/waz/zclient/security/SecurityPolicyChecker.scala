@@ -19,12 +19,12 @@ package com.waz.zclient.security
 
 import android.app.Activity
 import android.app.admin.DevicePolicyManager
-import android.content.{ComponentName, Intent}
+import android.content.{ComponentName, Context, Intent}
 import android.provider.Settings
 import com.waz.content.GlobalPreferences
 import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.AccountManager
+import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.services.SecurityPolicyService
 import com.waz.utils.events.Signal
 import com.waz.zclient.log.LogUI._
@@ -45,10 +45,11 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
   private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences     = inject[GlobalPreferences]
   private lazy val accountManager        = inject[Signal[AccountManager]]
+  lazy val accounts = ZMessaging.currentAccounts
 
   def run(activity: Activity): Unit = {
     for {
-      allChecksPassed  <- securityChecklist(activity).run()
+      allChecksPassed  <- foregroundSecurityChecklist(activity).run()
       isAppLockEnabled <- if (allChecksPassed) appLockEnabled else Future.successful(false)
       _ = verbose(l"all checks passed: $allChecksPassed, is app lock enabled: $isAppLockEnabled")
     } yield {
@@ -56,7 +57,39 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
     }
   }
 
-  private def securityChecklist(implicit parentActivity: Activity): SecurityChecklist = {
+  /**
+    * Security checklist for background activities (e.g. receiving notifications)
+    */
+  def backgroundSecurityChecklist(implicit context: Context): SecurityChecklist = {
+    val checksAndActions = new ListBuffer[(Check, List[Action])]()
+
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
+      val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
+      val rootDetectionActions = List(new WipeDataAction())
+
+      checksAndActions += rootDetectionCheck ->  rootDetectionActions
+    }
+
+    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
+      verbose(l"check WIPE_ON_COOKIE_INVALID")
+
+      accounts.activeAccountManager.head.foreach {
+        case Some(am) =>
+          val cookieCheck = new CookieValidationCheck(am.auth)
+          val cookieActions = List(new WipeDataAction())
+          checksAndActions += cookieCheck -> cookieActions
+        case None =>
+      }
+    }
+
+    new SecurityChecklist(checksAndActions.toList)
+  }
+
+  /**
+    * Security checklist for background activity
+    */
+  private def foregroundSecurityChecklist(implicit parentActivity: Activity): SecurityChecklist = {
     verbose(l"securityChecklist")
     val checksAndActions = new ListBuffer[(Check, List[Action])]()
 

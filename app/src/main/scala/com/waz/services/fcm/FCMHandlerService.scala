@@ -31,55 +31,24 @@ import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security._
-import com.waz.zclient.security.checks._
-import com.waz.zclient.security.actions.WipeDataAction
-import com.waz.zclient.{BuildConfig, WireApplication}
+import com.waz.zclient.{Injectable, Injector, WireApplication}
 import org.json
 import org.threeten.bp.Instant
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.util.Try
 
 /**
   * For more information, see: https://firebase.google.com/docs/cloud-messaging/android/receive
   */
-class FCMHandlerService extends FirebaseMessagingService with ZMessagingService with DerivedLogTag {
+class FCMHandlerService(implicit injector: Injector) extends FirebaseMessagingService with ZMessagingService with DerivedLogTag with Injectable {
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
   lazy val accounts = ZMessaging.currentAccounts
   lazy val tracking = ZMessaging.currentGlobal.trackingService
-
-  private val securityChecklist: SecurityChecklist = {
-    implicit val context: Context = this
-    val checksAndActions = new ListBuffer[(Check, List[Action])]()
-
-    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
-      val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
-      val rootDetectionActions = List(new WipeDataAction())
-
-      checksAndActions += rootDetectionCheck ->  rootDetectionActions
-    }
-
-    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
-      verbose(l"check WIPE_ON_COOKIE_INVALID")
-
-      accounts.activeAccountManager.head.foreach {
-        case Some(am) =>
-          val cookieCheck = new CookieValidationCheck(am.auth)
-          val cookieActions = List(new WipeDataAction())
-          checksAndActions += cookieCheck -> cookieActions
-        case None =>
-      }
-    }
-
-    new SecurityChecklist(checksAndActions.toList)
-  }
 
   override def onNewToken(s: String): Unit = {
     ZMessaging.globalModule.map {
@@ -99,13 +68,14 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
   private def processRemoteMessage(remoteMessage: RemoteMessage): Unit = {
     getData(remoteMessage).foreach { data =>
       verbose(l"processing remote message with data: ${redactedString(data.toString())}")
+      implicit val context: Context = this
 
       Option(ZMessaging.currentGlobal) match {
         case None =>
           warn(l"No ZMessaging global available - calling too early")
         case Some(globalModule) if !isSenderKnown(globalModule, remoteMessage.getFrom) =>
           warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
-        case _ => securityChecklist.run().foreach { allChecksPassed =>
+        case _ => inject[SecurityPolicyChecker].backgroundSecurityChecklist(context).run().foreach { allChecksPassed =>
           if (allChecksPassed) {
             getTargetAccount(data) match {
               case None =>
