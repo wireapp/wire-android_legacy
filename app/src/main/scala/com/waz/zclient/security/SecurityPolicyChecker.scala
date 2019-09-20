@@ -87,7 +87,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
   }
 
   /**
-    * Security checklist for background activity
+    * Security checklist for foreground activity
     */
   private def foregroundSecurityChecklist(implicit parentActivity: Activity): SecurityChecklist = {
     verbose(l"securityChecklist")
