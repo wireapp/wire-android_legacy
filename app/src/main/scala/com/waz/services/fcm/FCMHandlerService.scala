@@ -30,9 +30,9 @@ import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
+import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security._
-import com.waz.zclient.{Injectable, Injector, WireApplication}
 import org.json
 import org.threeten.bp.Instant
 
@@ -43,7 +43,7 @@ import scala.util.Try
 /**
   * For more information, see: https://firebase.google.com/docs/cloud-messaging/android/receive
   */
-class FCMHandlerService(implicit injector: Injector) extends FirebaseMessagingService with ZMessagingService with DerivedLogTag with Injectable {
+class FCMHandlerService extends FirebaseMessagingService with ZMessagingService with DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 
   lazy val pushSenderId = ZMessaging.currentGlobal.backend.pushSenderId
@@ -75,7 +75,7 @@ class FCMHandlerService(implicit injector: Injector) extends FirebaseMessagingSe
           warn(l"No ZMessaging global available - calling too early")
         case Some(globalModule) if !isSenderKnown(globalModule, remoteMessage.getFrom) =>
           warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
-        case _ => inject[SecurityPolicyChecker].backgroundSecurityChecklist(context).run().foreach { allChecksPassed =>
+        case _ => SecurityPolicyChecker.backgroundSecurityChecklist(context).run().foreach { allChecksPassed =>
           if (allChecksPassed) {
             getTargetAccount(data) match {
               case None =>
