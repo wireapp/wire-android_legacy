@@ -318,7 +318,7 @@ object ContextUtils {
   }
 
   def showLogoutWarningIfNeeded(reason: LogoutReason)(implicit context: Context): Future[Unit] = {
-    if (reason == InvalidCookie || reason == ClientDeleted || reason == DataWiped) {
+    if (reason == InvalidCookie || reason == ClientDeleted) {
       showErrorDialog(R.string.invalid_cookie_dialog_title, R.string.invalid_cookie_dialog_message)
     } else {
       Future.successful(())
