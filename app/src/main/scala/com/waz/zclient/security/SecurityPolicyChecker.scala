@@ -66,7 +66,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
       verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
       val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
-      val rootDetectionActions = List(new WipeDataAction())
+      val rootDetectionActions = List(new WipeDataAction(None))
 
       checksAndActions += rootDetectionCheck ->  rootDetectionActions
     }
@@ -77,7 +77,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
       accounts.activeAccountManager.head.foreach {
         case Some(am) =>
           val cookieCheck = new CookieValidationCheck(am.auth)
-          val cookieActions = List(new WipeDataAction())
+          val cookieActions = List(new WipeDataAction(Some(am.userId)))
           checksAndActions += cookieCheck -> cookieActions
         case None =>
       }
@@ -97,7 +97,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
       verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
       val rootDetectionCheck = RootDetectionCheck(globalPreferences)
       val rootDetectionActions = List(
-        new WipeDataAction(),
+        new WipeDataAction(None),
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
 
@@ -136,7 +136,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
 
       accountManager.head.foreach { am =>
         val cookieCheck = new CookieValidationCheck(am.auth)
-        val cookieActions = List(new WipeDataAction())
+        val cookieActions = List(new WipeDataAction(Some(am.userId)))
         checksAndActions += cookieCheck -> cookieActions
       }
     }
