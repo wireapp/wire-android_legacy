@@ -40,12 +40,12 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
 class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
+
   import com.waz.threading.Threading.Implicits.Ui
 
   private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences     = inject[GlobalPreferences]
   private lazy val accountManager        = inject[Signal[AccountManager]]
-  lazy val accounts = ZMessaging.currentAccounts
 
   def run(activity: Activity): Unit = {
     for {
@@ -55,35 +55,6 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
     } yield {
       if (isAppLockEnabled) authenticateIfNeeded(activity)
     }
-  }
-
-  /**
-    * Security checklist for background activities (e.g. receiving notifications)
-    */
-  def backgroundSecurityChecklist(implicit context: Context): SecurityChecklist = {
-    val checksAndActions = new ListBuffer[(Check, List[Action])]()
-
-    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
-      val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
-      val rootDetectionActions = List(new WipeDataAction(None))
-
-      checksAndActions += rootDetectionCheck ->  rootDetectionActions
-    }
-
-    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
-      verbose(l"check WIPE_ON_COOKIE_INVALID")
-
-      accounts.activeAccountManager.head.foreach {
-        case Some(am) =>
-          val cookieCheck = new CookieValidationCheck(am.auth)
-          val cookieActions = List(new WipeDataAction(Some(am.userId)))
-          checksAndActions += cookieCheck -> cookieActions
-        case None =>
-      }
-    }
-
-    new SecurityChecklist(checksAndActions.toList)
   }
 
   /**
@@ -159,7 +130,8 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
   def appLockEnabled: Future[Boolean] =
     if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences(AppLockEnabled).apply()
 
-  private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH) // this ensures asking for password when the app is first opened
+  // This ensures asking for password when the app is first opened.
+  private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
   val authenticationNeeded = Signal(false)
 
   private def timerExpired: Boolean = {
@@ -185,5 +157,41 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
       case true => parentActivity.startActivity(new Intent(parentActivity, classOf[AppLockActivity]))
       case _ =>
     }
+  }
+}
+
+object SecurityPolicyChecker extends DerivedLogTag {
+
+  import com.waz.threading.Threading.Implicits.Ui
+
+  /**
+    * Security checklist for background activities (e.g. receiving notifications). This is
+    * static so that it can be accessible from `FCMHandlerService`.
+    */
+  def backgroundSecurityChecklist(implicit context: Context): SecurityChecklist = {
+    val checksAndActions = new ListBuffer[(Check, List[Action])]()
+
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
+
+      val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
+      val rootDetectionActions = List(new WipeDataAction(None))
+
+      checksAndActions += rootDetectionCheck ->  rootDetectionActions
+    }
+
+    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
+      verbose(l"check WIPE_ON_COOKIE_INVALID")
+
+      ZMessaging.currentAccounts.activeAccountManager.head.foreach {
+        case Some(am) =>
+          val cookieCheck = new CookieValidationCheck(am.auth)
+          val cookieActions = List(new WipeDataAction(Some(am.userId)))
+          checksAndActions += cookieCheck -> cookieActions
+        case None =>
+      }
+    }
+
+    new SecurityChecklist(checksAndActions.toList)
   }
 }
