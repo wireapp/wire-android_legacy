@@ -28,7 +28,7 @@ import android.text.TextUtils
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
-import com.waz.content._
+import com.waz.content.{UserPreferences, _}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.push.NotificationUiController
@@ -47,7 +47,6 @@ import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
-import com.waz.content.UserPreferences
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -325,6 +324,8 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         case CONNECT_ACCEPTED       => ResString(R.string.notification__message__single__accept_request, userName)
         case CONNECT_REQUEST        => ResString(R.string.people_picker__invite__share_text__header, userName)
         case MESSAGE_SENDING_FAILED => ResString(R.string.notification__message__send_failed)
+        case CONVERSATION_DELETED   => if (userName == Name.Empty) ResString(R.string.notification__message__conversation_deleted)
+        else ResString(R.string.notification__message__conversation_deleted_by, userName)
         case _ => ResString.Empty
       }
 

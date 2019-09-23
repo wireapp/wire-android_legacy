@@ -639,6 +639,8 @@
     <string name="notification__message__liked">\u2764 ‘%1$s’</string>
     <string name="notification__message__liked_message">\u2764 your message</string>
     <string name="notification__message__liked_picture">\u2764 your picture</string>
+    <string name="notification__message__conversation_deleted">Someone deleted the group</string>
+    <string name="notification__message__conversation_deleted_by">%1$s deleted the group</string>
 
     <!-- ephemeral -->
     <string name="notification__message__ephemeral_someone">Someone</string>

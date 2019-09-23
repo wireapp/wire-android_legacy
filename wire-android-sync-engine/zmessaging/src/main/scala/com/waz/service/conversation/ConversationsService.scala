@@ -341,7 +341,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) = {
     (for {
       _ <- notificationService.displayNotificationForConversation(
-        new NotificationData(msg ="deleted", conv = convData.id, user = from, msgType = NotificationType.CONVERSATION_DELETED, time = remoteTime),
+        new NotificationData(conv = convData.id, user = from, msgType = NotificationType.CONVERSATION_DELETED, time = remoteTime),
         convData
       )
       convId = convData.id
