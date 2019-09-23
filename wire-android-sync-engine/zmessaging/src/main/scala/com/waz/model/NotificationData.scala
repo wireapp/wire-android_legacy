@@ -107,5 +107,6 @@ object NotificationData {
     case NotificationType.LIKE => "Like"
     case NotificationType.LOCATION => "Location"
     case NotificationType.MESSAGE_SENDING_FAILED => "MessageSendingFailed"
+    case NotificationType.CONVERSATION_DELETED => "ConversationDeleted"
   }
 }

@@ -19,20 +19,20 @@ package com.waz.service.notifications
 
 import com.waz.api.Message
 import com.waz.api.NotificationsHandler.NotificationType
+import com.waz.api.NotificationsHandler.NotificationType.LIKE
 import com.waz.content.{ConversationStorage, MessagesStorage, NotificationStorage}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent.{MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
-import com.waz.api.NotificationsHandler.NotificationType.LIKE
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.ConversationData.ConversationType
 import com.waz.service.UserService
-import com.waz.service.push.{NotificationService, NotificationUiController, PushService}
+import com.waz.service.push.{NotificationServiceImpl, NotificationUiController, PushService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.events.Signal
 import com.waz.utils._
+import com.waz.utils.events.Signal
 import org.threeten.bp.Duration
 
 import scala.collection.Seq
@@ -468,7 +468,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     (userService.getSelfUser _).expects().anyNumberOfTimes().returning(Future.successful(Option(self)))
 
-    new NotificationService(account1Id, messages, storage, convs, pushService, uiController, userService, clock)
+    new NotificationServiceImpl(account1Id, messages, storage, convs, pushService, uiController, userService, clock)
   }
 
   private def setup(cs: Seq[(ConversationData, Boolean)] = Seq((conv, true)),

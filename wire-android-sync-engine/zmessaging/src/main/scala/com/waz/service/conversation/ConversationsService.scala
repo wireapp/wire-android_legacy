@@ -20,6 +20,7 @@ package com.waz.service.conversation
 import com.softwaremill.macwire._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
+import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -30,7 +31,7 @@ import com.waz.model._
 import com.waz.service._
 import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.PushService
+import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.tracking.{GuestsAllowedToggled, TrackingService}
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.{ConversationsClient, ErrorOr}
@@ -89,7 +90,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                selectedConv:    SelectedConversationService,
                                syncReqService:  SyncRequestService,
                                assetService:    AssetService,
-                               receiptsStorage: ReadReceiptsStorage) extends ConversationsService with DerivedLogTag {
+                               receiptsStorage: ReadReceiptsStorage,
+                               notificationService: NotificationService) extends ConversationsService with DerivedLogTag {
 
   private implicit val ev = EventContext.Global
   import Threading.Implicits.Background
@@ -126,7 +128,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   errors.onErrorDismissed {
     case ErrorData(_, ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, _, _, Some(convId), _, _, _, _) =>
-      deleteConversation(convId)
+      deleteTempConversation(convId)
     case ErrorData(_, ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION, userIds, _, Some(convId), _, _, _, _) => Future.successful(())
     case ErrorData(_, ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION, userIds, _, Some(convId), _, _, _, _) => Future.successful(())
     case ErrorData(_, ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION, _, _, Some(conv), _, _, _, _) =>
@@ -166,7 +168,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
-    case DeleteConversationEvent(_, _, _) => deleteConversation(conv.id)
+    case DeleteConversationEvent(_, time, from) => deleteConversation(conv, time, from)
 
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
@@ -330,19 +332,35 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       Future successful None
   }
 
-  private def deleteConversation(convId: ConvId) = for {
-    convMessages <- messages.findMessages(convId)
-    _ <- assetService.deleteAll(convMessages.flatMap(_.assetId))
+  private def deleteTempConversation(convId: ConvId) = for {
     _ <- convsStorage.remove(convId)
     _ <- membersStorage.delete(convId)
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
-    _ <- receiptsStorage.removeAllForMessages(convMessages.map(_.id).toSet)
-    _ <- if (selectedConv.selectedConversationId.currentValue.flatten.getOrElse(None) == convId) {
-      selectedConv.selectConversation(None)
-    } else {
-      Future.successful(())
-    }
   } yield ()
+
+  private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) = {
+    (for {
+      _ <- notificationService.displayNotificationForConversation(
+        new NotificationData(msg ="deleted", conv = convData.id, user = from, msgType = NotificationType.CONVERSATION_DELETED, time = remoteTime),
+        convData
+      )
+      convId = convData.id
+      convMessages <- messages.findMessages(convId)
+      _ <- assetService.deleteAll(convMessages.flatMap(_.assetId))
+      _ <- convsStorage.remove(convId)
+      _ <- membersStorage.delete(convId)
+      _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
+      _ <- receiptsStorage.removeAllForMessages(convMessages.map(_.id).toSet)
+      _ <- if (selectedConv.selectedConversationId.currentValue.flatten.getOrElse(None) == convId) {
+        selectedConv.selectConversation(None)
+      } else {
+        Future.successful(())
+      }
+    } yield ()).recoverWith {
+      case ex : Exception => error(l"error while deleting conversation $ex")
+        Future.successful(())
+    }
+  }
 
   def forceNameUpdate(id: ConvId, defaultName: String) = {
     warn(l"forceNameUpdate($id)")

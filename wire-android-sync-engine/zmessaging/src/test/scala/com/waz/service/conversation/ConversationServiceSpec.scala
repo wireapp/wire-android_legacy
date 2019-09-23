@@ -23,7 +23,7 @@ import com.waz.model.{ConversationData, _}
 import com.waz.service._
 import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.PushService
+import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.tracking.TrackingService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
@@ -58,6 +58,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   lazy val selectedConvoMock  = mock[SelectedConversationService]
   lazy val assetServiceMock   = mock[AssetService]
   lazy val receiptStorageMock = mock[ReadReceiptsStorage]
+  lazy val notificationServiceMock = mock[NotificationService]
 
   val selfUserId = UserId("user1")
   val convId = ConvId("conv_id1")
@@ -84,7 +85,8 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     selectedConvoMock,
     syncRequestMock,
     assetServiceMock,
-    receiptStorageMock
+    receiptStorageMock,
+    notificationServiceMock
   )
 
   // mock mapping from remote to local conversation ID
