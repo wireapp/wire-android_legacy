@@ -226,6 +226,18 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       case _                     => Future.successful(None)
     }
 
+  private def getOpenConvIntent(account: UserId, n: NotificationData, requestBase: Int) : Option[(UserId, ConvId, Int)] = {
+    if (n.msgType == NotificationType.CONVERSATION_DELETED) {
+      None
+    } else {
+      Some((account, n.conv, requestBase))
+    }
+  }
+
+  private def getAction(account: UserId, n: NotificationData, requestBase: Int, offset: Int, bundleEnabled: Boolean)= {
+    if (n.msgType == NotificationType.CONVERSATION_DELETED) None else Some((account, n.conv, requestBase + 1, bundleEnabled))
+  }
+
   private def singleNotificationProperties(props: NotificationProps, account: UserId, n: NotificationData, teamName: Option[Name]) = {
     verbose(l"singleNotificationProperties: $account, $n, $teamName")
     for {
@@ -238,15 +250,18 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         contentTitle             = Some(title),
         contentText              = Some(body),
         style                    = Some(bigTextStyle),
-        openConvIntent           = Some((account, n.conv, requestBase)),
+        openConvIntent           = getOpenConvIntent(account, n, requestBase),
         clearNotificationsIntent = Some((account, Some(n.conv)))
       )
-      if (n.msgType != NotificationType.CONNECT_REQUEST)
+
+      if (n.msgType == NotificationType.CONNECT_REQUEST) {
+        specProps
+      } else {
         specProps.copy(
-          action1 = Some((account, n.conv, requestBase + 1, bundleEnabled)),
-          action2 = Some((account, n.conv, requestBase + 2, bundleEnabled))
+          action1 = getAction(account, n, requestBase, 1, bundleEnabled),
+          action2 = getAction(account, n, requestBase, 2, bundleEnabled)
         )
-      else specProps
+      }
     }
   }
 
@@ -477,10 +492,10 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
 
       if (isSingleConv)
         specProps.copy(
-          openConvIntent           = Some((account, n.conv, requestBase)),
+          openConvIntent           = getOpenConvIntent(account, n, requestBase),
           clearNotificationsIntent = Some((account, Some(n.conv))),
-          action1                  = Some((account, n.conv, requestBase + 1, bundleEnabled)),
-          action2                  = Some((account, n.conv, requestBase + 2, bundleEnabled))
+          action1                  = getAction(account, n, requestBase, 1, bundleEnabled),
+          action2                  = getAction(account, n, requestBase, 2, bundleEnabled)
         )
       else
         specProps.copy(
