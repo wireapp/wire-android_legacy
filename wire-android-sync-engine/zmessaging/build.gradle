@@ -1,9 +1,30 @@
 apply plugin: 'com.android.library'
 apply plugin: 'jp.leafytree.android-scala'
 
+// Deflake
+def previouslyFailedTests = [].toSet()
+def failedTestsFile = new File("${projectDir}/failedTests.list")
+def failedTestsLogs = new File("${projectDir}/failedTests.list.previous")
+
+// Android
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
+
+    // Load previous failed unit tests. This needs to be loaded before Android configuration is generated
+    // or tests will not be filtered out (they are filtered at configuration time)
+    if (failedTestsFile.exists()) {
+        failedTestsFile.eachLine { line ->
+            println "Found previously failed test: ${line}"
+            previouslyFailedTests.add(line.trim())
+        }
+
+        // copy for further analysis
+        failedTestsLogs.withWriter { writer ->
+            writer.write(failedTestsFile.text)
+        }
+        failedTestsFile.delete()
+    }
 
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
@@ -22,13 +43,39 @@ android {
     }
 
     testOptions {
+
         unitTests.all {
-            forkEvery 1
+
             jvmArgs "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled",
                 "-Djava.net.preferIPv4Stack=true", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n"
+
+            test {
+
+                // Filter tests if deflaking
+                if (project.wireDeflakeTests == "1") { // use `-PwireDeflakeTests=1` from command line to enable this
+                    previouslyFailedTests.forEach {
+                        // After much trial-and-error, this seems to be the only way
+                        // to filter tests - hack the test class name.
+                        // It would have been better to use `inclideMatching`
+                        // but it's not supported by this plugin
+                        def testName = it.split("\\.").last()
+                        def testToRun = "**/*$testName*"
+                        println "Applying filter: ${testName}"
+                        include testToRun
+                    }
+                }
+            }
+
+            // Update failure state
+            afterTest { desc, result ->
+                if (result.resultType == TestResult.ResultType.FAILURE) {
+                    failedTestsFile.withWriterAppend {
+                        it.write("${desc.className}\n")
+                    }
+                }
+            }
         }
     }
-
 }
 
 repositories {
@@ -118,4 +165,10 @@ dependencies {
 
 }
 
-
+afterEvaluate {
+    // In order for the recording of failed tests (for deflake) to run reliably, we need
+    // to `cleanTest` or the `afterTest` block will be skipped for tests that did
+    // not change since last run
+    def unitTests = tasks.getByName("testDebugUnitTest")
+    unitTests.dependsOn("cleanTest")
+}
