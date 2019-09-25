@@ -369,6 +369,10 @@ object TeamEvent extends DerivedLogTag {
   case class Delete(teamId: TeamId) extends TeamEvent
   case class Update(teamId: TeamId, name: Option[Name], icon: AssetId) extends TeamEvent
 
+  case class Ignored() extends TeamEvent {
+    override val teamId: TeamId = TeamId.Empty
+  }
+
   sealed trait MemberEvent extends TeamEvent {
     val userId: UserId
   }
@@ -381,7 +385,6 @@ object TeamEvent extends DerivedLogTag {
   }
 
   case class ConversationCreate(teamId: TeamId, convId: RConvId) extends ConversationEvent
-  case class ConversationDelete(teamId: TeamId, convId: RConvId) extends ConversationEvent
 
   case class UnknownTeamEvent(js: JSONObject) extends TeamEvent { override val teamId = TeamId.Empty }
 
@@ -396,7 +399,7 @@ object TeamEvent extends DerivedLogTag {
         case "team.member-leave"        => MemberLeave('team, UserId(decodeString('user)('data)))
         case "team.member-update"       => MemberUpdate('team, UserId(decodeString('user)('data)))
         case "team.conversation-create" => ConversationCreate('team, RConvId(decodeString('conv)('data)))
-        case "team.conversation-delete" => ConversationDelete('team, RConvId(decodeString('conv)('data)))
+        case "team.conversation-delete" => Ignored()
         case _ =>
           error(l"Unhandled event: $js")
           UnknownTeamEvent(js)
