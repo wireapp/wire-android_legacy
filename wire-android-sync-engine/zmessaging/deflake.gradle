@@ -21,21 +21,6 @@ if (failedTestsFile.exists()) {
 
 android {
 
-    // Load previous failed unit tests. This needs to be loaded before Android configuration is generated
-    // or tests will not be filtered out (they are filtered at configuration time)
-    if (failedTestsFile.exists()) {
-        failedTestsFile.eachLine { line ->
-            println "Found previously failed test: ${line}"
-            previouslyFailedTests.add(line.trim())
-        }
-
-        // copy for further analysis
-        failedTestsLogs.withWriter { writer ->
-            writer.write(failedTestsFile.text)
-        }
-        failedTestsFile.delete()
-    }
-
     testOptions {
         unitTests.all {
             test {
@@ -46,7 +31,7 @@ android {
                     previouslyFailedTests.forEach {
                         // After much trial-and-error, this seems to be the only way
                         // to filter tests - hack the test class name.
-                        // It would have been better to use `inclideMatching`
+                        // It would have been better to use `includeMatching`
                         // but it's not supported by this plugin
                         def testName = it.split("\\.").last()
                         def testToRun = "**/*$testName*"
