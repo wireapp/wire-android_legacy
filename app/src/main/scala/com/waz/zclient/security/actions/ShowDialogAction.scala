@@ -20,7 +20,6 @@ package com.waz.zclient.security.actions
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface}
 import com.waz.threading.Threading.Implicits.Ui
-import com.waz.zclient.R
 import com.waz.zclient.security.SecurityChecklist
 import com.waz.zclient.utils.ContextUtils.getString
 
@@ -38,7 +37,7 @@ class ShowDialogAction(title: String,
         override def onClick(dialog: DialogInterface, which: Int): Unit = action()
       }
 
-      new AlertDialog.Builder(context, R.style.fullscreen_dialog)
+      new AlertDialog.Builder(context)
         .setTitle(title)
         .setMessage(message)
         .setCancelable(false)
