@@ -110,6 +110,10 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     appLockSwitch.setVisibility(View.GONE)
   }
 
+  if (BuildConfig.FORCE_PRIVATE_KEYBOARD) {
+    appLockSwitch.setVisibility(View.GONE)
+  }
+
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
     soundsButton.setVisible(false)
     vibrationSwitch.setTitle(getString(R.string.pref_options_vibration_title_o))
