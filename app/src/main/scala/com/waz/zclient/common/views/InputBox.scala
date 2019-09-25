@@ -28,8 +28,10 @@ import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, ProgressBar, TextView}
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
+import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.common.views.InputBox._
+import com.waz.zclient.common.views.TextViewHelpers.TextViewFlagsImprovement
 import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -84,6 +86,8 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
     progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
   editText.setImeOptions(EditorInfo.IME_ACTION_DONE)
+
+  editText.setPrivateModeFromPreferences()
 
   editText.setOnEditorActionListener(new OnEditorActionListener {
     override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
