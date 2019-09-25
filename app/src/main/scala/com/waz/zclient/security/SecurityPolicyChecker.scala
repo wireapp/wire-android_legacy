@@ -154,7 +154,10 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
     }
 
     authenticationNeeded.head.foreach {
-      case true => parentActivity.startActivity(new Intent(parentActivity, classOf[AppLockActivity]))
+      case true =>
+        val intent = new Intent(parentActivity, classOf[AppLockActivity])
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        parentActivity.startActivity(intent)
       case _ =>
     }
   }
