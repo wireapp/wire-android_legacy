@@ -43,8 +43,6 @@ android {
                 // Filter tests if deflaking
                 if (project.hasProperty('wireDeflakeTests')) { // use `-PwireDeflakeTests=1` from command line to enable this
 
-                    println "------------- APPLY FILTERS ${previouslyFailedTests}"
-
                     previouslyFailedTests.forEach {
                         // After much trial-and-error, this seems to be the only way
                         // to filter tests - hack the test class name.
@@ -60,7 +58,6 @@ android {
 
             // Update failure state
             afterTest { desc, result ->
-                println "Running test ${desc}....."
                 if (result.resultType == TestResult.ResultType.FAILURE) {
                     failedTestsFile.withWriterAppend {
                         it.write("${desc.className}\n")
