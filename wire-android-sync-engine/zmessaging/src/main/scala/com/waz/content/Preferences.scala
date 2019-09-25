@@ -388,6 +388,7 @@ object GlobalPreferences {
   lazy val ShouldWarnAndroid4Users = PrefKey[Boolean]( "should_warn_android_4_users", customDefault = true)
 
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
+  lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
   lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
