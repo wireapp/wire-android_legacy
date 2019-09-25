@@ -23,6 +23,7 @@ import android.widget.TextView
 import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.service.ZMessaging
 import com.waz.utils.events.EventContext
+import com.waz.zclient.BuildConfig
 import com.waz.zclient.ui.utils.MathUtils
 
 import scala.concurrent.ExecutionContext
@@ -90,6 +91,14 @@ object TextViewHelpers {
       * Set incognito/suggestion mode on/off according to preferences
       */
     def setPrivateModeFromPreferences()(implicit ec: EventContext, xc: ExecutionContext): Unit = {
+
+      // If hardcoded by configuration, just turn it on
+      if(BuildConfig.FORCE_PRIVATE_KEYBOARD) {
+        textView.setPrivateMode(true)
+        return
+      }
+
+      // else read from user preferences
       for {
         globalModule <- ZMessaging.globalModule
         prefs = globalModule.prefs
