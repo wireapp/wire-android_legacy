@@ -351,11 +351,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _ <- membersStorage.delete(convId)
       _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
       _ <- receiptsStorage.removeAllForMessages(convMessages.map(_.id).toSet)
-      _ <- if (selectedConv.selectedConversationId.currentValue.flatten.getOrElse(None) == convId) {
-        selectedConv.selectConversation(None)
-      } else {
-        Future.successful(())
-      }
+      selectedConvId <- selectedConv.selectedConversationId.head
+      deletedConversationSelected = selectedConvId.contains(convId)
+      _ <- if (deletedConversationSelected) selectedConv.selectConversation(None) else Future.successful(())
     } yield ()).recoverWith {
       case ex : Exception => error(l"error while deleting conversation $ex")
         Future.successful(())
