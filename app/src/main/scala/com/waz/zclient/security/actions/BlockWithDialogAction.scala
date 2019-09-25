@@ -20,6 +20,7 @@ package com.waz.zclient.security.actions
 import android.app.AlertDialog
 import android.content.Context
 import com.waz.threading.Threading.Implicits.Ui
+import com.waz.zclient.R
 import com.waz.zclient.security.SecurityChecklist
 
 import scala.concurrent.Future
@@ -28,7 +29,7 @@ class BlockWithDialogAction(title: String, message: String)(implicit context: Co
 
   override def execute(): Future[Unit] = {
     Future {
-      new AlertDialog.Builder(context)
+      new AlertDialog.Builder(context, R.style.fullscreen_dialog)
         .setTitle(title)
         .setMessage(message)
         .setCancelable(false)

@@ -55,7 +55,7 @@ class AppLockActivity extends AppCompatActivity with ActivityHelper with Derived
       }
     }
 
-    new AlertDialog.Builder(this)
+    new AlertDialog.Builder(this, R.style.fullscreen_dialog)
       .setMessage(R.string.app_lock_setup_dialog_messsage)
       .setPositiveButton(R.string.app_lock_setup_dialog_button, openSettingsAction)
       .setCancelable(false)
