@@ -142,7 +142,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
 
   def updateBackgroundEntryTimer(): Unit = timeEnteredBackground = Some(Instant.now())
 
-  def clearBackgroundEntryTimer(): Unit = {
+  def onAuthenticationSuccessful(): Unit = {
     timeEnteredBackground = None
     authenticationNeeded ! false
   }
@@ -154,7 +154,10 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
     }
 
     authenticationNeeded.head.foreach {
-      case true => parentActivity.startActivity(new Intent(parentActivity, classOf[AppLockActivity]))
+      case true =>
+        val intent = new Intent(parentActivity, classOf[AppLockActivity])
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        parentActivity.startActivity(intent)
       case _ =>
     }
   }

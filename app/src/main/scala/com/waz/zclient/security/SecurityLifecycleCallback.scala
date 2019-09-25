@@ -23,32 +23,36 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.{Injectable, Injector, LaunchActivity}
 import com.waz.zclient.log.LogUI._
 
-class SecurityLifecycleCallback(implicit injector: Injector) extends Application.ActivityLifecycleCallbacks with Injectable with DerivedLogTag {
+class SecurityLifecycleCallback(implicit injector: Injector)
+  extends Application.ActivityLifecycleCallbacks with Injectable with DerivedLogTag {
+
   private var activitiesStarted = 0
 
-  override def onActivityStarted(activity: Activity): Unit = synchronized {
+  override def onActivityPaused(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
-      case _ =>
-        activitiesStarted += 1
-        verbose(l"onActivityStarted, activities active now: $activitiesStarted, ${activity.getClass.getName}")
-        if (activitiesStarted == 1) inject[SecurityPolicyChecker].run(activity)
-    }
-  }
-
-  override def onActivityStopped(activity: Activity): Unit = synchronized {
-    activity match {
-      case _: LaunchActivity =>
+      case _: AppLockActivity =>
       case _ =>
         activitiesStarted -= 1
-        verbose(l"onActivityStopped, activities still active: $activitiesStarted, ${activity.getClass.getName}")
+        verbose(l"onActivityPaused, activities still active: $activitiesStarted, ${activity.getClass.getName}")
         if (activitiesStarted == 0) inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
     }
   }
 
+  override def onActivityResumed(activity: Activity): Unit = synchronized {
+    activity match {
+      case _: LaunchActivity =>
+      case _: AppLockActivity =>
+      case _ =>
+        activitiesStarted += 1
+        verbose(l"onActivityResumed, activities active now: $activitiesStarted, ${activity.getClass.getName}")
+        if (activitiesStarted == 1) inject[SecurityPolicyChecker].run(activity)
+    }
+  }
+
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
+  override def onActivityStarted(activity: Activity): Unit = {}
+  override def onActivityStopped(activity: Activity): Unit = {}
   override def onActivityDestroyed(activity: Activity): Unit = {}
-  override def onActivityPaused(activity: Activity): Unit = {}
-  override def onActivityResumed(activity: Activity): Unit = {}
   override def onActivitySaveInstanceState(activity: Activity, bundle: Bundle): Unit = {}
 }
