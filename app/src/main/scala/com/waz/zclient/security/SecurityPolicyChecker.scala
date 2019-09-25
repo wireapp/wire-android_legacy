@@ -142,7 +142,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
 
   def updateBackgroundEntryTimer(): Unit = timeEnteredBackground = Some(Instant.now())
 
-  def clearBackgroundEntryTimer(): Unit = {
+  def onAuthenticationSuccessful(): Unit = {
     timeEnteredBackground = None
     authenticationNeeded ! false
   }
