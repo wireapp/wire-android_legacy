@@ -31,6 +31,7 @@ class SecurityLifecycleCallback(implicit injector: Injector)
   override def onActivityPaused(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
+      case _: AppLockActivity =>
       case _ =>
         activitiesStarted -= 1
         verbose(l"onActivityPaused, activities still active: $activitiesStarted, ${activity.getClass.getName}")
@@ -41,6 +42,7 @@ class SecurityLifecycleCallback(implicit injector: Injector)
   override def onActivityResumed(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
+      case _: AppLockActivity =>
       case _ =>
         activitiesStarted += 1
         verbose(l"onActivityResumed, activities active now: $activitiesStarted, ${activity.getClass.getName}")
