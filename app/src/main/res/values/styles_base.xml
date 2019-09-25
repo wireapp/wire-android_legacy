@@ -58,6 +58,10 @@
         <item name="behavior_peekHeight">@dimen/message__bottom__menu__peek_height</item>
     </style>
 
+    <style name="fullscreen_dialog" parent="android:Theme.Material.Light.NoActionBar.Fullscreen">
+        <item name="android:layout_gravity">center</item>
+    </style>
+
     <!-- messageStream -->
     <style name="message_stream__message__base">
         <item name="android:textSize">@dimen/wire__text_size__regular</item>
