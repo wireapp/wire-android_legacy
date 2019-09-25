@@ -74,11 +74,15 @@ object TextViewHelpers {
       */
     def setPrivateMode(on: Boolean): Unit = {
       if(on) {
-        textView.addImeOption(EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
         textView.addInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+        // this disables autocomplete because it implies that you will provide your
+        // own autocomplete facility. We don't, so no autocomplete is shown
+        textView.addInputType(InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE)
+        textView.addImeOption(EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
       } else {
-        textView.removeImeOption(EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
         textView.removeInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+        textView.removeInputType(InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE)
+        textView.removeImeOption(EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
       }
     }
 
