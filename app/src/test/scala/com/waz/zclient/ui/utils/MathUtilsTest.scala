@@ -20,12 +20,9 @@ package com.waz.zclient.ui.utils
 import org.junit.Assert._
 import org.junit.Test
 import org.scalatest.junit.JUnitSuite
+import MathUtilsTest.binary
 
 class MathUtilsTest extends JUnitSuite {
-
-  def binary(text: String): Int = {
-    return Integer.parseInt(text, 2)
-  }
 
   @Test
   def testRemoveBinaryFlag_flagIsPresent(): Unit = {
@@ -60,5 +57,8 @@ class MathUtilsTest extends JUnitSuite {
 }
 
 object MathUtilsTest {
+  def binary(text: String): Int = {
+    return Integer.parseInt(text, 2)
+  }
   type Block = () => Unit
 }
