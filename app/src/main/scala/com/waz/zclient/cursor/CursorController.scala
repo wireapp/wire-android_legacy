@@ -336,19 +336,18 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
         color
       ) else { Future.successful(true) } // skip dialog
     } yield {
-      if(!response) { // user canceled
-        return
-      }
-      // store that we asked and the user clicked "OK", so that we don't ask anymore
-      // this is not a synchronous operation, but we are not interested in waiting
-      askedForLocationPermissionPreference.update(true)
+      if(response) { // user canceled
+        // store that we asked and the user clicked "OK", so that we don't ask anymore
+        // this is not a synchronous operation, but we are not interested in waiting
+        askedForLocationPermissionPreference.update(true)
 
-      val googleAPI = GoogleApiAvailability.getInstance
-      if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
-        KeyboardUtils.hideKeyboard(activity)
-        locationController.showShareLocation()
+        val googleAPI = GoogleApiAvailability.getInstance
+        if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
+          KeyboardUtils.hideKeyboard(activity)
+          locationController.showShareLocation()
+        }
+        else showToast(R.string.location_sharing__missing_play_services)
       }
-      else showToast(R.string.location_sharing__missing_play_services)
     }
   }
 
