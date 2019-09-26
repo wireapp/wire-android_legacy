@@ -23,26 +23,38 @@ import org.scalatest.junit.JUnitSuite
 
 class MathUtilsTest extends JUnitSuite {
 
-  def bin(text: String): Int = {
+  def binary(text: String): Int = {
     return Integer.parseInt(text, 2)
   }
 
   @Test
-  def testRemoveBinaryFlag(): Unit = {
-    // flag is present
-    assertEquals(MathUtils.removeBinaryFlag(bin("10101"), bin("100")), bin("10001"))
-    assertEquals(MathUtils.removeBinaryFlag(bin("11111"), bin("101")), bin("11010"))
-    // flag is not present (flag is larger than number)
-    assertEquals(MathUtils.removeBinaryFlag(bin("00001"), bin("100")), bin("00001"))
-    assertEquals(MathUtils.removeBinaryFlag(bin("00011"), bin("101")), bin("00011"))
-    // flag is not present (flag is smaller than number)
-    assertEquals(MathUtils.removeBinaryFlag(bin("10001"), bin("100")), bin("10001"))
-    // flag is null
-    assertEquals(MathUtils.removeBinaryFlag(bin("10101"), bin("000")), bin("10101"))
-    // value is null
-    assertEquals(MathUtils.removeBinaryFlag(bin("00000"), bin("000")), bin("00000"))
-    assertEquals(MathUtils.removeBinaryFlag(bin("00000"), bin("111")), bin("00000"))
+  def testRemoveBinaryFlag_flagIsPresent(): Unit = {
+    assertEquals(MathUtils.removeBinaryFlag(binary("10101"), binary("100")), binary("10001"))
+    assertEquals(MathUtils.removeBinaryFlag(binary("11111"), binary("101")), binary("11010"))
   }
+
+  @Test
+  def testRemoveBinaryFlag_flagIsNotPresent(): Unit = {
+    // flag is not present (flag is larger than number)
+    assertEquals(MathUtils.removeBinaryFlag(binary("00001"), binary("100")), binary("00001"))
+    assertEquals(MathUtils.removeBinaryFlag(binary("00011"), binary("101")), binary("00011"))
+    // flag is not present (flag is smaller than number)
+    assertEquals(MathUtils.removeBinaryFlag(binary("10001"), binary("100")), binary("10001"))
+  }
+
+  @Test
+  def testRemoveBinaryFlag_NullFlag(): Unit = {
+    // flag is null
+    assertEquals(MathUtils.removeBinaryFlag(binary("10101"), binary("000")), binary("10101"))
+  }
+
+  @Test
+  def testRemoveBinaryFlag_NullValue(): Unit = {
+    // value is null
+    assertEquals(MathUtils.removeBinaryFlag(binary("00000"), binary("000")), binary("00000"))
+    assertEquals(MathUtils.removeBinaryFlag(binary("00000"), binary("111")), binary("00000"))
+  }
+
 
 
 }
