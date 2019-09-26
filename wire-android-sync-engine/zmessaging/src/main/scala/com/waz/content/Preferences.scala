@@ -384,9 +384,6 @@ object GlobalPreferences {
 
   lazy val RootDetected: PrefKey[Boolean] = PrefKey[Boolean]("root_detected", customDefault = false)
 
-  // TODO: Remove after release 3.36
-  lazy val ShouldWarnAndroid4Users = PrefKey[Boolean]( "should_warn_android_4_users", customDefault = true)
-
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
