@@ -42,7 +42,7 @@ import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager
 import com.waz.zclient.utils.ContextUtils.getString
-import com.waz.content.GlobalPreferences.AppLockEnabled
+import com.waz.content.GlobalPreferences.{AppLockEnabled, IncognitoKeyboardEnabled}
 
 trait OptionsView {
   def setSounds(level: IntensityLevel): Unit
@@ -79,6 +79,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   val downloadImagesSwitch    = findById[SwitchPreference](R.id.preferences_options_image_download)
   val hideScreenContentSwitch = findById[SwitchPreference](R.id.preferences_hide_screen)
   val messagePreviewSwitch = findById[SwitchPreference](R.id.preferences_message_previews)
+  val incognitoKeyboardSwitch = findById[SwitchPreference](R.id.preferences_incognito_keyboard)
 
   val ringToneButton         = findById[TextButton](R.id.preference_sounds_ringtone)
   val textToneButton         = findById[TextButton](R.id.preference_sounds_text)
@@ -108,6 +109,12 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   if (BuildConfig.FORCE_APP_LOCK) {
     appLockSwitch.setVisibility(View.GONE)
+  }
+
+
+  incognitoKeyboardSwitch.setPreference(IncognitoKeyboardEnabled, global = true)
+  if (BuildConfig.FORCE_PRIVATE_KEYBOARD) {
+    incognitoKeyboardSwitch.setVisibility(View.GONE)
   }
 
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -138,6 +138,7 @@ android {
         buildConfigField 'Integer', 'APP_LOCK_TIMEOUT',              "$buildtimeConfiguration.configuration.app_lock_timeout"
         buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$buildtimeConfiguration.configuration.block_on_password_policy"
         buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
+        buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
     }
 
     packagingOptions {

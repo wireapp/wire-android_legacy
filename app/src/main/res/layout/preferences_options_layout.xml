@@ -146,6 +146,14 @@
                 />
 
             <com.waz.zclient.preferences.views.SwitchPreference
+                android:id="@+id/preferences_incognito_keyboard"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/preference_button_height"
+                app:title="@string/pref_options_incognito_keyboard"
+                app:subtitle="@string/pref_options_incognito_keyboard_summary"
+                />
+
+            <com.waz.zclient.preferences.views.SwitchPreference
                 android:id="@+id/preferences_hide_screen"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
