@@ -142,7 +142,6 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       _  =  verbose(l"SYNC content messages added (${cm.size})")
     } yield sm.toSet ++ cm
 
-
   private def skipPreviouslyDeleted(msgs: Seq[MessageData]) =
     deletions.getAll(msgs.map(_.id)) map { deletions =>
       val ds: Set[MessageId] = deletions.collect { case Some(MsgDeletion(id, _)) => id } (breakOut)
@@ -181,48 +180,17 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     }
 
   private def addContentMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
-    // merge data from multiple events in single message
     verbose(l"SYNC addContentMessages($convId, ${msgs.map(_.id)})")
-    def merge(msgs: Seq[MessageData]): MessageData = {
 
-      def mergeLocal(m: MessageData, msg: MessageData) =
-        msg.copy(id = m.id, localTime = m.localTime)
-
-      def mergeMatching(prev: MessageData, msg: MessageData) = {
-        val u = prev.copy(
-          msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
-          time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
-          protos        = prev.protos ++ msg.protos,
-          content       = msg.content,
-          quote         = msg.quote,
-          assetId       = msg.assetId.orElse(prev.assetId)
-        )
-        prev.msgType match {
-          case Message.Type.RECALLED => prev // ignore updates to already recalled message
-          case _ => u
-        }
-      }
-
-      if (msgs.size == 1) msgs.head
-      else msgs.reduce { (prev, msg) =>
-        verbose(l"msgs reduce from $prev to $msg")
-        if (prev.isLocal && prev.userId == msg.userId) mergeLocal(prev, msg)
-        else if (prev.userId == msg.userId) mergeMatching(prev, msg)
-        else {
-          warn(l"got message id conflict, will add it with random id, existing: $prev, new: $msg")
-          addMessage(msg.copy(id = MessageId()))
-          prev
-        }
-      }
+    if (msgs.isEmpty) {
+      Future.successful(Set.empty)
     }
-
-    if (msgs.isEmpty) Future.successful(Set.empty)
     else {
-      val grouped = msgs.groupBy(_.id).map {
-        case (id, data) => id -> { prev: Option[MessageData] => merge(prev.toSeq ++ data) }
-      }
+      val dataMerger = (data: Seq[MessageData]) => { prev: Option[MessageData] => Merger.merge(prev.toSeq ++ data) }
+      val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> dataMerger(data) }
+
       verbose(l"SYNC before update or create all for ${msgs.size}")
-      returning(messagesStorage.updateOrCreateAll(grouped)) {
+      returning(messagesStorage.updateOrCreateAll(updaters)) {
         _.foreach(_ => verbose(l"SYNC after update or create all for ${msgs.size}"))
       }
     }
@@ -239,4 +207,57 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         if (m.isLocal) m.copy(time = time + (m.time.toEpochMilli - prevTime.toEpochMilli).millis) else m
       })
     }
+
+  private object Merger {
+
+    /**
+      * Merges data from multiple events into a single message.
+      * @param msgs
+      * @return
+      */
+    def merge(msgs: Seq[MessageData]): MessageData = {
+      if (msgs.size == 1)
+        msgs.head
+      else {
+        msgs.reduce { (prev, msg) =>
+          verbose(l"msgs reduce from $prev to $msg")
+
+          if (prev.isLocal && prev.userId == msg.userId)
+            mergeLocal(localMessage = prev, msg)
+          else if (prev.userId == msg.userId)
+            mergeMatching(prev, msg)
+          else {
+            warn(l"got message id conflict, will add it with random id, existing: $prev, new: $msg")
+            addMessage(msg.copy(id = MessageId()))
+            prev
+          }
+        }
+      }
+    }
+
+    def mergeLocal(localMessage: MessageData, msg: MessageData): MessageData =
+      msg.copy(id = localMessage.id, localTime = localMessage.localTime)
+
+    def mergeMatching(prev: MessageData, msg: MessageData): MessageData = {
+      // `AssetId` (for uploaded assets) takes highest priority.
+      val assetId = List(msg.assetId, prev.assetId)
+        .collectFirst { case Some(id: AssetId) => id }
+        .orElse(msg.assetId)
+        .orElse(prev.assetId)
+
+      val u = prev.copy(
+        msgType       = if (msg.msgType != Message.Type.UNKNOWN) msg.msgType else prev.msgType ,
+        time          = if (msg.time.isBefore(prev.time) || prev.isLocal) msg.time else prev.time,
+        protos        = prev.protos ++ msg.protos,
+        content       = msg.content,
+        quote         = msg.quote,
+        assetId       = assetId
+      )
+
+      prev.msgType match {
+        case Message.Type.RECALLED => prev // Ignore updates to already recalled message.
+        case _ => u
+      }
+    }
+  }
 }
