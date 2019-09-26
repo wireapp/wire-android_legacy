@@ -48,7 +48,6 @@ import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DraftMap
 import com.waz.zclient.{Injectable, Injector, R}
-import com.waz.zclient.log.LogUI._
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
