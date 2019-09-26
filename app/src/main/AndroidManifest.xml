@@ -209,6 +209,7 @@
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
+            android:permission="android.permission.INSTALL_PACKAGES"
             tools:ignore="ExportedReceiver"
             >
             <intent-filter>
