@@ -55,6 +55,6 @@ public class MathUtils {
         if((original & flag) != flag) { // the flag is not set
             return original;
         }
-        return original - flag;
+        return original & ~flag;
     }
 }
