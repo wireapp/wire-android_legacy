@@ -60,23 +60,19 @@ class BaseActivity extends AppCompatActivity
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
-  private lazy val flagSecure = for {
-    prefs  <- userPreferences
-    secure <- prefs.preference(UserPreferences.HideScreenContent).signal
-  } yield secure
+  private lazy val shouldHideScreenContent = for {
+    prefs             <- userPreferences
+    hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
+  } yield hideScreenContent
 
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(l"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
 
-    flagSecure.onUi {
-      case true =>
-        verbose(l"Adding secure flag")
-        getWindow.addFlags(FLAG_SECURE)
-      case false =>
-        verbose(l"Removing secure flag")
-        getWindow.clearFlags(FLAG_SECURE)
+    shouldHideScreenContent.onUi {
+      case true  => getWindow.addFlags(FLAG_SECURE)
+      case false => getWindow.clearFlags(FLAG_SECURE)
     }
   }
 
