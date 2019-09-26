@@ -46,13 +46,12 @@ class FCMNotificationStatsServiceImpl(fcmTimestamps: FCMNotificationsRepository,
   override def markNotificationsWithState(ids: Set[Uid], stage: String): Future[Unit] =  async {
     stage match {
       case Pushed => await {
-        Future.traverse(ids.toSeq)(p => fcmTimestamps.storeNotificationState(p, stage, Instant.now))
+        Future.traverse(ids.toSeq)(fcmTimestamps.storeNotificationState(_, stage, Instant.now))
       }
       case _ =>
-          val fcmIds = await { filterFCMNotifications(ids) }
-          verbose(l"""marking ${showString(fcmIds.size.toString)} notifications
-               at stage ${showString(stage)} """)
-          await { calcAndStore(ids, stage) }
+        val fcmIds = await { filterFCMNotifications(ids) }
+        verbose(l"marking ${showString(fcmIds.size.toString)} notifications at stage ${showString(stage)}")
+        await { calcAndStore(ids, stage) }
     }
   }
 

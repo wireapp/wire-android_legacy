@@ -46,7 +46,6 @@ import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
 import FCMNotification.{Fetched, FinishedPipeline, StartedPipeline}
 
-import scala.async.Async._
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 
@@ -111,8 +110,6 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private val beDriftPref = prefs.preference(BackendDrift)
   override val beDrift = beDriftPref.signal.disableAutowiring()
-
-  private var fetchInProgress = Future.successful({})
 
   private lazy val idPref = userPrefs.preference(LastStableNotification)
 
@@ -189,25 +186,27 @@ class PushServiceImpl(selfUserId:           UserId,
     }
   }
 
-  wsPushService.notifications() { notifications =>
-    fetchInProgress =
-      if (fetchInProgress.isCompleted) storeNotifications(notifications)
-      else fetchInProgress.flatMap(_ => storeNotifications(notifications))
-  }
+  private val timeOffset = System.currentTimeMillis()
+  @inline private def timePassed = System.currentTimeMillis() - timeOffset
+  verbose(l"SYNC PushService created with the time offset: $timeOffset")
+
+  wsPushService.notifications(storeNotifications)
 
   wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){ source =>
     verbose(l"sync history due to web socket change")
     syncHistory(source)
   }
 
-  private def storeNotifications(notifications: Seq[PushNotificationEncoded]): Future[Unit] =
-    Serialized.future(PipelineKey)(async {
-      await { fcmService.markNotificationsWithState(notifications.map(_.id).toSet, Fetched) }
-      await { notificationStorage.saveAll(notifications) }
-      val res = notifications.lift(notifications.lastIndexWhere(!_.transient))
-      if (res.nonEmpty)
-        await { idPref := res.map(_.id) }
-    })
+  private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Unit] =
+    if (nots.nonEmpty) synchronized {
+      verbose(l"SYNC storeNotifications")
+      for {
+        _   <- fcmService.markNotificationsWithState(nots.map(_.id).toSet, Fetched)
+        _   <- notificationStorage.saveAll(nots)
+        res = nots.lift(nots.lastIndexWhere(!_.transient))
+        _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
+      } yield ()
+    } else Future.successful(())
 
   private def isOtrEventJson(ev: JSONObject) =
     ev.getString("type").equals("conversation.otr-message-add")
@@ -271,24 +270,23 @@ class PushServiceImpl(selfUserId:           UserId,
           }
       }
 
-    def syncHistory(lastId: Option[Uid]): Future[Unit] =
-      load(lastId, firstSync = lastId.isEmpty).future.flatMap {
-        case Results(nots, time, firstSync, historyLost) =>
-          if (firstSync) idPref := nots.headOption.map(_.id)
-          else
-            (for {
-              _ <- if (historyLost) sync.performFullSync().map(_ => onHistoryLost ! clock.instant()) else Future.successful({})
-              _ <- beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
-            } yield {
-              nots
-            }).flatMap(storeNotifications)
-      }
-
-    if (fetchInProgress.isCompleted) {
-      verbose(l"Sync history in response to $source")
-      fetchInProgress = idPref().flatMap(syncHistory)
+    def syncHistory(lastId: Option[Uid]): Future[Unit] = load(lastId, firstSync = lastId.isEmpty).future.flatMap {
+      case Results(nots, _, true, _) =>
+        idPref := nots.headOption.map(_.id)
+      case Results(_, time, _, true) =>
+        sync.performFullSync()
+          .map(_ => onHistoryLost ! clock.instant())
+          .flatMap(_ => beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v)))
+      case Results(nots, time, _, _) if nots.nonEmpty =>
+        beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
+          .flatMap(_ => storeNotifications(nots))
+          .flatMap(_ => idPref().flatMap(syncHistory))
+      case Results(_, time, _, _) =>
+        beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
     }
-    fetchInProgress
+
+    verbose(l"SYNC Sync history in response to $source ($timePassed)")
+    idPref().flatMap(syncHistory)
   }
 }
 

@@ -222,7 +222,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
       processConvWithRemoteId(remoteId, retryAsync = false, retryCount + 1)(processor)(tag, ec)
     } (ec)
 
-    convByRemoteId(remoteId) .flatMap {
+    convByRemoteId(remoteId).flatMap {
       case Some(conv) => processor(conv)
       case None if retryCount > 3 =>
         val ex = new NoSuchElementException("No conversation data found") with NoStackTrace

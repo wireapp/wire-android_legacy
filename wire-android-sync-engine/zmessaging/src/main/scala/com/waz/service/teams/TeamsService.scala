@@ -226,8 +226,8 @@ class TeamsServiceImpl(selfUser:           UserId,
     verbose(l"onConversationsCreated: convs: $convs")
     if (convs.nonEmpty)
       for {
-        convs <- Future.traverse(convs)(convsContent.convByRemoteId).map(_.collect { case Some(c) => c.id })
-        _     <- sync.syncConversations(convs)
+        convs <- convsContent.convsByRemoteId(convs)
+        _     <- sync.syncConversations(convs.values.map(_.id).toSet)
       } yield {}
     else Future.successful({})
   }
