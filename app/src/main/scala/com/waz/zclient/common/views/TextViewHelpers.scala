@@ -26,7 +26,6 @@ import com.waz.utils.events.EventContext
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.ui.utils.MathUtils
 
-import scala.concurrent.ExecutionContext
 
 /**
   * Utilities related to input fields
@@ -90,8 +89,8 @@ object TextViewHelpers {
     /**
       * Set incognito/suggestion mode on/off according to preferences
       */
-    def setPrivateModeFromPreferences()(implicit ec: EventContext, xc: ExecutionContext): Unit = {
-
+    def setPrivateModeFromPreferences(implicit eventContext: EventContext): Unit = {
+      import com.waz.threading.Threading.Implicits.Ui
       // If hardcoded by configuration, just turn it on
       if(BuildConfig.FORCE_PRIVATE_KEYBOARD) {
         textView.setPrivateMode(true)
