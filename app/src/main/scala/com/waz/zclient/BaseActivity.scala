@@ -40,6 +40,7 @@ import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
+import WindowManager.LayoutParams.FLAG_SECURE
 
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
@@ -59,10 +60,20 @@ class BaseActivity extends AppCompatActivity
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
+  private lazy val shouldHideScreenContent = for {
+    prefs             <- userPreferences
+    hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
+  } yield hideScreenContent
+
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(l"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
+
+    shouldHideScreenContent.onUi {
+      case true  => getWindow.addFlags(FLAG_SECURE)
+      case false => getWindow.clearFlags(FLAG_SECURE)
+    }
   }
 
   override def onStart(): Unit = {
@@ -82,20 +93,6 @@ class BaseActivity extends AppCompatActivity
   override protected def onResume(): Unit = {
     super.onResume()
     onBaseActivityResume()
-    setScreenContentHiding()
-  }
-
-  private def setScreenContentHiding(): Unit = {
-    //FLAG_SECURE prevents all kinds of screenshots, not just in task switcher
-    import WindowManager.LayoutParams.FLAG_SECURE
-    userPreferences.currentValue.foreach { p =>
-      p.preference(UserPreferences.HideScreenContent).apply().foreach {
-        case true => verbose(l"Adding secure flag")
-          getWindow.addFlags(FLAG_SECURE)
-        case false => verbose(l"Removing secure flag")
-          getWindow.clearFlags(FLAG_SECURE)
-      }(Threading.Ui)
-    }
   }
 
   def onBaseActivityResume(): Unit =
