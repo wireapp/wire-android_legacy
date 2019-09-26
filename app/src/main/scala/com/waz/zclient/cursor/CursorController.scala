@@ -320,26 +320,36 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     * the permission to access location
     */
   private def showLocationIfAllowed(): Unit = {
-    error(l"SHOW LOCATION")
     for {
-
       color <- accentColorController.accentColor.head
-      response <- ContextUtils.showConfirmationDialog(
+
+      // Check if the user was asked before
+      preferences <- zms.map(_.userPrefs).head
+      askedForLocationPermissionPreference = preferences.preference(UserPreferences.AskedForLocationPermission)
+      askedForLocation <- askedForLocationPermissionPreference.apply()
+
+      // Show dialog only if the user didn't accept it before
+      response <- if (!askedForLocation) ContextUtils.showConfirmationDialog(
         getString(R.string.location_sharing__permission__title),
         getString(R.string.location_sharing__permission__message),
         R.string.location_sharing__permission__continue,
         R.string.location_sharing__permission__cancel,
         color
-      )
+      ) else { Future.successful(true) } // skip dialog
     } yield {
-      if(response) {
-        val googleAPI = GoogleApiAvailability.getInstance
-        if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
-          KeyboardUtils.hideKeyboard(activity)
-          locationController.showShareLocation()
-        }
-        else showToast(R.string.location_sharing__missing_play_services)
+      if(!response) { // user canceled
+        return
       }
+      // store that we asked and the user clicked "OK", so that we don't ask anymore
+      // this is not a synchronous operation, but we are not interested in waiting
+      askedForLocationPermissionPreference.update(true)
+
+      val googleAPI = GoogleApiAvailability.getInstance
+      if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
+        KeyboardUtils.hideKeyboard(activity)
+        locationController.showShareLocation()
+      }
+      else showToast(R.string.location_sharing__missing_play_services)
     }
   }
 
