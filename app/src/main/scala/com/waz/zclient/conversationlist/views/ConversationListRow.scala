@@ -102,7 +102,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   val members = conversationId.collect { case Some(convId) => convId } flatMap controller.members
 
-  val conversationName = conversation map { conv =>
+  val cconversationName = conversation map { conv =>
     if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated

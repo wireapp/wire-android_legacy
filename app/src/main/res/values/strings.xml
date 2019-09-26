@@ -238,6 +238,7 @@
 
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
 
+
     <!-- Conversation actions -->
     <string name="conversation__action__delete">Delete content…</string>
     <string name="conversation__action__archive">Archive</string>
@@ -789,6 +790,11 @@
     <string name="location_sharing__enable_system_location__confirm">Settings</string>
     <string name="location_sharing__enable_system_location__cancel">Cancel</string>
     <string name="location_sharing__missing_play_services">Google Play Services is needed for location sharing</string>
+    <string name="location_sharing__permission__message">Do you want to allow Wire to access your location?</string>
+    <string name="location_sharing__permission__title">Location sharing</string>
+    <string name="location_sharing__permission__cancel">Cancel</string>
+    <string name="location_sharing__permission__continue">OK</string>
+
 
     <!-- From SyncEngine -->
     <string name="new_reg__phone_signup__create_account">Create an account</string>
