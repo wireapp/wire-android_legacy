@@ -468,4 +468,6 @@ object UserPreferences {
   lazy val StatusNotificationsBitmask       = PrefKey[Int]("status_notifications_bitmask", customDefault = 0)
   lazy val ShouldWarnStatusNotifications    = PrefKey[Boolean]( "should_warn_status_notifications", customDefault = true)
 
+  lazy val AskedForLocationPermission       = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
+
 }
