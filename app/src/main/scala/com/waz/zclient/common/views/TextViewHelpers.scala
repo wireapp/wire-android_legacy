@@ -89,7 +89,7 @@ object TextViewHelpers {
     /**
       * Set incognito/suggestion mode on/off according to preferences
       */
-    def setPrivateModeFromPreferences(implicit eventContext: EventContext): Unit = {
+    def setPrivateModeFromPreferences()(implicit eventContext: EventContext): Unit = {
       import com.waz.threading.Threading.Implicits.Ui
       // If hardcoded by configuration, just turn it on
       if(BuildConfig.FORCE_PRIVATE_KEYBOARD) {

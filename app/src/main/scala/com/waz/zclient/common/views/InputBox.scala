@@ -28,7 +28,6 @@ import android.widget.TextView.OnEditorActionListener
 import android.widget.{LinearLayout, ProgressBar, TextView}
 import com.waz.model.EmailAddress
 import com.waz.threading.Threading
-import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.common.views.InputBox._
 import com.waz.zclient.common.views.TextViewHelpers.TextViewFlagsImprovement
