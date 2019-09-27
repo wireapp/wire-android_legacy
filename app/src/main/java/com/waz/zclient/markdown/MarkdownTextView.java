@@ -19,7 +19,6 @@ package com.waz.zclient.markdown;
 
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.os.Build;
 import android.text.SpannableString;
 import android.util.AttributeSet;
 
