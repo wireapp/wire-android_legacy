@@ -186,9 +186,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       Future.successful(Set.empty)
     }
     else {
-      val dataMerger = (data: Seq[MessageData]) => { prev: Option[MessageData] => Merger.merge(prev.toSeq ++ data) }
-      val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> dataMerger(data) }
-
+      val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> Merger.messageDataMerger(data) }
       verbose(l"SYNC before update or create all for ${msgs.size}")
       returning(messagesStorage.updateOrCreateAll(updaters)) {
         _.foreach(_ => verbose(l"SYNC after update or create all for ${msgs.size}"))
@@ -211,11 +209,18 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   private object Merger {
 
     /**
+      * A merging function for a given sequence of messages. It is assumed that the messages
+      * share the same id.
+      */
+    val messageDataMerger: Seq[MessageData] => Option[MessageData] => MessageData =
+      data => { prev => merge(prev.toSeq ++ data) }
+
+    /**
       * Merges data from multiple events into a single message.
       * @param msgs
       * @return
       */
-    def merge(msgs: Seq[MessageData]): MessageData = {
+    private def merge(msgs: Seq[MessageData]): MessageData = {
       if (msgs.size == 1)
         msgs.head
       else {
@@ -235,10 +240,10 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       }
     }
 
-    def mergeLocal(localMessage: MessageData, msg: MessageData): MessageData =
+    private def mergeLocal(localMessage: MessageData, msg: MessageData): MessageData =
       msg.copy(id = localMessage.id, localTime = localMessage.localTime)
 
-    def mergeMatching(prev: MessageData, msg: MessageData): MessageData = {
+    private def mergeMatching(prev: MessageData, msg: MessageData): MessageData = {
       // `AssetId` (for uploaded assets) takes highest priority.
       val assetId = List(msg.assetId, prev.assetId)
         .collectFirst { case Some(id: AssetId) => id }
