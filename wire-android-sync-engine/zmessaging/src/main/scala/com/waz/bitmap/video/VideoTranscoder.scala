@@ -91,11 +91,6 @@ object VideoTranscoder {
   }
 }
 
-class FallbackTranscoder(context: Context) extends VideoTranscoder {
-  override def apply(input: URI, out: File, callback: ProgressData => Unit): CancellableFuture[File] =
-    CancellableFuture.failed(new UnsupportedOperationException("Transcoding not available in this android version"))
-}
-
 abstract class BaseTranscoder(context: Context) extends VideoTranscoder with DerivedLogTag {
   import VideoTranscoder._
   private implicit val ec = com.waz.threading.Threading.BlockingIO
