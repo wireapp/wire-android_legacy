@@ -25,6 +25,7 @@ import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
+import android.os.Build;
 import android.util.Log;
 import android.view.Surface;
 /**
@@ -34,7 +35,7 @@ import android.view.Surface;
  * to create an EGL window surface.  Calls to eglSwapBuffers() cause a frame of data to be sent
  * to the video encoder.
  */
-@TargetApi(18)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 class InputSurface {
     private static final String TAG = "InputSurface";
     private static final int EGL_RECORDABLE_ANDROID = 0x3142;

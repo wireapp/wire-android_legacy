@@ -24,8 +24,7 @@ import java.util.{Comparator, Locale}
 
 import android.annotation.TargetApi
 import android.content.res.Configuration
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.{JELLY_BEAN_MR2, LOLLIPOP}
+import android.os.Build
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -44,7 +43,7 @@ object Locales extends DerivedLogTag {
       locale    <- localeOptFromConfig(config)
     } yield locale) getOrElse Locale.getDefault
 
-  lazy val bcp47 = if (SDK_INT >= LOLLIPOP) AndroidLanguageTags.create else FallbackLanguageTags.create
+  lazy val bcp47 = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) AndroidLanguageTags.create else FallbackLanguageTags.create
 
   def localeOptFromConfig(config: Configuration): Option[Locale] = Option(config.locale)
 
@@ -81,7 +80,7 @@ trait LanguageTags {
   def localeFor(languageTag: String): Option[Locale]
 }
 
-@TargetApi(LOLLIPOP)
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 object AndroidLanguageTags {
   def create(implicit logTag: LogTag): LanguageTags = new LanguageTags {
     debug(l"using built-in Android language tag support")(logTag)
@@ -126,7 +125,7 @@ object Transliteration extends DerivedLogTag {
   }
 }
 
-@TargetApi(JELLY_BEAN_MR2)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 object LibcoreTransliteration {
   def create(id: String)(implicit logTag: LogTag): Transliteration = new Transliteration {
     debug(l"using libcore transliteration")(logTag)
@@ -147,7 +146,7 @@ trait Indexing {
   def labelFor(s: String): String
 }
 
-@TargetApi(JELLY_BEAN_MR2)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 object LibcoreIndexing {
   def create(locale: Locale)(implicit logTag: LogTag): Indexing = new Indexing {
 

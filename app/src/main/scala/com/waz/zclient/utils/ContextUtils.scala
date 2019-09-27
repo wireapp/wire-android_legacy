@@ -72,10 +72,7 @@ object ContextUtils {
   def getDimen(resId: Int)(implicit context: Context) = context.getResources.getDimension(resId)
 
   def getDrawable(resId: Int, theme: Option[Resources#Theme] = None)(implicit context: Context): Drawable = {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-      DeprecationUtils.getDrawable(context, resId)
-    } else
-      context.getResources.getDrawable(resId, theme.orNull)
+    context.getResources.getDrawable(resId, theme.orNull)
   }
 
   def getIntArray(resId: Int)(implicit context: Context) = context.getResources.getIntArray(resId)

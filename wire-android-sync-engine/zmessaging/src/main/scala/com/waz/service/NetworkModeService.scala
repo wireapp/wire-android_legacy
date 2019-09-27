@@ -20,6 +20,7 @@ package com.waz.service
 import android.annotation.TargetApi
 import android.content.{BroadcastReceiver, Context, Intent, IntentFilter}
 import android.net.{ConnectivityManager, NetworkInfo}
+import android.os.Build
 import android.telephony.TelephonyManager
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -73,7 +74,7 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
 
   //this method doesn't really belong here, but it's only used for tracking - just tells us if the device was in doze mode or not
   //fixme get the version code from android sdk
-  @TargetApi(23)
+  @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
   override def isDeviceIdleMode = false
   //    if (android.os.Build.VERSION.SDK_INT >= M)
   //      Option(context.getSystemService(Context.POWER_SERVICE)).map(_.asInstanceOf[PowerManager]).exists(_.isDeviceIdleMode)

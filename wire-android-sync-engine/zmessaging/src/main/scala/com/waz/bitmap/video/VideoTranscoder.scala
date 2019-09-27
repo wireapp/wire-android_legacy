@@ -66,8 +66,7 @@ object VideoTranscoder {
   }
 
   def apply(context: Context): VideoTranscoder =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) new VideoTranscoder18(context)
-    else new FallbackTranscoder(context)
+    new VideoTranscoder18(context)
 
   trait OutputWriter {
     /**

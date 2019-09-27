@@ -258,7 +258,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   }
 
   // from TextInputLayout
-  @TargetApi(KITKAT)
+  @TargetApi(Build.VERSION_CODES.KITKAT)
   private def clearColorFilter(@NonNull drawable: Drawable): Unit = {
     drawable.clearColorFilter()
     if (Build.VERSION.SDK_INT == LOLLIPOP || Build.VERSION.SDK_INT == LOLLIPOP_MR1) {
@@ -284,7 +284,7 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   // from TextInputLayout
   private def ensureBackgroundDrawableStateWorkaround(editText: EditText) = {
     // The workaround is only required on API 21-22
-    if (Seq(LOLLIPOP, LOLLIPOP_MR1).contains(Build.VERSION.SDK_INT)) {
+    if (Build.VERSION.SDK_INT == LOLLIPOP || Build.VERSION.SDK_INT == LOLLIPOP_MR1) {
       Option(editText.getBackground).foreach { bg =>
         // There is an issue in the platform which affects container Drawables
         // where the first drawable retrieved from resources will propogate any changes

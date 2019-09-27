@@ -24,8 +24,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.DatabaseUtils.queryNumEntries
 import android.net.Uri
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.LOLLIPOP
+import android.os.Build
 import android.provider.ContactsContract.DisplayNameSources._
 import android.provider.{BaseColumns, ContactsContract}
 import com.google.i18n.phonenumbers.PhoneNumberUtil
@@ -466,7 +465,7 @@ object ContactsServiceImpl {
     val InDefaultDirectory = ContactsContract.ContactsColumns.IN_DEFAULT_DIRECTORY
   }
 
-  lazy val Visible = if (SDK_INT >= LOLLIPOP) Some(s"${Col.Visible} = 1 OR ${Col.InDefaultDirectory} = 1") else None
+  lazy val Visible = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) Some(s"${Col.Visible} = 1 OR ${Col.InDefaultDirectory} = 1") else None
   lazy val OrderBySortKey = s"${Col.SortKey} COLLATE LOCALIZED ASC"
 
   private[service] val zUserAndTimeOfLastCheck = new AtomicReference((UserId(), Instant.EPOCH))
