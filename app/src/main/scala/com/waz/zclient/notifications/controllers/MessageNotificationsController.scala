@@ -368,7 +368,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       }
     }
 
-  @TargetApi(21)
+  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   private def getMessageSpannable(header: ResString, body: ResString, isTextMessage: Boolean) = {
     val spans = Span(Span.ForegroundColorSpanBlack, Span.HeaderRange) ::
       (if (!isTextMessage) List(Span(Span.StyleSpanItalic, Span.BodyRange)) else Nil)

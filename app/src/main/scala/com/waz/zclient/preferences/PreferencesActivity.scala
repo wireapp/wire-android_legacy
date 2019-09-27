@@ -23,7 +23,7 @@ import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.media.RingtoneManager
 import android.net.Uri
-import android.os.{Build, Bundle}
+import android.os.Bundle
 import android.support.annotation.Nullable
 import android.support.v4.app.Fragment
 import android.support.v7.widget.Toolbar
@@ -99,13 +99,8 @@ class PreferencesActivity extends BaseActivity
 
     accountTabs.onTabClick.onUi { account =>
       val intent = new Intent()
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        intent.putExtra(SwitchAccountExtra, account.id.str)
-        setResult(Activity.RESULT_OK, intent)
-      } else {
-        ZMessaging.currentAccounts.setAccount(Some(account.id))
-        setResult(Activity.RESULT_CANCELED, intent)
-      }
+      intent.putExtra(SwitchAccountExtra, account.id.str)
+      setResult(Activity.RESULT_OK, intent)
       finish()
     }
 

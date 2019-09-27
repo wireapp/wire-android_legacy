@@ -48,9 +48,9 @@ public class AssetIntentsManager {
     private final Context context;
     private final Callback callback;
 
-    @TargetApi(19)
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     private static String openDocumentAction() {
-        return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) ? Intent.ACTION_OPEN_DOCUMENT : Intent.ACTION_GET_CONTENT;
+        return Intent.ACTION_OPEN_DOCUMENT;
     }
 
     public AssetIntentsManager(Context context, Callback callback) {
@@ -70,7 +70,7 @@ public class AssetIntentsManager {
             Timber.i("Did not resolve testing gallery for intent: %s", intent.toString());
         }
         Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 && allowMultiple) {
+        if (allowMultiple) {
             documentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
         callback.openIntent(documentIntent, tpe);
@@ -88,9 +88,6 @@ public class AssetIntentsManager {
         Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
-        }
 
         if (intent.resolveActivity(this.context.getPackageManager()) != null) {
             callback.openIntent(intent, IntentType.VIDEO);
@@ -122,11 +119,6 @@ public class AssetIntentsManager {
         }
 
         Timber.d("onActivityResult - data: %s", Intents.RichIntent(data).toString());
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            callback.onDataReceived(type, AndroidURIUtil.parse(data.getDataString()));
-            return true;
-        }
 
         if(data.getClipData() != null) {
             ClipData clipData = data.getClipData();

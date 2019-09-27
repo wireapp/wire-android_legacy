@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.appentry.fragments
 
-import android.os.{Build, Bundle, Handler}
+import android.os.{Bundle, Handler}
 import android.support.v4.content.ContextCompat
 import android.text.{Editable, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -98,9 +98,7 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
     findById[View](view, R.id.gtv__not_now__close).setVisibility(View.GONE)
     resendCodeButton.foreach(_.setVisibility(View.GONE))
     resendCodeCallButton.foreach(_.setVisibility(View.GONE))
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      editTextCode.foreach(_.setLetterSpacing(1))
-    }
+    editTextCode.foreach(_.setLetterSpacing(1))
     getStringArg(PhoneArg).foreach(phone => onPhoneNumberLoaded(phone))
   }
 

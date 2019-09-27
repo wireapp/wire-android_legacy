@@ -486,7 +486,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
   override def onTerminate(): Unit = {
     controllerFactory.tearDown()
     controllerFactory = null
-    if (Build.VERSION.SDK_INT > 22){
+    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1){
       RenderScript.releaseAllContexts()
     } else {
       inject[RenderScript].destroy()

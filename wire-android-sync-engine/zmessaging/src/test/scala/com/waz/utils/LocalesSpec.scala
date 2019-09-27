@@ -34,16 +34,6 @@ import org.scalatest.junit.JUnitRunner
         bcp47.languageTagOf(bcp47.localeFor(bcp47.languageTagOf(original)).value) shouldEqual bcp47.languageTagOf(original)
       }
     }
-
-    scenario("Fallback") {
-      lazy val bcp47 = FallbackLanguageTags.create(LogTag("LocalesSpec"))
-
-      forEvery(availableLocale) { locale =>
-        bcp47.localeFor(bcp47.languageTagOf(locale)).value should have(
-          'language (locale.getLanguage),
-          'country (locale.getCountry))
-      }
-    }
   }
 
   feature("Indexing a string") {
