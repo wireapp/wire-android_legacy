@@ -23,18 +23,20 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent.Text
+import com.waz.model.GenericContent.Asset
 import com.waz.model._
+import com.waz.model.nano.Messages
 import com.waz.model.otr.UserClients
 import com.waz.service.assets2.{AssetService, DownloadAssetStorage}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, MessagesService}
-import com.waz.service.otr.OtrService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.testutils.TestGlobalPreferences
+import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.events.{EventStream, Signal}
+import com.waz.utils.returning
 import org.scalatest.Inside
-import com.waz.threading.Threading
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -177,6 +179,61 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       inside(result(processor.processEvents(conv, isGroup = false, Seq(event))).head) { case msg =>
         msg.msgType shouldEqual RENAME
         msg.time    shouldEqual event.time
+      }
+    }
+
+    scenario("Processing asset message pairs together") {
+      // Given
+      val sender = UserId("sender")
+      val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
+      val messageId = Uid("messageId")
+      val remoteAssetId = AssetId("remoteAssetId")
+
+      val originalAsset = returning(new Messages.Asset) { asset =>
+        asset.original = returning(new Messages.Asset.Original) { original =>
+          original.name = "The Alphabet"
+          original.mimeType = "text/plain"
+          original.size = 26
+        }
+      }
+
+      val uploadAsset = returning(new Messages.Asset) { asset =>
+        val remoteData = returning(new Messages.Asset.RemoteData)(_.assetId = remoteAssetId.str)
+        asset.setUploaded(remoteData)
+      }
+
+      clock.advance(5.seconds)
+      val originalEvent = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(messageId, originalAsset))
+
+      clock.advance(5.seconds)
+      val uploadEvent = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(messageId, uploadAsset))
+
+      // Expectations
+
+      // both events will check storage when looking for local data, but none will exist.
+      (storage.get _).expects(*).twice().returns(Future.successful(None))
+
+      // We will add both messages to storage together
+      (storage.updateOrCreateAll _).expects(*).onCall { updaters: Map[MessageId, Option[MessageData] => MessageData] =>
+        Future.successful(updaters.values.map(_.apply(None)).toSet)
+      }
+
+      // We will save both assets
+      (assets.save _).expects(*).twice().returns(Future.successful(()))
+
+      // When
+      val processor = getProcessor
+      inside(result(processor.processEvents(conv, isGroup = false, Seq(originalEvent, uploadEvent))).head) {
+        // Then
+        case m =>
+          m.msgType              shouldEqual ANY_ASSET
+          m.convId               shouldEqual conv.id
+          m.userId               shouldEqual sender
+          m.time                 shouldEqual originalEvent.time
+          m.localTime            shouldEqual originalEvent.localTime
+          m.state                shouldEqual Status.SENT
+          m.protos.head.toString shouldEqual uploadEvent.asInstanceOf[GenericMessageEvent].content.toString
+          m.assetId              shouldEqual Some(remoteAssetId)
       }
     }
   }
