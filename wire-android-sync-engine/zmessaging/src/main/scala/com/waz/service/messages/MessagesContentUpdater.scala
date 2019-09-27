@@ -182,15 +182,15 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   private def addContentMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
     verbose(l"SYNC addContentMessages($convId, ${msgs.map(_.id)})")
 
-    if (msgs.isEmpty) {
-      Future.successful(Set.empty)
-    }
-    else {
-      val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> Merger.messageDataMerger(data) }
-      verbose(l"SYNC before update or create all for ${msgs.size}")
-      returning(messagesStorage.updateOrCreateAll(updaters)) {
-        _.foreach(_ => verbose(l"SYNC after update or create all for ${msgs.size}"))
-      }
+    msgs.size match {
+      case 0 =>
+        Future.successful(Set.empty)
+      case 1 =>
+        val updater: MessageData => MessageData = msg => Merger.merge(Seq(msg) ++ msgs)
+        messagesStorage.updateOrCreate(msgs.head.id, updater, creator = msgs.head).map(Set(_))
+      case _ =>
+        val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> Merger.messageDataMerger(data) }
+        messagesStorage.updateOrCreateAll(updaters)
     }
   }
 
@@ -220,7 +220,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       * @param msgs
       * @return
       */
-    private def merge(msgs: Seq[MessageData]): MessageData = {
+    def merge(msgs: Seq[MessageData]): MessageData = {
       if (msgs.size == 1)
         msgs.head
       else {
