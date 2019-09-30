@@ -37,8 +37,8 @@ import com.waz.utils._
 import com.waz.utils.events.{EventStream, Signal, SourceStream}
 import com.waz.utils.wrappers.DB
 
-import scala.collection.immutable.Set
 import scala.collection._
+import scala.collection.immutable.Set
 import scala.concurrent.Future
 
 trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
@@ -69,9 +69,11 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
   def lastLocalMessage(conv: ConvId, tpe: Message.Type): Future[Option[MessageData]]
   def countLaterThan(conv: ConvId, time: RemoteInstant): Future[Long]
 
-  def findMessages(convId: ConvId): Future[IndexedSeq[MessageData]]
+  def findMessageIds(convId: ConvId): Future[Set[MessageId]]
   def findMessagesFrom(conv: ConvId, time: RemoteInstant): Future[IndexedSeq[MessageData]]
   def findMessagesBetween(conv: ConvId, from: RemoteInstant, to: RemoteInstant): Future[IndexedSeq[MessageData]]
+
+  def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
 
   def clear(convId: ConvId, clearTime: RemoteInstant): Future[Unit]
 
@@ -227,14 +229,17 @@ class MessagesStorageImpl(context:     Context,
   override def findLocalFrom(conv: ConvId, time: RemoteInstant) =
     find(m => m.convId == conv && m.isLocal && !m.time.isBefore(time), MessageDataDao.findLocalFrom(conv, time)(_), identity)
 
-  override def findMessages(convId: ConvId) =
-    find(m => m.convId == convId, MessageDataDao.findMessages(convId)(_), identity)
+  override def findMessageIds(convId: ConvId) =
+    storage.read(MessageDataDao.findMessageIds(convId)(_))
 
   def findMessagesFrom(conv: ConvId, time: RemoteInstant) =
     find(m => m.convId == conv && !m.time.isBefore(time), MessageDataDao.findMessagesFrom(conv, time)(_), identity)
 
   def findMessagesBetween(conv: ConvId, from: RemoteInstant, to: RemoteInstant): Future[IndexedSeq[MessageData]] =
     find(m => !m.isLocal && m.time.isAfter(from) && (m.time.isBefore(to) || m.time == to), MessageDataDao.findMessagesBetween(conv, from, to)(_), identity)
+
+  override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] =
+    storage.read(MessageDataDao.getAssetIds(messageIds)(_))
 
   override def delete(msg: MessageData) =
     for {

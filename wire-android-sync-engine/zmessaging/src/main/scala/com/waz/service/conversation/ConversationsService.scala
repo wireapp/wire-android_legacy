@@ -340,23 +340,38 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) = {
     (for {
-      _ <- notificationService.displayNotificationForConversation(
-        new NotificationData(conv = convData.id, user = from, msgType = NotificationType.CONVERSATION_DELETED, time = remoteTime),
-        convData
+      _  <- notificationService.displayNotificationForDeletingConversation(
+                                    new NotificationData(
+                                      conv = convData.id,
+                                      user = from,
+                                      msgType = NotificationType.CONVERSATION_DELETED,
+                                      time = remoteTime
+                                    ), convData
       )
-      convId = convData.id
-      convMessages <- messages.findMessages(convId)
-      _ <- assetService.deleteAll(convMessages.flatMap(_.assetId))
-      _ <- convsStorage.remove(convId)
-      _ <- membersStorage.delete(convId)
-      _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
-      _ <- receiptsStorage.removeAllForMessages(convMessages.map(_.id).toSet)
-      selectedConvId <- selectedConv.selectedConversationId.head
-      deletedConversationSelected = selectedConvId.contains(convId)
-      _ <- if (deletedConversationSelected) selectedConv.selectConversation(None) else Future.successful(())
+      convId           = convData.id
+      convMessageIds  <- messages.findMessageIds(convId)
+      assetIds        <- messages.getAssetIds(convMessageIds)
+      _               <- assetService.deleteAll(assetIds)
+      _               <- convsStorage.remove(convId)
+      _               <- membersStorage.delete(convId)
+      _               <- msgContent.deleteMessagesForConversation(convId)
+      _               <- receiptsStorage.removeAllForMessages(convMessageIds)
+      _               <- checkCurrentConversationDeleted(convId)
     } yield ()).recoverWith {
-      case ex : Exception => error(l"error while deleting conversation $ex")
+      case ex : Exception =>  {
+        error(l"error while deleting conversation $ex")
+      }
         Future.successful(())
+    }
+  }
+
+  private def checkCurrentConversationDeleted(convId: ConvId): Future[Unit] = {
+    for {
+      selectedConvId <- selectedConv.selectedConversationId.head
+      currentConversationDeleted = selectedConvId.contains(convId)
+      _ <- if (currentConversationDeleted) selectedConv.selectConversation(None) else Future.successful(())
+    } yield {
+
     }
   }
 

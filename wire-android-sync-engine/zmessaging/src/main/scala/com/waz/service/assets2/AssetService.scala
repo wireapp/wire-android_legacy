@@ -36,6 +36,7 @@ import com.waz.utils.{Cancellable, IoUtils}
 import com.waz.znet2.http.HttpClient._
 import com.waz.znet2.http.ResponseCode
 
+import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -52,7 +53,7 @@ trait AssetService {
 
   def save(asset: GeneralAsset): Future[Unit]
   def delete(id: GeneralAssetId): Future[Unit]
-  def deleteAll(ids: Seq[GeneralAssetId]): Future[Unit]
+  def deleteAll(ids: Set[GeneralAssetId]): Future[Unit]
 
   def loadContentById(assetId: AssetId, callback: Option[ProgressCallback] = None): CancellableFuture[InputStream]
   def loadContent(asset: Asset, callback: Option[ProgressCallback] = None): CancellableFuture[InputStream]
@@ -143,8 +144,17 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
     case id: DownloadAssetId => downloadAssetStorage.deleteByKey(id)
   }
 
-  override def deleteAll(ids: Seq[GeneralAssetId]): Future[Unit] = {
-    Future(ids.foreach(delete))
+  override def deleteAll(ids: Set[GeneralAssetId]): Future[Unit] = {
+    val (assets, uploadAssets, downloadAssets) =
+      (mutable.HashSet[AssetId](), mutable.HashSet[UploadAssetId](), mutable.HashSet[DownloadAssetId]())
+    ids.foreach {
+        case id: AssetId => assets.add(id)
+        case id: DownloadAssetId => downloadAssets.add(id)
+        case id: UploadAssetId => uploadAssets.add(id)
+    }
+    assetsStorage.deleteAllByKey(assets.toSet)
+    downloadAssetStorage.deleteAllByKey(downloadAssets.toSet)
+    uploadAssetStorage.deleteAllByKey(uploadAssets.toSet)
   }
 
   private def loadFromBackend(asset: Asset, callback: Option[ProgressCallback]): CancellableFuture[InputStream] = {

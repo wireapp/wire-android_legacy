@@ -219,7 +219,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       )
 
       // EXPECT
-      (notificationServiceMock.displayNotificationForConversation _).expects(*, conversationData)
+      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, conversationData)
         .once().returning(Future.successful(()))
 
       // WHEN
@@ -235,9 +235,10 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForConversation _).expects(*, *).anyNumberOfTimes()
+      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *).anyNumberOfTimes()
         .returning(Future.successful(()))
-      (messagesMock.findMessages _).expects(*).anyNumberOfTimes().returning(Future.successful(IndexedSeq[MessageData]()))
+      (messagesMock.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
+      (messagesMock.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
       (assetServiceMock.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 
       //EXPECT
@@ -257,9 +258,10 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForConversation _).expects(*, *).anyNumberOfTimes()
+      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *).anyNumberOfTimes()
         .returning(Future.successful(()))
-      (messagesMock.findMessages _).expects(*).anyNumberOfTimes().returning(Future.successful(IndexedSeq[MessageData]()))
+      (messagesMock.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
+      (messagesMock.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
       (assetServiceMock.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convoStorageMock.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (membersMock.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
@@ -280,16 +282,18 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForConversation _).expects(*, *).anyNumberOfTimes()
+      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *).anyNumberOfTimes()
         .returning(Future.successful(()))
 
-      val assetId = AssetId()
-      val assetMessage = MessageData(convId = convId, assetId = Some(assetId))
-      (messagesMock.findMessages _).expects(convId).anyNumberOfTimes()
-        .returning(Future.successful(IndexedSeq(assetMessage)))
+      val assetId: GeneralAssetId = AssetId()
+      val messageId = MessageId()
+      val assetMessage = MessageData(id = messageId, convId = convId, assetId = Some(assetId))
+      (messagesMock.findMessageIds _).expects(convId).anyNumberOfTimes()
+        .returning(Future.successful(Set(messageId)))
 
       //EXPECT
-      (assetServiceMock.deleteAll _).expects(Seq(assetId)).once()
+      (messagesMock.getAssetIds _).expects(Set(messageId)).once().returning(Future.successful(Set(assetId)))
+      (assetServiceMock.deleteAll _).expects(Set(assetId)).once()
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -305,14 +309,15 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForConversation _).expects(*, *).anyNumberOfTimes()
+      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *).anyNumberOfTimes()
         .returning(Future.successful(()))
 
 
       val messageId = MessageId()
       val message = MessageData(id = messageId, convId = convId)
-      (messagesMock.findMessages _).expects(convId).anyNumberOfTimes().returning(Future.successful(IndexedSeq(message)))
-
+      (messagesMock.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set(messageId)))
+      (messagesMock.getAssetIds _).expects(Set(messageId)).anyNumberOfTimes()
+        .returning(Future.successful(Set[GeneralAssetId]()))
 
       (assetServiceMock.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convoStorageMock.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))

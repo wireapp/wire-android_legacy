@@ -38,7 +38,7 @@ import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
 import com.waz.utils.events.{EventContext, EventStream}
 
-import scala.collection.{IndexedSeq, breakOut}
+import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.Future.{successful, traverse}
 import scala.concurrent.duration.{FiniteDuration, _}
@@ -86,7 +86,9 @@ trait MessagesService {
   def retentionPolicy2ById(convId: ConvId): Future[AssetClient2.Retention]
   def retentionPolicy2(convData: ConversationData): Future[AssetClient2.Retention]
 
-  def findMessages(convId: ConvId): Future[IndexedSeq[MessageData]]
+  def findMessageIds(convId: ConvId): Future[Set[MessageId]]
+
+  def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
 }
 
 class MessagesServiceImpl(selfUserId:   UserId,
@@ -487,6 +489,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
-  override def findMessages(convId: ConvId): Future[IndexedSeq[MessageData]] = storage.findMessages(convId)
+  override def findMessageIds(convId: ConvId): Future[Set[MessageId]] = storage.findMessageIds(convId)
 
+  override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] = storage.getAssetIds(messageIds)
 }

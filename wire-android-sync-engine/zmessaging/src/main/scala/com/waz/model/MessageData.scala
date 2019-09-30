@@ -20,9 +20,9 @@ package com.waz.model
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
+
 import android.database.DatabaseUtils.queryNumEntries
 import android.database.sqlite.SQLiteQueryBuilder
-import com.waz.{api, model}
 import com.waz.api.Message.Type._
 import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
@@ -39,6 +39,7 @@ import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder, returning}
+import com.waz.{api, model}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
 
@@ -360,9 +361,19 @@ object MessageData extends
     val ForceReadReceipts = opt(int('force_read_receipts))(_.forceReadReceipts)
     val AssetId = opt(text('asset_id, GeneralAssetIdCodec.serialize, GeneralAssetIdCodec.deserialize))(_.assetId)
 
+    private val IndexColumns = Array(Id.name, Time.name)
+
     override val idCol = Id
 
     override val table = Table("Messages", Id, Conv, Type, User, Content, Protos, Time, LocalTime, FirstMessage, Members, Recipient, Email, Name, State, ContentSize, EditTime, Ephemeral, ExpiryTime, Expired, Duration, Quote, QuoteValidity, ForceReadReceipts, AssetId)
+
+    object MessageIdReader extends Reader[MessageId] {
+      override def apply(implicit c: DBCursor): MessageId = Id.load(c, 0)
+    }
+
+    object AssetIdReader extends Reader[Option[GeneralAssetId]] {
+      override def apply(implicit c: DBCursor): Option[GeneralAssetId] = AssetId.load(c, 0)
+    }
 
     override def onCreate(db: DB): Unit = {
       super.onCreate(db)
@@ -423,7 +434,8 @@ object MessageData extends
     def findLatestUpTo(convId: ConvId, time: RemoteInstant)(implicit db: DB) =
       single(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${Time.name} < ${time.toEpochMilli}", null, null, null, s"${Time.name} DESC", "1"))
 
-    def findMessages(conv: ConvId)(implicit db: DB) = iterating(db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC"))
+    def findMessageIds(conv: ConvId)(implicit db: DB) =
+      iteratingWithReader(MessageIdReader)(db.rawQuery(s"SELECT ${Id.name} FROM ${table.name} WHERE ${Conv.name} = '$conv'", null)).acquire(_.toSet)
 
     def findMessagesFrom(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' and ${Time.name} >= ${time.toEpochMilli}", null, null, null, s"${Time.name} ASC"))
@@ -443,7 +455,12 @@ object MessageData extends
     def findSystemMessage(conv: ConvId, serverTime: RemoteInstant, tpe: Message.Type, sender: UserId)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '${conv.str}' and ${Time.name} = ${Time(serverTime)} and ${Type.name} = '${Type(tpe)}' and ${User.name} = '${User(sender)}'", null, null, null, s"${Time.name} DESC"))
 
-    private val IndexColumns = Array(Id.name, Time.name)
+    def getAssetIds(messageIds: Set[MessageId])(implicit db:DB) = {
+      val idList = messageIds.map(t => s"'${Id(t)}'").mkString("(", "," , ")")
+      iteratingWithReader(AssetIdReader)(db.rawQuery(s"SELECT ${AssetId.name} FROM ${table.name} WHERE ${Id.name} IN $idList", null))
+        .acquire(_.flatten.toSet)
+    }
+
     def msgIndexCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, IndexColumns, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} ASC")
 
     def msgCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} DESC")

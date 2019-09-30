@@ -122,7 +122,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       }
     }
     case None => {
-      // conversation is deleted
       convChanged ! ConversationChange(from = lastConvId, to = None, requester = ConversationChangeRequester.DELETE_CONVERSATION)
       lastConvId = None
     }
