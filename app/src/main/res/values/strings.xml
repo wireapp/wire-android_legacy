@@ -477,7 +477,7 @@
     <string name="pref_options_app_lock_title">Lock with Passphrase</string>
     <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
     <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
-    <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when composing messages</string>
+    <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
