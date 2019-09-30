@@ -19,14 +19,18 @@ package com.waz.model
 
 import com.waz.db.{Dao, Dao2}
 import com.waz.model
-import com.waz.utils.Identifiable
-import com.waz.utils.wrappers.DBCursor
+import com.waz.model.ConversationMemberData.ConversationMemberDataDao.{ConvId, find, iterating}
+import com.waz.utils.{Identifiable, Managed}
+import com.waz.utils.wrappers.{DB, DBCursor}
 
 case class FolderData(override val id: FolderId,
                                    name: Name,
                                    folderType: Int) extends Identifiable[FolderId]
 
 object FolderData {
+  val FavouritesFolderType = 1
+  val FavouritesFolder = FolderData(FolderId("Favourites"), "Favourites", FavouritesFolderType)
+
   import com.waz.db.Col._
   implicit object FolderDataDao extends Dao[FolderData, FolderId] {
     val Id         = id[FolderId]('_id, "PRIMARY KEY").apply(_.id)
@@ -37,6 +41,8 @@ object FolderData {
     override val table = Table("Folders", Id, Name, FolderType)
 
     override def apply(implicit cursor: DBCursor): FolderData = new FolderData(Id, Name, FolderType)
+
+    def findForType(folderType: Int)(implicit db: DB): Managed[Iterator[FolderData]] = iterating(find(FolderType, folderType))
   }
 }
 
@@ -54,5 +60,8 @@ object ConversationFolderData {
     override val table = Table("ConversationFolders", ConvId, FolderId)
 
     override def apply(implicit cursor: DBCursor): ConversationFolderData = new ConversationFolderData(ConvId, FolderId)
+
+    def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
+    def findForFolder(folderId: FolderId)(implicit db: DB) = iterating(find(FolderId, folderId))
   }
 }
