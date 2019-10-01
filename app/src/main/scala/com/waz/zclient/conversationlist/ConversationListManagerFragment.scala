@@ -168,8 +168,20 @@ class ConversationListManagerFragment extends Fragment
       inject[AccentColorController].accentColor.map(_.color).onUi { c =>
         Option(startUiLoadingIndicator).foreach(_.setColor(c))
         Option(listLoadingIndicator).foreach(_.setColor(c))
+        Option(bottomNavigationView).foreach(_ => setUpBottomNavigationTintColors(c))
       }
     }
+
+  private def setUpBottomNavigationTintColors(color: Int): Unit = {
+    import android.content.res.ColorStateList
+    import android.graphics.Color
+
+    val states = Array[Array[Int]](Array[Int](android.R.attr.state_checked), Array[Int]())
+    val colors = Array[Int](color, Color.WHITE)
+
+    val colorStateList = new ColorStateList(states, colors)
+    bottomNavigationView.setItemIconTintList(colorStateList)
+  }
 
   override def onShowPickUser() = {
     import Page._
