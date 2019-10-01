@@ -40,8 +40,7 @@ import com.waz.zclient.utils.Callback;
 
 public class ConversationPagerFragment extends BaseFragment<ConversationPagerFragment.Container> implements OnBackPressedListener,
                                                                                                             PagerControllerObserver,
-                                                                                                            NavigationControllerObserver,
-                                                                                                            FirstPageFragment.Container {
+                                                                                                            NavigationControllerObserver {
     public static final String TAG = ConversationPagerFragment.class.getName();
     private static final int PAGER_DELAY = 150;
 
