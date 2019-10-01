@@ -41,22 +41,23 @@ class FoldersStorageImpl(context: Context, storage: Database)
 }
 
 trait ConversationFoldersStorage extends CachedStorage[(ConvId, FolderId), ConversationFolderData] {
-  def findForConv(convId: ConvId): Future[Seq[ConversationFolderData]]
-  def findForFolder(folderId: FolderId): Future[Seq[ConversationFolderData]]
+  def findForConv(convId: ConvId): Future[Set[FolderId]]
+  def findForFolder(folderId: FolderId): Future[Set[ConvId]]
 
-  def put(convId: ConvId, folderId: FolderId): Unit
+  def put(convId: ConvId, folderId: FolderId): Future[Unit]
 }
 
 class ConversationFoldersStorageImpl(context: Context, storage: Database)
   extends CachedStorageImpl[(ConvId, FolderId), ConversationFolderData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationFolderDataDao, LogTag("ConversationFoldersStorage"))
     with ConversationFoldersStorage {
+  private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationFoldersStorage")
 
-  override def findForConv(convId: ConvId): Future[Seq[ConversationFolderData]] =
-    find(_.convId == convId, ConversationFolderDataDao.findForConv(convId)(_), identity)
+  override def findForConv(convId: ConvId): Future[Set[FolderId]] =
+    find(_.convId == convId, ConversationFolderDataDao.findForConv(convId)(_), identity).map(_.map(_.folderId).toSet)
 
-  override def findForFolder(folderId: FolderId): Future[Seq[ConversationFolderData]] =
-    find(_.folderId == folderId, ConversationFolderDataDao.findForFolder(folderId)(_), identity)
+  override def findForFolder(folderId: FolderId): Future[Set[ConvId]] =
+    find(_.folderId == folderId, ConversationFolderDataDao.findForFolder(folderId)(_), identity).map(_.map(_.convId).toSet)
 
-  override def put(convId: ConvId, folderId: FolderId): Unit =
-    put((convId, folderId), ConversationFolderData(convId, folderId))
+  override def put(convId: ConvId, folderId: FolderId): Future[Unit] =
+    put((convId, folderId), ConversationFolderData(convId, folderId)).map(_ => ())
 }

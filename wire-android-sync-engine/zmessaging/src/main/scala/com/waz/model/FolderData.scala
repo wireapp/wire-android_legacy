@@ -19,12 +19,14 @@ package com.waz.model
 
 import com.waz.db.{Dao, Dao2}
 import com.waz.model
+
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, Managed}
 
 case class FolderData(override val id: FolderId,
                                    name: Name,
-                                   folderType: Int) extends Identifiable[FolderId]
+                                   folderType: Int = FolderData.CustomFolderType)
+  extends Identifiable[FolderId]
 
 object FolderData {
   var CustomFolderType = 0

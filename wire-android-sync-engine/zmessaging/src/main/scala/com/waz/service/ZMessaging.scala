@@ -263,6 +263,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val replyHashing                               = wire[ReplyHashingImpl]
   lazy val libSodiumUtils                             = wire[LibSodiumUtilsImpl]
   lazy val backupManager                              = wire[BackupManagerImpl]
+  lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -373,6 +374,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     verificationUpdater
 
     propertiesService
+
+    foldersService.favouritesFolderId // creates the Favourites folder if it doesn't exist yet
 
     reporting.addStateReporter { pw =>
       Future {
