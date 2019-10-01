@@ -19,17 +19,16 @@ package com.waz.model
 
 import com.waz.db.{Dao, Dao2}
 import com.waz.model
-import com.waz.model.ConversationMemberData.ConversationMemberDataDao.{ConvId, find, iterating}
-import com.waz.utils.{Identifiable, Managed}
 import com.waz.utils.wrappers.{DB, DBCursor}
+import com.waz.utils.{Identifiable, Managed}
 
 case class FolderData(override val id: FolderId,
                                    name: Name,
                                    folderType: Int) extends Identifiable[FolderId]
 
 object FolderData {
+  var CustomFolderType = 0
   val FavouritesFolderType = 1
-  val FavouritesFolder = FolderData(FolderId("Favourites"), "Favourites", FavouritesFolderType)
 
   import com.waz.db.Col._
   implicit object FolderDataDao extends Dao[FolderData, FolderId] {

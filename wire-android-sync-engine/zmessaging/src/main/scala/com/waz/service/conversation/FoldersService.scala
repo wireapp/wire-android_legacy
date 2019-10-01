@@ -24,46 +24,62 @@ import com.waz.threading.Threading
 import scala.concurrent.Future
 
 trait FoldersService {
-  def ensureFavouritesFolderExists(): Future[Unit]
 
-  def favouritesFolder: Future[FolderData]
+  // returns all folders. The "favourites folder" is not included.
   def folders: Future[Seq[FolderData]]
   def convsInFolder(folderId: FolderId): Future[Seq[ConvId]]
 
   def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean]
-  def move(convId: ConvId, folderId: FolderId): Future[Unit]
-  def remove(convId: ConvId): Future[Unit]
+  def add(convId: ConvId, folderId: FolderId): Unit
+  def remove(convId: ConvId, folderId: FolderId): Future[Unit]
+
+  def favouriteConversations: Future[Seq[ConvId]]
+  def addToFavourite(convId: ConvId): Future[Unit]
+  def removeFromFavourite(convId: ConvId): Future[Unit]
+
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          conversationFoldersStorage: ConversationFoldersStorage) extends FoldersService {
   import Threading.Implicits.Background
 
-  override def ensureFavouritesFolderExists(): Future[Unit] =
-    foldersStorage.getByType(FolderData.FavouritesFolderType).map {
-      case Nil => foldersStorage.put(FolderData.FavouritesFolder.id, FolderData.FavouritesFolder)
-      case _   =>
-    }
-
-  override def favouritesFolder: Future[FolderData] =
+  private def favouritesFolder: Future[FolderData] =
     foldersStorage.getByType(FolderData.FavouritesFolderType).flatMap {
       case head :: _ => Future.successful(head)
-      case Nil       => foldersStorage.put(FolderData.FavouritesFolder.id, FolderData.FavouritesFolder)
+      case Nil       => {
+        val folderData = FolderData(FolderId(), "", FolderData.FavouritesFolderType)
+        foldersStorage.put(folderData.id, folderData)
+      }
     }
 
   override def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean] =
     conversationFoldersStorage.get((convId, folderId)).map(_.nonEmpty)
 
-  override def move(convId: ConvId, folderId: FolderId): Future[Unit] =
-    remove(convId).map(_ => conversationFoldersStorage.put(convId, folderId))
+  override def add(convId: ConvId, folderId: FolderId): Unit =
+    conversationFoldersStorage.put(convId, folderId)
 
-  override def remove(convId: ConvId): Future[Unit] = for {
-    convFolders <- conversationFoldersStorage.findForConv(convId)
-    _           <- conversationFoldersStorage.removeAll(convFolders.map(_.id))
-  } yield ()
+  override def remove(convId: ConvId, folderId: FolderId): Future[Unit] =
+    conversationFoldersStorage.remove((convId, folderId))
 
   override def folders: Future[Seq[FolderData]] = foldersStorage.list()
+    .map(_.filter(_.folderType == FolderData.CustomFolderType))
 
   override def convsInFolder(folderId: FolderId): Future[Seq[ConvId]] =
     conversationFoldersStorage.findForFolder(folderId).map(_.map(_.convId))
+
+  override def addToFavourite(convId: ConvId): Future[Unit] = for {
+    favourite <- favouritesFolder
+    _ = add(convId, favourite.id)
+  } yield()
+
+  override def removeFromFavourite(convId: ConvId): Future[Unit] = for {
+    favourite <- favouritesFolder
+    _ = remove(convId, favourite.id)
+  } yield()
+
+  override def favouriteConversations: Future[Seq[ConvId]] = for {
+    favourite <- favouritesFolder
+    convsData <- conversationFoldersStorage.findForFolder(favourite.id)
+  } yield convsData.map(_.convId)
+
 }
