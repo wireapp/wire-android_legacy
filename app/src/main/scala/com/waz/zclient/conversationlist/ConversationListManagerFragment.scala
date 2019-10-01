@@ -19,6 +19,7 @@ package com.waz.zclient.conversationlist
 
 import android.content.Intent
 import android.os.Bundle
+import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, ViewGroup}
 import android.widget.FrameLayout
@@ -47,6 +48,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.usersearch.SearchUIFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.utils.extensions.BottomNavigationUtil
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.views.LoadingIndicatorView.{InfiniteLoadingBar, Spinner}
 import com.waz.zclient.views.menus.ConfirmationMenu
@@ -80,6 +82,7 @@ class ConversationListManagerFragment extends Fragment
   private var listLoadingIndicator   : LoadingIndicatorView = _
   private var mainContainer          : FrameLayout          = _
   private var confirmationMenu       : ConfirmationMenu     = _
+  private var bottomNavigationView : BottomNavigationView = _
 
   private def stripToConversationList() = {
     pickUserController.hideUserProfile() // Hide possibly open self profile
@@ -110,7 +113,11 @@ class ConversationListManagerFragment extends Fragment
         v.setVisible(false)
         v.resetFullScreenPadding()
       }
-
+      bottomNavigationView = returning(
+        findById[BottomNavigationView](view, R.id.fragment_conversation_list_manager_bottom_navigation)
+      ) { v =>
+        BottomNavigationUtil.disableShiftMode(v)
+      }
 
       if (savedInstanceState == null) {
         val fm = getChildFragmentManager
