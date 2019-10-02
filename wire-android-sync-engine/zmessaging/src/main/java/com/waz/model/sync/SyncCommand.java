@@ -72,6 +72,7 @@ public enum SyncCommand {
     PostBoolProperty("post-bool-property"),
     PostIntProperty("post-int-property"),
     PostStringProperty("post-string-property"),
+    PostCustomFoldersAndFavourites("post-folders-favourites"),
     Unknown("unknown");
 
     public final String name;

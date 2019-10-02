@@ -19,9 +19,10 @@ package com.waz.sync.queue
 
 import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.{PostAssetStatus, RegisterPushToken}
-import com.waz.model.{ConvId, MessageId, PushToken, SyncId}
+import com.waz.model.sync.SyncRequest.{PostAssetStatus, PostCustomFoldersAndFavourites, RegisterPushToken}
+import com.waz.model.{ConvId, FolderData, FolderId, MessageId, PushToken, SyncId}
 import com.waz.service.assets2.UploadAssetStatus
+import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncJobMerger.Merged
 
@@ -29,7 +30,7 @@ import scala.concurrent.duration._
 
 class SyncRequestSpec extends AndroidFreeSpec {
 
-  scenario("RegisterPushToken") {
+  scenario("Merging RegisterPushToken") {
 
     val job1 = SyncJob(SyncId(), RegisterPushToken(PushToken("token")), priority = Priority.High)
     val job2 = SyncJob(SyncId(), RegisterPushToken(PushToken("token2")), priority = Priority.High)
@@ -40,6 +41,28 @@ class SyncRequestSpec extends AndroidFreeSpec {
   scenario("PostAssetStatus encoding decoding") {
     val request = PostAssetStatus(ConvId(), MessageId(), Some(10.minutes), UploadAssetStatus.Failed)
     SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
+  }
+
+  scenario("PostCustomFoldersAndFavourites") {
+    //given
+    val convId1 = ConvId("cid1")
+    val convId2 = ConvId("cid2")
+    val convId3 = ConvId("cid3")
+    val folderId1 = FolderId("Fid1")
+    val folderId2 = FolderId("Fid2")
+    val favourites = FolderId("FAVS")
+    val mapping = List(
+      FolderDataWithConversations(FolderData(folderId1, "F1", FolderData.CustomFolderType), List(convId1)),
+      FolderDataWithConversations(FolderData(folderId2, "F2", FolderData.CustomFolderType), List(convId1, convId2)),
+      FolderDataWithConversations(FolderData(favourites, "", FolderData.FavouritesFolderType), List(convId2, convId3))
+    )
+
+    // when
+    val request = PostCustomFoldersAndFavourites(mapping)
+
+    // then
+    SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
+
   }
 
 

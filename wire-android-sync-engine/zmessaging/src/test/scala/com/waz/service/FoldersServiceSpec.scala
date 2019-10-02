@@ -567,20 +567,20 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       // then
       folders.length shouldBe 3
-      val folder1 = folders.find(_._1.id == folderId1).get
-      folder1._1.name.toString shouldEqual "F1"
-      folder1._1.folderType shouldEqual FolderData.CustomFolderType
-      folder1._2 shouldEqual List(convId1, convId2)
+      val folder1 = folders.find(_.folderData.id == folderId1).get
+      folder1.folderData.name.toString shouldEqual "F1"
+      folder1.folderData.folderType shouldEqual FolderData.CustomFolderType
+      folder1.conversations shouldEqual List(convId1, convId2)
 
-      val folder2 = folders.find(_._1.id == folderId2).get
-      folder2._1.name.toString shouldEqual "F2"
-      folder2._1.folderType shouldEqual FolderData.CustomFolderType
-      folder2._2 shouldEqual List(convId1)
+      val folder2 = folders.find(_.folderData.id == folderId2).get
+      folder2.folderData.name.toString shouldEqual "F2"
+      folder2.folderData.folderType shouldEqual FolderData.CustomFolderType
+      folder2.conversations shouldEqual List(convId1)
 
-      val favourite = folders.find(_._1.id == favouriteId).get
-      favourite._1.name.toString shouldEqual ""
-      favourite._1.folderType shouldEqual FolderData.FavouritesFolderType
-      favourite._2 shouldEqual List(convId1)
+      val favourite = folders.find(_.folderData.id == favouriteId).get
+      favourite.folderData.name.toString shouldEqual ""
+      favourite.folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      favourite.conversations shouldEqual List(convId1)
 
     }
   }

@@ -33,6 +33,7 @@ import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
 import org.threeten.bp.Instant
 import com.waz.log.LogSE._
+import com.waz.service.conversation.FolderDataWithConversations
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -79,6 +80,7 @@ trait SyncServiceHandle {
   def postProperty(key: PropertyKey, value: Boolean): Future[SyncId]
   def postProperty(key: PropertyKey, value: Int): Future[SyncId]
   def postProperty(key: PropertyKey, value: String): Future[SyncId]
+  def postCustomFoldersAndFavourites(folders: Seq[FolderDataWithConversations]): Future[SyncId]
 
   def registerPush(token: PushToken): Future[SyncId]
   def deletePushToken(token: PushToken): Future[SyncId]
@@ -166,6 +168,8 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postProperty(key: PropertyKey, value: Boolean): Future[SyncId] = addRequest(PostBoolProperty(key, value), forceRetry = true)
   def postProperty(key: PropertyKey, value: Int): Future[SyncId] = addRequest(PostIntProperty(key, value), forceRetry = true)
   def postProperty(key: PropertyKey, value: String): Future[SyncId] = addRequest(PostStringProperty(key, value), forceRetry = true)
+
+  def postCustomFoldersAndFavourites(folders: Seq[FolderDataWithConversations]): Future[SyncId] = addRequest(PostCustomFoldersAndFavourites(folders), forceRetry = true)
 
   def registerPush(token: PushToken)    = addRequest(RegisterPushToken(token), priority = Priority.High, forceRetry = true)
   def deletePushToken(token: PushToken) = addRequest(DeletePushToken(token), priority = Priority.Low)
@@ -268,6 +272,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostIntProperty(key, value)                         => zms.propertiesSyncHandler.postProperty(key, value)
           case PostStringProperty(key, value)                      => zms.propertiesSyncHandler.postProperty(key, value)
           case SyncProperties                                      => zms.propertiesSyncHandler.syncProperties
+          case PostCustomFoldersAndFavourites(folders)             => Future.successful(Failure("Unknown sync request")) // XXX
           case Unknown                                             => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

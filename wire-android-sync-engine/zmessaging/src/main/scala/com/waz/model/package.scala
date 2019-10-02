@@ -24,7 +24,9 @@ import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
 import com.waz.model.nano.Messages
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
+import io.circe.{Decoder, Encoder}
 import org.json.JSONObject
+
 import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration
 
@@ -46,6 +48,9 @@ package object model {
     implicit def toNameString(name: Name): String = name.str
     implicit def fromNameString(str: String): Name = Name(str)
     val Empty = Name("")
+
+    implicit val encoder: Encoder[Name] = Encoder.encodeString.contramap(_.str)
+    implicit val decoder: Decoder[Name] = Decoder.decodeString.map(Name(_))
   }
 
   trait ProtoDecoder[A <: MessageNano] {

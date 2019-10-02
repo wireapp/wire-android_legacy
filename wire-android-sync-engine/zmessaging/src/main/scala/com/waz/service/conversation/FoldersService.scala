@@ -26,6 +26,7 @@ import com.waz.service.EventScheduler.Stage
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import io.circe.{Decoder, Encoder}
 
 import scala.concurrent.Future
 
@@ -52,7 +53,20 @@ trait FoldersService {
   def foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]]
   def folder(folderId: FolderId): Signal[Option[FolderData]]
 
-  def foldersToSynchronize(): Future[Seq[(FolderData, Seq[ConvId])]]
+  def foldersToSynchronize(): Future[Seq[FolderDataWithConversations]]
+}
+
+case class FolderDataWithConversations(folderData: FolderData, conversations: Seq[ConvId]) {}
+
+object FolderDataWithConversations {
+  // This is necessary as "type" is a reserved word in Scala
+  implicit val encodeFolderDataConversations: Encoder[FolderDataWithConversations] = Encoder.forProduct4(
+    "name", "type", "id", "conversations"
+  )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations))
+  implicit val decodeFolderDataConversations: Decoder[FolderDataWithConversations] = Decoder.forProduct4(
+    "name", "type", "id", "conversations"
+  )((name: String, folderType: Int, id: FolderId, convs: Seq[ConvId]) =>
+    FolderDataWithConversations(FolderData(id, name, folderType), convs))
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
@@ -199,10 +213,10 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     }).disableAutowiring()
   }
 
-  override def foldersToSynchronize(): Future[Seq[(FolderData, Seq[ConvId])]] = for {
+  override def foldersToSynchronize(): Future[Seq[FolderDataWithConversations]] = for {
     allFolders <- folders
     foldersMapping <- Future.sequence(
-      allFolders.map(f => convsInFolder(f.id).map(l => (f, l.toList)))
+      allFolders.map(f => convsInFolder(f.id).map(l => FolderDataWithConversations(f, l.toList)))
     )
   } yield foldersMapping
 

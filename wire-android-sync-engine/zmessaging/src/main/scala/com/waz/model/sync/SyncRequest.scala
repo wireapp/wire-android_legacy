@@ -18,6 +18,7 @@
 package com.waz.model.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
+import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
@@ -321,6 +322,10 @@ object SyncRequest {
     override def mergeKey: Any = (cmd, key)
   }
 
+  case class PostCustomFoldersAndFavourites(folders: Seq[FolderDataWithConversations]) extends BaseRequest(Cmd.PostCustomFoldersAndFavourites) {
+    override def mergeKey: Any = (cmd, "labels")
+  }
+
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
     case req: A if req.mergeKey == other.mergeKey => f(req)
     case _ => Unchanged
@@ -389,6 +394,7 @@ object SyncRequest {
           case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
+          case Cmd.PostCustomFoldersAndFavourites => Unknown // XXX
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -502,6 +508,9 @@ object SyncRequest {
         case PostStringProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)
+        case PostCustomFoldersAndFavourites(folders) =>
+          o.put("key", "labels")
+          o.put("value", folders)
         case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
       }
