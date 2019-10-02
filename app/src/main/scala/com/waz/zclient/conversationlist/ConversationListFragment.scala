@@ -189,15 +189,19 @@ class NormalConversationFragment extends ConversationListFragment {
     count  <- userAccountsController.unreadCount.map(_.filterNot(_._1 == accountId).values.sum)
   } yield count).orElse(Signal.const(0))
 
-  lazy val hasConversationsAndArchive = for {
+  lazy val hasConversations = for {
     z <- zms
     convs <- z.convsStorage.contents
   } yield {
-    (convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
-    convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
+    convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType))
   }
 
-  lazy val archiveEnabled = hasConversationsAndArchive.map(_._2)
+  lazy val hasConversationsAndArchive = for {
+    hasConv     <- hasConversations
+    archEnabled <- getContainer.archiveEnabled
+  } yield {
+    (hasConv, archEnabled)
+  }
 
   private val waitingAccount = Signal[Option[UserId]](None)
 
@@ -216,18 +220,14 @@ class NormalConversationFragment extends ConversationListFragment {
 
   lazy val loadingListView = view[View](R.id.conversation_list_loading_indicator)
   lazy val listActionsView = returning(view[ListActionsView](R.id.lav__conversation_list_actions)){ vh =>
-    archiveEnabled.onUi(enabled => vh.foreach(_.setArchiveEnabled(enabled)))
-    hasConversationsAndArchive.map {
-      case (false, false) => true
-      case _ => false
-    }.onUi(centered => vh.foreach(_.setContactsCentered(centered)))
+//    archiveEnabled.onUi(enabled => vh.foreach(_.setArchiveEnabled(enabled)))
   }
 
   lazy val noConvsTitle = returning(view[TypefaceTextView](R.id.conversation_list_empty_title)) { vh =>
     hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
-    }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
+    }
     hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
@@ -333,6 +333,7 @@ class NormalConversationFragment extends ConversationListFragment {
 
 object ConversationListFragment {
   trait Container {
+    val archiveEnabled : Signal[Boolean]
     def showArchive(): Unit
     def closeArchive(): Unit
   }

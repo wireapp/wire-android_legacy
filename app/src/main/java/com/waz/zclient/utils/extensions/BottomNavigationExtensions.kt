@@ -3,9 +3,11 @@
 package com.waz.zclient.utils.extensions
 
 import android.annotation.SuppressLint
+import android.support.annotation.IdRes
 import android.support.design.internal.BottomNavigationMenuView
 import android.support.design.widget.BottomNavigationView
 import android.support.design.internal.BottomNavigationItemView
+import android.view.View
 import timber.log.Timber
 
 @SuppressLint("RestrictedApi")
@@ -32,4 +34,9 @@ fun BottomNavigationView.disableShiftMode() {
         Timber.e(e, "Unable to change value of shift mode")
     }
 
+}
+
+fun BottomNavigationView.setItemVisible(@IdRes id: Int, visible: Boolean) {
+    val menuView: BottomNavigationMenuView = getChildAt(0) as BottomNavigationMenuView
+    menuView.findViewById<View>(id).visibility = if (visible) View.VISIBLE else View.GONE
 }

@@ -25,6 +25,7 @@ import android.view.{LayoutInflater, MenuItem, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.api.SyncState._
 import com.waz.content.UsersStorage
+import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
@@ -85,6 +86,15 @@ class ConversationListManagerFragment extends Fragment
   private var confirmationMenu       : ConfirmationMenu     = _
   private var bottomNavigationView : BottomNavigationView = _
 
+  lazy val zms = inject[Signal[ZMessaging]]
+
+  lazy val archiveEnabled = for {
+    z     <- zms
+    convs <- z.convsStorage.contents
+  } yield {
+      convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType))
+  }
+
   private def stripToConversationList() = {
     pickUserController.hideUserProfile() // Hide possibly open self profile
     if (pickUserController.hidePickUser()) navController.setLeftPage(Page.CONVERSATION_LIST, Tag) // Hide possibly open start ui
@@ -119,6 +129,10 @@ class ConversationListManagerFragment extends Fragment
       ) { v =>
         BottomNavigationUtil.disableShiftMode(v)
         v.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
+      }
+
+      archiveEnabled.onUi { enabled =>
+          BottomNavigationUtil.setItemVisible(bottomNavigationView, R.id.navigation_archive, enabled)
       }
 
       if (savedInstanceState == null) {
