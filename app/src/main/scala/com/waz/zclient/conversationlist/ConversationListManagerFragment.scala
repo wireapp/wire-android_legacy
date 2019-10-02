@@ -132,10 +132,8 @@ class ConversationListManagerFragment extends Fragment
           }
         }
 
-        fm.beginTransaction
-          .add(R.id.fl__conversation_list_main, ConversationListFragment.newNormalInstance(), NormalConversationListFragment.TAG)
-          .addToBackStack(NormalConversationListFragment.TAG)
-          .commit
+        //TODO: read last selection from pref
+        bottomNavigationView.setSelectedItemId(R.id.navigation_recents)
       }
 
       (for {
@@ -426,16 +424,27 @@ class ConversationListManagerFragment extends Fragment
     item.getItemId match {
       case R.id.navigation_search =>
         pickUserController.showPickUser()
-        true
+        false
       case R.id.navigation_recents =>
-        //TODO open conversation list
+        val currentPage = navController.getCurrentLeftPage
+        if (currentPage != Page.CONVERSATION_LIST) {
+          val fragment = Option(getChildFragmentManager.findFragmentByTag(NormalConversationListFragment.TAG))
+            .getOrElse(ConversationListFragment.newNormalInstance())
+          getChildFragmentManager.beginTransaction
+            .replace(R.id.fl__conversation_list_main, fragment, NormalConversationListFragment.TAG)
+            .addToBackStack(NormalConversationListFragment.TAG)
+            .commit
+        }
+        if (navController.getCurrentLeftPage != Page.START) {
+          navController.setLeftPage(Page.CONVERSATION_LIST, Tag)
+        }
         true
       case R.id.navigation_folders =>
         //TODO new screen
         true
       case R.id.navigation_archive =>
         showArchive()
-        true
+        false
     }
   }
 
