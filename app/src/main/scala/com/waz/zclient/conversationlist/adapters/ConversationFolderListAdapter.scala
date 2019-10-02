@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.conversationlist
+package com.waz.zclient.conversationlist.adapters
 
 import android.view.ViewGroup
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConvId, ConversationData, Name}
-import com.waz.zclient.conversationlist.ConversationListAdapter._
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 
 /**
   * A list adapter for displaying conversations grouped into folders.

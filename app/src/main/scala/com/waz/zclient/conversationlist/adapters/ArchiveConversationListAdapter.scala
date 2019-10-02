@@ -15,12 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.conversationlist
+package com.waz.zclient.conversationlist.adapters
 
 import android.view.ViewGroup
 import com.waz.model.ConversationData
-import com.waz.zclient.conversationlist.ConversationListAdapter.ViewHolderFactory
-import com.waz.zclient.conversationlist.ConversationListAdapter.{ConversationRowViewHolder, NormalConversationRowViewHolder, NormalViewType}
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 import com.waz.zclient.log.LogUI._
 
 class ArchiveConversationListAdapter extends ConversationListAdapter {

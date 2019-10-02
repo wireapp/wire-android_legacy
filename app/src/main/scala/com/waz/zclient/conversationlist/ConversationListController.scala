@@ -30,6 +30,7 @@ import com.waz.zclient.{Injectable, Injector}
 import com.waz.api.Message
 import com.waz.content.{ConversationStorage, MembersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}

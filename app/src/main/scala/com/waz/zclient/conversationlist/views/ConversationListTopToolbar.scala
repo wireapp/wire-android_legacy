@@ -30,7 +30,8 @@ import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.common.views.GlyphButton
-import com.waz.zclient.conversationlist.{ConversationListAdapter, ListSeparatorDrawable}
+import com.waz.zclient.conversationlist.ListSeparatorDrawable
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.CircleView

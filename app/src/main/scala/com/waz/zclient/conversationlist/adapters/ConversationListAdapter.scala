@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.conversationlist
+package com.waz.zclient.conversationlist.adapters
 
 import android.support.v7.widget.RecyclerView
 import android.view.View.OnLongClickListener
@@ -24,8 +24,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, UserId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
-import com.waz.zclient.conversationlist.ConversationFolderListAdapter.HeaderItem
-import com.waz.zclient.conversationlist.ConversationListAdapter.ConversationRowViewHolder
+import com.waz.zclient.conversationlist.ConversationListController
+import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.HeaderItem
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.ConversationRowViewHolder
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{R, ViewHelper}
