@@ -22,54 +22,66 @@ import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.ZMessaging
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.utils.events.EventStream
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListAdapter._
 import com.waz.zclient.conversationlist.views.{IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
-import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
+import com.waz.zclient.{R, ViewHelper}
 
-class ConversationListAdapter(implicit injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[ConversationRowViewHolder]
-    with Injectable
-    with DerivedLogTag {
+class ConversationListAdapter extends RecyclerView.Adapter[ConversationRowViewHolder] with DerivedLogTag {
 
   setHasStableIds(true)
-
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val userAccountsController = inject[UserAccountsController]
-
-  var _conversations = Seq.empty[ConversationData]
-  var _incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
 
   val onConversationClick = EventStream[ConvId]()
   val onConversationLongClick = EventStream[ConversationData]()
 
-  var maxAlpha = 1.0f
+  private var conversations = Seq.empty[ConversationData]
+  private var incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
+
+  private var maxAlpha = 1.0f
+
+  // Setters
 
   def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
-    _conversations = convs
-    _incomingRequests = incoming
+    conversations = convs
+    incomingRequests = incoming
     verbose(l"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
     notifyDataSetChanged()
   }
 
+  def setMaxAlpha(maxAlpha: Float): Unit = {
+    this.maxAlpha = maxAlpha
+    notifyDataSetChanged()
+  }
+
+  // Getters
+
   private def getConversation(position: Int): Option[ConversationData] =
-    _conversations.lift(position)
+    conversations.lift(position)
 
   private def getItem(position: Int): Option[ConversationData] =
-    _incomingRequests._2 match {
+    incomingRequests._2 match {
       case Seq() => getConversation(position)
       case _ => if (position == 0) None else getConversation(position - 1)
     }
 
   override def getItemCount = {
-    val incoming = if (_incomingRequests._2.nonEmpty) 1 else 0
-    _conversations.size + incoming
+    val incoming = if (incomingRequests._2.nonEmpty) 1 else 0
+    conversations.size + incoming
   }
+
+  override def getItemId(position: Int): Long =
+    getItem(position).fold(position)(_.id.str.hashCode)
+
+  override def getItemViewType(position: Int): Int =
+    if (position == 0 && incomingRequests._2.nonEmpty)
+      IncomingViewType
+    else
+      NormalViewType
+
+  // View management
 
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int) = {
     holder match {
@@ -80,7 +92,7 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
           normalViewHolder.bind(item)
         }
       case incomingViewHolder: IncomingConversationRowViewHolder =>
-        incomingViewHolder.bind(_incomingRequests)
+        incomingViewHolder.bind(incomingRequests)
     }
   }
 
@@ -109,25 +121,12 @@ class ConversationListAdapter(implicit injector: Injector, eventContext: EventCo
         IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, addToParent = false)) { r =>
           r.setOnClickListener(new View.OnClickListener {
             override def onClick(view: View): Unit =
-              _incomingRequests._1.headOption.map(_.id).foreach(onConversationClick ! _ )
+              incomingRequests._1.headOption.map(_.id).foreach(onConversationClick ! _ )
           })
         })
     }
   }
 
-  override def getItemId(position: Int): Long =
-    getItem(position).fold(position)(_.id.str.hashCode)
-
-  override def getItemViewType(position: Int): Int =
-    if (position == 0 && _incomingRequests._2.nonEmpty)
-      IncomingViewType
-    else
-      NormalViewType
-
-  def setMaxAlpha(maxAlpha: Float): Unit = {
-    this.maxAlpha = maxAlpha
-    notifyDataSetChanged()
-  }
 }
 
 object ConversationListAdapter {
