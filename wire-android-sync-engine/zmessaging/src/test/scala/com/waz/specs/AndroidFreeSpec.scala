@@ -49,7 +49,7 @@ object FutureAwaitSyntax {
 trait FutureAwaitSyntax {
   import FutureAwaitSyntax._
 
-  @deprecated("await does not fail tests if the provided future fails! Better to just always use result and discard the return value")
+  @deprecated("await does not fail tests if the provided future fails! Better to just always use result and discard the return value", "?")
   def await(future: Future[_])(implicit duration: FiniteDuration = DefaultTimeout): Unit =
     Await.ready(future, duration)
 
