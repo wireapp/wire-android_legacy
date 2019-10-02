@@ -24,7 +24,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, UserId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
-import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.HeaderItem
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.ConversationRowViewHolder
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, IncomingConversationListRow, NormalConversationListRow}
@@ -49,27 +48,6 @@ object ConversationListAdapter {
   val NormalViewType = 0
   val IncomingViewType = 1
   val FolderViewType = 2
-
-  trait ListMode {
-    val nameId: Int
-    val filter: (ConversationData) => Boolean
-    val sort = ConversationData.ConversationDataOrdering
-  }
-
-  case object Normal extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__title
-    override val filter = ConversationListController.RegularListFilter
-  }
-
-  case object Archive extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = ConversationListController.ArchivedListFilter
-  }
-
-  case object Incoming extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = ConversationListController.IncomingListFilter
-  }
 
   trait ConversationRowViewHolder extends RecyclerView.ViewHolder
 

@@ -30,8 +30,8 @@ import com.waz.utils.events.{EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.drawables.TeamIconDrawable
 import com.waz.zclient.common.views.GlyphButton
+import com.waz.zclient.conversationlist.ConversationListController.{ListMode, Normal}
 import com.waz.zclient.conversationlist.ListSeparatorDrawable
-import com.waz.zclient.conversationlist.adapters.ConversationListAdapter
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.CircleView
@@ -79,12 +79,12 @@ abstract class ConversationListTopToolbar(val context: Context, val attrs: Attri
       }
     }
 
-  def setTitle(mode: ConversationListAdapter.ListMode, currentUser: Option[UserData]): Unit = (mode, currentUser) match {
-    case (ConversationListAdapter.Normal, Some(user)) if user.teamId.nonEmpty =>
+  def setTitle(mode: ListMode, currentUser: Option[UserData]): Unit = (mode, currentUser) match {
+    case (Normal, Some(user)) if user.teamId.nonEmpty =>
       title.setText(user.displayName)
       AvailabilityView.displayLeftOfText(title, user.availability, title.getCurrentTextColor, pushDown = true)
       title.onClick { AvailabilityView.showAvailabilityMenu(AvailabilityChanged.ListHeader) }
-    case (ConversationListAdapter.Normal, Some(user)) =>
+    case (Normal, Some(user)) =>
       title.setText(user.displayName)
       AvailabilityView.displayLeftOfText(title, Availability.None, title.getCurrentTextColor)
       title.setOnClickListener(null)
