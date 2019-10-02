@@ -25,13 +25,39 @@ import scala.concurrent.Future
 
 trait FoldersService {
 
-  // returns all folders. The "favourites folder" is not included.
+  /**
+    * Returns list of all custom folders. Does not include the favourites special folder.
+    * @return
+    */
   def folders: Future[Seq[FolderData]]
   def convsInFolder(folderId: FolderId): Future[Seq[ConvId]]
 
+  /**
+    * Returns the list of folders that contains the conversation. Does not include
+    * the favourite special folder
+    * @param convId
+    * @return
+    */
+  def foldersForConv(convId: ConvId): Future[Seq[FolderId]]
+
   def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean]
-  def add(convId: ConvId, folderId: FolderId): Unit
-  def remove(convId: ConvId, folderId: FolderId): Future[Unit]
+  def addToFolder(convId: ConvId, folderId: FolderId): Unit
+  def removeFromFolder(convId: ConvId, folderId: FolderId): Future[Unit]
+
+  /**
+    * Removes a conversation from all folders (excluding the favourites)
+    * @param convId
+    * @return
+    */
+  def removeFromAllFolders(convId: ConvId): Future[Unit]
+
+  /**
+    * Removes a conversation from all folders (excluding the favourites) and adds it to another one
+    * @param convId
+    * @param folderId
+    * @return
+    */
+  def moveToFolder(convId: ConvId, folderId: FolderId): Future[Unit]
 
   def favouriteConversations: Future[Seq[ConvId]]
   def addToFavourite(convId: ConvId): Future[Unit]
@@ -55,11 +81,26 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean] =
     conversationFoldersStorage.get((convId, folderId)).map(_.nonEmpty)
 
-  override def add(convId: ConvId, folderId: FolderId): Unit =
+  override def addToFolder(convId: ConvId, folderId: FolderId): Unit =
     conversationFoldersStorage.put(convId, folderId)
 
-  override def remove(convId: ConvId, folderId: FolderId): Future[Unit] =
+  override def removeFromFolder(convId: ConvId, folderId: FolderId): Future[Unit] =
     conversationFoldersStorage.remove((convId, folderId))
+
+  override def removeFromAllFolders(convId: ConvId): Future[Unit] = for {
+    allFolders <- foldersForConv(convId)
+    _ <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
+  } yield ()
+
+  override def foldersForConv(convId: ConvId): Future[scala.Seq[FolderId]] = for {
+    favourite <- favouritesFolder
+    allFolders <- conversationFoldersStorage.findForConv(convId).map(_.map(_.folderId))
+      .map(_.filter(_ != favourite.id))
+  } yield allFolders
+
+  override def moveToFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
+    _ <- removeFromAllFolders(convId)
+  } yield addToFolder(convId, folderId)
 
   override def folders: Future[Seq[FolderData]] = foldersStorage.list()
     .map(_.filter(_.folderType == FolderData.CustomFolderType))
@@ -69,12 +110,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def addToFavourite(convId: ConvId): Future[Unit] = for {
     favourite <- favouritesFolder
-    _ = add(convId, favourite.id)
+    _ = addToFolder(convId, favourite.id)
   } yield()
 
   override def removeFromFavourite(convId: ConvId): Future[Unit] = for {
     favourite <- favouritesFolder
-    _ = remove(convId, favourite.id)
+    _ = removeFromFolder(convId, favourite.id)
   } yield()
 
   override def favouriteConversations: Future[Seq[ConvId]] = for {

@@ -97,12 +97,10 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      val favourites = Await.result(for {
-        _ <- service.addToFavourite(convId)
-        favs <- service.favouriteConversations
-      } yield favs, 500.millis)
+      Await.result(service.addToFavourite(convId), 500.millis)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites shouldEqual List(convId)
 
     }
@@ -114,14 +112,11 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      val favourites = Await.result(for {
-        _ <- service.addToFavourite(convId)
-        _ <- service.removeFromFavourite(convId)
-        favs <- service.favouriteConversations
-      } yield favs, 500.millis)
-
+      Await.result(service.addToFavourite(convId), 500.millis)
+      Await.result(service.removeFromFavourite(convId), 500.millis)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites.isEmpty shouldBe true
     }
 
@@ -133,14 +128,11 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      val favourites = Await.result(for {
-        _ <- service.addToFavourite(convId)
-        _ = service.add(convId, folderId)
-        favs <- service.favouriteConversations
-      } yield favs, 500.millis)
-
+      Await.result(service.addToFavourite(convId), 500.millis)
+      service.addToFolder(convId, folderId)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites shouldEqual List(convId)
     }
 
@@ -152,15 +144,12 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      val favourites = Await.result(for {
-        _ <- service.addToFavourite(convId)
-        _ = service.add(convId, folderId)
-        _ = service.remove(convId, folderId)
-        favs <- service.favouriteConversations
-      } yield favs, 500.millis)
-
+      Await.result(service.addToFavourite(convId), 500.millis)
+      service.addToFolder(convId, folderId)
+      service.removeFromFolder(convId, folderId)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites shouldEqual List(convId)
     }
 
@@ -172,11 +161,10 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      service.add(convId, folderId)
-      val favourites = Await.result(service.favouriteConversations, 500.millis)
-
+      service.addToFolder(convId, folderId)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites.length shouldBe 0
     }
 
@@ -188,14 +176,12 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      val favourites = Await.result(for {
-        _ <- service.addToFavourite(convId1)
-        _ <- service.addToFavourite(convId2)
-        _ <- service.addToFavourite(convId3)
-        favs <- service.favouriteConversations
-      } yield favs, 500.millis)
+      Await.result(service.addToFavourite(convId1), 500.millis)
+      Await.result(service.addToFavourite(convId2), 500.millis)
+      Await.result(service.addToFavourite(convId3), 500.millis)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites.toSet shouldEqual Set(convId1, convId2, convId3)
     }
 
@@ -207,15 +193,13 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      val favourites = Await.result(for {
-        _ <- service.addToFavourite(convId1)
-        _ <- service.addToFavourite(convId2)
-        _ <- service.removeFromFavourite(convId1)
-        _ <- service.addToFavourite(convId3)
-        favs <- service.favouriteConversations
-      } yield favs, 500.millis)
+      Await.result(service.addToFavourite(convId1), 500.millis)
+      Await.result(service.addToFavourite(convId2), 500.millis)
+      Await.result(service.removeFromFavourite(convId1), 500.millis)
+      Await.result(service.addToFavourite(convId3), 500.millis)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites.toSet shouldEqual Set(convId2, convId3)
     }
 
@@ -228,17 +212,17 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val folderId1 = FolderId("folder_id1")
       val folderId2 = FolderId("folder_id2")
       val service = getService
-
-      // when
       Await.result(service.addToFavourite(convId1), 500.millis)
       Await.result(service.addToFavourite(convId2), 500.millis)
-      service.add(convId1, folderId1)
-      service.add(convId2, folderId2)
-      service.add(convId3, folderId1)
-      Await.result(service.remove(convId1, folderId1), 500.millis)
-      val favourites = Await.result(service.favouriteConversations, 500.millis)
+
+      // when
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId2, folderId2)
+      service.addToFolder(convId3, folderId1)
+      Await.result(service.removeFromFolder(convId1, folderId1), 500.millis)
 
       // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
       favourites.toSet shouldEqual Set(convId1, convId2)
     }
   }
@@ -252,10 +236,10 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      service.add(convId1, folderId1)
-      val conversationsInFolder = Await.result(service.convsInFolder(folderId1), 500.millis)
+      service.addToFolder(convId1, folderId1)
 
       // then
+      val conversationsInFolder = Await.result(service.convsInFolder(folderId1), 500.millis)
       conversationsInFolder shouldEqual List(convId1)
       Await.result(service.isInFolder(convId1, folderId1), 500.millis) shouldBe true
     }
@@ -271,20 +255,20 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      service.add(convId1, folderId1)
-      service.add(convId2, folderId2)
-      service.add(convId3, folderId1)
-      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
-      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId2), 500.millis)
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId2, folderId2)
+      service.addToFolder(convId3, folderId1)
 
       // then
+      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId2), 500.millis)
       conversationsInFolder1.toSet shouldEqual Set(convId1, convId3)
       conversationsInFolder2.toSet shouldEqual Set(convId2)
       Await.result(service.isInFolder(convId1, folderId1), 500.millis) shouldBe true
       Await.result(service.isInFolder(convId1, folderId2), 500.millis) shouldBe false
     }
 
-    scenario("Add a conversation to multiple custom folder") {
+    scenario("Add a single conversation to multiple custom folder") {
 
       // given
       val convId1 = ConvId("conv_id1")
@@ -293,12 +277,12 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val service = getService
 
       // when
-      service.add(convId1, folderId1)
-      service.add(convId1, folderId2)
-      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
-      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId1, folderId2)
 
       // then
+      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId1), 500.millis)
       conversationsInFolder1 shouldEqual List(convId1)
       conversationsInFolder2 shouldEqual List(convId1)
       Await.result(service.isInFolder(convId1, folderId1), 500.millis) shouldBe true
@@ -314,16 +298,16 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val folderId1 = FolderId("folder_id1")
       val folderId2 = FolderId("folder_id2")
       val service = getService
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId2, folderId2)
+      service.addToFolder(convId3, folderId1)
 
       // when
-      service.add(convId1, folderId1)
-      service.add(convId2, folderId2)
-      service.add(convId3, folderId1)
-      Await.result(service.remove(convId1, folderId1), 500.millis)
-      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
-      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId2), 500.millis)
+      Await.result(service.removeFromFolder(convId1, folderId1), 500.millis)
 
       // then
+      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId2), 500.millis)
       conversationsInFolder1 shouldEqual List(convId3)
       conversationsInFolder2 shouldEqual List(convId2)
       Await.result(service.isInFolder(convId1, folderId1), 500.millis) shouldBe false
@@ -337,44 +321,117 @@ class FoldersServiceSpec extends AndroidFreeSpec {
       val convId1 = ConvId("conv_id1")
       val folderId1 = FolderId("folder_id1")
       val service = getService
+      service.addToFolder(convId1, folderId1)
 
       // when
-      service.add(convId1, folderId1)
-      Await.result(service.remove(convId1, folderId1), 500.millis)
-      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      Await.result(service.removeFromFolder(convId1, folderId1), 500.millis)
 
       // then
+      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
       conversationsInFolder1.isEmpty shouldBe true
     }
 
-    scenario("Get list of folders") {
+    scenario("Remove conversations from all folders") {
+
       // given
+      val convId1 = ConvId("conv_id1")
+      val convId2 = ConvId("conv_id2")
       val folderId1 = FolderId("folder_id1")
       val folderId2 = FolderId("folder_id2")
       val service = getService
-      this.folders += FolderData(folderId1, "", FolderData.CustomFolderType)
-      this.folders += FolderData(folderId2, "", FolderData.CustomFolderType)
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId2, folderId1)
+      service.addToFolder(convId1, folderId2)
 
       // when
-      val folders = Await.result(service.folders, 500.millis)
+      Await.result(service.removeFromAllFolders(convId1), 500.millis)
 
       // then
-      folders.map(_.id).toSet shouldEqual Set(folderId1, folderId2)
+      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId2), 500.millis)
+      conversationsInFolder1 shouldEqual List(convId2)
+      conversationsInFolder2 shouldEqual List()
+    }
+
+    scenario("Move conversation to folder") {
+      // given
+      val convId1 = ConvId("conv_id1")
+      val convId2 = ConvId("conv_id2")
+      val folderId1 = FolderId("folder_id1")
+      val folderId2 = FolderId("folder_id2")
+      val folderId3 = FolderId("folder_id3")
+      val service = getService
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId2, folderId1)
+      service.addToFolder(convId1, folderId2)
+
+      // when
+      Await.result(service.moveToFolder(convId1, folderId3), 500.millis)
+
+      // then
+      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
+      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId2), 500.millis)
+      val conversationsInFolder3 = Await.result(service.convsInFolder(folderId3), 500.millis)
+      conversationsInFolder1 shouldEqual List(convId2)
+      conversationsInFolder2 shouldEqual List()
+      conversationsInFolder3 shouldEqual List(convId1)
+    }
+
+    scenario("Move conversation to folder does not remove from favourite") {
+      // given
+      val convId1 = ConvId("conv_id1")
+      val convId2 = ConvId("conv_id2")
+      val folderId1 = FolderId("folder_id1")
+      val folderId2 = FolderId("folder_id2")
+      val folderId3 = FolderId("folder_id3")
+      val favouriteId = FolderId("folder_fav")
+      val service = getService
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId2, folderId1)
+      service.addToFolder(convId1, folderId2)
+      this.folders += FolderData(favouriteId, "", FolderData.FavouritesFolderType)
+      Await.result(service.addToFavourite(convId1), 500.millis)
+
+      // when
+      Await.result(service.moveToFolder(convId1, folderId3), 500.millis)
+
+      // then
+      val favourites = Await.result(service.favouriteConversations, 500.millis)
+      favourites shouldEqual List(convId1)
     }
 
     scenario("List of folders does not include favourite") {
       // given
       val folderId1 = FolderId("folder_id1")
-      val folderId2 = FolderId("folder_id2")
+      val favouriteId = FolderId("folder_fav")
       val service = getService
       this.folders += FolderData(folderId1, "", FolderData.CustomFolderType)
-      this.folders += FolderData(folderId2, "", FolderData.FavouritesFolderType)
+      this.folders += FolderData(favouriteId, "", FolderData.FavouritesFolderType)
 
       // when
       val folders = Await.result(service.folders, 500.millis)
 
       // then
       folders.map(_.id).toSet shouldEqual Set(folderId1)
+    }
+
+    scenario("Get list of folders for conversation does not include favourite") {
+      // given
+      val convId1 = ConvId("conv_id1")
+      val folderId1 = FolderId("folder_id1")
+      val folderId2 = FolderId("folder_id2")
+      val favouriteId = FolderId("folder_fav")
+      val service = getService
+      service.addToFolder(convId1, folderId1)
+      service.addToFolder(convId1, folderId2)
+      this.folders += FolderData(favouriteId, "", FolderData.FavouritesFolderType)
+      Await.result(service.addToFavourite(convId1), 500.millis)
+
+      // when
+      val foldersForConv = Await.result(service.foldersForConv(convId1), 500.millis)
+
+      // then
+      foldersForConv.toSet shouldEqual Set(folderId1, folderId2)
     }
   }
 }
