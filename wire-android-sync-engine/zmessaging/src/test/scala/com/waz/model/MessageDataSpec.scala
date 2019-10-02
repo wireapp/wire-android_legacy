@@ -88,9 +88,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val start = text.indexOf(handle)
       val mention = Mention(Some(UserId()), start, handle.length)
       val mentions = Seq(mention)
-      println(s"mentions: $mentions")
       val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
-      println(s"adjusted: $adjusted")
       adjusted shouldEqual mentions
     }
 
@@ -101,9 +99,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val mention1 = Mention(Some(UserId()), text.indexOf(handle1), handle1.length)
       val mention2 = Mention(Some(UserId()), text.indexOf(handle2), handle2.length)
       val mentions = Seq(mention1, mention2)
-      println(s"mentions: $mentions")
       val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
-      println(s"adjusted: $adjusted")
       adjusted shouldEqual mentions
     }
 
@@ -113,9 +109,7 @@ class MessageDataSpec extends AndroidFreeSpec {
       val start = text.indexOf(handle)
       val mention = Mention(Some(UserId()), start, handle.length)
       val mentions = Seq(mention)
-      println(s"mentions: $mentions")
       val adjusted = MessageData.adjustMentions(text, mentions, forSending = true)
-      println(s"adjusted: $adjusted")
       adjusted shouldEqual mentions
     }
   }
