@@ -24,8 +24,9 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, UserId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
+import com.waz.zclient.conversationlist.ConversationFolderListAdapter.HeaderItem
 import com.waz.zclient.conversationlist.ConversationListAdapter.ConversationRowViewHolder
-import com.waz.zclient.conversationlist.views.{IncomingConversationListRow, NormalConversationListRow}
+import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{R, ViewHelper}
 
@@ -46,6 +47,7 @@ object ConversationListAdapter {
 
   val NormalViewType = 0
   val IncomingViewType = 1
+  val FolderViewType = 2
 
   trait ListMode {
     val nameId: Int
@@ -82,6 +84,11 @@ object ConversationListAdapter {
     }
   }
 
+  case class ConversationFolderRowViewHolder(view: ConversationFolderListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
+    def bind(sectionHeader: HeaderItem): Unit =
+      view.setTitle(sectionHeader.title)
+  }
+
   object ViewHolderFactory extends DerivedLogTag {
 
     def newNormalConversationRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): NormalConversationRowViewHolder = {
@@ -111,6 +118,11 @@ object ConversationListAdapter {
           override def onClick(view: View): Unit = r.conversationId.foreach(adapter.onConversationClick ! _ )
         })
       })
+    }
+
+    def newConversationFolderRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): ConversationFolderRowViewHolder = {
+      val view = ViewHelper.inflate[ConversationFolderListRow](R.layout.conv_folder_list_item, parent, addToParent = false)
+      ConversationFolderRowViewHolder(view)
     }
   }
 }
