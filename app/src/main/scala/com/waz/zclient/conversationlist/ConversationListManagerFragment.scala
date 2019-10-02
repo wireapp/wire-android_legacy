@@ -216,7 +216,7 @@ class ConversationListManagerFragment extends Fragment
     }
 
     page match {
-      case SEND_CONNECT_REQUEST | BLOCK_USER | PENDING_CONNECT_REQUEST =>
+      case SEND_CONNECT_REQUEST | PENDING_CONNECT_REQUEST =>
         pickUserController.hideUserProfile()
         hide()
       case PICK_USER | INTEGRATION_DETAILS => hide()
@@ -320,7 +320,7 @@ class ConversationListManagerFragment extends Fragment
     startUiLoadingIndicator
 
   override def onPageVisible(page: Page) = {
-    if (page != Page.ARCHIVE && page != Page.CONVERSATION_MENU_OVER_CONVERSATION_LIST) closeArchive()
+    if (page != Page.ARCHIVE) closeArchive()
     bottomNavigationView.setVisible(page == Page.START || page == Page.CONVERSATION_LIST)
   }
 
@@ -371,7 +371,7 @@ class ConversationListManagerFragment extends Fragment
     navController.getCurrentLeftPage match { // TODO: START is set as left page on tablet, fix
       case PICK_USER =>
         pickUserController.showPickUser()
-      case BLOCK_USER | PENDING_CONNECT_REQUEST | SEND_CONNECT_REQUEST | COMMON_USER_PROFILE =>
+      case PENDING_CONNECT_REQUEST | SEND_CONNECT_REQUEST =>
         togglePeoplePicker(false)
       case _ => //
     }
