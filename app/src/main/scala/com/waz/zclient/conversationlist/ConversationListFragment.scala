@@ -151,8 +151,19 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   }
 }
 
-object ArchiveListFragment{
-  val TAG = ArchiveListFragment.getClass.getSimpleName
+object ConversationListFragment {
+  trait Container {
+    def showArchive(): Unit
+    def closeArchive(): Unit
+  }
+
+  def newNormalInstance(): ConversationListFragment = {
+    new NormalConversationFragment()
+  }
+
+  def newArchiveInstance(): ConversationListFragment = {
+    new ArchiveListFragment()
+  }
 }
 
 class ArchiveListFragment extends ConversationListFragment with OnBackPressedListener {
@@ -172,8 +183,8 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
   }
 }
 
-object NormalConversationListFragment {
-  val TAG = NormalConversationListFragment.getClass.getSimpleName
+object ArchiveListFragment{
+  val TAG = ArchiveListFragment.getClass.getSimpleName
 }
 
 class NormalConversationFragment extends ConversationListFragment {
@@ -336,18 +347,7 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 }
 
-
-object ConversationListFragment {
-  trait Container {
-    def showArchive(): Unit
-    def closeArchive(): Unit
-  }
-
-  def newNormalInstance(): ConversationListFragment = {
-    new NormalConversationFragment()
-  }
-
-  def newArchiveInstance(): ConversationListFragment = {
-    new ArchiveListFragment()
-  }
+object NormalConversationListFragment {
+  val TAG = NormalConversationListFragment.getClass.getSimpleName
 }
+
