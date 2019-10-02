@@ -72,24 +72,28 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   protected val adapterMode: ConversationListAdapter.ListMode
 
   protected lazy val topToolbar: ViewHolder[_ <: ConversationListTopToolbar] = view[ConversationListTopToolbar](R.id.conversation_list_top_toolbar)
-  lazy val adapter = returning(new ConversationListAdapter) { a =>
-    a.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
 
-    userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
-
-    adapterMode match {
-      case ConversationListAdapter.Normal =>
-        (for {
+  lazy val adapter = returning(adapterMode match {
+    case ConversationListAdapter.Normal =>
+      returning(new NormalConversationListAdapter) { a =>
+        val dataSource = for {
           regular  <- convListController.regularConversationListData
           incoming <- convListController.incomingConversationListData
-        } yield (regular, incoming)).onUi { case (regular, incoming) =>
+        } yield (regular, incoming)
+
+        dataSource.onUi { case (regular, incoming) =>
           a.setData(regular, incoming)
         }
-      case ConversationListAdapter.Archive =>
+      }
+    case ConversationListAdapter.Archive =>
+      returning(new ArchiveConversationListAdapter) { a =>
         convListController.archiveConversationListData.onUi { archive =>
-          a.setData(archive, (Seq.empty, Seq.empty))
+          a.setData(archive)
         }
-    }
+      }
+  }) { a =>
+    a.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
+    userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
     a.onConversationClick { conv =>
       verbose(l"handleItemClick, switching conv to $conv")

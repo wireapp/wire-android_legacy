@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,112 +21,25 @@ import android.support.v7.widget.RecyclerView
 import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model._
-import com.waz.utils.events.EventStream
+import com.waz.model.{ConvId, ConversationData, UserId}
+import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
-import com.waz.zclient.conversationlist.ConversationListAdapter._
+import com.waz.zclient.conversationlist.ConversationListAdapter.ConversationRowViewHolder
 import com.waz.zclient.conversationlist.views.{IncomingConversationListRow, NormalConversationListRow}
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{R, ViewHelper}
 
-class ConversationListAdapter extends RecyclerView.Adapter[ConversationRowViewHolder] with DerivedLogTag {
+abstract class ConversationListAdapter extends RecyclerView.Adapter[ConversationRowViewHolder] with DerivedLogTag {
 
-  setHasStableIds(true)
+  val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
+  val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
 
-  val onConversationClick = EventStream[ConvId]()
-  val onConversationLongClick = EventStream[ConversationData]()
-
-  private var conversations = Seq.empty[ConversationData]
-  private var incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
-
-  private var maxAlpha = 1.0f
-
-  // Setters
-
-  def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
-    conversations = convs
-    incomingRequests = incoming
-    verbose(l"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
-    notifyDataSetChanged()
-  }
+  protected var maxAlpha = 1.0f
 
   def setMaxAlpha(maxAlpha: Float): Unit = {
     this.maxAlpha = maxAlpha
     notifyDataSetChanged()
   }
-
-  // Getters
-
-  private def getConversation(position: Int): Option[ConversationData] =
-    conversations.lift(position)
-
-  private def getItem(position: Int): Option[ConversationData] =
-    incomingRequests._2 match {
-      case Seq() => getConversation(position)
-      case _ => if (position == 0) None else getConversation(position - 1)
-    }
-
-  override def getItemCount = {
-    val incoming = if (incomingRequests._2.nonEmpty) 1 else 0
-    conversations.size + incoming
-  }
-
-  override def getItemId(position: Int): Long =
-    getItem(position).fold(position)(_.id.str.hashCode)
-
-  override def getItemViewType(position: Int): Int =
-    if (position == 0 && incomingRequests._2.nonEmpty)
-      IncomingViewType
-    else
-      NormalViewType
-
-  // View management
-
-  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int) = {
-    holder match {
-      case normalViewHolder: NormalConversationRowViewHolder =>
-        getItem(position).fold {
-          error(l"Conversation not found at position: $position")
-        } { item =>
-          normalViewHolder.bind(item)
-        }
-      case incomingViewHolder: IncomingConversationRowViewHolder =>
-        incomingViewHolder.bind(incomingRequests)
-    }
-  }
-
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int) = {
-    viewType match {
-      case NormalViewType =>
-        NormalConversationRowViewHolder(returning(ViewHelper.inflate[NormalConversationListRow](R.layout.normal_conv_list_item, parent, addToParent = false)) { r =>
-          r.setAlpha(1f)
-          r.setMaxAlpha(maxAlpha)
-          r.setOnClickListener(new View.OnClickListener {
-            override def onClick(view: View): Unit =
-              r.conversationData.map(_.id).foreach(onConversationClick ! _ )
-          })
-          r.setOnLongClickListener(new OnLongClickListener {
-            override def onLongClick(view: View): Boolean = {
-              r.conversationData.foreach(onConversationLongClick ! _)
-              true
-            }
-          })
-          r.setConversationCallback(new ConversationCallback {
-            override def onConversationListRowSwiped(convId: String, view: View) =
-              r.conversationData.foreach(onConversationLongClick ! _)
-          })
-        })
-      case IncomingViewType =>
-        IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, addToParent = false)) { r =>
-          r.setOnClickListener(new View.OnClickListener {
-            override def onClick(view: View): Unit =
-              incomingRequests._1.headOption.map(_.id).foreach(onConversationClick ! _ )
-          })
-        })
-    }
-  }
-
 }
 
 object ConversationListAdapter {
@@ -163,7 +76,41 @@ object ConversationListAdapter {
   }
 
   case class IncomingConversationRowViewHolder(view: IncomingConversationListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
-    def bind(convsAndUsers: (Seq[ConversationData], Seq[UserId])): Unit =
+    def bind(convsAndUsers: (Seq[ConversationData], Seq[UserId])): Unit = {
+      view.conversationId = convsAndUsers._1.headOption.map(_.id)
       view.setIncomingUsers(convsAndUsers._2)
+    }
+  }
+
+  object ViewHolderFactory extends DerivedLogTag {
+
+    def newNormalConversationRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): NormalConversationRowViewHolder = {
+      NormalConversationRowViewHolder(returning(ViewHelper.inflate[NormalConversationListRow](R.layout.normal_conv_list_item, parent, addToParent = false)) { r =>
+        r.setAlpha(1f)
+        r.setMaxAlpha(adapter.maxAlpha)
+        r.setOnClickListener(new View.OnClickListener {
+          override def onClick(view: View): Unit =
+            r.conversationData.map(_.id).foreach(adapter.onConversationClick ! _ )
+        })
+        r.setOnLongClickListener(new OnLongClickListener {
+          override def onLongClick(view: View): Boolean = {
+            r.conversationData.foreach(adapter.onConversationLongClick ! _)
+            true
+          }
+        })
+        r.setConversationCallback(new ConversationCallback {
+          override def onConversationListRowSwiped(convId: String, view: View): Unit =
+            r.conversationData.foreach(adapter.onConversationLongClick ! _)
+        })
+      })
+    }
+
+    def newIncomingConversationRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): IncomingConversationRowViewHolder = {
+      IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, addToParent = false)) { r =>
+        r.setOnClickListener(new View.OnClickListener {
+          override def onClick(view: View): Unit = r.conversationId.foreach(adapter.onConversationClick ! _ )
+        })
+      })
+    }
   }
 }

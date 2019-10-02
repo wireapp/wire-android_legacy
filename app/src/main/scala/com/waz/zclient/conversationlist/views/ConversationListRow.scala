@@ -232,6 +232,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var moveToAnimator: ObjectAnimator = _
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
+    // TODO: We don't need to store all this data.
     this.conversationData = Some(conversationData)
     title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
@@ -533,6 +534,8 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
 
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.conv_list_item)
+
+  var conversationId = Option.empty[ConvId]
 
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
