@@ -43,28 +43,28 @@ class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
       )
 
       // when
-      val json = payload.asJson
+      val json = payload.asJson.noSpaces
 
       // then
-      json.toString().replaceAll("\\s","") shouldEqual """[
-                                    |  {
-                                    |    "name" : "F1",
-                                    |    "type" : 0,
-                                    |    "id" : "f1",
-                                    |    "conversations" : [
-                                    |      "c1",
-                                    |      "c2"
-                                    |    ]
-                                    |  },
-                                    |  {
-                                    |    "name" : "FAV",
-                                    |    "type" : 1,
-                                    |    "id" : "fav",
-                                    |    "conversations" : [
-                                    |      "c2"
-                                    |    ]
-                                    |  }]
-                                  """.stripMargin.replaceAll("\\s","")
+      json shouldEqual """[
+                          |  {
+                          |    "name" : "F1",
+                          |    "type" : 0,
+                          |    "id" : "f1",
+                          |    "conversations" : [
+                          |      "c1",
+                          |      "c2"
+                          |    ]
+                          |  },
+                          |  {
+                          |    "name" : "FAV",
+                          |    "type" : 1,
+                          |    "id" : "fav",
+                          |    "conversations" : [
+                          |      "c2"
+                          |    ]
+                          |  }]
+                        """.stripMargin.replaceAll("\\s","")
     }
   }
 
@@ -101,6 +101,42 @@ class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
       list(0).conversations shouldEqual List(ConvId("c1"), ConvId("c2"))
 
       list(1).folderData.name shouldEqual Name("FAV")
+      list(1).folderData.id shouldEqual FolderId("fav")
+      list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      list(1).conversations shouldEqual List(ConvId("c2"))
+    }
+
+    scenario ("favourites with no name") {
+
+      // given
+      val payload = """[
+        {
+          "name" : "F1",
+          "type" : 0,
+          "id" : "f1",
+          "conversations" : [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "type" : 1,
+          "id" : "fav",
+          "conversations" : [
+            "c2"
+          ]
+        }]"""
+
+      // when
+      val list = decode[List[FolderDataWithConversations]](payload).right.get
+
+      // then
+      list(0).folderData.name shouldEqual Name("F1")
+      list(0).folderData.id shouldEqual FolderId("f1")
+      list(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      list(0).conversations shouldEqual List(ConvId("c1"), ConvId("c2"))
+
+      list(1).folderData.name shouldEqual Name("")
       list(1).folderData.id shouldEqual FolderId("fav")
       list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
       list(1).conversations shouldEqual List(ConvId("c2"))

@@ -23,10 +23,11 @@ import com.waz.log.LogSE._
 import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RemoteFolderData}
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
+import com.waz.model.{ConvId, FolderData, FolderId, Name}
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
-import io.circe.{Decoder, Encoder}
+import io.circe.{Decoder, Encoder, JsonObject}
 
 import scala.concurrent.Future
 
@@ -63,10 +64,27 @@ object FolderDataWithConversations {
   implicit val encodeFolderDataConversations: Encoder[FolderDataWithConversations] = Encoder.forProduct4(
     "name", "type", "id", "conversations"
   )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations))
-  implicit val decodeFolderDataConversations: Decoder[FolderDataWithConversations] = Decoder.forProduct4(
-    "name", "type", "id", "conversations"
-  )((name: String, folderType: Int, id: FolderId, convs: Seq[ConvId]) =>
-    FolderDataWithConversations(FolderData(id, name, folderType), convs))
+
+  implicit val decodeFolderDataConversations: Decoder[FolderDataWithConversations] = Decoder.decodeJsonObject.emap(objectToFolderDataWithConversation(_))
+
+  // This in necessary because:
+  // - It needs to parse even when name is missing
+  // - "type" is a reserved word in Scala
+  def objectToFolderDataWithConversation(obj: JsonObject): Either[String, FolderDataWithConversations] = {
+    val name = obj.apply("name").flatMap(_.asString).getOrElse("")
+    val id = obj.apply("id").flatMap(_.asString).getOrElse("")
+    val maybeFolderType = obj.apply("type").flatMap(_.asNumber).flatMap(_.toInt)
+    if (maybeFolderType.isEmpty) {
+      return Left("Missing/wrong folder type")
+    }
+    val maybeConversations = obj.apply("conversations").flatMap(_.asArray).map(_.toList).getOrElse(List())
+      .map(_.asString)
+    if (maybeConversations.find(_.isEmpty).isDefined) {
+      return Left("Conversation has invalid ID")
+    }
+    val conversations = maybeConversations.map(_.get).map(ConvId(_))
+    return Right(FolderDataWithConversations(FolderData(FolderId(id), name, maybeFolderType.get), conversations))
+  }
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
