@@ -21,7 +21,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.{Fragment, FragmentManager}
-import android.view.{LayoutInflater, ViewGroup}
+import android.view.{LayoutInflater, MenuItem, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.api.SyncState._
 import com.waz.content.UsersStorage
@@ -66,7 +66,8 @@ class ConversationListManagerFragment extends Fragment
   with ConversationScreenControllerObserver
   with SendConnectRequestFragment.Container
   with BlockedUserProfileFragment.Container
-  with PendingConnectRequestManagerFragment.Container {
+  with PendingConnectRequestManagerFragment.Container
+  with BottomNavigationView.OnNavigationItemSelectedListener {
 
   import ConversationListManagerFragment._
   import Threading.Implicits.Background
@@ -117,6 +118,7 @@ class ConversationListManagerFragment extends Fragment
         findById[BottomNavigationView](view, R.id.fragment_conversation_list_manager_bottom_navigation)
       ) { v =>
         BottomNavigationUtil.disableShiftMode(v)
+        v.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
       }
 
       if (savedInstanceState == null) {
@@ -319,8 +321,10 @@ class ConversationListManagerFragment extends Fragment
   override def getLoadingViewIndicator =
     startUiLoadingIndicator
 
-  override def onPageVisible(page: Page) =
+  override def onPageVisible(page: Page) = {
     if (page != Page.ARCHIVE && page != Page.CONVERSATION_MENU_OVER_CONVERSATION_LIST) closeArchive()
+    bottomNavigationView.setVisible(page == Page.START || page == Page.CONVERSATION_LIST)
+  }
 
   override def showArchive() = {
     import Page._
@@ -375,7 +379,7 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
-  override def onBackPressed = {
+  override def onBackPressed() = {
     withBackstackHead {
       case Some(f: FragmentHelper) if f.onBackPressed() => true
       case _ if pickUserController.isShowingPickUser() =>
@@ -417,6 +421,24 @@ class ConversationListManagerFragment extends Fragment
   override def onHideOtrClient() = {}
 
   override def showRemoveConfirmation(userId: UserId) = {}
+
+  override def onNavigationItemSelected(item: MenuItem): Boolean = {
+    item.getItemId match {
+      case R.id.navigation_search =>
+        pickUserController.showPickUser()
+        true
+      case R.id.navigation_recents =>
+        //TODO open conversation list
+        true
+      case R.id.navigation_folders =>
+        //TODO new screen
+        true
+      case R.id.navigation_archive =>
+        showArchive()
+        true
+    }
+  }
+
 }
 
 object ConversationListManagerFragment {
