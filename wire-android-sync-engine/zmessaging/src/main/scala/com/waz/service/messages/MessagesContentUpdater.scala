@@ -182,17 +182,15 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   private def addContentMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
     verbose(l"SYNC addContentMessages($convId, ${msgs.map(_.id)})")
 
-    if (msgs.isEmpty) {
-      Future.successful(Set.empty)
-    }
-    else {
-      val dataMerger = (data: Seq[MessageData]) => { prev: Option[MessageData] => Merger.merge(prev.toSeq ++ data) }
-      val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> dataMerger(data) }
-
-      verbose(l"SYNC before update or create all for ${msgs.size}")
-      returning(messagesStorage.updateOrCreateAll(updaters)) {
-        _.foreach(_ => verbose(l"SYNC after update or create all for ${msgs.size}"))
-      }
+    msgs.size match {
+      case 0 =>
+        Future.successful(Set.empty)
+      case 1 =>
+        val updater: MessageData => MessageData = msg => Merger.merge(Seq(msg) ++ msgs)
+        messagesStorage.updateOrCreate(msgs.head.id, updater, creator = msgs.head).map(Set(_))
+      case _ =>
+        val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> Merger.messageDataMerger(data) }
+        messagesStorage.updateOrCreateAll(updaters)
     }
   }
 
@@ -209,6 +207,13 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     }
 
   private object Merger {
+
+    /**
+      * A merging function for a given sequence of messages. It is assumed that the messages
+      * share the same id.
+      */
+    val messageDataMerger: Seq[MessageData] => Option[MessageData] => MessageData =
+      data => { prev => merge(prev.toSeq ++ data) }
 
     /**
       * Merges data from multiple events into a single message.
@@ -235,10 +240,10 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       }
     }
 
-    def mergeLocal(localMessage: MessageData, msg: MessageData): MessageData =
+    private def mergeLocal(localMessage: MessageData, msg: MessageData): MessageData =
       msg.copy(id = localMessage.id, localTime = localMessage.localTime)
 
-    def mergeMatching(prev: MessageData, msg: MessageData): MessageData = {
+    private def mergeMatching(prev: MessageData, msg: MessageData): MessageData = {
       // `AssetId` (for uploaded assets) takes highest priority.
       val assetId = List(msg.assetId, prev.assetId)
         .collectFirst { case Some(id: AssetId) => id }

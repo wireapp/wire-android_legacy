@@ -75,9 +75,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       clock.advance(5.seconds)
       val event = GenericMessageEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, GenericMessage(Uid("uid"), Text(text)))
 
-      (storage.updateOrCreateAll _).expects(*).onCall { updaters: Map[MessageId, Option[MessageData] => MessageData] =>
-        Future.successful(updaters.values.map(_.apply(None)).toSet)
-      }
+      (storage.updateOrCreate _).expects(*, *, *).onCall { (_, _, creator) => Future.successful(creator)}
       (storage.get _).expects(*).once().returns(Future.successful(None))
 
       val processor = getProcessor
