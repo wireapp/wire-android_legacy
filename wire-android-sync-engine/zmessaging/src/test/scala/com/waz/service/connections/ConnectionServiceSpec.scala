@@ -143,7 +143,6 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
       val convId = ConvId(otherUser.id.str)
 
       var previousConv = ConversationData(convId, tempRemoteId, convType = WaitForConnection)
-      println(previousConv)
 
       (usersStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[UserId], updater: ((UserId, Option[UserData]) => UserData)) =>
         Future.successful(keys.map {
@@ -161,7 +160,6 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         Future.successful(keys.map {
           case id if id == convId =>
             returning(updater(id, Some(previousConv))) { updated =>
-              println(updated)
               previousConv = updated
             }
           case _ => fail("Unexpected user being updated")
@@ -172,7 +170,6 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
         if (!keys.toSet.contains(convId)) fail ("didn't try to update other conversation")
         val prev = previousConv
         Future.successful(Seq((prev, returning(updater(previousConv)) { updated =>
-          println(updated)
           previousConv = updated
         })))
       }

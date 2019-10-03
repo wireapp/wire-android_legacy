@@ -98,7 +98,6 @@ class MessageDataDaoSpec extends AndroidFreeSpec {
 
     scenario("Decode mentions") {
       val encoded = JsonEncoder.encode(contentWithMention)
-      println(encoded.toString)
       val decoded = JsonDecoder.decode[MessageContent](encoded.toString)
       decoded shouldEqual contentWithMention
     }
