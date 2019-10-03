@@ -91,32 +91,57 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
 object ConversationListController {
 
+  type Filter = ConversationData => Boolean
+
   trait ListMode {
     val nameId: Int
-    val filter: (ConversationData) => Boolean
-    val sort = ConversationData.ConversationDataOrdering
+    val filter: Filter
+    val sort: Ordering[ConversationData] = ConversationData.ConversationDataOrdering
   }
 
   case object Normal extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__title
-    override val filter = ConversationListController.RegularListFilter
+    override lazy val nameId: Int = R.string.conversation_list__header__title
+    override val filter: Filter = ConversationListController.RegularListFilter
   }
 
   case object Archive extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = ConversationListController.ArchivedListFilter
+    override lazy val nameId: Int = R.string.conversation_list__header__archive_title
+    override val filter: Filter = ConversationListController.ArchivedListFilter
   }
 
   case object Incoming extends ListMode {
-    override lazy val nameId = R.string.conversation_list__header__archive_title
-    override val filter = ConversationListController.IncomingListFilter
+    override lazy val nameId: Int = R.string.conversation_list__header__archive_title
+    override val filter: Filter = ConversationListController.IncomingListFilter
   }
 
-  lazy val RegularListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && !c.archived}
-  lazy val IncomingListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType == ConversationType.Incoming }
-  lazy val ArchivedListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.Incoming, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && c.archived && !c.completelyCleared }
-  lazy val EstablishedListFilter: (ConversationData => Boolean) = { c => RegularListFilter(c) && c.convType != ConversationType.WaitForConnection }
-  lazy val EstablishedArchivedListFilter: (ConversationData => Boolean) = { c => ArchivedListFilter(c) && c.convType != ConversationType.WaitForConnection }
+  case object Folders extends ListMode {
+    // TODO: add real copy
+    override lazy val nameId: Int = R.string.conversation_list__header__title
+    override val filter: Filter = ConversationListController.RegularListFilter
+  }
+
+  lazy val RegularListFilter: Filter = { c =>
+    import ConversationType._
+    Set(OneToOne, Group, WaitForConnection).contains(c.convType) && !c.hidden && !c.archived
+  }
+
+  lazy val IncomingListFilter: Filter = { c =>
+    !c.hidden && !c.archived && c.convType == ConversationType.Incoming
+  }
+
+  lazy val ArchivedListFilter: Filter = { c =>
+    import ConversationType._
+    val validConversationTypes = Set(OneToOne, Group, ConversationType.Incoming, WaitForConnection)
+    validConversationTypes.contains(c.convType) && !c.hidden && c.archived && !c.completelyCleared
+  }
+
+  lazy val EstablishedListFilter: Filter = { c =>
+    RegularListFilter(c) && c.convType != ConversationType.WaitForConnection
+  }
+
+  lazy val EstablishedArchivedListFilter: Filter = { c =>
+    ArchivedListFilter(c) && c.convType != ConversationType.WaitForConnection
+  }
 
   // Maintains a short list of members for each conversation.
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.
