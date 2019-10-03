@@ -24,8 +24,8 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, Managed}
 
 case class FolderData(override val id: FolderId = FolderId(),
-                                   name: Name,
-                                   folderType: Int = FolderData.CustomFolderType)
+                      name: Name,
+                      folderType: Int = FolderData.CustomFolderType)
   extends Identifiable[FolderId]
 
 object FolderData {

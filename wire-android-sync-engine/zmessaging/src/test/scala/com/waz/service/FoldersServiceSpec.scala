@@ -318,30 +318,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       Await.result(service.isInFolder(convId1, folderId2), 500.millis) shouldBe false
     }
 
-    scenario("Add a single conversation to multiple folders") {
-
-      // given
-      val convId1 = ConvId("conv_id1")
-      val service = getService
-
-      // when
-      val res = for {
-        folderId1 <- service.addFolder("custom folder 1")
-        folderId2 <- service.addFolder("custom folder 2")
-        _         <- service.addConversationTo(convId1, folderId1)
-        _         <- service.addConversationTo(convId1, folderId2)
-      } yield (folderId1, folderId2)
-      val (folderId1, folderId2) = Await.result(res, 500.millis)
-
-      // then
-      val conversationsInFolder1 = Await.result(service.convsInFolder(folderId1), 500.millis)
-      val conversationsInFolder2 = Await.result(service.convsInFolder(folderId1), 500.millis)
-      conversationsInFolder1 shouldEqual Set(convId1)
-      conversationsInFolder2 shouldEqual Set(convId1)
-      Await.result(service.isInFolder(convId1, folderId1), 500.millis) shouldBe true
-      Await.result(service.isInFolder(convId1, folderId2), 500.millis) shouldBe true
-    }
-
     scenario("Remove conversations from folders") {
 
       // given
