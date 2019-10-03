@@ -375,8 +375,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     propertiesService
 
-    foldersService.favouritesFolderId // creates the Favourites folder if it doesn't exist yet
-
     reporting.addStateReporter { pw =>
       Future {
         userPrefs foreachCached {
