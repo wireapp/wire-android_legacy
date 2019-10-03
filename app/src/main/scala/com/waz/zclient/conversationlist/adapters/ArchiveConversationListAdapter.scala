@@ -30,40 +30,28 @@ class ArchiveConversationListAdapter extends ConversationListAdapter {
 
   def setData(convs: Seq[ConversationData]): Unit = {
     conversations = convs
-    verbose(l"Conversation list updated => conversations: ${convs.size}")
     notifyDataSetChanged()
   }
 
-  private def getConversation(position: Int): Option[ConversationData] =
-    conversations.lift(position)
+  private def getConversation(position: Int): Option[ConversationData] = conversations.lift(position)
 
-  private def getItem(position: Int): Option[ConversationData] =
-    getConversation(position)
+  private def getItem(position: Int): Option[ConversationData] = getConversation(position)
 
   override def getItemCount: Int = conversations.size
 
-  override def getItemId(position: Int): Long =
-    getItem(position).fold(position)(_.id.str.hashCode)
+  override def getItemId(position: Int): Long = getItem(position).fold(position)(_.id.str.hashCode)
 
   override def getItemViewType(position: Int): Int = NormalViewType
 
   // View management
 
-  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
-    holder match {
-      case normalViewHolder: NormalConversationRowViewHolder =>
-        getItem(position).fold {
-          error(l"Conversation not found at position: $position")
-        } { item =>
-          normalViewHolder.bind(item)
-        }
-      case _=>
-        error(l"Unexpected view holder")
-    }
+  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): NormalConversationRowViewHolder = {
+    ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
   }
 
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): NormalConversationRowViewHolder = {
-    // TODO: Handle unexpected view type?
-    ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
+  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
+    getItem(position).fold(error(l"Conversation not found at position: $position")) { item =>
+      holder.asInstanceOf[NormalConversationRowViewHolder].bind(item)
+    }
   }
 }

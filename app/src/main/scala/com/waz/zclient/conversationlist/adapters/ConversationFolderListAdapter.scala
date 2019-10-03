@@ -18,31 +18,28 @@
 package com.waz.zclient.conversationlist.adapters
 
 import android.view.ViewGroup
-import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConvId, ConversationData, Name}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.ConversationData
+import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
+import com.waz.zclient.log.LogUI._
 
 /**
   * A list adapter for displaying conversations grouped into folders.
   */
-class ConversationFolderListAdapter extends ConversationListAdapter {
-  import ConversationFolderListAdapter._
+class ConversationFolderListAdapter extends ConversationListAdapter with DerivedLogTag {
 
   // TODO: pull data from service when ready.
-  private val folders = {
-    val groups = Folder("Groups", List(ConversationItem("Android Team"), ConversationItem("iOS Team")))
-    val contacts = Folder("Contacts", List(ConversationItem("San Pat"), ConversationItem("Bob")))
-    List(groups, contacts)
-  }
-
+  private val folders = Seq.empty[Folder]
   private var items = Seq.empty[Item]
-  updateItems()
 
   private def updateItems(): Unit = {
     items = folders.foldLeft(Seq.empty[Item]) { (result, folder) =>
       result ++ (HeaderItem(folder.title) :: folder.conversations)
     }
   }
+
+  // Getters
 
   override def getItemCount: Int = items.size
 
@@ -51,23 +48,19 @@ class ConversationFolderListAdapter extends ConversationListAdapter {
     case _: ConversationItem => NormalViewType
   }
 
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = {
-    viewType match {
-      case FolderViewType => ViewHolderFactory.newConversationFolderRowViewHolder(this, parent)
-      case NormalViewType => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
-    }
+  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
+    case FolderViewType => ViewHolderFactory.newConversationFolderRowViewHolder(this, parent)
+    case NormalViewType => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
   }
 
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
-    val model = items(position)
-
-    holder match {
-      case folderViewHolder: ConversationFolderRowViewHolder =>
-        folderViewHolder.bind(model.asInstanceOf[HeaderItem])
-      case normalViewHolder: NormalConversationRowViewHolder =>
-        // TODO: adjust the view holder to accept the view model.
-        val data = ConversationData(id = ConvId(), convType = ConversationType.OneToOne, generatedName = Name(model.asInstanceOf[ConversationItem].name))
-        normalViewHolder.bind(data)
+    (holder, items(position)) match {
+      case (viewHolder: ConversationFolderRowViewHolder, header: HeaderItem) =>
+        viewHolder.bind(header)
+      case (viewHolder: NormalConversationRowViewHolder, conversation: ConversationItem) =>
+        viewHolder.bind(conversation.data)
+      case _ =>
+        error(l"Invalid view holder/data pair")
     }
   }
 }
@@ -78,5 +71,7 @@ object ConversationFolderListAdapter {
 
   sealed trait Item
   case class HeaderItem(title: String) extends Item
-  case class ConversationItem(name: String) extends Item
+
+  // TODO: It's not necessary to provide all of this data. Will refactor.
+  case class ConversationItem(data: ConversationData) extends Item
 }

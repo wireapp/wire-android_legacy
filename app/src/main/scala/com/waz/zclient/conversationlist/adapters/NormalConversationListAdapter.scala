@@ -32,54 +32,42 @@ class NormalConversationListAdapter extends ConversationListAdapter {
   def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
     conversations = convs
     incomingRequests = incoming
-    verbose(l"Conversation list updated => conversations: ${convs.size}, requests: ${incoming._2.size}")
     notifyDataSetChanged()
   }
 
   // Getters
 
-  private def getConversation(position: Int): Option[ConversationData] =
-    conversations.lift(position)
+  private def getConversation(position: Int): Option[ConversationData] = conversations.lift(position)
 
-  private def getItem(position: Int): Option[ConversationData] =
-    incomingRequests._2 match {
-      case Seq() => getConversation(position)
-      case _ => if (position == 0) None else getConversation(position - 1)
-    }
+  private def getItem(position: Int): Option[ConversationData] = incomingRequests._2 match {
+    case Seq() => getConversation(position)
+    case _ => if (position == 0) None else getConversation(position - 1)
+  }
 
   override def getItemCount: Int = {
     val incoming = if (incomingRequests._2.nonEmpty) 1 else 0
     conversations.size + incoming
   }
 
-  override def getItemId(position: Int): Long =
-    getItem(position).fold(position)(_.id.str.hashCode)
+  override def getItemId(position: Int): Long = getItem(position).fold(position)(_.id.str.hashCode)
 
   override def getItemViewType(position: Int): Int =
-    if (position == 0 && incomingRequests._2.nonEmpty)
-      IncomingViewType
-    else
-      NormalViewType
+    if (position == 0 && incomingRequests._2.nonEmpty) IncomingViewType
+    else NormalViewType
 
   // View management
 
-  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
-    holder match {
-      case normalViewHolder: NormalConversationRowViewHolder =>
-        getItem(position).fold {
-          error(l"Conversation not found at position: $position")
-        } { item =>
-          normalViewHolder.bind(item)
-        }
-      case incomingViewHolder: IncomingConversationRowViewHolder =>
-        incomingViewHolder.bind(incomingRequests)
-    }
+  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
+    case NormalViewType => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
+    case IncomingViewType => ViewHolderFactory.newIncomingConversationRowViewHolder(this, parent)
   }
 
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = {
-    viewType match {
-      case NormalViewType => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
-      case IncomingViewType => ViewHolderFactory.newIncomingConversationRowViewHolder(this, parent)
-    }
+  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = holder match {
+    case normalViewHolder: NormalConversationRowViewHolder =>
+      getItem(position).fold(error(l"Conversation not found at position: $position")) { item =>
+        normalViewHolder.bind(item)
+      }
+    case incomingViewHolder: IncomingConversationRowViewHolder =>
+      incomingViewHolder.bind(incomingRequests)
   }
 }
