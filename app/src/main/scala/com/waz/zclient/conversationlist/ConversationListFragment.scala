@@ -34,7 +34,7 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.conversationlist.ConversationListController.{Archive, ListMode, Normal}
+import com.waz.zclient.conversationlist.ConversationListController.{Archive, ListMode, Normal, Folders}
 import com.waz.zclient.conversationlist.adapters.{ArchiveConversationListAdapter, NormalConversationListAdapter}
 import com.waz.zclient.conversationlist.views.{ArchiveTopToolbar, ConversationListTopToolbar, NormalTopToolbar}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -93,6 +93,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
           a.setData(archive)
         }
       }
+      // TODO: Add Folders case
   }) { a =>
     a.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
     userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
@@ -157,13 +158,9 @@ object ConversationListFragment {
     def closeArchive(): Unit
   }
 
-  def newNormalInstance(): ConversationListFragment = {
-    new NormalConversationFragment()
-  }
-
-  def newArchiveInstance(): ConversationListFragment = {
-    new ArchiveListFragment()
-  }
+  def newNormalInstance(): ConversationListFragment = new NormalConversationFragment()
+  def newArchiveInstance(): ConversationListFragment = new ArchiveListFragment()
+  def newFoldersInstance(): ConversationListFragment = new ConversationFoldersListFragment()
 }
 
 class ArchiveListFragment extends ConversationListFragment with OnBackPressedListener {
@@ -189,8 +186,8 @@ object ArchiveListFragment{
 
 class NormalConversationFragment extends ConversationListFragment {
 
-  override val layoutId = R.layout.fragment_conversation_list
-  override protected val adapterMode = Normal
+  override val layoutId: Int = R.layout.fragment_conversation_list
+  override protected val adapterMode: ListMode = Normal
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val accentColor = inject[AccentColorController].accentColor
@@ -351,3 +348,6 @@ object NormalConversationListFragment {
   val TAG = NormalConversationListFragment.getClass.getSimpleName
 }
 
+class ConversationFolderListFragment extends NormalConversationFragment {
+  override protected val adapterMode: ListMode = Folders
+}
