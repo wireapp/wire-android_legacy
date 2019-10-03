@@ -69,39 +69,47 @@ object ConversationListAdapter {
   }
 
   object ViewHolderFactory extends DerivedLogTag {
+    import ViewHelper.inflate
 
     def newNormalConversationRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): NormalConversationRowViewHolder = {
-      NormalConversationRowViewHolder(returning(ViewHelper.inflate[NormalConversationListRow](R.layout.normal_conv_list_item, parent, addToParent = false)) { r =>
+      val row = returning(inflate[NormalConversationListRow](R.layout.normal_conv_list_item, parent, addToParent = false)) { r =>
         r.setAlpha(1f)
         r.setMaxAlpha(adapter.maxAlpha)
+
         r.setOnClickListener(new View.OnClickListener {
           override def onClick(view: View): Unit =
-            r.conversationData.map(_.id).foreach(adapter.onConversationClick ! _ )
+            r.conversationData.map(_.id).foreach(adapter.onConversationClick ! _)
         })
+
         r.setOnLongClickListener(new OnLongClickListener {
           override def onLongClick(view: View): Boolean = {
             r.conversationData.foreach(adapter.onConversationLongClick ! _)
             true
           }
         })
+
         r.setConversationCallback(new ConversationCallback {
           override def onConversationListRowSwiped(convId: String, view: View): Unit =
             r.conversationData.foreach(adapter.onConversationLongClick ! _)
         })
-      })
+      }
+
+      NormalConversationRowViewHolder(row)
     }
 
     def newIncomingConversationRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): IncomingConversationRowViewHolder = {
-      IncomingConversationRowViewHolder(returning(ViewHelper.inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, addToParent = false)) { r =>
+      val row = returning(inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, addToParent = false)) { r =>
         r.setOnClickListener(new View.OnClickListener {
-          override def onClick(view: View): Unit = r.conversationId.foreach(adapter.onConversationClick ! _ )
+          override def onClick(view: View): Unit = r.conversationId.foreach(adapter.onConversationClick ! _)
         })
-      })
+      }
+
+      IncomingConversationRowViewHolder(row)
     }
 
     def newConversationFolderRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): ConversationFolderRowViewHolder = {
-      val view = ViewHelper.inflate[ConversationFolderListRow](R.layout.conv_folder_list_item, parent, addToParent = false)
-      ConversationFolderRowViewHolder(view)
+      val row = inflate[ConversationFolderListRow](R.layout.conv_folder_list_item, parent, addToParent = false)
+      ConversationFolderRowViewHolder(row)
     }
   }
 }
