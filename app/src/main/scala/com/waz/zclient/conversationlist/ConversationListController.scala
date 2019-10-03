@@ -38,6 +38,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ConversationListController(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
+  import Threading.Implicits.Background
   import ConversationListController._
 
   val zms = inject[Signal[ZMessaging]]
@@ -133,6 +134,32 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     favId  <- Signal.future(favouritesFolderId)
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
+
+  def addToFavourites(convId: ConvId): Future[Unit] = for {
+    service  <- foldersService.head
+    favId    <- service.ensureFavouritesFolder()
+    _        <- service.addConversationTo(convId, favId)
+  } yield ()
+
+  def removeFromFavourites(convId: ConvId): Future[Unit] = for {
+    Some(favId) <- favouritesFolderId
+    _           <- removeFromFolder(convId, favId)
+  } yield ()
+
+  def removeFromFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
+    service <- foldersService.head
+    _       <- service.removeConversationFrom(convId, folderId)
+    convs   <- service.convsInFolder(folderId)
+    _       <- if (convs.isEmpty) service.removeFolder(folderId) else Future.successful(())
+  } yield ()
+
+  def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
+    service       <- foldersService.head
+    folders       <- service.foldersForConv(convId)
+    favId         <- favouritesFolderId
+    customFolders =  favId.fold(folders)(folders - _)
+    _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
+  } yield ()
 }
 
 object ConversationListController {

@@ -22,7 +22,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, FolderData, FolderId, Name}
 import com.waz.threading.Threading
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
-import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
@@ -37,7 +36,7 @@ trait FoldersService {
   def folders: Future[Seq[FolderData]]
   def addFolder(folderName: Name): Future[FolderId]
   def removeFolder(folderId: FolderId): Future[Unit]
-  def addFavouritesFolder(): Future[FolderId]
+  def ensureFavouritesFolder(): Future[FolderId]
   def removeFavouritesFolder(): Future[Unit]
 
   def foldersForConv(convId: ConvId): Future[Set[FolderId]]
@@ -47,7 +46,7 @@ trait FoldersService {
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
-                         conversationFoldersStorage: ConversationFoldersStorage) extends FoldersService with DerivedLogTag {
+                         conversationFoldersStorage: ConversationFoldersStorage) extends FoldersService {
   import Threading.Implicits.Background
   private implicit val ev = EventContext.Global
 
@@ -70,7 +69,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def foldersForConv(convId: ConvId): Future[Set[FolderId]] =
     conversationFoldersStorage.findForConv(convId)
-  
+
   override def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean] =
     conversationFoldersStorage.get((convId, folderId)).map(_.nonEmpty)
 
@@ -91,7 +90,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _       <- foldersStorage.remove(folderId)
   } yield ()
 
-  override def addFavouritesFolder(): Future[FolderId] = favouritesFolderId.map {
+  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.map {
     case None =>
       val folderData = FolderData(FolderId(), "", FolderData.FavouritesFolderType)
       foldersStorage.put(folderData.id, folderData).map(_ => folderData.id)
