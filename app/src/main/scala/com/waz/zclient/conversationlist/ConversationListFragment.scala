@@ -160,7 +160,7 @@ object ConversationListFragment {
 
   def newNormalInstance(): ConversationListFragment = new NormalConversationFragment()
   def newArchiveInstance(): ConversationListFragment = new ArchiveListFragment()
-  def newFoldersInstance(): ConversationListFragment = new ConversationFoldersListFragment()
+  def newFoldersInstance(): ConversationListFragment = new ConversationFolderListFragment()
 }
 
 class ArchiveListFragment extends ConversationListFragment with OnBackPressedListener {
