@@ -24,10 +24,10 @@
         android:icon="@drawable/search" />
     <item android:id="@+id/navigation_recents"
         android:title="@null"
-        android:icon="@drawable/ic_recentview" />
+        android:icon="@drawable/icon_recentview" />
     <item android:id="@+id/navigation_folders"
         android:title="@null"
-        android:icon="@drawable/ic_folderview" />
+        android:icon="@drawable/icon_folderview" />
     <item android:id="@+id/navigation_archive"
         android:title="@null"
         android:icon="@drawable/search" />
