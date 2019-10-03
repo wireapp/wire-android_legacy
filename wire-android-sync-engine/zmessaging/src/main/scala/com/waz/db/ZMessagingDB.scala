@@ -27,11 +27,9 @@ import com.waz.model.AddressBook.ContactHashesDao
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.Contact.{ContactsDao, ContactsOnWireDao, EmailAddressesDao, PhoneNumbersDao}
 import com.waz.model.ConversationData.ConversationDataDao
-import com.waz.model.ConversationFolderData.ConversationFolderDataDao
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
 import com.waz.model.EditHistory.EditHistoryDao
 import com.waz.model.ErrorData.ErrorDataDao
-import com.waz.model.FolderData.FolderDataDao
 import com.waz.model.KeyValueData.KeyValueDataDao
 import com.waz.model.Liking.LikingDao
 import com.waz.model.MessageData.MessageDataDao
@@ -65,7 +63,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 123
+  val DbVersion = 122
 
   lazy val daos = Seq (
     UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
@@ -378,10 +376,6 @@ object ZMessagingDB {
     Migration(121, 122) { db =>
       // To fetch team data to display the logo.
       db.execSQL(s"UPDATE ${KeyValueDataDao.table.name} SET ${KeyValueDataDao.Value.name} = 'true' WHERE ${KeyValueDataDao.Key.name} = 'should_sync_teams'")
-    },
-    Migration(122, 123) { db =>
-      db.execSQL(FolderDataDao.table.createSql)
-      db.execSQL(ConversationFolderDataDao.table.createSql)
     }
   )
 }

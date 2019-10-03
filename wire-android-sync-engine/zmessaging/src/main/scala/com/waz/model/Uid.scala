@@ -351,16 +351,3 @@ object IntegrationId extends (String => IntegrationId) {
     override def decode(str: String): IntegrationId = IntegrationId(str)
   }
 }
-
-case class FolderId(str: String) {
-  override def toString: String = str
-}
-
-object FolderId extends (String => FolderId) {
-  def apply(): FolderId = Id.random()
-
-  implicit object Id extends Id[FolderId] {
-    override def random(): FolderId = FolderId(Uid().toString)
-    override def decode(str: String): FolderId = FolderId(str)
-  }
-}
