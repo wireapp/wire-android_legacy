@@ -183,7 +183,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
 object AndroidFreeSpec {
   val clock = TestClock()
 
-  val DefaultTimeout = 15.seconds
+  val DefaultTimeout = 30.seconds
   @volatile private var swallowedFailure = Option.empty[exceptions.TestFailedException]
 }
 
