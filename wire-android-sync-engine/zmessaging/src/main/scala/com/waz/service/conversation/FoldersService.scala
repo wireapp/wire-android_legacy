@@ -18,9 +18,11 @@
 package com.waz.service.conversation
 
 import com.waz.content.{ConversationFoldersStorage, FoldersStorage}
-import com.waz.model.{ConvId, FolderData, FolderId}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.{ConvId, FolderData, FolderId, Name}
 import com.waz.threading.Threading
-import com.waz.utils.events.{AggregatingSignal, EventContext, Signal}
+import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
@@ -28,14 +30,15 @@ trait FoldersService {
   def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit]
   def removeConversationFrom(convId: ConvId, folderId: FolderId): Future[Unit]
   def removeConversationFromAll(convId: ConvId): Future[Unit]
-  def moveConversationToCustomFolder(convId: ConvId, folderId: FolderId): Future[Unit]
   def convsInFolder(folderId: FolderId): Future[Set[ConvId]]
   def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean]
 
-  def favouritesFolderId: Future[FolderId]
+  def favouritesFolderId: Future[Option[FolderId]]
   def folders: Future[Seq[FolderData]]
-  def addFolder(folder: FolderData): Future[Unit]
+  def addFolder(folderName: Name): Future[FolderId]
   def removeFolder(folderId: FolderId): Future[Unit]
+  def addFavouritesFolder(): Future[FolderId]
+  def removeFavouritesFolder(): Future[Unit]
 
   def foldersForConv(convId: ConvId): Future[Set[FolderId]]
 
@@ -44,16 +47,14 @@ trait FoldersService {
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
-                         conversationFoldersStorage: ConversationFoldersStorage) extends FoldersService {
+                         conversationFoldersStorage: ConversationFoldersStorage) extends FoldersService with DerivedLogTag {
   import Threading.Implicits.Background
   private implicit val ev = EventContext.Global
 
-  override def favouritesFolderId: Future[FolderId] =
-    foldersStorage.getByType(FolderData.FavouritesFolderType).flatMap {
-      case head :: _ => Future.successful(head.id)
-      case Nil       =>
-        val folderData = FolderData(FolderId(), "", FolderData.FavouritesFolderType)
-        foldersStorage.put(folderData.id, folderData).map(_ => folderData.id)
+  override def favouritesFolderId: Future[Option[FolderId]] =
+    foldersStorage.getByType(FolderData.FavouritesFolderType).map {
+      case head :: _ => Some(head.id)
+      case Nil       => None
     }
 
   override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] =
@@ -67,18 +68,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _          <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
   } yield ()
 
-  override def moveConversationToCustomFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
-    favId         <- favouritesFolderId
-    allFolders    <- foldersForConv(convId)
-    customFolders =  allFolders.filterNot(_ == favId)
-    _             <- conversationFoldersStorage.removeAll(customFolders.map((convId, _)))
-    _             =  addConversationTo(convId, folderId)
-  } yield ()
-
-  override def foldersForConv(convId: ConvId): Future[Set[FolderId]] = for {
-    favId      <- favouritesFolderId
-    allFolders <- conversationFoldersStorage.findForConv(convId)
-  } yield allFolders
+  override def foldersForConv(convId: ConvId): Future[Set[FolderId]] =
+    conversationFoldersStorage.findForConv(convId)
   
   override def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean] =
     conversationFoldersStorage.get((convId, folderId)).map(_.nonEmpty)
@@ -89,21 +80,39 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def folder(folderId: FolderId): Signal[Option[FolderData]] =
     foldersStorage.optSignal(folderId)
 
-  override def addFolder(folder: FolderData): Future[Unit] =
-    foldersStorage.put(folder.id, folder).map(_ => ())
+  override def addFolder(folderName: Name): Future[FolderId] = {
+    val folder = FolderData(name = folderName)
+    foldersStorage.put(folder.id, folder).map(_.id)
+  }
 
-  override def removeFolder(folderId: FolderId): Future[Unit] =
-    foldersStorage.remove(folderId)
+  override def removeFolder(folderId: FolderId): Future[Unit] = for {
+    convIds <- convsInFolder(folderId)
+    _       <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
+    _       <- foldersStorage.remove(folderId)
+  } yield ()
+
+  override def addFavouritesFolder(): Future[FolderId] = favouritesFolderId.map {
+    case None =>
+      val folderData = FolderData(FolderId(), "", FolderData.FavouritesFolderType)
+      foldersStorage.put(folderData.id, folderData).map(_ => folderData.id)
+      folderData.id
+    case Some(id) => id
+  }
+
+  override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.flatMap {
+    case Some(id) => removeFolder(id)
+    case None     => Future.successful(())
+  }
 
   override def folders: Future[Seq[FolderData]] = foldersStorage.list()
 
   override val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = {
-    def changesStream = for {
-      deletedFolderIds <- foldersStorage.onDeleted.map(_.toSet)
-      addedFolderIds   <- foldersStorage.onAdded.map(_.map(_.id).toSet)
-      removedConvIds   <- conversationFoldersStorage.onDeleted.map(_.groupBy(_._2).mapValues(_.map(_._1).toSet))
-      addedConvIds     <- conversationFoldersStorage.onAdded.map(_.map(_.id).groupBy(_._2).mapValues(_.map(_._1).toSet))
-    } yield (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)
+    def changesStream: EventStream[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]])] = EventStream.union(
+      foldersStorage.onDeleted.map(cs => (cs.toSet, Set.empty, Map.empty, Map.empty)),
+      foldersStorage.onAdded.map(cs => (Set.empty, cs.map(_.id).toSet, Map.empty, Map.empty)),
+      conversationFoldersStorage.onDeleted.map(cs => (Set.empty, Set.empty, cs.groupBy(_._2).mapValues(_.map(_._1).toSet), Map.empty)),
+      conversationFoldersStorage.onAdded.map(cs => (Set.empty, Set.empty, Map.empty, cs.map(_.id).groupBy(_._2).mapValues(_.map(_._1).toSet)))
+    )
 
     def loadAll = for {
       folders     <- foldersStorage.list()
@@ -113,27 +122,24 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     new AggregatingSignal[
       (Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]),
       Map[FolderId, Set[ConvId]]
-    ](
-      changesStream,
-      loadAll,
-      { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
+    ](changesStream, loadAll, { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
 
-        // Step 1: remove deleted folders and add new ones
-        val step1 = current -- deletedFolderIds ++ addedFolderIds.map(_ -> Set.empty[ConvId]).toMap
+      // Step 1: remove deleted folders and add new ones
+      val step1 = current -- deletedFolderIds ++ addedFolderIds.map(_ -> Set.empty[ConvId]).toMap
 
-        // Step 2: remove conversations from folders
-        val step2 = step1.map {
-          case (folderId, convIds) if removedConvIds.contains(folderId) =>
-           (folderId, convIds -- removedConvIds(folderId))
-          case other => other
-        }
+      // Step 2: remove conversations from folders
+      val step2 = step1.map {
+        case (folderId, convIds) if removedConvIds.contains(folderId) =>
+         (folderId, convIds -- removedConvIds(folderId))
+        case other => other
+      }
 
-        // Step 3: add conversations to folders
-        step2.map {
-          case (folderId, convIds) if addedConvIds.contains(folderId) =>
-            (folderId, convIds ++ addedConvIds(folderId))
-          case other => other
-        }
-      })
+      // Step 3: add conversations to folders
+      step2.map {
+        case (folderId, convIds) if addedConvIds.contains(folderId) =>
+          (folderId, convIds ++ addedConvIds(folderId))
+        case other => other
+      }
+    }).disableAutowiring()
   }
 }

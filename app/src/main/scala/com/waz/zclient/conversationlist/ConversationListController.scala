@@ -94,18 +94,18 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
 
-  def folder(folderId: FolderId): Signal[FolderData] = foldersService.flatMap(_.folder(folderId))
+  def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
-  lazy val favouritesFolderId: Future[FolderId] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
+  lazy val favouritesFolderId: Future[Option[FolderId]] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
 
-  lazy val favouritesFolder: Signal[FolderData] = for {
-    id        <- Signal.future(favouritesFolderId)
-    favFolder <- folder(id)
-  } yield favFolder
+  lazy val favouritesFolder: Signal[Option[FolderData]] = Signal.future(favouritesFolderId).flatMap {
+    case Some(folderId) => folder(folderId)
+    case None           => Signal.const(None)
+  }
 
   lazy val favouriteConversations: Signal[Seq[ConversationData]] = for {
     favId <- Signal.future(favouritesFolderId)
-    convs <- folderConversations(favId)
+    convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
   } yield convs
 
   def folderConversations(folderId: FolderId): Signal[Seq[ConversationData]] = for {
@@ -123,16 +123,16 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     results            <- Signal.sequence(convsWithoutFolder.map(c => convService.groupConversation(c.id).map(b => c -> b)): _*)
   } yield results
 
-  lazy val groupConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(_._2))
+  lazy val groupConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(_._2).map(_._1))
 
-  lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2))
+  lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2).map(_._1))
 
   lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
 
   lazy val customFolderIds: Signal[Set[FolderId]] = for {
     favId  <- Signal.future(favouritesFolderId)
     allIds <- allFolderIds
-  } yield allIds - favId
+  } yield favId.fold(allIds)(allIds - _)
 }
 
 object ConversationListController {

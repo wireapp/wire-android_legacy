@@ -23,7 +23,7 @@ import com.waz.model
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{Identifiable, Managed}
 
-case class FolderData(override val id: FolderId,
+case class FolderData(override val id: FolderId = FolderId(),
                                    name: Name,
                                    folderType: Int = FolderData.CustomFolderType)
   extends Identifiable[FolderId]
