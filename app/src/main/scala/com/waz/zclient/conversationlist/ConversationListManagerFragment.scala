@@ -21,7 +21,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.{Fragment, FragmentManager}
-import android.view.{LayoutInflater, MenuItem, ViewGroup}
+import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.api.SyncState._
 import com.waz.content.UsersStorage
@@ -84,7 +84,8 @@ class ConversationListManagerFragment extends Fragment
   private var listLoadingIndicator   : LoadingIndicatorView = _
   private var mainContainer          : FrameLayout          = _
   private var confirmationMenu       : ConfirmationMenu     = _
-  private var bottomNavigationView : BottomNavigationView = _
+  private var bottomNavigationView   : BottomNavigationView = _
+  private var bottomNavigationBorder : View                 = _
 
   lazy val zms = inject[Signal[ZMessaging]]
 
@@ -132,8 +133,9 @@ class ConversationListManagerFragment extends Fragment
       }
 
       archiveEnabled.onUi { enabled =>
-          BottomNavigationUtil.setItemVisible(bottomNavigationView, R.id.navigation_archive, enabled)
+        BottomNavigationUtil.setItemVisible(bottomNavigationView, R.id.navigation_archive, enabled)
       }
+      bottomNavigationBorder = findById(view, R.id.fragment_conversation_list_manager_view_bottom_border)
 
       if (savedInstanceState == null) {
         val fm = getChildFragmentManager
@@ -335,10 +337,12 @@ class ConversationListManagerFragment extends Fragment
 
   override def onPageVisible(page: Page) = {
     if (page != Page.ARCHIVE) closeArchive()
-    bottomNavigationView.setVisible(page == Page.START || page == Page.CONVERSATION_LIST)
+    val bottomNavigationVisible = page == Page.START || page == Page.CONVERSATION_LIST
+    bottomNavigationView.setVisible(bottomNavigationVisible)
+    bottomNavigationBorder.setVisible(bottomNavigationVisible)
   }
 
-  override def showArchive() = {
+  private def showArchive() = {
     import Page._
     navController.getCurrentLeftPage match {
       case START | CONVERSATION_LIST =>
@@ -358,6 +362,14 @@ class ConversationListManagerFragment extends Fragment
       case _ => //
     }
     navController.setLeftPage(ARCHIVE, Tag)
+  }
+
+  override def onConversationsLoadingStarted(): Unit = {
+    bottomNavigationView.setAlpha(0.5f)
+  }
+
+  override def onConversationsLoadingFinished(): Unit = {
+    bottomNavigationView.animate().alpha(1f).setDuration(500)
   }
 
   override def closeArchive() = {

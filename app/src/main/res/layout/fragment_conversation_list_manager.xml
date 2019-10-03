@@ -54,11 +54,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <View
+        android:id="@+id/fragment_conversation_list_manager_view_bottom_border"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/people_picker__border_line__height"
+        app:layout_constraintBottom_toTopOf="@id/fragment_conversation_list_manager_bottom_navigation"
+        android:background="@color/separator_dark" />
+
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/fragment_conversation_list_manager_bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
+        android:paddingTop="@dimen/wire__padding__4"
         app:menu="@menu/main_bottom_navigation_items" />
 
 </android.support.constraint.ConstraintLayout>
