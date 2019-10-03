@@ -27,6 +27,8 @@ class NormalConversationListAdapter extends ConversationListAdapter {
   setHasStableIds(true)
 
   private var conversations = Seq.empty[ConversationData]
+
+  // `FIXME: This data is not being used in a meaningful way. We only check for the existence of a user id.
   private var incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
 
   def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
