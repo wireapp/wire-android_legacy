@@ -27,6 +27,11 @@ class NormalConversationListAdapter extends ConversationListAdapter {
   setHasStableIds(true)
 
   private var conversations = Seq.empty[ConversationData]
+
+  // `FIXME: This data could be simplified. We only care about the number of user ids, and
+  // we will only user the first conversation data object in order to present the ConnectRequestFragment
+  // when the incoming row is tapped. I think it would be better to just pass an int here, and handle
+  // the tap differently to make the ConnectRequestFragment appear.
   private var incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
 
   def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
