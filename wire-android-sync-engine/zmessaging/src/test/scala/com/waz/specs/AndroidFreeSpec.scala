@@ -43,7 +43,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 
 object FutureAwaitSyntax {
-  val DefaultTimeout: FiniteDuration = 15.seconds
+  val DefaultTimeout: FiniteDuration = 30.seconds
 }
 
 trait FutureAwaitSyntax {
