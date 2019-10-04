@@ -232,6 +232,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var moveToAnimator: ObjectAnimator = _
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
+    // TODO: We don't need to store all this data.
     this.conversationData = Some(conversationData)
     title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
@@ -534,6 +535,8 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.conv_list_item)
 
+  var conversationId = Option.empty[ConvId]
+
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
   val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
@@ -546,4 +549,21 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   }
 
   private def getInboxName(convSize: Int): String = getResources.getQuantityString(R.plurals.connect_inbox__link__name, convSize, convSize.toString)
+}
+
+class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: Int)
+  extends FrameLayout(context, attrs, style)
+  with ConversationListRow
+  with ViewHelper {
+
+  def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
+  def this(context: Context) = this(context, null, 0)
+
+  setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
+
+  inflate(R.layout.conv_list_section_header)
+
+  private val title = ViewUtils.getView(this, R.id.title).asInstanceOf[TypefaceTextView]
+
+  def setTitle(title: String): Unit = this.title.setText(title)
 }
