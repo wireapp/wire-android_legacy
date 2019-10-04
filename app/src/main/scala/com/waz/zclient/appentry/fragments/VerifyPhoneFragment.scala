@@ -32,8 +32,6 @@ import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
 import com.waz.zclient.appentry.fragments.SignInFragment.{Login, Phone, Register, SignInMethod}
 import com.waz.zclient.appentry.fragments.VerifyPhoneFragment._
-import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
-import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.ui.text.TypefaceEditText
@@ -114,7 +112,6 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
     phoneConfirmationButton.foreach(_.setAccentColor(color))
     resendCodeButton.foreach(_.setTextColor(color))
     textViewInfo.foreach(_.setTextColor(color))
-    inject[IGlobalLayoutController].setSoftInputModeForPage(Page.PHONE_VERIFY_CODE)
     KeyboardUtils.showKeyboard(getActivity)
     startResendCodeTimer()
   }
