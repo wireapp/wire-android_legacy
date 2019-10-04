@@ -20,6 +20,7 @@ package com.waz.zclient.conversationlist.views
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.support.constraint.ConstraintLayout
+import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.FrameLayout
@@ -563,7 +564,13 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
 
   inflate(R.layout.conv_list_section_header)
 
-  private val title = ViewUtils.getView(this, R.id.title).asInstanceOf[TypefaceTextView]
+  private val title = ViewUtils.getView(this, R.id.header_textview_title).asInstanceOf[TypefaceTextView]
 
   def setTitle(title: String): Unit = this.title.setText(title)
+
+  def setIsFirstHeader(isFirstHeader: Boolean): Unit = {
+    val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
+    params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__20)
+    setLayoutParams(params)
+  }
 }

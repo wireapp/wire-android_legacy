@@ -73,7 +73,7 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
     (holder, items(position)) match {
       case (viewHolder: ConversationFolderRowViewHolder, header: HeaderItem) =>
-        viewHolder.bind(header)
+        viewHolder.bind(header, isFirst = position == 0)
       case (viewHolder: NormalConversationRowViewHolder, conversation: ConversationItem) =>
         viewHolder.bind(conversation.data)
       case _ =>

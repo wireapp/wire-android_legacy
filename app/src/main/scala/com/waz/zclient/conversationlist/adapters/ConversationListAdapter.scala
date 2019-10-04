@@ -64,8 +64,10 @@ object ConversationListAdapter {
   }
 
   case class ConversationFolderRowViewHolder(view: ConversationFolderListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
-    def bind(header: HeaderItem): Unit =
+    def bind(header: HeaderItem, isFirst: Boolean): Unit = {
       view.setTitle(header.title)
+      view.setIsFirstHeader(isFirst)
+    }
   }
 
   object ViewHolderFactory extends DerivedLogTag {
