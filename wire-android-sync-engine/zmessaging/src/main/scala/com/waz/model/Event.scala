@@ -136,6 +136,23 @@ case class OtrMessageEvent(convId: RConvId, time: RemoteInstant, from: UserId, s
 sealed trait PropertyEvent extends UserEvent
 
 case class ReadReceiptEnabledPropertyEvent(value: Int) extends PropertyEvent
+
+// An event that contains a new folders/favorites list
+case class FoldersEvent(folders: Seq[RemoteFolderData]) extends PropertyEvent
+case class RemoteFolderData(folderData: FolderData, conversations: Seq[ConvId])
+object RemoteFolderData {
+
+  implicit val RemoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
+    override def apply(implicit js: JSONObject): RemoteFolderData = {
+      import JsonDecoder._
+      RemoteFolderData(
+        FolderData(decodeFolderId('id), decodeString('name), decodeInt('type)),
+        decodeConvIdSeq('conversations)
+      )
+    }
+  }
+}
+
 case class UnknownPropertyEvent(key: PropertyKey, value: String) extends PropertyEvent
 
 case class ConversationState(archived:    Option[Boolean] = None,
@@ -415,6 +432,11 @@ object PropertyEvent {
           case "user.properties-set" => ReadReceiptEnabledPropertyEvent('value)
           case "user.properties-delete" => ReadReceiptEnabledPropertyEvent(0)
           case e => UnknownPropertyEvent(ReadReceiptsEnabled, e)
+        }
+        case Folders => decodeString('type) match {
+          case "user.properties-set" => FoldersEvent(decodeSeq[RemoteFolderData]('value))
+          case "user.properties-delete" => FoldersEvent(Seq[RemoteFolderData]())
+          case e => UnknownPropertyEvent(Folders, e)
         }
         case key => UnknownPropertyEvent(key, 'value)
       }
