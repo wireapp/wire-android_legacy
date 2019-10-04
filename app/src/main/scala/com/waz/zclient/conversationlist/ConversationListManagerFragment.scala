@@ -39,7 +39,6 @@ import com.waz.zclient.controllers.navigation.{INavigationController, Navigation
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.pages.main.BlankFragment
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
@@ -462,8 +461,8 @@ class ConversationListManagerFragment extends Fragment
         ConversationListType.RECENTS)
         true
       case R.id.navigation_folders => replaceConversationFragment(
-        BlankFragment.newInstance(), //FIXME: use the correct fragment
-        BlankFragment.TAG,
+        ConversationListFragment.newFoldersInstance(),
+        ConversationFolderListFragment.TAG,
         ConversationListType.FOLDERS)
         true
       case R.id.navigation_archive =>
