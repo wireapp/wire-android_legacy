@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2019 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,8 +18,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:id="@+id/fl__first_page_container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-    />
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/navigation_search"
+        android:title="@null"
+        android:icon="@drawable/search" />
+    <item android:id="@+id/navigation_recents"
+        android:title="@null"
+        android:icon="@drawable/icon_recentview" />
+    <item android:id="@+id/navigation_folders"
+        android:title="@null"
+        android:icon="@drawable/icon_folderview" />
+    <item android:id="@+id/navigation_archive"
+        android:title="@null"
+        android:icon="@drawable/search" />
+</menu>

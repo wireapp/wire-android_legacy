@@ -41,8 +41,6 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.pages.main.conversationlist.ConversationListAnimation
-import com.waz.zclient.pages.main.conversationlist.views.ListActionsView
-import com.waz.zclient.pages.main.conversationlist.views.ListActionsView.Callback
 import com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.DownArrowDrawable
@@ -189,15 +187,19 @@ class NormalConversationFragment extends ConversationListFragment {
     count  <- userAccountsController.unreadCount.map(_.filterNot(_._1 == accountId).values.sum)
   } yield count).orElse(Signal.const(0))
 
-  lazy val hasConversationsAndArchive = for {
+  lazy val hasConversations = for {
     z <- zms
     convs <- z.convsStorage.contents
   } yield {
-    (convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)),
-    convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType)))
+    convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType))
   }
 
-  lazy val archiveEnabled = hasConversationsAndArchive.map(_._2)
+  lazy val hasConversationsAndArchive = for {
+    hasConv     <- hasConversations
+    archEnabled <- getContainer.archiveEnabled
+  } yield {
+    (hasConv, archEnabled)
+  }
 
   private val waitingAccount = Signal[Option[UserId]](None)
 
@@ -215,19 +217,12 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 
   lazy val loadingListView = view[View](R.id.conversation_list_loading_indicator)
-  lazy val listActionsView = returning(view[ListActionsView](R.id.lav__conversation_list_actions)){ vh =>
-    archiveEnabled.onUi(enabled => vh.foreach(_.setArchiveEnabled(enabled)))
-    hasConversationsAndArchive.map {
-      case (false, false) => true
-      case _ => false
-    }.onUi(centered => vh.foreach(_.setContactsCentered(centered)))
-  }
 
   lazy val noConvsTitle = returning(view[TypefaceTextView](R.id.conversation_list_empty_title)) { vh =>
     hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
-    }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
+    }
     hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
@@ -241,30 +236,8 @@ class NormalConversationFragment extends ConversationListFragment {
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
-  lazy val listActionsScrollListener = new RecyclerView.OnScrollListener {
-    override def onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) =
-      listActionsView.foreach(_.setScrolledToBottom(!recyclerView.canScrollVertically(1)))
-  }
-
-  lazy val listActionsCallback = new Callback {
-    override def onAvatarPress() =
-      getControllerFactory.getPickUserController.showPickUser()
-
-    override def onArchivePress() =
-      Option(getContainer).foreach(_.showArchive())
-  }
-
   override def onViewCreated(v: View, savedInstanceState: Bundle) = {
     super.onViewCreated(v, savedInstanceState)
-
-    for {
-      convList    <- conversationListView
-      actionsList <- listActionsView
-    } yield {
-      convList.addOnScrollListener(listActionsScrollListener)
-      actionsList.setCallback(listActionsCallback)
-      actionsList.setScrolledToBottom(!convList.canScrollVertically(1))
-    }
 
     subs += loading.onUi {
       case true => showLoading()
@@ -295,23 +268,17 @@ class NormalConversationFragment extends ConversationListFragment {
     }
   }
 
-  override def onDestroyView() = {
-    conversationListView.foreach(_.removeOnScrollListener(listActionsScrollListener))
-    listActionsView.foreach(_.setCallback(null))
-    super.onDestroyView()
-  }
-
   private def showLoading(): Unit = {
     loadingListView.foreach { lv =>
       lv.setAlpha(1f)
       lv.setVisibility(VISIBLE)
     }
-    listActionsView.foreach(_.setAlpha(0.5f))
+    Option(getContainer).foreach(_.onConversationsLoadingStarted())
     topToolbar.foreach(_.setLoading(true))
   }
 
   private def hideLoading(): Unit = {
-    listActionsView.foreach(_.animate().alpha(1f).setDuration(500))
+    Option(getContainer).foreach(_.onConversationsLoadingFinished())
     loadingListView.foreach(v => v.animate().alpha(0f).setDuration(500).withEndAction(new Runnable {
       override def run() = {
         if (NormalConversationFragment.this != null)
@@ -333,7 +300,9 @@ class NormalConversationFragment extends ConversationListFragment {
 
 object ConversationListFragment {
   trait Container {
-    def showArchive(): Unit
+    val archiveEnabled : Signal[Boolean]
+    def onConversationsLoadingStarted(): Unit
+    def onConversationsLoadingFinished(): Unit
     def closeArchive(): Unit
   }
 

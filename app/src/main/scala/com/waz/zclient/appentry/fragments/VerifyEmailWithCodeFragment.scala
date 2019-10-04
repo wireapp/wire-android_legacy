@@ -37,8 +37,6 @@ import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignI
 import com.waz.zclient.appentry.fragments.VerifyEmailWithCodeFragment._
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
-import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.tracking.GlobalTrackingController._
 import com.waz.zclient.tracking.{EnteredCodeEvent, RegistrationSuccessfulEvent}
@@ -128,7 +126,6 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
     phoneConfirmationButton.setAccentColor(color)
     resendCodeButton.setTextColor(color)
     textViewInfo.setTextColor(color)
-    inject[IGlobalLayoutController].setSoftInputModeForPage(Page.PHONE_VERIFY_CODE)
     KeyboardUtils.showKeyboard(getActivity)
     startResendCodeTimer()
   }

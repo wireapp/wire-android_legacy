@@ -70,7 +70,6 @@
     <LinearLayout
         android:id="@+id/conversation_list_loading_indicator"
         android:layout_marginTop="?attr/actionBarSize"
-        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -90,18 +89,10 @@
 
     </LinearLayout>
 
-    <com.waz.zclient.pages.main.conversationlist.views.ListActionsView
-        android:id="@+id/lav__conversation_list_actions"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/conversation_list__action_view__height"
-        android:layout_gravity="bottom"
-        />
-
     <com.waz.zclient.pages.main.conversationlist.views.listview.SwipeListView
         android:id="@+id/conversation_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
         android:layout_marginTop="?attr/actionBarSize"
         />
 
@@ -111,7 +102,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="@dimen/conversation_list__action_view__height"
         android:visibility="gone"
         >
 
