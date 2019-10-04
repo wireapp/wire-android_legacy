@@ -51,6 +51,8 @@ trait FoldersService {
 
   def foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]]
   def folder(folderId: FolderId): Signal[Option[FolderData]]
+
+  def foldersToSynchronize(): Future[Seq[(FolderData, Seq[ConvId])]]
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
@@ -101,7 +103,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def favouritesFolderId: Future[Option[FolderId]] =
     foldersStorage.getByType(FolderData.FavouritesFolderType).map {
       case head :: _ => Some(head.id)
-      case Nil       => None
+      case Nil => None
     }
 
   override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] =
@@ -115,7 +117,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def removeConversationFromAll(convId: ConvId): Future[Unit] = for {
     allFolders <- foldersForConv(convId)
-    _          <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
+    _ <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
   } yield ()
 
   override def foldersForConv(convId: ConvId): Future[Set[FolderId]] =
@@ -137,8 +139,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def removeFolder(folderId: FolderId): Future[Unit] = for {
     convIds <- convsInFolder(folderId)
-    _       <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
-    _       <- foldersStorage.remove(folderId)
+    _ <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
+    _ <- foldersStorage.remove(folderId)
   } yield ()
 
   override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.map {
@@ -151,7 +153,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.flatMap {
     case Some(id) => removeFolder(id)
-    case None     => Future.successful(())
+    case None => Future.successful(())
   }
 
   override def update(folderId: FolderId, folderName: Name): Future[Unit] =
@@ -169,14 +171,14 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       )
 
     def loadAll = for {
-      folders     <- foldersStorage.list()
+      folders <- foldersStorage.list()
       folderConvs <- Future.sequence(folders.map(folder => conversationFoldersStorage.findForFolder(folder.id).map(convIds => folder.id -> convIds)))
     } yield folderConvs.toMap
 
     new AggregatingSignal[
       (Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]),
       Map[FolderId, Set[ConvId]]
-    ](changesStream, loadAll, { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
+      ](changesStream, loadAll, { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
 
       // Step 1: remove deleted folders and add new ones
       val step1 = current -- deletedFolderIds ++ addedFolderIds.map(_ -> Set.empty[ConvId]).toMap
@@ -184,7 +186,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       // Step 2: remove conversations from folders
       val step2 = step1.map {
         case (folderId, convIds) if removedConvIds.contains(folderId) =>
-         (folderId, convIds -- removedConvIds(folderId))
+          (folderId, convIds -- removedConvIds(folderId))
         case other => other
       }
 
@@ -196,4 +198,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       }
     }).disableAutowiring()
   }
+
+  override def foldersToSynchronize(): Future[Seq[(FolderData, Seq[ConvId])]] = for {
+    allFolders <- folders
+    foldersMapping <- Future.sequence(
+      allFolders.map(f => convsInFolder(f.id).map(l => (f, l.toList)))
+    )
+  } yield foldersMapping
+
 }

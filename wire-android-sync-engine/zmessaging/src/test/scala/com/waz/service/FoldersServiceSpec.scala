@@ -544,6 +544,45 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       states.last.size shouldBe 1
       states.last.apply(folderId2) shouldBe Set(convId)
     }
+
+    scenario("Get mapping from folders to conversations") {
+
+      // given
+      val convId1 = ConvId("conv_id1")
+      val convId2 = ConvId("conv_id2")
+      val folderId1 = FolderId("folder_id1")
+      val folderId2 = FolderId("folder_id2")
+      val favouriteId = FolderId("folder_fav")
+      val service = getService
+      service.addConversationTo(convId1, folderId1)
+      service.addConversationTo(convId1, folderId2)
+      service.addConversationTo(convId2, folderId1)
+      this.folders += FolderData(favouriteId, "", FolderData.FavouritesFolderType)
+      this.folders += FolderData(folderId1, "F1", FolderData.CustomFolderType)
+      this.folders += FolderData(folderId2, "F2", FolderData.CustomFolderType)
+      Await.result(service.addConversationTo(convId1, favouriteId), 500.millis)
+
+      // when
+      val folders = Await.result(service.foldersToSynchronize(), 500.millis)
+
+      // then
+      folders.length shouldBe 3
+      val folder1 = folders.find(_._1.id == folderId1).get
+      folder1._1.name.toString shouldEqual "F1"
+      folder1._1.folderType shouldEqual FolderData.CustomFolderType
+      folder1._2 shouldEqual List(convId1, convId2)
+
+      val folder2 = folders.find(_._1.id == folderId2).get
+      folder2._1.name.toString shouldEqual "F2"
+      folder2._1.folderType shouldEqual FolderData.CustomFolderType
+      folder2._2 shouldEqual List(convId1)
+
+      val favourite = folders.find(_._1.id == favouriteId).get
+      favourite._1.name.toString shouldEqual ""
+      favourite._1.folderType shouldEqual FolderData.FavouritesFolderType
+      favourite._2 shouldEqual List(convId1)
+
+    }
   }
 
   feature("Events handling") {
