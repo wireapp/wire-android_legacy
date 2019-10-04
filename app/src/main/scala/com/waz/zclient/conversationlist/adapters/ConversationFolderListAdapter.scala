@@ -29,8 +29,9 @@ import com.waz.zclient.log.LogUI._
   */
 class ConversationFolderListAdapter extends ConversationListAdapter with DerivedLogTag {
 
-  // TODO: pull data from service when ready.
-  private val folders = Seq.empty[Folder]
+  setHasStableIds(true)
+
+  private var folders = Seq.empty[Folder]
   private var items = Seq.empty[Item]
 
   private def updateItems(): Unit = {
@@ -46,6 +47,11 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
   override def getItemViewType(position: Int): Int = items(position) match {
     case _: HeaderItem => FolderViewType
     case _: ConversationItem => NormalViewType
+  }
+
+  override def getItemId(position: Int): Long = items(position) match {
+    case HeaderItem(title) => title.hashCode
+    case ConversationItem(data) => data.id.str.hashCode
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
