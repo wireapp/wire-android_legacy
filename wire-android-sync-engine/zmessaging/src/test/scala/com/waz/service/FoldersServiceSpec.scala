@@ -17,9 +17,9 @@
  */
 package com.waz.service
 
-import com.waz.content.{ConversationFoldersStorage, FoldersStorage}
+import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId}
+import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, RemoteFolderData}
 import com.waz.service.conversation.{FoldersService, FoldersServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
@@ -34,6 +34,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val foldersStorage = mock[FoldersStorage]
   val conversationFoldersStorage = mock[ConversationFoldersStorage]
+  val conversationStorage = mock[ConversationStorage]
 
   private val folders = mutable.ListBuffer[FolderData]()
   private val convFolders = mutable.HashMap[(ConvId, FolderId), ConversationFolderData]()
@@ -42,11 +43,18 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     Future(folders.filter(_.folderType == folderType).toList )
   }
 
-  (foldersStorage.put _).expects(*, *).anyNumberOfTimes().onCall { (id: FolderId, folder: FolderData) =>
+  (foldersStorage.put _).expects(*, *).anyNumberOfTimes().onCall { (_: FolderId, folder: FolderData) =>
       Future {
         folders += folder
         onFoldersAdded ! Seq(folder)
       }.map(_ => folder)
+  }
+
+  (foldersStorage.insert _).expects(*).anyNumberOfTimes().onCall { folder: FolderData =>
+    Future {
+      folders += folder
+      onFoldersAdded ! Seq(folder)
+    }.map(_ => folder)
   }
 
   (foldersStorage.list _).expects().anyNumberOfTimes().onCall { _ =>
@@ -60,13 +68,32 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
   }
 
-  (conversationFoldersStorage.put _).expects(*, *).anyNumberOfTimes().onCall { (convId: ConvId, folderId: FolderId) =>
+  (foldersStorage.update _).expects(*, *).anyNumberOfTimes().onCall { (folderId: FolderId, updater: FolderData => FolderData) =>
+    Future {
+      folders.find(_.id == folderId).map { oldFolder =>
+        folders -= oldFolder
+        val newFolder = updater(oldFolder)
+        folders += newFolder
+        (oldFolder, newFolder)
+      }
+    }
+  }
+
+  (conversationFoldersStorage.put _).expects(*, *).anyNumberOfTimes().onCall { (convId: ConvId, folderId: FolderId)  =>
     Future {
       val convFolder = ConversationFolderData(convId, folderId)
       convFolders += ((convId, folderId) -> convFolder)
       onConvsAdded ! Seq(convFolder)
-    }
+    }.map(_ => ())
   }
+
+  (conversationFoldersStorage.insertAll(_: Set[ConversationFolderData])).expects(*).anyNumberOfTimes().onCall { cfs: Set[ConversationFolderData] =>
+    Future {
+      convFolders ++= cfs.map(cf => (cf.convId, cf.folderId) -> cf).toMap
+      onConvsAdded ! cfs.toSeq
+    }.map(_ => Set.empty[ConversationFolderData])
+  }
+
 
   (conversationFoldersStorage.get _).expects(*).anyNumberOfTimes().onCall { convFolder: (ConvId, FolderId) =>
     Future(convFolders.get(convFolder))
@@ -91,11 +118,15 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   }
 
   (conversationFoldersStorage.findForFolder _).expects(*).anyNumberOfTimes().onCall { folderId: FolderId =>
-    Future.successful(convFolders.values.filter(_.folderId == folderId).map(_.convId).toSet)
+    Future(convFolders.values.filter(_.folderId == folderId).map(_.convId).toSet)
   }
 
   (conversationFoldersStorage.removeAll _).expects(*).anyNumberOfTimes().onCall { cfs: Iterable[(ConvId, FolderId)] =>
-    Future.successful(convFolders --= cfs.toSet).map(_ => ())
+    Future(convFolders --= cfs.toSet).map(_ => ())
+  }
+
+  (conversationStorage.getByRemoteIds _).expects(*).anyNumberOfTimes().onCall { ids: Traversable[RConvId] =>
+    Future(ids.map(id => ConvId(id.str)).toSeq)
   }
 
   val onFoldersAdded = EventStream[Seq[FolderData]]()
@@ -108,8 +139,14 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   (conversationFoldersStorage.onAdded _).expects().anyNumberOfTimes().returning(onConvsAdded)
   (conversationFoldersStorage.onDeleted _).expects().anyNumberOfTimes().returning(onConvsDeleted)
 
-  private def getService: FoldersService = {
-    new FoldersServiceImpl(foldersStorage, conversationFoldersStorage)
+  private var _service = Option.empty[FoldersService]
+
+  private def getService: FoldersService = _service match {
+    case Some(service) => service
+    case None =>
+      val service = new FoldersServiceImpl(foldersStorage, conversationFoldersStorage, conversationStorage)
+      _service = Some(service)
+      service
   }
 
   feature("Favourites") {
@@ -507,5 +544,174 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       states.last.size shouldBe 1
       states.last.apply(folderId2) shouldBe Set(convId)
     }
+  }
+
+  feature("Events handling") {
+    scenario("Create the Favourites folder") {
+      // given
+      val convId = ConvId()
+      val (folder, event) = generateEventOneFolder(convIds = Set(convId))
+
+      // when
+      val (before, after) = sendEvent(event)
+
+      // then
+      before.isEmpty shouldBe true
+      after.size shouldBe 1
+      after.head shouldBe (folder.id, (folder, Set(convId)))
+    }
+
+    scenario("Add a conversation to the Favourites") {
+      // given
+      val favId = FolderId()
+      val convId1 = ConvId()
+      val (folder, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
+      sendEvent(event1)
+
+      val convId2 = ConvId()
+      val (_, event2) = generateEventOneFolder(folderId = favId, convIds = Set(convId1, convId2))
+
+      // when
+      val (before, after) = sendEvent(event2)
+
+      // then
+      before.size shouldBe 1
+      before.head shouldBe (favId, (folder, Set(convId1)))
+      after.size shouldBe 1
+      after.head shouldBe (favId, (folder, Set(convId1, convId2)))
+    }
+
+    scenario("Remove a conversation from the Favourites") {
+      // given
+      val favId = FolderId()
+      val convId1 = ConvId()
+      val (folder, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
+      sendEvent(event1)
+
+      val convId2 = ConvId()
+      val (_, event2) = generateEventOneFolder(folderId = favId, convIds = Set(convId1, convId2))
+      sendEvent(event2)
+
+      val (_, event3) = generateEventOneFolder(folderId = favId, convIds = Set(convId2))
+
+      // when
+      val (before, after) = sendEvent(event3)
+
+      // then
+      println(s"before: $before, after: $after")
+      before.size shouldBe 1
+      before.head shouldBe (favId, (folder, Set(convId1, convId2)))
+      after.size shouldBe 1
+      after.head shouldBe (favId, (folder, Set(convId2)))
+    }
+
+    scenario("Add a custom folder") {
+      // given
+      val favId = FolderId()
+      val customId = FolderId()
+      val convId1 = ConvId()
+      val (folder1, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
+      sendEvent(event1)
+
+      val convId2 = ConvId()
+      val (folder2, event2) = generateEventAddFolder(event1, folderId = customId, name = "Custom", convIds = Set(convId2), folderType =  FolderData.CustomFolderType)
+
+      // when
+      val (before, after) = sendEvent(event2)
+
+      // then
+      before.size shouldBe 1
+      before.head shouldBe (favId, (folder1, Set(convId1)))
+      after.size shouldBe 2
+      after(favId) shouldBe (folder1, Set(convId1))
+      after(customId) shouldBe (folder2, Set(convId2))
+    }
+
+    scenario("Change the folder's name") {
+      // given
+      val favId = FolderId()
+      val customId = FolderId()
+      val convId1 = ConvId()
+      val (folder1, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
+      sendEvent(event1)
+
+      val convId2 = ConvId()
+      val (folder2, event2) = generateEventAddFolder(event1, folderId = customId, name = "Custom", convIds = Set(convId2), folderType = FolderData.CustomFolderType)
+      sendEvent(event2)
+
+      val (folder3, event3) = generateEventAddFolder(event1, folderId = customId, name = "Custom 2", convIds = Set(convId2), folderType = FolderData.CustomFolderType)
+
+      // when
+      val (before, after) = sendEvent(event3)
+
+      // then
+      before.size shouldBe 2
+      before(favId) shouldBe (folder1, Set(convId1))
+      before(customId) shouldBe (folder2, Set(convId2))
+      after.size shouldBe 2
+      after(favId) shouldBe (folder1, Set(convId1))
+      after(customId) shouldBe (folder3, Set(convId2))
+    }
+
+    scenario("Remove the Favourites folder") {
+      // given
+      val favId = FolderId()
+      val customId = FolderId()
+      val convId1 = ConvId()
+      val (folder1, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
+      sendEvent(event1)
+
+      val convId2 = ConvId()
+      val (folder2, event2) = generateEventAddFolder(event1, folderId = customId, name = "Custom", convIds = Set(convId2), folderType = FolderData.CustomFolderType)
+      sendEvent(event2)
+
+      val (folder3, event3) = generateEventOneFolder(folderId = folder2.id, name = folder2.name, convIds = Set(convId2), folderType = FolderData.CustomFolderType)
+      assert(folder2 == folder3)
+
+      // when
+      val (before, after) = sendEvent(event3)
+
+      // then
+      before.size shouldBe 2
+      before(favId) shouldBe (folder1, Set(convId1))
+      before(customId) shouldBe (folder2, Set(convId2))
+      after.size shouldBe 1
+      after.head shouldBe (customId, (folder3, Set(convId2)))
+    }
+  }
+
+  private def generateEventOneFolder(folderId: FolderId   = FolderId(),
+                                     name: String         = "Favourites",
+                                     convIds: Set[ConvId] = Set.empty,
+                                     folderType: Int      = FolderData.FavouritesFolderType) = {
+    val folder = FolderData(folderId, name, folderType)
+    (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str)).toSeq))))
+  }
+
+  private def generateEventAddFolder(oldEvent: FoldersEvent,
+                                     folderId: FolderId   = FolderId(),
+                                     name: String         = "Favourites",
+                                     convIds: Set[ConvId] = Set.empty,
+                                     folderType: Int      = FolderData.FavouritesFolderType) = {
+    val folder = FolderData(folderId, name, folderType)
+    (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str)).toSeq))))
+  }
+
+  private def sendEvent(event: FoldersEvent) = {
+    val service = getService
+
+    def getState = for {
+      map  <- service.foldersWithConvs.head
+      data <- service.folders
+      res  =  map.map { case (id, convs) => id -> (data.find(_.id == id).get, convs) }
+    } yield res
+
+    val test = for {
+      before <- getState
+      _      <- service.processEvent(event)
+      after  <- getState
+    } yield (before, after)
+
+    Await.result(test, 500.millis)
   }
 }

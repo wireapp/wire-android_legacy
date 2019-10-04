@@ -139,7 +139,9 @@ case class ReadReceiptEnabledPropertyEvent(value: Int) extends PropertyEvent
 
 // An event that contains a new folders/favorites list
 case class FoldersEvent(folders: Seq[RemoteFolderData]) extends PropertyEvent
-case class RemoteFolderData(folderData: FolderData, conversations: Seq[ConvId])
+
+case class RemoteFolderData(folderData: FolderData, conversations: Seq[RConvId])
+
 object RemoteFolderData {
 
   implicit val RemoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
@@ -147,7 +149,7 @@ object RemoteFolderData {
       import JsonDecoder._
       RemoteFolderData(
         FolderData(decodeFolderId('id), decodeString('name), decodeInt('type)),
-        decodeConvIdSeq('conversations)
+        decodeRConvIdSeq('conversations)
       )
     }
   }
