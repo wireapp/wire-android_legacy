@@ -238,7 +238,7 @@ class NormalConversationFragment extends ConversationListFragment {
     hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
-    }
+    }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
     hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
