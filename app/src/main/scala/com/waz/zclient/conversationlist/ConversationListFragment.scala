@@ -164,8 +164,8 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
   }
 }
 
-object NormalConversationListFragment {
-  val TAG = NormalConversationListFragment.getClass.getSimpleName
+object NormalConversationFragment {
+  val TAG = "NormalConversationFragment"
 }
 
 class NormalConversationFragment extends ConversationListFragment {

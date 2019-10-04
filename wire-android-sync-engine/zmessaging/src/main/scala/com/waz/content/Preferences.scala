@@ -468,4 +468,5 @@ object UserPreferences {
 
   lazy val AskedForLocationPermission       = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
 
+  lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
 }
