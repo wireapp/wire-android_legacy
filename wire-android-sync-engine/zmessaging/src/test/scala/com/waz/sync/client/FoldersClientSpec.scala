@@ -18,11 +18,12 @@
 
 package com.waz.sync.client
 
-import com.waz.model.{ConvId, FolderData, FolderId}
+import com.waz.model.{ConvId, FolderData, FolderId, Name}
 import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.CirceJSONSupport
 import io.circe.syntax._
+import io.circe.parser.decode
 
 class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
 
@@ -64,6 +65,45 @@ class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
                                     |    ]
                                     |  }]
                                   """.stripMargin.replaceAll("\\s","")
+    }
+  }
+
+  feature("decoding payload") {
+    scenario ("with favourites") {
+
+      // given
+      val payload = """[
+        {
+          "name" : "F1",
+          "type" : 0,
+          "id" : "f1",
+          "conversations" : [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "name" : "FAV",
+          "type" : 1,
+          "id" : "fav",
+          "conversations" : [
+            "c2"
+          ]
+        }]"""
+
+      // when
+      val list = decode[List[FolderDataWithConversations]](payload).right.get
+
+      // then
+      list(0).folderData.name shouldEqual Name("F1")
+      list(0).folderData.id shouldEqual FolderId("f1")
+      list(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      list(0).conversations shouldEqual List(ConvId("c1"), ConvId("c2"))
+
+      list(1).folderData.name shouldEqual Name("FAV")
+      list(1).folderData.id shouldEqual FolderId("fav")
+      list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      list(1).conversations shouldEqual List(ConvId("c2"))
     }
   }
 }
