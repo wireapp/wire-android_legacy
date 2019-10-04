@@ -30,6 +30,7 @@ import com.waz.zclient.{Injectable, Injector, R}
 import com.waz.api.Message
 import com.waz.content.{ConversationStorage, MembersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.conversation.{ConversationsService, FoldersService}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,11 +38,15 @@ import scala.concurrent.{ExecutionContext, Future}
 class ConversationListController(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
+  import Threading.Implicits.Background
   import ConversationListController._
 
   val zms = inject[Signal[ZMessaging]]
   val membersCache = zms map { new MembersCache(_) }
   val lastMessageCache = zms map { new LastMessageCache(_) }
+
+  private lazy val foldersService = inject[Signal[FoldersService]]
+  private lazy val convService = inject[Signal[ConversationsService]]
 
   def members(conv: ConvId) = membersCache.flatMap(_.apply(conv))
 
@@ -87,6 +92,74 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       incomingConvs  =  conversations.values.filter(Incoming.filter).toSeq
       members <- Signal.sequence(incomingConvs.map(c => membersStorage.activeMembers(c.id).map(_.find(_ != selfUserId))):_*)
     } yield (incomingConvs, members.flatten)
+
+  lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
+
+  def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
+
+  lazy val favouritesFolderId: Future[Option[FolderId]] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
+
+  lazy val favouritesFolder: Signal[Option[FolderData]] = Signal.future(favouritesFolderId).flatMap {
+    case Some(folderId) => folder(folderId)
+    case None           => Signal.const(None)
+  }
+
+  lazy val favouriteConversations: Signal[Seq[ConversationData]] = for {
+    favId <- Signal.future(favouritesFolderId)
+    convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
+  } yield convs
+
+  def folderConversations(folderId: FolderId): Signal[Seq[ConversationData]] = for {
+    fwc     <- foldersWithConvs
+    convIds =  fwc(folderId)
+    convs   <- regularConversationListData
+  } yield convs.filter(c => convIds.contains(c.id))
+
+  private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
+    convService        <- convService
+    fwc                <- foldersWithConvs
+    folderConvIds      =  fwc.values.flatten.toSet
+    convs              <- regularConversationListData
+    convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
+    results            <- Signal.sequence(convsWithoutFolder.map(c => convService.groupConversation(c.id).map(b => c -> b)): _*)
+  } yield results
+
+  lazy val groupConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(_._2).map(_._1))
+
+  lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2).map(_._1))
+
+  lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
+
+  lazy val customFolderIds: Signal[Set[FolderId]] = for {
+    favId  <- Signal.future(favouritesFolderId)
+    allIds <- allFolderIds
+  } yield favId.fold(allIds)(allIds - _)
+
+  def addToFavourites(convId: ConvId): Future[Unit] = for {
+    service  <- foldersService.head
+    favId    <- service.ensureFavouritesFolder()
+    _        <- service.addConversationTo(convId, favId)
+  } yield ()
+
+  def removeFromFavourites(convId: ConvId): Future[Unit] = for {
+    Some(favId) <- favouritesFolderId
+    _           <- removeFromFolder(convId, favId)
+  } yield ()
+
+  def removeFromFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
+    service <- foldersService.head
+    _       <- service.removeConversationFrom(convId, folderId)
+    convs   <- service.convsInFolder(folderId)
+    _       <- if (convs.isEmpty) service.removeFolder(folderId) else Future.successful(())
+  } yield ()
+
+  def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
+    service       <- foldersService.head
+    folders       <- service.foldersForConv(convId)
+    favId         <- favouritesFolderId
+    customFolders =  favId.fold(folders)(folders - _)
+    _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
+  } yield ()
 }
 
 object ConversationListController {
