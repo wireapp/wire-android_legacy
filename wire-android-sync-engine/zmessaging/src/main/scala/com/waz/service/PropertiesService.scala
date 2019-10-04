@@ -131,4 +131,5 @@ object PropertyKey extends (String => PropertyKey) {
   implicit val PropertyKeyCodec: Codec[PropertyKey, String] = Codec.create(_.str, PropertyKey.apply)
 
   val ReadReceiptsEnabled: PropertyKey = "WIRE_RECEIPT_MODE"
+  val Folders: PropertyKey = "labels"
 }
