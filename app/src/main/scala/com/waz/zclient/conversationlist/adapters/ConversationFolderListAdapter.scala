@@ -34,10 +34,21 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
   private var folders = Seq.empty[Folder]
   private var items = Seq.empty[Item]
 
+  def setData(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
+    folders = Seq(
+      Folder("Groups", groups.map(data => ConversationItem(data)).toList),
+      Folder("One to One", oneToOnes.map(data => ConversationItem(data)).toList)
+    )
+
+    updateItems()
+  }
+
   private def updateItems(): Unit = {
     items = folders.foldLeft(Seq.empty[Item]) { (result, folder) =>
       result ++ (HeaderItem(folder.title) :: folder.conversations)
     }
+
+    notifyDataSetChanged()
   }
 
   // Getters
