@@ -26,7 +26,6 @@
     tools:parentTag="android.widget.FrameLayout">
 
     <LinearLayout
-        android:id="@+id/header_linearlayout_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
@@ -46,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical|start"
-            android:layout_marginLeft="@dimen/wire__padding__8"
+            android:layout_marginStart="@dimen/wire__padding__8"
             app:w_font="@string/wire__typeface__light"
             style="?startUiHeaderRowLabel"
             tools:text="Title" />
