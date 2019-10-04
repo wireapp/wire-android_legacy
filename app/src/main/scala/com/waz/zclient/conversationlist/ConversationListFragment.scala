@@ -34,8 +34,8 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.conversationlist.ConversationListController.{Archive, ListMode, Normal, Folders}
-import com.waz.zclient.conversationlist.adapters.{ArchiveConversationListAdapter, NormalConversationListAdapter}
+import com.waz.zclient.conversationlist.ConversationListController.{Archive, Folders, ListMode, Normal}
+import com.waz.zclient.conversationlist.adapters.{ArchiveConversationListAdapter, ConversationFolderListAdapter, ConversationListAdapter, NormalConversationListAdapter}
 import com.waz.zclient.conversationlist.views.{ArchiveTopToolbar, ConversationListTopToolbar, NormalTopToolbar}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
@@ -73,39 +73,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   protected lazy val topToolbar: ViewHolder[_ <: ConversationListTopToolbar] = view[ConversationListTopToolbar](R.id.conversation_list_top_toolbar)
 
-  lazy val adapter = returning(adapterMode match {
-    case Normal =>
-      returning(new NormalConversationListAdapter) { a =>
-        val dataSource = for {
-          regular  <- convListController.regularConversationListData
-          incoming <- convListController.incomingConversationListData
-        } yield (regular, incoming)
-
-        dataSource.onUi { case (regular, incoming) =>
-          a.setData(regular, incoming)
-        }
-      }
-    case Archive =>
-      returning(new ArchiveConversationListAdapter) { a =>
-        convListController.archiveConversationListData.onUi { archive =>
-          a.setData(archive)
-        }
-      }
-      // TODO: Add Folders case
-  }) { a =>
-    a.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
-    userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
-
-    a.onConversationClick { conv =>
-      verbose(l"handleItemClick, switching conv to $conv")
-      conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
-    }
-
-    a.onConversationLongClick { conv =>
-      if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
-        screenController.showConversationMenu(true, conv.id)
-    }
-  }
+  lazy val adapter: ConversationListAdapter = returning(createAdapter())(configureAdapter)
 
   lazy val conversationListView = returning(view[SwipeListView](R.id.conversation_list_view)) { vh =>
     userAccountsController.currentUser.onChanged.onUi(_ => vh.foreach(_.scrollToPosition(0)))
@@ -147,6 +115,52 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
         getInt(R.integer.framework_animation_duration_long), getInt(R.integer.framework_animation_duration_medium), false, 1f)
     else new ConversationListAnimation(0, getDimenPx(R.dimen.open_new_conversation__thread_list__max_top_distance), enter,
       getInt(R.integer.framework_animation_duration_medium), 0, false, 1f)
+  }
+
+  private def createAdapter(): ConversationListAdapter = adapterMode match {
+    case Normal =>
+      returning(new NormalConversationListAdapter) { a =>
+        val dataSource = for {
+          regular  <- convListController.regularConversationListData
+          incoming <- convListController.incomingConversationListData
+        } yield (regular, incoming)
+
+        dataSource.onUi { case (regular, incoming) =>
+          a.setData(regular, incoming)
+        }
+      }
+    case Folders =>
+      returning(new ConversationFolderListAdapter) { a =>
+        val dataSource = for {
+          groups <- convListController.groupConvsWithoutFolder
+          oneToOnes <- convListController.oneToOneConvsWithoutFolder
+        } yield (groups, oneToOnes)
+
+        dataSource.onUi { case (groups, oneToOnes) =>
+          a.setData(groups, oneToOnes)
+        }
+      }
+    case Archive =>
+      returning(new ArchiveConversationListAdapter) { a =>
+        convListController.archiveConversationListData.onUi { archive =>
+          a.setData(archive)
+        }
+      }
+  }
+
+  private def configureAdapter(adapter: ConversationListAdapter): Unit = {
+    adapter.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
+    userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
+
+    adapter.onConversationClick { conv =>
+      verbose(l"handleItemClick, switching conv to $conv")
+      conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
+    }
+
+    adapter.onConversationLongClick { conv =>
+      if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
+        screenController.showConversationMenu(true, conv.id)
+    }
   }
 }
 
