@@ -18,7 +18,7 @@
 package com.waz.zclient.conversationlist.adapters
 
 import android.view.ViewGroup
-import com.waz.model.{ConversationData, UserId}
+import com.waz.model.{ConvId, ConversationData}
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 import com.waz.zclient.log.LogUI._
 
@@ -27,14 +27,9 @@ class NormalConversationListAdapter extends ConversationListAdapter {
   setHasStableIds(true)
 
   private var conversations = Seq.empty[ConversationData]
+  private var incomingRequests = Seq.empty[ConvId]
 
-  // `FIXME: This data could be simplified. We only care about the number of user ids, and
-  // we will only user the first conversation data object in order to present the ConnectRequestFragment
-  // when the incoming row is tapped. I think it would be better to just pass an int here, and handle
-  // the tap differently to make the ConnectRequestFragment appear.
-  private var incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
-
-  def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
+  def setData(convs: Seq[ConversationData], incoming: Seq[ConvId]): Unit = {
     conversations = convs
     incomingRequests = incoming
     notifyDataSetChanged()
@@ -44,21 +39,22 @@ class NormalConversationListAdapter extends ConversationListAdapter {
 
   private def getConversation(position: Int): Option[ConversationData] = conversations.lift(position)
 
-  private def getItem(position: Int): Option[ConversationData] = incomingRequests._2 match {
+  private def getItem(position: Int): Option[ConversationData] = incomingRequests match {
     case Seq() => getConversation(position)
     case _ => if (position == 0) None else getConversation(position - 1)
   }
 
-  override def getItemCount: Int = {
-    val incoming = if (incomingRequests._2.nonEmpty) 1 else 0
-    conversations.size + incoming
-  }
+  override def getItemCount: Int =
+    if (hasIncomingRequests) conversations.size + 1
+    else conversations.size
 
   override def getItemId(position: Int): Long = getItem(position).fold(position)(_.id.str.hashCode)
 
   override def getItemViewType(position: Int): Int =
-    if (position == 0 && incomingRequests._2.nonEmpty) IncomingViewType
+    if (position == 0 && hasIncomingRequests) IncomingViewType
     else NormalViewType
+
+  private def hasIncomingRequests: Boolean = incomingRequests.nonEmpty
 
   // View management
 

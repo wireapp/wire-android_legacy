@@ -21,7 +21,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.View.OnLongClickListener
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, UserId}
+import com.waz.model.{ConvId, ConversationData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.HeaderItem
@@ -57,9 +57,8 @@ object ConversationListAdapter {
   }
 
   case class IncomingConversationRowViewHolder(view: IncomingConversationListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
-    def bind(convsAndUsers: (Seq[ConversationData], Seq[UserId])): Unit = {
-      view.conversationId = convsAndUsers._1.headOption.map(_.id)
-      view.setIncomingUsers(convsAndUsers._2)
+    def bind(users: Seq[ConvId]): Unit = {
+      view.setIncoming(users)
     }
   }
 
@@ -102,7 +101,7 @@ object ConversationListAdapter {
     def newIncomingConversationRowViewHolder(adapter: ConversationListAdapter, parent: ViewGroup): IncomingConversationRowViewHolder = {
       val row = returning(inflate[IncomingConversationListRow](R.layout.incoming_conv_list_item, parent, addToParent = false)) { r =>
         r.setOnClickListener(new View.OnClickListener {
-          override def onClick(view: View): Unit = r.conversationId.foreach(adapter.onConversationClick ! _)
+          override def onClick(view: View): Unit = r.firstIncomingConversation.foreach(adapter.onConversationClick ! _)
         })
       }
 

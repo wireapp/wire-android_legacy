@@ -536,16 +536,16 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.conv_list_item)
 
-  var conversationId = Option.empty[ConvId]
+  var firstIncomingConversation = Option.empty[ConvId]
 
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
   val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
 
-  def setIncomingUsers(users: Seq[UserId]): Unit = {
+  def setIncoming(convs: Seq[ConvId]): Unit = {
+    firstIncomingConversation = convs.headOption
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
-    //avatar.setMembers(users, ConversationType.Group)
-    title.setText(getInboxName(users.size))
+    title.setText(getInboxName(convs.size))
     badge.setStatus(ConversationBadge.WaitingConnection)
   }
 

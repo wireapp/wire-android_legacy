@@ -17,9 +17,13 @@
  */
 package com.waz.zclient.conversationlist
 
+import com.waz.api.Message
+import com.waz.content.ConversationStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
+import com.waz.service.conversation.{ConversationsService, FoldersService}
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
@@ -27,10 +31,6 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
-import com.waz.api.Message
-import com.waz.content.{ConversationStorage, MembersStorage}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.conversation.{ConversationsService, FoldersService}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,8 +38,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class ConversationListController(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
-  import Threading.Implicits.Background
   import ConversationListController._
+  import Threading.Implicits.Background
 
   val zms = inject[Signal[ZMessaging]]
   val membersCache = zms map { new MembersCache(_) }
@@ -83,15 +83,12 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     } yield
       conversations.values.filter(listMode.filter).toSeq.sorted(listMode.sort)
 
-  lazy val incomingConversationListData =
+  lazy val incomingConversationListData: Signal[Seq[ConvId]] =
     for {
-      selfUserId     <- inject[Signal[UserId]]
       convsStorage   <- inject[Signal[ConversationStorage]]
-      membersStorage <- inject[Signal[MembersStorage]]
       conversations  <- convsStorage.contents
-      incomingConvs  =  conversations.values.filter(Incoming.filter).toSeq
-      members <- Signal.sequence(incomingConvs.map(c => membersStorage.activeMembers(c.id).map(_.find(_ != selfUserId))):_*)
-    } yield (incomingConvs, members.flatten)
+      incomingConvs  =  conversations.values.filter(Incoming.filter).map(_.id).toSeq
+    } yield incomingConvs
 
   lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
 
