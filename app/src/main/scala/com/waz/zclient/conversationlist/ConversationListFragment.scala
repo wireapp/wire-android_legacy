@@ -74,7 +74,8 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   protected lazy val topToolbar: ViewHolder[_ <: ConversationListTopToolbar] = view[ConversationListTopToolbar](R.id.conversation_list_top_toolbar)
 
   lazy val adapter = returning(adapterMode match {
-    case Normal =>
+    // FIXME: Dummy Folders case
+    case Normal | Folders =>
       returning(new NormalConversationListAdapter) { a =>
         val dataSource = for {
           regular  <- convListController.regularConversationListData
@@ -91,7 +92,6 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
           a.setData(archive)
         }
       }
-      // TODO: Add Folders case
   }) { a =>
     a.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
     userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
@@ -238,7 +238,7 @@ class NormalConversationFragment extends ConversationListFragment {
     hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
-    }
+    }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
     hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
@@ -313,11 +313,15 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 }
 
-object NormalConversationListFragment {
-  val TAG = NormalConversationListFragment.getClass.getSimpleName
+object NormalConversationFragment {
+  val TAG = "NormalConversationFragment"
 }
 
 
 class ConversationFolderListFragment extends NormalConversationFragment {
   override protected val adapterMode: ListMode = Folders
+}
+
+object ConversationFolderListFragment {
+  val TAG = "ConversationFolderListFragment"
 }
