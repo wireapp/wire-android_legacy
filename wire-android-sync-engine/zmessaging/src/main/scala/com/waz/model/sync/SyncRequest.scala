@@ -324,6 +324,7 @@ object SyncRequest {
 
   case class PostCustomFoldersAndFavourites(folders: Seq[FolderDataWithConversations]) extends BaseRequest(Cmd.PostCustomFoldersAndFavourites) {
     override def mergeKey: Any = (cmd, "labels")
+    override def isDuplicateOf(req: SyncRequest): Boolean = true
   }
 
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
@@ -331,7 +332,7 @@ object SyncRequest {
     case _ => Unchanged
   }
 
-  implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest] with StorageCodecs {
+    implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest] with StorageCodecs {
     import JsonDecoder._
 
     override def apply(implicit js: JSONObject): SyncRequest = {
@@ -394,7 +395,7 @@ object SyncRequest {
           case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
-          case Cmd.PostCustomFoldersAndFavourites => Unknown // XXX
+          case Cmd.PostCustomFoldersAndFavourites => PostCustomFoldersAndFavourites(decodeCustomFoldersAndFavourites('labels))
           case Cmd.Unknown                   => Unknown
         }
       } catch {

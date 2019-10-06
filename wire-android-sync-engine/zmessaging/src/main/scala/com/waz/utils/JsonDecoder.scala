@@ -27,10 +27,12 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.PropertyKey
+import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.{Duration, Instant}
+import io.circe._, io.circe.parser._
 
 import scala.collection.generic._
 import scala.concurrent.duration.FiniteDuration
@@ -204,6 +206,13 @@ object JsonDecoder {
   implicit def decodeInvitationId(s: Symbol)(implicit js: JSONObject): InvitationId = InvitationId(js.getString(s.name))
   implicit def decodeMessage(s: Symbol)(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(decodeString(s)))
   implicit def decodeMessageIdSeq(s: Symbol)(implicit js: JSONObject): Seq[MessageId] = array[MessageId](s)({ (arr, i) => MessageId(arr.getString(i)) })
+  implicit def decodeCustomFoldersAndFavourites(s: Symbol)(implicit js: JSONObject): Seq[FolderDataWithConversations] = {
+    // This is an artificial serialization/deserialization just to switch from one JSON parsing system to the other
+    // Ideally we would use only one system for JSON handling, and remove this hack
+    val jsonStr = js.getJSONArray(s.name).toString()
+    val parsed = parse(jsonStr).right.get // here I can assume it's a valid JSON fragment, as it comes from serializing a JSON object
+    parsed.as[List[FolderDataWithConversations]].right.get // here it's OK to throw an exception if it failed to parse
+  }
 
   implicit def decodeId[A](s: Symbol)(implicit js: JSONObject, id: Id[A]): A = id.decode(js.getString(s.name))
 
