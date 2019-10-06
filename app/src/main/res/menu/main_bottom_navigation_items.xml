@@ -21,7 +21,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/navigation_search"
         android:title="@null"
-        android:icon="@drawable/search" />
+        android:icon="@drawable/icon_contacts" />
     <item android:id="@+id/navigation_recents"
         android:title="@null"
         android:icon="@drawable/icon_recentview" />
@@ -30,5 +30,5 @@
         android:icon="@drawable/icon_folderview" />
     <item android:id="@+id/navigation_archive"
         android:title="@null"
-        android:icon="@drawable/search" />
+        android:icon="@drawable/icon_archive" />
 </menu>

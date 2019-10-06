@@ -253,7 +253,7 @@ class NormalConversationFragment extends ConversationListFragment {
     hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
-    }
+    }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
     hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
@@ -328,11 +328,15 @@ class NormalConversationFragment extends ConversationListFragment {
   }
 }
 
-object NormalConversationListFragment {
-  val TAG = NormalConversationListFragment.getClass.getSimpleName
+object NormalConversationFragment {
+  val TAG = "NormalConversationFragment"
 }
 
 
 class ConversationFolderListFragment extends NormalConversationFragment {
   override protected val adapterMode: ListMode = Folders
+}
+
+object ConversationFolderListFragment {
+  val TAG = "ConversationFolderListFragment"
 }
