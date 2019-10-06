@@ -255,6 +255,8 @@
     <string name="conversation__action__block">Block…</string>
     <string name="conversation__action__unblock">Unblock</string>
     <string name="conversation__action__remove_member">Remove from group…</string>
+    <string name="conversation__action__add_to_favorites">Add to Favorites</string>
+    <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
 
     <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>

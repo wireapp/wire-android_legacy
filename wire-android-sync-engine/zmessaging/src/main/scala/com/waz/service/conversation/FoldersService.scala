@@ -18,7 +18,6 @@
 package com.waz.service.conversation
 
 import com.waz.content.{ConversationFoldersStorage, FoldersStorage}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, FolderData, FolderId, Name}
 import com.waz.threading.Threading
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
@@ -51,10 +50,13 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   private implicit val ev = EventContext.Global
 
   override def favouritesFolderId: Future[Option[FolderId]] =
-    foldersStorage.getByType(FolderData.FavouritesFolderType).map {
-      case head :: _ => Some(head.id)
-      case Nil       => None
-    }
+    foldersStorage.getByType(FolderData.FavouritesFolderType).map(i =>
+      if (i == Nil || i.isEmpty) {
+        None
+      } else {
+        Some(i.head.id)
+      }
+    )
 
   override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] =
     conversationFoldersStorage.put(convId, folderId)
@@ -80,7 +82,11 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     foldersStorage.optSignal(folderId)
 
   override def addFolder(folderName: Name): Future[FolderId] = {
-    val folder = FolderData(name = folderName)
+    addFolder(folderName, FolderData.CustomFolderType)
+  }
+
+  private def addFolder(folderName: Name, folderType: Int): Future[FolderId] = {
+    val folder = FolderData(name = folderName, folderType = folderType)
     foldersStorage.put(folder.id, folder).map(_.id)
   }
 
@@ -90,12 +96,9 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _       <- foldersStorage.remove(folderId)
   } yield ()
 
-  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.map {
-    case None =>
-      val folderData = FolderData(FolderId(), "", FolderData.FavouritesFolderType)
-      foldersStorage.put(folderData.id, folderData).map(_ => folderData.id)
-      folderData.id
-    case Some(id) => id
+  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.flatMap {
+    case Some(x) => Future.successful(x)
+    case None => addFolder("", FolderData.FavouritesFolderType)
   }
 
   override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.flatMap {
