@@ -341,6 +341,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
         genericMsgs.eventProcessingStage,
+        foldersService.eventProcessingStage,
         propertiesService.eventProcessor,
         notifications.messageNotificationEventsStage,
         notifications.connectionNotificationEventStage

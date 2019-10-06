@@ -59,5 +59,5 @@ class ConversationFoldersStorageImpl(context: Context, storage: Database)
     find(_.folderId == folderId, ConversationFolderDataDao.findForFolder(folderId)(_), identity).map(_.map(_.convId).toSet)
 
   override def put(convId: ConvId, folderId: FolderId): Future[Unit] =
-    put((convId, folderId), ConversationFolderData(convId, folderId)).map(_ => ())
+    insert(ConversationFolderData(convId, folderId)).map(_ => ())
 }

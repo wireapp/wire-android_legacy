@@ -182,6 +182,7 @@ object JsonDecoder {
   implicit def decodeUidSeq(s: Symbol)(implicit js: JSONObject): Seq[Uid] = array[Uid](s)({ (arr, i) => Uid(arr.getString(i)) })
   implicit def decodeUserIdSeq(s: Symbol)(implicit js: JSONObject): Seq[UserId] = array[UserId](s)({ (arr, i) => UserId(arr.getString(i)) })
   implicit def decodeConvIdSeq(s: Symbol)(implicit js: JSONObject): Seq[ConvId] = array[ConvId](s)({ (arr, i) => ConvId(arr.getString(i)) })
+  implicit def decodeRConvIdSeq(s: Symbol)(implicit js: JSONObject): Seq[RConvId] = array[RConvId](s)({ (arr, i) => RConvId(arr.getString(i)) })
   implicit def decodeDoubleSeq(s: Symbol)(implicit js: JSONObject): Seq[Double] = array[Double](s)({ _.getDouble(_) })
   implicit def decodeStringSeq(s: Symbol)(implicit js: JSONObject): Seq[String] = array[String](s)({ _.getString(_) })
   implicit def decodeClientIdSeq(s: Symbol)(implicit js: JSONObject): Seq[ClientId] = array[ClientId](s)({ (arr, i) => ClientId(arr.getString(i)) })
