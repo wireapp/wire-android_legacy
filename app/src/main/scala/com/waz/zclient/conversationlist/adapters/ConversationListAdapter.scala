@@ -24,7 +24,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
-import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.HeaderItem
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.ConversationRowViewHolder
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
@@ -49,6 +48,16 @@ object ConversationListAdapter {
   val IncomingViewType = 1
   val FolderViewType = 2
 
+  sealed trait Item
+
+  object Item {
+    case class Header(title: String) extends Item
+    case class Conversation(data: ConversationData) extends Item
+    case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item
+  }
+
+
+
   trait ConversationRowViewHolder extends RecyclerView.ViewHolder
 
   case class NormalConversationRowViewHolder(view: NormalConversationListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
@@ -63,7 +72,7 @@ object ConversationListAdapter {
   }
 
   case class ConversationFolderRowViewHolder(view: ConversationFolderListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
-    def bind(header: HeaderItem, isFirst: Boolean): Unit = {
+    def bind(header: Item.Header, isFirst: Boolean): Unit = {
       view.setTitle(header.title)
       view.setIsFirstHeader(isFirst)
     }

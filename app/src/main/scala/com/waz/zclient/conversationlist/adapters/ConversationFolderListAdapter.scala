@@ -35,16 +35,16 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
 
   def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
     val folders = Seq(
-      Folder("Groups", groups.map(data => ConversationItem(data)).toList),
-      Folder("One to One", oneToOnes.map(data => ConversationItem(data)).toList)
+      Folder("Groups", groups.map(data => Item.Conversation(data)).toList),
+      Folder("One to One", oneToOnes.map(data => Item.Conversation(data)).toList)
     )
 
     items = folders.foldLeft(List.empty[Item]) { (result, folder) =>
-      result ++ (HeaderItem(folder.title) :: folder.conversations)
+      result ++ (Item.Header(folder.title) :: folder.conversations)
     }
 
     if (incoming.nonEmpty) {
-      items ::= IncomingRequestsItem(incoming.head, incoming.size)
+      items ::= Item.IncomingRequests(incoming.head, incoming.size)
     }
 
     notifyDataSetChanged()
@@ -55,15 +55,15 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
   override def getItemCount: Int = items.size
 
   override def getItemViewType(position: Int): Int = items(position) match {
-    case _: IncomingRequestsItem => IncomingViewType
-    case _: HeaderItem           => FolderViewType
-    case _: ConversationItem     => NormalViewType
+    case _: Item.IncomingRequests => IncomingViewType
+    case _: Item.Header           => FolderViewType
+    case _: Item.Conversation     => NormalViewType
   }
 
   override def getItemId(position: Int): Long = items(position) match {
-    case IncomingRequestsItem(first, _) => first.str.hashCode
-    case HeaderItem(title)              => title.hashCode
-    case ConversationItem(data)         => data.id.str.hashCode
+    case Item.IncomingRequests(first, _) => first.str.hashCode
+    case Item.Header(title)              => title.hashCode
+    case Item.Conversation(data)         => data.id.str.hashCode
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
@@ -74,11 +74,11 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
 
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
     (items(position), holder) match {
-      case (incomingRequests: IncomingRequestsItem, viewHolder: IncomingConversationRowViewHolder) =>
+      case (incomingRequests: Item.IncomingRequests, viewHolder: IncomingConversationRowViewHolder) =>
         viewHolder.bind(incomingRequests.first, incomingRequests.numberOfRequests)
-      case (header: HeaderItem, viewHolder: ConversationFolderRowViewHolder) =>
+      case (header: Item.Header, viewHolder: ConversationFolderRowViewHolder) =>
         viewHolder.bind(header, isFirst = position == 0)
-      case (conversation: ConversationItem, viewHolder: NormalConversationRowViewHolder) =>
+      case (conversation: Item.Conversation, viewHolder: NormalConversationRowViewHolder) =>
         viewHolder.bind(conversation.data)
       case _ =>
         error(l"Invalid view holder/data pair")
@@ -88,13 +88,5 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
 
 object ConversationFolderListAdapter {
 
-  case class Folder(title: String, conversations: List[ConversationItem])
-
-  sealed trait Item
-  case class HeaderItem(title: String) extends Item
-
-  // TODO: It's not necessary to provide all of this data. Will refactor.
-  case class ConversationItem(data: ConversationData) extends Item
-
-  case class IncomingRequestsItem(first: ConvId, numberOfRequests: Int) extends Item
+  case class Folder(title: String, conversations: List[Item.Conversation])
 }
