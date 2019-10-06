@@ -17,21 +17,17 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
-import android.view.ViewGroup
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData}
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
-import com.waz.zclient.log.LogUI._
 
 /**
   * A list adapter for displaying conversations grouped into folders.
   */
 class ConversationFolderListAdapter extends ConversationListAdapter with DerivedLogTag {
 
-  setHasStableIds(true)
-
-  private var items = List.empty[Item]
+  override protected var items: List[Item] = List.empty
 
   def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
     val folders = Seq(
@@ -48,41 +44,6 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
     }
 
     notifyDataSetChanged()
-  }
-
-  // Getters
-
-  override def getItemCount: Int = items.size
-
-  override def getItemViewType(position: Int): Int = items(position) match {
-    case _: Item.IncomingRequests => IncomingViewType
-    case _: Item.Header           => FolderViewType
-    case _: Item.Conversation     => NormalViewType
-  }
-
-  override def getItemId(position: Int): Long = items(position) match {
-    case Item.IncomingRequests(first, _) => first.str.hashCode
-    case Item.Header(title)              => title.hashCode
-    case Item.Conversation(data)         => data.id.str.hashCode
-  }
-
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
-    case IncomingViewType => ViewHolderFactory.newIncomingConversationRowViewHolder(this, parent)
-    case FolderViewType   => ViewHolderFactory.newConversationFolderRowViewHolder(this, parent)
-    case NormalViewType   => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
-  }
-
-  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
-    (items(position), holder) match {
-      case (incomingRequests: Item.IncomingRequests, viewHolder: IncomingConversationRowViewHolder) =>
-        viewHolder.bind(incomingRequests.first, incomingRequests.numberOfRequests)
-      case (header: Item.Header, viewHolder: ConversationFolderRowViewHolder) =>
-        viewHolder.bind(header, isFirst = position == 0)
-      case (conversation: Item.Conversation, viewHolder: NormalConversationRowViewHolder) =>
-        viewHolder.bind(conversation.data)
-      case _ =>
-        error(l"Invalid view holder/data pair")
-    }
   }
 }
 

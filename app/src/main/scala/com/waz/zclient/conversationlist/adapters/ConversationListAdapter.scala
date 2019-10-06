@@ -24,21 +24,58 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
-import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.ConversationRowViewHolder
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, IncomingConversationListRow, NormalConversationListRow}
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{R, ViewHelper}
 
 abstract class ConversationListAdapter extends RecyclerView.Adapter[ConversationRowViewHolder] with DerivedLogTag {
 
+  setHasStableIds(true)
+
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
 
+  protected var items: List[Item]
   protected var maxAlpha = 1.0f
 
   def setMaxAlpha(maxAlpha: Float): Unit = {
     this.maxAlpha = maxAlpha
     notifyDataSetChanged()
+  }
+
+  override def getItemCount: Int = items.size
+
+  override def getItemViewType(position: Int): Int = items(position) match {
+    case _: Item.IncomingRequests => IncomingViewType
+    case _: Item.Header           => FolderViewType
+    case _: Item.Conversation     => NormalViewType
+  }
+
+  override def getItemId(position: Int): Long = items(position) match {
+    case Item.IncomingRequests(first, _) => first.str.hashCode
+    case Item.Header(title)              => title.hashCode
+    case Item.Conversation(data)         => data.id.str.hashCode
+  }
+
+  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
+    case IncomingViewType => ViewHolderFactory.newIncomingConversationRowViewHolder(this, parent)
+    case FolderViewType   => ViewHolderFactory.newConversationFolderRowViewHolder(this, parent)
+    case NormalViewType   => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
+  }
+
+  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
+    (items(position), holder) match {
+      case (incomingRequests: Item.IncomingRequests, viewHolder: IncomingConversationRowViewHolder) =>
+        viewHolder.bind(incomingRequests.first, incomingRequests.numberOfRequests)
+      case (header: Item.Header, viewHolder: ConversationFolderRowViewHolder) =>
+        viewHolder.bind(header, isFirst = position == 0)
+      case (conversation: Item.Conversation, viewHolder: NormalConversationRowViewHolder) =>
+        viewHolder.bind(conversation.data)
+      case _ =>
+        error(l"Invalid view holder/data pair")
+    }
   }
 }
 
@@ -55,8 +92,6 @@ object ConversationListAdapter {
     case class Conversation(data: ConversationData) extends Item
     case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item
   }
-
-
 
   trait ConversationRowViewHolder extends RecyclerView.ViewHolder
 
