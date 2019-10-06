@@ -20,6 +20,7 @@ package com.waz.zclient.conversationlist
 import com.waz.api.Message
 import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -90,18 +91,18 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       incomingConvs  =  conversations.values.filter(Incoming.filter).map(_.id).toSeq
     } yield incomingConvs
 
-  lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
+  def foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
 
   def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
-  lazy val favouritesFolderId: Future[Option[FolderId]] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
+  def favouritesFolderId: Future[Option[FolderId]] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
 
   lazy val favouritesFolder: Signal[Option[FolderData]] = Signal.future(favouritesFolderId).flatMap {
     case Some(folderId) => folder(folderId)
     case None           => Signal.const(None)
   }
 
-  lazy val favouriteConversations: Signal[Seq[ConversationData]] = for {
+  def favouriteConversations(): Signal[Seq[ConversationData]] = for {
     favId <- Signal.future(favouritesFolderId)
     convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
   } yield convs
@@ -132,11 +133,14 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
 
-  def addToFavourites(convId: ConvId): Future[Unit] = for {
+  def addToFavourites(convId: ConvId) = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavouritesFolder()
     _        <- service.addConversationTo(convId, favId)
-  } yield ()
+  } yield ()).recoverWith {
+    case e: Exception => error(l"exception while adding conv $convId to favorites", e)
+      Future.successful({})
+  }
 
   def removeFromFavourites(convId: ConvId): Future[Unit] = for {
     Some(favId) <- favouritesFolderId
