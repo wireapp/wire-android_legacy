@@ -542,10 +542,10 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
   val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
 
-  def setIncoming(convs: Seq[ConvId]): Unit = {
-    firstIncomingConversation = convs.headOption
+  def setIncoming(first: ConvId, numberOfRequests: Int): Unit = {
+    firstIncomingConversation = Some(first)
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
-    title.setText(getInboxName(convs.size))
+    title.setText(getInboxName(numberOfRequests))
     badge.setStatus(ConversationBadge.WaitingConnection)
   }
 

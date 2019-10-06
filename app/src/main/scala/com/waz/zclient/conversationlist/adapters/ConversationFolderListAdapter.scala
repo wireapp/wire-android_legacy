@@ -19,7 +19,7 @@ package com.waz.zclient.conversationlist.adapters
 
 import android.view.ViewGroup
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.ConversationData
+import com.waz.model.{ConvId, ConversationData}
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 import com.waz.zclient.log.LogUI._
@@ -31,21 +31,20 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
 
   setHasStableIds(true)
 
-  private var folders = Seq.empty[Folder]
-  private var items = Seq.empty[Item]
+  private var items = List.empty[Item]
 
-  def setData(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
-    folders = Seq(
+  def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
+    val folders = Seq(
       Folder("Groups", groups.map(data => ConversationItem(data)).toList),
       Folder("One to One", oneToOnes.map(data => ConversationItem(data)).toList)
     )
 
-    updateItems()
-  }
-
-  private def updateItems(): Unit = {
-    items = folders.foldLeft(Seq.empty[Item]) { (result, folder) =>
+    items = folders.foldLeft(List.empty[Item]) { (result, folder) =>
       result ++ (HeaderItem(folder.title) :: folder.conversations)
+    }
+
+    if (incoming.nonEmpty) {
+      items ::= IncomingRequestsItem(incoming.head, incoming.size)
     }
 
     notifyDataSetChanged()
@@ -56,25 +55,30 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
   override def getItemCount: Int = items.size
 
   override def getItemViewType(position: Int): Int = items(position) match {
-    case _: HeaderItem => FolderViewType
-    case _: ConversationItem => NormalViewType
+    case _: IncomingRequestsItem => IncomingViewType
+    case _: HeaderItem           => FolderViewType
+    case _: ConversationItem     => NormalViewType
   }
 
   override def getItemId(position: Int): Long = items(position) match {
-    case HeaderItem(title) => title.hashCode
-    case ConversationItem(data) => data.id.str.hashCode
+    case IncomingRequestsItem(first, _) => first.str.hashCode
+    case HeaderItem(title)              => title.hashCode
+    case ConversationItem(data)         => data.id.str.hashCode
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
-    case FolderViewType => ViewHolderFactory.newConversationFolderRowViewHolder(this, parent)
-    case NormalViewType => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
+    case IncomingViewType => ViewHolderFactory.newIncomingConversationRowViewHolder(this, parent)
+    case FolderViewType   => ViewHolderFactory.newConversationFolderRowViewHolder(this, parent)
+    case NormalViewType   => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
   }
 
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
-    (holder, items(position)) match {
-      case (viewHolder: ConversationFolderRowViewHolder, header: HeaderItem) =>
+    (items(position), holder) match {
+      case (incomingRequests: IncomingRequestsItem, viewHolder: IncomingConversationRowViewHolder) =>
+        viewHolder.bind(incomingRequests.first, incomingRequests.numberOfRequests)
+      case (header: HeaderItem, viewHolder: ConversationFolderRowViewHolder) =>
         viewHolder.bind(header, isFirst = position == 0)
-      case (viewHolder: NormalConversationRowViewHolder, conversation: ConversationItem) =>
+      case (conversation: ConversationItem, viewHolder: NormalConversationRowViewHolder) =>
         viewHolder.bind(conversation.data)
       case _ =>
         error(l"Invalid view holder/data pair")
@@ -91,4 +95,6 @@ object ConversationFolderListAdapter {
 
   // TODO: It's not necessary to provide all of this data. Will refactor.
   case class ConversationItem(data: ConversationData) extends Item
+
+  case class IncomingRequestsItem(first: ConvId, numberOfRequests: Int) extends Item
 }

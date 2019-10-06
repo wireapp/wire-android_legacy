@@ -57,8 +57,8 @@ object ConversationListAdapter {
   }
 
   case class IncomingConversationRowViewHolder(view: IncomingConversationListRow) extends RecyclerView.ViewHolder(view) with ConversationRowViewHolder {
-    def bind(users: Seq[ConvId]): Unit = {
-      view.setIncoming(users)
+    def bind(first: ConvId, numberOfRequest: Int): Unit = {
+      view.setIncoming(first, numberOfRequest)
     }
   }
 

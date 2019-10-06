@@ -132,12 +132,13 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     case Folders =>
       returning(new ConversationFolderListAdapter) { a =>
         val dataSource = for {
-          groups <- convListController.groupConvsWithoutFolder
+          incoming  <- convListController.incomingConversationListData
+          groups    <- convListController.groupConvsWithoutFolder
           oneToOnes <- convListController.oneToOneConvsWithoutFolder
-        } yield (groups, oneToOnes)
+        } yield (incoming, groups, oneToOnes)
 
-        dataSource.onUi { case (groups, oneToOnes) =>
-          a.setData(groups, oneToOnes)
+        dataSource.onUi { case (incoming, groups, oneToOnes) =>
+          a.setData(incoming, groups, oneToOnes)
         }
       }
     case Archive =>

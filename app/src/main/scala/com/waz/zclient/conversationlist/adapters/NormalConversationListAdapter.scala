@@ -69,6 +69,7 @@ class NormalConversationListAdapter extends ConversationListAdapter {
         normalViewHolder.bind(item)
       }
     case incomingViewHolder: IncomingConversationRowViewHolder =>
-      incomingViewHolder.bind(incomingRequests)
+      // TODO: don't force unwrap
+      incomingViewHolder.bind(incomingRequests.head, incomingRequests.size)
   }
 }
