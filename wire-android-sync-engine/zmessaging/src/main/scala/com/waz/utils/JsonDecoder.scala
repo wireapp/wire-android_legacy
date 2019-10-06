@@ -207,12 +207,9 @@ object JsonDecoder {
   implicit def decodeMessage(s: Symbol)(implicit js: JSONObject): GenericMessage = GenericMessage(AESUtils.base64(decodeString(s)))
   implicit def decodeMessageIdSeq(s: Symbol)(implicit js: JSONObject): Seq[MessageId] = array[MessageId](s)({ (arr, i) => MessageId(arr.getString(i)) })
   implicit def decodeCustomFoldersAndFavourites(s: Symbol)(implicit js: JSONObject): Seq[FolderDataWithConversations] = {
-    // This is an artificial serialization/deserialization just to switch from one JSON parsing system to the other
-    // Ideally we would use only one system for JSON handling, and remove this hack
-    val jsonStr = js.getJSONArray(s.name).toString()
-    val parsed = parse(jsonStr).right.get // here I can assume it's a valid JSON fragment, as it comes from serializing a JSON object
-    parsed.as[List[FolderDataWithConversations]].right.get // here it's OK to throw an exception if it failed to parse
+    array[FolderDataWithConversations](js.getJSONArray(s.name))
   }
+
 
   implicit def decodeId[A](s: Symbol)(implicit js: JSONObject, id: Id[A]): A = id.decode(js.getString(s.name))
 

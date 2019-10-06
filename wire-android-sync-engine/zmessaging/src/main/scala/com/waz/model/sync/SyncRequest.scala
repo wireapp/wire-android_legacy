@@ -324,7 +324,6 @@ object SyncRequest {
 
   case class PostCustomFoldersAndFavourites(folders: Seq[FolderDataWithConversations]) extends BaseRequest(Cmd.PostCustomFoldersAndFavourites) {
     override def mergeKey: Any = (cmd, "labels")
-    override def isDuplicateOf(req: SyncRequest): Boolean = true
   }
 
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
@@ -395,7 +394,7 @@ object SyncRequest {
           case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
-          case Cmd.PostCustomFoldersAndFavourites => PostCustomFoldersAndFavourites(decodeCustomFoldersAndFavourites('labels))
+          case Cmd.PostCustomFoldersAndFavourites => PostCustomFoldersAndFavourites(decodeCustomFoldersAndFavourites('value))
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -511,7 +510,7 @@ object SyncRequest {
           o.put("value", value)
         case PostCustomFoldersAndFavourites(folders) =>
           o.put("key", "labels")
-          o.put("value", folders)
+          o.put("value", arr(folders))
         case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
       }

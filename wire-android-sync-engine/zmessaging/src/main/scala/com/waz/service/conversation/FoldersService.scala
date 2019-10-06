@@ -24,10 +24,14 @@ import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, Fold
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.model.{ConvId, FolderData, FolderId, Name}
+import com.waz.service.assets2.StorageCodecs
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.waz.utils.{JsonDecoder, JsonEncoder}
+import io.circe.parser.parse
 import io.circe.{Decoder, Encoder, JsonObject}
+import org.json.{JSONArray, JSONObject}
 
 import scala.concurrent.Future
 
@@ -60,12 +64,15 @@ trait FoldersService {
 case class FolderDataWithConversations(folderData: FolderData, conversations: Seq[ConvId]) {}
 
 object FolderDataWithConversations {
+
+  // ------- JSON encoding/decoding (Circe) ----------
+
   // This is necessary as "type" is a reserved word in Scala
-  implicit val encodeFolderDataConversations: Encoder[FolderDataWithConversations] = Encoder.forProduct4(
+  lazy implicit val folderDataConversationsCirceEncoder: Encoder[FolderDataWithConversations] = Encoder.forProduct4(
     "name", "type", "id", "conversations"
   )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations))
 
-  implicit val decodeFolderDataConversations: Decoder[FolderDataWithConversations] = Decoder.decodeJsonObject.emap(objectToFolderDataWithConversation(_))
+  lazy implicit val folderDataConversationsCirceDecoder: Decoder[FolderDataWithConversations] = Decoder.decodeJsonObject.emap(objectToFolderDataWithConversation(_))
 
   // This in necessary because:
   // - It needs to parse even when name is missing
@@ -84,6 +91,27 @@ object FolderDataWithConversations {
     }
     val conversations = maybeConversations.map(_.get).map(ConvId(_))
     return Right(FolderDataWithConversations(FolderData(FolderId(id), name, maybeFolderType.get), conversations))
+  }
+
+  // ------- JSON encoding/decoding (Json utilities) ----------
+  lazy implicit val folderDataConversationsEncoder = new JsonEncoder[FolderDataWithConversations] with StorageCodecs {
+    override def apply(v: FolderDataWithConversations): JSONObject = JsonEncoder { o =>
+      o.put("name", v.folderData.name)
+      o.put("type", v.folderData.folderType)
+      o.put("id", v.folderData.id)
+      o.put("conversations", JsonEncoder.arrString(v.conversations.map(_.str)))
+    }
+  }
+
+  implicit lazy val folderDataConversationsDecoder: JsonDecoder[FolderDataWithConversations] = new JsonDecoder[FolderDataWithConversations] with StorageCodecs {
+
+    override def apply(implicit js: JSONObject): FolderDataWithConversations = {
+      // This is an artificial serialization/deserialization just to switch from one JSON parsing system to the other
+      // Ideally we would use only one system for JSON handling, and remove this hack
+      val jsonStr = js.toString()
+      val parsed = parse(jsonStr).right.get // here I can assume it's a valid JSON fragment, as it comes from serializing a JSON object
+      return parsed.as[FolderDataWithConversations].right.get // here it's OK to throw an exception if it failed to parse
+    }
   }
 }
 
