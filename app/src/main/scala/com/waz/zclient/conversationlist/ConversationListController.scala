@@ -20,7 +20,6 @@ package com.waz.zclient.conversationlist
 import com.waz.api.Message
 import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -30,6 +29,7 @@ import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
 
@@ -91,7 +91,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       incomingConvs  =  conversations.values.filter(Incoming.filter).map(_.id).toSeq
     } yield incomingConvs
 
-  def foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
+  lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
 
   def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
@@ -133,7 +133,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
 
-  def addToFavourites(convId: ConvId) = (for {
+  def addToFavourites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavouritesFolder()
     _        <- service.addConversationTo(convId, favId)
