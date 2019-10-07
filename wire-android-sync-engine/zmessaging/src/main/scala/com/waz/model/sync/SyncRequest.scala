@@ -322,7 +322,7 @@ object SyncRequest {
     override def mergeKey: Any = (cmd, key)
   }
 
-  case class PostCustomFoldersAndFavourites(folders: Seq[FolderDataWithConversations]) extends BaseRequest(Cmd.PostCustomFoldersAndFavourites) {
+  case class PostFolders(folders: Seq[FolderDataWithConversations]) extends BaseRequest(Cmd.PostFolders) {
     override def mergeKey: Any = (cmd, "labels")
   }
 
@@ -394,7 +394,7 @@ object SyncRequest {
           case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
-          case Cmd.PostCustomFoldersAndFavourites => PostCustomFoldersAndFavourites(decodeCustomFoldersAndFavourites('value))
+          case Cmd.PostFolders               => PostFolders(decodeCustomFoldersAndFavourites('value))
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -508,7 +508,7 @@ object SyncRequest {
         case PostStringProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)
-        case PostCustomFoldersAndFavourites(folders) =>
+        case PostFolders(folders) =>
           o.put("key", "labels")
           o.put("value", arr(folders))
         case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |

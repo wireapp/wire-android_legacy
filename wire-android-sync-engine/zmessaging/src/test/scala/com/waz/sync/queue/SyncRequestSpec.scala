@@ -18,7 +18,7 @@
 package com.waz.sync.queue
 
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.{PostAssetStatus, PostCustomFoldersAndFavourites, RegisterPushToken}
+import com.waz.model.sync.SyncRequest.{PostAssetStatus, PostFolders, RegisterPushToken}
 import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.model._
 import com.waz.service.assets2.UploadAssetStatus
@@ -44,7 +44,7 @@ class SyncRequestSpec extends AndroidFreeSpec {
     SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
   }
 
-  scenario("PostCustomFoldersAndFavourites encoding/decoding") {
+  scenario("PostFolders encoding/decoding") {
     //given
     val convId1 = ConvId("cid1")
     val convId2 = ConvId("cid2")
@@ -59,14 +59,14 @@ class SyncRequestSpec extends AndroidFreeSpec {
     )
 
     // when
-    val request = PostCustomFoldersAndFavourites(mapping)
+    val request = PostFolders(mapping)
 
     // then
     SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
 
   }
 
-  scenario("PostCustomFoldersAndFavourites encoding") {
+  scenario("PostFolders encoding") {
     //given
     val convId1 = ConvId("cid1")
     val convId2 = ConvId("cid2")
@@ -118,7 +118,7 @@ class SyncRequestSpec extends AndroidFreeSpec {
 
 
     // when
-    val request = PostCustomFoldersAndFavourites(mapping)
+    val request = PostFolders(mapping)
 
     // then
     val encoded = SyncRequest.Encoder(request)
