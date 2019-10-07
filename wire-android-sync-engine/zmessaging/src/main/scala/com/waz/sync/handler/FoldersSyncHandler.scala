@@ -20,19 +20,20 @@ package com.waz.sync.handler
 
 import com.waz.service.conversation.FoldersService
 import com.waz.sync.SyncResult
-import com.waz.sync.client.FoldersClient
+import com.waz.sync.client.PropertiesClient
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
+import com.waz.znet2.http.HttpClient
 
 import scala.concurrent.Future
 
-class FoldersSyncHandler(foldersClient: FoldersClient, foldersService: FoldersService) {
-
+class FoldersSyncHandler(prefsClient: PropertiesClient, foldersService: FoldersService) {
   private implicit val ec = EventContext.Global
-
+  import HttpClient.AutoDerivation._
   import Threading.Implicits.Background
-  def postFolders(): Future[SyncResult] = foldersService.foldersToSynchronize()
-    .flatMap(foldersClient.putFolders)
-    .map(SyncResult(_))
 
+  def postFolders(): Future[SyncResult] =
+    foldersService.foldersToSynchronize().flatMap(folders => prefsClient.putProperty("labels", folders)).map(SyncResult(_))
+
+  def syncFolders(): Future[SyncResult] = ???
 }

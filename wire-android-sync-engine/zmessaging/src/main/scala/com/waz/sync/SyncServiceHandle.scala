@@ -50,6 +50,8 @@ trait SyncServiceHandle {
   def syncTeamMember(id: UserId): Future[SyncId]
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
+  def syncFolders(): Future[SyncId]
+
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
 
@@ -137,6 +139,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncTeamMember(id: UserId): Future[SyncId] = addRequest(SyncTeamMember(id))
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
+  def syncFolders(): Future[SyncId] = addRequest(SyncFolders)
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: UploadAssetId) = addRequest(PostSelfPicture(picture))
@@ -270,8 +273,9 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostBoolProperty(key, value)                        => zms.propertiesSyncHandler.postProperty(key, value)
           case PostIntProperty(key, value)                         => zms.propertiesSyncHandler.postProperty(key, value)
           case PostStringProperty(key, value)                      => zms.propertiesSyncHandler.postProperty(key, value)
-          case SyncProperties                                      => zms.propertiesSyncHandler.syncProperties
-          case PostFolders                                         => zms.foldersSyncHandler.postFolders
+          case SyncProperties                                      => zms.propertiesSyncHandler.syncProperties()
+          case PostFolders                                         => zms.foldersSyncHandler.postFolders()
+          case SyncFolders                                         => zms.foldersSyncHandler.syncFolders()
           case Unknown                                             => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

@@ -19,8 +19,8 @@ package com.waz.service
 
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, RemoteFolderData}
-import com.waz.service.conversation.{FoldersService, FoldersServiceImpl}
+import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId}
+import com.waz.service.conversation.{FoldersService, FoldersServiceImpl, RemoteFolderData}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
 import com.waz.utils.events.EventStream
@@ -29,7 +29,11 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
-class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
+import com.waz.utils.CirceJSONSupport
+import io.circe.syntax._
+import io.circe.parser.decode
+
+class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJSONSupport {
   import Threading.Implicits.Background
 
   val foldersStorage = mock[FoldersStorage]
@@ -752,5 +756,121 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     } yield (before, after)
 
     Await.result(test, 500.millis)
+  }
+
+  feature("encoding request") {
+    scenario("with favourites") {
+
+      // given
+      val convId1 = ConvId("c1")
+      val convId2 = ConvId("c2")
+      val folderId1 = FolderId("f1")
+      val favouritesId = FolderId("fav")
+      val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
+      val folderFavorites = FolderData(favouritesId, "FAV", FolderData.FavouritesFolderType)
+      val payload = List(
+        RemoteFolderData(folder1, Set(convId1, convId2)),
+        RemoteFolderData(folderFavorites, Set(convId2))
+      )
+
+      // when
+      val json = payload.asJson.noSpaces
+
+      // then
+      json shouldEqual """[
+                         |  {
+                         |    "name" : "F1",
+                         |    "type" : 0,
+                         |    "id" : "f1",
+                         |    "conversations" : [
+                         |      "c1",
+                         |      "c2"
+                         |    ]
+                         |  },
+                         |  {
+                         |    "name" : "FAV",
+                         |    "type" : 1,
+                         |    "id" : "fav",
+                         |    "conversations" : [
+                         |      "c2"
+                         |    ]
+                         |  }]
+                       """.stripMargin.replaceAll("\\s","")
+    }
+  }
+
+  feature("decoding payload") {
+    scenario ("with favourites") {
+
+      // given
+      val payload = """[
+        {
+          "name" : "F1",
+          "type" : 0,
+          "id" : "f1",
+          "conversations" : [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "name" : "FAV",
+          "type" : 1,
+          "id" : "fav",
+          "conversations" : [
+            "c2"
+          ]
+        }]"""
+
+      // when
+      val list = decode[List[RemoteFolderData]](payload).right.get
+
+      // then
+      list(0).folderData.name shouldEqual Name("F1")
+      list(0).folderData.id shouldEqual FolderId("f1")
+      list(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      list(0).conversations shouldEqual Set(ConvId("c1"), ConvId("c2"))
+
+      list(1).folderData.name shouldEqual Name("FAV")
+      list(1).folderData.id shouldEqual FolderId("fav")
+      list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      list(1).conversations shouldEqual Set(ConvId("c2"))
+    }
+
+    scenario ("favourites with no name") {
+
+      // given
+      val payload = """[
+        {
+          "name" : "F1",
+          "type" : 0,
+          "id" : "f1",
+          "conversations" : [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "type" : 1,
+          "id" : "fav",
+          "conversations" : [
+            "c2"
+          ]
+        }]"""
+
+      // when
+      val list = decode[List[RemoteFolderData]](payload).right.get
+
+      // then
+      list(0).folderData.name shouldEqual Name("F1")
+      list(0).folderData.id shouldEqual FolderId("f1")
+      list(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      list(0).conversations shouldEqual Set(ConvId("c1"), ConvId("c2"))
+
+      list(1).folderData.name shouldEqual Name("")
+      list(1).folderData.id shouldEqual FolderId("fav")
+      list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      list(1).conversations shouldEqual Set(ConvId("c2"))
+    }
   }
 }

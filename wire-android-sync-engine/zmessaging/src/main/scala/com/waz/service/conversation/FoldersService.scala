@@ -17,7 +17,7 @@
  */
 package com.waz.service.conversation
 
-import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
+import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
@@ -25,8 +25,11 @@ import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.sync.client.RemoteFolderData
 import com.waz.threading.Threading
-import com.waz.utils.RichFuture
+import com.waz.utils.JsonDecoder.{decodeFolderId, decodeInt, decodeRConvIdSeq, decodeString}
+import com.waz.utils.{JsonDecoder, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import io.circe.Encoder
+import org.json.JSONObject
 
 import scala.concurrent.Future
 
@@ -58,9 +61,17 @@ trait FoldersService {
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          conversationFoldersStorage: ConversationFoldersStorage,
-                         conversationStorage: ConversationStorage) extends FoldersService with DerivedLogTag  {
+                         conversationStorage: ConversationStorage,
+                         userPrefs: UserPreferences) extends FoldersService with DerivedLogTag  {
   import Threading.Implicits.Background
   private implicit val ev: EventContext = EventContext.Global
+
+  private val shouldSyncFolders = userPrefs.preference(UserPreferences.ShouldSyncFolders)
+
+  shouldSyncFolders().foreach {
+    case false =>
+    case true => sync.syncFolders().flatMap(_ => shouldSyncFolders := false)
+  }
 
   override val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FoldersEvent] { (_, events) =>
     verbose(l"Handling events: $events")
@@ -212,4 +223,26 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     convRIds = convData.flatten.map(_.remoteId)
   } yield RemoteFolderData(folder, convRIds)
 
+}
+
+case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
+
+object RemoteFolderData {
+
+  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
+    "name", "type", "id", "conversations"
+  )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations))
+
+
+  implicit val remoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
+    override def apply(implicit js: JSONObject): RemoteFolderData = {
+      import JsonDecoder._
+
+      val conversations: Seq[RConvId] = decodeRConvIdSeq('conversations)
+      RemoteFolderData(
+        FolderData(decodeFolderId('id), decodeString('name), decodeInt('type)),
+        conversations.toSet
+      )
+    }
+  }
 }

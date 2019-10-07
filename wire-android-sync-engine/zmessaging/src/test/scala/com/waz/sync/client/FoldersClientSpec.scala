@@ -18,7 +18,8 @@
 
 package com.waz.sync.client
 
-import com.waz.model.{ConvId, FolderData, FolderId, Name, RemoteFolderData}
+import com.waz.model.{ConvId, FolderData, FolderId, Name}
+import com.waz.service.conversation.RemoteFolderData
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.CirceJSONSupport
 import io.circe.syntax._

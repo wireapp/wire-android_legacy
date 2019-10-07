@@ -81,6 +81,7 @@ object SyncRequest {
   case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
   case object SyncProperties      extends BaseRequest(Cmd.SyncProperties)
   case object PostFolders         extends BaseRequest(Cmd.PostFolders)
+  case object SyncFolders         extends BaseRequest(Cmd.SyncFolders)
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
@@ -504,7 +505,7 @@ object SyncRequest {
         case PostStringProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)
-        case PostFolders | SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
+        case PostFolders | SyncFolders | SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
       }
     }
