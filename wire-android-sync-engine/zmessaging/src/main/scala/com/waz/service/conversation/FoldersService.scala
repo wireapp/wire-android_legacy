@@ -261,9 +261,14 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def foldersToSynchronize(): Future[Seq[FolderDataWithConversations]] = for {
     allFolders <- folders
-    foldersMapping <- Future.sequence(
-      allFolders.map(f => convsInFolder(f.id).map(l => FolderDataWithConversations(f, l.toList)))
-    )
-  } yield foldersMapping
+    data <- Future.sequence(allFolders.map(conversationDataForFolder))
+  } yield data
+
+
+  private def conversationDataForFolder(folder: FolderData): Future[FolderDataWithConversations] = for {
+    convsInFolder <- convsInFolder(folder.id)
+    convData <- Future.sequence(convsInFolder.map(id => conversationStorage.get(id)))
+    convRIds = convData.flatten.map(_.remoteId)
+  } yield FolderDataWithConversations(folder, convRIds)
 
 }
