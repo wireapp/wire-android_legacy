@@ -101,7 +101,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant
-    favoriteConvIds     <- convListController.favouriteConversations().map(convs => convs.map(_.id))
+    favoriteConvIds     <- convListController.favouriteConversations.map(convs => convs.map(_.id))
   } yield {
     import com.waz.api.User.ConnectionStatus._
 

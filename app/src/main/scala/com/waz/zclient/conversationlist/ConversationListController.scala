@@ -95,15 +95,15 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
-  def favouritesFolderId: Future[Option[FolderId]] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
+  lazy val favouritesFolderId: Signal[Option[FolderId]] = foldersService.flatMap(_.favouritesFolderId)
 
-  lazy val favouritesFolder: Signal[Option[FolderData]] = Signal.future(favouritesFolderId).flatMap {
+  lazy val favouritesFolder: Signal[Option[FolderData]] = favouritesFolderId.flatMap {
     case Some(folderId) => folder(folderId)
     case None           => Signal.const(None)
   }
 
-  def favouriteConversations(): Signal[Seq[ConversationData]] = for {
-    favId <- Signal.future(favouritesFolderId)
+  lazy val favouriteConversations: Signal[Seq[ConversationData]] = for {
+    favId <- favouritesFolderId
     convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
   } yield convs
 
@@ -129,7 +129,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
 
   lazy val customFolderIds: Signal[Set[FolderId]] = for {
-    favId  <- Signal.future(favouritesFolderId)
+    favId  <- favouritesFolderId
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
 
@@ -143,7 +143,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   }
 
   def removeFromFavourites(convId: ConvId): Future[Unit] = for {
-    Some(favId) <- favouritesFolderId
+    Some(favId) <- favouritesFolderId.head
     _           <- removeFromFolder(convId, favId)
   } yield ()
 
@@ -157,7 +157,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
-    favId         <- favouritesFolderId
+    favId         <- favouritesFolderId.head
     customFolders =  favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
   } yield ()

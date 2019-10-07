@@ -18,12 +18,12 @@
 package com.waz.service.conversation
 
 import com.waz.content.ConversationStorage
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RemoteFolderData}
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.content.{ConversationFoldersStorage, FoldersStorage}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
@@ -40,7 +40,7 @@ trait FoldersService {
   def convsInFolder(folderId: FolderId): Future[Set[ConvId]]
   def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean]
 
-  def favouritesFolderId: Future[Option[FolderId]]
+  def favouritesFolderId: Signal[Option[FolderId]]
   def folders: Future[Seq[FolderData]]
   def addFolder(folderName: Name): Future[FolderId]
   def removeFolder(folderId: FolderId): Future[Unit]
@@ -99,14 +99,14 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          })
     } yield ()
 
-  override def favouritesFolderId: Future[Option[FolderId]] =
-    foldersStorage.getByType(FolderData.FavouritesFolderType).map(i =>
-      if (i == Nil || i.isEmpty) {
-        None
-      } else {
-        Some(i.head.id)
-      }
-    )
+  override def favouritesFolderId: Signal[Option[FolderId]] =
+    for {
+      foldersWithConvs <- foldersWithConvs
+      folderDataOpt    <- Signal.sequence(foldersWithConvs.keys.toSeq.map(folder):_*)
+      folderData        = folderDataOpt.flatten
+      favoriteFolderId  = folderData.find(_.folderType == FolderData.FavouritesFolderType).map(_.id)
+    } yield favoriteFolderId
+
 
   override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] =
     conversationFoldersStorage.put(convId, folderId)
@@ -149,12 +149,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _       <- foldersStorage.remove(folderId)
   } yield ()
 
-  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.flatMap {
+  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.head.flatMap {
     case Some(x) => Future.successful(x)
     case None => addFolder("", FolderData.FavouritesFolderType)
   }
 
-  override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.flatMap {
+  override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.head.flatMap {
     case Some(id) => removeFolder(id)
     case None     => Future.successful(())
   }
