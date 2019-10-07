@@ -29,6 +29,7 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
@@ -47,7 +48,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   extends OptionsMenuController
     with Injectable
     with DerivedLogTag {
-  
+
   import Threading.Implicits.Ui
 
   private val zMessaging             = inject[Signal[ZMessaging]]
@@ -58,6 +59,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   private val callingController      = inject[CallStartController]
   private val cameraController       = inject[ICameraController]
   private val screenController       = inject[IConversationScreenController]
+  private val convListController     = inject[ConversationListController]
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
   override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
@@ -99,6 +101,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant
+    favoriteConvIds     <- convListController.favouriteConversations.map(convs => convs.map(_.id))
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -129,6 +132,9 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
             Unmute
 
         builder += (if (conv.archived) Unarchive else Archive)
+
+        val isConvFavorite = favoriteConvIds.contains(convId)
+        builder += (if (isConvFavorite) RemoveFromFavorites else AddToFavorites)
 
         if (isGroup) {
           if (conv.isActive) builder += Leave
@@ -177,6 +183,8 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           }
         case Call      => callConversation(cId)
         case Picture   => takePictureInConversation(cId)
+        case AddToFavorites      => convListController.addToFavourites(cId)
+        case RemoveFromFavorites => convListController.removeFromFavourites(cId)
         case _ =>
       }
     case _ =>
@@ -279,23 +287,27 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
-  object Mute           extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
-  object Unmute         extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
-  object Picture        extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
-  object Call           extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
-  object Notifications  extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
-  object Archive        extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
-  object Unarchive      extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
-  object Delete         extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
-  object Leave          extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
-  object Block          extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
-  object Unblock        extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
-  object RemoveMember   extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
+  object Mute                extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
+  object Unmute              extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
+  object Picture             extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
+  object Call                extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
+  object Notifications       extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
+  object Archive             extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
+  object Unarchive           extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
+  //FIXME: use correct icons
+  object AddToFavorites      extends BaseMenuItem(R.string.conversation__action__add_to_favorites, Some(R.string.glyph__add))
+  object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__delete_me))
+  object Delete              extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
+  object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
+  object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
+  object Unblock             extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
+  object RemoveMember        extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
 
   object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
   object LeaveAndDelete extends BaseMenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
   object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
   object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
-  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
+  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, Delete, Leave, Block, Unblock,
+    RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 }
