@@ -23,7 +23,7 @@ import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, Fold
 import com.waz.service.conversation.{FoldersService, FoldersServiceImpl}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.threading.Threading
-import com.waz.utils.events.EventStream
+import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -61,6 +61,10 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     Future(folders.toList)
   }
 
+  (foldersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall { folderId: FolderId =>
+    Signal.const(folders.find(_.id === folderId))
+  }
+
   (foldersStorage.remove _).expects(*).anyNumberOfTimes().onCall { folderId: FolderId =>
     Future {
       folders.find(_.id == folderId).foreach(folders -= _)
@@ -93,7 +97,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       onConvsAdded ! cfs.toSeq
     }.map(_ => Set.empty[ConversationFolderData])
   }
-
 
   (conversationFoldersStorage.get _).expects(*).anyNumberOfTimes().onCall { convFolder: (ConvId, FolderId) =>
     Future(convFolders.get(convFolder))
