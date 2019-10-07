@@ -33,20 +33,26 @@ class ConversationFolderListAdapter(implicit context: Context)
     with DerivedLogTag {
 
   def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
-    val folders = Seq(
+    var newItems = List.empty[Item]
+
+    if (incoming.nonEmpty) {
+      newItems ::= Item.IncomingRequests(incoming.head, incoming.size)
+    }
+
+    val folders = calculateFolders(groups, oneToOnes)
+
+    newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
+      acc ++ (Item.Header(next.title) :: next.conversations)
+    }
+
+    updateList(newItems)
+  }
+
+  private def calculateFolders(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
+    Seq(
       Folder(getString(R.string.conversation_folder_name_group), groups.map(data => Item.Conversation(data)).toList),
       Folder(getString(R.string.conversation_folder_name_one_to_one), oneToOnes.map(data => Item.Conversation(data)).toList)
     )
-
-    items = folders.foldLeft(List.empty[Item]) { (result, folder) =>
-      result ++ (Item.Header(folder.title) :: folder.conversations)
-    }
-
-    if (incoming.nonEmpty) {
-      items ::= Item.IncomingRequests(incoming.head, incoming.size)
-    }
-
-    notifyDataSetChanged()
   }
 
   override def onClick(position: Int): Unit = items(position) match {

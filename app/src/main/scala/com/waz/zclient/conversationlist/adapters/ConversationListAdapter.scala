@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
+import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -45,6 +46,16 @@ abstract class ConversationListAdapter
   def setMaxAlpha(maxAlpha: Float): Unit = {
     this.maxAlpha = maxAlpha
     notifyDataSetChanged()
+  }
+
+  /**
+    * Replaces the data source and updates the views of the list.
+    *
+    * @param newItems the new data source.
+    */
+  protected def updateList(newItems: List[Item]): Unit = {
+    DiffUtil.calculateDiff(new DiffCallback(items, newItems), false).dispatchUpdatesTo(this)
+    items = newItems
   }
 
   override def getItemCount: Int = items.size
@@ -174,5 +185,39 @@ object ConversationListAdapter {
       val row = inflate[ConversationFolderListRow](R.layout.conv_folder_list_item, parent, addToParent = false)
       new ConversationFolderRowViewHolder(row, listener = adapter)
     }
+  }
+
+  /**
+    * A `DiffUtil.Callback` used with `DiffUtil` to efficiently update a `ConversationListAdapter`.
+    *
+    * @param oldList the current out of date list of items.
+    * @param newList the new updated list of items.
+    */
+  class DiffCallback(oldList: Seq[Item], newList: Seq[Item]) extends DiffUtil.Callback {
+    import Item._
+
+    override def getOldListSize: Int = oldList.size
+    override def getNewListSize: Int = newList.size
+
+    override def areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean = {
+      (oldList(oldItemPosition), newList(newItemPosition)) match {
+        case (_: Header,           _: Header)           => true
+        case (_: Conversation,     _: Conversation)     => true
+        case (_: IncomingRequests, _: IncomingRequests) => true
+        case _                                          => false
+      }
+    }
+
+    override def areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+      (oldList(oldItemPosition), newList(newItemPosition)) match {
+        case (Header(title), Header(newTitle)) =>
+          title == newTitle
+        case (Conversation(data), Conversation(newData)) =>
+          data == newData
+        case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>
+          requests == newRequests
+        case _ =>
+          false
+      }
   }
 }
