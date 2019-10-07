@@ -119,8 +119,8 @@ object ConversationListAdapter {
       with View.OnClickListener
       with View.OnLongClickListener {
 
-    row.setOnClickListener(this)
-    row.setOnLongClickListener(this)
+    itemView.setOnClickListener(this)
+    itemView.setOnLongClickListener(this)
 
     override def onClick(v: View): Unit = listener.onClick(getAdapterPosition)
     override def onLongClick(v: View): Boolean = listener.onLongClick(getAdapterPosition)
