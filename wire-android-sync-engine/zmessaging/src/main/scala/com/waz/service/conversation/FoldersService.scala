@@ -165,7 +165,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def folders: Future[Seq[FolderData]] = foldersStorage.list()
 
   override val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = {
-    def changesStream: EventStream[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]])] =
+    val changesStream: EventStream[(Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]])] =
       EventStream.union(
         foldersStorage.onDeleted.map            (cs => (cs.toSet,  Set.empty,          Map.empty,                                     Map.empty                                              )),
         foldersStorage.onAdded.map              (cs => (Set.empty, cs.map(_.id).toSet, Map.empty,                                     Map.empty                                              )),
