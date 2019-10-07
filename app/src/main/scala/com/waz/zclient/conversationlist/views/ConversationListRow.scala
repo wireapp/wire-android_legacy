@@ -24,7 +24,7 @@ import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout.LayoutParams
-import android.widget.{FrameLayout, LinearLayout}
+import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -564,6 +564,7 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   setLayoutParameters()
 
   private val title = ViewUtils.getView(this, R.id.header_textview_title).asInstanceOf[TypefaceTextView]
+  private val expandIcon = ViewUtils.getView(this, R.id.header_imageview_expand).asInstanceOf[ImageView]
 
   def setTitle(title: String): Unit = this.title.setText(title)
 
@@ -571,6 +572,11 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
     val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
     params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__20)
     setLayoutParams(params)
+  }
+
+  def setIsExpanded(isExpanded: Boolean): Unit = {
+    if (isExpanded) expandIcon.setImageDrawable(getDrawable(R.drawable.icon_arrow_down_white))
+    else expandIcon.setImageDrawable(getDrawable(R.drawable.icon_arrow_up_white))
   }
 
   private def setLayoutParameters(): Unit = {

@@ -68,7 +68,7 @@ abstract class ConversationListAdapter
 
   override def getItemId(position: Int): Long = items(position) match {
     case Item.IncomingRequests(first, _) => first.str.hashCode
-    case Item.Header(id, _)              => id.str.hashCode
+    case Item.Header(id, _, _)           => id.str.hashCode
     case Item.Conversation(data)         => data.id.str.hashCode
   }
 
@@ -120,7 +120,7 @@ object ConversationListAdapter {
   sealed trait Item
 
   object Item {
-    case class Header(id: Uid, title: String) extends Item
+    case class Header(id: Uid, title: String, isExpanded: Boolean) extends Item
     case class Conversation(data: ConversationData) extends Item
     case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item
   }
@@ -155,6 +155,7 @@ object ConversationListAdapter {
     def bind(header: Item.Header, isFirst: Boolean): Unit = {
       row.setTitle(header.title)
       row.setIsFirstHeader(isFirst)
+      row.setIsExpanded(header.isExpanded)
     }
   }
 
@@ -210,8 +211,8 @@ object ConversationListAdapter {
 
     override def areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
       (oldList(oldItemPosition), newList(newItemPosition)) match {
-        case (Header(_, title), Header(_, newTitle)) =>
-          title == newTitle
+        case (Header(_, title, isExpanded), Header(_, newTitle, newIsExpanded)) =>
+          title == newTitle && isExpanded && newIsExpanded
         case (Conversation(data), Conversation(newData)) =>
           data == newData
         case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>

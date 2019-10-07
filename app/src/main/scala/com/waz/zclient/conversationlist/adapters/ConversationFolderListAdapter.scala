@@ -44,7 +44,7 @@ class ConversationFolderListAdapter(implicit context: Context)
     folders = calculateFolders(groups, oneToOnes)
 
     newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
-      val header = Item.Header(next.id, next.title)
+      val header = Item.Header(next.id, next.title, next.isExpanded)
       val conversations = if (next.isExpanded) next.conversations else List.empty
       acc ++ (header :: conversations)
     }
@@ -54,39 +54,51 @@ class ConversationFolderListAdapter(implicit context: Context)
 
   private def calculateFolders(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
     Seq(
-      new Folder(Uid(), getString(R.string.conversation_folder_name_group), groups.map(data => Item.Conversation(data)).toList),
-      new Folder(Uid(), getString(R.string.conversation_folder_name_one_to_one), oneToOnes.map(data => Item.Conversation(data)).toList)
+      new Folder(Uid("Group"), getString(R.string.conversation_folder_name_group), groups.map(data => Item.Conversation(data)).toList),
+      new Folder(Uid("Contacts"), getString(R.string.conversation_folder_name_one_to_one), oneToOnes.map(data => Item.Conversation(data)).toList)
     )
   }
 
   override def onClick(position: Int): Unit = items(position) match {
-    case Item.Header(id, _) => folder(id).fold()(f => collapseOrExpand(f, position))
-    case _                  => super.onClick(position)
+    case _: Item.Header => collapseOrExpand(items(position).asInstanceOf[Item.Header], position)
+    case _              => super.onClick(position)
+  }
+
+  private def collapseOrExpand(header: Item.Header, headerPosition: Int): Unit = {
+    if (header.isExpanded) collapseSection(header, headerPosition)
+    else expandSection(header, headerPosition)
+  }
+
+  private def collapseSection(header: Item.Header, headerPosition: Int): Unit = {
+    folder(header.id).fold() { folder =>
+      val positionAfterHeader = headerPosition + 1
+      val numberOfConversations = folder.conversations.size
+      val (beforeHeader, toModify) = items.splitAt(headerPosition)
+
+      val newHeader = header.copy(isExpanded = false)
+      folder.isExpanded = false
+
+      items = beforeHeader ++ (newHeader :: toModify.drop(numberOfConversations + 1))
+      notifyItemChanged(headerPosition)
+      notifyItemRangeRemoved(positionAfterHeader, numberOfConversations)
+    }
+  }
+
+  private def expandSection(header: Item.Header, headerPosition: Int): Unit = {
+    folder(header.id).fold() { folder =>
+      val positionAfterHeader = headerPosition + 1
+      val (beforeHeader, toModify) = items.splitAt(headerPosition)
+
+      val newHeader = header.copy(isExpanded = true)
+      folder.isExpanded = true
+
+      items = beforeHeader ++ (newHeader :: folder.conversations ++ toModify.drop(1))
+      notifyItemChanged(headerPosition)
+      notifyItemRangeInserted(positionAfterHeader, folder.conversations.size)
+    }
   }
 
   private def folder(id: Uid): Option[Folder] = folders.find(_.id == id)
-
-  private def collapseOrExpand(folder: Folder, position: Int): Unit = {
-    if (folder.isExpanded) collapseSection(folder, position)
-    else expandSection(folder, position)
-  }
-
-  private def collapseSection(folder: Folder, headerPosition: Int): Unit = {
-    val positionAfterHeader = headerPosition + 1
-    val numberToDrop = folder.conversations.size
-    val (upToAndIncludingHeader, afterHeader) = items.splitAt(positionAfterHeader)
-    items = upToAndIncludingHeader ++ afterHeader.drop(numberToDrop)
-    notifyItemRangeRemoved(positionAfterHeader, numberToDrop)
-    folder.isExpanded = false
-  }
-
-  private def expandSection(folder: Folder, headerPosition: Int): Unit = {
-    val positionAfterHeader = headerPosition + 1
-    val (upToAndIncludingHeader, afterHeader) = items.splitAt(positionAfterHeader)
-    items = upToAndIncludingHeader ++ folder.conversations ++ afterHeader
-    notifyItemRangeInserted(positionAfterHeader, folder.conversations.size)
-    folder.isExpanded = true
-  }
 }
 
 object ConversationFolderListAdapter {
