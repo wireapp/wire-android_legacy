@@ -19,15 +19,40 @@ package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.conversation.FolderDataWithConversations
+import com.waz.model.{FolderData, RConvId}
 import com.waz.sync.client.PropertiesClient.PropertyPath
+import com.waz.utils.JsonDecoder
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.http.{HttpClient, Request, ResponseCode}
+import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request, ResponseCode}
+import io.circe.Encoder
 import io.circe.syntax._
+import org.json.JSONObject
 
 trait FoldersClient {
-  def putFolders(folders: Seq[FolderDataWithConversations]): ErrorOrResponse[Unit]
+  def putFolders(folders: Seq[RemoteFolderData]): ErrorOrResponse[Unit]
+}
+
+case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
+
+object RemoteFolderData {
+
+  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
+      "name", "type", "id", "conversations"
+  )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations))
+
+
+  implicit val remoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
+    override def apply(implicit js: JSONObject): RemoteFolderData = {
+      import JsonDecoder._
+
+      val conversations: Seq[RConvId] = decodeRConvIdSeq('conversations)
+      RemoteFolderData(
+        FolderData(decodeFolderId('id), decodeString('name), decodeInt('type)),
+        conversations.toSet
+      )
+    }
+  }
 }
 
 class FoldersClientImpl(implicit
@@ -38,8 +63,11 @@ class FoldersClientImpl(implicit
   import HttpClient.AutoDerivation._
   import HttpClient.dsl._
 
+  private implicit val errorResponseDeserializer: RawBodyDeserializer[ErrorResponse] =
+    objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
-  override def putFolders(folders: Seq[FolderDataWithConversations]): ErrorOrResponse[Unit] = {
+
+  override def putFolders(folders: Seq[RemoteFolderData]): ErrorOrResponse[Unit] = {
     Request.Put(relativePath = PropertyPath("labels"), body = folders.asJson)
       .withResultHttpCodes(ResponseCode.SuccessCodes)
       .withResultType[Unit]

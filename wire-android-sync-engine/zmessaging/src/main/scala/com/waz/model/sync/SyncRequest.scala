@@ -18,7 +18,6 @@
 package com.waz.model.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId

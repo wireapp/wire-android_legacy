@@ -20,17 +20,13 @@ package com.waz.service.conversation
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, RemoteFolderData}
+import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
-import com.waz.service.assets2.StorageCodecs
+import com.waz.sync.client.RemoteFolderData
 import com.waz.threading.Threading
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
-import com.waz.utils.{JsonDecoder, JsonEncoder}
-import io.circe.parser.parse
-import io.circe.{Decoder, Encoder, JsonObject}
-import org.json.{JSONArray, JSONObject}
 
 import scala.concurrent.Future
 
@@ -57,60 +53,7 @@ trait FoldersService {
   def foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]]
   def folder(folderId: FolderId): Signal[Option[FolderData]]
 
-  def foldersToSynchronize(): Future[Seq[FolderDataWithConversations]]
-}
-
-case class FolderDataWithConversations(folderData: FolderData, conversations: Set[RConvId]) {}
-
-object FolderDataWithConversations {
-
-  // ------- JSON encoding/decoding (Circe) ----------
-
-  // This is necessary as "type" is a reserved word in Scala
-//  lazy implicit val folderDataConversationsCirceEncoder: Encoder[FolderDataWithConversations] = Encoder.forProduct4(
-//    "name", "type", "id", "conversations"
-//  )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations))
-//
-//  lazy implicit val folderDataConversationsCirceDecoder: Decoder[FolderDataWithConversations] = Decoder.decodeJsonObject.emap(objectToFolderDataWithConversation(_))
-//  // This in necessary because:
-//  // - It needs to parse even when name is missing
-//  // - "type" is a reserved word in Scala
-//  def objectToFolderDataWithConversation(obj: JsonObject): Either[String, FolderDataWithConversations] = {
-//    val name = obj("name").fold("")(_.toString)
-//    val id = obj.apply("id").flatMap(_.asString).getOrElse("")
-//    val maybeFolderType = obj.apply("type").flatMap(_.asNumber).flatMap(_.toInt)
-//    if (maybeFolderType.isEmpty) {
-//      return Left("Missing/wrong folder type")
-//    }
-//    val maybeConversations = obj.apply("conversations").flatMap(_.asArray).map(_.toList).getOrElse(List())
-//      .map(_.asString)
-//    if (maybeConversations.find(_.isEmpty).isDefined) {
-//      return Left("Conversation has invalid ID")
-//    }
-//    val conversations = maybeConversations.map(_.get).map(RConvId(_))
-//    return Right(FolderDataWithConversations(FolderData(FolderId(id), name, maybeFolderType.get), conversations))
-//  }
-//
-//  // ------- JSON encoding/decoding (Json utilities) ----------
-//  lazy implicit val folderDataConversationsEncoder = new JsonEncoder[FolderDataWithConversations] with StorageCodecs {
-//    override def apply(v: FolderDataWithConversations): JSONObject = JsonEncoder { o =>
-//      o.put("name", v.folderData.name)
-//      o.put("type", v.folderData.folderType)
-//      o.put("id", v.folderData.id)
-//      o.put("conversations", JsonEncoder.arrString(v.conversations.map(_.str)))
-//    }
-//  }
-//
-//  implicit lazy val folderDataConversationsDecoder: JsonDecoder[FolderDataWithConversations] = new JsonDecoder[FolderDataWithConversations] with StorageCodecs {
-//
-//    override def apply(implicit js: JSONObject): FolderDataWithConversations = {
-//      // This is an artificial serialization/deserialization just to switch from one JSON parsing system to the other
-//      // Ideally we would use only one system for JSON handling, and remove this hack
-//      val jsonStr = js.toString()
-//      val parsed = parse(jsonStr).right.get // here I can assume it's a valid JSON fragment, as it comes from serializing a JSON object
-//      return parsed.as[FolderDataWithConversations].right.get // here it's OK to throw an exception if it failed to parse
-//    }
-//  }
+  def foldersToSynchronize(): Future[Seq[RemoteFolderData]]
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
@@ -257,16 +200,16 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     }).disableAutowiring()
   }
 
-  override def foldersToSynchronize(): Future[Seq[FolderDataWithConversations]] = for {
+  override def foldersToSynchronize(): Future[Seq[RemoteFolderData]] = for {
     allFolders <- folders
     data <- Future.sequence(allFolders.map(conversationDataForFolder))
   } yield data
 
 
-  private def conversationDataForFolder(folder: FolderData): Future[FolderDataWithConversations] = for {
+  private def conversationDataForFolder(folder: FolderData): Future[RemoteFolderData] = for {
     convsInFolder <- convsInFolder(folder.id)
     convData <- Future.sequence(convsInFolder.map(id => conversationStorage.get(id)))
     convRIds = convData.flatten.map(_.remoteId)
-  } yield FolderDataWithConversations(folder, convRIds)
+  } yield RemoteFolderData(folder, convRIds)
 
 }

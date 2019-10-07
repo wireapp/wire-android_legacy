@@ -33,7 +33,7 @@ import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
 import org.threeten.bp.Instant
 import com.waz.log.LogSE._
-import com.waz.service.conversation.FolderDataWithConversations
+import com.waz.sync.client.RemoteFolderData
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -80,7 +80,7 @@ trait SyncServiceHandle {
   def postProperty(key: PropertyKey, value: Boolean): Future[SyncId]
   def postProperty(key: PropertyKey, value: Int): Future[SyncId]
   def postProperty(key: PropertyKey, value: String): Future[SyncId]
-  def postFolders(folders: Seq[FolderDataWithConversations]): Future[SyncId]
+  def postFolders(folders: Seq[RemoteFolderData]): Future[SyncId]
 
   def registerPush(token: PushToken): Future[SyncId]
   def deletePushToken(token: PushToken): Future[SyncId]

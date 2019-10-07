@@ -228,6 +228,9 @@ object RConvId {
     override def random(): RConvId = RConvId(Uid().toString)
     override def decode(str: String): RConvId = RConvId(str)
   }
+
+  implicit val idEncoder: Encoder[RConvId] = Encoder.encodeString.contramap(_.str)
+  implicit val iIdDecoder: Decoder[RConvId] = Decoder.decodeString.map(RConvId(_))
 }
 
 case class SyncId(str: String) extends SafeToLog {

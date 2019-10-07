@@ -27,12 +27,10 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.PropertyKey
-import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.{Duration, Instant}
-import io.circe._, io.circe.parser._
 
 import scala.collection.generic._
 import scala.concurrent.duration.FiniteDuration

@@ -18,8 +18,7 @@
 
 package com.waz.sync.client
 
-import com.waz.model.{ConvId, FolderData, FolderId, Name}
-import com.waz.service.conversation.FolderDataWithConversations
+import com.waz.model.{ConvId, FolderData, FolderId, Name, RemoteFolderData}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.utils.CirceJSONSupport
 import io.circe.syntax._
@@ -38,8 +37,8 @@ class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
       val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
       val folderFavorites = FolderData(favouritesId, "FAV", FolderData.FavouritesFolderType)
       val payload = List(
-        FolderDataWithConversations(folder1, List(convId1, convId2)),
-        FolderDataWithConversations(folderFavorites, List(convId2))
+        RemoteFolderData(folder1, Set(convId1, convId2)),
+        RemoteFolderData(folderFavorites, Set(convId2))
       )
 
       // when
@@ -92,18 +91,18 @@ class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         }]"""
 
       // when
-      val list = decode[List[FolderDataWithConversations]](payload).right.get
+      val list = decode[List[RemoteFolderData]](payload).right.get
 
       // then
       list(0).folderData.name shouldEqual Name("F1")
       list(0).folderData.id shouldEqual FolderId("f1")
       list(0).folderData.folderType shouldEqual FolderData.CustomFolderType
-      list(0).conversations shouldEqual List(ConvId("c1"), ConvId("c2"))
+      list(0).conversations shouldEqual Set(ConvId("c1"), ConvId("c2"))
 
       list(1).folderData.name shouldEqual Name("FAV")
       list(1).folderData.id shouldEqual FolderId("fav")
       list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
-      list(1).conversations shouldEqual List(ConvId("c2"))
+      list(1).conversations shouldEqual Set(ConvId("c2"))
     }
 
     scenario ("favourites with no name") {
@@ -128,18 +127,18 @@ class FoldersClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         }]"""
 
       // when
-      val list = decode[List[FolderDataWithConversations]](payload).right.get
+      val list = decode[List[RemoteFolderData]](payload).right.get
 
       // then
       list(0).folderData.name shouldEqual Name("F1")
       list(0).folderData.id shouldEqual FolderId("f1")
       list(0).folderData.folderType shouldEqual FolderData.CustomFolderType
-      list(0).conversations shouldEqual List(ConvId("c1"), ConvId("c2"))
+      list(0).conversations shouldEqual Set(ConvId("c1"), ConvId("c2"))
 
       list(1).folderData.name shouldEqual Name("")
       list(1).folderData.id shouldEqual FolderId("fav")
       list(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
-      list(1).conversations shouldEqual List(ConvId("c2"))
+      list(1).conversations shouldEqual Set(ConvId("c2"))
     }
   }
 }
