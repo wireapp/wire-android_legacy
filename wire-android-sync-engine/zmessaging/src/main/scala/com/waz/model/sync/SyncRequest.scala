@@ -81,6 +81,7 @@ object SyncRequest {
   case object SyncClientsLocation extends BaseRequest(Cmd.SyncClientLocation)
   case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
   case object SyncProperties      extends BaseRequest(Cmd.SyncProperties)
+  case object PostFolders         extends BaseRequest(Cmd.PostFolders)
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
@@ -322,10 +323,6 @@ object SyncRequest {
     override def mergeKey: Any = (cmd, key)
   }
 
-  case class PostFolders(folders: Seq[FolderDataWithConversations]) extends BaseRequest(Cmd.PostFolders) {
-    override def mergeKey: Any = (cmd, "labels")
-  }
-
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
     case req: A if req.mergeKey == other.mergeKey => f(req)
     case _ => Unchanged
@@ -394,7 +391,7 @@ object SyncRequest {
           case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
-          case Cmd.PostFolders               => PostFolders(decodeCustomFoldersAndFavourites('value))
+          case Cmd.PostFolders               => PostFolders
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -508,10 +505,7 @@ object SyncRequest {
         case PostStringProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)
-        case PostFolders(folders) =>
-          o.put("key", "labels")
-          o.put("value", arr(folders))
-        case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
+        case PostFolders | SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
       }
     }

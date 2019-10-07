@@ -19,6 +19,7 @@ package com.waz.sync.client
 
 import io.circe.generic._
 import com.waz.api.impl.ErrorResponse
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, FolderData, FolderId, Name}
 import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.sync.client.PropertiesClient.PropertyPath
@@ -26,7 +27,6 @@ import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.{HttpClient, Request, ResponseCode}
 import com.waz.znet2.http.Request.UrlCreator
-import io.circe.{Decoder, Encoder, Json}
 import io.circe.syntax._
 
 trait FoldersClient {
@@ -36,7 +36,7 @@ trait FoldersClient {
 class FoldersClientImpl(implicit
                            urlCreator: UrlCreator,
                            httpClient: HttpClient,
-                           authRequestInterceptor: AuthRequestInterceptor) extends FoldersClient with CirceJSONSupport {
+                           authRequestInterceptor: AuthRequestInterceptor) extends FoldersClient with DerivedLogTag {
 
   import HttpClient.dsl._
   import HttpClient.AutoDerivation._

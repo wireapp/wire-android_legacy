@@ -23,7 +23,6 @@ import com.waz.sync.SyncResult
 import com.waz.sync.client.FoldersClient
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
-import com.waz.znet2.http.BodySerializer
 
 import scala.concurrent.Future
 
@@ -32,7 +31,7 @@ class FoldersSyncHandler(foldersClient: FoldersClient, foldersService: FoldersSe
   private implicit val ec = EventContext.Global
 
   import Threading.Implicits.Background
-  def postFolders(folders: Seq[FolderDataWithConversations])(implicit bs: BodySerializer[Seq[FolderDataWithConversations]]): Future[SyncResult] =
-      foldersClient.putFolders(folders).map(SyncResult(_))
+  def postFolders(): Future[SyncResult] = Future.failed(new Exception()) // XXX
+
 
 }
