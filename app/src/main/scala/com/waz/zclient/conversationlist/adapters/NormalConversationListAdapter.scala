@@ -23,6 +23,8 @@ import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 class NormalConversationListAdapter extends ConversationListAdapter {
 
   def setData(convs: Seq[ConversationData], incoming: Seq[ConvId]): Unit = {
+    items = List.empty
+    
     if (incoming.nonEmpty) {
       items = List(Item.IncomingRequests(incoming.head, incoming.size))
     }
