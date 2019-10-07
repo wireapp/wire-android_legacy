@@ -17,20 +17,25 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
+import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData}
+import com.waz.zclient.R
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
+import com.waz.zclient.utils.ContextUtils.getString
 
 /**
   * A list adapter for displaying conversations grouped into folders.
   */
-class ConversationFolderListAdapter extends ConversationListAdapter with DerivedLogTag {
+class ConversationFolderListAdapter(implicit context: Context)
+  extends ConversationListAdapter
+    with DerivedLogTag {
 
   def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
     val folders = Seq(
-      Folder("Groups", groups.map(data => Item.Conversation(data)).toList),
-      Folder("One to One", oneToOnes.map(data => Item.Conversation(data)).toList)
+      Folder(getString(R.string.conversation_folder_name_group), groups.map(data => Item.Conversation(data)).toList),
+      Folder(getString(R.string.conversation_folder_name_one_to_one), oneToOnes.map(data => Item.Conversation(data)).toList)
     )
 
     items = folders.foldLeft(List.empty[Item]) { (result, folder) =>
