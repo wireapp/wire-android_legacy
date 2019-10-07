@@ -17,41 +17,13 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
-import android.view.ViewGroup
 import com.waz.model.ConversationData
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
-import com.waz.zclient.log.LogUI._
 
 class ArchiveConversationListAdapter extends ConversationListAdapter {
 
-  setHasStableIds(true)
-
-  private var conversations = Seq.empty[ConversationData]
-
   def setData(convs: Seq[ConversationData]): Unit = {
-    conversations = convs
+    items = convs.map(data => Item.Conversation(data)).toList
     notifyDataSetChanged()
-  }
-
-  private def getConversation(position: Int): Option[ConversationData] = conversations.lift(position)
-
-  private def getItem(position: Int): Option[ConversationData] = getConversation(position)
-
-  override def getItemCount: Int = conversations.size
-
-  override def getItemId(position: Int): Long = getItem(position).fold(position)(_.id.str.hashCode)
-
-  override def getItemViewType(position: Int): Int = NormalViewType
-
-  // View management
-
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): NormalConversationRowViewHolder = {
-    ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
-  }
-
-  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
-    getItem(position).fold(error(l"Conversation not found at position: $position")) { item =>
-      holder.asInstanceOf[NormalConversationRowViewHolder].bind(item)
-    }
   }
 }

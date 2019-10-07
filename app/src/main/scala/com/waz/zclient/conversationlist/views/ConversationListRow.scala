@@ -20,10 +20,11 @@ package com.waz.zclient.conversationlist.views
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.support.constraint.ConstraintLayout
+import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
+import android.widget.{FrameLayout, LinearLayout}
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -56,7 +57,7 @@ import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.Set
 
-trait ConversationListRow extends FrameLayout
+trait ConversationListRow extends View
 
 class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -535,16 +536,16 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
   inflate(R.layout.conv_list_item)
 
-  var conversationId = Option.empty[ConvId]
+  var firstIncomingConversation = Option.empty[ConvId]
 
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
   val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
 
-  def setIncomingUsers(users: Seq[UserId]): Unit = {
+  def setIncoming(first: ConvId, numberOfRequests: Int): Unit = {
+    firstIncomingConversation = Some(first)
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
-    //avatar.setMembers(users, ConversationType.Group)
-    title.setText(getInboxName(users.size))
+    title.setText(getInboxName(numberOfRequests))
     badge.setStatus(ConversationBadge.WaitingConnection)
   }
 
@@ -552,18 +553,30 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
 }
 
 class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: Int)
-  extends FrameLayout(context, attrs, style)
+  extends LinearLayout(context, attrs, style)
   with ConversationListRow
   with ViewHelper {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
-
   inflate(R.layout.conv_list_section_header)
+  setLayoutParameters()
 
-  private val title = ViewUtils.getView(this, R.id.title).asInstanceOf[TypefaceTextView]
+  private val title = ViewUtils.getView(this, R.id.header_textview_title).asInstanceOf[TypefaceTextView]
 
   def setTitle(title: String): Unit = this.title.setText(title)
+
+  def setIsFirstHeader(isFirstHeader: Boolean): Unit = {
+    val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
+    params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__20)
+    setLayoutParams(params)
+  }
+
+  private def setLayoutParameters(): Unit = {
+    val params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height))
+    setLayoutParams(params)
+    setOrientation(LinearLayout.HORIZONTAL)
+    setPadding(getDimenPx(R.dimen.wire__padding__24), getDimenPx(R.dimen.wire__padding__20), 0, getDimenPx(R.dimen.wire__padding__20))
+  }
 }

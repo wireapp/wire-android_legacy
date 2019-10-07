@@ -18,20 +18,32 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/conversation_list__row__height">
+    android:layout_height="@dimen/conversation_list__row__height"
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/wire__padding__20"
+    android:paddingBottom="@dimen/wire__padding__20"
+    android:layout_marginStart="@dimen/wire__padding__big"
+    tools:parentTag="android.widget.LinearLayout">
+
+    <ImageView
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_gravity="center_vertical|start"
+        android:src="@drawable/icon_arrow_down_white"
+        android:tint="?wireSecondaryTextColor" />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/title"
+        android:id="@+id/header_textview_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/wire__padding__big"
-        android:layout_marginTop="@dimen/people_picker__header__padding_top"
-        android:layout_marginBottom="@dimen/people_picker__header__padding_bottom"
         android:layout_gravity="center_vertical|start"
+        android:layout_marginStart="@dimen/wire__padding__8"
         app:w_font="@string/wire__typeface__light"
         style="?startUiHeaderRowLabel"
-        />
-</FrameLayout>
+        tools:text="Title" />
+
+</merge>
