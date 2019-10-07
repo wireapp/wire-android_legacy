@@ -21,7 +21,7 @@ import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData}
+import com.waz.model.{ConvId, ConversationData, Uid}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
@@ -68,7 +68,7 @@ abstract class ConversationListAdapter
 
   override def getItemId(position: Int): Long = items(position) match {
     case Item.IncomingRequests(first, _) => first.str.hashCode
-    case Item.Header(title)              => title.hashCode
+    case Item.Header(id, _)              => id.str.hashCode
     case Item.Conversation(data)         => data.id.str.hashCode
   }
 
@@ -120,7 +120,7 @@ object ConversationListAdapter {
   sealed trait Item
 
   object Item {
-    case class Header(title: String) extends Item
+    case class Header(id: Uid, title: String) extends Item
     case class Conversation(data: ConversationData) extends Item
     case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item
   }
@@ -210,7 +210,7 @@ object ConversationListAdapter {
 
     override def areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
       (oldList(oldItemPosition), newList(newItemPosition)) match {
-        case (Header(title), Header(newTitle)) =>
+        case (Header(_, title), Header(_, newTitle)) =>
           title == newTitle
         case (Conversation(data), Conversation(newData)) =>
           data == newData
