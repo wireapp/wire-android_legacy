@@ -22,8 +22,6 @@ import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 
 class NormalConversationListAdapter extends ConversationListAdapter {
 
-  override protected var items: List[Item] = List.empty
-
   def setData(convs: Seq[ConversationData], incoming: Seq[ConvId]): Unit = {
     if (incoming.nonEmpty) {
       items = List(Item.IncomingRequests(incoming.head, incoming.size))

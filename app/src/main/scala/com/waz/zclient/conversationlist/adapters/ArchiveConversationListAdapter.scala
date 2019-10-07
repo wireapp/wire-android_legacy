@@ -22,8 +22,6 @@ import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 
 class ArchiveConversationListAdapter extends ConversationListAdapter {
 
-  override protected var items: List[Item] = List.empty
-
   def setData(convs: Seq[ConversationData]): Unit = {
     items = convs.map(data => Item.Conversation(data)).toList
     notifyDataSetChanged()

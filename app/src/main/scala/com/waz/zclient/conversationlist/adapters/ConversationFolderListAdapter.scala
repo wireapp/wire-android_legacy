@@ -27,8 +27,6 @@ import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
   */
 class ConversationFolderListAdapter extends ConversationListAdapter with DerivedLogTag {
 
-  override protected var items: List[Item] = List.empty
-
   def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
     val folders = Seq(
       Folder("Groups", groups.map(data => Item.Conversation(data)).toList),
@@ -44,6 +42,11 @@ class ConversationFolderListAdapter extends ConversationListAdapter with Derived
     }
 
     notifyDataSetChanged()
+  }
+
+  override def onClick(position: Int): Unit = items(position) match {
+    case Item.Header(_) => // TODO: collapse logic
+    case _              => super.onClick(position)
   }
 }
 
