@@ -31,7 +31,8 @@ class FoldersSyncHandler(foldersClient: FoldersClient, foldersService: FoldersSe
   private implicit val ec = EventContext.Global
 
   import Threading.Implicits.Background
-  def postFolders(): Future[SyncResult] = Future.failed(new Exception()) // XXX
-
+  def postFolders(): Future[SyncResult] = foldersService.foldersToSynchronize()
+    .flatMap(foldersClient.putFolders)
+    .map(SyncResult(_))
 
 }
