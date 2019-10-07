@@ -78,7 +78,7 @@ object FolderDataWithConversations {
   // - It needs to parse even when name is missing
   // - "type" is a reserved word in Scala
   def objectToFolderDataWithConversation(obj: JsonObject): Either[String, FolderDataWithConversations] = {
-    val name = obj.apply("name").flatMap(_.asString).getOrElse("")
+    val name = obj("name").fold("")(_.toString)
     val id = obj.apply("id").flatMap(_.asString).getOrElse("")
     val maybeFolderType = obj.apply("type").flatMap(_.asNumber).flatMap(_.toInt)
     if (maybeFolderType.isEmpty) {
@@ -162,8 +162,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def favouritesFolderId: Future[Option[FolderId]] =
     foldersStorage.getByType(FolderData.FavouritesFolderType).map {
-      case head :: _ => Some(head.id)
-      case Nil => None
+      case head :: _  => Some(head.id)
+      case Nil        => None
     }
 
   override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] =
