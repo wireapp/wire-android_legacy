@@ -21,7 +21,7 @@ import scala.language.implicitConversions
 import com.waz.content.{PropertiesStorage, PropertyValue, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{PropertyEvent, ReadReceiptEnabledPropertyEvent, UnknownPropertyEvent}
+import com.waz.model.{FoldersEvent, PropertyEvent, ReadReceiptEnabledPropertyEvent, UnknownPropertyEvent}
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.assets2.Codec
 import com.waz.service.push.PushService
@@ -58,7 +58,7 @@ class PropertiesServiceImpl(prefs: UserPreferences, syncServiceHandle: SyncServi
     _ <- pushService.syncHistory(ForceSync) // Force fetch to clear the sync event
   } ()
 
-  private def processEvent(event: PropertyEvent): Future[Unit] = {
+  private def processEvent(event: PropertyEvent): Future[Unit] =
     event match {
       case ReadReceiptEnabledPropertyEvent(value) =>
         getProperty[Int](PropertyKey.ReadReceiptsEnabled).flatMap {
@@ -72,11 +72,13 @@ class PropertiesServiceImpl(prefs: UserPreferences, syncServiceHandle: SyncServi
             verbose(l"processEvent ReadReceiptsEnabled: other:$other value:$value")
             Future.successful({})
         }
+
+      case FoldersEvent(folders) => Future.successful({}) // handled in FoldersService
+
       case UnknownPropertyEvent(key, _) =>
         verbose(l"Unhandled property event $key")
         Future.successful({})
     }
-  }
 
   def updateProperty[T: Encoder: Decoder](key: PropertyKey, value: T): Future[Unit] = {
     import io.circe.syntax._

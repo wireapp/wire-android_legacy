@@ -26,8 +26,9 @@ import com.waz.model.Event.EventDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.PropertyKey
+import com.waz.service.conversation.RemoteFolderData
 import com.waz.sync.client.ConversationsClient.ConversationResponse
-import com.waz.sync.client.{OtrClient, RemoteFolderData}
+import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, _}

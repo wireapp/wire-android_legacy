@@ -199,7 +199,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val asset2Client       = new AssetClient2Impl()(urlCreator, httpClientForLongRunning, authRequestInterceptor)
   lazy val usersClient        = new UsersClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val convClient         = new ConversationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
-  lazy val foldersClient      = new FoldersClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val teamClient         = new TeamsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val abClient           = new AddressBookClientImpl()(urlCreator, httpClient, authRequestInterceptor)

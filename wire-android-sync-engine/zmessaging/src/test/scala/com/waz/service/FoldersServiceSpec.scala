@@ -22,13 +22,14 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId}
 import com.waz.service.conversation.{FoldersService, FoldersServiceImpl, RemoteFolderData}
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.SyncServiceHandle
+import com.waz.testutils.TestUserPreferences
 import com.waz.threading.Threading
 import com.waz.utils.events.EventStream
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-
 import com.waz.utils.CirceJSONSupport
 import io.circe.syntax._
 import io.circe.parser.decode
@@ -36,9 +37,11 @@ import io.circe.parser.decode
 class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJSONSupport {
   import Threading.Implicits.Background
 
-  val foldersStorage = mock[FoldersStorage]
+  val foldersStorage             = mock[FoldersStorage]
   val conversationFoldersStorage = mock[ConversationFoldersStorage]
-  val conversationStorage = mock[ConversationStorage]
+  val conversationStorage        = mock[ConversationStorage]
+  val userPrefs                  = new TestUserPreferences
+  val sync                       = mock[SyncServiceHandle]
 
   private val folders = mutable.ListBuffer[FolderData]()
   private val convFolders = mutable.HashMap[(ConvId, FolderId), ConversationFolderData]()
@@ -148,7 +151,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
   private def getService: FoldersService = _service match {
     case Some(service) => service
     case None =>
-      val service = new FoldersServiceImpl(foldersStorage, conversationFoldersStorage, conversationStorage)
+      val service = new FoldersServiceImpl(foldersStorage, conversationFoldersStorage, conversationStorage, userPrefs, sync)
       _service = Some(service)
       service
   }
@@ -728,7 +731,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
                                      convIds: Set[ConvId] = Set.empty,
                                      folderType: Int      = FolderData.FavouritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
-    (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str)).toSeq))))
+    (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
 
   private def generateEventAddFolder(oldEvent: FoldersEvent,
@@ -737,7 +740,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
                                      convIds: Set[ConvId] = Set.empty,
                                      folderType: Int      = FolderData.FavouritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
-    (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str)).toSeq))))
+    (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
 
   private def sendEvent(event: FoldersEvent) = {

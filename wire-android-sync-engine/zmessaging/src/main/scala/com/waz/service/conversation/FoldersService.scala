@@ -23,9 +23,8 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
-import com.waz.sync.client.RemoteFolderData
+import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.JsonDecoder.{decodeFolderId, decodeInt, decodeRConvIdSeq, decodeString}
 import com.waz.utils.{JsonDecoder, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import io.circe.Encoder
@@ -62,7 +61,9 @@ trait FoldersService {
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          conversationFoldersStorage: ConversationFoldersStorage,
                          conversationStorage: ConversationStorage,
-                         userPrefs: UserPreferences) extends FoldersService with DerivedLogTag  {
+                         userPrefs: UserPreferences,
+                         sync: SyncServiceHandle
+                        ) extends FoldersService with DerivedLogTag  {
   import Threading.Implicits.Background
   private implicit val ev: EventContext = EventContext.Global
 
