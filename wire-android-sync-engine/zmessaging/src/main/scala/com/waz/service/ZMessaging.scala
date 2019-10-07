@@ -107,7 +107,6 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val inProgressAssetStorage: assets2.DownloadAssetStorage = new assets2.DownloadAssetStorageImpl(context, db2)(Threading.BlockingIO)
   lazy val rawAssetStorage: assets2.UploadAssetStorage   = new assets2.UploadAssetStorageImpl(context, db2)(Threading.BlockingIO)
   lazy val assetsStorage: assets2.AssetStorage         = new assets2.AssetStorageImpl(context, db2, Threading.BlockingIO)
-
 }
 
 class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: AccountManager, val storage: StorageModule, val cryptoBox: CryptoBoxService) extends DerivedLogTag {
@@ -185,11 +184,13 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def searchQueryCache  = storage.searchQueryCache
   def propertiesStorage = storage.propertiesStorage
 
-  lazy val messagesStorage: MessagesStorage            = wire[MessagesStorageImpl]
-  lazy val msgAndLikes: MessageAndLikesStorageImpl     = wire[MessageAndLikesStorageImpl]
-  lazy val messagesIndexStorage: MessageIndexStorage   = wire[MessageIndexStorage]
-  lazy val eventStorage: PushNotificationEventsStorage = wire[PushNotificationEventsStorageImpl]
-  lazy val readReceiptsStorage: ReadReceiptsStorage    = wire[ReadReceiptsStorageImpl]
+  lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]
+  lazy val msgAndLikes: MessageAndLikesStorageImpl                = wire[MessageAndLikesStorageImpl]
+  lazy val messagesIndexStorage: MessageIndexStorage              = wire[MessageIndexStorage]
+  lazy val eventStorage: PushNotificationEventsStorage            = wire[PushNotificationEventsStorageImpl]
+  lazy val readReceiptsStorage: ReadReceiptsStorage               = wire[ReadReceiptsStorageImpl]
+  lazy val foldersStorage: FoldersStorage                         = wire[FoldersStorageImpl]
+  lazy val conversationFoldersStorage: ConversationFoldersStorage = wire[ConversationFoldersStorageImpl]
 
   lazy val googleMapsClient   = new GoogleMapsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val youtubeClient      = new YouTubeClientImpl()(urlCreator, httpClient, authRequestInterceptor)
@@ -262,6 +263,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val replyHashing                               = wire[ReplyHashingImpl]
   lazy val libSodiumUtils                             = wire[LibSodiumUtilsImpl]
   lazy val backupManager                              = wire[BackupManagerImpl]
+  lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -339,6 +341,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
         genericMsgs.eventProcessingStage,
+        foldersService.eventProcessingStage,
         propertiesService.eventProcessor,
         notifications.messageNotificationEventsStage,
         notifications.connectionNotificationEventStage

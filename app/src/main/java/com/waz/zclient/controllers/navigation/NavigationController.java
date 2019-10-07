@@ -188,9 +188,7 @@ public class NavigationController implements INavigationController {
             case CONVERSATION_LIST:
                 setPagerEnabled(false);
                 return;
-            case SELF_PROFILE_OVERLAY:
             case CAMERA:
-            case CONFIRMATION_DIALOG:
             case SINGLE_MESSAGE:
             case DRAWING:
             case SHARE_LOCATION:
@@ -198,14 +196,10 @@ public class NavigationController implements INavigationController {
             case ARCHIVE:
                 setPagerEnabled(false);
                 break;
-            case CONVERSATION_MENU_OVER_CONVERSATION_LIST:
             case PARTICIPANT:
-            case PARTICIPANT_USER_PROFILE:
             case PICK_USER:
-            case COMMON_USER_PROFILE:
             case SEND_CONNECT_REQUEST:
             case PENDING_CONNECT_REQUEST:
-            case BLOCK_USER:
             case PICK_USER_ADD_TO_CONVERSATION:
             case INTEGRATION_DETAILS:
                 setPagerEnabled(false);

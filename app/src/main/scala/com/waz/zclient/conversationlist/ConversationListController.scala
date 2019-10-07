@@ -17,19 +17,20 @@
  */
 package com.waz.zclient.conversationlist
 
+import com.waz.api.Message
+import com.waz.content.ConversationStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.service.ZMessaging
+import com.waz.service.conversation.{ConversationsService, FoldersService}
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
 import com.waz.zclient.utils.{UiStorage, UserSignal}
-import com.waz.zclient.{Injectable, Injector}
-import com.waz.api.Message
-import com.waz.content.{ConversationStorage, MembersStorage}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,10 +39,14 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   extends Injectable with DerivedLogTag {
 
   import ConversationListController._
+  import Threading.Implicits.Background
 
   val zms = inject[Signal[ZMessaging]]
   val membersCache = zms map { new MembersCache(_) }
   val lastMessageCache = zms map { new LastMessageCache(_) }
+
+  private lazy val foldersService = inject[Signal[FoldersService]]
+  private lazy val convService = inject[Signal[ConversationsService]]
 
   def members(conv: ConvId) = membersCache.flatMap(_.apply(conv))
 
@@ -68,34 +73,145 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     convs      <- z.convsStorage.contents.throttle(ConvListUpdateThrottling)
   } yield convs.values.filter(EstablishedListFilter)
 
-  lazy val regularConversationListData = conversationData(ConversationListAdapter.Normal)
-  lazy val archiveConversationListData = conversationData(ConversationListAdapter.Archive)
+  lazy val regularConversationListData = conversationData(Normal)
+  lazy val archiveConversationListData = conversationData(Archive)
 
-  private def conversationData(listMode: ConversationListAdapter.ListMode) =
+  private def conversationData(listMode: ListMode) =
     for {
       convsStorage  <- inject[Signal[ConversationStorage]]
       conversations <- convsStorage.contents
     } yield
       conversations.values.filter(listMode.filter).toSeq.sorted(listMode.sort)
 
-  lazy val incomingConversationListData =
+  lazy val incomingConversationListData: Signal[Seq[ConvId]] =
     for {
-      selfUserId     <- inject[Signal[UserId]]
       convsStorage   <- inject[Signal[ConversationStorage]]
-      membersStorage <- inject[Signal[MembersStorage]]
       conversations  <- convsStorage.contents
-      incomingConvs  =  conversations.values.filter(ConversationListAdapter.Incoming.filter).toSeq
-      members <- Signal.sequence(incomingConvs.map(c => membersStorage.activeMembers(c.id).map(_.find(_ != selfUserId))):_*)
-    } yield (incomingConvs, members.flatten)
+      incomingConvs  =  conversations.values.filter(Incoming.filter).map(_.id).toSeq
+    } yield incomingConvs
+
+  lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
+
+  def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
+
+  lazy val favouritesFolderId: Future[Option[FolderId]] = foldersService.head.flatMap(_.favouritesFolderId)(Threading.Background)
+
+  lazy val favouritesFolder: Signal[Option[FolderData]] = Signal.future(favouritesFolderId).flatMap {
+    case Some(folderId) => folder(folderId)
+    case None           => Signal.const(None)
+  }
+
+  lazy val favouriteConversations: Signal[Seq[ConversationData]] = for {
+    favId <- Signal.future(favouritesFolderId)
+    convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
+  } yield convs
+
+  def folderConversations(folderId: FolderId): Signal[Seq[ConversationData]] = for {
+    fwc     <- foldersWithConvs
+    convIds =  fwc(folderId)
+    convs   <- regularConversationListData
+  } yield convs.filter(c => convIds.contains(c.id))
+
+  private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
+    convService        <- convService
+    fwc                <- foldersWithConvs
+    folderConvIds      =  fwc.values.flatten.toSet
+    convs              <- regularConversationListData
+    convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
+    results            <- Signal.sequence(convsWithoutFolder.map(c => convService.groupConversation(c.id).map(b => c -> b)): _*)
+  } yield results
+
+  lazy val groupConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(_._2).map(_._1))
+
+  lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2).map(_._1))
+
+  lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
+
+  lazy val customFolderIds: Signal[Set[FolderId]] = for {
+    favId  <- Signal.future(favouritesFolderId)
+    allIds <- allFolderIds
+  } yield favId.fold(allIds)(allIds - _)
+
+  def addToFavourites(convId: ConvId): Future[Unit] = for {
+    service  <- foldersService.head
+    favId    <- service.ensureFavouritesFolder()
+    _        <- service.addConversationTo(convId, favId)
+  } yield ()
+
+  def removeFromFavourites(convId: ConvId): Future[Unit] = for {
+    Some(favId) <- favouritesFolderId
+    _           <- removeFromFolder(convId, favId)
+  } yield ()
+
+  def removeFromFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
+    service <- foldersService.head
+    _       <- service.removeConversationFrom(convId, folderId)
+    convs   <- service.convsInFolder(folderId)
+    _       <- if (convs.isEmpty) service.removeFolder(folderId) else Future.successful(())
+  } yield ()
+
+  def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
+    service       <- foldersService.head
+    folders       <- service.foldersForConv(convId)
+    favId         <- favouritesFolderId
+    customFolders =  favId.fold(folders)(folders - _)
+    _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
+  } yield ()
 }
 
 object ConversationListController {
 
-  lazy val RegularListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && !c.archived}
-  lazy val IncomingListFilter: (ConversationData => Boolean) = { c => !c.hidden && !c.archived && c.convType == ConversationType.Incoming }
-  lazy val ArchivedListFilter: (ConversationData => Boolean) = { c => Set(ConversationType.OneToOne, ConversationType.Group, ConversationType.Incoming, ConversationType.WaitForConnection).contains(c.convType) && !c.hidden && c.archived && !c.completelyCleared }
-  lazy val EstablishedListFilter: (ConversationData => Boolean) = { c => RegularListFilter(c) && c.convType != ConversationType.WaitForConnection }
-  lazy val EstablishedArchivedListFilter: (ConversationData => Boolean) = { c => ArchivedListFilter(c) && c.convType != ConversationType.WaitForConnection }
+  type Filter = ConversationData => Boolean
+
+  trait ListMode {
+    val nameId: Int
+    val filter: Filter
+    val sort: Ordering[ConversationData] = ConversationData.ConversationDataOrdering
+  }
+
+  case object Normal extends ListMode {
+    override lazy val nameId: Int = R.string.conversation_list__header__title
+    override val filter: Filter = ConversationListController.RegularListFilter
+  }
+
+  case object Archive extends ListMode {
+    override lazy val nameId: Int = R.string.conversation_list__header__archive_title
+    override val filter: Filter = ConversationListController.ArchivedListFilter
+  }
+
+  case object Incoming extends ListMode {
+    override lazy val nameId: Int = R.string.conversation_list__header__archive_title
+    override val filter: Filter = ConversationListController.IncomingListFilter
+  }
+
+  case object Folders extends ListMode {
+    // TODO: add real copy
+    override lazy val nameId: Int = R.string.conversation_list__header__title
+    override val filter: Filter = ConversationListController.RegularListFilter
+  }
+
+  lazy val RegularListFilter: Filter = { c =>
+    import ConversationType._
+    Set(OneToOne, Group, WaitForConnection).contains(c.convType) && !c.hidden && !c.archived
+  }
+
+  lazy val IncomingListFilter: Filter = { c =>
+    !c.hidden && !c.archived && c.convType == ConversationType.Incoming
+  }
+
+  lazy val ArchivedListFilter: Filter = { c =>
+    import ConversationType._
+    val validConversationTypes = Set(OneToOne, Group, ConversationType.Incoming, WaitForConnection)
+    validConversationTypes.contains(c.convType) && !c.hidden && c.archived && !c.completelyCleared
+  }
+
+  lazy val EstablishedListFilter: Filter = { c =>
+    RegularListFilter(c) && c.convType != ConversationType.WaitForConnection
+  }
+
+  lazy val EstablishedArchivedListFilter: Filter = { c =>
+    ArchivedListFilter(c) && c.convType != ConversationType.WaitForConnection
+  }
 
   // Maintains a short list of members for each conversation.
   // Only keeps up to 4 users other than self user, this list is to be used for avatar in conv list.

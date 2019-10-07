@@ -44,7 +44,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service._
 import com.waz.service.assets2._
 import com.waz.service.call.GlobalCallingService
-import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
+import com.waz.service.conversation.{ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
 import com.waz.service.tracking.TrackingService
@@ -195,6 +195,9 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[ReadReceiptsStorage]]           to inject[Signal[ZMessaging]].map(_.readReceiptsStorage)
     bind [Signal[ReactionsStorage]]              to inject[Signal[ZMessaging]].map(_.reactionsStorage)
     bind [Signal[FCMNotificationStatsService]]   to inject[Signal[ZMessaging]].map(_.fcmNotStatsService)
+    bind [Signal[FoldersStorage]]                to inject[Signal[ZMessaging]].map(_.foldersStorage)
+    bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
+    bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers

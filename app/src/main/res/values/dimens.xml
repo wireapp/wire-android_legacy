@@ -371,7 +371,7 @@
     <dimen name="list__left_icon__dimension">18dp</dimen>
     <dimen name="conversation_list__sticky_view__top_margin">88dp</dimen>
     <dimen name="framework__dialog__marker__radius">28dp</dimen>
-    <dimen name="conversation_list__action_icon__size">28dp</dimen>
+    <dimen name="action_icon__size">28dp</dimen>
     <dimen name="conversation_list__action_icon__size__big">48dp</dimen>
     <dimen name="conversation_list__action_label__padding_left">64dp</dimen>
     <dimen name="conversation_list__action_view__height">56dp</dimen>

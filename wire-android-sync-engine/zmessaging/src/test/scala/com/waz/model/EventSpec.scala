@@ -74,6 +74,81 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       res.asInstanceOf[ReadReceiptEnabledPropertyEvent].value shouldEqual 1
     }
 
+    scenario("Folders and favorites property event is parsed correctly") {
+
+      // given
+      val foldersData = new JSONObject(
+        s"""{
+           |  "key": "${PropertyKey.Folders}",
+           |  "type": "user.properties-set",
+           |  "value": [
+           |    {
+           |      "name": "Project Zeta",
+           |      "id": "69ed036b-2d10-4ad2-81fc-4a5b3476205b",
+           |      "type": 0,
+           |      "conversations": [
+           |        "0d61425f-1a4e-4111-9641-4e0da34798cf",
+           |        "f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2"
+           |      ]
+           |    },
+           |    {
+           |      "id": "1abcd64e-4a7f-48da-8362-28e660e7c553",
+           |      "type": 1,
+           |      "conversations": [
+           |        "0d61425f-1a4e-4111-9641-4e0da34798cf",
+           |        "f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2"
+           |      ]
+           |    }
+           |  ]
+           |}""".stripMargin
+      )
+
+      // when
+      val res = PropertyEvent.Decoder(foldersData)
+
+      // then
+      res.isInstanceOf[FoldersEvent] shouldEqual true
+      val folderEvent = res.asInstanceOf[FoldersEvent]
+      folderEvent.folders.length shouldEqual 2
+      val folder1 = folderEvent.folders(0)
+      val folder2 = folderEvent.folders(1)
+
+      folder1.folderData.name shouldBe Name("Project Zeta")
+      folder1.folderData.id shouldBe FolderId("69ed036b-2d10-4ad2-81fc-4a5b3476205b")
+      folder1.folderData.folderType shouldBe 0
+      folder1.conversations shouldBe Seq(
+        RConvId("0d61425f-1a4e-4111-9641-4e0da34798cf"),
+        RConvId("f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2")
+      )
+
+      folder2.folderData.name shouldBe Name("")
+      folder2.folderData.id shouldBe FolderId("1abcd64e-4a7f-48da-8362-28e660e7c553")
+      folder2.folderData.folderType shouldBe 1
+      folder2.conversations shouldBe Seq(
+        RConvId("0d61425f-1a4e-4111-9641-4e0da34798cf"),
+        RConvId("f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2")
+      )
+    }
+
+    scenario("Folders and favorites property deletion event is parsed properly") {
+
+      // given
+      var foldersData = new JSONObject(
+        s"""{
+           |  "key": "${PropertyKey.Folders}",
+           |  "type": "user.properties-delete"
+           |}""".stripMargin
+      )
+
+      // when
+      val res = PropertyEvent.Decoder(foldersData)
+
+      // then
+      res.isInstanceOf[FoldersEvent] shouldEqual true
+      val folderEvent = res.asInstanceOf[FoldersEvent]
+      folderEvent.folders.length shouldEqual 0
+    }
+
     scenario("parse otr message event") {
       EventDecoder(new JSONObject(OtrMessageEvent)) match {
         case ev: OtrMessageEvent =>

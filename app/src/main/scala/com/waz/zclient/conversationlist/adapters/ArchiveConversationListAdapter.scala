@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,28 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.controllers.navigation;
+package com.waz.zclient.conversationlist.adapters
 
-public enum Page {
-    PHONE_REGISTRATION_ADD_NAME,
-    START,
-    CONVERSATION_LIST,
-    MESSAGE_STREAM,
-    SINGLE_MESSAGE,
-    PARTICIPANT,
-    PICK_USER,
-    PICK_USER_ADD_TO_CONVERSATION,
-    SEND_CONNECT_REQUEST,
-    PENDING_CONNECT_REQUEST,
-    PENDING_CONNECT_REQUEST_AS_CONVERSATION,
-    CONNECT_REQUEST_INBOX,
-    CONNECT_REQUEST_PENDING,
-    NONE,
-    CAMERA,
-    DRAWING,
-    SHARE_LOCATION,
-    COLLECTION,
-    ARCHIVE,
-    INTEGRATION_DETAILS,
-    GIPHY
+import com.waz.model.ConversationData
+import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
+
+class ArchiveConversationListAdapter extends ConversationListAdapter {
+
+  def setData(convs: Seq[ConversationData]): Unit = {
+    items = convs.map(data => Item.Conversation(data)).toList
+    notifyDataSetChanged()
+  }
 }
