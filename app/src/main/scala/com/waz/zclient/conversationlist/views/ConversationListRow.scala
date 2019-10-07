@@ -23,8 +23,8 @@ import android.support.constraint.ConstraintLayout
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
-import android.widget.FrameLayout
 import android.widget.LinearLayout.LayoutParams
+import android.widget.{FrameLayout, LinearLayout}
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -57,7 +57,7 @@ import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.Set
 
-trait ConversationListRow extends FrameLayout
+trait ConversationListRow extends View
 
 class NormalConversationListRow(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style)
@@ -553,16 +553,15 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
 }
 
 class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: Int)
-  extends FrameLayout(context, attrs, style)
+  extends LinearLayout(context, attrs, style)
   with ConversationListRow
   with ViewHelper {
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
-  setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height)))
-
   inflate(R.layout.conv_list_section_header)
+  setLayoutParameters()
 
   private val title = ViewUtils.getView(this, R.id.header_textview_title).asInstanceOf[TypefaceTextView]
 
@@ -572,5 +571,12 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
     val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
     params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__20)
     setLayoutParams(params)
+  }
+
+  private def setLayoutParameters(): Unit = {
+    val params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height))
+    setLayoutParams(params)
+    setOrientation(LinearLayout.HORIZONTAL)
+    setPadding(getDimenPx(R.dimen.wire__padding__24), getDimenPx(R.dimen.wire__padding__20), 0, getDimenPx(R.dimen.wire__padding__20))
   }
 }

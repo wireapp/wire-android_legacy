@@ -23,32 +23,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="@dimen/conversation_list__row__height"
-    tools:parentTag="android.widget.FrameLayout">
+    android:orientation="horizontal"
+    android:paddingTop="@dimen/wire__padding__20"
+    android:paddingBottom="@dimen/wire__padding__20"
+    android:layout_marginStart="@dimen/wire__padding__big"
+    tools:parentTag="android.widget.LinearLayout">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:paddingTop="@dimen/wire__padding__20"
-        android:paddingBottom="@dimen/wire__padding__20"
-        android:layout_marginStart="@dimen/wire__padding__big" >
+    <ImageView
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_gravity="center_vertical|start"
+        android:src="@drawable/icon_arrow_down_white"
+        android:tint="?wireSecondaryTextColor" />
 
-        <ImageView
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_gravity="center_vertical|start"
-            android:src="@drawable/icon_arrow_down_white"
-            android:tint="?wireSecondaryTextColor" />
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/header_textview_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|start"
-            android:layout_marginStart="@dimen/wire__padding__8"
-            app:w_font="@string/wire__typeface__light"
-            style="?startUiHeaderRowLabel"
-            tools:text="Title" />
-    </LinearLayout>
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/header_textview_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|start"
+        android:layout_marginStart="@dimen/wire__padding__8"
+        app:w_font="@string/wire__typeface__light"
+        style="?startUiHeaderRowLabel"
+        tools:text="Title" />
 
 </merge>
