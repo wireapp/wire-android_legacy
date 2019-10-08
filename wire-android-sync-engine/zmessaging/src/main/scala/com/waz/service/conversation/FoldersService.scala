@@ -17,22 +17,27 @@
  */
 package com.waz.service.conversation
 
+import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage, UserPreferences}
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.content.ConversationStorage
 import com.waz.log.LogSE._
-import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RemoteFolderData}
+import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
+import com.waz.sync.SyncServiceHandle
 import com.waz.content.{ConversationFoldersStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
-import com.waz.utils.RichFuture
+import com.waz.utils.{JsonDecoder, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import io.circe.{Decoder, Encoder}
+import org.json.JSONObject
 
 import scala.concurrent.Future
 
 trait FoldersService {
   def eventProcessingStage: EventScheduler.Stage
-  def processEvent(event: FoldersEvent): Future[Unit]
+  def processFolders(folders: Seq[RemoteFolderData]): Future[Unit]
 
   def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit]
   def removeConversationFrom(convId: ConvId, folderId: FolderId): Future[Unit]
@@ -52,22 +57,34 @@ trait FoldersService {
 
   def foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]]
   def folder(folderId: FolderId): Signal[Option[FolderData]]
+
+  def foldersToSynchronize(): Future[Seq[RemoteFolderData]]
 }
 
 class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          conversationFoldersStorage: ConversationFoldersStorage,
-                         conversationStorage: ConversationStorage) extends FoldersService with DerivedLogTag  {
+                         conversationStorage: ConversationStorage,
+                         userPrefs: UserPreferences,
+                         sync: SyncServiceHandle
+                        ) extends FoldersService with DerivedLogTag  {
   import Threading.Implicits.Background
   private implicit val ev: EventContext = EventContext.Global
 
-  override val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FoldersEvent] { (_, events) =>
-    verbose(l"Handling events: $events")
-    RichFuture.traverseSequential(events)(processEvent)
+  private val shouldSyncFolders = userPrefs.preference(UserPreferences.ShouldSyncFolders)
+
+  shouldSyncFolders().foreach {
+    case false =>
+    case true => sync.syncFolders().flatMap(_ => shouldSyncFolders := false)
   }
 
-  override def processEvent(event: FoldersEvent): Future[Unit] =
+  override val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FoldersEvent] { (_, events) =>
+    verbose(l"Handling events: $events")
+    RichFuture.traverseSequential(events)(ev => processFolders(ev.folders))
+  }
+
+  override def processFolders(folders: Seq[RemoteFolderData]): Future[Unit] =
     for {
-      newFolders      <- Future.sequence(event.folders.map { case RemoteFolderData(data, rConvIds) =>
+      newFolders      <- Future.sequence(folders.map { case RemoteFolderData(data, rConvIds) =>
                            conversationStorage.getByRemoteIds(rConvIds).map(ids => data.id -> (data, ids.toSet))
                          }).map(_.toMap)
       currentFolders  <- foldersStorage.list().map(_.map(folder => folder.id -> folder).toMap)
@@ -119,7 +136,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def removeConversationFromAll(convId: ConvId): Future[Unit] = for {
     allFolders <- foldersForConv(convId)
-    _          <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
+    _ <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
   } yield ()
 
   override def foldersForConv(convId: ConvId): Future[Set[FolderId]] =
@@ -145,8 +162,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def removeFolder(folderId: FolderId): Future[Unit] = for {
     convIds <- convsInFolder(folderId)
-    _       <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
-    _       <- foldersStorage.remove(folderId)
+    _ <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
+    _ <- foldersStorage.remove(folderId)
   } yield ()
 
   override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.head.flatMap {
@@ -156,7 +173,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.head.flatMap {
     case Some(id) => removeFolder(id)
-    case None     => Future.successful(())
+    case None => Future.successful(())
   }
 
   override def update(folderId: FolderId, folderName: Name): Future[Unit] =
@@ -174,14 +191,14 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       )
 
     def loadAll = for {
-      folders     <- foldersStorage.list()
+      folders <- foldersStorage.list()
       folderConvs <- Future.sequence(folders.map(folder => conversationFoldersStorage.findForFolder(folder.id).map(convIds => folder.id -> convIds)))
     } yield folderConvs.toMap
 
     new AggregatingSignal[
       (Set[FolderId], Set[FolderId], Map[FolderId, Set[ConvId]], Map[FolderId, Set[ConvId]]),
       Map[FolderId, Set[ConvId]]
-    ](changesStream, loadAll, { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
+      ](changesStream, loadAll, { case (current, (deletedFolderIds, addedFolderIds, removedConvIds, addedConvIds)) =>
 
       // Step 1: remove deleted folders and add new ones
       val step1 = current -- deletedFolderIds ++ addedFolderIds.map(_ -> Set.empty[ConvId]).toMap
@@ -189,7 +206,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       // Step 2: remove conversations from folders
       val step2 = step1.map {
         case (folderId, convIds) if removedConvIds.contains(folderId) =>
-         (folderId, convIds -- removedConvIds(folderId))
+          (folderId, convIds -- removedConvIds(folderId))
         case other => other
       }
 
@@ -200,5 +217,52 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
         case other => other
       }
     }).disableAutowiring()
+  }
+
+  override def foldersToSynchronize(): Future[Seq[RemoteFolderData]] = for {
+    allFolders <- folders
+    data <- Future.sequence(allFolders.map(conversationDataForFolder))
+  } yield data
+
+
+  private def conversationDataForFolder(folder: FolderData): Future[RemoteFolderData] = for {
+    convsInFolder <- convsInFolder(folder.id)
+    convData      <- Future.sequence(convsInFolder.map(id => conversationStorage.get(id)))
+    convRIds      =  convData.flatten.map(_.remoteId)
+  } yield RemoteFolderData(folder, convRIds)
+
+}
+
+case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
+
+object RemoteFolderData {
+
+  case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: List[String]) {
+    def toRemoteFolderData: RemoteFolderData =
+      RemoteFolderData(
+        FolderData(id = FolderId(id), name = Name(name.getOrElse("")), folderType = `type`),
+        conversations.map(RConvId(_)).toSet
+      )
+  }
+
+  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
+    "id", "name", "type", "conversations"
+  )(fd => (fd.folderData.id.str, fd.folderData.name.str, fd.folderData.folderType, fd.conversations.map(_.str)))
+
+  lazy implicit val folderDataConversationsCirceDecoder: Decoder[IntermediateFolderData] =
+    Decoder.forProduct4("id", "name", "type", "conversations")(IntermediateFolderData.apply)
+
+  // TODO: the old JSON decoder is still needed for FoldersEvent. Remove after migrating to circe.
+  implicit val remoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
+    override def apply(implicit js: JSONObject): RemoteFolderData = {
+      import JsonDecoder._
+
+      val conversations: Seq[RConvId] = decodeRConvIdSeq('conversations)
+      val name: Option[String] = decodeOptString('name)
+      RemoteFolderData(
+        FolderData(decodeFolderId('id), Name(name.getOrElse("")), decodeInt('type)),
+        conversations.toSet
+      )
+    }
   }
 }

@@ -26,6 +26,7 @@ import com.waz.model.Event.EventDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.PropertyKey
+import com.waz.service.conversation.RemoteFolderData
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
@@ -139,21 +140,6 @@ case class ReadReceiptEnabledPropertyEvent(value: Int) extends PropertyEvent
 
 // An event that contains a new folders/favorites list
 case class FoldersEvent(folders: Seq[RemoteFolderData]) extends PropertyEvent
-
-case class RemoteFolderData(folderData: FolderData, conversations: Seq[RConvId])
-
-object RemoteFolderData {
-
-  implicit val RemoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
-    override def apply(implicit js: JSONObject): RemoteFolderData = {
-      import JsonDecoder._
-      RemoteFolderData(
-        FolderData(decodeFolderId('id), decodeString('name), decodeInt('type)),
-        decodeRConvIdSeq('conversations)
-      )
-    }
-  }
-}
 
 case class UnknownPropertyEvent(key: PropertyKey, value: String) extends PropertyEvent
 

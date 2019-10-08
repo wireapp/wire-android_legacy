@@ -116,7 +116,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       folder1.folderData.name shouldBe Name("Project Zeta")
       folder1.folderData.id shouldBe FolderId("69ed036b-2d10-4ad2-81fc-4a5b3476205b")
       folder1.folderData.folderType shouldBe 0
-      folder1.conversations shouldBe Seq(
+      folder1.conversations shouldBe Set(
         RConvId("0d61425f-1a4e-4111-9641-4e0da34798cf"),
         RConvId("f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2")
       )
@@ -124,7 +124,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       folder2.folderData.name shouldBe Name("")
       folder2.folderData.id shouldBe FolderId("1abcd64e-4a7f-48da-8362-28e660e7c553")
       folder2.folderData.folderType shouldBe 1
-      folder2.conversations shouldBe Seq(
+      folder2.conversations shouldBe Set(
         RConvId("0d61425f-1a4e-4111-9641-4e0da34798cf"),
         RConvId("f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2")
       )

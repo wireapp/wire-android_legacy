@@ -49,6 +49,8 @@ trait SyncServiceHandle {
   def syncTeamMember(id: UserId): Future[SyncId]
   def syncConnections(dependsOn: Option[SyncId] = None): Future[SyncId]
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority): Future[SyncId]
+  def syncFolders(): Future[SyncId]
+
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId): Future[SyncId]
   def postRemoveBot(cId: ConvId, botId: UserId): Future[SyncId]
 
@@ -79,6 +81,7 @@ trait SyncServiceHandle {
   def postProperty(key: PropertyKey, value: Boolean): Future[SyncId]
   def postProperty(key: PropertyKey, value: Int): Future[SyncId]
   def postProperty(key: PropertyKey, value: String): Future[SyncId]
+  def postFolders(): Future[SyncId]
 
   def registerPush(token: PushToken): Future[SyncId]
   def deletePushToken(token: PushToken): Future[SyncId]
@@ -135,6 +138,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def syncTeamMember(id: UserId): Future[SyncId] = addRequest(SyncTeamMember(id))
   def syncConnections(dependsOn: Option[SyncId]) = addRequest(SyncConnections, dependsOn = dependsOn.toSeq)
   def syncRichMedia(id: MessageId, priority: Int = Priority.MinPriority) = addRequest(SyncRichMedia(id), priority = priority)
+  def syncFolders(): Future[SyncId] = addRequest(SyncFolders)
 
   def postSelfUser(info: UserInfo) = addRequest(PostSelf(info))
   def postSelfPicture(picture: UploadAssetId) = addRequest(PostSelfPicture(picture))
@@ -166,6 +170,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postProperty(key: PropertyKey, value: Boolean): Future[SyncId] = addRequest(PostBoolProperty(key, value), forceRetry = true)
   def postProperty(key: PropertyKey, value: Int): Future[SyncId] = addRequest(PostIntProperty(key, value), forceRetry = true)
   def postProperty(key: PropertyKey, value: String): Future[SyncId] = addRequest(PostStringProperty(key, value), forceRetry = true)
+  def postFolders(): Future[SyncId] = addRequest(PostFolders, forceRetry = true)
 
   def registerPush(token: PushToken)    = addRequest(RegisterPushToken(token), priority = Priority.High, forceRetry = true)
   def deletePushToken(token: PushToken) = addRequest(DeletePushToken(token), priority = Priority.Low)
@@ -192,8 +197,9 @@ class AndroidSyncServiceHandle(account:         UserId,
       id7     <- syncProperties()
       userIds <- usersStorage.list().map(_.map(_.id).toSet)
       id8     <- syncUsers(userIds)
+      id9     <- syncFolders()
       _ = verbose(l"SYNC waiting for full sync to finish...")
-      _ <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8))
+      _ <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9))
       _ = verbose(l"SYNC ... and done")
     } yield ()
   }
@@ -267,7 +273,9 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostBoolProperty(key, value)                        => zms.propertiesSyncHandler.postProperty(key, value)
           case PostIntProperty(key, value)                         => zms.propertiesSyncHandler.postProperty(key, value)
           case PostStringProperty(key, value)                      => zms.propertiesSyncHandler.postProperty(key, value)
-          case SyncProperties                                      => zms.propertiesSyncHandler.syncProperties
+          case SyncProperties                                      => zms.propertiesSyncHandler.syncProperties()
+          case PostFolders                                         => zms.foldersSyncHandler.postFolders()
+          case SyncFolders                                         => zms.foldersSyncHandler.syncFolders()
           case Unknown                                             => Future.successful(Failure("Unknown sync request"))
       }
       case None => Future.successful(Failure(s"Account $accountId is not logged in"))

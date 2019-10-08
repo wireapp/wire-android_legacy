@@ -19,22 +19,32 @@ package com.waz.service
 
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, RemoteFolderData}
-import com.waz.service.conversation.{FoldersService, FoldersServiceImpl}
+import com.waz.model.{ConvId, ConversationData, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, SyncId}
+import com.waz.service.conversation.RemoteFolderData.IntermediateFolderData
+import com.waz.service.conversation.{FoldersService, FoldersServiceImpl, RemoteFolderData}
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.SyncServiceHandle
+import com.waz.testutils.TestUserPreferences
 import com.waz.threading.Threading
 import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+import com.waz.utils.CirceJSONSupport
+import io.circe.syntax._
+import io.circe.parser.decode
 
-class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
+class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJSONSupport {
   import Threading.Implicits.Background
 
-  val foldersStorage = mock[FoldersStorage]
+  val foldersStorage             = mock[FoldersStorage]
   val conversationFoldersStorage = mock[ConversationFoldersStorage]
-  val conversationStorage = mock[ConversationStorage]
+  val conversationStorage        = mock[ConversationStorage]
+  val userPrefs                  = new TestUserPreferences
+  val sync                       = mock[SyncServiceHandle]
+
+  (sync.syncFolders _).expects().anyNumberOfTimes().returning(Future.successful(SyncId()))
 
   private val folders = mutable.ListBuffer[FolderData]()
   private val convFolders = mutable.HashMap[(ConvId, FolderId), ConversationFolderData]()
@@ -132,6 +142,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     Future(ids.map(id => ConvId(id.str)).toSeq)
   }
 
+  val convId1 = ConvId("conv_id1")
+  val convId2 = ConvId("conv_id2")
+  val convId3 = ConvId("conv_id3")
+  val conversations = Set(convId1, convId2).map(id => id -> ConversationData(id, remoteId = RConvId(id.str))).toMap
+
+  (conversationStorage.get _).expects(*).anyNumberOfTimes().onCall { convId: ConvId => Future.successful(conversations.get(convId)) }
+
   val onFoldersAdded = EventStream[Seq[FolderData]]()
   val onConvsAdded = EventStream[Seq[ConversationFolderData]]()
   val onFoldersDeleted = EventStream[Seq[FolderId]]()
@@ -147,7 +164,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   private def getService: FoldersService = _service match {
     case Some(service) => service
     case None =>
-      val service = new FoldersServiceImpl(foldersStorage, conversationFoldersStorage, conversationStorage)
+      val service = new FoldersServiceImpl(foldersStorage, conversationFoldersStorage, conversationStorage, userPrefs, sync)
       _service = Some(service)
       service
   }
@@ -156,32 +173,30 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("adding to favourites") {
 
       // given
-      val convId = ConvId("conv_id1")
       val service = getService
 
       // when
       val favConvs = for {
         favId <- service.ensureFavouritesFolder()
-        _     <- service.addConversationTo(convId, favId)
+        _     <- service.addConversationTo(convId1, favId)
         favs  <- service.convsInFolder(favId)
       } yield favs
 
       // then
-      Await.result(favConvs, 500.millis) shouldEqual Set(convId)
+      Await.result(favConvs, 500.millis) shouldEqual Set(convId1)
 
     }
 
     scenario("adding and removing from favourites") {
 
       // given
-      val convId = ConvId("conv_id1")
       val service = getService
 
       // when
       val favConvs = for {
         favId <- service.ensureFavouritesFolder()
-        _     <- service.addConversationTo(convId, favId)
-        _     <- service.removeConversationFrom(convId, favId)
+        _     <- service.addConversationTo(convId1, favId)
+        _     <- service.removeConversationFrom(convId1, favId)
         favs  <- service.convsInFolder(favId)
       } yield favs
 
@@ -191,44 +206,41 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Keep in favourites after adding to folder") {
       // given
-      val convId = ConvId("conv_id1")
       val service = getService
 
       // when
       val favConvs = for {
         favId     <- service.ensureFavouritesFolder()
         folderId  <- service.addFolder("custom folder")
-        _         <- service.addConversationTo(convId, favId)
-        _         <- service.addConversationTo(convId, folderId)
+        _         <- service.addConversationTo(convId1, favId)
+        _         <- service.addConversationTo(convId1, folderId)
         favs      <- service.convsInFolder(favId)
       } yield favs
 
       // then
-      Await.result(favConvs, 500.millis) shouldEqual Set(convId)
+      Await.result(favConvs, 500.millis) shouldEqual Set(convId1)
     }
 
     scenario("Conversations stays in favourites after removing from another folder") {
       // given
-      val convId = ConvId("conv_id1")
       val service = getService
 
       // when
       val favConvs = for {
         favId     <- service.ensureFavouritesFolder()
         folderId  <- service.addFolder("custom folder")
-        _         <- service.addConversationTo(convId, favId)
-        _         <- service.addConversationTo(convId, folderId)
-        _         <- service.removeConversationFrom(convId, folderId)
+        _         <- service.addConversationTo(convId1, favId)
+        _         <- service.addConversationTo(convId1, folderId)
+        _         <- service.removeConversationFrom(convId1, folderId)
         favs      <- service.convsInFolder(favId)
       } yield favs
 
       // then
-      Await.result(favConvs, 500.millis) shouldEqual Set(convId)
+      Await.result(favConvs, 500.millis) shouldEqual Set(convId1)
     }
 
     scenario("Favourites stays empty after adding to folder") {
       // given
-      val convId = ConvId("conv_id1")
       val folderId = FolderId("folder_id1")
       val service = getService
 
@@ -236,7 +248,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val favConvs = for {
         favId     <- service.ensureFavouritesFolder()
         folderId  <- service.addFolder("custom folder")
-        _         <- service.addConversationTo(convId, folderId)
+        _         <- service.addConversationTo(convId1, folderId)
         favs      <- service.convsInFolder(favId)
       } yield favs
 
@@ -246,9 +258,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Multiple conversations in Favourites") {
       // given
-      val convId1 = ConvId("conv_id1")
-      val convId2 = ConvId("conv_id2")
-      val convId3 = ConvId("conv_id3")
       val service = getService
 
       // when
@@ -266,9 +275,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Adding and removing multiple conversations in Favourites") {
       // given
-      val convId1 = ConvId("conv_id1")
-      val convId2 = ConvId("conv_id2")
-      val convId3 = ConvId("conv_id3")
       val service = getService
 
       // when
@@ -286,11 +292,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Adding and removing conversations from custom folders does not change favourites") {
-
       // given
-      val convId1 = ConvId("conv_id1")
-      val convId2 = ConvId("conv_id2")
-      val convId3 = ConvId("conv_id3")
       val service = getService
 
       val favConvs = for {
@@ -315,7 +317,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Add conversation to a folder") {
 
       // given
-      val convId1 = ConvId("conv_id1")
       val folderId1 = FolderId("folder_id1")
       val service = getService
 
@@ -332,11 +333,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Add conversations to various folders") {
-
       // given
-      val convId1 = ConvId("conv_id1")
-      val convId2 = ConvId("conv_id2")
-      val convId3 = ConvId("conv_id3")
       val service = getService
 
       // when
@@ -359,11 +356,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Remove conversations from folders") {
-
       // given
-      val convId1 = ConvId("conv_id1")
-      val convId2 = ConvId("conv_id2")
-      val convId3 = ConvId("conv_id3")
       val service = getService
       val res = for {
         folderId1 <- service.addFolder("custom folder 1")
@@ -387,7 +380,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Remove all conversations from a folder") {
       // given
-      val convId1 = ConvId("conv_id1")
       val folderId1 = FolderId("folder_id1")
       val service = getService
 
@@ -404,13 +396,10 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Remove conversations from all folders") {
-
       // given
-      val convId1 = ConvId("conv_id1")
-      val convId2 = ConvId("conv_id2")
-      val folderId1 = FolderId("folder_id1")
-      val folderId2 = FolderId("folder_id2")
       val service = getService
+
+      // when
       val convs = for {
         folderId1 <- service.addFolder("custom folder 1")
         folderId2 <- service.addFolder("custom folder 2")
@@ -423,15 +412,15 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val (conversationsInFolder1, conversationsInFolder2) = Await.result(convs, 500.millis)
 
       // then
-
       conversationsInFolder1 shouldEqual Set(convId2)
       conversationsInFolder2 shouldEqual Set()
     }
 
     scenario("Get list of folders for conversation includes favourites") {
       // given
-      val convId1 = ConvId("conv_id1")
       val service = getService
+
+      // when
       val fs = for {
         favId     <- service.ensureFavouritesFolder()
         folderId1 <- service.addFolder("custom folder 1")
@@ -448,29 +437,25 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("remove a conversation from a folder") {
-      val convId = ConvId("conv_id1")
-
       val service = getService
+
       val convInFavsAfterAdding = for {
         favFolder <- service.ensureFavouritesFolder()
-        _         <- service.addConversationTo(convId, favFolder)
-        res       <- service.isInFolder(convId, favFolder)
+        _         <- service.addConversationTo(convId1, favFolder)
+        res       <- service.isInFolder(convId1, favFolder)
       } yield res
-
       assert(Await.result(convInFavsAfterAdding, 500.millis) == true)
 
       val convInFavsAfterRemoval = for {
         favFolder <- service.ensureFavouritesFolder()
-        _         <- service.removeConversationFrom(convId, favFolder)
-        res       <- service.isInFolder(convId, favFolder)
+        _         <- service.removeConversationFrom(convId1, favFolder)
+        res       <- service.isInFolder(convId1, favFolder)
       } yield res
-
       assert(Await.result(convInFavsAfterRemoval, 500.millis) == false)
     }
 
     scenario("Retrieve changes to the Favourites through a signal") {
-      val convId = ConvId("conv_id1")
-
+      // given
       val service = getService
 
       val states = mutable.ListBuffer[Map[FolderId, Set[ConvId]]]()
@@ -478,17 +463,17 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         println(s"${states.size} > $state")
         states += state
       }
-
       Await.result(service.foldersWithConvs.head, 5.seconds) //  wait for the signal to initialize, otherwise we'll skip the initial state
 
+      // when
       val res = for {
         favId     <- service.ensureFavouritesFolder()
-        _         <- service.addConversationTo(convId, favId)
+        _         <- service.addConversationTo(convId1, favId)
         folderId1 <- service.addFolder("custom folder 1")
-        _         <- service.addConversationTo(convId, folderId1)
+        _         <- service.addConversationTo(convId1, folderId1)
         folderId2 <- service.addFolder("custom folder 2")
-        _         <- service.removeConversationFrom(convId, folderId1)
-        _         <- service.addConversationTo(convId, folderId2)
+        _         <- service.removeConversationFrom(convId1, folderId1)
+        _         <- service.addConversationTo(convId1, folderId2)
         _         <- service.removeFolder(folderId1)
         _         <- service.removeFavouritesFolder()
       } yield (favId, folderId1, folderId2)
@@ -504,40 +489,40 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       // after adding convId to to favourites
       states(2).size shouldBe 1
-      states(2)(favId) shouldBe Set(convId)
+      states(2)(favId) shouldBe Set(convId1)
 
       // after creating the first custom folder
       states(3).size shouldBe 2
-      states(3)(favId) shouldBe Set(convId)
+      states(3)(favId) shouldBe Set(convId1)
       states(3)(folderId1) shouldBe Set.empty
 
       // after adding convId to the folder
       states(4).size shouldBe 2
-      states(4)(favId) shouldBe Set(convId)
-      states(4)(folderId1) shouldBe Set(convId)
+      states(4)(favId) shouldBe Set(convId1)
+      states(4)(folderId1) shouldBe Set(convId1)
 
       // after creating the second custom folder
       states(5).size shouldBe 3
-      states(5)(favId) shouldBe Set(convId)
-      states(5)(folderId1) shouldBe Set(convId)
+      states(5)(favId) shouldBe Set(convId1)
+      states(5)(folderId1) shouldBe Set(convId1)
       states(5)(folderId2) shouldBe Set.empty
 
       // after removing convId from the first folder
       states(6).size shouldBe 3
-      states(6)(favId) shouldBe Set(convId)
+      states(6)(favId) shouldBe Set(convId1)
       states(6)(folderId1) shouldBe Set.empty
       states(6)(folderId2) shouldBe Set.empty
 
       // after adding convId to the second folder
       states(7).size shouldBe 3
-      states(7)(favId) shouldBe Set(convId)
+      states(7)(favId) shouldBe Set(convId1)
       states(7)(folderId1) shouldBe Set.empty
-      states(7)(folderId2) shouldBe Set(convId)
+      states(7)(folderId2) shouldBe Set(convId1)
 
       // after removing the first folder
       states(8).size shouldBe 2
-      states(8)(favId) shouldBe Set(convId)
-      states(8)(folderId2) shouldBe Set(convId)
+      states(8)(favId) shouldBe Set(convId1)
+      states(8)(folderId2) shouldBe Set(convId1)
 
       // after removing the favourites folder
       // Here's a trick: it consists of two operations: removing convId from the fav folder,
@@ -545,15 +530,49 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       // and update immediately to the state after the removal of the fav folder. But it might not.
       // So we can't rely on `states(9)` - instead we use `states.last`
       states.last.size shouldBe 1
-      states.last.apply(folderId2) shouldBe Set(convId)
+      states.last.apply(folderId2) shouldBe Set(convId1)
+    }
+
+    scenario("Get mapping from folders to conversations") {
+      // given
+      val service = getService
+
+      // when
+      val foldersFuture = for {
+        favouriteId <- service.ensureFavouritesFolder()
+        folderId1   <- service.addFolder("F1")
+        folderId2   <- service.addFolder("F2")
+        _           <- service.addConversationTo(convId1, folderId1)
+        _           <- service.addConversationTo(convId1, folderId2)
+        _           <- service.addConversationTo(convId2, folderId1)
+        _           <- service.addConversationTo(convId1, favouriteId)
+        folders     <- service.foldersToSynchronize()
+      } yield (favouriteId, folderId1, folderId2, folders)
+      val (favouriteId, folderId1, folderId2, folders) = Await.result(foldersFuture, 500.millis)
+
+      // then
+      folders.length shouldBe 3
+      val folder1 = folders.find(_.folderData.id == folderId1).get
+      folder1.folderData.name.toString shouldEqual "F1"
+      folder1.folderData.folderType shouldEqual FolderData.CustomFolderType
+      folder1.conversations shouldEqual Set(RConvId(convId1.str), RConvId(convId2.str))
+
+      val folder2 = folders.find(_.folderData.id == folderId2).get
+      folder2.folderData.name.toString shouldEqual "F2"
+      folder2.folderData.folderType shouldEqual FolderData.CustomFolderType
+      folder2.conversations shouldEqual Set(RConvId(convId1.str))
+
+      val favourite = folders.find(_.folderData.id == favouriteId).get
+      favourite.folderData.name.toString shouldEqual ""
+      favourite.folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      favourite.conversations shouldEqual Set(RConvId(convId1.str))
     }
   }
 
   feature("Events handling") {
     scenario("Create the Favourites folder") {
       // given
-      val convId = ConvId()
-      val (folder, event) = generateEventOneFolder(convIds = Set(convId))
+      val (folder, event) = generateEventOneFolder(convIds = Set(convId1))
 
       // when
       val (before, after) = sendEvent(event)
@@ -561,17 +580,15 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       // then
       before.isEmpty shouldBe true
       after.size shouldBe 1
-      after.head shouldBe (folder.id, (folder, Set(convId)))
+      after.head shouldBe (folder.id, (folder, Set(convId1)))
     }
 
     scenario("Add a conversation to the Favourites") {
       // given
       val favId = FolderId()
-      val convId1 = ConvId()
       val (folder, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
       sendEvent(event1)
 
-      val convId2 = ConvId()
       val (_, event2) = generateEventOneFolder(folderId = favId, convIds = Set(convId1, convId2))
 
       // when
@@ -587,11 +604,9 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Remove a conversation from the Favourites") {
       // given
       val favId = FolderId()
-      val convId1 = ConvId()
       val (folder, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
       sendEvent(event1)
 
-      val convId2 = ConvId()
       val (_, event2) = generateEventOneFolder(folderId = favId, convIds = Set(convId1, convId2))
       sendEvent(event2)
 
@@ -612,11 +627,9 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       // given
       val favId = FolderId()
       val customId = FolderId()
-      val convId1 = ConvId()
       val (folder1, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
       sendEvent(event1)
 
-      val convId2 = ConvId()
       val (folder2, event2) = generateEventAddFolder(event1, folderId = customId, name = "Custom", convIds = Set(convId2), folderType =  FolderData.CustomFolderType)
 
       // when
@@ -634,11 +647,9 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       // given
       val favId = FolderId()
       val customId = FolderId()
-      val convId1 = ConvId()
       val (folder1, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
       sendEvent(event1)
 
-      val convId2 = ConvId()
       val (folder2, event2) = generateEventAddFolder(event1, folderId = customId, name = "Custom", convIds = Set(convId2), folderType = FolderData.CustomFolderType)
       sendEvent(event2)
 
@@ -660,11 +671,9 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       // given
       val favId = FolderId()
       val customId = FolderId()
-      val convId1 = ConvId()
       val (folder1, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
       sendEvent(event1)
 
-      val convId2 = ConvId()
       val (folder2, event2) = generateEventAddFolder(event1, folderId = customId, name = "Custom", convIds = Set(convId2), folderType = FolderData.CustomFolderType)
       sendEvent(event2)
 
@@ -688,7 +697,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
                                      convIds: Set[ConvId] = Set.empty,
                                      folderType: Int      = FolderData.FavouritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
-    (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str)).toSeq))))
+    (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
 
   private def generateEventAddFolder(oldEvent: FoldersEvent,
@@ -697,7 +706,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
                                      convIds: Set[ConvId] = Set.empty,
                                      folderType: Int      = FolderData.FavouritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
-    (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str)).toSeq))))
+    (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
 
   private def sendEvent(event: FoldersEvent) = {
@@ -711,10 +720,132 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val test = for {
       before <- getState
-      _      <- service.processEvent(event)
+      _      <- service.processFolders(event.folders)
       after  <- getState
     } yield (before, after)
 
     Await.result(test, 500.millis)
+  }
+
+  feature("encoding request") {
+    scenario("with favourites") {
+
+      // given
+      val convId1 = RConvId("c1")
+      val convId2 = RConvId("c2")
+      val folderId1 = FolderId("f1")
+      val favouritesId = FolderId("fav")
+      val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
+      val folderFavorites = FolderData(favouritesId, "FAV", FolderData.FavouritesFolderType)
+      val payload = List(
+        RemoteFolderData(folder1, Set(convId1, convId2)),
+        RemoteFolderData(folderFavorites, Set(convId2))
+      )
+
+      // when
+      val json = payload.asJson.noSpaces
+
+      // then
+      json shouldEqual """[
+                         |  {
+                         |    "id" : "f1",
+                         |    "name" : "F1",
+                         |    "type" : 0,
+                         |    "conversations" : [
+                         |      "c1",
+                         |      "c2"
+                         |    ]
+                         |  },
+                         |  {
+                         |    "id" : "fav",
+                         |    "name" : "FAV",
+                         |    "type" : 1,
+                         |    "conversations" : [
+                         |      "c2"
+                         |    ]
+                         |  }]
+                       """.stripMargin.replaceAll("\\s","")
+    }
+  }
+
+  feature("decoding payload") {
+    scenario ("with favourites") {
+
+      // given
+      val payload = """[
+        {
+          "name" : "F1",
+          "type" : 0,
+          "id" : "f1",
+          "conversations" : [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "name" : "FAV",
+          "type" : 1,
+          "id" : "fav",
+          "conversations" : [
+            "c2"
+          ]
+        }]"""
+
+      // when
+      val seq = decode[Seq[IntermediateFolderData]](payload) match {
+        case Right(fs)   => fs.map(_.toRemoteFolderData)
+        case Left(error) => fail(error.getMessage)
+      }
+
+      // then
+      seq(0).folderData.name shouldEqual Name("F1")
+      seq(0).folderData.id shouldEqual FolderId("f1")
+      seq(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      seq(0).conversations shouldEqual Set(RConvId("c1"), RConvId("c2"))
+
+      seq(1).folderData.name shouldEqual Name("FAV")
+      seq(1).folderData.id shouldEqual FolderId("fav")
+      seq(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      seq(1).conversations shouldEqual Set(RConvId("c2"))
+    }
+
+    scenario ("favourites with no name") {
+
+      // given
+      val payload = """[
+        {
+          "name" : "F1",
+          "type" : 0,
+          "id" : "f1",
+          "conversations" : [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "type" : 1,
+          "id" : "fav",
+          "conversations" : [
+            "c2"
+          ]
+        }]"""
+
+      // when
+      val seq = decode[Seq[IntermediateFolderData]](payload) match {
+        case Right(fs)   => fs.map(_.toRemoteFolderData)
+        case Left(error) => fail(error.getMessage)
+      }
+
+      // then
+      seq(0).folderData.name shouldEqual Name("F1")
+      seq(0).folderData.id shouldEqual FolderId("f1")
+      seq(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      seq(0).conversations shouldEqual Set(RConvId("c1"), RConvId("c2"))
+
+      seq(1).folderData.name shouldEqual Name("")
+      seq(1).folderData.id shouldEqual FolderId("fav")
+      seq(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      seq(1).conversations shouldEqual Set(RConvId("c2"))
+    }
   }
 }

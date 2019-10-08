@@ -80,6 +80,8 @@ object SyncRequest {
   case object SyncClientsLocation extends BaseRequest(Cmd.SyncClientLocation)
   case object SyncTeam            extends BaseRequest(Cmd.SyncTeam)
   case object SyncProperties      extends BaseRequest(Cmd.SyncProperties)
+  case object PostFolders         extends BaseRequest(Cmd.PostFolders)
+  case object SyncFolders         extends BaseRequest(Cmd.SyncFolders)
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
@@ -326,7 +328,7 @@ object SyncRequest {
     case _ => Unchanged
   }
 
-  implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest] with StorageCodecs {
+    implicit lazy val Decoder: JsonDecoder[SyncRequest] = new JsonDecoder[SyncRequest] with StorageCodecs {
     import JsonDecoder._
 
     override def apply(implicit js: JSONObject): SyncRequest = {
@@ -389,6 +391,8 @@ object SyncRequest {
           case Cmd.PostIntProperty           => PostIntProperty('key, 'value)
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
+          case Cmd.PostFolders               => PostFolders
+          case Cmd.SyncFolders               => SyncFolders
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -502,7 +506,7 @@ object SyncRequest {
         case PostStringProperty(key, value) =>
           o.put("key", key)
           o.put("value", value)
-        case SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
+        case PostFolders | SyncFolders | SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
       }
     }
