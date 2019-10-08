@@ -1394,5 +1394,5 @@
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
 
     <string name="conversation_folder_name_group">Groups</string>
-    <string name="conversation_folder_name_one_to_one">Contacts</string>
+    <string name="conversation_folder_name_one_to_one">People</string>
 </resources>
