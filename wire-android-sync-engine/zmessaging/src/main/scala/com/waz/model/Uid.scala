@@ -26,7 +26,6 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.wrappers.URI
 import com.waz.utils.{JsonDecoder, JsonEncoder}
-import io.circe.{Encoder, Decoder}
 import org.json.JSONObject
 
 trait Id[A] extends Ordering[A] {
@@ -211,9 +210,6 @@ object ConvId extends (String => ConvId) {
     override def random(): ConvId = ConvId(Uid().toString)
     override def decode(str: String): ConvId = ConvId(str)
   }
-
-  implicit val idEncoder: Encoder[ConvId] = Encoder.encodeString.contramap(_.str)
-  implicit val iIdDecoder: Decoder[ConvId] = Decoder.decodeString.map(ConvId(_))
 }
 
 case class RConvId(str: String) {
@@ -228,9 +224,6 @@ object RConvId {
     override def random(): RConvId = RConvId(Uid().toString)
     override def decode(str: String): RConvId = RConvId(str)
   }
-
-  implicit val idEncoder: Encoder[RConvId] = Encoder.encodeString.contramap(_.str)
-  implicit val iIdDecoder: Decoder[RConvId] = Decoder.decodeString.map(RConvId(_))
 }
 
 case class SyncId(str: String) extends SafeToLog {
@@ -370,7 +363,4 @@ object FolderId extends (String => FolderId) {
     override def random(): FolderId = FolderId(Uid().toString)
     override def decode(str: String): FolderId = FolderId(str)
   }
-
-  implicit val idEncoder: Encoder[FolderId] = Encoder.encodeString.contramap(_.str)
-  implicit val iIdDecoder: Decoder[FolderId] = Decoder.decodeString.map(FolderId(_))
 }

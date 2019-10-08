@@ -29,7 +29,7 @@ import com.waz.threading.Threading
 import com.waz.utils.{JsonDecoder, JsonEncoder, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import io.circe.Encoder
-import org.json.JSONObject
+import org.json.{JSONArray, JSONObject}
 
 import scala.concurrent.Future
 
@@ -231,14 +231,9 @@ case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
 
 object RemoteFolderData {
 
-  lazy implicit val folderDataConversationsEncoder = new JsonEncoder[RemoteFolderData] with StorageCodecs {
-    override def apply(v: RemoteFolderData): JSONObject = JsonEncoder { o =>
-      o.put("name", v.folderData.name)
-      o.put("type", v.folderData.folderType)
-      o.put("id", v.folderData.id)
-      o.put("conversations", JsonEncoder.arrString(v.conversations.map(_.str).toList))
-    }
-  }
+  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
+    "name", "type", "id", "conversations"
+  )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations.map(_.str)))
 
   implicit val remoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
     override def apply(implicit js: JSONObject): RemoteFolderData = {

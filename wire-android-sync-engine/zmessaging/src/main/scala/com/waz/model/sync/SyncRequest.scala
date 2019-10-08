@@ -392,6 +392,7 @@ object SyncRequest {
           case Cmd.PostStringProperty        => PostStringProperty('key, 'value)
           case Cmd.SyncProperties            => SyncProperties
           case Cmd.PostFolders               => PostFolders
+          case Cmd.SyncFolders               => SyncFolders
           case Cmd.Unknown                   => Unknown
         }
       } catch {

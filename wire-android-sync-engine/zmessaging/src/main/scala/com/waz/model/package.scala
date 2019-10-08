@@ -48,9 +48,6 @@ package object model {
     implicit def toNameString(name: Name): String = name.str
     implicit def fromNameString(str: String): Name = Name(str)
     val Empty = Name("")
-
-    implicit val encoder: Encoder[Name] = Encoder.encodeString.contramap(_.str)
-    implicit val decoder: Decoder[Name] = Decoder.decodeString.map(Name(_))
   }
 
   trait ProtoDecoder[A <: MessageNano] {

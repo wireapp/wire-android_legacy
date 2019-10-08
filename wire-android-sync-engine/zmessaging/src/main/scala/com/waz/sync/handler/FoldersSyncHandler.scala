@@ -18,7 +18,7 @@
 
 package com.waz.sync.handler
 
-import com.waz.service.conversation.{FoldersService}
+import com.waz.service.conversation.FoldersService
 import com.waz.sync.SyncResult
 import com.waz.sync.client.PropertiesClient
 import com.waz.threading.Threading
