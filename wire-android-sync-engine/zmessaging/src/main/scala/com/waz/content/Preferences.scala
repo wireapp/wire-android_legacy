@@ -33,7 +33,7 @@ import com.waz.sync.client.OAuth2Client.RefreshToken
 import com.waz.threading.{DispatchQueue, SerialDispatchQueue, Threading}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.events.{Signal, SourceSignal}
-import com.waz.utils.{CachedStorageImpl, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
+import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
 import com.waz.zms.BuildConfig
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
@@ -150,6 +150,20 @@ object Preferences {
       implicit lazy val PhoneNumberCodec = apply[PhoneNumber](_.str, PhoneNumber(_), PhoneNumber(""))
 
       implicit lazy val UserInfoCodec = apply[UserInfo](JsonEncoder.encode(_).toString, JsonDecoder.decode[UserInfo], null.asInstanceOf[UserInfo])
+
+      implicit lazy val ConversationFoldersUiStateCodec = apply[Map[Uid, Boolean]](ConversationFoldersUiState.encode, ConversationFoldersUiState.decode, Map.empty)
+
+      object ConversationFoldersUiState extends CirceJSONSupport {
+        import io.circe.{Decoder, Encoder, ObjectEncoder, parser}
+
+        lazy val encoder: ObjectEncoder[Map[Uid, Boolean]] = Encoder.encodeMap[Uid, Boolean]
+        lazy val decoder: Decoder[Map[Uid, Boolean]] = Decoder.decodeMap[Uid, Boolean]
+
+        def encode(o: Map[Uid, Boolean]): String = encoder(o).toString()
+
+        def decode(json: String): Map[Uid, Boolean] =
+          parser.decode(json)(decoder).right.toOption.getOrElse(Map.empty)
+      }
     }
   }
 
@@ -469,4 +483,5 @@ object UserPreferences {
   lazy val AskedForLocationPermission       = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
 
   lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
+  lazy val ConversationFoldersUiState       = PrefKey[Map[Uid, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
 }
