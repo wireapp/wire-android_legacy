@@ -102,6 +102,8 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant
     favoriteConvIds     <- convListController.favoriteConversations.map(convs => convs.map(_.id))
+    customFolderId      <- Signal.future(convListController.getCustomFolderId(convId))
+    customFolderData    <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -147,6 +149,8 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }
+
+        customFolderData.fold(builder += MoveToFolder)(_ => builder += RemoveFromFolder)
     }
     builder.result().toSeq.sortWith {
       case (a, b) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(b)) < 0
@@ -297,6 +301,8 @@ object ConversationOptionsMenuController {
   //FIXME: use correct icons
   object AddToFavorites      extends BaseMenuItem(R.string.conversation__action__add_to_favorites, Some(R.string.glyph__add))
   object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__delete_me))
+  object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__leave))
+  object RemoveFromFolder    extends BaseMenuItem(R.string.conversation__action__remove_from_folder, Some(R.string.glyph__leave))
   object Delete              extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
@@ -308,6 +314,6 @@ object ConversationOptionsMenuController {
   object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
   object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
-  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, Delete, Leave, Block, Unblock,
-    RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
+  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder, RemoveFromFolder,
+    Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 }

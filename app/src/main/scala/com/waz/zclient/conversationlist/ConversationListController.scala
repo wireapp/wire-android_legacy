@@ -155,6 +155,13 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     _       <- if (convs.isEmpty) service.removeFolder(folderId, true) else Future.successful(())
   } yield ()
 
+  def getCustomFolderId(convId: ConvId) : Future[Option[FolderId]] = for {
+    service       <- foldersService.head
+    folders       <- service.foldersForConv(convId)
+    favId         <- favouritesFolderId.head
+    customFolderId = folders.find(id => favId.fold(true)(fId => fId != id))
+  } yield customFolderId
+
   def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
