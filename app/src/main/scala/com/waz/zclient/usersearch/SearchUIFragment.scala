@@ -376,7 +376,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
         R.anim.open_new_conversation__thread_list_out,
         R.anim.open_new_conversation__thread_list_in,
         R.anim.slide_out_to_bottom_pick_user)
-      .replace(R.id.fl__conversation_list_main, new CreateConversationManagerFragment, CreateConversationManagerFragment.Tag)
+      .replace(R.id.fl__conversation_list_main, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
       .addToBackStack(CreateConversationManagerFragment.Tag)
       .commit()
   }
