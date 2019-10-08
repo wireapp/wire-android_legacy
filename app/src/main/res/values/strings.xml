@@ -255,6 +255,8 @@
     <string name="conversation__action__block">Block…</string>
     <string name="conversation__action__unblock">Unblock</string>
     <string name="conversation__action__remove_member">Remove from group…</string>
+    <string name="conversation__action__add_to_favorites">Add to Favorites</string>
+    <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
 
     <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -1392,4 +1394,7 @@
 
     <string name="invalid_cookie_dialog_title">Your session expired</string>
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
+
+    <string name="conversation_folder_name_group">Groups</string>
+    <string name="conversation_folder_name_one_to_one">Contacts</string>
 </resources>

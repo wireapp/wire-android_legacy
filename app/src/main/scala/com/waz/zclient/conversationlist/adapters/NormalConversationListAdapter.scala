@@ -17,62 +17,19 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
-import android.view.ViewGroup
-import com.waz.model.{ConversationData, UserId}
+import com.waz.model.{ConvId, ConversationData}
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
-import com.waz.zclient.log.LogUI._
 
 class NormalConversationListAdapter extends ConversationListAdapter {
 
-  setHasStableIds(true)
+  def setData(convs: Seq[ConversationData], incoming: Seq[ConvId]): Unit = {
+    items = List.empty
+    
+    if (incoming.nonEmpty) {
+      items = List(Item.IncomingRequests(incoming.head, incoming.size))
+    }
 
-  private var conversations = Seq.empty[ConversationData]
-
-  // `FIXME: This data could be simplified. We only care about the number of user ids, and
-  // we will only user the first conversation data object in order to present the ConnectRequestFragment
-  // when the incoming row is tapped. I think it would be better to just pass an int here, and handle
-  // the tap differently to make the ConnectRequestFragment appear.
-  private var incomingRequests = (Seq.empty[ConversationData], Seq.empty[UserId])
-
-  def setData(convs: Seq[ConversationData], incoming: (Seq[ConversationData], Seq[UserId])): Unit = {
-    conversations = convs
-    incomingRequests = incoming
+    items ++= convs.map { data => Item.Conversation(data) }
     notifyDataSetChanged()
-  }
-
-  // Getters
-
-  private def getConversation(position: Int): Option[ConversationData] = conversations.lift(position)
-
-  private def getItem(position: Int): Option[ConversationData] = incomingRequests._2 match {
-    case Seq() => getConversation(position)
-    case _ => if (position == 0) None else getConversation(position - 1)
-  }
-
-  override def getItemCount: Int = {
-    val incoming = if (incomingRequests._2.nonEmpty) 1 else 0
-    conversations.size + incoming
-  }
-
-  override def getItemId(position: Int): Long = getItem(position).fold(position)(_.id.str.hashCode)
-
-  override def getItemViewType(position: Int): Int =
-    if (position == 0 && incomingRequests._2.nonEmpty) IncomingViewType
-    else NormalViewType
-
-  // View management
-
-  override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
-    case NormalViewType => ViewHolderFactory.newNormalConversationRowViewHolder(this, parent)
-    case IncomingViewType => ViewHolderFactory.newIncomingConversationRowViewHolder(this, parent)
-  }
-
-  override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = holder match {
-    case normalViewHolder: NormalConversationRowViewHolder =>
-      getItem(position).fold(error(l"Conversation not found at position: $position")) { item =>
-        normalViewHolder.bind(item)
-      }
-    case incomingViewHolder: IncomingConversationRowViewHolder =>
-      incomingViewHolder.bind(incomingRequests)
   }
 }
