@@ -34,7 +34,8 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.conversationlist.ConversationListController.{Archive, Folders, ListMode, Normal}
+import com.waz.zclient.conversationlist.ConversationListController._
+import com.waz.zclient.conversationlist.ConversationListFragment.{FolderState, FoldersUiState}
 import com.waz.zclient.conversationlist.adapters.{ArchiveConversationListAdapter, ConversationFolderListAdapter, ConversationListAdapter, NormalConversationListAdapter}
 import com.waz.zclient.conversationlist.views.{ArchiveTopToolbar, ConversationListTopToolbar, NormalTopToolbar}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -52,12 +53,16 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHolder}
 
+import scala.concurrent.Future
+
 /**
   * Due to how we use the NormalConversationListFragment - it gets replaced by the ArchiveConversationListFragment or
   * PickUserFragment, thus destroying its views - we have to be careful about when assigning listeners to signals and
   * trying to instantiate things in onViewCreated - be careful to tear them down again.
   */
 abstract class ConversationListFragment extends BaseFragment[ConversationListFragment.Container] with FragmentHelper {
+
+  import com.waz.threading.Threading.Implicits.Ui
 
   val layoutId: Int
   lazy val accounts               = inject[AccountsService]
@@ -67,6 +72,9 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   lazy val screenController       = inject[IConversationScreenController]
   lazy val pickUserController     = inject[IPickUserController]
   lazy val convListController     = inject[ConversationListController]
+
+  private lazy val userPreferences = inject[Signal[UserPreferences]]
+  private var foldersUiState: FoldersUiState = Map.empty
 
   protected var subs = Set.empty[Subscription]
   protected val adapterMode: ListMode
@@ -90,12 +98,16 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    conversationListView.foreach { lv =>
-      lv.setLayoutManager(new LinearLayoutManager(getContext))
-      lv.setAdapter(adapter)
-      lv.setAllowSwipeAway(true)
-      lv.setOverScrollMode(View.OVER_SCROLL_NEVER)
-      lv.addOnScrollListener(conversationsListScrollListener)
+    for {
+      _ <- loadFoldersUiState()
+    } yield {
+      conversationListView.foreach { lv =>
+        lv.setLayoutManager(new LinearLayoutManager(getContext))
+        lv.setAdapter(adapter)
+        lv.setAllowSwipeAway(true)
+        lv.setOverScrollMode(View.OVER_SCROLL_NEVER)
+        lv.addOnScrollListener(conversationsListScrollListener)
+      }
     }
   }
 
@@ -103,6 +115,11 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     conversationListView.foreach(_.removeOnScrollListener(conversationsListScrollListener))
     subs.foreach(_.destroy())
     super.onDestroyView()
+  }
+
+  override def onStop(): Unit = {
+    super.onStop()
+    storeFoldersUiState()
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
@@ -137,8 +154,9 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
           oneToOnes <- convListController.oneToOneConvsWithoutFolder
         } yield (incoming, groups, oneToOnes)
 
+        // TODO: Here we can prune the states, or we do it in the adapter
         dataSource.onUi { case (incoming, groups, oneToOnes) =>
-          a.setData(incoming, groups, oneToOnes)
+          a.setData(incoming, groups, oneToOnes, foldersUiState)
         }
       }
     case Archive =>
@@ -162,6 +180,27 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
       if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
         screenController.showConversationMenu(true, conv.id)
     }
+
+    adapter.onFolderStateChanged(updateFolderState)
+  }
+
+  def updateFolderState(folderState: FolderState): Unit = {
+    foldersUiState += folderState.id -> folderState.isExpanded
+  }
+
+  private def loadFoldersUiState(): Future[Unit] = {
+    for {
+      prefs  <- userPreferences.head
+      states <- prefs(UserPreferences.ConversationFoldersUiState).apply()
+    } yield {
+      foldersUiState = states
+    }
+  }
+
+  private def storeFoldersUiState(): Unit = {
+    userPreferences.head.foreach { prefs =>
+      prefs(UserPreferences.ConversationFoldersUiState).update(foldersUiState)
+    }
   }
 }
 
@@ -176,6 +215,9 @@ object ConversationListFragment {
   def newNormalInstance(): ConversationListFragment = new NormalConversationFragment()
   def newArchiveInstance(): ConversationListFragment = new ArchiveListFragment()
   def newFoldersInstance(): ConversationListFragment = new ConversationFolderListFragment()
+
+  type FoldersUiState = Map[Uid, Boolean]
+  case class FolderState(id: Uid, isExpanded: Boolean)
 }
 
 class ArchiveListFragment extends ConversationListFragment with OnBackPressedListener {

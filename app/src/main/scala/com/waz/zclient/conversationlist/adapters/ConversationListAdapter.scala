@@ -24,6 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, Uid}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
+import com.waz.zclient.conversationlist.ConversationListFragment.FolderState
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, ConversationListRow, IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.log.LogUI._
@@ -39,6 +40,7 @@ abstract class ConversationListAdapter
 
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
+  val onFolderStateChanged: SourceStream[FolderState] = EventStream[FolderState]()
 
   protected var items: List[Item] = List.empty
   protected var maxAlpha = 1.0f

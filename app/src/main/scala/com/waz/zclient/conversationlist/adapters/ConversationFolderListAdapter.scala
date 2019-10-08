@@ -21,6 +21,8 @@ import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, Uid}
 import com.waz.zclient.R
+import com.waz.zclient.conversationlist.ConversationListFragment.{FolderState, FoldersUiState}
+import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 import com.waz.zclient.utils.ContextUtils.getString
@@ -34,14 +36,14 @@ class ConversationFolderListAdapter(implicit context: Context)
 
   private var folders = Seq.empty[Folder]
 
-  def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Unit = {
+  def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData], folderStates: FoldersUiState): Unit = {
     var newItems = List.empty[Item]
 
     if (incoming.nonEmpty) {
       newItems ::= Item.IncomingRequests(incoming.head, incoming.size)
     }
 
-    folders = calculateFolders(groups, oneToOnes)
+    folders = calculateFolders(groups, oneToOnes, folderStates)
 
     newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
       val header = Item.Header(next.id, next.title, next.isExpanded)
@@ -52,11 +54,23 @@ class ConversationFolderListAdapter(implicit context: Context)
     updateList(newItems)
   }
 
-  private def calculateFolders(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
-    Seq(
-      new Folder(Uid("Group"), getString(R.string.conversation_folder_name_group), groups.map(data => Item.Conversation(data)).toList),
-      new Folder(Uid("Contacts"), getString(R.string.conversation_folder_name_one_to_one), oneToOnes.map(data => Item.Conversation(data)).toList)
-    )
+  private def calculateFolders(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData], folderStates: FoldersUiState): Seq[Folder] = {
+    val groupsFolder = {
+      val isExpanded = folderStates.getOrElse(GroupId, true)
+      createFolder(GroupId, R.string.conversation_folder_name_group, groups, isExpanded)
+    }
+
+    val peopleFolder = {
+      val isExpanded = folderStates.getOrElse(OneToOnesId, true)
+      createFolder(OneToOnesId, R.string.conversation_folder_name_one_to_one, oneToOnes, isExpanded)
+    }
+
+    Seq(groupsFolder, peopleFolder).flatten
+  }
+
+  private def createFolder(id: Uid, titleResId: Int, conversations: Seq[ConversationData], isExpanded: Boolean): Option[Folder] = {
+    if (conversations.nonEmpty) Some(Folder(id, getString(titleResId), conversations, isExpanded))
+    else None
   }
 
   override def onClick(position: Int): Unit = items(position) match {
@@ -81,6 +95,7 @@ class ConversationFolderListAdapter(implicit context: Context)
       items = beforeHeader ++ (newHeader :: toModify.drop(numberOfConversations + 1))
       notifyItemChanged(headerPosition)
       notifyItemRangeRemoved(positionAfterHeader, numberOfConversations)
+      onFolderStateChanged ! FolderState(folder.id, folder.isExpanded)
     }
   }
 
@@ -95,6 +110,7 @@ class ConversationFolderListAdapter(implicit context: Context)
       items = beforeHeader ++ (newHeader :: folder.conversations ++ toModify.drop(1))
       notifyItemChanged(headerPosition)
       notifyItemRangeInserted(positionAfterHeader, folder.conversations.size)
+      onFolderStateChanged ! FolderState(folder.id, folder.isExpanded)
     }
   }
 
@@ -104,4 +120,17 @@ class ConversationFolderListAdapter(implicit context: Context)
 object ConversationFolderListAdapter {
 
   class Folder(val id: Uid, var title: String, val conversations: List[Item.Conversation], var isExpanded: Boolean = true)
+
+  object Folder {
+
+    val GroupId = Uid("Groups")
+    val OneToOnesId = Uid("OneToOnes")
+
+    def apply(id: Uid, title: String, conversations: Seq[ConversationData], isExpanded: Boolean): Folder = {
+      new Folder(id, title, conversations.map(data => Item.Conversation(data)).toList, isExpanded)
+    }
+
+
+  }
+
 }
