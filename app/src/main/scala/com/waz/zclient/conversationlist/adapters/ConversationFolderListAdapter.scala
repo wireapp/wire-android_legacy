@@ -60,12 +60,12 @@ class ConversationFolderListAdapter(implicit context: Context)
       createFolder(GroupId, R.string.conversation_folder_name_group, groups, isExpanded)
     }
 
-    val peopleFolder = {
+    val oneToOnesFolder = {
       val isExpanded = folderStates.getOrElse(OneToOnesId, true)
       createFolder(OneToOnesId, R.string.conversation_folder_name_one_to_one, oneToOnes, isExpanded)
     }
 
-    Seq(groupsFolder, peopleFolder).flatten
+    Seq(groupsFolder, oneToOnesFolder).flatten
   }
 
   private def createFolder(id: Uid, titleResId: Int, conversations: Seq[ConversationData], isExpanded: Boolean): Option[Folder] = {
