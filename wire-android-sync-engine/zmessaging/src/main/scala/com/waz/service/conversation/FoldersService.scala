@@ -19,17 +19,14 @@ package com.waz.service.conversation
 
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.content.ConversationStorage
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
 import com.waz.sync.SyncServiceHandle
-import com.waz.content.{ConversationFoldersStorage, FoldersStorage}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
-import com.waz.utils.{JsonDecoder, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
+import com.waz.utils.{JsonDecoder, RichFuture}
 import io.circe.{Decoder, Encoder}
 import org.json.JSONObject
 
@@ -47,7 +44,7 @@ trait FoldersService {
 
   def favouritesFolderId: Signal[Option[FolderId]]
   def folders: Future[Seq[FolderData]]
-  def addFolder(folderName: Name): Future[FolderId]
+  def addFolder(folderName: Name, convIds: Set[ConvId]): Future[FolderId]
   def removeFolder(folderId: FolderId): Future[Unit]
   def ensureFavouritesFolder(): Future[FolderId]
   def removeFavouritesFolder(): Future[Unit]
@@ -125,18 +122,26 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     } yield favoriteFolderId
 
 
-  override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] =
-    conversationFoldersStorage.put(convId, folderId)
+  override def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit] = for {
+    _ <- conversationFoldersStorage.put(convId, folderId)
+    _ <- sync.postFolders()
+  } yield ()
 
-  private def addAllConversationsTo(convIds: Set[ConvId], folderId: FolderId): Future[Unit] =
-    conversationFoldersStorage.insertAll(convIds.map(id => ConversationFolderData(id, folderId))).map(_ => ())
 
-  override def removeConversationFrom(convId: ConvId, folderId: FolderId): Future[Unit] =
-    conversationFoldersStorage.remove((convId, folderId))
+  private def addAllConversationsTo(convIds: Set[ConvId], folderId: FolderId): Future[Unit] = for {
+    _ <- conversationFoldersStorage.insertAll(convIds.map(id => ConversationFolderData(id, folderId))).map(_ => ())
+    _ <- sync.postFolders()
+  } yield ()
+
+  override def removeConversationFrom(convId: ConvId, folderId: FolderId): Future[Unit] = for {
+    _ <- conversationFoldersStorage.remove((convId, folderId))
+    _ <- sync.postFolders()
+  } yield ()
 
   override def removeConversationFromAll(convId: ConvId): Future[Unit] = for {
     allFolders <- foldersForConv(convId)
     _ <- conversationFoldersStorage.removeAll(allFolders.map((convId, _)))
+    _ <- sync.postFolders()
   } yield ()
 
   override def foldersForConv(convId: ConvId): Future[Set[FolderId]] =
@@ -151,19 +156,21 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def folder(folderId: FolderId): Signal[Option[FolderData]] =
     foldersStorage.optSignal(folderId)
 
-  override def addFolder(folderName: Name): Future[FolderId] = {
-    addFolder(folderName, FolderData.CustomFolderType)
-  }
+  override def addFolder(folderName: Name, convIds: Set[ConvId]): Future[FolderId] = for {
+    folderId <- addFolder(folderName, FolderData.CustomFolderType)
+    _        <- addAllConversationsTo(convIds, folderId) // this will sync too
+  } yield folderId
 
-  private def addFolder(folderName: Name, folderType: Int): Future[FolderId] = {
-    val folder = FolderData(name = folderName, folderType = folderType)
-    foldersStorage.put(folder.id, folder).map(_.id)
-  }
+  private def addFolder(folderName: Name, folderType: Int): Future[FolderId] = for {
+    folder    <- Future.successful(FolderData(name = folderName, folderType = folderType))
+    folderId  <- foldersStorage.put(folder.id, folder).map(_.id)
+  } yield folderId
 
   override def removeFolder(folderId: FolderId): Future[Unit] = for {
     convIds <- convsInFolder(folderId)
-    _ <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
-    _ <- foldersStorage.remove(folderId)
+    _       <- conversationFoldersStorage.removeAll(convIds.map((_, folderId)))
+    _       <- foldersStorage.remove(folderId)
+    _       <- sync.postFolders()
   } yield ()
 
   override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.head.flatMap {
@@ -176,8 +183,10 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     case None => Future.successful(())
   }
 
-  override def update(folderId: FolderId, folderName: Name): Future[Unit] =
-    foldersStorage.update(folderId, _.copy(name = folderName)).map(_ => ())
+  override def update(folderId: FolderId, folderName: Name): Future[Unit] = for {
+    _ <- foldersStorage.update(folderId, _.copy(name = folderName)).map(_ => ())
+    _ <- sync.postFolders()
+  } yield ()
 
   override def folders: Future[Seq[FolderData]] = foldersStorage.list()
 
