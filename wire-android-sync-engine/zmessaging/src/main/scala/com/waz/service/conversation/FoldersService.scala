@@ -23,19 +23,18 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.EventScheduler
 import com.waz.service.EventScheduler.Stage
-import com.waz.service.assets2.StorageCodecs
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
-import com.waz.utils.{JsonDecoder, JsonEncoder, RichFuture}
+import com.waz.utils.{JsonDecoder, RichFuture}
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
-import io.circe.Encoder
-import org.json.{JSONArray, JSONObject}
+import io.circe.{Decoder, Encoder}
+import org.json.JSONObject
 
 import scala.concurrent.Future
 
 trait FoldersService {
   def eventProcessingStage: EventScheduler.Stage
-  def processEvent(event: FoldersEvent): Future[Unit]
+  def processFolders(folders: Seq[RemoteFolderData]): Future[Unit]
 
   def addConversationTo(convId: ConvId, folderId: FolderId): Future[Unit]
   def removeConversationFrom(convId: ConvId, folderId: FolderId): Future[Unit]
@@ -77,12 +76,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   override val eventProcessingStage: Stage.Atomic = EventScheduler.Stage[FoldersEvent] { (_, events) =>
     verbose(l"Handling events: $events")
-    RichFuture.traverseSequential(events)(processEvent)
+    RichFuture.traverseSequential(events)(ev => processFolders(ev.folders))
   }
 
-  override def processEvent(event: FoldersEvent): Future[Unit] =
+  override def processFolders(folders: Seq[RemoteFolderData]): Future[Unit] =
     for {
-      newFolders      <- Future.sequence(event.folders.map { case RemoteFolderData(data, rConvIds) =>
+      newFolders      <- Future.sequence(folders.map { case RemoteFolderData(data, rConvIds) =>
                            conversationStorage.getByRemoteIds(rConvIds).map(ids => data.id -> (data, ids.toSet))
                          }).map(_.toMap)
       currentFolders  <- foldersStorage.list().map(_.map(folder => folder.id -> folder).toMap)
@@ -221,8 +220,8 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
   private def conversationDataForFolder(folder: FolderData): Future[RemoteFolderData] = for {
     convsInFolder <- convsInFolder(folder.id)
-    convData <- Future.sequence(convsInFolder.map(id => conversationStorage.get(id)))
-    convRIds = convData.flatten.map(_.remoteId)
+    convData      <- Future.sequence(convsInFolder.map(id => conversationStorage.get(id)))
+    convRIds      =  convData.flatten.map(_.remoteId)
   } yield RemoteFolderData(folder, convRIds)
 
 }
@@ -231,17 +230,30 @@ case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
 
 object RemoteFolderData {
 
-  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
-    "name", "type", "id", "conversations"
-  )(fd => (fd.folderData.name.str, fd.folderData.folderType, fd.folderData.id.str, fd.conversations.map(_.str)))
+  case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: List[String]) {
+    def toRemoteFolderData: RemoteFolderData =
+      RemoteFolderData(
+        FolderData(id = FolderId(id), name = Name(name.getOrElse("")), folderType = `type`),
+        conversations.map(RConvId(_)).toSet
+      )
+  }
 
+  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
+    "id", "name", "type", "conversations"
+  )(fd => (fd.folderData.id.str, fd.folderData.name.str, fd.folderData.folderType, fd.conversations.map(_.str)))
+
+  lazy implicit val folderDataConversationsCirceDecoder: Decoder[IntermediateFolderData] =
+    Decoder.forProduct4("id", "name", "type", "conversations")(IntermediateFolderData.apply)
+
+  // TODO: the old JSON decoder is still needed for FoldersEvent. Remove after migrating to circe.
   implicit val remoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
     override def apply(implicit js: JSONObject): RemoteFolderData = {
       import JsonDecoder._
 
       val conversations: Seq[RConvId] = decodeRConvIdSeq('conversations)
+      val name: Option[String] = decodeOptString('name)
       RemoteFolderData(
-        FolderData(decodeFolderId('id), decodeString('name), decodeInt('type)),
+        FolderData(decodeFolderId('id), Name(name.getOrElse("")), decodeInt('type)),
         conversations.toSet
       )
     }

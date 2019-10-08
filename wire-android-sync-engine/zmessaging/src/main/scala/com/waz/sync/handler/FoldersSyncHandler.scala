@@ -18,7 +18,9 @@
 
 package com.waz.sync.handler
 
+import com.waz.service.PropertyKey
 import com.waz.service.conversation.FoldersService
+import com.waz.service.conversation.RemoteFolderData.IntermediateFolderData
 import com.waz.sync.SyncResult
 import com.waz.sync.client.PropertiesClient
 import com.waz.threading.Threading
@@ -29,11 +31,18 @@ import scala.concurrent.Future
 class FoldersSyncHandler(prefsClient: PropertiesClient, foldersService: FoldersService) {
   private implicit val ec = EventContext.Global
 
-  import com.waz.znet2.http.HttpClient.AutoDerivation._
   import Threading.Implicits.Background
+  import com.waz.znet2.http.HttpClient.AutoDerivation._
 
   def postFolders(): Future[SyncResult] =
-    foldersService.foldersToSynchronize().flatMap(folders => prefsClient.putProperty("labels", folders)).map(SyncResult(_))
+    foldersService.foldersToSynchronize().flatMap(folders => prefsClient.putProperty(PropertyKey.Folders, folders)).map(SyncResult(_))
 
-  def syncFolders(): Future[SyncResult] = ???
+  def syncFolders(): Future[SyncResult] = {
+    prefsClient.getProperty[Seq[IntermediateFolderData]](PropertyKey.Folders).future.flatMap {
+      case Right(Some(folders)) =>
+        foldersService.processFolders(folders.map(_.toRemoteFolderData)).map(_ => SyncResult.Success)
+      case Right(None) => Future.successful(SyncResult.Success)
+      case Left(e) => Future.successful(SyncResult(e))
+    }
+  }
 }

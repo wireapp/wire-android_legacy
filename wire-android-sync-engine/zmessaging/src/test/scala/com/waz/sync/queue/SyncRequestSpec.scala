@@ -18,14 +18,12 @@
 package com.waz.sync.queue
 
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.{PostAssetStatus, PostFolders, RegisterPushToken}
+import com.waz.model.sync.SyncRequest.{PostAssetStatus, RegisterPushToken}
 import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.model._
 import com.waz.service.assets2.UploadAssetStatus
-import com.waz.service.conversation.FolderDataWithConversations
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncJobMerger.Merged
-import org.json.JSONObject
 
 import scala.concurrent.duration._
 
@@ -43,87 +41,4 @@ class SyncRequestSpec extends AndroidFreeSpec {
     val request = PostAssetStatus(ConvId(), MessageId(), Some(10.minutes), UploadAssetStatus.Failed)
     SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
   }
-
-//  scenario("PostFolders encoding/decoding") {
-//    //given
-//    val convId1 = ConvId("cid1")
-//    val convId2 = ConvId("cid2")
-//    val convId3 = ConvId("cid3")
-//    val folderId1 = FolderId("Fid1")
-//    val folderId2 = FolderId("Fid2")
-//    val favourites = FolderId("FAVS")
-//    val mapping = List(
-//      FolderDataWithConversations(FolderData(folderId1, "F1", FolderData.CustomFolderType), List(convId1)),
-//      FolderDataWithConversations(FolderData(folderId2, "F2", FolderData.CustomFolderType), List(convId1, convId2)),
-//      FolderDataWithConversations(FolderData(favourites, "", FolderData.FavouritesFolderType), List(convId2, convId3))
-//    )
-//
-//    // when
-//    val request = PostFolders(mapping)
-//
-//    // then
-//    SyncRequest.Decoder.apply(SyncRequest.Encoder(request)) shouldEqual request
-//
-//  }
-//
-//  scenario("PostFolders encoding") {
-//    //given
-//    val convId1 = ConvId("cid1")
-//    val convId2 = ConvId("cid2")
-//    val convId3 = ConvId("cid3")
-//    val folderId1 = FolderId("Fid1")
-//    val folderId2 = FolderId("Fid2")
-//    val favourites = FolderId("FAVS")
-//    val mapping = List(
-//      FolderDataWithConversations(FolderData(folderId1, "F1", FolderData.CustomFolderType), List(convId1)),
-//      FolderDataWithConversations(FolderData(folderId2, "F2", FolderData.CustomFolderType), List(convId1, convId2)),
-//      FolderDataWithConversations(FolderData(favourites, "", FolderData.FavouritesFolderType), List(convId2, convId3))
-//    )
-//
-//    val expectedObject = new JSONObject(
-//      """
-//        |{
-//        | "cmd": "post-folders-favourites",
-//        | "key": "labels",
-//        | "value": [
-//        |   {
-//        |     "name": "F1",
-//        |     "type": 0,
-//        |     "id": "Fid1",
-//        |     "conversations": [
-//        |       "cid1"
-//        |     ]
-//        |   },
-//        |   {
-//        |     "name": "F2",
-//        |     "type": 0,
-//        |     "id": "Fid2",
-//        |     "conversations": [
-//        |       "cid1",
-//        |       "cid2"
-//        |     ]
-//        |   },
-//        |   {
-//        |     "name": "",
-//        |     "type": 1,
-//        |     "id": "FAVS",
-//        |     "conversations": [
-//        |       "cid2",
-//        |       "cid3"
-//        |     ]
-//        |   }
-//        | ]
-//        |}
-//      """.stripMargin)
-//
-//
-//    // when
-//    val request = PostFolders(mapping)
-//
-//    // then
-//    val encoded = SyncRequest.Encoder(request)
-//    encoded.toString shouldEqual(expectedObject.toString())
-//  }
-
-
 }
