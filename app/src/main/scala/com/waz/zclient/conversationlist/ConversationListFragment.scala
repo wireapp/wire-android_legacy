@@ -154,7 +154,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
           oneToOnes <- convListController.oneToOneConvsWithoutFolder
         } yield (incoming, groups, oneToOnes)
 
-        // TODO: Here we can prune the states, or we do it in the adapter
+        // TODO: Here we will need to prune deleted folders from the folder states map.
         dataSource.onUi { case (incoming, groups, oneToOnes) =>
           a.setData(incoming, groups, oneToOnes, foldersUiState)
         }
