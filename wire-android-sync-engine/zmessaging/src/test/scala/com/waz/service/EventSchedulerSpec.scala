@@ -106,7 +106,7 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     })
 
     scenario("Stack safety")(withFixture { env => import env._
-      val events = E(1 to 1000 map (_ => randomEvent):_*)
+      val events = E(1 to 100 map (_ => randomEvent):_*)
       val scheduler = new EventScheduler(seq(_A, intr(_B, _C, par(_D, intr(_E, _F)), _G), _H))
 
       val n = numberOfScheduledEvents(scheduler.createSchedule(events))
