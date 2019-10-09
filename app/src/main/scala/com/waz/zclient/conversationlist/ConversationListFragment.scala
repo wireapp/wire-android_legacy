@@ -368,13 +368,14 @@ class ConversationFolderListFragment extends NormalConversationFragment {
     returning(new ConversationFolderListAdapter) { a =>
       val dataSource = for {
         incoming  <- convListController.incomingConversationListData
+        favorites <- convListController.favoriteConversations
         groups    <- convListController.groupConvsWithoutFolder
         oneToOnes <- convListController.oneToOneConvsWithoutFolder
-      } yield (incoming, groups, oneToOnes)
+      } yield (incoming, favorites, groups, oneToOnes)
 
       // TODO: Here we will need to prune deleted folders from the folder states map.
-      dataSource.onUi { case (incoming, groups, oneToOnes) =>
-        a.setData(incoming, groups, oneToOnes, foldersUiState)
+      dataSource.onUi { case (incoming, favorites, groups, oneToOnes) =>
+        a.setData(incoming, favorites, groups, oneToOnes, foldersUiState)
       }
 
       a.onFolderStateChanged(updateFolderState)

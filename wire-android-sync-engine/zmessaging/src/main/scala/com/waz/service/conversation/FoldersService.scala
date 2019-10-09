@@ -1,20 +1,20 @@
 /**
- * Wire
- * Copyright (C) 2019 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2019 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.service.conversation
 
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage, UserPreferences}
@@ -42,12 +42,12 @@ trait FoldersService {
   def convsInFolder(folderId: FolderId): Future[Set[ConvId]]
   def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean]
 
-  def favouritesFolderId: Signal[Option[FolderId]]
+  def favoritesFolderId: Signal[Option[FolderId]]
   def folders: Future[Seq[FolderData]]
   def addFolder(folderName: Name, uploadAllChanges: Boolean): Future[FolderId]
   def removeFolder(folderId: FolderId, uploadAllChanges: Boolean): Future[Unit]
-  def ensureFavouritesFolder(): Future[FolderId]
-  def removeFavouritesFolder(): Future[Unit]
+  def ensureFavoritesFolder(): Future[FolderId]
+  def removeFavoritesFolder(): Future[Unit]
   def update(folderId: FolderId, folderName: Name, uploadAllChanges: Boolean): Future[Unit]
 
   def foldersForConv(convId: ConvId): Future[Set[FolderId]]
@@ -82,43 +82,43 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   override def processFolders(folders: Seq[RemoteFolderData]): Future[Unit] =
     for {
       newFolders      <- Future.sequence(folders.map { case RemoteFolderData(data, rConvIds) =>
-                           conversationStorage.getByRemoteIds(rConvIds).map(ids => data.id -> (data, ids.toSet))
-                         }).map(_.toMap)
+        conversationStorage.getByRemoteIds(rConvIds).map(ids => data.id -> (data, ids.toSet))
+      }).map(_.toMap)
       currentFolders  <- foldersStorage.list().map(_.map(folder => folder.id -> folder).toMap)
       foldersToDelete =  currentFolders.keySet -- newFolders.keySet
       _               <- Future.sequence(foldersToDelete.map(removeFolder(_, false)))
       foldersToAdd    =  newFolders.filterKeys(id => !currentFolders.contains(id)).values
       _               <- Future.sequence(foldersToAdd.map { case (data, convIds) =>
-                           foldersStorage.insert(data).flatMap(_ => addAllConversationsTo(convIds, data.id, false))
-                         })
+        foldersStorage.insert(data).flatMap(_ => addAllConversationsTo(convIds, data.id, false))
+      })
       foldersToUpdate =  newFolders.collect { case (id, (data, _)) if currentFolders.contains(id) && data.name != currentFolders(id).name => data }
       _               <- Future.sequence(foldersToUpdate.map(folder => update(folder.id, folder.name, false)))
       // at this point the list of folders in newFolders should be the same as in the storage, so we can use newFolders to get currentConvs
       currentConvs    <- Future.sequence(newFolders.keys.map(id =>
-                           conversationFoldersStorage.findForFolder(id).map(convIds => id -> convIds)
-                         )).map(_.toMap)
+        conversationFoldersStorage.findForFolder(id).map(convIds => id -> convIds)
+      )).map(_.toMap)
       convsToDelete   =  currentConvs.flatMap { case (folderId, convIds) =>
-                           val convsToDelete = convIds -- newFolders(folderId)._2
-                           if (convsToDelete.nonEmpty) Some(folderId -> convsToDelete) else None
-                         }
+        val convsToDelete = convIds -- newFolders(folderId)._2
+        if (convsToDelete.nonEmpty) Some(folderId -> convsToDelete) else None
+      }
       _               <- Future.sequence(convsToDelete.flatMap { case (folderId, convIds) =>
-                           convIds.map(removeConversationFrom(_, folderId, false))
-                         })
+        convIds.map(removeConversationFrom(_, folderId, false))
+      })
       convsToAdd      =  currentConvs.flatMap { case (folderId, convIds) =>
-                           val convsToAdd = newFolders(folderId)._2 -- convIds
-                           if (convsToAdd.nonEmpty) Some(folderId -> convsToAdd) else None
-                         }
+        val convsToAdd = newFolders(folderId)._2 -- convIds
+        if (convsToAdd.nonEmpty) Some(folderId -> convsToAdd) else None
+      }
       _               <- Future.sequence(convsToAdd.flatMap { case (folderId, convIds) =>
-                           convIds.map(addConversationTo(_, folderId, false))
-                         })
+        convIds.map(addConversationTo(_, folderId, false))
+      })
     } yield ()
 
-  override def favouritesFolderId: Signal[Option[FolderId]] =
+  override def favoritesFolderId: Signal[Option[FolderId]] =
     for {
       foldersWithConvs <- foldersWithConvs
       folderDataOpt    <- Signal.sequence(foldersWithConvs.keys.toSeq.map(folder):_*)
       folderData        = folderDataOpt.flatten
-      favoriteFolderId  = folderData.find(_.folderType == FolderData.FavouritesFolderType).map(_.id)
+      favoriteFolderId  = folderData.find(_.folderType == FolderData.FavoritesFolderType).map(_.id)
     } yield favoriteFolderId
 
 
@@ -171,12 +171,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _       <- postFoldersIfNeeded(uploadAllChanges)
   } yield ()
 
-  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.head.flatMap {
+  override def ensureFavoritesFolder(): Future[FolderId] = favoritesFolderId.head.flatMap {
     case Some(x) => Future.successful(x)
-    case None => addFolder("", FolderData.FavouritesFolderType, true)
+    case None => addFolder("", FolderData.FavoritesFolderType, true)
   }
 
-  override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.head.flatMap {
+  override def removeFavoritesFolder(): Future[Unit] = favoritesFolderId.head.flatMap {
     case Some(id) => removeFolder(id, true)
     case None => Future.successful(())
   }
@@ -185,7 +185,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _ <- foldersStorage.update(folderId, _.copy(name = folderName))
     _ <- postFoldersIfNeeded(uploadAllChanges)
   } yield ()
-  
+
   private def postFoldersIfNeeded(shouldUpload: Boolean) =
     if (shouldUpload) sync.postFolders() else Future.successful(())
 

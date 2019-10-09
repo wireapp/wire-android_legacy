@@ -101,7 +101,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant
-    favoriteConvIds     <- convListController.favouriteConversations.map(convs => convs.map(_.id))
+    favoriteConvIds     <- convListController.favoriteConversations.map(convs => convs.map(_.id))
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -183,8 +183,8 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           }
         case Call      => callConversation(cId)
         case Picture   => takePictureInConversation(cId)
-        case AddToFavorites      => convListController.addToFavourites(cId)
-        case RemoveFromFavorites => convListController.removeFromFavourites(cId)
+        case AddToFavorites      => convListController.addToFavorites(cId)
+        case RemoveFromFavorites => convListController.removeFromFavorites(cId)
         case _ =>
       }
     case _ =>
