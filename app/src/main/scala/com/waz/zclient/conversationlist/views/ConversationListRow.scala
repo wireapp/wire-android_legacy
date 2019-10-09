@@ -562,8 +562,8 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   inflate(R.layout.conv_list_section_header)
   setLayoutParameters()
 
-  private val title = ViewUtils.getView(this, R.id.header_textview_title).asInstanceOf[TypefaceTextView]
-  private val expandIcon = ViewUtils.getView(this, R.id.header_imageview_expand).asInstanceOf[ImageView]
+  private val expandIcon = ViewUtils.getView(this, R.id.conv_list_section_imageview_expand).asInstanceOf[ImageView]
+  private val title = ViewUtils.getView(this, R.id.conv_list_section_textview_title).asInstanceOf[TypefaceTextView]
 
   def setTitle(title: String): Unit = this.title.setText(title)
 
