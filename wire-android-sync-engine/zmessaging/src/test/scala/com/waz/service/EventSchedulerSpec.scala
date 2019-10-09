@@ -104,6 +104,15 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
 
       events2 scheduledBy seq(_X, intr(_A, _Y, par(_B, _C, _Z)), _D) shouldEqual "seq(X01,seq(A0,Y0,A2,par(B23,C23,-),Y4,par(B46,C56,Z5),A7,par(-,C7,-),Y8),D0234567)"
     })
+
+    scenario("Stack safety")(withFixture { env => import env._
+      val events = E(1 to 100 map (_ => randomEvent):_*)
+      val scheduler = new EventScheduler(seq(_A, intr(_B, _C, par(_D, intr(_E, _F)), _G), _H))
+
+      val n = numberOfScheduledEvents(scheduler.createSchedule(events))
+      info(s"number of scheduled events: $n")
+      n should be > 0
+    })
   }
 
   feature("Executing schedules") {
@@ -130,7 +139,7 @@ class EventSchedulerSpec extends FeatureSpec with Matchers with OptionValues wit
     })
 
     scenario("Stack safety")(withFixture { env => import env._
-      val schedule = new EventScheduler(seq(_A, intr(_B, _C, par(_D, intr(_E, _F)), _G), _H)).createSchedule(E(1 to 100 map (_ => randomEvent):_*))
+      val schedule = new EventScheduler(seq(_A, intr(_B, _C, par(_D, intr(_E, _F)), _G), _H)).createSchedule(E(1 to 42000 map (_ => randomEvent):_*))
       EventScheduler.executeSchedule(conv, schedule).await()
 
       executed.get.flatMap(_._2) should have size numberOfScheduledEvents(schedule)

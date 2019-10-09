@@ -87,6 +87,9 @@ dependencies {
     compileOnly "com.softwaremill.macwire:macrosakka_$rootProject.ext.scalaMajorVersion:2.3.3"
     compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:2.3.3"
     compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly("com.google.android.gms:play-services-base:11.0.0") {
+        exclude(group: "com.android.support", module: "support-v4")
+    }
     compileOnly "com.wire:avs:3.4.100"
     compileOnly "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
     compileOnly "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
