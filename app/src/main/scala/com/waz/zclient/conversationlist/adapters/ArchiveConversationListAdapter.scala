@@ -23,7 +23,7 @@ import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 class ArchiveConversationListAdapter extends ConversationListAdapter {
 
   def setData(convs: Seq[ConversationData]): Unit = {
-    items = convs.map(data => Item.Conversation(data)).toList
-    notifyDataSetChanged()
+    val newItems = convs.map(data => Item.Conversation(data)).toList
+    updateList(newItems)
   }
 }

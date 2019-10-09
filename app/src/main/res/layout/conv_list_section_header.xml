@@ -30,6 +30,7 @@
     tools:parentTag="android.widget.LinearLayout">
 
     <ImageView
+        android:id="@+id/conv_list_section_imageview_expand"
         android:layout_width="10dp"
         android:layout_height="10dp"
         android:layout_gravity="center_vertical|start"
@@ -37,7 +38,7 @@
         android:tint="?wireSecondaryTextColor" />
 
     <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/header_textview_title"
+        android:id="@+id/conv_list_section_textview_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|start"

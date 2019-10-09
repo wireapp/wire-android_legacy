@@ -24,7 +24,7 @@ import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout.LayoutParams
-import android.widget.{FrameLayout, LinearLayout}
+import android.widget.{FrameLayout, ImageView, LinearLayout}
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -233,7 +233,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var moveToAnimator: ObjectAnimator = _
 
   def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
-    // TODO: We don't need to store all this data.
     this.conversationData = Some(conversationData)
     title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
@@ -563,7 +562,8 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   inflate(R.layout.conv_list_section_header)
   setLayoutParameters()
 
-  private val title = ViewUtils.getView(this, R.id.header_textview_title).asInstanceOf[TypefaceTextView]
+  private val expandIcon = ViewUtils.getView(this, R.id.conv_list_section_imageview_expand).asInstanceOf[ImageView]
+  private val title = ViewUtils.getView(this, R.id.conv_list_section_textview_title).asInstanceOf[TypefaceTextView]
 
   def setTitle(title: String): Unit = this.title.setText(title)
 
@@ -571,6 +571,11 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
     val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
     params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__20)
     setLayoutParams(params)
+  }
+
+  def setIsExpanded(isExpanded: Boolean): Unit = {
+    val resId = if (isExpanded) R.drawable.icon_arrow_down_white else R.drawable.icon_arrow_up_white
+    expandIcon.setImageDrawable(getDrawable(resId))
   }
 
   private def setLayoutParameters(): Unit = {

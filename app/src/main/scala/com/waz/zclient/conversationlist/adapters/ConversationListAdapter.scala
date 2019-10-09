@@ -17,10 +17,11 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
+import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData}
+import com.waz.model.{ConvId, ConversationData, Uid}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
@@ -28,6 +29,8 @@ import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, Conver
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{R, ViewHelper}
+
+import scala.collection.mutable.ListBuffer
 
 abstract class ConversationListAdapter
   extends RecyclerView.Adapter[ConversationRowViewHolder]
@@ -39,12 +42,23 @@ abstract class ConversationListAdapter
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
 
-  protected var items: List[Item] = List.empty
+  protected val items = new ListBuffer[Item]
   protected var maxAlpha = 1.0f
 
   def setMaxAlpha(maxAlpha: Float): Unit = {
     this.maxAlpha = maxAlpha
     notifyDataSetChanged()
+  }
+
+  /**
+    * Replaces the data source and updates the views of the list.
+    *
+    * @param newItems the new data source.
+    */
+  protected def updateList(newItems: List[Item]): Unit = {
+    DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
+    items.clear()
+    items.appendAll(newItems)
   }
 
   override def getItemCount: Int = items.size
@@ -57,7 +71,7 @@ abstract class ConversationListAdapter
 
   override def getItemId(position: Int): Long = items(position) match {
     case Item.IncomingRequests(first, _) => first.str.hashCode
-    case Item.Header(title)              => title.hashCode
+    case Item.Header(id, _, _)           => id.str.hashCode
     case Item.Conversation(data)         => data.id.str.hashCode
   }
 
@@ -109,7 +123,7 @@ object ConversationListAdapter {
   sealed trait Item
 
   object Item {
-    case class Header(title: String) extends Item
+    case class Header(id: Uid, title: String, isExpanded: Boolean) extends Item
     case class Conversation(data: ConversationData) extends Item
     case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item
   }
@@ -144,6 +158,7 @@ object ConversationListAdapter {
     def bind(header: Item.Header, isFirst: Boolean): Unit = {
       row.setTitle(header.title)
       row.setIsFirstHeader(isFirst)
+      row.setIsExpanded(header.isExpanded)
     }
   }
 
@@ -174,5 +189,39 @@ object ConversationListAdapter {
       val row = inflate[ConversationFolderListRow](R.layout.conv_folder_list_item, parent, addToParent = false)
       new ConversationFolderRowViewHolder(row, listener = adapter)
     }
+  }
+
+  /**
+    * A `DiffUtil.Callback` used with `DiffUtil` to efficiently update a `ConversationListAdapter`.
+    *
+    * @param oldList the current out of date list of items.
+    * @param newList the new updated list of items.
+    */
+  class DiffCallback(oldList: Seq[Item], newList: Seq[Item]) extends DiffUtil.Callback {
+    import Item._
+
+    override def getOldListSize: Int = oldList.size
+    override def getNewListSize: Int = newList.size
+
+    override def areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean = {
+      (oldList(oldItemPosition), newList(newItemPosition)) match {
+        case (lhs: Header,       rhs: Header)           => lhs.id == rhs.id
+        case (lhs: Conversation, rhs: Conversation)     => lhs.data.id == rhs.data.id
+        case (_: IncomingRequests, _: IncomingRequests) => true
+        case _                                          => false
+      }
+    }
+
+    override def areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+      (oldList(oldItemPosition), newList(newItemPosition)) match {
+        case (Header(_, title, isExpanded), Header(_, newTitle, newIsExpanded)) =>
+          title == newTitle && isExpanded && newIsExpanded
+        case (Conversation(data), Conversation(newData)) =>
+          data == newData
+        case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>
+          requests == newRequests
+        case _ =>
+          false
+      }
   }
 }
