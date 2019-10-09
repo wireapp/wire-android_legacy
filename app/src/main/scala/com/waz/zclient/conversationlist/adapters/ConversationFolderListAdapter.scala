@@ -77,8 +77,8 @@ class ConversationFolderListAdapter(implicit context: Context)
   }
 
   override def onClick(position: Int): Unit = items(position) match {
-    case _: Item.Header => collapseOrExpand(items(position).asInstanceOf[Item.Header], position)
-    case _              => super.onClick(position)
+    case header: Item.Header => collapseOrExpand(header, position)
+    case _                   => super.onClick(position)
   }
 
   private def collapseOrExpand(header: Item.Header, headerPosition: Int): Unit = {
@@ -88,36 +88,37 @@ class ConversationFolderListAdapter(implicit context: Context)
 
   private def collapseSection(header: Item.Header, headerPosition: Int): Unit = {
     folder(header.id).fold() { folder =>
+      updateHeader(header, headerPosition, isExpanded = false)
+
       val positionAfterHeader = headerPosition + 1
       val numberOfConversations = folder.conversations.size
-      val (beforeHeader, toModify) = items.splitAt(headerPosition)
-
-      val newHeader = header.copy(isExpanded = false)
-      folder.isExpanded = false
-
-      items = beforeHeader ++ (newHeader :: toModify.drop(numberOfConversations + 1))
-      notifyItemChanged(headerPosition)
+      items.remove(positionAfterHeader, numberOfConversations)
       notifyItemRangeRemoved(positionAfterHeader, numberOfConversations)
+
+      folder.isExpanded = false
       onFolderStateChanged ! FolderState(folder.id, folder.isExpanded)
     }
   }
 
   private def expandSection(header: Item.Header, headerPosition: Int): Unit = {
     folder(header.id).fold() { folder =>
+      updateHeader(header, headerPosition, isExpanded = true)
+
       val positionAfterHeader = headerPosition + 1
-      val (beforeHeader, toModify) = items.splitAt(headerPosition)
-
-      val newHeader = header.copy(isExpanded = true)
-      folder.isExpanded = true
-
-      items = beforeHeader ++ (newHeader :: folder.conversations ++ toModify.drop(1))
-      notifyItemChanged(headerPosition)
+      items.insertAll(positionAfterHeader, folder.conversations)
       notifyItemRangeInserted(positionAfterHeader, folder.conversations.size)
+
+      folder.isExpanded = true
       onFolderStateChanged ! FolderState(folder.id, folder.isExpanded)
     }
   }
 
   private def folder(id: Uid): Option[Folder] = folders.find(_.id == id)
+
+  private def updateHeader(header: Item.Header, position: Int, isExpanded: Boolean): Unit = {
+    items.update(position, header.copy(isExpanded = isExpanded))
+    notifyItemChanged(position)
+  }
 }
 
 object ConversationFolderListAdapter {
@@ -132,8 +133,5 @@ object ConversationFolderListAdapter {
     def apply(id: Uid, title: String, conversations: Seq[ConversationData], isExpanded: Boolean): Folder = {
       new Folder(id, title, conversations.map(data => Item.Conversation(data)).toList, isExpanded)
     }
-
-
   }
-
 }

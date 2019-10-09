@@ -30,6 +30,8 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{R, ViewHelper}
 
+import scala.collection.mutable.ListBuffer
+
 abstract class ConversationListAdapter
   extends RecyclerView.Adapter[ConversationRowViewHolder]
     with RowClickListener
@@ -40,7 +42,7 @@ abstract class ConversationListAdapter
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
 
-  protected var items: List[Item] = List.empty
+  protected val items = new ListBuffer[Item]
   protected var maxAlpha = 1.0f
 
   def setMaxAlpha(maxAlpha: Float): Unit = {
@@ -54,8 +56,9 @@ abstract class ConversationListAdapter
     * @param newItems the new data source.
     */
   protected def updateList(newItems: List[Item]): Unit = {
-    DiffUtil.calculateDiff(new DiffCallback(items, newItems), false).dispatchUpdatesTo(this)
-    items = newItems
+    DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
+    items.clear()
+    items.appendAll(newItems)
   }
 
   override def getItemCount: Int = items.size
