@@ -39,14 +39,19 @@ class ConversationFolderListAdapter(implicit context: Context)
 
   private var folders = Seq.empty[Folder]
 
-  def setData(incoming: Seq[ConvId], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData], folderStates: FoldersUiState): Unit = {
+  def setData(incoming: Seq[ConvId],
+              favorites: Seq[ConversationData],
+              groups: Seq[ConversationData],
+              oneToOnes: Seq[ConversationData],
+              folderStates: FoldersUiState): Unit = {
+
     var newItems = List.empty[Item]
 
     if (incoming.nonEmpty) {
       newItems ::= Item.IncomingRequests(incoming.head, incoming.size)
     }
 
-    folders = calculateFolders(groups, oneToOnes)
+    folders = calculateFolders(favorites, groups, oneToOnes)
 
     newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
       val header = Item.Header(next.id, next.title, isExpanded = folderStates.getOrElse(next.id, true))
@@ -57,10 +62,11 @@ class ConversationFolderListAdapter(implicit context: Context)
     updateList(newItems)
   }
 
-  private def calculateFolders(groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
+  private def calculateFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
+    val favoritesFolder = Folder.apply(FavouritesId, R.string.conversation_folder_name_favorites, favorites)
     val groupsFolder = Folder.apply(GroupId, R.string.conversation_folder_name_group, groups)
     val oneToOnesFolder = Folder.apply(OneToOnesId, R.string.conversation_folder_name_one_to_one, oneToOnes)
-    Seq(groupsFolder, oneToOnesFolder).flatten
+    Seq(favoritesFolder, groupsFolder, oneToOnesFolder).flatten
   }
 
   override def onClick(position: Int): Unit = items(position) match {
@@ -106,6 +112,7 @@ object ConversationFolderListAdapter {
 
   object Folder {
 
+    val FavouritesId = Uid("Favourites")
     val GroupId = Uid("Groups")
     val OneToOnesId = Uid("OneToOnes")
 
