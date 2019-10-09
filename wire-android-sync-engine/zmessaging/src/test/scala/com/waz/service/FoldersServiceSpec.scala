@@ -577,7 +577,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       val favourite = folders.find(_.folderData.id == favouriteId).get
       favourite.folderData.name.toString shouldEqual ""
-      favourite.folderData.folderType shouldEqual FolderData.favoritesFolderType
+      favourite.folderData.folderType shouldEqual FolderData.FavoritesFolderType
       favourite.conversations shouldEqual Set(RConvId(convId1.str))
     }
   }
@@ -774,7 +774,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
   private def generateEventOneFolder(folderId: FolderId   = FolderId(),
                                      name: String         = "favorites",
                                      convIds: Set[ConvId] = Set.empty,
-                                     folderType: Int      = FolderData.favoritesFolderType) = {
+                                     folderType: Int      = FolderData.FavoritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
     (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
@@ -783,7 +783,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
                                      folderId: FolderId   = FolderId(),
                                      name: String         = "favorites",
                                      convIds: Set[ConvId] = Set.empty,
-                                     folderType: Int      = FolderData.favoritesFolderType) = {
+                                     folderType: Int      = FolderData.FavoritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
     (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
@@ -815,7 +815,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val folderId1 = FolderId("f1")
       val favoritesId = FolderId("fav")
       val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
-      val folderFavorites = FolderData(favoritesId, "FAV", FolderData.favoritesFolderType)
+      val folderFavorites = FolderData(favoritesId, "FAV", FolderData.FavoritesFolderType)
       val payload = List(
         RemoteFolderData(folder1, Set(convId1, convId2)),
         RemoteFolderData(folderFavorites, Set(convId2))
@@ -884,7 +884,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       seq(1).folderData.name shouldEqual Name("FAV")
       seq(1).folderData.id shouldEqual FolderId("fav")
-      seq(1).folderData.folderType shouldEqual FolderData.favoritesFolderType
+      seq(1).folderData.folderType shouldEqual FolderData.FavoritesFolderType
       seq(1).conversations shouldEqual Set(RConvId("c2"))
     }
 
@@ -923,7 +923,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       seq(1).folderData.name shouldEqual Name("")
       seq(1).folderData.id shouldEqual FolderId("fav")
-      seq(1).folderData.folderType shouldEqual FolderData.favoritesFolderType
+      seq(1).folderData.folderType shouldEqual FolderData.FavoritesFolderType
       seq(1).conversations shouldEqual Set(RConvId("c2"))
     }
   }
