@@ -76,21 +76,16 @@ class ConversationFolderListAdapter(implicit context: Context)
   private def collapseSection(header: Item.Header, headerPosition: Int): Unit = {
     folderConversations(header.id).fold() { conversations =>
       updateHeader(header, headerPosition, isExpanded = false)
-
-      val positionAfterHeader = headerPosition + 1
-      val numberOfConversations = conversations.size
-      items.remove(positionAfterHeader, numberOfConversations)
-      notifyItemRangeRemoved(positionAfterHeader, numberOfConversations)
+      items.remove(headerPosition + 1, conversations.size)
+      notifyItemRangeRemoved(headerPosition + 1, conversations.size)
     }
   }
 
   private def expandSection(header: Item.Header, headerPosition: Int): Unit = {
     folderConversations(header.id).fold() { conversations =>
       updateHeader(header, headerPosition, isExpanded = true)
-
-      val positionAfterHeader = headerPosition + 1
-      items.insertAll(positionAfterHeader, conversations)
-      notifyItemRangeInserted(positionAfterHeader, conversations.size)
+      items.insertAll(headerPosition + 1, conversations)
+      notifyItemRangeInserted(headerPosition + 1, conversations.size)
     }
   }
 
