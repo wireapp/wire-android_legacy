@@ -91,7 +91,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                syncReqService:  SyncRequestService,
                                assetService:    AssetService,
                                receiptsStorage: ReadReceiptsStorage,
-                               notificationService: NotificationService) extends ConversationsService with DerivedLogTag {
+                               notificationService: NotificationService,
+                               foldersService:  FoldersService
+                              ) extends ConversationsService with DerivedLogTag {
 
   private implicit val ev = EventContext.Global
   import Threading.Implicits.Background
@@ -338,17 +340,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
   } yield ()
 
-  private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) = {
+  private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) =
     (for {
-      _  <- notificationService.displayNotificationForDeletingConversation(
-                                    new NotificationData(
-                                      conv = convData.id,
-                                      user = from,
-                                      msgType = NotificationType.CONVERSATION_DELETED,
-                                      time = remoteTime
-                                    ), convData
-      )
-      convId           = convData.id
+      _               <- notificationService.displayNotificationForDeletingConversation(from, remoteTime, convData)
+      convId          =  convData.id
       convMessageIds  <- messages.findMessageIds(convId)
       assetIds        <- messages.getAssetIds(convMessageIds)
       _               <- assetService.deleteAll(assetIds)
@@ -357,13 +352,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _               <- msgContent.deleteMessagesForConversation(convId)
       _               <- receiptsStorage.removeAllForMessages(convMessageIds)
       _               <- checkCurrentConversationDeleted(convId)
+      _               <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
     } yield ()).recoverWith {
       case ex : Exception =>  {
         error(l"error while deleting conversation $ex")
       }
         Future.successful(())
     }
-  }
 
   private def checkCurrentConversationDeleted(convId: ConvId): Future[Unit] = {
     for {
@@ -387,10 +382,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   } yield ()
 
   def groupConversation(convId: ConvId) =
-    convsStorage.signal(convId).map(c => (c.convType, c.name, c.team)).flatMap {
-      case (convType, _, _) if convType != ConversationType.Group => Signal.const(false)
-      case (_, Some(_), _) | (_, _, None) => Signal.const(true)
-      case _ => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
+    convsStorage.optSignal(convId).map(_.map(c => (c.convType, c.name, c.team))).flatMap {
+      case None => Signal.const(true) // the conversation might have been deleted - only group conversations can be deleted
+      case Some((convType, _, _)) if convType != ConversationType.Group => Signal.const(false)
+      case Some((_, Some(_), _)) | Some((_, _, None)) => Signal.const(true)
+      case Some(_) => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
     }
 
   def isGroupConversation(convId: ConvId) = groupConversation(convId).head

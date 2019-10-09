@@ -58,7 +58,7 @@ trait NotificationUiController {
 
 trait NotificationService {
   def dismissNotifications(forConvs: Option[Set[ConvId]] = None): Future[Unit]
-  def displayNotificationForDeletingConversation(notData: NotificationData, convData: ConversationData): Future[Unit]
+  def displayNotificationForDeletingConversation(from: UserId, time: RemoteInstant, convData: ConversationData): Future[Unit]
   val messageNotificationEventsStage : EventScheduler.Stage
   val connectionNotificationEventStage : EventScheduler.Stage
 }
@@ -140,7 +140,13 @@ class NotificationServiceImpl(selfUserId:      UserId,
     } else Future.successful({})
   })
 
-  def displayNotificationForDeletingConversation(notData: NotificationData, convData: ConversationData): Future[Unit] = {
+  override def displayNotificationForDeletingConversation(from: UserId, remoteTime: RemoteInstant, convData: ConversationData): Future[Unit] = {
+    val notData = NotificationData(
+      conv    = convData.id,
+      user    = from,
+      msgType = NotificationType.CONVERSATION_DELETED,
+      time    = remoteTime
+    )
     (for {
       Some(self)                <- userService.getSelfUser
       notificationSourceVisible <- uiController.notificationsSourceVisible.head
@@ -155,7 +161,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
   }
 
   private def allowWhileSourceIsDisplayed(notificationData: NotificationData): Boolean =
-    notificationData.msgType == CONVERSATION_DELETED
+    notificationData.isConvDeleted
 
   private def shouldShowNotification(self: UserData,
                                      n: NotificationData,
@@ -191,18 +197,23 @@ class NotificationServiceImpl(selfUserId:      UserId,
   private def pushNotificationsToUi(): Future[Unit] = {
     verbose(l"pushNotificationsToUi")
     (for {
-      Some(self)                <- userService.getSelfUser
-      toShow                    <- storage.list()
       notificationSourceVisible <- uiController.notificationsSourceVisible.head
-      convs                     <- convs.getAll(toShow.map(_.conv).toSet)
-                                        .map(_.collect { case Some(c) => c.id -> c }.toMap)
-      (show, ignore)            =  toShow.partition { n =>
-                                     shouldShowNotification(self, n, convs(n.conv), notificationSourceVisible)
-                                   }
-      _                         =  verbose(l"show: $show, ignore: $ignore")
-      _                         <- uiController.onNotificationsChanged(self.id, show.toSet)
-      _                         <- storage.insertAll(show.map(_.copy(hasBeenDisplayed = true)))
-      _                         <- storage.removeAll(ignore.map(_.id))
+      _                         = verbose(l"source: $notificationSourceVisible")
+      toShow                    <- storage.list()
+      _ = verbose(l"toShow: $toShow")
+      Some(self)                <- userService.getSelfUser
+      convsWithNots             <- Future.sequence(toShow.map(n => convs.get(n.conv).map(c => (n, c))))
+      (show, ignore)            =  convsWithNots.partition {
+                                     case (n, Some(c))                 => shouldShowNotification(self, n, c, notificationSourceVisible)
+                                     case (n, None) if n.isConvDeleted => true
+                                     case (_, None)                    => false
+                                    }
+      showNotifications         = show.map(_._1).toSet
+      ignoreNotifications       = ignore.map(_._1.id).toSet
+      _                         =  verbose(l"show: $showNotifications, ignore: $ignoreNotifications")
+      _                         <- uiController.onNotificationsChanged(self.id, showNotifications)
+      _                         <- storage.insertAll(showNotifications.map(_.copy(hasBeenDisplayed = true)))
+      _                         <- storage.removeAll(ignoreNotifications)
     } yield {}).recoverWith {
       case exception: Exception =>
         error(l"error while displaying notifications to ui $exception")
