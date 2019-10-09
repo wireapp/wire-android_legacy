@@ -182,7 +182,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
   }
 
   override def update(folderId: FolderId, folderName: Name, uploadAllChanges: Boolean): Future[Unit] = for {
-    _ <- foldersStorage.update(folderId, _.copy(name = folderName)).map(_ => ())
+    _ <- foldersStorage.update(folderId, _.copy(name = folderName))
     _ <- postFoldersIfNeeded(uploadAllChanges)
   } yield ()
   
