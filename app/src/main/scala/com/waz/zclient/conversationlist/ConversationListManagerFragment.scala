@@ -37,6 +37,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
@@ -517,7 +518,7 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def onMoveToFolder(convId: ConvId): Unit = {
-    //TODO: open new screen
+    startActivity(MoveToFolderActivity.newIntent(requireContext()))
   }
 }
 

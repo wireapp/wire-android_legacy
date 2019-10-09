@@ -206,6 +206,8 @@
             android:launchMode="singleTask">
         </activity>
 
+        <activity android:name=".conversation.folders.moveto.MoveToFolderActivity"/>
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
