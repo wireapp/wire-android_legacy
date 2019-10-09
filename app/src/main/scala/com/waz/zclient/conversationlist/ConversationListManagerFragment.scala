@@ -516,6 +516,9 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
+  override def onMoveToFolder(convId: ConvId): Unit = {
+    //TODO: open new screen
+  }
 }
 
 object ConversationListManagerFragment {

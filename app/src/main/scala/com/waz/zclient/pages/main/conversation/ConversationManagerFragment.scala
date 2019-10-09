@@ -280,6 +280,10 @@ class ConversationManagerFragment extends FragmentHelper
   override def showRemoveConfirmation(userId: UserId): Unit = {}
 
   override def onCameraNotAvailable(): Unit = {}
+
+  override def onMoveToFolder(convId: ConvId): Unit = {
+    //no-op
+  }
 }
 
 object ConversationManagerFragment {

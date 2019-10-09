@@ -150,7 +150,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }
 
-        customFolderData.fold(builder += MoveToFolder)(data => builder += RemoveFromFolder(data.name.str))
+        customFolderData.fold(builder += MoveToFolder)(data => builder += RemoveFromFolder(data))
     }
     builder.result().toSeq.sortWith {
       case (_: RemoveFromFolder, b) => OrderSeq.indexOf(MoveToFolder).compareTo(OrderSeq.indexOf(b)) < 0
@@ -191,6 +191,8 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
         case Picture   => takePictureInConversation(cId)
         case AddToFavorites      => convListController.addToFavorites(cId)
         case RemoveFromFavorites => convListController.removeFromFavorites(cId)
+        case MoveToFolder        => screenController.showMoveToFolder(cId)
+        case i: RemoveFromFolder => convListController.removeFromFolder(cId, i.folderData.id)
         case _ =>
       }
     case _ =>
@@ -293,8 +295,8 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
-  case class RemoveFromFolder(folderName: String) extends BaseMenuItem(
-    WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderName),
+  case class RemoveFromFolder(folderData: FolderData) extends BaseMenuItem(
+    WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderData.name.str),
     Some(R.string.glyph__leave) //FIXME: use correct icons
   )
 
