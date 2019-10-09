@@ -30,7 +30,7 @@ case class FolderData(override val id: FolderId = FolderId(),
 
 object FolderData {
   var CustomFolderType = 0
-  val FavoritesFolderType = 1
+  val FavouritesFolderType = 1
 
   import com.waz.db.Col._
   implicit object FolderDataDao extends Dao[FolderData, FolderId] {

@@ -41,7 +41,7 @@ class UserDataSpec extends AndroidFreeSpec {
     Some(RemoteInstant.ofEpochSec(10000)),
     Some(SSOId("foo", "bar")),
     Some(ManagedBy("wire")),
-    Some(Seq(UserField("Department", "Sales & Marketing"), UserField("Favorite color", "Blue")))
+    Some(Seq(UserField("Department", "Sales & Marketing"), UserField("Favourite color", "Blue")))
   )
 
   feature("Update from user info") {

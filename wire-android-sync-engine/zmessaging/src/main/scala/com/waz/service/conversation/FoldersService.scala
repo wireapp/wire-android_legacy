@@ -45,12 +45,12 @@ trait FoldersService {
   def convsInFolder(folderId: FolderId): Future[Set[ConvId]]
   def isInFolder(convId: ConvId, folderId: FolderId): Future[Boolean]
 
-  def favoritesFolderId: Signal[Option[FolderId]]
+  def favouritesFolderId: Signal[Option[FolderId]]
   def folders: Future[Seq[FolderData]]
   def addFolder(folderName: Name): Future[FolderId]
   def removeFolder(folderId: FolderId): Future[Unit]
-  def ensureFavoritesFolder(): Future[FolderId]
-  def removeFavoritesFolder(): Future[Unit]
+  def ensureFavouritesFolder(): Future[FolderId]
+  def removeFavouritesFolder(): Future[Unit]
   def update(folderId: FolderId, folderName: Name): Future[Unit]
 
   def foldersForConv(convId: ConvId): Future[Set[FolderId]]
@@ -116,12 +116,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
                          })
     } yield ()
 
-  override def favoritesFolderId: Signal[Option[FolderId]] =
+  override def favouritesFolderId: Signal[Option[FolderId]] =
     for {
       foldersWithConvs <- foldersWithConvs
       folderDataOpt    <- Signal.sequence(foldersWithConvs.keys.toSeq.map(folder):_*)
       folderData        = folderDataOpt.flatten
-      favoriteFolderId  = folderData.find(_.folderType == FolderData.FavoritesFolderType).map(_.id)
+      favoriteFolderId  = folderData.find(_.folderType == FolderData.FavouritesFolderType).map(_.id)
     } yield favoriteFolderId
 
 
@@ -166,12 +166,12 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
     _ <- foldersStorage.remove(folderId)
   } yield ()
 
-  override def ensureFavoritesFolder(): Future[FolderId] = favoritesFolderId.head.flatMap {
+  override def ensureFavouritesFolder(): Future[FolderId] = favouritesFolderId.head.flatMap {
     case Some(x) => Future.successful(x)
-    case None => addFolder("", FolderData.FavoritesFolderType)
+    case None => addFolder("", FolderData.FavouritesFolderType)
   }
 
-  override def removeFavoritesFolder(): Future[Unit] = favoritesFolderId.head.flatMap {
+  override def removeFavouritesFolder(): Future[Unit] = favouritesFolderId.head.flatMap {
     case Some(id) => removeFolder(id)
     case None => Future.successful(())
   }

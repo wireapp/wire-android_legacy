@@ -368,7 +368,7 @@ class ConversationFolderListFragment extends NormalConversationFragment {
     returning(new ConversationFolderListAdapter) { a =>
       val dataSource = for {
         incoming  <- convListController.incomingConversationListData
-        favorites <- convListController.favoriteConversations
+        favorites <- convListController.favouriteConversations
         groups    <- convListController.groupConvsWithoutFolder
         oneToOnes <- convListController.oneToOneConvsWithoutFolder
       } yield (incoming, favorites, groups, oneToOnes)

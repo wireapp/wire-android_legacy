@@ -169,15 +169,15 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       service
   }
 
-  feature("Favorites") {
-    scenario("adding to favorites") {
+  feature("Favourites") {
+    scenario("adding to favourites") {
 
       // given
       val service = getService
 
       // when
       val favConvs = for {
-        favId <- service.ensureFavoritesFolder()
+        favId <- service.ensureFavouritesFolder()
         _     <- service.addConversationTo(convId1, favId)
         favs  <- service.convsInFolder(favId)
       } yield favs
@@ -187,14 +187,14 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
     }
 
-    scenario("adding and removing from favorites") {
+    scenario("adding and removing from favourites") {
 
       // given
       val service = getService
 
       // when
       val favConvs = for {
-        favId <- service.ensureFavoritesFolder()
+        favId <- service.ensureFavouritesFolder()
         _     <- service.addConversationTo(convId1, favId)
         _     <- service.removeConversationFrom(convId1, favId)
         favs  <- service.convsInFolder(favId)
@@ -204,13 +204,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       Await.result(favConvs, 500.millis).isEmpty shouldBe true
     }
 
-    scenario("Keep in favorites after adding to folder") {
+    scenario("Keep in favourites after adding to folder") {
       // given
       val service = getService
 
       // when
       val favConvs = for {
-        favId     <- service.ensureFavoritesFolder()
+        favId     <- service.ensureFavouritesFolder()
         folderId  <- service.addFolder("custom folder")
         _         <- service.addConversationTo(convId1, favId)
         _         <- service.addConversationTo(convId1, folderId)
@@ -221,13 +221,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       Await.result(favConvs, 500.millis) shouldEqual Set(convId1)
     }
 
-    scenario("Conversations stays in favorites after removing from another folder") {
+    scenario("Conversations stays in favourites after removing from another folder") {
       // given
       val service = getService
 
       // when
       val favConvs = for {
-        favId     <- service.ensureFavoritesFolder()
+        favId     <- service.ensureFavouritesFolder()
         folderId  <- service.addFolder("custom folder")
         _         <- service.addConversationTo(convId1, favId)
         _         <- service.addConversationTo(convId1, folderId)
@@ -239,14 +239,14 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       Await.result(favConvs, 500.millis) shouldEqual Set(convId1)
     }
 
-    scenario("favorites stays empty after adding to folder") {
+    scenario("Favourites stays empty after adding to folder") {
       // given
       val folderId = FolderId("folder_id1")
       val service = getService
 
       // when
       val favConvs = for {
-        favId     <- service.ensureFavoritesFolder()
+        favId     <- service.ensureFavouritesFolder()
         folderId  <- service.addFolder("custom folder")
         _         <- service.addConversationTo(convId1, folderId)
         favs      <- service.convsInFolder(favId)
@@ -256,13 +256,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       Await.result(favConvs, 500.millis).isEmpty shouldBe true
     }
 
-    scenario("Multiple conversations in favorites") {
+    scenario("Multiple conversations in Favourites") {
       // given
       val service = getService
 
       // when
       val favConvs = for {
-        favId <- service.ensureFavoritesFolder()
+        favId <- service.ensureFavouritesFolder()
         _     <- service.addConversationTo(convId1, favId)
         _     <- service.addConversationTo(convId2, favId)
         _     <- service.addConversationTo(convId3, favId)
@@ -273,13 +273,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       Await.result(favConvs, 500.millis) shouldEqual Set(convId1, convId2, convId3)
     }
 
-    scenario("Adding and removing multiple conversations in favorites") {
+    scenario("Adding and removing multiple conversations in Favourites") {
       // given
       val service = getService
 
       // when
       val favConvs = for {
-        favId <- service.ensureFavoritesFolder()
+        favId <- service.ensureFavouritesFolder()
         _     <- service.addConversationTo(convId1, favId)
         _     <- service.addConversationTo(convId2, favId)
         _     <- service.removeConversationFrom(convId1, favId)
@@ -291,12 +291,12 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       Await.result(favConvs, 500.millis) shouldEqual Set(convId2, convId3)
     }
 
-    scenario("Adding and removing conversations from custom folders does not change favorites") {
+    scenario("Adding and removing conversations from custom folders does not change favourites") {
       // given
       val service = getService
 
       val favConvs = for {
-        favId     <- service.ensureFavoritesFolder()
+        favId     <- service.ensureFavouritesFolder()
         _         <- service.addConversationTo(convId1, favId)
         _         <- service.addConversationTo(convId2, favId)
         folderId1 <- service.addFolder("custom folder 1")
@@ -416,13 +416,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       conversationsInFolder2 shouldEqual Set()
     }
 
-    scenario("Get list of folders for conversation includes favorites") {
+    scenario("Get list of folders for conversation includes favourites") {
       // given
       val service = getService
 
       // when
       val fs = for {
-        favId     <- service.ensureFavoritesFolder()
+        favId     <- service.ensureFavouritesFolder()
         folderId1 <- service.addFolder("custom folder 1")
         folderId2 <- service.addFolder("custom folder 2")
         _         <- service.addConversationTo(convId1, folderId1)
@@ -440,21 +440,21 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val service = getService
 
       val convInFavsAfterAdding = for {
-        favFolder <- service.ensureFavoritesFolder()
+        favFolder <- service.ensureFavouritesFolder()
         _         <- service.addConversationTo(convId1, favFolder)
         res       <- service.isInFolder(convId1, favFolder)
       } yield res
       assert(Await.result(convInFavsAfterAdding, 500.millis) == true)
 
       val convInFavsAfterRemoval = for {
-        favFolder <- service.ensureFavoritesFolder()
+        favFolder <- service.ensureFavouritesFolder()
         _         <- service.removeConversationFrom(convId1, favFolder)
         res       <- service.isInFolder(convId1, favFolder)
       } yield res
       assert(Await.result(convInFavsAfterRemoval, 500.millis) == false)
     }
 
-    scenario("Retrieve changes to the favorites through a signal") {
+    scenario("Retrieve changes to the Favourites through a signal") {
       // given
       val service = getService
 
@@ -467,7 +467,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       // when
       val res = for {
-        favId     <- service.ensureFavoritesFolder()
+        favId     <- service.ensureFavouritesFolder()
         _         <- service.addConversationTo(convId1, favId)
         folderId1 <- service.addFolder("custom folder 1")
         _         <- service.addConversationTo(convId1, folderId1)
@@ -475,7 +475,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
         _         <- service.removeConversationFrom(convId1, folderId1)
         _         <- service.addConversationTo(convId1, folderId2)
         _         <- service.removeFolder(folderId1)
-        _         <- service.removeFavoritesFolder()
+        _         <- service.removeFavouritesFolder()
       } yield (favId, folderId1, folderId2)
 
       val (favId, folderId1, folderId2) = Await.result(res, 5.seconds)
@@ -483,11 +483,11 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       // initial empty state
       states(0) shouldEqual Map.empty
 
-      // after adding the favorites folder, but before putting a convId in it
+      // after adding the favourites folder, but before putting a convId in it
       states(1).size shouldBe 1
       states(1)(favId) shouldBe Set.empty
 
-      // after adding convId to to favorites
+      // after adding convId to to favourites
       states(2).size shouldBe 1
       states(2)(favId) shouldBe Set(convId1)
 
@@ -524,7 +524,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       states(8)(favId) shouldBe Set(convId1)
       states(8)(folderId2) shouldBe Set(convId1)
 
-      // after removing the favorites folder
+      // after removing the favourites folder
       // Here's a trick: it consists of two operations: removing convId from the fav folder,
       // and then deleting the fav folder itself. The signal might skip that intermediate step
       // and update immediately to the state after the removal of the fav folder. But it might not.
@@ -539,16 +539,16 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       // when
       val foldersFuture = for {
-        favoriteId  <- service.ensureFavoritesFolder()
+        favouriteId <- service.ensureFavouritesFolder()
         folderId1   <- service.addFolder("F1")
         folderId2   <- service.addFolder("F2")
         _           <- service.addConversationTo(convId1, folderId1)
         _           <- service.addConversationTo(convId1, folderId2)
         _           <- service.addConversationTo(convId2, folderId1)
-        _           <- service.addConversationTo(convId1, favoriteId)
+        _           <- service.addConversationTo(convId1, favouriteId)
         folders     <- service.foldersToSynchronize()
-      } yield (favoriteId, folderId1, folderId2, folders)
-      val (favoriteId, folderId1, folderId2, folders) = Await.result(foldersFuture, 500.millis)
+      } yield (favouriteId, folderId1, folderId2, folders)
+      val (favouriteId, folderId1, folderId2, folders) = Await.result(foldersFuture, 500.millis)
 
       // then
       folders.length shouldBe 3
@@ -562,15 +562,15 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       folder2.folderData.folderType shouldEqual FolderData.CustomFolderType
       folder2.conversations shouldEqual Set(RConvId(convId1.str))
 
-      val favorite = folders.find(_.folderData.id == favoriteId).get
-      favorite.folderData.name.toString shouldEqual ""
-      favorite.folderData.folderType shouldEqual FolderData.FavoritesFolderType
-      favorite.conversations shouldEqual Set(RConvId(convId1.str))
+      val favourite = folders.find(_.folderData.id == favouriteId).get
+      favourite.folderData.name.toString shouldEqual ""
+      favourite.folderData.folderType shouldEqual FolderData.FavouritesFolderType
+      favourite.conversations shouldEqual Set(RConvId(convId1.str))
     }
   }
 
   feature("Events handling") {
-    scenario("Create the favorites folder") {
+    scenario("Create the Favourites folder") {
       // given
       val (folder, event) = generateEventOneFolder(convIds = Set(convId1))
 
@@ -583,7 +583,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       after.head shouldBe (folder.id, (folder, Set(convId1)))
     }
 
-    scenario("Add a conversation to the favorites") {
+    scenario("Add a conversation to the Favourites") {
       // given
       val favId = FolderId()
       val (folder, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
@@ -601,7 +601,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       after.head shouldBe (favId, (folder, Set(convId1, convId2)))
     }
 
-    scenario("Remove a conversation from the favorites") {
+    scenario("Remove a conversation from the Favourites") {
       // given
       val favId = FolderId()
       val (folder, event1) = generateEventOneFolder(folderId = favId, convIds = Set(convId1))
@@ -667,7 +667,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       after(customId) shouldBe (folder3, Set(convId2))
     }
 
-    scenario("Remove the favorites folder") {
+    scenario("Remove the Favourites folder") {
       // given
       val favId = FolderId()
       val customId = FolderId()
@@ -693,18 +693,18 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
   }
 
   private def generateEventOneFolder(folderId: FolderId   = FolderId(),
-                                     name: String         = "favorites",
+                                     name: String         = "Favourites",
                                      convIds: Set[ConvId] = Set.empty,
-                                     folderType: Int      = FolderData.FavoritesFolderType) = {
+                                     folderType: Int      = FolderData.FavouritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
     (folder, FoldersEvent(Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
 
   private def generateEventAddFolder(oldEvent: FoldersEvent,
                                      folderId: FolderId   = FolderId(),
-                                     name: String         = "favorites",
+                                     name: String         = "Favourites",
                                      convIds: Set[ConvId] = Set.empty,
-                                     folderType: Int      = FolderData.FavoritesFolderType) = {
+                                     folderType: Int      = FolderData.FavouritesFolderType) = {
     val folder = FolderData(folderId, name, folderType)
     (folder, FoldersEvent(oldEvent.folders ++ Seq(RemoteFolderData(folder, convIds.map(id => RConvId(id.str))))))
   }
@@ -728,15 +728,15 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
   }
 
   feature("encoding request") {
-    scenario("with favorites") {
+    scenario("with favourites") {
 
       // given
       val convId1 = RConvId("c1")
       val convId2 = RConvId("c2")
       val folderId1 = FolderId("f1")
-      val favoritesId = FolderId("fav")
+      val favouritesId = FolderId("fav")
       val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
-      val folderFavorites = FolderData(favoritesId, "FAV", FolderData.FavoritesFolderType)
+      val folderFavorites = FolderData(favouritesId, "FAV", FolderData.FavouritesFolderType)
       val payload = List(
         RemoteFolderData(folder1, Set(convId1, convId2)),
         RemoteFolderData(folderFavorites, Set(convId2))
@@ -769,7 +769,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
   }
 
   feature("decoding payload") {
-    scenario ("with favorites") {
+    scenario ("with favourites") {
 
       // given
       val payload = """[
@@ -805,11 +805,11 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       seq(1).folderData.name shouldEqual Name("FAV")
       seq(1).folderData.id shouldEqual FolderId("fav")
-      seq(1).folderData.folderType shouldEqual FolderData.FavoritesFolderType
+      seq(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
       seq(1).conversations shouldEqual Set(RConvId("c2"))
     }
 
-    scenario ("favorites with no name") {
+    scenario ("favourites with no name") {
 
       // given
       val payload = """[
@@ -844,7 +844,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       seq(1).folderData.name shouldEqual Name("")
       seq(1).folderData.id shouldEqual FolderId("fav")
-      seq(1).folderData.folderType shouldEqual FolderData.FavoritesFolderType
+      seq(1).folderData.folderType shouldEqual FolderData.FavouritesFolderType
       seq(1).conversations shouldEqual Set(RConvId("c2"))
     }
   }

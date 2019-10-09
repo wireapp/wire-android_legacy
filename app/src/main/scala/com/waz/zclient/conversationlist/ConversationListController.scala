@@ -95,15 +95,15 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
-  lazy val favoritesFolderId: Signal[Option[FolderId]] = foldersService.flatMap(_.favoritesFolderId)
+  lazy val favouritesFolderId: Signal[Option[FolderId]] = foldersService.flatMap(_.favouritesFolderId)
 
-  lazy val favoritesFolder: Signal[Option[FolderData]] = favoritesFolderId.flatMap {
+  lazy val favouritesFolder: Signal[Option[FolderData]] = favouritesFolderId.flatMap {
     case Some(folderId) => folder(folderId)
     case None           => Signal.const(None)
   }
 
-  lazy val favoriteConversations: Signal[Seq[ConversationData]] = for {
-    favId <- favoritesFolderId
+  lazy val favouriteConversations: Signal[Seq[ConversationData]] = for {
+    favId <- favouritesFolderId
     convs <- favId.fold(Signal.const(Seq.empty[ConversationData]))(folderConversations)
   } yield convs
 
@@ -114,8 +114,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   } yield convs.filter(c => convIds.contains(c.id))
 
   private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
-    favoritesFolderId  <- favoritesFolderId
-    customFolders      <- foldersWithConvs.map(fwc => favoritesFolderId.fold(fwc)(fwc - _))
+    favouritesFolderId <- favouritesFolderId
+    customFolders      <- foldersWithConvs.map(fwc => favouritesFolderId.fold(fwc)(fwc - _))
     folderConvIds      =  customFolders.values.flatten.toSet
     convs              <- regularConversationListData
     convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
@@ -130,21 +130,21 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
 
   lazy val customFolderIds: Signal[Set[FolderId]] = for {
-    favId  <- favoritesFolderId
+    favId  <- favouritesFolderId
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
 
-  def addToFavorites(convId: ConvId): Future[Unit] = (for {
+  def addToFavourites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
-    favId    <- service.ensureFavoritesFolder()
+    favId    <- service.ensureFavouritesFolder()
     _        <- service.addConversationTo(convId, favId)
   } yield ()).recoverWith {
     case e: Exception => error(l"exception while adding conv $convId to favorites", e)
       Future.successful({})
   }
 
-  def removeFromFavorites(convId: ConvId): Future[Unit] = for {
-    Some(favId) <- favoritesFolderId.head
+  def removeFromFavourites(convId: ConvId): Future[Unit] = for {
+    Some(favId) <- favouritesFolderId.head
     _           <- removeFromFolder(convId, favId)
   } yield ()
 
@@ -158,7 +158,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
-    favId         <- favoritesFolderId.head
+    favId         <- favouritesFolderId.head
     customFolders =  favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
   } yield ()
