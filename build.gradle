@@ -13,9 +13,6 @@ buildscript {
         maven {
             url "https://dl.bintray.com/wire-android/third-party"
         }
-        maven {
-            url "https://maven.google.com"
-        }
         google()
         jcenter()
         mavenCentral()
