@@ -205,8 +205,8 @@ object ConversationListAdapter {
 
     override def areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean = {
       (oldList(oldItemPosition), newList(newItemPosition)) match {
-        case (_: Header,           _: Header)           => true
-        case (_: Conversation,     _: Conversation)     => true
+        case (lhs: Header,       rhs: Header)           => lhs.id == rhs.id
+        case (lhs: Conversation, rhs: Conversation)     => lhs.data.id == rhs.data.id
         case (_: IncomingRequests, _: IncomingRequests) => true
         case _                                          => false
       }
