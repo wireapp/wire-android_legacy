@@ -114,11 +114,12 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   } yield convs.filter(c => convIds.contains(c.id))
 
   private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
-    convService        <- convService
-    fwc                <- foldersWithConvs
-    folderConvIds      =  fwc.values.flatten.toSet
+    favouritesFolderId <- favouritesFolderId
+    customFolders      <- foldersWithConvs.map(fwc => favouritesFolderId.fold(fwc)(fwc - _))
+    folderConvIds      =  customFolders.values.flatten.toSet
     convs              <- regularConversationListData
     convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
+    convService        <- convService
     results            <- Signal.sequence(convsWithoutFolder.map(c => convService.groupConversation(c.id).map(b => c -> b)): _*)
   } yield results
 
