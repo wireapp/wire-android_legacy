@@ -17,9 +17,10 @@
  */
 package com.waz.zclient.participants
 
+import android.support.annotation.StringRes
 import com.waz.log.LogShow.SafeToLog
 import com.waz.utils.events.{SourceStream, _}
-import com.waz.zclient.R
+import com.waz.zclient.{R, WireApplication}
 import com.waz.zclient.participants.OptionsMenuController._
 
 trait OptionsMenuController {
@@ -31,14 +32,19 @@ trait OptionsMenuController {
 
 object OptionsMenuController {
   trait MenuItem extends SafeToLog {
-    val titleId: Int
+    val title: String
     val iconId: Option[Int]
     val colorId: Option[Int]
   }
 
-  case class BaseMenuItem(titleId: Int,
-                          iconId: Option[Int] = None,
-                          colorId: Option[Int] = Some(R.color.graphite)) extends MenuItem {
+  class BaseMenuItem(override val title: String,
+                     override val iconId: Option[Int] = None,
+                     override val colorId: Option[Int] = Some(R.color.graphite)) extends MenuItem {
+
+    def this(@StringRes titleId: Int, iconId: Option[Int]) = this(
+      WireApplication.APP_INSTANCE.getString(titleId),
+      iconId
+    )
 
     override def toString: String = this.getClass.getSimpleName
   }

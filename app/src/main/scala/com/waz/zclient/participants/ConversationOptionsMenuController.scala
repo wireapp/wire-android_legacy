@@ -39,7 +39,7 @@ import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.participants.ConversationOptionsMenuController._
 import com.waz.zclient.participants.OptionsMenuController._
 import com.waz.zclient.utils.ContextUtils.{getInt, getString}
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R, WireApplication}
 
 import scala.concurrent.duration._
 
@@ -150,9 +150,11 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }
 
-        customFolderData.fold(builder += MoveToFolder)(_ => builder += RemoveFromFolder)
+        customFolderData.fold(builder += MoveToFolder)(data => builder += RemoveFromFolder(data.name.str))
     }
     builder.result().toSeq.sortWith {
+      case (_: RemoveFromFolder, b) => OrderSeq.indexOf(MoveToFolder).compareTo(OrderSeq.indexOf(b)) < 0
+      case (a, _: RemoveFromFolder) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(MoveToFolder)) < 0
       case (a, b) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(b)) < 0
     }
   }
@@ -291,6 +293,11 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
+  case class RemoveFromFolder(folderName: String) extends BaseMenuItem(
+    WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderName),
+    Some(R.string.glyph__leave) //FIXME: use correct icons
+  )
+
   object Mute                extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
   object Unmute              extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
   object Picture             extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
@@ -302,7 +309,6 @@ object ConversationOptionsMenuController {
   object AddToFavorites      extends BaseMenuItem(R.string.conversation__action__add_to_favorites, Some(R.string.glyph__add))
   object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__delete_me))
   object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__leave))
-  object RemoveFromFolder    extends BaseMenuItem(R.string.conversation__action__remove_from_folder, Some(R.string.glyph__leave))
   object Delete              extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
@@ -314,6 +320,6 @@ object ConversationOptionsMenuController {
   object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
   object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
-  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder, RemoveFromFolder,
+  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder,
     Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 }
