@@ -825,24 +825,27 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val json = payload.asJson.noSpaces
 
       // then
-      json shouldEqual """[
-                         |  {
-                         |    "id" : "f1",
-                         |    "name" : "F1",
-                         |    "type" : 0,
-                         |    "conversations" : [
-                         |      "c1",
-                         |      "c2"
-                         |    ]
-                         |  },
-                         |  {
-                         |    "id" : "fav",
-                         |    "name" : "FAV",
-                         |    "type" : 1,
-                         |    "conversations" : [
-                         |      "c2"
-                         |    ]
+      json shouldEqual """{
+                         | "labels":
+                         |  [
+                         |    {
+                         |      "id" : "f1",
+                         |      "name" : "F1",
+                         |      "type" : 0,
+                         |      "conversations" : [
+                         |        "c1",
+                         |        "c2"
+                         |      ]
+                         |    },
+                         |    {
+                         |      "id" : "fav",
+                         |      "name" : "FAV",
+                         |      "type" : 1,
+                         |      "conversations" : [
+                         |        "c2"
+                         |      ]
                          |  }]
+                         |}
                        """.stripMargin.replaceAll("\\s","")
     }
   }
@@ -851,24 +854,26 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario ("with favorites") {
 
       // given
-      val payload = """[
-        {
-          "name" : "F1",
-          "type" : 0,
-          "id" : "f1",
-          "conversations" : [
-            "c1",
-            "c2"
-          ]
-        },
-        {
-          "name" : "FAV",
-          "type" : 1,
-          "id" : "fav",
-          "conversations" : [
-            "c2"
-          ]
-        }]"""
+      val payload = """{
+                 | "labels" : [
+                 |  {
+                 |    "name" : "F1",
+                 |    "type" : 0,
+                 |    "id" : "f1",
+                 |    "conversations" : [
+                 |      "c1",
+                 |      "c2"
+                 |    ]
+                 |  },
+                 |  {
+                 |    "name" : "FAV",
+                 |    "type" : 1,
+                 |    "id" : "fav",
+                 |    "conversations" : [
+                 |      "c2"
+                 |    ]
+                 |  }
+                 |]""".stripMargin
 
       // when
       val seq = decode[Seq[IntermediateFolderData]](payload) match {
@@ -891,23 +896,26 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario ("favorites with no name") {
 
       // given
-      val payload = """[
-        {
-          "name" : "F1",
-          "type" : 0,
-          "id" : "f1",
-          "conversations" : [
-            "c1",
-            "c2"
-          ]
-        },
-        {
-          "type" : 1,
-          "id" : "fav",
-          "conversations" : [
-            "c2"
-          ]
-        }]"""
+      val payload = """{
+                       |  "labels": [
+                       |    {
+                       |      "name" : "F1",
+                       |      "type" : 0,
+                       |      "id" : "f1",
+                       |      "conversations" : [
+                       |        "c1",
+                       |        "c2"
+                       |      ]
+                       |    },
+                       |    {
+                       |      "type" : 1,
+                       |      "id" : "fav",
+                       |      "conversations" : [
+                       |        "c2"
+                       |      ]
+                       |    }
+                       |  ]
+                       |}""".stripMargin
 
       // when
       val seq = decode[Seq[IntermediateFolderData]](payload) match {
