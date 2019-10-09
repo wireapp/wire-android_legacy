@@ -81,25 +81,27 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
         s"""{
            |  "key": "${PropertyKey.Folders}",
            |  "type": "user.properties-set",
-           |  "value": [
-           |    {
-           |      "name": "Project Zeta",
-           |      "id": "69ed036b-2d10-4ad2-81fc-4a5b3476205b",
-           |      "type": 0,
-           |      "conversations": [
-           |        "0d61425f-1a4e-4111-9641-4e0da34798cf",
-           |        "f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2"
-           |      ]
-           |    },
-           |    {
-           |      "id": "1abcd64e-4a7f-48da-8362-28e660e7c553",
-           |      "type": 1,
-           |      "conversations": [
-           |        "0d61425f-1a4e-4111-9641-4e0da34798cf",
-           |        "f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2"
-           |      ]
-           |    }
-           |  ]
+           |  "value": {
+           |    "labels": [
+           |      {
+           |        "name": "Project Zeta",
+           |        "id": "69ed036b-2d10-4ad2-81fc-4a5b3476205b",
+           |        "type": 0,
+           |        "conversations": [
+           |          "0d61425f-1a4e-4111-9641-4e0da34798cf",
+           |          "f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2"
+           |        ]
+           |      },
+           |      {
+           |        "id": "1abcd64e-4a7f-48da-8362-28e660e7c553",
+           |        "type": 1,
+           |        "conversations": [
+           |          "0d61425f-1a4e-4111-9641-4e0da34798cf",
+           |          "f4c0208c-f19b-4d9f-8fa0-e45a08b01bf2"
+           |        ]
+           |      }
+           |    ]
+           |  }
            |}""".stripMargin
       )
 
