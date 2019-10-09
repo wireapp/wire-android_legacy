@@ -25,10 +25,10 @@ import com.waz.model.ConvId
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.ConversationListController
-import com.waz.zclient.conversationlist.folders.FolderSelectionFragment
+import com.waz.zclient.conversationlist.folders.{FolderMoveListener, FolderSelectionFragment}
 import com.waz.zclient.ui.DefaultToolbarFragment
 
-class MoveToFolderFragment extends DefaultToolbarFragment {
+class MoveToFolderFragment extends DefaultToolbarFragment with FolderMoveListener {
 
   private lazy val convListController = inject[ConversationListController]
   implicit val executionContext = Threading.Ui //TODO: check!!
@@ -58,6 +58,10 @@ class MoveToFolderFragment extends DefaultToolbarFragment {
   }
 
   override protected def onActionClick(): Unit = {
+    //TODO
+  }
+
+  override def onNewFolderSelected(index: Int): Unit = {
     //TODO
   }
 }
