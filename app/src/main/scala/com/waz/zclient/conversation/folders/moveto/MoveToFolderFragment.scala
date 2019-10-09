@@ -17,16 +17,40 @@
  */
 package com.waz.zclient.conversation.folders.moveto
 
+import java.util
+
 import android.os.Bundle
 import android.view.View
+import com.waz.model.ConvId
+import com.waz.threading.Threading
+import com.waz.utils.returning
+import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.folders.FolderSelectionFragment
 import com.waz.zclient.ui.DefaultToolbarFragment
 
 class MoveToFolderFragment extends DefaultToolbarFragment {
 
+  private lazy val convListController = inject[ConversationListController]
+  implicit val executionContext = Threading.Ui //TODO: check!!
+
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
-    openFragmentWithAnimation(FolderSelectionFragment.newInstance(), FolderSelectionFragment.TAG)
+    val convId = getArguments.getSerializable(MoveToFolderFragment.KEY_CONV_ID).asInstanceOf[ConvId]
+
+    for {
+      customFolders     <- convListController.getCustomFolders
+      convFolderId      <- convListController.getCustomFolderId(convId)
+      sortedFolders      = customFolders.sortBy(_.name.str)
+      currentFolderIndex = convFolderId.fold(-1)(x => sortedFolders.indexWhere(f => f.id == x))
+    } yield {
+      val folderNames = new util.ArrayList[String]()
+      sortedFolders.map(data => folderNames.add(data.name.str))
+
+      openFragmentWithAnimation(
+        FolderSelectionFragment.newInstance(folderNames, currentFolderIndex),
+        FolderSelectionFragment.TAG
+      )
+    }
   }
 
   override protected def onNavigationClick(): Unit = {
@@ -41,5 +65,13 @@ class MoveToFolderFragment extends DefaultToolbarFragment {
 object MoveToFolderFragment {
   val TAG = classOf[MoveToFolderFragment].getSimpleName
 
-  def newInstance = new MoveToFolderFragment()
+  val KEY_CONV_ID = "convId"
+
+  def newInstance(convId: ConvId) = {
+    returning(new MoveToFolderFragment()) { fragment =>
+      val bundle = new Bundle()
+      bundle.putSerializable(KEY_CONV_ID, convId)
+      fragment.setArguments(bundle)
+    }
+  }
 }

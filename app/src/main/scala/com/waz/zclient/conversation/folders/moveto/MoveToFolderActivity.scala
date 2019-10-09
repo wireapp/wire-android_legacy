@@ -19,23 +19,31 @@ package com.waz.zclient.conversation.folders.moveto
 
 import android.content.{Context, Intent}
 import android.os.Bundle
+import com.waz.model.ConvId
+import com.waz.zclient.pages.NoOpContainer
 import com.waz.zclient.{BaseActivity, R}
 
-class MoveToFolderActivity extends BaseActivity {
+class MoveToFolderActivity extends BaseActivity with NoOpContainer {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_blank)
-    getSupportFragmentManager.beginTransaction()
-      .replace(R.id.activity_blank_framelayout_container, MoveToFolderFragment.newInstance)
-      .addToBackStack(MoveToFolderFragment.TAG)
+    getSupportFragmentManager
+      .beginTransaction()
+      .replace(R.id.activity_blank_framelayout_container,
+        MoveToFolderFragment.newInstance(
+          getIntent.getSerializableExtra(MoveToFolderActivity.KEY_CONV_ID).asInstanceOf[ConvId]
+        )
+      )
       .commit()
   }
 
 }
 
 object MoveToFolderActivity {
-  def newIntent(context: Context) : Intent = {
-    new Intent(context, classOf[MoveToFolderActivity])
+  val KEY_CONV_ID = "convId"
+
+  def newIntent(context: Context, convId: ConvId): Intent = {
+    new Intent(context, classOf[MoveToFolderActivity]).putExtra(KEY_CONV_ID, convId)
   }
 }

@@ -134,6 +134,16 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
 
+  def getCustomFolders: Future[Seq[FolderData]] = (for {
+    service    <- foldersService.head
+    allFolders <- service.folders
+    favId      <- favoritesFolderId.head
+  } yield favId.fold(allFolders)(x => allFolders.filter(f => f.id != x))
+    ).recoverWith{
+    case ex: Exception => error(l"exception while retrieving custom folders", ex)
+    Future.failed(ex)
+  }
+
   def addToFavorites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavoritesFolder()
@@ -155,12 +165,16 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     _       <- if (convs.isEmpty) service.removeFolder(folderId, true) else Future.successful(())
   } yield ()
 
-  def getCustomFolderId(convId: ConvId) : Future[Option[FolderId]] = for {
+  def getCustomFolderId(convId: ConvId) : Future[Option[FolderId]] = (for {
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
-    favId         <- favouritesFolderId.head
+    favId         <- favoritesFolderId.head
     customFolderId = folders.find(id => favId.fold(true)(fId => fId != id))
-  } yield customFolderId
+  } yield customFolderId)
+    .recoverWith {
+      case ex: Exception => error(l"error while retrieving custom folder id for conv $convId", ex)
+      Future.failed(ex)
+    }
 
   def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
     service       <- foldersService.head

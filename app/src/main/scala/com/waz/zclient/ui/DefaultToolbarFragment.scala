@@ -26,12 +26,13 @@ import android.support.v7.widget.Toolbar
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.pages.{BaseFragment, NoOpContainer}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils.{getDimenPx, getInt}
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, R}
 
-abstract class DefaultToolbarFragment extends Fragment with FragmentHelper {
+abstract class DefaultToolbarFragment extends BaseFragment[NoOpContainer] with FragmentHelper {
 
   private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
 

@@ -1,5 +1,23 @@
+/**
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.waz.zclient.conversationlist.folders
 
+import android.graphics.Color
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.LayoutInflater
@@ -11,13 +29,24 @@ class FolderSelectionFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         //TODO
-        return inflater.inflate(R.layout.activity_blank, container, false)
+        return inflater.inflate(R.layout.activity_blank, container, false).apply {
+            setBackgroundColor(Color.RED)
+        }
     }
 
     companion object {
         const val TAG = "FolderSelectionFragment"
 
+        const val KEY_FOLDER_NAMES = "folderNames"
+        const val KEY_CURRENT_FOLDER_INDEX = "currentFolderIndex"
+
         @JvmStatic
-        fun newInstance() = FolderSelectionFragment()
+        fun newInstance(folderNames: ArrayList<String>, currentFolderIndex: Int) =
+            FolderSelectionFragment().apply {
+                arguments = Bundle().apply {
+                    putStringArrayList(KEY_FOLDER_NAMES, folderNames)
+                    putInt(KEY_CURRENT_FOLDER_INDEX, currentFolderIndex)
+                }
+            }
     }
 }

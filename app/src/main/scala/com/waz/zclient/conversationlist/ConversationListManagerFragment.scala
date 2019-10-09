@@ -518,7 +518,7 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def onMoveToFolder(convId: ConvId): Unit = {
-    startActivity(MoveToFolderActivity.newIntent(requireContext()))
+    startActivity(MoveToFolderActivity.newIntent(requireContext(), convId))
   }
 }
 
