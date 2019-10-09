@@ -136,7 +136,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   def addToFavourites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavouritesFolder()
-    _        <- service.addConversationTo(convId, favId)
+    _        <- service.addConversationTo(convId, favId, true)
   } yield ()).recoverWith {
     case e: Exception => error(l"exception while adding conv $convId to favorites", e)
       Future.successful({})
@@ -149,9 +149,9 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   def removeFromFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
     service <- foldersService.head
-    _       <- service.removeConversationFrom(convId, folderId)
+    _       <- service.removeConversationFrom(convId, folderId, true)
     convs   <- service.convsInFolder(folderId)
-    _       <- if (convs.isEmpty) service.removeFolder(folderId) else Future.successful(())
+    _       <- if (convs.isEmpty) service.removeFolder(folderId, true) else Future.successful(())
   } yield ()
 
   def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
