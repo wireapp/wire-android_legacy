@@ -20,8 +20,9 @@ package com.waz.zclient.conversationlist.adapters
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, Uid}
+import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
-import com.waz.zclient.conversationlist.ConversationListFragment.{FolderState, FoldersUiState}
+import com.waz.zclient.conversationlist.ConversationFolderListFragment.{FolderState, FoldersUiState}
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
@@ -33,6 +34,8 @@ import com.waz.zclient.utils.ContextUtils.getString
 class ConversationFolderListAdapter(implicit context: Context)
   extends ConversationListAdapter
     with DerivedLogTag {
+
+  val onFolderStateChanged: SourceStream[FolderState] = EventStream[FolderState]()
 
   private var folders = Seq.empty[Folder]
 
