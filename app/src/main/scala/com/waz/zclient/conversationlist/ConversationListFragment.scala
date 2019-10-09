@@ -130,8 +130,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   private def configureAdapter(adapter: ConversationListAdapter): Unit = {
     adapter.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
-
-    // TODO: Do we need to consider folders title? We might be able to push these down to subclasses.
+    
     userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
     adapter.onConversationClick { conv =>
