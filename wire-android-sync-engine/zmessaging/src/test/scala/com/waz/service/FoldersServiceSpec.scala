@@ -159,12 +159,6 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
   (conversationFoldersStorage.onAdded _).expects().anyNumberOfTimes().returning(onConvsAdded)
   (conversationFoldersStorage.onDeleted _).expects().anyNumberOfTimes().returning(onConvsDeleted)
 
-  (sync.postFolders _).expects().anyNumberOfTimes().onCall { _ =>
-    callsToPostFolders += 1
-    Future.successful(SyncId())
-  }
-
-  var callsToPostFolders = 0
 
   private var _service = Option.empty[FoldersService]
 
@@ -181,6 +175,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -198,6 +193,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -214,6 +210,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Keep in favourites after adding to folder") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -231,6 +228,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Conversations stays in favourites after removing from another folder") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -250,6 +248,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       // given
       val folderId = FolderId("folder_id1")
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -266,6 +265,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Multiple conversations in Favourites") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -283,6 +283,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Adding and removing multiple conversations in Favourites") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val favConvs = for {
@@ -301,6 +302,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Adding and removing conversations from custom folders does not change favourites") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       val favConvs = for {
         favId     <- service.ensureFavouritesFolder()
@@ -426,6 +428,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Get list of folders for conversation includes favourites") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val fs = for {
@@ -445,6 +448,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
     scenario("remove a conversation from a folder") {
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       val convInFavsAfterAdding = for {
         favFolder <- service.ensureFavouritesFolder()
@@ -464,6 +468,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Retrieve changes to the Favourites through a signal") {
       // given
       val service = getService
+      (sync.postFolders _).expects().repeat(2).returning{ Future.successful(SyncId()) }
 
       val states = mutable.ListBuffer[Map[FolderId, Set[ConvId]]]()
       service.foldersWithConvs { state =>
@@ -543,6 +548,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Get mapping from folders to conversations") {
       // given
       val service = getService
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val foldersFuture = for {
@@ -703,14 +709,13 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario("Add a folder will upload to backend") {
       // given
       val service = getService
-      callsToPostFolders = 0
+
+      // expect
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       val fid = Await.result(service.addFolder("custom folder", false), 500.millis)
       Await.result(service.addConversationTo(convId1, fid, true), 500.millis)
-
-      // then
-      callsToPostFolders shouldBe 1
     }
 
     scenario("Add to an existing folder will upload to backend") {
@@ -718,11 +723,11 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val service = getService
       val folderId = Await.result(service.addFolder("custom folder", false), 500.millis)
 
+      // expect
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
+
       // when
       Await.result(service.addConversationTo(ConvId("foo"), folderId, true), 500.millis)
-
-      // then
-      callsToPostFolders shouldBe 1
     }
 
     scenario("Remove from folder will upload to backend") {
@@ -732,11 +737,11 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val folderId = Await.result(service.addFolder("custom folder", false), 500.millis)
       Await.result(service.addConversationTo(convId, folderId, false), 500.millis)
 
+      // expect
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
+
       // when
       Await.result(service.removeConversationFrom(convId, folderId, true), 500.millis)
-
-      // then
-      callsToPostFolders shouldBe 1
     }
 
     scenario("Remove from all folders will upload to backend") {
@@ -745,26 +750,24 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val convId = ConvId("cid1")
       val folderId = Await.result(service.addFolder("custom folder", false), 500.millis)
       Await.result(service.addConversationTo(convId, folderId, false), 500.millis)
-      callsToPostFolders = 0
+
+      // expect
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       Await.result(service.removeConversationFromAll(convId, true), 500.millis)
-
-      // then
-      callsToPostFolders shouldBe 1
     }
 
     scenario("Renaming folder will upload to backend") {
       // given
       val service = getService
       val folderId = Await.result(service.addFolder("Foo", false), 500.millis)
-      callsToPostFolders = 0
+
+      // expect
+      (sync.postFolders _).expects().once().returning{ Future.successful(SyncId()) }
 
       // when
       Await.result(service.update(folderId, "Bam!", true), 500.millis)
-
-      // then
-      callsToPostFolders shouldBe 1
     }
   }
 
