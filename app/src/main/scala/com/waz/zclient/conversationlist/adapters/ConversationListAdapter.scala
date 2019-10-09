@@ -84,7 +84,9 @@ abstract class ConversationListAdapter
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
     (items(position), holder) match {
       case (incomingRequests: Item.IncomingRequests, viewHolder: IncomingConversationRowViewHolder) =>
-        viewHolder.bind(incomingRequests.first, incomingRequests.numberOfRequests)
+        val Item.IncomingRequests(first, number) = incomingRequests
+        val showSeparator = !this.isInstanceOf[ConversationFolderListAdapter]
+        viewHolder.bind(first, number, showSeparator)
       case (header: Item.Header, viewHolder: ConversationFolderRowViewHolder) =>
         viewHolder.bind(header, isFirst = position == 0)
       case (conversation: Item.Conversation, viewHolder: NormalConversationRowViewHolder) =>
@@ -149,7 +151,10 @@ object ConversationListAdapter {
   class IncomingConversationRowViewHolder(row: IncomingConversationListRow, listener: RowClickListener)
     extends ConversationRowViewHolder(row, listener) {
 
-    def bind(first: ConvId, numberOfRequest: Int): Unit = row.setIncoming(first, numberOfRequest)
+    def bind(first: ConvId, numberOfRequest: Int, showSeparator: Boolean): Unit = {
+      row.setIncoming(first, numberOfRequest)
+      row.setSeparatorVisibility(showSeparator)
+    }
   }
 
   class ConversationFolderRowViewHolder(row: ConversationFolderListRow, listener: RowClickListener)
@@ -170,7 +175,6 @@ object ConversationListAdapter {
         r.setAlpha(1f)
         r.setMaxAlpha(adapter.maxAlpha)
 
-        // TODO: can we move this to our listener?
         r.setConversationCallback(new ConversationCallback {
           override def onConversationListRowSwiped(convId: String, view: View): Unit =
             r.conversationData.foreach(adapter.onConversationLongClick ! _)
