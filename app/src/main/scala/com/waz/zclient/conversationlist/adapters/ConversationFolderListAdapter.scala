@@ -63,7 +63,7 @@ class ConversationFolderListAdapter(implicit context: Context)
   }
 
   private def calculateFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
-    val favoritesFolder = Folder.apply(FavouritesId, R.string.conversation_folder_name_favorites, favorites)
+    val favoritesFolder = Folder.apply(FavoritesId, R.string.conversation_folder_name_favorites, favorites)
     val groupsFolder = Folder.apply(GroupId, R.string.conversation_folder_name_group, groups)
     val oneToOnesFolder = Folder.apply(OneToOnesId, R.string.conversation_folder_name_one_to_one, oneToOnes)
     Seq(favoritesFolder, groupsFolder, oneToOnesFolder).flatten
@@ -112,7 +112,7 @@ object ConversationFolderListAdapter {
 
   object Folder {
 
-    val FavouritesId = Uid("Favourites")
+    val FavoritesId = Uid("Favorites")
     val GroupId = Uid("Groups")
     val OneToOnesId = Uid("OneToOnes")
 

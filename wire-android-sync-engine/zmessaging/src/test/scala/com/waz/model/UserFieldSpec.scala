@@ -28,7 +28,7 @@ class UserFieldSpec extends AndroidFreeSpec {
     scenario("JSON from rich-info endpoint") {
 
       // GIVEN
-      val expectedFields = Seq(UserField("Department", "Sales & Marketing"), UserField("Favourite color", "Blue"))
+      val expectedFields = Seq(UserField("Department", "Sales & Marketing"), UserField("Favorite color", "Blue"))
       val document =
         """
           |{
@@ -49,7 +49,7 @@ class UserFieldSpec extends AndroidFreeSpec {
       val info: Seq[UserField] = JsonDecoder.decode[Seq[UserField]](document)
 
       // THEN
-      info == expectedFields
+      info shouldEqual expectedFields
     }
   }
 }
