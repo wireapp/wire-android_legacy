@@ -18,6 +18,8 @@
 package com.waz.zclient.conversation.folders.moveto
 
 import android.os.Bundle
+import android.support.v4.content.ContextCompat
+import android.util.TypedValue
 import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.utils.returning
@@ -39,6 +41,12 @@ class CreateNewFolderFragment extends DefaultToolbarFragment[CreateNewFolderFrag
     super.onViewCreated(view, savedInstanceState)
     setActionButtonEnabled(false)
     setTitle(getString(R.string.folders_create_new_folder))
+    toolbar.foreach(t => {
+      val typedvalueattr = new TypedValue
+      getContext.getTheme.resolveAttribute(R.attr.backNavigationIcon, typedvalueattr, true)
+      val resId = typedvalueattr.resourceId
+      t.setNavigationIcon(ContextCompat.getDrawable(getContext, resId))
+    })
     setActionButtonText(getString(R.string.folders_create_new_folder_action))
     setUpInputBoxValidations()
     textViewInfo.foreach(_.setText(getString(

@@ -30,7 +30,7 @@
         android:layout_height="?android:actionBarSize"
         android:layout_alignParentTop="true"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/ic_action_close_dark">
+        app:navigationIcon="?actionModeCloseDrawable">
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/fragment_move_to_folder_textview_navigation"
@@ -52,7 +52,7 @@
             android:paddingBottom="@dimen/wire__padding__regular"
             android:paddingEnd="@dimen/wire__padding__regular"
             android:text="@string/glyph__plus"
-            android:textColor="@drawable/app_entry_text_button"
+            android:textColor="?wirePrimaryTextColor"
             android:textSize="@dimen/wire__text_size__small"
             app:w_font="@string/wire__typeface__bold" />
 

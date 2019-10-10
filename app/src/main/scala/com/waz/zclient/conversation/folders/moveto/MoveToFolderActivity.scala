@@ -49,10 +49,14 @@ class MoveToFolderActivity extends BaseActivity
       .commit()
   }
 
+  override def onCloseScreenClicked(): Unit = {
+    cancelOperation()
+  }
+
   override def onPrepareNewFolderClicked(): Unit = {
     conversationController.getConversation(convId).foreach {
       case Some(conv) => openCreteNewFolderScreen(conv.name.getOrElse("").toString)
-      case None => finishSilently()
+      case None => cancelOperation()
     }
   }
 
@@ -67,7 +71,7 @@ class MoveToFolderActivity extends BaseActivity
   }
 
   override def onBackNavigationClicked(): Unit = {
-    //TODO
+    getSupportFragmentManager.popBackStackImmediate()
   }
 
   override def onCreateFolderClicked(folderName: String): Unit = {
@@ -80,12 +84,12 @@ class MoveToFolderActivity extends BaseActivity
     }).recoverWith {
       case ex: Exception => Log.e("MoveToFolderActivity",
         "An error occured while creating folder " + folderName + " with conversation " + convId, ex)
-        finishSilently()
+        cancelOperation()
         Future.successful(())
     }
   }
 
-  private def finishSilently(): Unit = {
+  private def cancelOperation(): Unit = {
     setResult(Activity.RESULT_CANCELED)
     finish()
   }

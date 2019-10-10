@@ -95,7 +95,7 @@ class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
   }
 
   private def onNavigationClick(): Unit = {
-    //TODO close the page
+    getContainer.onCloseScreenClicked()
   }
 
   override def onNewFolderSelected(index: Int): Unit = {
@@ -111,6 +111,7 @@ object MoveToFolderFragment {
   val KEY_FOLDER_INDEX_MAP = "folderindexMap"
 
   trait Container {
+    def onCloseScreenClicked(): Unit
     def onPrepareNewFolderClicked(): Unit
   }
 

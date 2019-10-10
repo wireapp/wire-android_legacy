@@ -26,7 +26,7 @@
     android:layout_height="?android:actionBarSize"
     android:layout_alignParentTop="true"
     app:layout_constraintTop_toTopOf="parent"
-    app:navigationIcon="@drawable/ic_action_close_dark">
+    app:navigationIcon="?actionModeCloseDrawable">
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/fragment_default_toolbar_textview_title"
