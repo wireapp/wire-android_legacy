@@ -27,7 +27,7 @@ import com.waz.zclient.common.views.InputBox.GroupNameValidator
 import com.waz.zclient.ui.DefaultToolbarFragment
 import com.waz.zclient.utils.ContextUtils
 
-class CreateNewFolderFragment extends DefaultToolbarFragment {
+class CreateNewFolderFragment extends DefaultToolbarFragment[CreateNewFolderFragment.Container] {
 
   private lazy val textViewInfo = view[TextView](R.id.fragment_create_new_folder_textview_info)
   private lazy val inputBox = view[InputBox](R.id.fragment_create_new_folder_inputbox_folder_name)
@@ -71,9 +71,15 @@ class CreateNewFolderFragment extends DefaultToolbarFragment {
     }
   }
 
-  override protected def onNavigationClick(): Unit = {}
+  override protected def onNavigationClick(): Unit = {
+    getContainer.onBackNavigationClicked()
+  }
 
-  override protected def onActionClick(): Unit = {}
+  override protected def onActionClick(): Unit = {
+    inputBox.foreach(v => {
+      getContainer.onCreateFolderClicked(v.editText.getText.toString)
+    })
+  }
 
   override protected def getToolbarId = R.id.fragment_create_new_folder_toolbar
 }
@@ -89,4 +95,9 @@ object CreateNewFolderFragment {
       bundle.putString(KEY_CONVERSATION_NAME, conversationName)
       fragment.setArguments(bundle)
     }
+
+  trait Container {
+    def onBackNavigationClicked(): Unit
+    def onCreateFolderClicked(folderName: String): Unit
+  }
 }

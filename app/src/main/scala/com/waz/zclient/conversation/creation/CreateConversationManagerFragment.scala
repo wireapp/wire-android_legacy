@@ -30,11 +30,12 @@ import com.waz.zclient.common.controllers.global.{AccentColorController, Keyboar
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationManagerFragment._
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.pages.NoOpContainer
 import com.waz.zclient.ui.DefaultToolbarFragment
 import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 
-class CreateConversationManagerFragment extends DefaultToolbarFragment with FragmentHelper {
+class CreateConversationManagerFragment extends DefaultToolbarFragment[NoOpContainer] with FragmentHelper {
 
   implicit private def ctx = getContext
   import Threading.Implicits.Ui

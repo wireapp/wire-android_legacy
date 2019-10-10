@@ -1,36 +1,42 @@
 /**
- * Wire
- * Copyright (C) 2019 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2019 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.conversation.folders.moveto
 
+import android.app.Activity
 import android.content.{Context, Intent}
 import android.os.Bundle
+import android.util.Log
 import com.waz.model.ConvId
 import com.waz.threading.Threading
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.{BaseActivity, R}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-class MoveToFolderActivity extends BaseActivity with MoveToFolderFragment.Container {
+class MoveToFolderActivity extends BaseActivity
+  with MoveToFolderFragment.Container
+  with CreateNewFolderFragment.Container {
 
   implicit val executionContext: ExecutionContext = Threading.Ui //TODO: check!!
 
   private lazy val conversationController = inject[ConversationController]
+  private lazy val convListController = inject[ConversationListController]
 
   private lazy val convId = getIntent.getSerializableExtra(MoveToFolderActivity.KEY_CONV_ID).asInstanceOf[ConvId]
 
@@ -46,7 +52,7 @@ class MoveToFolderActivity extends BaseActivity with MoveToFolderFragment.Contai
   override def onPrepareNewFolderClicked(): Unit = {
     conversationController.getConversation(convId).foreach {
       case Some(conv) => openCreteNewFolderScreen(conv.name.getOrElse("").toString)
-      case None => //TODO: conversation is deleted. what to do?
+      case None => finishSilently()
     }
   }
 
@@ -59,9 +65,35 @@ class MoveToFolderActivity extends BaseActivity with MoveToFolderFragment.Contai
       .addToBackStack(CreateNewFolderFragment.TAG)
       .commit()
   }
+
+  override def onBackNavigationClicked(): Unit = {
+    //TODO
+  }
+
+  override def onCreateFolderClicked(folderName: String): Unit = {
+    (for {
+      _ <- convListController.createNewFolderWithConversation(folderName, convId)
+    } yield {
+      val resultIntent = new Intent().putExtra(MoveToFolderActivity.KEY_CONV_ID, convId)
+      setResult(Activity.RESULT_OK, resultIntent)
+      finish()
+    }).recoverWith {
+      case ex: Exception => Log.e("MoveToFolderActivity",
+        "An error occured while creating folder " + folderName + " with conversation " + convId, ex)
+        finishSilently()
+        Future.successful(())
+    }
+  }
+
+  private def finishSilently(): Unit = {
+    setResult(Activity.RESULT_CANCELED)
+    finish()
+  }
 }
 
 object MoveToFolderActivity {
+  val REQUEST_CODE_MOVE_CREATE = 147
+
   val KEY_CONV_ID = "convId"
 
   def newIntent(context: Context, convId: ConvId): Intent = {

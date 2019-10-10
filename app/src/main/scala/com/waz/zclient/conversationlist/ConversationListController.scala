@@ -182,8 +182,17 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     favId         <- favoritesFolderId.head
     customFolders =  favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
-    _             <- Future.successful(service.addConversationTo(convId, folderId, true))
+    _             <- Future.successful(service.addConversationTo(convId, folderId, uploadAllChanges = true))
   } yield ()
+
+  def createNewFolderWithConversation(folderName: String, convId: ConvId) = (for {
+    service  <- foldersService.head
+    folderId <- service.addFolder(Name(folderName), uploadAllChanges = false)
+    _        <- moveToCustomFolder(convId, folderId)
+  } yield ()).recoverWith {
+    case ex: Exception => error(l"error while creating custom folder $folderName for conv $convId", ex)
+      Future.failed(ex)
+  }
 }
 
 object ConversationListController {
