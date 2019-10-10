@@ -27,7 +27,6 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.utils.{JsonDecoder, RichFuture}
-import io.circe.{Decoder, Encoder}
 import org.json.JSONObject
 
 import scala.concurrent.Future
@@ -243,26 +242,24 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
 
 }
 
-case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
-
-object RemoteFolderData {
+object FoldersService {
 
   // This type is matching the JSON payload on the backend
   // e. g. Do NOT rename "labels" or it will not serialize/deserialize properly
-  case class FoldersProperty(labels: Seq[IntermediateFolderData])
-
-  case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: Vector[String]) {
-    def toRemoteFolderData: RemoteFolderData =
+  case class FoldersProperty(labels: Seq[IntermediateFolderData]) {
+    def toRemote: Seq[RemoteFolderData] = labels.map(label =>
       RemoteFolderData(
-        FolderData(id = FolderId(id), name = Name(name.getOrElse("")), folderType = `type`),
-        conversations.map(RConvId(_)).toSet
+        FolderData(id = FolderId(label.id), name = Name(label.name.getOrElse("")), folderType = label.`type`),
+        label.conversations.map(RConvId(_)).toSet
       )
+    )
   }
 
-  object IntermediateFolderData {
-    def apply(remoteFolderData: RemoteFolderData): IntermediateFolderData =
-      apply(remoteFolderData.folderData.id.str, Some(remoteFolderData.folderData.name.str), remoteFolderData.folderData.folderType, remoteFolderData.conversations.map(_.str).toVector)
+  object FoldersProperty {
+    def fromRemote(folders: Seq[RemoteFolderData]): FoldersProperty = FoldersProperty(folders.map(_.toIntermediate))
   }
+
+  case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: Vector[String])
 
   // TODO: the old JSON decoder is still needed for FoldersEvent. Remove after migrating to circe.
   implicit val remoteFolderPropertyDecoder: JsonDecoder[FoldersProperty] = new JsonDecoder[FoldersProperty] {
@@ -287,4 +284,15 @@ object RemoteFolderData {
       )
     }
   }
+}
+
+case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId]) {
+  import FoldersService.IntermediateFolderData
+
+  def toIntermediate: IntermediateFolderData = IntermediateFolderData(
+    folderData.id.str,
+    Some(folderData.name.str),
+    folderData.folderType,
+    conversations.map(_.str).toVector
+  )
 }

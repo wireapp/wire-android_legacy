@@ -20,7 +20,7 @@ package com.waz.sync.handler
 
 import com.waz.service.PropertyKey
 import com.waz.service.conversation.FoldersService
-import com.waz.service.conversation.RemoteFolderData._
+import com.waz.service.conversation.FoldersService.FoldersProperty
 import com.waz.sync.SyncResult
 import com.waz.sync.client.PropertiesClient
 import com.waz.threading.Threading
@@ -36,16 +36,16 @@ class FoldersSyncHandler(prefsClient: PropertiesClient, foldersService: FoldersS
   import com.waz.znet2.http.HttpClient.AutoDerivation._
 
   def postFolders(): Future[SyncResult] =
-    foldersService.foldersToSynchronize().flatMap(folders => prefsClient.putProperty(
-      PropertyKey.Folders, FoldersProperty(labels = folders.map(IntermediateFolderData.apply)))
-    ).map(SyncResult(_))
+    for {
+      folders <- foldersService.foldersToSynchronize()
+      res     <- prefsClient.putProperty(PropertyKey.Folders, FoldersProperty.fromRemote(folders))
+    } yield SyncResult(res)
 
-  def syncFolders(): Future[SyncResult] = {
+  def syncFolders(): Future[SyncResult] =
     prefsClient.getProperty[FoldersProperty](PropertyKey.Folders).future.flatMap {
       case Right(Some(foldersProperty)) =>
-        foldersService.processFolders(foldersProperty.labels.map(_.toRemoteFolderData)).map(_ => SyncResult.Success)
+        foldersService.processFolders(foldersProperty.toRemote).map(_ => SyncResult.Success)
       case Right(None) => Future.successful(SyncResult.Success)
       case Left(e) => Future.successful(SyncResult(e))
     }
-  }
 }

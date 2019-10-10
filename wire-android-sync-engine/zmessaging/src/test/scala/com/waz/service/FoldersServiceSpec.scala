@@ -877,7 +877,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       // when
       val seq = decode[FoldersProperty](payload) match {
-        case Right(fp)   => fp.labels.map(_.toRemoteFolderData)
+        case Right(fp)   => fp.labels.map(_.toRemote)
         case Left(error) => fail(error.getMessage)
       }
 
@@ -919,7 +919,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
 
       // when
       val seq = decode[FoldersProperty](payload) match {
-        case Right(fp)   => fp.labels.map(_.toRemoteFolderData)
+        case Right(fp)   => fp.labels.map(_.toRemote)
         case Left(error) => fail(error.getMessage)
       }
 

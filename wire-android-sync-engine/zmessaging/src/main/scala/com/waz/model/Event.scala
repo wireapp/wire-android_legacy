@@ -26,8 +26,8 @@ import com.waz.model.Event.EventDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.PropertyKey
+import com.waz.service.conversation.FoldersService.FoldersProperty
 import com.waz.service.conversation.RemoteFolderData
-import com.waz.service.conversation.RemoteFolderData._
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
@@ -418,12 +418,12 @@ object PropertyEvent {
       import PropertyKey._
       decodePropertyKey('key) match {
         case ReadReceiptsEnabled => decodeString('type) match {
-          case "user.properties-set" => ReadReceiptEnabledPropertyEvent('value)
+          case "user.properties-set"    => ReadReceiptEnabledPropertyEvent('value)
           case "user.properties-delete" => ReadReceiptEnabledPropertyEvent(0)
           case e => UnknownPropertyEvent(ReadReceiptsEnabled, e)
         }
         case Folders => decodeString('type) match {
-          case "user.properties-set" => FoldersEvent(decode[FoldersProperty]('value).labels.map(_.toRemoteFolderData))
+          case "user.properties-set"    => FoldersEvent(decode[FoldersProperty]('value).toRemote)
           case "user.properties-delete" => FoldersEvent(Seq.empty[RemoteFolderData])
           case e => UnknownPropertyEvent(Folders, e)
         }
