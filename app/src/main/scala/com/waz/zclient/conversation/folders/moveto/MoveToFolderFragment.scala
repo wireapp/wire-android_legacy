@@ -30,6 +30,7 @@ import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.folders.{FolderMoveListener, FolderSelectionFragment}
 import com.waz.zclient.pages.{BaseFragment, NoOpContainer}
+import com.waz.zclient.ui.EmptyStateFragment
 
 import scala.concurrent.ExecutionContext
 
@@ -57,16 +58,24 @@ class MoveToFolderFragment extends BaseFragment[NoOpContainer] with FolderMoveLi
     } yield {
 
       folderIndexMap.clear()
-      sortedFolders.zipWithIndex.foreach { case (f, i) => folderIndexMap.put(i, f) }
+      if (sortedFolders.isEmpty) {
+        getChildFragmentManager.beginTransaction.replace(
+          R.id.fragment_move_to_folder_framelayout_container,
+          EmptyStateFragment.newInstance(getString(R.string.folders_no_custom_folder_found)),
+          EmptyStateFragment.TAG
+        ).commit()
+      } else {
+        sortedFolders.zipWithIndex.foreach { case (f, i) => folderIndexMap.put(i, f) }
 
-      val folderNames = new util.ArrayList[String]()
-      sortedFolders.map(data => folderNames.add(data.name.str))
+        val folderNames = new util.ArrayList[String]()
+        sortedFolders.map(data => folderNames.add(data.name.str))
 
-      getChildFragmentManager.beginTransaction.replace(
-        R.id.fragment_move_to_folder_framelayout_container,
-        FolderSelectionFragment.newInstance(folderNames, currentFolderIndex),
-        FolderSelectionFragment.TAG
-      ).commit()
+        getChildFragmentManager.beginTransaction.replace(
+          R.id.fragment_move_to_folder_framelayout_container,
+          FolderSelectionFragment.newInstance(folderNames, currentFolderIndex),
+          FolderSelectionFragment.TAG
+        ).commit()
+      }
     }
   }
 
