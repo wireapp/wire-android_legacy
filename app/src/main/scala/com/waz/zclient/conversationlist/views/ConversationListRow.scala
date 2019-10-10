@@ -579,7 +579,7 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   }
 
   def setIsExpanded(isExpanded: Boolean): Unit = {
-    val resId = if (isExpanded) R.drawable.icon_arrow_down_white else R.drawable.icon_arrow_up_white
+    val resId = if (isExpanded) R.drawable.icon_arrow_down_white else R.drawable.icon_arrow_right_white
     expandIcon.setImageDrawable(getDrawable(resId))
   }
 
