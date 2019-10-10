@@ -131,10 +131,12 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           else
             Unmute
 
-        builder += (if (conv.archived) Unarchive else Archive)
-
         val isConvFavorite = favoriteConvIds.contains(convId)
-        builder += (if (isConvFavorite) RemoveFromFavorites else AddToFavorites)
+        
+        (conv.archived, isConvFavorite) match {
+          case (true, _)           => builder += Unarchive
+          case (false, isFavorite) => builder ++= List(Archive, if (isFavorite) RemoveFromFavorites else AddToFavorites)
+        }
 
         if (isGroup) {
           if (conv.isActive) builder += Leave
