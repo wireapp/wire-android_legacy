@@ -32,7 +32,7 @@ class FolderSelectionFragment : Fragment() {
     private lateinit var adapter: FolderSelectionAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_folder_selection, container, false) as RecyclerView
+        return inflater.inflate(R.layout.fragment_folder_selection, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -49,7 +49,9 @@ class FolderSelectionFragment : Fragment() {
     }
 
     private fun onFolderSelected(index: Int) {
-        (parentFragment as? FolderMoveListener)?.onNewFolderSelected(index)
+        if (index != arguments!!.getInt(KEY_CURRENT_FOLDER_INDEX)) {
+            (parentFragment as? FolderMoveListener)?.onNewFolderSelected(index)
+        }
     }
 
     companion object {

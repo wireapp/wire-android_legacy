@@ -60,6 +60,10 @@ class MoveToFolderActivity extends BaseActivity
     }
   }
 
+  override def onConvFolderChanged(): Unit = {
+    finishOperation()
+  }
+
   private def openCreteNewFolderScreen(convName: String): Unit = {
     getSupportFragmentManager
       .beginTransaction()
@@ -78,15 +82,19 @@ class MoveToFolderActivity extends BaseActivity
     (for {
       _ <- convListController.createNewFolderWithConversation(folderName, convId)
     } yield {
-      val resultIntent = new Intent().putExtra(MoveToFolderActivity.KEY_CONV_ID, convId)
-      setResult(Activity.RESULT_OK, resultIntent)
-      finish()
+      finishOperation()
     }).recoverWith {
       case ex: Exception => Log.e("MoveToFolderActivity",
         "An error occured while creating folder " + folderName + " with conversation " + convId, ex)
         cancelOperation()
         Future.successful(())
     }
+  }
+
+  private def finishOperation(): Unit = {
+    val resultIntent = new Intent().putExtra(MoveToFolderActivity.KEY_CONV_ID, convId)
+    setResult(Activity.RESULT_OK, resultIntent)
+    finish()
   }
 
   private def cancelOperation(): Unit = {

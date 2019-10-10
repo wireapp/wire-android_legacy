@@ -102,7 +102,9 @@ class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
     val folder = folderIndexMap.get(index)
     for {
       _ <- convListController.moveToCustomFolder(convId, folder.id)
-    } yield ()
+    } yield {
+      getContainer.onConvFolderChanged()
+    }
   }
 }
 
@@ -113,6 +115,7 @@ object MoveToFolderFragment {
   trait Container {
     def onCloseScreenClicked(): Unit
     def onPrepareNewFolderClicked(): Unit
+    def onConvFolderChanged(): Unit
   }
 
   val KEY_CONV_ID = "convId"
