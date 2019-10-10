@@ -93,6 +93,15 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
 
+  private lazy val customFoldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = {
+    for {
+      favoritesFolderId <- favoritesFolderId
+      foldersWithConvs  <- foldersWithConvs
+    } yield {
+      favoritesFolderId.fold(foldersWithConvs)(foldersWithConvs - _)
+    }
+  }
+
   def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
   lazy val favoritesFolderId: Signal[Option[FolderId]] = foldersService.flatMap(_.favoritesFolderId)
@@ -114,8 +123,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   } yield convs.filter(c => convIds.contains(c.id))
 
   private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
-    favoritesFolderId  <- favoritesFolderId
-    customFolders      <- foldersWithConvs.map(fwc => favoritesFolderId.fold(fwc)(fwc - _))
+    customFolders      <- customFoldersWithConvs
     folderConvIds      =  customFolders.values.flatten.toSet
     convs              <- regularConversationListData
     convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
@@ -126,6 +134,16 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   lazy val groupConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(_._2).map(_._1))
 
   lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2).map(_._1))
+
+  lazy val customFolderConversations: Signal[Seq[(FolderData, Seq[ConversationData])]] = {
+    for {
+      customFolderIds  <- customFolderIds
+      customFoldersOpt <- Signal.sequence(customFolderIds.toSeq.map(folder): _*)
+      customFolders     = customFoldersOpt.flatten.sortBy(_.name.str)
+      conversations    <- Signal.sequence(customFolders.map(f => folderConversations(f.id)): _*)
+      result            = customFolders.zip(conversations)
+    } yield result
+  }
 
   lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
 
