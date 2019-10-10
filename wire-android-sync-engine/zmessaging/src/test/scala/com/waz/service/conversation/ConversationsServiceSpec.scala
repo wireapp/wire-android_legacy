@@ -57,13 +57,14 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   val assetService =    mock[AssetService]
   val receiptStorage =  mock[ReadReceiptsStorage]
   val notificationService = mock[NotificationService]
+  val foldersService =  mock[FoldersService]
 
   val prefs = new TestGlobalPreferences()
 
   private def getService(teamId: Option[TeamId] = None): ConversationsServiceImpl = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, prefs)
     new ConversationsServiceImpl(teamId, selfUserId, push, users, usersStorage, membersStorage, convsStorage, content, sync, errors, messages, msgContent, userPrefs, null, tracking, client, selectedConv, requests,
-      assetService, receiptStorage, notificationService)
+      assetService, receiptStorage, notificationService, foldersService)
   }
 
   scenario("updateConversationsWithDeviceStartMessage happy path") {

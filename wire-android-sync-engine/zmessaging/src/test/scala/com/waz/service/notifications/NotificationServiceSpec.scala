@@ -420,7 +420,9 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       )
       storedNotifications ! previousNots
 
-      (convs.getAll _).expects(*).once().returning(Future.successful(Seq(Some(conv1), Some(conv2))))
+      setup(Seq((conv1, true), (conv2, true)))
+
+     // (convs.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(Some(conv1), Some(conv2))))
 
       val uiNotified = Signal(false)
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
@@ -480,19 +482,27 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       .foreach(conv =>
         (convs.getByRemoteId _)
           .expects(conv.remoteId)
-          .once()
+          .anyNumberOfTimes()
           .returning(Future.successful(Some(conv)))
       )
+
+    val conversations = cs.map { case (c, _) => c.id -> c }.toMap
+
+
+    import Threading.Implicits.Background
+
     (convs.getAll _)
-      .expects(cs.map(_._1.id).toSet)
-      .once()
-      .returning(Future.successful(cs.map(ce => Some(ce._1))))
+      .expects(*)
+      .anyNumberOfTimes()
+      .onCall { ids: Traversable[ConvId] => Future { ids.toSeq.map(conversations.get) } }
+
+    (convs.get _).expects(*).anyNumberOfTimes().onCall { id: ConvId => Future { conversations.get(id) } }
 
     if (msg.isEmpty) {
-      (messages.getAll _).expects(*).twice().returning(Future.successful(Seq.empty))
+      (messages.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     } else if (msg.isDefined) msg.foreach { msg =>
-      (messages.getAll _).expects(Set(msg.id)).once().returning(Future.successful(Seq(Some(msg))))
-      (messages.getAll _).expects(*).once().returning(Future.successful(Seq.empty))
+      (messages.getAll _).expects(Set(msg.id)).anyNumberOfTimes().returning(Future.successful(Seq(Some(msg))))
+      (messages.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     }
   }
 }
