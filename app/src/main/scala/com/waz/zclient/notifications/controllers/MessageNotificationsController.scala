@@ -28,7 +28,7 @@ import android.text.TextUtils
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
-import com.waz.content._
+import com.waz.content.{UserPreferences, _}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.push.NotificationUiController
@@ -47,7 +47,6 @@ import com.waz.zclient.messages.controllers.NavigationController
 import com.waz.zclient.utils.ContextUtils.{getInt, getIntArray}
 import com.waz.zclient.utils.{ResString, RingtoneUtils}
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
-import com.waz.content.UserPreferences
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -227,6 +226,12 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
       case _                     => Future.successful(None)
     }
 
+  private def getOpenConvIntent(account: UserId, n: NotificationData, requestBase: Int) : Option[(UserId, ConvId, Int)] =
+    if (n.isConvDeleted) None else Some((account, n.conv, requestBase))
+
+  private def getAction(account: UserId, n: NotificationData, requestBase: Int, offset: Int, bundleEnabled: Boolean)=
+    if (n.isConvDeleted) None else Some((account, n.conv, requestBase + 1, bundleEnabled))
+
   private def singleNotificationProperties(props: NotificationProps, account: UserId, n: NotificationData, teamName: Option[Name]) = {
     verbose(l"singleNotificationProperties: $account, $n, $teamName")
     for {
@@ -239,51 +244,46 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         contentTitle             = Some(title),
         contentText              = Some(body),
         style                    = Some(bigTextStyle),
-        openConvIntent           = Some((account, n.conv, requestBase)),
+        openConvIntent           = getOpenConvIntent(account, n, requestBase),
         clearNotificationsIntent = Some((account, Some(n.conv)))
       )
-      if (n.msgType != NotificationType.CONNECT_REQUEST)
-        specProps.copy(
-          action1 = Some((account, n.conv, requestBase + 1, bundleEnabled)),
-          action2 = Some((account, n.conv, requestBase + 2, bundleEnabled))
-        )
-      else specProps
-    }
-  }
 
-  private def getMessageTitle(account: UserId, n: NotificationData, teamName: Option[String]) = {
-    if (n.ephemeral)
-      Future.successful(ResString(R.string.notification__message__ephemeral_someone))
-    else {
-      getConvName(account, n).map(_.getOrElse(Name.Empty)).map { convName =>
-        teamName match {
-          case Some(name) =>
-            ResString(R.string.notification__message__group__prefix__other, convName, name)
-          case None =>
-            ResString(convName)
-        }
+      if (n.msgType == NotificationType.CONNECT_REQUEST) {
+        specProps
+      } else {
+        specProps.copy(
+          action1 = getAction(account, n, requestBase, 1, bundleEnabled),
+          action2 = getAction(account, n, requestBase, 2, bundleEnabled)
+        )
       }
     }
   }
 
+  private def getMessageTitle(account: UserId, n: NotificationData, teamName: Option[String]) =
+    if (n.isConvDeleted) Future.successful(ResString(R.string.notification__message__conversation_deleted))
+    else if (n.ephemeral) Future.successful(ResString(R.string.notification__message__ephemeral_someone))
+    else getConvName(account, n).map(_.getOrElse(Name.Empty)).map { convName =>
+      teamName match {
+        case Some(name) => ResString (R.string.notification__message__group__prefix__other, convName, name)
+        case None       => ResString(convName)
+      }
+    }
+
   private def getConvName(account: UserId, n: NotificationData) =
     inject[AccountToConvsStorage].apply(account).flatMap {
-      case Some(st) =>
-        st.get(n.conv).map(_.map(_.displayName))
-      case None =>
-        Future.successful(Option.empty[Name])
+      case Some(storage) => storage.get(n.conv).map(_.map(_.displayName))
+      case None          => Future.successful(Option.empty[Name])
     }
 
   private def getUserName(account: UserId, n: NotificationData) =
     inject[AccountToUsersStorage].apply(account).flatMap {
-      case Some(st) =>
-        st.get(n.user).map(_.map(_.getDisplayName))
-      case None =>
-        Future.successful(Option.empty[Name])
+      case Some(storage) => storage.get(n.user).map(_.map(_.getDisplayName))
+      case None          => Future.successful(Option.empty[Name])
     }
 
   private def isGroupConv(account: UserId, n: NotificationData) =
-    inject[AccountToConvsService].apply(account).flatMap {
+    if (n.isConvDeleted) Future.successful(true)
+    else inject[AccountToConvsService].apply(account).flatMap {
       case Some(service) => service.isGroupConversation(n.conv)
       case _ => Future.successful(false)
     }
@@ -292,39 +292,40 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     val message = n.msg.replaceAll("\\r\\n|\\r|\\n", " ")
 
     for {
-      header <- n.msgType match {
-        case CONNECT_ACCEPTED => Future.successful(ResString.Empty)
-        case _ => getDefaultNotificationMessageLineHeader(account, n, singleConversationInBatch)
-      }
-      convName <- getConvName(account, n).map(_.getOrElse(Name.Empty))
-      userName <- getUserName(account, n).map(_.getOrElse(Name.Empty))
+      header         <- n.msgType match {
+                          case CONNECT_ACCEPTED => Future.successful(ResString.Empty)
+                          case _                => getDefaultNotificationMessageLineHeader(account, n, singleConversationInBatch)
+                        }
+      convName       <- getConvName(account, n).map(_.getOrElse(Name.Empty))
+      userName       <- getUserName(account, n).map(_.getOrElse(Name.Empty))
       messagePreview <- userPrefs.flatMap(_.preference(UserPreferences.MessagePreview).signal).head
     } yield {
       val body = n.msgType match {
-        case _ if n.ephemeral && n.isSelfMentioned => ResString(R.string.notification__message_with_mention__ephemeral)
-        case _ if n.ephemeral && n.isReply => ResString(R.string.notification__message_with_quote__ephemeral)
-        case _ if n.ephemeral => ResString(R.string.notification__message__ephemeral)
-        case TEXT             => if (messagePreview) ResString(message) else ResString(R.string.notification__message_one_to_one_message_preview)
-        case MISSED_CALL      => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
-        case KNOCK            => ResString(R.string.notification__message__one_to_one__pinged)
-        case ANY_ASSET        => ResString(R.string.notification__message__one_to_one__shared_file)
-        case ASSET            => ResString(R.string.notification__message__one_to_one__shared_picture)
-        case VIDEO_ASSET      => ResString(R.string.notification__message__one_to_one__shared_video)
-        case AUDIO_ASSET      => ResString(R.string.notification__message__one_to_one__shared_audio)
-        case LOCATION         => ResString(R.string.notification__message__one_to_one__shared_location)
-        case RENAME           => ResString(R.string.notification__message__group__renamed_conversation, convName)
-        case MEMBER_LEAVE     => ResString(R.string.notification__message__group__remove)
-        case MEMBER_JOIN      => ResString(R.string.notification__message__group__add)
+        case _ if n.ephemeral && n.isSelfMentioned    => ResString(R.string.notification__message_with_mention__ephemeral)
+        case _ if n.ephemeral && n.isReply            => ResString(R.string.notification__message_with_quote__ephemeral)
+        case _ if n.ephemeral                         => ResString(R.string.notification__message__ephemeral)
+        case TEXT if messagePreview                   => ResString(message)
+        case TEXT                                     => ResString(R.string.notification__message_one_to_one_message_preview)
+        case MISSED_CALL                              => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
+        case KNOCK                                    => ResString(R.string.notification__message__one_to_one__pinged)
+        case ANY_ASSET                                => ResString(R.string.notification__message__one_to_one__shared_file)
+        case ASSET                                    => ResString(R.string.notification__message__one_to_one__shared_picture)
+        case VIDEO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_video)
+        case AUDIO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_audio)
+        case LOCATION                                 => ResString(R.string.notification__message__one_to_one__shared_location)
+        case RENAME                                   => ResString(R.string.notification__message__group__renamed_conversation, convName)
+        case MEMBER_LEAVE                             => ResString(R.string.notification__message__group__remove)
+        case MEMBER_JOIN                              => ResString(R.string.notification__message__group__add)
+        case CONNECT_ACCEPTED                         => ResString(R.string.notification__message__single__accept_request, userName)
+        case CONNECT_REQUEST                          => ResString(R.string.people_picker__invite__share_text__header, userName)
+        case MESSAGE_SENDING_FAILED                   => ResString(R.string.notification__message__send_failed)
+        case CONVERSATION_DELETED if userName.isEmpty => ResString(R.string.notification__message__conversation_deleted)
+        case CONVERSATION_DELETED                     => ResString(R.string.notification__message__conversation_deleted_by, userName)
         case LIKE if n.likedContent.nonEmpty =>
           n.likedContent.collect {
-            case LikedContent.PICTURE =>
-              ResString(R.string.notification__message__liked_picture)
-            case LikedContent.TEXT_OR_URL =>
-              ResString(R.string.notification__message__liked, n.msg)
+            case LikedContent.PICTURE     => ResString(R.string.notification__message__liked_picture)
+            case LikedContent.TEXT_OR_URL => ResString(R.string.notification__message__liked, n.msg)
           }.getOrElse(ResString(R.string.notification__message__liked_message))
-        case CONNECT_ACCEPTED       => ResString(R.string.notification__message__single__accept_request, userName)
-        case CONNECT_REQUEST        => ResString(R.string.people_picker__invite__share_text__header, userName)
-        case MESSAGE_SENDING_FAILED => ResString(R.string.notification__message__send_failed)
         case _ => ResString.Empty
       }
 
@@ -476,10 +477,10 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
 
       if (isSingleConv)
         specProps.copy(
-          openConvIntent           = Some((account, n.conv, requestBase)),
+          openConvIntent           = getOpenConvIntent(account, n, requestBase),
           clearNotificationsIntent = Some((account, Some(n.conv))),
-          action1                  = Some((account, n.conv, requestBase + 1, bundleEnabled)),
-          action2                  = Some((account, n.conv, requestBase + 2, bundleEnabled))
+          action1                  = getAction(account, n, requestBase, 1, bundleEnabled),
+          action2                  = getAction(account, n, requestBase, 2, bundleEnabled)
         )
       else
         specProps.copy(

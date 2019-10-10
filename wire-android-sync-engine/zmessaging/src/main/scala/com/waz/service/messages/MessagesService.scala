@@ -17,28 +17,26 @@
  */
 package com.waz.service.messages
 
-import com.waz.log.LogSE._
 import com.waz.api.Message
 import com.waz.api.Message.{Status, Type}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.{Mention, MessageId, _}
 import com.waz.service._
-import com.waz.service.assets2.Asset.General
 import com.waz.service.assets2.UploadAsset
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.AssetClient.Retention
-import com.waz.sync.client.{AssetClient2, AssetClient2Impl}
+import com.waz.sync.client.AssetClient2
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventContext, EventStream, Signal}
+import com.waz.utils.events.{EventContext, EventStream}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -87,6 +85,10 @@ trait MessagesService {
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]]
   def retentionPolicy2ById(convId: ConvId): Future[AssetClient2.Retention]
   def retentionPolicy2(convData: ConversationData): Future[AssetClient2.Retention]
+
+  def findMessageIds(convId: ConvId): Future[Set[MessageId]]
+
+  def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
 }
 
 class MessagesServiceImpl(selfUserId:   UserId,
@@ -487,4 +489,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     }
   }
 
+  override def findMessageIds(convId: ConvId): Future[Set[MessageId]] = storage.findMessageIds(convId)
+
+  override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] = storage.getAssetIds(messageIds)
 }

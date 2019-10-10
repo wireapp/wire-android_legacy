@@ -19,7 +19,7 @@ package com.waz.service.messages
 
 import com.waz.api.Message.Status.DELIVERED
 import com.waz.api.Message.Type._
-import com.waz.content.{ConversationStorage, MessagesStorage, ReadReceiptsStorage}
+import com.waz.content.{MessagesStorage, ReadReceiptsStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.sync.ReceiptType
@@ -33,7 +33,6 @@ import scala.concurrent.Future
 import scala.concurrent.Future.successful
 
 class ReceiptService(messages: MessagesStorage,
-                     convsStorage: ConversationStorage,
                      sync: SyncServiceHandle,
                      selfUserId: UserId,
                      convsService: ConversationsService,
@@ -64,4 +63,5 @@ class ReceiptService(messages: MessagesStorage,
       debug(l"received read receipts: $receipts")
       readReceiptsStorage.insertAll(receipts)
     } else successful(Set.empty)
+
 }

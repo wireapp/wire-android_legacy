@@ -56,14 +56,21 @@ trait NotificationUiController {
   def notificationsSourceVisible: Signal[Map[UserId, Set[ConvId]]]
 }
 
-class NotificationService(selfUserId:      UserId,
+trait NotificationService {
+  def dismissNotifications(forConvs: Option[Set[ConvId]] = None): Future[Unit]
+  def displayNotificationForDeletingConversation(from: UserId, time: RemoteInstant, convData: ConversationData): Future[Unit]
+  val messageNotificationEventsStage : EventScheduler.Stage
+  val connectionNotificationEventStage : EventScheduler.Stage
+}
+
+class NotificationServiceImpl(selfUserId:      UserId,
                           messages:        MessagesStorage,
                           storage:         NotificationStorage,
                           convs:           ConversationStorage,
                           pushService:     PushService,
                           uiController:    NotificationUiController,
                           userService:     UserService,
-                          clock:           Clock) {
+                          clock:           Clock) extends NotificationService {
 
   import Threading.Implicits.Background
   implicit lazy val logTag: LogTag = accountTag[NotificationService](selfUserId)
@@ -91,7 +98,7 @@ class NotificationService(selfUserId:      UserId,
     } yield {}
   }
 
-  val messageNotificationEventsStage = EventScheduler.Stage[ConversationEvent]({ (c, events) =>
+  override val messageNotificationEventsStage = EventScheduler.Stage[ConversationEvent]({ (c, events) =>
     if (events.nonEmpty) {
       for {
         (undoneLikes, likes) <- getReactionChanges(events)
@@ -114,7 +121,7 @@ class NotificationService(selfUserId:      UserId,
     } else Future.successful({})
   })
 
-  val connectionNotificationEventStage = EventScheduler.Stage[Event]({ (_, events) =>
+  override val connectionNotificationEventStage = EventScheduler.Stage[Event]({ (_, events) =>
     if (events.nonEmpty) {
       val toShow = events.collect {
         case UserConnectionEvent(_, _, userId, msg, ConnectionStatus.PendingFromOther, time, name) =>
@@ -133,50 +140,85 @@ class NotificationService(selfUserId:      UserId,
     } else Future.successful({})
   })
 
-  private def pushNotificationsToUi(): Future[Unit] = {
-    def shouldShowNotification(self: UserData,
-                               n: NotificationData,
-                               conv: ConversationData,
-                               notificationSourceVisible: Map[UserId, Set[ConvId]]): Boolean = {
-      // broken down for better readability
-      val appAllows =
-        n.user != self.id &&
-        conv.lastRead.isBefore(n.time) &&
-        conv.cleared.forall(_.isBefore(n.time)) &&
-        !notificationSourceVisible.get(self.id).exists(_.contains(n.conv))
+  override def displayNotificationForDeletingConversation(from: UserId, remoteTime: RemoteInstant, convData: ConversationData): Future[Unit] = {
+    val notData = NotificationData(
+      conv    = convData.id,
+      user    = from,
+      msgType = NotificationType.CONVERSATION_DELETED,
+      time    = remoteTime
+    )
+    (for {
+      Some(self)                <- userService.getSelfUser
+      notificationSourceVisible <- uiController.notificationsSourceVisible.head
+      true                      <- Future.successful(shouldShowNotification(self, notData, convData, notificationSourceVisible))
+      _                         <- uiController.onNotificationsChanged(self.id, Set(notData))
+      _                         <- storage.insert(notData.copy(hasBeenDisplayed = true))
+    } yield {}).recoverWith {
+      case ex: Exception =>
+        error(l"error @ displayNotificationForDeletingConversation $ex")
+        Future.successful(())
+    }
+  }
+
+  private def allowWhileSourceIsDisplayed(notificationData: NotificationData): Boolean =
+    notificationData.isConvDeleted
+
+  private def shouldShowNotification(self: UserData,
+                                     n: NotificationData,
+                                     conv: ConversationData,
+                                     notificationSourceVisible: Map[UserId, Set[ConvId]]): Boolean = {
+
+    val fromSelf = n.user == self.id
+    val notReadYet = conv.lastRead.isBefore(n.time)
+    val notCleared = conv.cleared.forall(_.isBefore(n.time))
+    val isConvOnDisplay = !notificationSourceVisible.get(self.id).exists(_.contains(n.conv))
+
+    val allowedForDisplay = !fromSelf && notReadYet && notCleared &&
+      (allowWhileSourceIsDisplayed(n) || isConvOnDisplay)
+
+    if (!allowedForDisplay) {
+      false
+    } else {
       val isReplyOrMention = n.isSelfMentioned || n.isReply
-      if (!appAllows) {
+      if (self.availability == Availability.Away) {
         false
-      } else {
-        if (self.availability == Availability.Away) {
+      } else if (self.availability == Availability.Busy) {
+        if (!isReplyOrMention) {
           false
-        } else if (self.availability == Availability.Busy) {
-          if (!isReplyOrMention) {
-            false
-          } else {
-            conv.muted.isAllAllowed || conv.muted.onlyMentionsAllowed
-          }
         } else {
-          conv.muted.isAllAllowed  || (conv.muted.onlyMentionsAllowed && isReplyOrMention)
+          conv.muted.isAllAllowed || conv.muted.onlyMentionsAllowed
         }
+      } else {
+        conv.muted.isAllAllowed || (conv.muted.onlyMentionsAllowed && isReplyOrMention)
       }
     }
+  }
 
+  private def pushNotificationsToUi(): Future[Unit] = {
     verbose(l"pushNotificationsToUi")
-    for {
-      Some(self)                <- userService.getSelfUser
-      toShow                    <- storage.list()
+    (for {
       notificationSourceVisible <- uiController.notificationsSourceVisible.head
-      convs                     <- convs.getAll(toShow.map(_.conv).toSet)
-                                        .map(_.collect { case Some(c) => c.id -> c }.toMap)
-      (show, ignore)            =  toShow.partition { n =>
-                                     shouldShowNotification(self, n, convs(n.conv), notificationSourceVisible)
-                                   }
-      _                         =  verbose(l"show: $show, ignore: $ignore")
-      _                         <- uiController.onNotificationsChanged(self.id, show.toSet)
-      _                         <- storage.insertAll(show.map(_.copy(hasBeenDisplayed = true)))
-      _                         <- storage.removeAll(ignore.map(_.id))
-    } yield {}
+      _                         = verbose(l"source: $notificationSourceVisible")
+      toShow                    <- storage.list()
+      _ = verbose(l"toShow: $toShow")
+      Some(self)                <- userService.getSelfUser
+      convsWithNots             <- Future.sequence(toShow.map(n => convs.get(n.conv).map(c => (n, c))))
+      (show, ignore)            =  convsWithNots.partition {
+                                     case (n, Some(c))                 => shouldShowNotification(self, n, c, notificationSourceVisible)
+                                     case (n, None) if n.isConvDeleted => true
+                                     case (_, None)                    => false
+                                    }
+      showNotifications         = show.map(_._1).toSet
+      ignoreNotifications       = ignore.map(_._1.id).toSet
+      _                         =  verbose(l"show: $showNotifications, ignore: $ignoreNotifications")
+      _                         <- uiController.onNotificationsChanged(self.id, showNotifications)
+      _                         <- storage.insertAll(showNotifications.map(_.copy(hasBeenDisplayed = true)))
+      _                         <- storage.removeAll(ignoreNotifications)
+    } yield {}).recoverWith {
+      case exception: Exception =>
+        error(l"error while displaying notifications to ui $exception")
+        Future.successful(())
+    }
   }
 
   private def getMessageNotifications(rConvId: RConvId, events: Vector[Event]) = {

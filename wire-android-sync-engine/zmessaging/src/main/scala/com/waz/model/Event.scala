@@ -98,6 +98,8 @@ case class UnknownConvEvent(json: JSONObject) extends ConversationEvent {
 
 case class CreateConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId, data: ConversationResponse) extends ConversationStateEvent
 
+case class DeleteConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId) extends ConversationStateEvent
+
 case class MessageTimerEvent(convId: RConvId, time: RemoteInstant, from: UserId, duration: Option[FiniteDuration]) extends MessageEvent with ConversationStateEvent
 
 case class RenameConversationEvent(convId: RConvId, time: RemoteInstant, from: UserId, name: Name) extends MessageEvent with ConversationStateEvent
@@ -248,6 +250,7 @@ object ConversationEvent extends DerivedLogTag {
 
       decodeString('type) match {
         case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
+        case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
         case "conversation.member-join"          => MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeString('id).startsWith("1."))
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
@@ -366,6 +369,10 @@ object TeamEvent extends DerivedLogTag {
   case class Delete(teamId: TeamId) extends TeamEvent
   case class Update(teamId: TeamId, name: Option[Name], icon: AssetId) extends TeamEvent
 
+  case class Ignored() extends TeamEvent {
+    override val teamId: TeamId = TeamId.Empty
+  }
+
   sealed trait MemberEvent extends TeamEvent {
     val userId: UserId
   }
@@ -378,7 +385,6 @@ object TeamEvent extends DerivedLogTag {
   }
 
   case class ConversationCreate(teamId: TeamId, convId: RConvId) extends ConversationEvent
-  case class ConversationDelete(teamId: TeamId, convId: RConvId) extends ConversationEvent
 
   case class UnknownTeamEvent(js: JSONObject) extends TeamEvent { override val teamId = TeamId.Empty }
 
@@ -393,7 +399,7 @@ object TeamEvent extends DerivedLogTag {
         case "team.member-leave"        => MemberLeave('team, UserId(decodeString('user)('data)))
         case "team.member-update"       => MemberUpdate('team, UserId(decodeString('user)('data)))
         case "team.conversation-create" => ConversationCreate('team, RConvId(decodeString('conv)('data)))
-        case "team.conversation-delete" => ConversationDelete('team, RConvId(decodeString('conv)('data)))
+        case "team.conversation-delete" => Ignored()
         case _ =>
           error(l"Unhandled event: $js")
           UnknownTeamEvent(js)
