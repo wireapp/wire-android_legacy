@@ -20,28 +20,41 @@ package com.waz.zclient.conversation.folders.moveto
 import android.content.{Context, Intent}
 import android.os.Bundle
 import com.waz.model.ConvId
+import com.waz.threading.Threading
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.{BaseActivity, R}
 
+import scala.concurrent.ExecutionContext
+
 class MoveToFolderActivity extends BaseActivity with MoveToFolderFragment.Container {
+
+  implicit val executionContext: ExecutionContext = Threading.Ui //TODO: check!!
+
+  private lazy val conversationController = inject[ConversationController]
+
+  private lazy val convId = getIntent.getSerializableExtra(MoveToFolderActivity.KEY_CONV_ID).asInstanceOf[ConvId]
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_blank)
     getSupportFragmentManager
       .beginTransaction()
-      .replace(R.id.activity_blank_framelayout_container,
-        MoveToFolderFragment.newInstance(
-          getIntent.getSerializableExtra(MoveToFolderActivity.KEY_CONV_ID).asInstanceOf[ConvId]
-        )
-      )
+      .replace(R.id.activity_blank_framelayout_container, MoveToFolderFragment.newInstance(convId))
       .commit()
   }
 
   override def onPrepareNewFolderClicked(): Unit = {
+    conversationController.getConversation(convId).foreach {
+      case Some(conv) => openCreteNewFolderScreen(conv.name.getOrElse("").toString)
+      case None => //TODO: conversation is deleted. what to do?
+    }
+  }
+
+  private def openCreteNewFolderScreen(convName: String): Unit = {
     getSupportFragmentManager
       .beginTransaction()
       .replace(R.id.activity_blank_framelayout_container,
-        CreateNewFolderFragment.newInstance(),
+        CreateNewFolderFragment.newInstance(convName),
         CreateNewFolderFragment.TAG)
       .addToBackStack(CreateNewFolderFragment.TAG)
       .commit()

@@ -39,16 +39,16 @@
         android:textColor="?wireSecondaryTextColor"
         android:textSize="@dimen/wire__text_size__small"
         app:w_font="@string/wire__typeface__regular"
-        android:layout_marginTop="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/wire__margin__20"
         android:layout_marginStart="@dimen/wire__padding__regular"
         android:layout_marginEnd="@dimen/wire__padding__regular"
-        android:layout_marginBottom="@dimen/wire__padding__24"/>
+        android:layout_marginBottom="@dimen/wire__margin__20"/>
 
     <com.waz.zclient.common.views.InputBox
         android:id="@+id/fragment_create_new_folder_inputbox_folder_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/create_conv_input_margin_top"
+        android:layout_marginTop="@dimen/wire__margin__20"
         app:hasButton="false"
         app:hint="@string/folders_folder_name_hint"
         app:layout_constraintTop_toBottomOf="@id/fragment_create_new_folder_textview_info" />

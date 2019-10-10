@@ -18,11 +18,19 @@
 package com.waz.zclient.conversation.folders.moveto
 
 import android.os.Bundle
+import android.text.InputFilter.LengthFilter
 import android.view.{LayoutInflater, View, ViewGroup}
+import android.widget.TextView
+import com.waz.utils.returning
 import com.waz.zclient.R
+import com.waz.zclient.common.views.InputBox
+import com.waz.zclient.common.views.InputBox.GroupNameValidator
 import com.waz.zclient.ui.DefaultToolbarFragment
 
 class CreateNewFolderFragment extends DefaultToolbarFragment {
+
+  private lazy val textViewInfo = view[TextView](R.id.fragment_create_new_folder_textview_info)
+  private lazy val inputBox = view[InputBox](R.id.fragment_create_new_folder_inputbox_folder_name)
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_create_new_folder, container, false)
@@ -31,6 +39,14 @@ class CreateNewFolderFragment extends DefaultToolbarFragment {
     super.onViewCreated(view, savedInstanceState)
     setTitle(getString(R.string.folders_create_new_folder))
     setActionButtonText(getString(R.string.folders_create_new_folder_action))
+    inputBox.foreach { box =>
+      box.editText.setFilters(Array(new LengthFilter(64)))
+      box.setValidator(GroupNameValidator)
+    }
+    textViewInfo.foreach(_.setText(getString(
+      R.string.folders_create_new_folder_info,
+      getArguments.getString(CreateNewFolderFragment.KEY_CONVERSATION_NAME)
+    )))
   }
 
   override protected def onNavigationClick(): Unit = {}
@@ -43,5 +59,12 @@ class CreateNewFolderFragment extends DefaultToolbarFragment {
 object CreateNewFolderFragment {
   val TAG = "CreateNewFolderFragment"
 
-  def newInstance() = new CreateNewFolderFragment()
+  val KEY_CONVERSATION_NAME = "conversationName"
+
+  def newInstance(conversationName: String) =
+    returning(new CreateNewFolderFragment()) { fragment =>
+      val bundle = new Bundle()
+      bundle.putString(KEY_CONVERSATION_NAME, conversationName)
+      fragment.setArguments(bundle)
+    }
 }

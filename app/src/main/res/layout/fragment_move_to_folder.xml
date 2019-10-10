@@ -47,7 +47,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity='end'
-            android:layout_marginEnd="@dimen/wire__padding__regular"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingTop="@dimen/wire__padding__regular"
+            android:paddingBottom="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__regular"
             android:text="@string/glyph__plus"
             android:textColor="@drawable/app_entry_text_button"
             android:textSize="@dimen/wire__text_size__small"
