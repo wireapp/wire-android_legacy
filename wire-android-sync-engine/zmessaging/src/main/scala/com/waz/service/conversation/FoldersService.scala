@@ -247,8 +247,9 @@ case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
 
 object RemoteFolderData {
 
-  // This type is matching the JSON payload on the backend. Do NOT rename "labels".
-  case class FoldersPropertyRemotePayload(labels: Seq[IntermediateFolderData]) {}
+  // This type is matching the JSON payload on the backend
+  // e. g. Do NOT rename "labels" or it will not serialize/deserialize properly
+  case class FoldersProperty(labels: Seq[IntermediateFolderData])
 
   case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: Vector[String]) {
     def toRemoteFolderData: RemoteFolderData =
@@ -256,18 +257,19 @@ object RemoteFolderData {
         FolderData(id = FolderId(id), name = Name(name.getOrElse("")), folderType = `type`),
         conversations.map(RConvId(_)).toSet
       )
+  }
 
-    def this(remoteFolderData: RemoteFolderData) {
-      this(remoteFolderData.folderData.id.str, Some(remoteFolderData.folderData.name.str), remoteFolderData.folderData.folderType, remoteFolderData.conversations.map(_.str).toVector)
-    }
+  object IntermediateFolderData {
+    def apply(remoteFolderData: RemoteFolderData): IntermediateFolderData =
+      apply(remoteFolderData.folderData.id.str, Some(remoteFolderData.folderData.name.str), remoteFolderData.folderData.folderType, remoteFolderData.conversations.map(_.str).toVector)
   }
 
   // TODO: the old JSON decoder is still needed for FoldersEvent. Remove after migrating to circe.
-  implicit val remoteFolderPropertyDecoder: JsonDecoder[FoldersPropertyRemotePayload] = new JsonDecoder[FoldersPropertyRemotePayload] {
-    override def apply(implicit js: JSONObject): FoldersPropertyRemotePayload = {
+  implicit val remoteFolderPropertyDecoder: JsonDecoder[FoldersProperty] = new JsonDecoder[FoldersProperty] {
+    override def apply(implicit js: JSONObject): FoldersProperty = {
       import JsonDecoder._
       val folderData = decodeSeq[IntermediateFolderData]('labels)
-      FoldersPropertyRemotePayload(folderData)
+      FoldersProperty(folderData)
     }
   }
 

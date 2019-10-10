@@ -423,8 +423,8 @@ object PropertyEvent {
           case e => UnknownPropertyEvent(ReadReceiptsEnabled, e)
         }
         case Folders => decodeString('type) match {
-          case "user.properties-set" => FoldersEvent(decode[FoldersPropertyRemotePayload]('value).labels.map(_.toRemoteFolderData))
-          case "user.properties-delete" => FoldersEvent(Seq[RemoteFolderData]())
+          case "user.properties-set" => FoldersEvent(decode[FoldersProperty]('value).labels.map(_.toRemoteFolderData))
+          case "user.properties-delete" => FoldersEvent(Seq.empty[RemoteFolderData])
           case e => UnknownPropertyEvent(Folders, e)
         }
         case key => UnknownPropertyEvent(key, 'value)

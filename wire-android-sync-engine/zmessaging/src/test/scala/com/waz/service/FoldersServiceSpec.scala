@@ -20,7 +20,7 @@ package com.waz.service
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, SyncId}
-import com.waz.service.conversation.RemoteFolderData.{FoldersPropertyRemotePayload, IntermediateFolderData}
+import com.waz.service.conversation.RemoteFolderData.{FoldersProperty, IntermediateFolderData}
 import com.waz.service.conversation.{FoldersService, FoldersServiceImpl, RemoteFolderData}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -816,9 +816,9 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val favoritesId = FolderId("fav")
       val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
       val folderFavorites = FolderData(favoritesId, "FAV", FolderData.FavoritesFolderType)
-      val payload = FoldersPropertyRemotePayload(List(
-        new IntermediateFolderData(RemoteFolderData(folder1, Set(convId1, convId2))),
-        new IntermediateFolderData(RemoteFolderData(folderFavorites, Set(convId2)))
+      val payload = FoldersProperty(List(
+        IntermediateFolderData(RemoteFolderData(folder1, Set(convId1, convId2))),
+        IntermediateFolderData(RemoteFolderData(folderFavorites, Set(convId2)))
       ))
 
       // when
@@ -876,7 +876,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
                  |]}""".stripMargin
 
       // when
-      val seq = decode[FoldersPropertyRemotePayload](payload) match {
+      val seq = decode[FoldersProperty](payload) match {
         case Right(fp)   => fp.labels.map(_.toRemoteFolderData)
         case Left(error) => fail(error.getMessage)
       }
@@ -918,7 +918,7 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
                        |}""".stripMargin
 
       // when
-      val seq = decode[FoldersPropertyRemotePayload](payload) match {
+      val seq = decode[FoldersProperty](payload) match {
         case Right(fp)   => fp.labels.map(_.toRemoteFolderData)
         case Left(error) => fail(error.getMessage)
       }

@@ -37,11 +37,11 @@ class FoldersSyncHandler(prefsClient: PropertiesClient, foldersService: FoldersS
 
   def postFolders(): Future[SyncResult] =
     foldersService.foldersToSynchronize().flatMap(folders => prefsClient.putProperty(
-      PropertyKey.Folders, FoldersPropertyRemotePayload(labels = folders.map(new IntermediateFolderData(_))))
+      PropertyKey.Folders, FoldersProperty(labels = folders.map(IntermediateFolderData.apply)))
     ).map(SyncResult(_))
 
   def syncFolders(): Future[SyncResult] = {
-    prefsClient.getProperty[FoldersPropertyRemotePayload](PropertyKey.Folders).future.flatMap {
+    prefsClient.getProperty[FoldersProperty](PropertyKey.Folders).future.flatMap {
       case Right(Some(foldersProperty)) =>
         foldersService.processFolders(foldersProperty.labels.map(_.toRemoteFolderData)).map(_ => SyncResult.Success)
       case Right(None) => Future.successful(SyncResult.Success)
