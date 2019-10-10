@@ -176,12 +176,13 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       Future.failed(ex)
     }
 
-  def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
+  def moveToCustomFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
     favId         <- favoritesFolderId.head
     customFolders =  favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
+    _             <- Future.successful(service.addConversationTo(convId, folderId, true))
   } yield ()
 }
 
