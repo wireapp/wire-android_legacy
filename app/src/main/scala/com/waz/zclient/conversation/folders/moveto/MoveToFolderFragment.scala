@@ -29,12 +29,14 @@ import com.waz.utils.returning
 import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.folders.{FolderMoveListener, FolderSelectionFragment}
-import com.waz.zclient.pages.{BaseFragment, NoOpContainer}
+import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.EmptyStateFragment
 
 import scala.concurrent.ExecutionContext
 
-class MoveToFolderFragment extends BaseFragment[NoOpContainer] with FolderMoveListener with FragmentHelper {
+class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
+  with FolderMoveListener
+  with FragmentHelper {
 
   private lazy val convListController = inject[ConversationListController]
   private lazy val convId = getArguments.getSerializable(MoveToFolderFragment.KEY_CONV_ID).asInstanceOf[ConvId]
@@ -87,17 +89,13 @@ class MoveToFolderFragment extends BaseFragment[NoOpContainer] with FolderMoveLi
     )
     view.findViewById[View](R.id.fragment_move_to_folder_textview_create).setOnClickListener(
       new View.OnClickListener {
-        override def onClick(v: View): Unit = onCreateClick()
+        override def onClick(v: View): Unit = getContainer.onPrepareNewFolderClicked()
       }
     )
   }
 
   private def onNavigationClick(): Unit = {
     //TODO close the page
-  }
-
-  private def onCreateClick(): Unit = {
-    //TODO
   }
 
   override def onNewFolderSelected(index: Int): Unit = {
@@ -111,6 +109,10 @@ class MoveToFolderFragment extends BaseFragment[NoOpContainer] with FolderMoveLi
 object MoveToFolderFragment {
   val TAG = classOf[MoveToFolderFragment].getSimpleName
   val KEY_FOLDER_INDEX_MAP = "folderindexMap"
+
+  trait Container {
+    def onPrepareNewFolderClicked(): Unit
+  }
 
   val KEY_CONV_ID = "convId"
 

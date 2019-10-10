@@ -1405,4 +1405,7 @@
     <string name="conversation_folder_name_one_to_one">People</string>
     <string name="folders_move_to">MOVE TO</string>
     <string name="folders_no_custom_folder_found">No custom folders</string>
+    <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
+    <string name="folders_create_new_folder_action">CREATE</string>
+
 </resources>

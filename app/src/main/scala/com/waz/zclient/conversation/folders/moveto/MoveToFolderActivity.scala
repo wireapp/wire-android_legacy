@@ -20,10 +20,9 @@ package com.waz.zclient.conversation.folders.moveto
 import android.content.{Context, Intent}
 import android.os.Bundle
 import com.waz.model.ConvId
-import com.waz.zclient.pages.NoOpContainer
 import com.waz.zclient.{BaseActivity, R}
 
-class MoveToFolderActivity extends BaseActivity with NoOpContainer {
+class MoveToFolderActivity extends BaseActivity with MoveToFolderFragment.Container {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -38,6 +37,15 @@ class MoveToFolderActivity extends BaseActivity with NoOpContainer {
       .commit()
   }
 
+  override def onPrepareNewFolderClicked(): Unit = {
+    getSupportFragmentManager
+      .beginTransaction()
+      .replace(R.id.activity_blank_framelayout_container,
+        CreateNewFolderFragment.newInstance(),
+        CreateNewFolderFragment.TAG)
+      .addToBackStack(CreateNewFolderFragment.TAG)
+      .commit()
+  }
 }
 
 object MoveToFolderActivity {
