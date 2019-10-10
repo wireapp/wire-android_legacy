@@ -20,19 +20,20 @@ package com.waz.zclient.conversation.folders.moveto
 import java.util
 
 import android.os.Bundle
+import android.support.v7.widget.Toolbar
 import android.util.SparseArray
-import android.view.View
+import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.{ConvId, FolderData}
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.R
+import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.folders.{FolderMoveListener, FolderSelectionFragment}
-import com.waz.zclient.ui.DefaultToolbarFragment
+import com.waz.zclient.pages.{BaseFragment, NoOpContainer}
 
 import scala.concurrent.ExecutionContext
 
-class MoveToFolderFragment extends DefaultToolbarFragment with FolderMoveListener {
+class MoveToFolderFragment extends BaseFragment[NoOpContainer] with FolderMoveListener with FragmentHelper {
 
   private lazy val convListController = inject[ConversationListController]
   private lazy val convId = getArguments.getSerializable(MoveToFolderFragment.KEY_CONV_ID).asInstanceOf[ConvId]
@@ -41,8 +42,12 @@ class MoveToFolderFragment extends DefaultToolbarFragment with FolderMoveListene
 
   private var folderIndexMap = new SparseArray[FolderData]()
 
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
+    inflater.inflate(R.layout.fragment_move_to_folder, container, false)
+
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
+    setUpClickListeners(view)
 
     for {
       customFolders <- convListController.getCustomFolders
@@ -57,18 +62,32 @@ class MoveToFolderFragment extends DefaultToolbarFragment with FolderMoveListene
       val folderNames = new util.ArrayList[String]()
       sortedFolders.map(data => folderNames.add(data.name.str))
 
-      openFragmentWithAnimation(
+      getChildFragmentManager.beginTransaction.replace(
+        R.id.fragment_move_to_folder_framelayout_container,
         FolderSelectionFragment.newInstance(folderNames, currentFolderIndex),
         FolderSelectionFragment.TAG
-      )
+      ).commit()
     }
   }
 
-  override protected def onNavigationClick(): Unit = {
+  private def setUpClickListeners(view: View): Unit = {
+    view.findViewById[Toolbar](R.id.fragment_move_to_folder_toolbar).setNavigationOnClickListener(
+      new View.OnClickListener {
+        override def onClick(v: View): Unit = onNavigationClick()
+      }
+    )
+    view.findViewById[View](R.id.fragment_move_to_folder_textview_create).setOnClickListener(
+      new View.OnClickListener {
+        override def onClick(v: View): Unit = onCreateClick()
+      }
+    )
+  }
+
+  private def onNavigationClick(): Unit = {
     //TODO close the page
   }
 
-  override protected def onActionClick(): Unit = {
+  private def onCreateClick(): Unit = {
     //TODO
   }
 

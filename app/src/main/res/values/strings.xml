@@ -1403,4 +1403,5 @@
     <string name="conversation_folder_name_favorites">Favorites</string>
     <string name="conversation_folder_name_group">Groups</string>
     <string name="conversation_folder_name_one_to_one">People</string>
+    <string name="folders_move_to">MOVE TO</string>
 </resources>
