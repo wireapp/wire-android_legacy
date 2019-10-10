@@ -190,8 +190,7 @@ object ConversationListController {
   }
 
   case object Folders extends ListMode {
-    // TODO: add real copy
-    override lazy val nameId: Int = R.string.conversation_list__header__title
+    override lazy val nameId: Int = R.string.conversation_list__header__folders_title
     override val filter: Filter = ConversationListController.RegularListFilter
   }
 

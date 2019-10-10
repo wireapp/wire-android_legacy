@@ -540,12 +540,17 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
   val title = ViewUtils.getView(this, R.id.conversation_title).asInstanceOf[TypefaceTextView]
   val avatar = ViewUtils.getView(this, R.id.conversation_icon).asInstanceOf[ConversationAvatarView]
   val badge = ViewUtils.getView(this, R.id.conversation_badge).asInstanceOf[ConversationBadge]
+  val separator = ViewUtils.getView(this, R.id.conversation_separator).asInstanceOf[View]
 
   def setIncoming(first: ConvId, numberOfRequests: Int): Unit = {
     firstIncomingConversation = Some(first)
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_inactive))
     title.setText(getInboxName(numberOfRequests))
     badge.setStatus(ConversationBadge.WaitingConnection)
+  }
+
+  def setSeparatorVisibility(isVisible: Boolean): Unit = {
+    separator.setVisibility(if (isVisible) View.VISIBLE else View.GONE)
   }
 
   private def getInboxName(convSize: Int): String = getResources.getQuantityString(R.plurals.connect_inbox__link__name, convSize, convSize.toString)
