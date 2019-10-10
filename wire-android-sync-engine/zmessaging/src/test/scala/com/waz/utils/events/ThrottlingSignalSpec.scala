@@ -41,7 +41,7 @@ class ThrottlingSignalSpec extends FeatureSpec with Matchers with Inspectors wit
   feature("Forwarding") {
 
     scenario("throttle serial events") {
-      100 times spying { spy =>
+      10 times spying { spy =>
         val s = Signal(1)
         val m = s.throttle(2.millis)
         m(spy.capture)
@@ -67,9 +67,9 @@ class ThrottlingSignalSpec extends FeatureSpec with Matchers with Inspectors wit
       val m = s.throttle(50.millis)
       m(capture)
 
-      val updates = Future.sequence((1 to 10000).map(n => delayed(random.nextInt(500).millis) {
+      val updates = Future.sequence((1 to 100).map(n => delayed(random.nextInt(100).millis) {
         s ! n
-        s ! n + 1000
+        s ! n + 100
       }.future))
 
       Await.result(updates, 5.seconds)

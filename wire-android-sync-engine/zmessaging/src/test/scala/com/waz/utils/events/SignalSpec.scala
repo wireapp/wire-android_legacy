@@ -223,7 +223,7 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
     }
 
     scenario("Two concurrent dispatches (global event and background execution contexts)") {
-      concurrentDispatches(2, 1000, EventContext.Global, Some(Threading.Background), Threading.Background)()
+      concurrentDispatches(2, 200, EventContext.Global, Some(Threading.Background), Threading.Background)()
     }
 
     scenario("Several concurrent dispatches (global event and background execution contexts)") {
@@ -237,7 +237,7 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
 
 
     scenario("Two concurrent dispatches (subscriber on UI eventcontext)") {
-      concurrentDispatches(2, 1000, eventContext, Some(Threading.Background), Threading.Background)()
+      concurrentDispatches(2, 200, eventContext, Some(Threading.Background), Threading.Background)()
     }
 
     scenario("Several concurrent dispatches (subscriber on UI event context)") {
