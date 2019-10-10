@@ -247,31 +247,41 @@ case class RemoteFolderData(folderData: FolderData, conversations: Set[RConvId])
 
 object RemoteFolderData {
 
-  case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: List[String]) {
+  // This type is matching the JSON payload on the backend. Do NOT rename "labels".
+  case class FoldersPropertyRemotePayload(labels: Seq[IntermediateFolderData]) {}
+
+  case class IntermediateFolderData(id: String, name: Option[String], `type`: Int, conversations: Vector[String]) {
     def toRemoteFolderData: RemoteFolderData =
       RemoteFolderData(
         FolderData(id = FolderId(id), name = Name(name.getOrElse("")), folderType = `type`),
         conversations.map(RConvId(_)).toSet
       )
+
+    def this(remoteFolderData: RemoteFolderData) {
+      this(remoteFolderData.folderData.id.str, Some(remoteFolderData.folderData.name.str), remoteFolderData.folderData.folderType, remoteFolderData.conversations.map(_.str).toVector)
+    }
   }
 
-  lazy implicit val folderDataConversationsCirceEncoder: Encoder[RemoteFolderData] = Encoder.forProduct4(
-    "id", "name", "type", "conversations"
-  )(fd => (fd.folderData.id.str, fd.folderData.name.str, fd.folderData.folderType, fd.conversations.map(_.str)))
-
-  lazy implicit val folderDataConversationsCirceDecoder: Decoder[IntermediateFolderData] =
-    Decoder.forProduct4("id", "name", "type", "conversations")(IntermediateFolderData.apply)
-
   // TODO: the old JSON decoder is still needed for FoldersEvent. Remove after migrating to circe.
-  implicit val remoteFolderDataDecoder: JsonDecoder[RemoteFolderData] = new JsonDecoder[RemoteFolderData] {
-    override def apply(implicit js: JSONObject): RemoteFolderData = {
+  implicit val remoteFolderPropertyDecoder: JsonDecoder[FoldersPropertyRemotePayload] = new JsonDecoder[FoldersPropertyRemotePayload] {
+    override def apply(implicit js: JSONObject): FoldersPropertyRemotePayload = {
+      import JsonDecoder._
+      val folderData = decodeSeq[IntermediateFolderData]('labels)
+      FoldersPropertyRemotePayload(folderData)
+    }
+  }
+
+  implicit val remoteFolderDataDecoder: JsonDecoder[IntermediateFolderData] = new JsonDecoder[IntermediateFolderData] {
+    override def apply(implicit js: JSONObject): IntermediateFolderData = {
       import JsonDecoder._
 
-      val conversations: Seq[RConvId] = decodeRConvIdSeq('conversations)
+      val conversations: Seq[String] = decodeStringSeq('conversations)
       val name: Option[String] = decodeOptString('name)
-      RemoteFolderData(
-        FolderData(decodeFolderId('id), Name(name.getOrElse("")), decodeInt('type)),
-        conversations.toSet
+      IntermediateFolderData(
+        decodeString('id),
+        name,
+        decodeInt('type),
+        conversations.toVector
       )
     }
   }

@@ -20,7 +20,7 @@ package com.waz.service
 import com.waz.content.{ConversationFoldersStorage, ConversationStorage, FoldersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, ConversationFolderData, FolderData, FolderId, FoldersEvent, Name, RConvId, SyncId}
-import com.waz.service.conversation.RemoteFolderData.IntermediateFolderData
+import com.waz.service.conversation.RemoteFolderData.{FoldersPropertyRemotePayload, IntermediateFolderData}
 import com.waz.service.conversation.{FoldersService, FoldersServiceImpl, RemoteFolderData}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
@@ -816,33 +816,36 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       val favoritesId = FolderId("fav")
       val folder1 = FolderData(folderId1, "F1", FolderData.CustomFolderType)
       val folderFavorites = FolderData(favoritesId, "FAV", FolderData.FavoritesFolderType)
-      val payload = List(
-        RemoteFolderData(folder1, Set(convId1, convId2)),
-        RemoteFolderData(folderFavorites, Set(convId2))
-      )
+      val payload = FoldersPropertyRemotePayload(List(
+        new IntermediateFolderData(RemoteFolderData(folder1, Set(convId1, convId2))),
+        new IntermediateFolderData(RemoteFolderData(folderFavorites, Set(convId2)))
+      ))
 
       // when
       val json = payload.asJson.noSpaces
 
       // then
-      json shouldEqual """[
-                         |  {
-                         |    "id" : "f1",
-                         |    "name" : "F1",
-                         |    "type" : 0,
-                         |    "conversations" : [
-                         |      "c1",
-                         |      "c2"
-                         |    ]
-                         |  },
-                         |  {
-                         |    "id" : "fav",
-                         |    "name" : "FAV",
-                         |    "type" : 1,
-                         |    "conversations" : [
-                         |      "c2"
-                         |    ]
+      json shouldEqual """{
+                         | "labels":
+                         |  [
+                         |    {
+                         |      "id" : "f1",
+                         |      "name" : "F1",
+                         |      "type" : 0,
+                         |      "conversations" : [
+                         |        "c1",
+                         |        "c2"
+                         |      ]
+                         |    },
+                         |    {
+                         |      "id" : "fav",
+                         |      "name" : "FAV",
+                         |      "type" : 1,
+                         |      "conversations" : [
+                         |        "c2"
+                         |      ]
                          |  }]
+                         |}
                        """.stripMargin.replaceAll("\\s","")
     }
   }
@@ -851,28 +854,30 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario ("with favorites") {
 
       // given
-      val payload = """[
-        {
-          "name" : "F1",
-          "type" : 0,
-          "id" : "f1",
-          "conversations" : [
-            "c1",
-            "c2"
-          ]
-        },
-        {
-          "name" : "FAV",
-          "type" : 1,
-          "id" : "fav",
-          "conversations" : [
-            "c2"
-          ]
-        }]"""
+      val payload = """{
+                 | "labels" : [
+                 |  {
+                 |    "name" : "F1",
+                 |    "type" : 0,
+                 |    "id" : "f1",
+                 |    "conversations" : [
+                 |      "c1",
+                 |      "c2"
+                 |    ]
+                 |  },
+                 |  {
+                 |    "name" : "FAV",
+                 |    "type" : 1,
+                 |    "id" : "fav",
+                 |    "conversations" : [
+                 |      "c2"
+                 |    ]
+                 |  }
+                 |]}""".stripMargin
 
       // when
-      val seq = decode[Seq[IntermediateFolderData]](payload) match {
-        case Right(fs)   => fs.map(_.toRemoteFolderData)
+      val seq = decode[FoldersPropertyRemotePayload](payload) match {
+        case Right(fp)   => fp.labels.map(_.toRemoteFolderData)
         case Left(error) => fail(error.getMessage)
       }
 
@@ -891,27 +896,30 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
     scenario ("favorites with no name") {
 
       // given
-      val payload = """[
-        {
-          "name" : "F1",
-          "type" : 0,
-          "id" : "f1",
-          "conversations" : [
-            "c1",
-            "c2"
-          ]
-        },
-        {
-          "type" : 1,
-          "id" : "fav",
-          "conversations" : [
-            "c2"
-          ]
-        }]"""
+      val payload = """{
+                       |  "labels": [
+                       |    {
+                       |      "name" : "F1",
+                       |      "type" : 0,
+                       |      "id" : "f1",
+                       |      "conversations" : [
+                       |        "c1",
+                       |        "c2"
+                       |      ]
+                       |    },
+                       |    {
+                       |      "type" : 1,
+                       |      "id" : "fav",
+                       |      "conversations" : [
+                       |        "c2"
+                       |      ]
+                       |    }
+                       |  ]
+                       |}""".stripMargin
 
       // when
-      val seq = decode[Seq[IntermediateFolderData]](payload) match {
-        case Right(fs)   => fs.map(_.toRemoteFolderData)
+      val seq = decode[FoldersPropertyRemotePayload](payload) match {
+        case Right(fp)   => fp.labels.map(_.toRemoteFolderData)
         case Left(error) => fail(error.getMessage)
       }
 
