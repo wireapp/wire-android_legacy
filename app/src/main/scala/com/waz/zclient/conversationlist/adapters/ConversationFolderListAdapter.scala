@@ -36,6 +36,7 @@ class ConversationFolderListAdapter(implicit context: Context)
     with DerivedLogTag {
 
   val onFolderStateChanged: SourceStream[FolderState] = EventStream[FolderState]()
+  val onUsedFolderStatesChanged: SourceStream[Set[Uid]] = EventStream[Set[Uid]]()
 
   private var folders = Seq.empty[Folder]
 
@@ -59,6 +60,8 @@ class ConversationFolderListAdapter(implicit context: Context)
       val conversations = if (header.isExpanded) next.conversations.toList else List.empty
       acc ++ (header :: conversations)
     }
+
+    onUsedFolderStatesChanged ! folders.map(_.id).toSet
 
     updateList(newItems)
   }
