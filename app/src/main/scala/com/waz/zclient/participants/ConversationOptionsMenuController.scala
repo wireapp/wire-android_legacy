@@ -150,11 +150,12 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }
 
-        customFolderData.fold(builder += MoveToFolder)(data => builder += RemoveFromFolder(data))
+        builder += MoveToFolder
+        customFolderData.foreach(data => builder += RemoveFromFolder(data))
     }
     builder.result().toSeq.sortWith {
-      case (_: RemoveFromFolder, b) => OrderSeq.indexOf(MoveToFolder).compareTo(OrderSeq.indexOf(b)) < 0
-      case (a, _: RemoveFromFolder) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(MoveToFolder)) < 0
+      case (_: RemoveFromFolder, b) => OrderSeq.indexOf(RemoveFromFolderPlaceHolder).compareTo(OrderSeq.indexOf(b)) < 0
+      case (a, _: RemoveFromFolder) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(RemoveFromFolderPlaceHolder)) < 0
       case (a, b) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(b)) < 0
     }
   }
@@ -299,6 +300,7 @@ object ConversationOptionsMenuController {
     WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderData.name.str),
     Some(R.string.glyph__leave) //FIXME: use correct icons
   )
+  object RemoveFromFolderPlaceHolder extends RemoveFromFolder(FolderData(name = "")) //dummy object to hold place in OrderSeq
 
   object Mute                extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
   object Unmute              extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
@@ -323,5 +325,5 @@ object ConversationOptionsMenuController {
   object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
   val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder,
-    Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
+    RemoveFromFolderPlaceHolder, Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 }
