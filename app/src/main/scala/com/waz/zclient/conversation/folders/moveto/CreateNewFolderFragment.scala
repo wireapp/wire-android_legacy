@@ -18,14 +18,14 @@
 package com.waz.zclient.conversation.folders.moveto
 
 import android.os.Bundle
-import android.text.InputFilter.LengthFilter
-import android.view.{LayoutInflater, View, ViewGroup}
+import android.view.{Gravity, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.GroupNameValidator
 import com.waz.zclient.ui.DefaultToolbarFragment
+import com.waz.zclient.utils.ContextUtils
 
 class CreateNewFolderFragment extends DefaultToolbarFragment {
 
@@ -37,16 +37,38 @@ class CreateNewFolderFragment extends DefaultToolbarFragment {
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
+    setActionButtonEnabled(false)
     setTitle(getString(R.string.folders_create_new_folder))
     setActionButtonText(getString(R.string.folders_create_new_folder_action))
-    inputBox.foreach { box =>
-      box.editText.setFilters(Array(new LengthFilter(64)))
-      box.setValidator(GroupNameValidator)
-    }
+    setUpInputBoxValidations()
     textViewInfo.foreach(_.setText(getString(
       R.string.folders_create_new_folder_info,
       getArguments.getString(CreateNewFolderFragment.KEY_CONVERSATION_NAME)
     )))
+  }
+
+  private def setUpInputBoxValidations(): Unit = {
+    val maxNameLength = ContextUtils.getInt(R.integer.max_folder_name_length)
+    inputBox.foreach { box =>
+
+      box.errorText.setGravity(Gravity.START)
+      box.errorText.setTextColor(ContextUtils.getColor(R.color.teams_placeholder_text))
+
+      box.setShouldDisableOnClick(false)
+      box.setShouldClearErrorOnClick(false)
+      box.setShouldClearErrorOnTyping(false)
+
+      box.showErrorMessage(Some(getString(R.string.folders_folder_name_error_text, maxNameLength.toString)))
+      val validator = GroupNameValidator
+      box.setValidator(validator)
+
+      box.text.onUi(s => {
+        val maxLengthExceeded = s.length() > maxNameLength
+        box.errorText.setTextColor(ContextUtils.getColor(
+          if (maxLengthExceeded) R.color.teams_error_red else R.color.teams_placeholder_text))
+        setActionButtonEnabled(validator.isValid(s.toString) && !maxLengthExceeded)
+      })
+    }
   }
 
   override protected def onNavigationClick(): Unit = {}

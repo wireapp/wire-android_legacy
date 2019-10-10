@@ -104,4 +104,6 @@
 
     <integer name="team_tabs__animation_duration">100</integer>
     <integer name="slide_transition_fade_duration">250</integer>
+
+    <integer name="max_folder_name_length">64</integer>
 </resources>
