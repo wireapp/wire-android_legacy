@@ -19,12 +19,12 @@ package com.waz.zclient.ui
 
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.support.annotation.{ColorInt, NonNull, Nullable}
+import android.support.annotation.{ColorInt, IdRes, NonNull, Nullable}
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.Toolbar
+import android.view.View
 import android.view.animation.Animation
-import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.pages.{BaseFragment, NoOpContainer}
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -38,10 +38,7 @@ abstract class DefaultToolbarFragment extends BaseFragment[NoOpContainer] with F
 
   private lazy val textViewTitle = view[TypefaceTextView](R.id.fragment_default_toolbar_textview_title)
   private lazy val textViewAction = view[TypefaceTextView](R.id.fragment_default_toolbar_textview_action)
-  protected lazy val toolbar = view[Toolbar](R.id.fragment_default_toolbar_toolbar)
-
-  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    inflater.inflate(R.layout.fragment_default_toolbar, container, false)
+  protected lazy val toolbar = view[Toolbar](getToolbarId)
 
   override def onActivityCreated(@Nullable savedInstanceState: Bundle): Unit = {
     super.onActivityCreated(savedInstanceState)
@@ -81,7 +78,8 @@ abstract class DefaultToolbarFragment extends BaseFragment[NoOpContainer] with F
       )
   }
 
-  protected def openFragmentWithAnimation(@NonNull fragment: Fragment,
+  protected def openFragmentWithAnimation(@IdRes containerResId: Int,
+                                          @NonNull fragment: Fragment,
                                           @Nullable tag: String): Unit = {
     getChildFragmentManager.beginTransaction
       .setCustomAnimations(
@@ -90,7 +88,7 @@ abstract class DefaultToolbarFragment extends BaseFragment[NoOpContainer] with F
         R.anim.fragment_animation_second_page_slide_in_from_left,
         R.anim.fragment_animation_second_page_slide_out_to_right
       )
-      .replace(R.id.fragment_default_toolbar_fragment_container, fragment)
+      .replace(containerResId, fragment)
       .addToBackStack(tag)
       .commit
   }
@@ -99,6 +97,9 @@ abstract class DefaultToolbarFragment extends BaseFragment[NoOpContainer] with F
     toolbar.foreach(_.setNavigationOnClickListener(null))
     super.onDestroyView()
   }
+
+  @IdRes
+  protected def getToolbarId: Int
 
   protected def onNavigationClick(): Unit
 

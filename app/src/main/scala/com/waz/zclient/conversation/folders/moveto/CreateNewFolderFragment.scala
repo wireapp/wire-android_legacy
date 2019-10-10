@@ -18,11 +18,14 @@
 package com.waz.zclient.conversation.folders.moveto
 
 import android.os.Bundle
-import android.view.View
+import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.zclient.R
 import com.waz.zclient.ui.DefaultToolbarFragment
 
 class CreateNewFolderFragment extends DefaultToolbarFragment {
+
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
+    inflater.inflate(R.layout.fragment_create_new_folder, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
@@ -33,6 +36,8 @@ class CreateNewFolderFragment extends DefaultToolbarFragment {
   override protected def onNavigationClick(): Unit = {}
 
   override protected def onActionClick(): Unit = {}
+
+  override protected def getToolbarId = R.id.fragment_create_new_folder_toolbar
 }
 
 object CreateNewFolderFragment {

@@ -19,8 +19,9 @@ package com.waz.zclient.conversation.creation
 
 import android.app.FragmentManager
 import android.os.Bundle
+import android.support.annotation.IdRes
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
-import android.view.View
+import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -119,9 +120,14 @@ class CreateConversationManagerFragment extends DefaultToolbarFragment with Frag
     })
   }
 
+  override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
+    inflater.inflate(R.layout.fragment_create_conversation_manager, container, false)
+
   override def onViewCreated(v: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
-    openFragmentWithAnimation(new CreateConversationSettingsFragment, CreateConversationSettingsFragment.Tag)
+    openFragmentWithAnimation(
+      R.id.fragment_create_conversation_manager_layout_container,
+      new CreateConversationSettingsFragment, CreateConversationSettingsFragment.Tag)
 
     Signal(currentPage, themeController.darkThemeSet).map {
       case (PickerPage, true) => R.drawable.action_back_light
@@ -169,7 +175,9 @@ class CreateConversationManagerFragment extends DefaultToolbarFragment with Frag
     currentPage.currentValue.foreach {
       case SettingsPage =>
         keyboard.hideKeyboardIfVisible()
-        openFragmentWithAnimation(new AddParticipantsFragment, AddParticipantsFragment.Tag)
+        openFragmentWithAnimation(
+          R.id.fragment_create_conversation_manager_layout_container,
+          new AddParticipantsFragment, AddParticipantsFragment.Tag)
       case PickerPage =>
         convCreationInProgress.head.foreach {
           case false =>
@@ -188,6 +196,8 @@ class CreateConversationManagerFragment extends DefaultToolbarFragment with Frag
     }
   }
 
+  @IdRes
+  override protected def getToolbarId = R.id.fragment_create_conversation_manager_toolbar
 }
 
 object CreateConversationManagerFragment {

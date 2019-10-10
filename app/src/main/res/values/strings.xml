@@ -1407,5 +1407,6 @@
     <string name="folders_no_custom_folder_found">No custom folders</string>
     <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
     <string name="folders_create_new_folder_action">CREATE</string>
+    <string name="folders_folder_name_hint">FOLDER NAME</string>
 
 </resources>
