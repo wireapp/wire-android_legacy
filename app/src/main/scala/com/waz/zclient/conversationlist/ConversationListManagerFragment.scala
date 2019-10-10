@@ -455,7 +455,7 @@ class ConversationListManagerFragment extends Fragment
       case R.id.navigation_search =>
         pickUserController.showPickUser()
         false
-      case R.id.navigation_recents => replaceConversationFragment(
+      case R.id.navigation_conversations => replaceConversationFragment(
         ConversationListFragment.newNormalInstance(),
         NormalConversationFragment.TAG,
         ConversationListType.RECENTS)
@@ -491,7 +491,7 @@ class ConversationListManagerFragment extends Fragment
       bottomNavigationView.setSelectedItemId(
         t match {
           case ConversationListType.FOLDERS => R.id.navigation_folders
-          case _                            => R.id.navigation_recents
+          case _                            => R.id.navigation_conversations
         }
       )
     )
