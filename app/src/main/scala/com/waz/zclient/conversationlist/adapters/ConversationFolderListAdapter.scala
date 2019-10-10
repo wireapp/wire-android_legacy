@@ -117,8 +117,12 @@ object ConversationFolderListAdapter {
     val OneToOnesId = Uid("OneToOnes")
 
     def apply(id: Uid, titleResId: Int, conversations: Seq[ConversationData])(implicit context: Context): Option[Folder] = {
-      if (conversations.nonEmpty) Some(Folder(id, getString(titleResId), conversations.map(d => Item.Conversation(d))))
-      else None
+      if (conversations.isEmpty) None
+      else {
+        val title = getString(titleResId)
+        val conversationItems = conversations.map { d => Item.Conversation(d, sectionTitle = Some(title))}
+        Some(Folder(id, title, conversationItems))
+      }
     }
   }
 }

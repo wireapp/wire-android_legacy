@@ -72,7 +72,7 @@ abstract class ConversationListAdapter
   override def getItemId(position: Int): Long = items(position) match {
     case Item.IncomingRequests(first, _) => first.str.hashCode
     case Item.Header(id, _, _)           => id.str.hashCode
-    case Item.Conversation(data)         => data.id.str.hashCode
+    case Item.Conversation(data, _)      => data.id.str.hashCode
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
@@ -84,13 +84,12 @@ abstract class ConversationListAdapter
   override def onBindViewHolder(holder: ConversationRowViewHolder, position: Int): Unit = {
     (items(position), holder) match {
       case (incomingRequests: Item.IncomingRequests, viewHolder: IncomingConversationRowViewHolder) =>
-        val Item.IncomingRequests(first, number) = incomingRequests
         val showSeparator = !this.isInstanceOf[ConversationFolderListAdapter]
-        viewHolder.bind(first, number, showSeparator)
+        viewHolder.bind(incomingRequests, showSeparator)
       case (header: Item.Header, viewHolder: ConversationFolderRowViewHolder) =>
         viewHolder.bind(header, isFirst = position == 0)
       case (conversation: Item.Conversation, viewHolder: NormalConversationRowViewHolder) =>
-        viewHolder.bind(conversation.data)
+        viewHolder.bind(conversation)
       case _ =>
         error(l"Invalid view holder/data pair")
     }
@@ -98,12 +97,12 @@ abstract class ConversationListAdapter
 
   override def onClick(position: Int): Unit = items(position) match {
     case Item.IncomingRequests(first, _) => onConversationClick ! first
-    case Item.Conversation(data)         => onConversationClick ! data.id
+    case Item.Conversation(data, _)      => onConversationClick ! data.id
     case _                               =>
   }
 
   override def onLongClick(position: Int): Boolean = items(position) match {
-    case Item.Conversation(data) =>
+    case Item.Conversation(data, _) =>
       onConversationLongClick ! data
       true
     case _ =>
@@ -122,12 +121,27 @@ object ConversationListAdapter {
     def onLongClick(position: Int): Boolean
   }
 
-  sealed trait Item
+  sealed trait Item {
+    val contentDescription: String
+  }
 
   object Item {
-    case class Header(id: Uid, title: String, isExpanded: Boolean) extends Item
-    case class Conversation(data: ConversationData) extends Item
-    case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item
+    case class Header(id: Uid, title: String, isExpanded: Boolean) extends Item {
+      override val contentDescription: String = {
+        s"$title (${if (isExpanded) "expanded" else "collapsed"})"
+      }
+    }
+
+    case class Conversation(data: ConversationData, sectionTitle: Option[String] = None) extends Item {
+      override val contentDescription: String = {
+        val prefix = sectionTitle.map { t => s"$t: "}.getOrElse("")
+        prefix + data.displayName.str
+      }
+    }
+
+    case class IncomingRequests(first: ConvId, numberOfRequests: Int) extends Item {
+      override val contentDescription: String = s"$numberOfRequests incoming request(s)"
+    }
   }
 
   abstract class ConversationRowViewHolder(row: ConversationListRow, listener: RowClickListener)
@@ -145,14 +159,18 @@ object ConversationListAdapter {
   class NormalConversationRowViewHolder(row: NormalConversationListRow, listener: RowClickListener)
     extends ConversationRowViewHolder(row, listener) {
 
-    def bind(conversation: ConversationData): Unit = row.setConversation(conversation)
+    def bind(item: Item.Conversation): Unit = {
+      row.setConversation(item.data)
+      row.setContentDescription(item.contentDescription)
+    }
   }
 
   class IncomingConversationRowViewHolder(row: IncomingConversationListRow, listener: RowClickListener)
     extends ConversationRowViewHolder(row, listener) {
 
-    def bind(first: ConvId, numberOfRequest: Int, showSeparator: Boolean): Unit = {
-      row.setIncoming(first, numberOfRequest)
+    def bind(item: Item.IncomingRequests, showSeparator: Boolean): Unit = {
+      row.setIncoming(item.first, item.numberOfRequests)
+      row.setContentDescription(item.contentDescription)
       row.setSeparatorVisibility(showSeparator)
     }
   }
@@ -160,10 +178,11 @@ object ConversationListAdapter {
   class ConversationFolderRowViewHolder(row: ConversationFolderListRow, listener: RowClickListener)
     extends ConversationRowViewHolder(row, listener) {
 
-    def bind(header: Item.Header, isFirst: Boolean): Unit = {
-      row.setTitle(header.title)
+    def bind(item: Item.Header, isFirst: Boolean): Unit = {
+      row.setTitle(item.title)
+      row.setIsExpanded(item.isExpanded)
+      row.setContentDescription(item.contentDescription)
       row.setIsFirstHeader(isFirst)
-      row.setIsExpanded(header.isExpanded)
     }
   }
 
@@ -209,10 +228,14 @@ object ConversationListAdapter {
 
     override def areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean = {
       (oldList(oldItemPosition), newList(newItemPosition)) match {
-        case (lhs: Header,       rhs: Header)           => lhs.id == rhs.id
-        case (lhs: Conversation, rhs: Conversation)     => lhs.data.id == rhs.data.id
-        case (_: IncomingRequests, _: IncomingRequests) => true
-        case _                                          => false
+        case (lhs: Header, rhs: Header) =>
+          lhs.id == rhs.id
+        case (lhs: Conversation, rhs: Conversation) =>
+          lhs.data.id == rhs.data.id && lhs.sectionTitle == rhs.sectionTitle
+        case (_: IncomingRequests, _: IncomingRequests) =>
+          true
+        case _ =>
+          false
       }
     }
 
@@ -220,7 +243,7 @@ object ConversationListAdapter {
       (oldList(oldItemPosition), newList(newItemPosition)) match {
         case (Header(_, title, isExpanded), Header(_, newTitle, newIsExpanded)) =>
           title == newTitle && isExpanded && newIsExpanded
-        case (Conversation(data), Conversation(newData)) =>
+        case (Conversation(data, _), Conversation(newData, _)) =>
           data == newData
         case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>
           requests == newRequests
