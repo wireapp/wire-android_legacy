@@ -27,6 +27,7 @@ import com.waz.zclient.R
 import com.waz.zclient.common.views.InputBox
 import com.waz.zclient.common.views.InputBox.GroupNameValidator
 import com.waz.zclient.ui.DefaultToolbarFragment
+import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils
 
 class CreateNewFolderFragment extends DefaultToolbarFragment[CreateNewFolderFragment.Container] {
@@ -85,6 +86,8 @@ class CreateNewFolderFragment extends DefaultToolbarFragment[CreateNewFolderFrag
 
   override protected def onActionClick(): Unit = {
     inputBox.foreach(v => {
+      setActionButtonEnabled(false)
+      KeyboardUtils.hideKeyboard(getActivity)
       getContainer.onCreateFolderClicked(v.editText.getText.toString)
     })
   }
