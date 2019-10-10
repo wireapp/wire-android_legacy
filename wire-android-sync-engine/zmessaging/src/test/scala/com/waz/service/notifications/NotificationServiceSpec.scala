@@ -422,8 +422,6 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       setup(Seq((conv1, true), (conv2, true)))
 
-     // (convs.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(Some(conv1), Some(conv2))))
-
       val uiNotified = Signal(false)
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         Future {
