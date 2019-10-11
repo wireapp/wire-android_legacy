@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.CUPCAKE)
+    @TargetApi(Build.VERSION_CODES.N)
     private void handleFile(Uri backupUri, String scheme) {
         String fileName = getFilename(getContentResolver(), backupUri, scheme);
         if (!fileName.isEmpty()) {
@@ -126,19 +126,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            try {
-                if (fileName.toLowerCase().endsWith("_wbu")) {
-                    ExportFile exportFile = ExportFile.fromJson(getFileFromArchiveAsString(targetFile, "export.json"));
-                    setIntent(null);
-                    showAlert(String.format("%s was saved\nBackup user id:%s", fileName, exportFile.getUserId()));
-                    return;
-                }
-                setIntent(null);
-                showToast(this, String.format("%s was saved", fileName));
-                return;
-            } catch (IOException e) {
-                showAlert(String.format("There was an error during file analyze: %s", e.getLocalizedMessage()));
-            }
+            setIntent(null);
+            showAlert(String.format("%s was saved", fileName));
+            return;
         }
         showAlert("Received file has no name!!!");
     }
