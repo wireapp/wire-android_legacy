@@ -88,23 +88,17 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     }
   }
 
-  protected def beforeListCreation(): Future[Unit] = Future.successful(())
-
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(layoutId, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    for {
-      _ <- beforeListCreation()
-    } yield {
-      conversationListView.foreach { lv =>
-        lv.setLayoutManager(new LinearLayoutManager(getContext))
-        lv.setAdapter(adapter)
-        lv.setAllowSwipeAway(true)
-        lv.setOverScrollMode(View.OVER_SCROLL_NEVER)
-        lv.addOnScrollListener(conversationsListScrollListener)
-      }
+    conversationListView.foreach { lv =>
+      lv.setLayoutManager(new LinearLayoutManager(getContext))
+      lv.setAdapter(adapter)
+      lv.setAllowSwipeAway(true)
+      lv.setOverScrollMode(View.OVER_SCROLL_NEVER)
+      lv.addOnScrollListener(conversationsListScrollListener)
     }
   }
 
@@ -323,30 +317,10 @@ class ConversationFolderListFragment extends NormalConversationFragment {
   import UserPreferences.ConversationFoldersUiState
 
   private lazy val userPreferences = inject[Signal[UserPreferences]]
-  private var foldersUiState: FoldersUiState = Map.empty
-
-  override protected def beforeListCreation(): Future[Unit] = loadFoldersUiState()
-
-  override def onStop(): Unit = {
-    storeFoldersUiState()
-    super.onStop()
-  }
-
-  private def loadFoldersUiState(): Future[Unit] = {
-    for {
-      prefs  <- userPreferences.head
-      states <- prefs(ConversationFoldersUiState).apply()
-    } yield {
-      foldersUiState = states
-    }
-  }
-
-  private def storeFoldersUiState(): Unit = {
-    for {
-      prefs <- userPreferences.head
-      _     <- prefs(ConversationFoldersUiState).update(foldersUiState)
-    } yield {}
-  }
+  private lazy val foldersUiState = for {
+    prefs     <- userPreferences
+    states    <- prefs(ConversationFoldersUiState).signal
+  } yield states
 
   override protected def createAdapter(): ConversationListAdapter = {
     returning(new ConversationFolderListAdapter) { a =>
@@ -356,10 +330,11 @@ class ConversationFolderListFragment extends NormalConversationFragment {
         groups    <- convListController.groupConvsWithoutFolder
         oneToOnes <- convListController.oneToOneConvsWithoutFolder
         custom    <- convListController.customFolderConversations
-      } yield (incoming, favorites, groups, oneToOnes, custom)
+        states    <- foldersUiState
+      } yield (incoming, favorites, groups, oneToOnes, custom, states)
 
-      dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom) =>
-        a.setData(incoming, favorites, groups, oneToOnes, custom, foldersUiState)
+      dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom, states) =>
+        a.setData(incoming, favorites, groups, oneToOnes, custom, states)
       }
 
       a.onFolderStateChanged(updateFolderState)
@@ -367,15 +342,23 @@ class ConversationFolderListFragment extends NormalConversationFragment {
     }
   }
 
-  private def pruneFolderStates(folderIds: Set[Uid]): Unit = {
-    val knownStates = foldersUiState.keySet
-    val unusedFolderStates = knownStates -- folderIds
-    foldersUiState --= unusedFolderStates
-  }
+  private def pruneFolderStates(folderIds: Set[Uid]): Future[Unit] = for {
+    state               <- foldersUiState.head
+    knownStates         = state.keySet
+    unusedFolderStates  = knownStates -- folderIds
+    _                   <- storeFoldersUiState(state -- unusedFolderStates)
+  } yield {}
 
-  private def updateFolderState(folderState: FolderState): Unit = {
-    foldersUiState += folderState.id -> folderState.isExpanded
-  }
+  private def updateFolderState(folderState: FolderState): Future[Unit] = for {
+    state           <- foldersUiState.head
+    _               <- storeFoldersUiState(state + (folderState.id -> folderState.isExpanded))
+  } yield {}
+
+  private def storeFoldersUiState(state: Map[Uid, Boolean]): Future[Unit] = for {
+    prefs <- userPreferences.head
+    _     <- prefs(ConversationFoldersUiState).update(state)
+  } yield {}
+
 }
 
 object ConversationFolderListFragment {
