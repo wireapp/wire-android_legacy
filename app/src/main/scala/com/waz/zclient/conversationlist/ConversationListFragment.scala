@@ -364,22 +364,30 @@ class ConversationFolderListFragment extends NormalConversationFragment {
     } yield {}
   }
 
-  override protected def createAdapter(): ConversationListAdapter =
+  override protected def createAdapter(): ConversationListAdapter = {
     returning(new ConversationFolderListAdapter) { a =>
       val dataSource = for {
         incoming  <- convListController.incomingConversationListData
         favorites <- convListController.favoriteConversations
         groups    <- convListController.groupConvsWithoutFolder
         oneToOnes <- convListController.oneToOneConvsWithoutFolder
-      } yield (incoming, favorites, groups, oneToOnes)
+        custom    <- convListController.customFolderConversations
+      } yield (incoming, favorites, groups, oneToOnes, custom)
 
-      // TODO: Here we will need to prune deleted folders from the folder states map.
-      dataSource.onUi { case (incoming, favorites, groups, oneToOnes) =>
-        a.setData(incoming, favorites, groups, oneToOnes, foldersUiState)
+      dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom) =>
+        a.setData(incoming, favorites, groups, oneToOnes, custom, foldersUiState)
       }
 
       a.onFolderStateChanged(updateFolderState)
+      a.onFoldersChanged(pruneFolderStates)
     }
+  }
+
+  private def pruneFolderStates(folderIds: Set[Uid]): Unit = {
+    val knownStates = foldersUiState.keySet
+    val unusedFolderStates = knownStates -- folderIds
+    foldersUiState --= unusedFolderStates
+  }
 
   private def updateFolderState(folderState: FolderState): Unit = {
     foldersUiState += folderState.id -> folderState.isExpanded
