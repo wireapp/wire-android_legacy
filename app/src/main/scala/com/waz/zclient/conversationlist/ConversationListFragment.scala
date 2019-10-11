@@ -147,7 +147,6 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
 object ConversationListFragment {
   trait Container {
-    val archiveEnabled : Signal[Boolean]
     def onConversationsLoadingStarted(): Unit
     def onConversationsLoadingFinished(): Unit
     def closeArchive(): Unit
@@ -187,7 +186,6 @@ object ArchiveListFragment {
 }
 
 class NormalConversationFragment extends ConversationListFragment {
-
   override val layoutId: Int = R.layout.fragment_conversation_list
   override protected val adapterMode: ListMode = Normal
 
@@ -204,20 +202,6 @@ class NormalConversationFragment extends ConversationListFragment {
     Some(accountId) <- accounts.activeAccountId
     count  <- userAccountsController.unreadCount.map(_.filterNot(_._1 == accountId).values.sum)
   } yield count).orElse(Signal.const(0))
-
-  lazy val hasConversations = for {
-    z <- zms
-    convs <- z.convsStorage.contents
-  } yield {
-    convs.values.exists(c => !c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType))
-  }
-
-  lazy val hasConversationsAndArchive = for {
-    hasConv     <- hasConversations
-    archEnabled <- getContainer.archiveEnabled
-  } yield {
-    (hasConv, archEnabled)
-  }
 
   private val waitingAccount = Signal[Option[UserId]](None)
 
@@ -237,18 +221,18 @@ class NormalConversationFragment extends ConversationListFragment {
   lazy val loadingListView = view[View](R.id.conversation_list_loading_indicator)
 
   lazy val noConvsTitle = returning(view[TypefaceTextView](R.id.conversation_list_empty_title)) { vh =>
-    hasConversationsAndArchive.map {
+    convListController.hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
     }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
-    hasConversationsAndArchive.map {
+    convListController.hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
   private lazy val noConvsMessage = returning(view[LinearLayout](R.id.empty_list_message)) { vh =>
-    hasConversationsAndArchive.map {
+    convListController.hasConversationsAndArchive.map {
       case (false, false) => VISIBLE
       case _ => GONE
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))

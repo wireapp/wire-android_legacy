@@ -21,6 +21,7 @@ import com.waz.api.Message
 import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
+import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.conversation.{ConversationsService, FoldersService}
@@ -76,6 +77,11 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   lazy val regularConversationListData = conversationData(Normal)
   lazy val archiveConversationListData = conversationData(Archive)
+
+  lazy val hasConversationsAndArchive = for {
+    convsStorage <- inject[Signal[ConversationStorage]]
+    convs        <- convsStorage.contents.map(_.values.filterNot(c => c.hidden || ignoredConvTypes.contains(c.convType)))
+  } yield (convs.exists(!_.archived), convs.exists(_.archived))
 
   private def conversationData(listMode: ListMode) =
     for {
@@ -215,6 +221,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 object ConversationListController {
 
   type Filter = ConversationData => Boolean
+
+  val ignoredConvTypes = Set(Self, Unknown)
 
   trait ListMode {
     val nameId: Int
