@@ -299,7 +299,7 @@ object ConversationOptionsMenuController {
   }
 
   case class RemoveFromFolder(folderData: FolderData) extends BaseMenuItem(
-    WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, s"\"${folderData.name.str}\""),
+    WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderData.name.str),
     Some(R.string.glyph__remove_from_folder)
   )
 
