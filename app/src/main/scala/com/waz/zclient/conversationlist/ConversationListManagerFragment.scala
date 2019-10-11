@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.conversationlist
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
@@ -37,6 +38,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
@@ -244,7 +246,14 @@ class ConversationListManagerFragment extends Fragment
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
     super.onActivityResult(requestCode, resultCode, data)
-    getChildFragmentManager.getFragments.asScala.foreach(_.onActivityResult(requestCode, resultCode, data))
+    if (requestCode == MoveToFolderActivity.REQUEST_CODE_MOVE_CREATE) {
+      if (resultCode == Activity.RESULT_OK) {
+        val movedConvId = data.getSerializableExtra(MoveToFolderActivity.KEY_CONV_ID).asInstanceOf[ConvId]
+        //TODO: scroll to conv w/ this id
+      }
+    } else {
+      getChildFragmentManager.getFragments.asScala.foreach(_.onActivityResult(requestCode, resultCode, data))
+    }
   }
 
   override def onShowUserProfile(userId: UserId, fromDeepLink: Boolean) =
@@ -516,6 +525,10 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
+  override def onMoveToFolder(convId: ConvId): Unit = {
+    startActivityForResult(MoveToFolderActivity.newIntent(requireContext(), convId),
+      MoveToFolderActivity.REQUEST_CODE_MOVE_CREATE)
+  }
 }
 
 object ConversationListManagerFragment {

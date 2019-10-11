@@ -44,7 +44,7 @@ class NotificationsOptionsFragment extends FragmentHelper {
           val view = getLayoutInflater.inflate(R.layout.conversation_option_item, layout, false)
           val separatorVisible = index != ConversationController.MuteSets.size - 1
 
-          findById[TextView](view, R.id.text).setText(getString(NotificationsOptionsMenuController.menuItem(muteSet).titleId))
+          findById[TextView](view, R.id.text).setText(NotificationsOptionsMenuController.menuItem(muteSet).title)
           findById[GlyphTextView](view, R.id.glyph).setVisible(e.equals(muteSet))
           findById[View](view, R.id.separator).setVisible(separatorVisible)
 

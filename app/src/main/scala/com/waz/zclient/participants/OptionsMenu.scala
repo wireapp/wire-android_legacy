@@ -76,7 +76,7 @@ case class OptionsMenu(context: Context, controller: OptionsMenuController) exte
             }
           }
           returning(getView[TextView](itemView, R.id.text)) { v =>
-            v.setText(item.titleId)
+            v.setText(item.title)
             item.colorId.map(getColor).foreach(v.setTextColor(_))
           }
           itemView.onClick {
