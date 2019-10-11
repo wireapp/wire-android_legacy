@@ -250,7 +250,7 @@ object FoldersService {
     def toRemote: Seq[RemoteFolderData] = labels.map(label =>
       RemoteFolderData(
         FolderData(id = FolderId(label.id), name = Name(label.name.getOrElse("")), folderType = label.`type`),
-        label.conversations.map(RConvId(_)).toSet
+        label.conversations.map(id => RConvId(id.toLowerCase())).toSet
       )
     )
   }

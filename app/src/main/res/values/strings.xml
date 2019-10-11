@@ -257,6 +257,8 @@
     <string name="conversation__action__remove_member">Remove from group…</string>
     <string name="conversation__action__add_to_favorites">Add to Favorites</string>
     <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
+    <string name="conversation__action__move_to_folder">Move to…</string>
+    <string name="conversation__action__remove_from_folder">Remove from %1$s</string>
 
     <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -1401,4 +1403,12 @@
     <string name="conversation_folder_name_favorites">Favorites</string>
     <string name="conversation_folder_name_group">Groups</string>
     <string name="conversation_folder_name_one_to_one">People</string>
+    <string name="folders_move_to">MOVE TO</string>
+    <string name="folders_no_custom_folder_found">Create a new folder by pressing the + button</string>
+    <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
+    <string name="folders_create_new_folder_action">CREATE</string>
+    <string name="folders_create_new_folder_info">Move the conversation \"%1$s\" to a new folder.</string>
+    <string name="folders_folder_name_hint">FOLDER NAME</string>
+    <string name="folders_folder_name_error_text">Maximum %s characters</string>
+
 </resources>

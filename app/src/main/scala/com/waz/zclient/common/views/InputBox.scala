@@ -168,6 +168,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
 object InputBox {
 
   case class Validator(f: String => Boolean) {
+    def isValid(s: String) : Boolean = f(s)
     def shouldTrim: Boolean = true
   }
 

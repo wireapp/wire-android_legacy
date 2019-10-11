@@ -19,28 +19,23 @@ package com.waz.zclient.conversation.creation
 
 import android.app.FragmentManager
 import android.os.Bundle
-import android.support.v4.app.Fragment
+import android.support.annotation.IdRes
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
-import android.support.v7.widget.Toolbar
-import android.view.View.OnClickListener
-import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
-import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationManagerFragment._
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getInt}
-import com.waz.zclient.utils.{RichView, ViewUtils}
-import com.waz.zclient.views.DefaultPageTransitionAnimation
+import com.waz.zclient.pages.NoOpContainer
+import com.waz.zclient.ui.DefaultToolbarFragment
+import com.waz.zclient.utils.ViewUtils
 import com.waz.zclient.{FragmentHelper, R, SpinnerController}
 
-class CreateConversationManagerFragment extends FragmentHelper {
+class CreateConversationManagerFragment extends DefaultToolbarFragment[NoOpContainer] with FragmentHelper {
 
   implicit private def ctx = getContext
   import Threading.Implicits.Ui
@@ -80,11 +75,6 @@ class CreateConversationManagerFragment extends FragmentHelper {
     }
   }
 
-  private lazy val confButtonColor = confButtonEnabled.flatMap {
-    case false => Signal.const(getColor(R.color.teams_inactive_button))
-    case _     => accentColor
-  }
-
   private lazy val headerText = for {
     currentPage <- currentPage
     userCount   <- ctrl.users.map(_.size)
@@ -94,70 +84,6 @@ class CreateConversationManagerFragment extends FragmentHelper {
     case PickerPage if userCount == 0 && integrationsCount == 0 => getString(R.string.add_participants_empty_header)
     case PickerPage                   => getString(R.string.add_participants_count_header, (userCount + integrationsCount).toString)
   }
-
-  private lazy val toolbar = returning(view[Toolbar](R.id.toolbar)) { vh =>
-    Signal(currentPage, themeController.darkThemeSet).map {
-      case (PickerPage, true)   => R.drawable.action_back_light
-      case (PickerPage, false)   => R.drawable.action_back_dark
-      case (SettingsPage, false) => R.drawable.ic_action_close_dark
-      case (SettingsPage, true) => R.drawable.ic_action_close_light
-      case _ => R.drawable.ic_action_close_dark
-    }.onUi(dr => vh.foreach(_.setNavigationIcon(dr)))
-  }
-
-  private lazy val confButton = returning(view[TypefaceTextView](R.id.confirmation_button)) { vh =>
-    confButtonEnabled.onUi(e => vh.foreach(_.setEnabled(e)))
-    confButtonText.onUi (id => vh.foreach(_.setText(id)))
-    confButtonColor.onUi(c => vh.foreach(_.setTextColor(c)))
-
-    vh.foreach(_.onClick {
-      currentPage.currentValue.foreach {
-        case SettingsPage =>
-          keyboard.hideKeyboardIfVisible()
-          openFragment(new AddParticipantsFragment, AddParticipantsFragment.Tag)
-        case PickerPage =>
-          convCreationInProgress.head.foreach {
-            case false =>
-              convCreationInProgress ! true
-              spinner.showSpinner(true)
-              ctrl.createConversation().foreach { convId =>
-                spinner.hideSpinner()
-                close()
-                conversationController
-                  .selectConv(Some(convId), ConversationChangeRequester.START_CONVERSATION)
-                  .onComplete(_ => convCreationInProgress ! false)
-              }
-            case true =>
-          }
-        case _ =>
-      }
-    })
-  }
-
-  private lazy val header = returning(view[TypefaceTextView](R.id.header)) { vh =>
-    headerText.onUi(txt => vh.foreach(_.setText(txt)))
-  }
-
-  override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
-    if (nextAnim == 0)
-      super.onCreateAnimation(transit, enter, nextAnim)
-    else if (enter)
-      new DefaultPageTransitionAnimation(0,
-        getDimenPx(R.dimen.open_new_conversation__thread_list__max_top_distance),
-        enter,
-        getInt(R.integer.framework_animation_duration_long),
-        getInt(R.integer.framework_animation_duration_medium),
-        1f)
-    else
-      new DefaultPageTransitionAnimation(
-        0,
-        getDimenPx(R.dimen.open_new_conversation__thread_list__max_top_distance),
-        enter,
-        getInt(R.integer.framework_animation_duration_medium),
-        0,
-        1f)
-  }
-
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -196,40 +122,25 @@ class CreateConversationManagerFragment extends FragmentHelper {
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    inflater.inflate(R.layout.create_conv_fragment, container, false)
+    inflater.inflate(R.layout.fragment_create_conversation_manager, container, false)
 
   override def onViewCreated(v: View, savedInstanceState: Bundle): Unit = {
-    openFragment(new CreateConversationSettingsFragment, CreateConversationSettingsFragment.Tag)
+    super.onViewCreated(v, savedInstanceState)
+    openFragmentWithAnimation(
+      R.id.fragment_create_conversation_manager_layout_container,
+      new CreateConversationSettingsFragment, CreateConversationSettingsFragment.Tag)
 
-    toolbar.foreach(_.setNavigationOnClickListener(new OnClickListener() {
-      override def onClick(v: View): Unit =
-        currentPage.currentValue.foreach {
-          case SettingsPage => close()
-          case PickerPage => back()
-          case _ =>
-        }
-    }))
+    Signal(currentPage, themeController.darkThemeSet).map {
+      case (PickerPage, true) => R.drawable.action_back_light
+      case (PickerPage, false) => R.drawable.action_back_dark
+      case (SettingsPage, false) => R.drawable.ic_action_close_dark
+      case (SettingsPage, true) => R.drawable.ic_action_close_light
+      case _ => R.drawable.ic_action_close_dark
+    }.onUi(drawable => toolbar.foreach(_.setNavigationIcon(drawable)))
 
-    //lazy init
-    header
-    confButton
-  }
-
-  override def onDestroyView() = {
-    toolbar.foreach(_.setNavigationOnClickListener(null))
-    super.onDestroyView()
-  }
-
-  private def openFragment(fragment: Fragment, tag: String): Unit = {
-    getChildFragmentManager.beginTransaction()
-      .setCustomAnimations(
-        R.anim.fragment_animation_second_page_slide_in_from_right,
-        R.anim.fragment_animation_second_page_slide_out_to_left,
-        R.anim.fragment_animation_second_page_slide_in_from_left,
-        R.anim.fragment_animation_second_page_slide_out_to_right)
-      .replace(R.id.container, fragment)
-      .addToBackStack(tag)
-      .commit()
+    headerText.onUi(setTitle)
+    confButtonEnabled.onUi(setActionButtonEnabled)
+    confButtonText.onUi(text => setActionButtonText(getString(text)))
   }
 
   private def close() = {
@@ -252,6 +163,42 @@ class CreateConversationManagerFragment extends FragmentHelper {
       true
     }
   }
+
+  override def onNavigationClick(): Unit = {
+    currentPage.currentValue.foreach {
+      case SettingsPage => close()
+      case PickerPage => back()
+      case _ =>
+    }
+  }
+
+  override def onActionClick(): Unit = {
+    currentPage.currentValue.foreach {
+      case SettingsPage =>
+        keyboard.hideKeyboardIfVisible()
+        openFragmentWithAnimation(
+          R.id.fragment_create_conversation_manager_layout_container,
+          new AddParticipantsFragment, AddParticipantsFragment.Tag)
+      case PickerPage =>
+        convCreationInProgress.head.foreach {
+          case false =>
+            convCreationInProgress ! true
+            spinner.showSpinner(true)
+            ctrl.createConversation().foreach { convId =>
+              spinner.hideSpinner()
+              close()
+              conversationController
+                .selectConv(Some(convId), ConversationChangeRequester.START_CONVERSATION)
+                .onComplete(_ => convCreationInProgress ! false)
+            }
+          case true =>
+        }
+      case _ =>
+    }
+  }
+
+  @IdRes
+  override protected def getToolbarId = R.id.fragment_create_conversation_manager_toolbar
 }
 
 object CreateConversationManagerFragment {

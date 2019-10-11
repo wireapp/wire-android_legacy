@@ -21,6 +21,7 @@ import com.waz.api.Message
 import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
+import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.conversation.{ConversationsService, FoldersService}
@@ -77,6 +78,11 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   lazy val regularConversationListData = conversationData(Normal)
   lazy val archiveConversationListData = conversationData(Archive)
 
+  lazy val hasConversationsAndArchive = for {
+    convsStorage <- inject[Signal[ConversationStorage]]
+    convs        <- convsStorage.contents.map(_.values.filterNot(c => c.hidden || ignoredConvTypes.contains(c.convType)))
+  } yield (convs.exists(!_.archived), convs.exists(_.archived))
+
   private def conversationData(listMode: ListMode) =
     for {
       convsStorage  <- inject[Signal[ConversationStorage]]
@@ -92,6 +98,15 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     } yield incomingConvs
 
   lazy val foldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = foldersService.flatMap(_.foldersWithConvs)
+
+  private lazy val customFoldersWithConvs: Signal[Map[FolderId, Set[ConvId]]] = {
+    for {
+      favoritesFolderId <- favoritesFolderId
+      foldersWithConvs  <- foldersWithConvs
+    } yield {
+      favoritesFolderId.fold(foldersWithConvs)(foldersWithConvs - _)
+    }
+  }
 
   def folder(folderId: FolderId): Signal[Option[FolderData]] = foldersService.flatMap(_.folder(folderId))
 
@@ -114,8 +129,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   } yield convs.filter(c => convIds.contains(c.id))
 
   private lazy val conversationsWithoutFolder: Signal[Seq[(ConversationData, Boolean)]] = for {
-    favoritesFolderId  <- favoritesFolderId
-    customFolders      <- foldersWithConvs.map(fwc => favoritesFolderId.fold(fwc)(fwc - _))
+    customFolders      <- customFoldersWithConvs
     folderConvIds      =  customFolders.values.flatten.toSet
     convs              <- regularConversationListData
     convsWithoutFolder =  convs.filter(c => !folderConvIds.contains(c.id))
@@ -127,6 +141,16 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   lazy val oneToOneConvsWithoutFolder: Signal[Seq[ConversationData]] = conversationsWithoutFolder.map(_.filter(!_._2).map(_._1))
 
+  lazy val customFolderConversations: Signal[Seq[(FolderData, Seq[ConversationData])]] = {
+    for {
+      customFolderIds  <- customFolderIds
+      customFoldersOpt <- Signal.sequence(customFolderIds.toSeq.map(folder): _*)
+      customFolders     = customFoldersOpt.flatten.sortBy(_.name.str)
+      conversations    <- Signal.sequence(customFolders.map(f => folderConversations(f.id)): _*)
+      result            = customFolders.zip(conversations)
+    } yield result
+  }
+
   lazy val allFolderIds: Signal[Set[FolderId]] = foldersWithConvs.map(_.keySet)
 
   lazy val customFolderIds: Signal[Set[FolderId]] = for {
@@ -134,12 +158,22 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     allIds <- allFolderIds
   } yield favId.fold(allIds)(allIds - _)
 
+  def getCustomFolders: Future[Seq[FolderData]] = (for {
+    service    <- foldersService.head
+    allFolders <- service.folders
+    favId      <- favoritesFolderId.head
+  } yield favId.fold(allFolders)(x => allFolders.filter(f => f.id != x))
+    ).recoverWith {
+    case ex: Exception => error(l"exception while retrieving custom folders", ex)
+    Future.failed(ex)
+  }
+
   def addToFavorites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavoritesFolder()
     _        <- service.addConversationTo(convId, favId, true)
-  } yield ()).recoverWith {
-    case e: Exception => error(l"exception while adding conv $convId to favorites", e)
+  } yield ()).recoverWith { case e: Exception =>
+      error(l"exception while adding conv $convId to favorites", e)
       Future.successful({})
   }
 
@@ -155,18 +189,40 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     _       <- if (convs.isEmpty) service.removeFolder(folderId, true) else Future.successful(())
   } yield ()
 
-  def moveToCustomFolder(convId: ConvId): Future[Unit] = for {
+  def getCustomFolderId(convId: ConvId) : Future[Option[FolderId]] = (for {
+    service          <- foldersService.head
+    folders          <- service.foldersForConv(convId)
+    allCustomFolders <- customFolderIds.head
+  } yield allCustomFolders.intersect(folders).headOption)
+    .recoverWith { case ex: Exception =>
+      error(l"error while retrieving custom folder id for conv $convId", ex)
+      Future.failed(ex)
+    }
+
+  def moveToCustomFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
     favId         <- favoritesFolderId.head
     customFolders =  favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
+    _             <- Future.successful(service.addConversationTo(convId, folderId, uploadAllChanges = true))
   } yield ()
+
+  def createNewFolderWithConversation(folderName: String, convId: ConvId) = (for {
+    service  <- foldersService.head
+    folderId <- service.addFolder(Name(folderName), uploadAllChanges = false)
+    _        <- moveToCustomFolder(convId, folderId)
+  } yield ()).recoverWith {
+    case ex: Exception => error(l"error while creating custom folder $folderName for conv $convId", ex)
+      Future.failed(ex)
+  }
 }
 
 object ConversationListController {
 
   type Filter = ConversationData => Boolean
+
+  val ignoredConvTypes = Set(Self, Unknown)
 
   trait ListMode {
     val nameId: Int

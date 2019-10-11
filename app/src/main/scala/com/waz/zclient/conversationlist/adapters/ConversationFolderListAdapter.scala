@@ -19,7 +19,7 @@ package com.waz.zclient.conversationlist.adapters
 
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, Uid}
+import com.waz.model.{ConvId, ConversationData, FolderData, Uid}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
 import com.waz.zclient.conversationlist.ConversationFolderListFragment.{FolderState, FoldersUiState}
@@ -36,6 +36,7 @@ class ConversationFolderListAdapter(implicit context: Context)
     with DerivedLogTag {
 
   val onFolderStateChanged: SourceStream[FolderState] = EventStream[FolderState]()
+  val onFoldersChanged: SourceStream[Set[Uid]] = EventStream[Set[Uid]]()
 
   private var folders = Seq.empty[Folder]
 
@@ -43,6 +44,7 @@ class ConversationFolderListAdapter(implicit context: Context)
               favorites: Seq[ConversationData],
               groups: Seq[ConversationData],
               oneToOnes: Seq[ConversationData],
+              custom: Seq[(FolderData, Seq[ConversationData])],
               folderStates: FoldersUiState): Unit = {
 
     var newItems = List.empty[Item]
@@ -51,7 +53,7 @@ class ConversationFolderListAdapter(implicit context: Context)
       newItems ::= Item.IncomingRequests(incoming.head, incoming.size)
     }
 
-    folders = calculateFolders(favorites, groups, oneToOnes)
+    folders = calculateDefaultFolders(favorites, groups, oneToOnes) ++ calculateCustomFolders(custom)
 
     newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
       val header = Item.Header(next.id, next.title, isExpanded = folderStates.getOrElse(next.id, true))
@@ -59,14 +61,20 @@ class ConversationFolderListAdapter(implicit context: Context)
       acc ++ (header :: conversations)
     }
 
+    onFoldersChanged ! folders.map(_.id).toSet
+
     updateList(newItems)
   }
 
-  private def calculateFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
-    val favoritesFolder = Folder.apply(FavoritesId, R.string.conversation_folder_name_favorites, favorites)
-    val groupsFolder = Folder.apply(GroupId, R.string.conversation_folder_name_group, groups)
-    val oneToOnesFolder = Folder.apply(OneToOnesId, R.string.conversation_folder_name_one_to_one, oneToOnes)
+  private def calculateDefaultFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
+    val favoritesFolder = Folder(FavoritesId, getString(R.string.conversation_folder_name_favorites), favorites)
+    val groupsFolder = Folder(GroupId, getString(R.string.conversation_folder_name_group), groups)
+    val oneToOnesFolder = Folder(OneToOnesId, getString(R.string.conversation_folder_name_one_to_one), oneToOnes)
     Seq(favoritesFolder, groupsFolder, oneToOnesFolder).flatten
+  }
+
+  private def calculateCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] = {
+    custom.flatMap { case (folderData, conversations) => Folder(folderData, conversations) }
   }
 
   override def onClick(position: Int): Unit = items(position) match {
@@ -116,13 +124,13 @@ object ConversationFolderListAdapter {
     val GroupId = Uid("Groups")
     val OneToOnesId = Uid("OneToOnes")
 
-    def apply(id: Uid, titleResId: Int, conversations: Seq[ConversationData])(implicit context: Context): Option[Folder] = {
+    def apply(folderData: FolderData, conversations: Seq[ConversationData]): Option[Folder] = {
+      Folder(Uid(folderData.id.str), folderData.name, conversations)
+    }
+
+    def apply(id: Uid, title: String, conversations: Seq[ConversationData]): Option[Folder] = {
       if (conversations.isEmpty) None
-      else {
-        val title = getString(titleResId)
-        val conversationItems = conversations.map { d => Item.Conversation(d, sectionTitle = Some(title))}
-        Some(Folder(id, title, conversationItems))
-      }
+      else Some(Folder(id, title, conversations.map(d => Item.Conversation(d, sectionTitle = Some(title)))))
     }
   }
 }

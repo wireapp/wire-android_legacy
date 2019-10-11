@@ -17,15 +17,16 @@
  */
 package com.waz.zclient.conversationlist
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.support.annotation.Nullable
 import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.api.SyncState._
 import com.waz.content.{UserPreferences, UsersStorage}
-import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
 import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
@@ -37,6 +38,7 @@ import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
@@ -72,7 +74,7 @@ class ConversationListManagerFragment extends Fragment
   with BottomNavigationView.OnNavigationItemSelectedListener {
 
   import ConversationListManagerFragment._
-  import Threading.Implicits.Background
+  import Threading.Implicits.Ui
 
   implicit lazy val context = getContext
 
@@ -80,22 +82,26 @@ class ConversationListManagerFragment extends Fragment
   private lazy val pickUserController   = inject[IPickUserController]
   private lazy val navController        = inject[INavigationController]
   private lazy val convScreenController = inject[IConversationScreenController]
+  private lazy val convListController   = inject[ConversationListController]
 
   private var startUiLoadingIndicator: LoadingIndicatorView = _
   private var listLoadingIndicator   : LoadingIndicatorView = _
   private var mainContainer          : FrameLayout          = _
   private var confirmationMenu       : ConfirmationMenu     = _
-  private var bottomNavigationView   : BottomNavigationView = _
   private var bottomNavigationBorder : View                 = _
 
-  lazy val zms = inject[Signal[ZMessaging]]
+  private lazy val bottomNavigationView = returning(view[BottomNavigationView](R.id.fragment_conversation_list_manager_bottom_navigation)) { vh =>
+    vh.foreach { view =>
+      BottomNavigationUtil.disableShiftMode(view)
+      view.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
+    }
 
-  lazy val archiveEnabled = for {
-    z     <- zms
-    convs <- z.convsStorage.contents
-  } yield {
-      convs.values.exists(c => c.archived && !c.hidden && !Set(Self, Unknown).contains(c.convType))
+    convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
+      vh.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, hasArchive))
+    }
   }
+
+  lazy val zms = inject[Signal[ZMessaging]]
 
   private def stripToConversationList() = {
     pickUserController.hideUserProfile() // Hide possibly open self profile
@@ -118,7 +124,11 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
-    returning(inflater.inflate(R.layout.fragment_conversation_list_manager, container, false)) { view =>
+    inflater.inflate(R.layout.fragment_conversation_list_manager, container, false)
+
+  override def onViewCreated(view: View, @Nullable savedInstanceState: Bundle): Unit = {
+    super.onViewCreated(view, savedInstanceState)
+
       mainContainer           = findById(view, R.id.fl__conversation_list_main)
       startUiLoadingIndicator = findById(view, R.id.liv__conversations__loading_indicator)
       listLoadingIndicator    = findById(view, R.id.lbv__conversation_list__loading_indicator)
@@ -126,16 +136,9 @@ class ConversationListManagerFragment extends Fragment
         v.setVisible(false)
         v.resetFullScreenPadding()
       }
-      bottomNavigationView = returning(
-        findById[BottomNavigationView](view, R.id.fragment_conversation_list_manager_bottom_navigation)
-      ) { v =>
-        BottomNavigationUtil.disableShiftMode(v)
-        v.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
-      }
 
-      archiveEnabled.onUi { enabled =>
-        BottomNavigationUtil.setItemVisible(bottomNavigationView, R.id.navigation_archive, enabled)
-      }
+      bottomNavigationView
+
       bottomNavigationBorder = findById(view, R.id.fragment_conversation_list_manager_view_bottom_border)
 
       if (savedInstanceState == null) {
@@ -184,7 +187,7 @@ class ConversationListManagerFragment extends Fragment
       inject[AccentColorController].accentColor.map(_.color).onUi { c =>
         Option(startUiLoadingIndicator).foreach(_.setColor(c))
         Option(listLoadingIndicator).foreach(_.setColor(c))
-        Option(bottomNavigationView).foreach(_ => setUpBottomNavigationTintColors(c))
+        setUpBottomNavigationTintColors(c)
       }
     }
 
@@ -196,7 +199,7 @@ class ConversationListManagerFragment extends Fragment
     val colors = Array[Int](color, Color.WHITE)
 
     val colorStateList = new ColorStateList(states, colors)
-    bottomNavigationView.setItemIconTintList(colorStateList)
+    bottomNavigationView.foreach(_ .setItemIconTintList(colorStateList))
   }
 
   override def onShowPickUser() = {
@@ -244,7 +247,14 @@ class ConversationListManagerFragment extends Fragment
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) = {
     super.onActivityResult(requestCode, resultCode, data)
-    getChildFragmentManager.getFragments.asScala.foreach(_.onActivityResult(requestCode, resultCode, data))
+    if (requestCode == MoveToFolderActivity.REQUEST_CODE_MOVE_CREATE) {
+      if (resultCode == Activity.RESULT_OK) {
+        val movedConvId = data.getSerializableExtra(MoveToFolderActivity.KEY_CONV_ID).asInstanceOf[ConvId]
+        //TODO: scroll to conv w/ this id
+      }
+    } else {
+      getChildFragmentManager.getFragments.asScala.foreach(_.onActivityResult(requestCode, resultCode, data))
+    }
   }
 
   override def onShowUserProfile(userId: UserId, fromDeepLink: Boolean) =
@@ -293,7 +303,7 @@ class ConversationListManagerFragment extends Fragment
           case _ => //
         }
         case _ => //
-      } (Threading.Ui)
+      }
     }
 
   private def togglePeoplePicker(show: Boolean) = {
@@ -339,7 +349,7 @@ class ConversationListManagerFragment extends Fragment
     if (page != Page.ARCHIVE) closeArchive()
 
     val conversationsVisible = page == Page.START || page == Page.CONVERSATION_LIST
-    bottomNavigationView.setVisible(conversationsVisible)
+    bottomNavigationView.foreach(_.setVisible(conversationsVisible))
     bottomNavigationBorder.setVisible(conversationsVisible)
     if (conversationsVisible) {
       selectDefaultConversationType()
@@ -368,12 +378,11 @@ class ConversationListManagerFragment extends Fragment
     navController.setLeftPage(ARCHIVE, Tag)
   }
 
-  override def onConversationsLoadingStarted(): Unit = {
-    bottomNavigationView.setAlpha(0.5f)
-  }
+  override def onConversationsLoadingStarted(): Unit =
+    bottomNavigationView.foreach(_.setAlpha(0.5f))
 
   override def onConversationsLoadingFinished(): Unit = {
-    bottomNavigationView.animate().alpha(1f).setDuration(500)
+    bottomNavigationView.foreach(_.animate().alpha(1f).setDuration(500))
   }
 
   override def closeArchive() = {
@@ -486,27 +495,22 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
-  private def selectDefaultConversationType(): Unit = {
-    getConversationListType().map(t =>
-      bottomNavigationView.setSelectedItemId(
-        t match {
-          case ConversationListType.FOLDERS => R.id.navigation_folders
-          case _                            => R.id.navigation_conversations
-        }
-      )
-    )
+  private def selectDefaultConversationType(): Unit = bottomNavigationView.foreach { view =>
+    getConversationListType().map {
+      case ConversationListType.FOLDERS => R.id.navigation_folders
+      case _                            => R.id.navigation_conversations
+    }.foreach(view.setSelectedItemId)
   }
 
-  private def setConversationListType(@ConversationListType listType: Int): Unit = {
+  private def setConversationListType(@ConversationListType listType: Int): Unit =
     for {
-      userPrefs              <- zms.map(_.userPrefs).head
+      userPrefs               <- zms.map(_.userPrefs).head
       convListTypePreference  = userPrefs.preference(UserPreferences.ConversationListType)
     } yield {
       convListTypePreference.update(listType)
     }
-  }
 
-  private def getConversationListType(): Future[Int] = {
+  private def getConversationListType(): Future[Int] =
     for {
       userPrefs              <- zms.map(_.userPrefs).head
       convListTypePreference  = userPrefs.preference(UserPreferences.ConversationListType)
@@ -514,8 +518,13 @@ class ConversationListManagerFragment extends Fragment
     } yield {
       convListType
     }
-  }
 
+  override def onMoveToFolder(convId: ConvId): Unit = {
+    startActivityForResult(
+      MoveToFolderActivity.newIntent(requireContext(), convId),
+      MoveToFolderActivity.REQUEST_CODE_MOVE_CREATE
+    )
+  }
 }
 
 object ConversationListManagerFragment {

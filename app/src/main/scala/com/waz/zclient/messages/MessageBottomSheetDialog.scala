@@ -29,7 +29,7 @@ import com.waz.zclient.messages.MessageBottomSheetDialog.{Actions, MessageAction
 import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.participants.OptionsMenuController
 import com.waz.zclient.participants.OptionsMenuController.MenuItem
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R, WireApplication}
 
 class MessageBottomSheetDialog(message: MessageData,
                                params: Params,
@@ -93,7 +93,7 @@ object MessageBottomSheetDialog {
   //TODO: Remove glyphId
   abstract class MessageAction(val resId: Int, val glyphResId: Int, val stringId: Int) extends MenuItem {
 
-    override val titleId: Int = stringId
+    override val title: String = WireApplication.APP_INSTANCE.getString(stringId)
     override val iconId: Option[Int] = Some(resId)
     override val colorId: Option[Int] = None
 

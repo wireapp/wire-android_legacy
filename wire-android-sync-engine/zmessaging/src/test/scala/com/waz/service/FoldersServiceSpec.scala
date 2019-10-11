@@ -934,5 +934,35 @@ class FoldersServiceSpec extends AndroidFreeSpec with DerivedLogTag with CirceJS
       seq(1).folderData.folderType shouldEqual FolderData.FavoritesFolderType
       seq(1).conversations shouldEqual Set(RConvId("c2"))
     }
+
+    scenario ("uppercase conv IDs (thanks, iOS!) are lowercased") {
+
+      // given
+      val payload = """{
+                      |  "labels": [
+                      |    {
+                      |      "name" : "F1",
+                      |      "type" : 0,
+                      |      "id" : "f1",
+                      |      "conversations" : [
+                      |        "UPPERCASE",
+                      |        "c2"
+                      |      ]
+                      |    }
+                      |  ]
+                      |}""".stripMargin
+
+      // when
+      val seq = decode[FoldersProperty](payload) match {
+        case Right(fp)   => fp.toRemote
+        case Left(error) => fail(error.getMessage)
+      }
+
+      // then
+      seq(0).folderData.name shouldEqual Name("F1")
+      seq(0).folderData.id shouldEqual FolderId("f1")
+      seq(0).folderData.folderType shouldEqual FolderData.CustomFolderType
+      seq(0).conversations shouldEqual Set(RConvId("uppercase"), RConvId("c2"))
+    }
   }
 }
