@@ -96,8 +96,8 @@ class ConversationListManagerFragment extends Fragment
       view.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
     }
 
-    convListController.hasConversationsAndArchive.onUi { case (_, enabled) =>
-      vh.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, enabled))
+    convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
+      vh.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, hasArchive))
     }
   }
 
