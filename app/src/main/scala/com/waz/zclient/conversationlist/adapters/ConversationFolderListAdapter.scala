@@ -53,7 +53,7 @@ class ConversationFolderListAdapter(implicit context: Context)
       newItems ::= Item.IncomingRequests(incoming.head, incoming.size)
     }
 
-    folders = createDefaultFolders(favorites, groups, oneToOnes) ++ createCustomFolders(custom)
+    folders = calculateDefaultFolders(favorites, groups, oneToOnes) ++ calculateCustomFolders(custom)
 
     newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
       val header = Item.Header(next.id, next.title, isExpanded = folderStates.getOrElse(next.id, true))
@@ -66,14 +66,14 @@ class ConversationFolderListAdapter(implicit context: Context)
     updateList(newItems)
   }
 
-  private def createDefaultFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
+  private def calculateDefaultFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
     val favoritesFolder = Folder(FavoritesId, getString(R.string.conversation_folder_name_favorites), favorites)
     val groupsFolder = Folder(GroupId, getString(R.string.conversation_folder_name_group), groups)
     val oneToOnesFolder = Folder(OneToOnesId, getString(R.string.conversation_folder_name_one_to_one), oneToOnes)
     Seq(favoritesFolder, groupsFolder, oneToOnesFolder).flatten
   }
 
-  private def createCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] = {
+  private def calculateCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] = {
     custom.flatMap { case (folderData, conversations) => Folder(folderData, conversations) }
   }
 
