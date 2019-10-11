@@ -70,9 +70,9 @@ abstract class ConversationListAdapter
   }
 
   override def getItemId(position: Int): Long = items(position) match {
-    case Item.IncomingRequests(first, _) => first.str.hashCode
-    case Item.Header(id, _, _)           => id.str.hashCode
-    case Item.Conversation(data, _)      => data.id.str.hashCode
+    case Item.IncomingRequests(first, _)  => first.str.hashCode
+    case Item.Header(id, _, _)            => id.str.hashCode
+    case Item.Conversation(data, section) => (data.id.str + section.getOrElse("")).hashCode
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
