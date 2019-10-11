@@ -860,7 +860,7 @@
 
     <dimen name="conversation_list__row__avatar_size">28dp</dimen>
     <dimen name="conversation_list__row__title__top">8dp</dimen>
-    <dimen name="conversation_list__folder_row__height">48dp</dimen>
+    <dimen name="conversation_list__folder_row__height">32dp</dimen>
     <dimen name="conversation_list__row__height">64dp</dimen>
     <dimen name="conversation_list__badge__height">20dp</dimen>
     <dimen name="conversation_list__avatar__inner_margin">2dp</dimen>
