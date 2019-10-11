@@ -88,23 +88,17 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     }
   }
 
-  protected def beforeListCreation(): Future[Unit] = Future.successful(())
-
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle) =
     inflater.inflate(layoutId, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    for {
-      _ <- beforeListCreation()
-    } yield {
-      conversationListView.foreach { lv =>
-        lv.setLayoutManager(new LinearLayoutManager(getContext))
-        lv.setAdapter(adapter)
-        lv.setAllowSwipeAway(true)
-        lv.setOverScrollMode(View.OVER_SCROLL_NEVER)
-        lv.addOnScrollListener(conversationsListScrollListener)
-      }
+    conversationListView.foreach { lv =>
+      lv.setLayoutManager(new LinearLayoutManager(getContext))
+      lv.setAdapter(adapter)
+      lv.setAllowSwipeAway(true)
+      lv.setOverScrollMode(View.OVER_SCROLL_NEVER)
+      lv.addOnScrollListener(conversationsListScrollListener)
     }
   }
 
@@ -336,8 +330,7 @@ class ConversationFolderListFragment extends NormalConversationFragment {
         groups    <- convListController.groupConvsWithoutFolder
         oneToOnes <- convListController.oneToOneConvsWithoutFolder
         custom    <- convListController.customFolderConversations
-        prefs     <- userPreferences
-        states    <- prefs(ConversationFoldersUiState).signal
+        states    <- foldersUiState
       } yield (incoming, favorites, groups, oneToOnes, custom, states)
 
       dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom, states) =>
