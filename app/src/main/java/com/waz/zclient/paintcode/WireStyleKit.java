@@ -22,7 +22,6 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Path;
 import java.util.Stack;
 
@@ -2428,11 +2427,6 @@ public class WireStyleKit {
         canvas.translate(resizedFrame.left, resizedFrame.top);
         canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
 
-        // Group 2
-        {
-            // Empty.
-        }
-
         // Bezier
         RectF bezierRect = CacheForSend.bezierRect;
         bezierRect.set(0f, 0f, 64f, 64f);
@@ -2538,11 +2532,6 @@ public class WireStyleKit {
         canvas.translate(resizedFrame.left, resizedFrame.top);
         canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
 
-        // Group 2
-        {
-            // Empty.
-        }
-
         // Bezier
         RectF bezierRect = CacheForEmoji.bezierRect;
         bezierRect.set(0f, 0f, 64f, 64f);
@@ -2618,11 +2607,6 @@ public class WireStyleKit {
         WireStyleKit.resizingBehaviorApply(resizing, CacheForMuteAlerts.originalFrame, targetFrame, resizedFrame);
         canvas.translate(resizedFrame.left, resizedFrame.top);
         canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
-
-        // Group 2
-        {
-            // Empty.
-        }
 
         // Group 4
         {
@@ -2704,11 +2688,6 @@ public class WireStyleKit {
         WireStyleKit.resizingBehaviorApply(resizing, CacheForAlerts.originalFrame, targetFrame, resizedFrame);
         canvas.translate(resizedFrame.left, resizedFrame.top);
         canvas.scale(resizedFrame.width() / 64f, resizedFrame.height() / 64f);
-
-        // Group 2
-        {
-            // Empty.
-        }
 
         // Group 4
         {
