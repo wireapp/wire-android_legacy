@@ -26,22 +26,22 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.{ConvId, FolderData}
 import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.conversationlist.folders.{FolderMoveListener, FolderSelectionFragment}
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.EmptyStateFragment
+import com.waz.zclient.{FragmentHelper, R}
 
-import scala.concurrent.ExecutionContext
+import scala.collection.JavaConverters._
 
 class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
   with FolderMoveListener
   with FragmentHelper {
 
+  import Threading.Implicits.Ui
+
   private lazy val convListController = inject[ConversationListController]
   private lazy val convId = getArguments.getSerializable(MoveToFolderFragment.KEY_CONV_ID).asInstanceOf[ConvId]
-
-  implicit val executionContext: ExecutionContext = Threading.Ui //TODO: check!!
 
   private var folderIndexMap = new SparseArray[FolderData]()
 
@@ -69,8 +69,7 @@ class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
       } else {
         sortedFolders.zipWithIndex.foreach { case (f, i) => folderIndexMap.put(i, f) }
 
-        val folderNames = new util.ArrayList[String]()
-        sortedFolders.map(data => folderNames.add(data.name.str))
+        val folderNames = new util.ArrayList[String](sortedFolders.map(_.name.str).asJava)
 
         getChildFragmentManager.beginTransaction.replace(
           R.id.fragment_move_to_folder_framelayout_container,

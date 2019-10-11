@@ -28,8 +28,10 @@ class FolderSelectionAdapter(private val items: ArrayList<String> = arrayListOf(
         val oldIndex = currentSelectedIndex
         currentSelectedIndex = index
         oldIndex?.let { notifyItemChanged(it) }
-        notifyItemChanged(currentSelectedIndex!!)
-        onItemSelected(currentSelectedIndex!!)
+        currentSelectedIndex?.let {
+            notifyItemChanged(it)
+            onItemSelected(it)
+        }
     }
 
 }

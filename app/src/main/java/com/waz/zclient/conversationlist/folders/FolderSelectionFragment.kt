@@ -40,8 +40,8 @@ class FolderSelectionFragment : Fragment() {
         recyclerView = view as RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
         adapter = FolderSelectionAdapter(
-            arguments!!.getStringArrayList(KEY_FOLDER_NAMES),
-            arguments!!.getInt(KEY_CURRENT_FOLDER_INDEX),
+            arguments?.getStringArrayList(KEY_FOLDER_NAMES) ?: arrayListOf(),
+            arguments?.getInt(KEY_CURRENT_FOLDER_INDEX),
             ::onFolderSelected
         )
         recyclerView.adapter = adapter
@@ -49,7 +49,7 @@ class FolderSelectionFragment : Fragment() {
     }
 
     private fun onFolderSelected(index: Int) {
-        if (index != arguments!!.getInt(KEY_CURRENT_FOLDER_INDEX)) {
+        if (index != arguments?.getInt(KEY_CURRENT_FOLDER_INDEX)) {
             (parentFragment as? FolderMoveListener)?.onNewFolderSelected(index)
         }
     }

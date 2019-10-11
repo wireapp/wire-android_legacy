@@ -27,13 +27,13 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.{BaseActivity, R}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class MoveToFolderActivity extends BaseActivity
   with MoveToFolderFragment.Container
   with CreateNewFolderFragment.Container {
 
-  implicit val executionContext: ExecutionContext = Threading.Ui //TODO: check!!
+  import Threading.Implicits.Ui
 
   private lazy val conversationController = inject[ConversationController]
   private lazy val convListController = inject[ConversationListController]
