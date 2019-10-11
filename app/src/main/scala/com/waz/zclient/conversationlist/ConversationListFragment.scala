@@ -379,13 +379,13 @@ class ConversationFolderListFragment extends NormalConversationFragment {
       }
 
       a.onFolderStateChanged(updateFolderState)
-      a.onUsedFolderStatesChanged(pruneFolderStates)
+      a.onFoldersChanged(pruneFolderStates)
     }
   }
 
-  private def pruneFolderStates(usedStates: Set[Uid]): Unit = {
+  private def pruneFolderStates(folderIds: Set[Uid]): Unit = {
     val knownStates = foldersUiState.keySet
-    val unusedFolderStates = knownStates -- usedStates
+    val unusedFolderStates = knownStates -- folderIds
     foldersUiState --= unusedFolderStates
   }
 
