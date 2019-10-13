@@ -55,7 +55,7 @@ class MoveToFolderActivity extends BaseActivity
 
   override def onPrepareNewFolderClicked(): Unit = {
     conversationController.getConversation(convId).foreach {
-      case Some(conv) => openCreteNewFolderScreen(conv.name.getOrElse("").toString)
+      case Some(conv) => openCreteNewFolderScreen(conv.displayName.toString)
       case None => cancelOperation()
     }
   }
