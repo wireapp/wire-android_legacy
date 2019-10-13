@@ -211,7 +211,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     customFolders  = favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
     _             <- folderStateController.update(FolderState(Uid(folderId.str), isExpanded = true))
-    _             <- Future.successful(service.addConversationTo(convId, folderId, uploadAllChanges = true))
+    _             <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
   } yield ()
 
   def createNewFolderWithConversation(folderName: String, convId: ConvId) = (for {
