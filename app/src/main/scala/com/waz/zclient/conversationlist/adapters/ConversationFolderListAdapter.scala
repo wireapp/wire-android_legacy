@@ -35,8 +35,8 @@ class ConversationFolderListAdapter(implicit context: Context)
   extends ConversationListAdapter
     with DerivedLogTag {
 
-  val onFolderStateChanged: SourceStream[FolderState] = EventStream[FolderState]()
-  val onFoldersChanged: SourceStream[Set[Uid]] = EventStream[Set[Uid]]()
+  val onFolderStateChanged: SourceStream[FolderState] = EventStream()
+  val onFoldersChanged: SourceStream[Set[Uid]] = EventStream()
 
   private var folders = Seq.empty[Folder]
 

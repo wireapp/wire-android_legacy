@@ -212,7 +212,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     _            <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
   } yield ()
 
-  def createNewFolderWithConversation(folderName: String, convId: ConvId) = (for {
+  def createNewFolderWithConversation(folderName: String, convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     folderId <- service.addFolder(Name(folderName), uploadAllChanges = false)
     _        <- moveToCustomFolder(convId, folderId)
