@@ -29,7 +29,6 @@ import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._
 import com.waz.service.{AccountsService, ZMessaging}
-import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -52,8 +51,6 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R, ViewHolder}
-
-import scala.concurrent.Future
 
 /**
   * Due to how we use the NormalConversationListFragment - it gets replaced by the ArchiveConversationListFragment or
@@ -311,16 +308,8 @@ object NormalConversationFragment {
 }
 
 class ConversationFolderListFragment extends NormalConversationFragment {
+
   override protected val adapterMode: ListMode = Folders
-
-  import ConversationFolderListFragment._
-  import UserPreferences.ConversationFoldersUiState
-
-  private lazy val userPreferences = inject[Signal[UserPreferences]]
-  private lazy val foldersUiState = for {
-    prefs     <- userPreferences
-    states    <- prefs(ConversationFoldersUiState).signal
-  } yield states
 
   override protected def createAdapter(): ConversationListAdapter = {
     returning(new ConversationFolderListAdapter) { a =>
@@ -330,40 +319,19 @@ class ConversationFolderListFragment extends NormalConversationFragment {
         groups    <- convListController.groupConvsWithoutFolder
         oneToOnes <- convListController.oneToOneConvsWithoutFolder
         custom    <- convListController.customFolderConversations
-        states    <- foldersUiState
+        states    <- convListController.folderStateController.folderUiStates
       } yield (incoming, favorites, groups, oneToOnes, custom, states)
 
       dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom, states) =>
         a.setData(incoming, favorites, groups, oneToOnes, custom, states)
       }
 
-      a.onFolderStateChanged(updateFolderState)
-      a.onFoldersChanged(pruneFolderStates)
+      a.onFolderStateChanged(convListController.folderStateController.update)
+      a.onFoldersChanged(convListController.folderStateController.prune)
     }
   }
-
-  private def pruneFolderStates(folderIds: Set[Uid]): Future[Unit] = for {
-    state               <- foldersUiState.head
-    knownStates         = state.keySet
-    unusedFolderStates  = knownStates -- folderIds
-    _                   <- storeFoldersUiState(state -- unusedFolderStates)
-  } yield {}
-
-  private def updateFolderState(folderState: FolderState): Future[Unit] = for {
-    state           <- foldersUiState.head
-    _               <- storeFoldersUiState(state + (folderState.id -> folderState.isExpanded))
-  } yield {}
-
-  private def storeFoldersUiState(state: Map[Uid, Boolean]): Future[Unit] = for {
-    prefs <- userPreferences.head
-    _     <- prefs(ConversationFoldersUiState).update(state)
-  } yield {}
-
 }
 
 object ConversationFolderListFragment {
   val TAG = "ConversationFolderListFragment"
-
-  type FoldersUiState = Map[Uid, Boolean]
-  case class FolderState(id: Uid, isExpanded: Boolean)
 }

@@ -18,7 +18,7 @@
 package com.waz.zclient.conversationlist
 
 import com.waz.api.Message
-import com.waz.content.ConversationStorage
+import com.waz.content.{ConversationStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
@@ -30,6 +30,8 @@ import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
+import com.waz.zclient.conversationlist.FolderStateController.FolderState
+import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
@@ -49,6 +51,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   private lazy val foldersService = inject[Signal[FoldersService]]
   private lazy val convService = inject[Signal[ConversationsService]]
+
+  val folderStateController = new FolderStateController(inject[Signal[UserPreferences]])
 
   def members(conv: ConvId) = membersCache.flatMap(_.apply(conv))
 
@@ -171,7 +175,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   def addToFavorites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavoritesFolder()
-    _        <- service.addConversationTo(convId, favId, true)
+    _        <- folderStateController.update(FolderState(Folder.FavoritesId, isExpanded = true))
+    _        <- service.addConversationTo(convId, favId, uploadAllChanges = true)
   } yield ()).recoverWith { case e: Exception =>
       error(l"exception while adding conv $convId to favorites", e)
       Future.successful({})
@@ -203,8 +208,9 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     service       <- foldersService.head
     folders       <- service.foldersForConv(convId)
     favId         <- favoritesFolderId.head
-    customFolders =  favId.fold(folders)(folders - _)
+    customFolders  = favId.fold(folders)(folders - _)
     _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
+    _             <- folderStateController.update(FolderState(Uid(folderId.str), isExpanded = true))
     _             <- Future.successful(service.addConversationTo(convId, folderId, uploadAllChanges = true))
   } yield ()
 
