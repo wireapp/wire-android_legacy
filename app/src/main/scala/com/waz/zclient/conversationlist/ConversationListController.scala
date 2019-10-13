@@ -124,7 +124,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   def folderConversations(folderId: FolderId): Signal[Seq[ConversationData]] = for {
     fwc     <- foldersWithConvs
-    convIds =  fwc(folderId)
+    convIds =  fwc.getOrElse(folderId, Set.empty)
     convs   <- regularConversationListData
   } yield convs.filter(c => convIds.contains(c.id))
 

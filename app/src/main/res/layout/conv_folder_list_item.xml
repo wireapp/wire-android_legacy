@@ -21,6 +21,6 @@
 <com.waz.zclient.conversationlist.views.ConversationFolderListRow
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/conversation_list__row__height"
+    android:layout_height="@dimen/conversation_list__folder_row__height"
     android:background="@drawable/selector__transparent_button"
     />

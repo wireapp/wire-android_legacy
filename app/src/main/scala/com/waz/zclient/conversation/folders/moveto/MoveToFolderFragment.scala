@@ -43,13 +43,16 @@ class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
   private lazy val convListController = inject[ConversationListController]
   private lazy val convId = getArguments.getSerializable(MoveToFolderFragment.KEY_CONV_ID).asInstanceOf[ConvId]
 
-  private var folderIndexMap = new SparseArray[FolderData]()
+  private lazy val toolbar = view[Toolbar](R.id.fragment_move_to_folder_toolbar)
+
+  private val folderIndexMap = new SparseArray[FolderData]()
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_move_to_folder, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
+    toolbar.foreach(_.setNavigationContentDescription(R.string.folders_move_to_folder_close))
     setUpClickListeners(view)
 
     for {
@@ -81,20 +84,16 @@ class MoveToFolderFragment extends BaseFragment[MoveToFolderFragment.Container]
   }
 
   private def setUpClickListeners(view: View): Unit = {
-    view.findViewById[Toolbar](R.id.fragment_move_to_folder_toolbar).setNavigationOnClickListener(
+    toolbar.foreach(_.setNavigationOnClickListener(
       new View.OnClickListener {
-        override def onClick(v: View): Unit = onNavigationClick()
+        override def onClick(v: View): Unit = getContainer.onCloseScreenClicked()
       }
-    )
+    ))
     view.findViewById[View](R.id.fragment_move_to_folder_textview_create).setOnClickListener(
       new View.OnClickListener {
         override def onClick(v: View): Unit = getContainer.onPrepareNewFolderClicked()
       }
     )
-  }
-
-  private def onNavigationClick(): Unit = {
-    getContainer.onCloseScreenClicked()
   }
 
   override def onNewFolderSelected(index: Int): Unit = {

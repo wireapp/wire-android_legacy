@@ -300,9 +300,11 @@ object ConversationOptionsMenuController {
 
   case class RemoveFromFolder(folderData: FolderData) extends BaseMenuItem(
     WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderData.name.str),
-    Some(R.string.glyph__leave) //FIXME: use correct icons
+    Some(R.string.glyph__remove_from_folder)
   )
-  object RemoveFromFolderPlaceHolder extends RemoveFromFolder(FolderData(name = "")) //dummy object to hold place in OrderSeq
+
+  // Dummy object to hold place in OrderSeq
+  object RemoveFromFolderPlaceHolder extends RemoveFromFolder(FolderData(name = ""))
 
   object Mute                extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
   object Unmute              extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
@@ -311,10 +313,10 @@ object ConversationOptionsMenuController {
   object Notifications       extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
   object Archive             extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
   object Unarchive           extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
-  //FIXME: use correct icons
-  object AddToFavorites      extends BaseMenuItem(R.string.conversation__action__add_to_favorites, Some(R.string.glyph__add))
-  object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__delete_me))
-  object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__leave))
+  object AddToFavorites      extends BaseMenuItem(R.string.conversation__action__add_to_favorites, Some(R.string.glyph__add_to_favorites))
+  object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__remove_from_favorites))
+  object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__move_to_folder))
+
   object Delete              extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
