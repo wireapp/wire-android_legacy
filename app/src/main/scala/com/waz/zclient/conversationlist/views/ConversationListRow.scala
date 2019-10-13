@@ -574,7 +574,7 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
 
   def setIsFirstHeader(isFirstHeader: Boolean): Unit = {
     val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
-    params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__20)
+    params.topMargin = if (isFirstHeader) 0 else getDimenPx(R.dimen.wire__padding__10)
     setLayoutParams(params)
   }
 
@@ -584,9 +584,9 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   }
 
   private def setLayoutParameters(): Unit = {
-    val params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__row__height))
+    val params = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getDimenPx(R.dimen.conversation_list__folder_row__height))
     setLayoutParams(params)
     setOrientation(LinearLayout.HORIZONTAL)
-    setPadding(getDimenPx(R.dimen.wire__padding__24), getDimenPx(R.dimen.wire__padding__20), 0, getDimenPx(R.dimen.wire__padding__20))
+    setPadding(getDimenPx(R.dimen.wire__padding__24), getDimenPx(R.dimen.wire__padding__10), 0, getDimenPx(R.dimen.wire__padding__10))
   }
 }
