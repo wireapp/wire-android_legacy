@@ -88,18 +88,22 @@ class ConversationFolderListAdapter(implicit context: Context)
   }
 
   private def collapseSection(header: Item.Header, headerPosition: Int): Unit = {
-    folderConversations(header.id).fold() { conversations =>
-      updateHeader(header, headerPosition, isExpanded = false)
-      items.remove(headerPosition + 1, conversations.size)
-      notifyItemRangeRemoved(headerPosition + 1, conversations.size)
+    if (header.isExpanded) {
+      folderConversations(header.id).fold() { conversations =>
+        updateHeader(header, headerPosition, isExpanded = false)
+        items.remove(headerPosition + 1, conversations.size)
+        notifyItemRangeRemoved(headerPosition + 1, conversations.size)
+      }
     }
   }
 
   private def expandSection(header: Item.Header, headerPosition: Int): Unit = {
-    folderConversations(header.id).fold() { conversations =>
-      updateHeader(header, headerPosition, isExpanded = true)
-      items.insertAll(headerPosition + 1, conversations)
-      notifyItemRangeInserted(headerPosition + 1, conversations.size)
+    if (!header.isExpanded) {
+      folderConversations(header.id).fold() { conversations =>
+        updateHeader(header, headerPosition, isExpanded = true)
+        items.insertAll(headerPosition + 1, conversations)
+        notifyItemRangeInserted(headerPosition + 1, conversations.size)
+      }
     }
   }
 
