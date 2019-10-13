@@ -205,13 +205,11 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     }
 
   def moveToCustomFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
-    service       <- foldersService.head
-    folders       <- service.foldersForConv(convId)
-    favId         <- favoritesFolderId.head
-    customFolders  = favId.fold(folders)(folders - _)
-    _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
-    _             <- folderStateController.update(FolderState(Uid(folderId.str), isExpanded = true))
-    _             <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
+    service      <- foldersService.head
+    customFolder <- getCustomFolderId(convId)
+    _            <- customFolder.fold(Future.successful(()))(removeFromFolder(convId, _))
+    _            <- folderStateController.update(FolderState(Uid(folderId.str), isExpanded = true))
+    _            <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
   } yield ()
 
   def createNewFolderWithConversation(folderName: String, convId: ConvId) = (for {
