@@ -21,7 +21,7 @@ import android.support.v7.util.DiffUtil
 import android.support.v7.widget.RecyclerView
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, Uid}
+import com.waz.model.{ConvId, ConversationData, FolderId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
@@ -126,7 +126,7 @@ object ConversationListAdapter {
   }
 
   object Item {
-    case class Header(id: Uid, title: String, isExpanded: Boolean) extends Item {
+    case class Header(id: FolderId, title: String, isExpanded: Boolean) extends Item {
       override val contentDescription: String = {
         s"$title (${if (isExpanded) "expanded" else "collapsed"})"
       }

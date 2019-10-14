@@ -20,7 +20,7 @@ package com.waz.zclient.conversationlist
 import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.ConversationFoldersUiState
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{FolderId, Uid}
+import com.waz.model.FolderId
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.events.Signal
 import com.waz.zclient.conversationlist.FolderStateController._
@@ -34,7 +34,7 @@ class FolderStateController(implicit val injector: Injector)
 
   private lazy val userPreferences = inject[Signal[UserPreferences]]
 
-  lazy val folderUiStates: Signal[Map[Uid, Boolean]] = for {
+  lazy val folderUiStates: Signal[Map[FolderId, Boolean]] = for {
     prefs  <- userPreferences
     states <- prefs(ConversationFoldersUiState).signal
   } yield states
@@ -44,14 +44,14 @@ class FolderStateController(implicit val injector: Injector)
     _     <- store(state + (folderState.id -> folderState.isExpanded))
   } yield {}
 
-  def prune(folderIds: Set[Uid]): Future[Unit] = for {
+  def prune(folderIds: Set[FolderId]): Future[Unit] = for {
     state               <- folderUiStates.head
     knownStates          = state.keySet
     unusedFolderStates   = knownStates -- folderIds
     _                   <- store(state -- unusedFolderStates)
   } yield {}
 
-  private def store(states: Map[Uid, Boolean]): Future[Unit] = for {
+  private def store(states: Map[FolderId, Boolean]): Future[Unit] = for {
     prefs <- userPreferences.head
     _     <- prefs(ConversationFoldersUiState).update(states)
   } yield {}
@@ -59,12 +59,5 @@ class FolderStateController(implicit val injector: Injector)
 
 object FolderStateController {
 
-  case class FolderState(id: Uid, isExpanded: Boolean)
-
-  object FolderState {
-
-    def apply(folderId: FolderId, isExpanded: Boolean): FolderState = {
-      FolderState(Uid(folderId.str), isExpanded)
-    }
-  }
+  case class FolderState(id: FolderId, isExpanded: Boolean)
 }

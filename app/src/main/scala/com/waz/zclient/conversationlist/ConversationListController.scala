@@ -208,7 +208,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     service      <- foldersService.head
     customFolder <- getCustomFolderId(convId)
     _            <- customFolder.fold(Future.successful(()))(removeFromFolder(convId, _))
-    _            <- folderStateController.update(FolderState(Uid(folderId.str), isExpanded = true))
+    _            <- folderStateController.update(FolderState(folderId, isExpanded = true))
     _            <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
   } yield ()
 

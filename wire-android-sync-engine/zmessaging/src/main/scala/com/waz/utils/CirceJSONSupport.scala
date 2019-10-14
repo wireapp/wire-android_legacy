@@ -48,6 +48,6 @@ trait CirceJSONSupport extends AutoDerivation {
   implicit def AssetIdDecoder: Decoder[AssetId] = Decoder[String].map(AssetId.apply)
   implicit def AssetTokenDecoder: Decoder[AssetToken] = Decoder[String].map(AssetToken.apply)
 
-  implicit def UidKeyDecoder: KeyDecoder[Uid] = KeyDecoder[String].map(Uid.apply)
-  implicit def UidKeyEncoder: KeyEncoder[Uid] = KeyEncoder[String].contramap(_.str)
+  implicit def FolderIdKeyDecoder: KeyDecoder[FolderId] = KeyDecoder[String].map(FolderId.apply)
+  implicit def FolderIdKeyEncoder: KeyEncoder[FolderId] = KeyEncoder[String].contramap(_.str)
 }

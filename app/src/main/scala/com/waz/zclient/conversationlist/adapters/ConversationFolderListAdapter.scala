@@ -19,7 +19,7 @@ package com.waz.zclient.conversationlist.adapters
 
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, FolderData, Uid}
+import com.waz.model._
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
 import com.waz.zclient.conversationlist.FolderStateController.FolderState
@@ -36,7 +36,7 @@ class ConversationFolderListAdapter(implicit context: Context)
     with DerivedLogTag {
 
   val onFolderStateChanged: SourceStream[FolderState] = EventStream()
-  val onFoldersChanged: SourceStream[Set[Uid]] = EventStream()
+  val onFoldersChanged: SourceStream[Set[FolderId]] = EventStream()
 
   private var folders = Seq.empty[Folder]
 
@@ -45,7 +45,7 @@ class ConversationFolderListAdapter(implicit context: Context)
               groups: Seq[ConversationData],
               oneToOnes: Seq[ConversationData],
               custom: Seq[(FolderData, Seq[ConversationData])],
-              folderStates: Map[Uid, Boolean]): Unit = {
+              folderStates: Map[FolderId, Boolean]): Unit = {
 
     var newItems = List.empty[Item]
 
@@ -107,7 +107,7 @@ class ConversationFolderListAdapter(implicit context: Context)
     }
   }
 
-  private def folderConversations(id: Uid): Option[Seq[Item.Conversation]] = {
+  private def folderConversations(id: FolderId): Option[Seq[Item.Conversation]] = {
     folders.find(_.id == id).map(_.conversations)
   }
 
@@ -120,19 +120,19 @@ class ConversationFolderListAdapter(implicit context: Context)
 
 object ConversationFolderListAdapter {
 
-  case class Folder(id: Uid, title: String, conversations: Seq[Item.Conversation])
+  case class Folder(id: FolderId, title: String, conversations: Seq[Item.Conversation])
 
   object Folder {
 
-    val FavoritesId = Uid("Favorites")
-    val GroupId = Uid("Groups")
-    val OneToOnesId = Uid("OneToOnes")
+    val FavoritesId = FolderId("Favorites")
+    val GroupId = FolderId("Groups")
+    val OneToOnesId = FolderId("OneToOnes")
 
     def apply(folderData: FolderData, conversations: Seq[ConversationData]): Option[Folder] = {
-      Folder(Uid(folderData.id.str), folderData.name, conversations)
+      Folder(folderData.id, folderData.name, conversations)
     }
 
-    def apply(id: Uid, title: String, conversations: Seq[ConversationData]): Option[Folder] = {
+    def apply(id: FolderId, title: String, conversations: Seq[ConversationData]): Option[Folder] = {
       if (conversations.isEmpty) None
       else Some(Folder(id, title, conversations.map(d => Item.Conversation(d, sectionTitle = Some(title)))))
     }
