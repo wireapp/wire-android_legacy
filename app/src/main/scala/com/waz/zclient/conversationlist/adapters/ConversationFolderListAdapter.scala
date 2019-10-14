@@ -73,7 +73,7 @@ class ConversationFolderListAdapter(implicit context: Context)
   }
 
   private def calculateCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] = {
-    custom.flatMap { case (folderData, conversations) => Folder(folderData, conversations) }
+    custom.flatMap { case (folderData, conversations) => Folder(folderData, conversations) }.sortBy(_.title)
   }
 
   override def onClick(position: Int): Unit = items(position) match {
