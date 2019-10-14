@@ -46,7 +46,7 @@ class FolderStateController(userPreferences: Signal[UserPreferences]) extends De
     _                   <- store(state -- unusedFolderStates)
   } yield {}
 
-  def store(states: FolderUiStates): Future[Unit] = for {
+  private def store(states: FolderUiStates): Future[Unit] = for {
     prefs <- userPreferences.head
     _     <- prefs(ConversationFoldersUiState).update(states)
   } yield {}
