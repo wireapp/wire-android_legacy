@@ -18,21 +18,23 @@
 package com.waz.service.push
 
 import android.content.Context
-import com.waz.log.LogSE._
 import com.waz.api.NetworkMode.{OFFLINE, UNKNOWN}
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences.BackendDrift
+import com.waz.content.Preferences.Preference
 import com.waz.content.UserPreferences.LastStableNotification
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.LogSE._
 import com.waz.log.LogShow
 import com.waz.model.Event.EventDecoder
+import com.waz.model.FCMNotification.{Fetched, FinishedPipeline, StartedPipeline}
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
-import com.waz.service.push.PushService.SyncSource
+import com.waz.service.push.PushService.{Results, SyncMode, SyncSource}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
@@ -44,7 +46,6 @@ import com.waz.utils.{RichInstant, _}
 import com.waz.znet2.http.ResponseCode
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
-import FCMNotification.{Fetched, FinishedPipeline, StartedPipeline}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
@@ -62,9 +63,7 @@ import scala.concurrent.{Future, Promise}
   */
 
 trait PushService {
-
-  //set withRetries to false if the caller is to handle their own retry logic
-  def syncHistory(reason: SyncSource, withRetries: Boolean = true): Future[Unit]
+  def syncNotifications(syncMode: SyncMode): Future[Option[Results]]
 
   def onHistoryLost: SourceSignal[Instant] with BgEventSource
   def processing: Signal[Boolean]
@@ -108,10 +107,12 @@ class PushServiceImpl(selfUserId:           UserId,
   override def waitProcessing =
     processing.filter(_ == false).head.map(_ => {})
 
-  private val beDriftPref = prefs.preference(BackendDrift)
+  private val beDriftPref: Preference[Duration] = prefs.preference(BackendDrift)
   override val beDrift = beDriftPref.signal.disableAutowiring()
 
-  private lazy val idPref = userPrefs.preference(LastStableNotification)
+  private def updateDrift(time: Option[Instant]) = beDriftPref.mutate(v => time.fold(v)(clock.instant.until(_)))
+
+  private lazy val idPref: Preference[Option[Uid]] = userPrefs.preference(LastStableNotification)
 
   notificationStorage.registerEventHandler { () =>
     Serialized.future(PipelineKey) {
@@ -131,7 +132,7 @@ class PushServiceImpl(selfUserId:           UserId,
     }
   }
 
-  private def processEncryptedRows() =
+  private def processEncryptedRows(): Future[Unit] =
     notificationStorage.encryptedEvents.flatMap { rows =>
       verbose(l"Processing ${rows.size} encrypted rows")
       Future.sequence(rows.map { row =>
@@ -150,7 +151,7 @@ class PushServiceImpl(selfUserId:           UserId,
             case Right(_) => Future.successful(())
           }
         }
-      })
+      }).map(_ => ())
     }
 
   private def processDecryptedRows(): Future[Unit] = {
@@ -174,13 +175,13 @@ class PushServiceImpl(selfUserId:           UserId,
         for {
           _ <- fcmService.markNotificationsWithState(ids, StartedPipeline)
           _ <- pipeline(rows.flatMap(decodeRow))
-          _ = verbose(l"pipeline work finished")
+          _ =  verbose(l"pipeline work finished")
           _ <- notificationStorage.removeRows(rows.map(_.index))
-          _ = verbose(l"rows removed from the notification storage")
+          _ =  verbose(l"rows removed from the notification storage")
           _ <- fcmService.markNotificationsWithState(ids, FinishedPipeline)
-          _ = verbose(l"notifications marked")
+          _ =  verbose(l"notifications marked")
           _ <- processDecryptedRows()
-          _ = verbose(l"decrypted rows processed")
+          _ =  verbose(l"decrypted rows processed")
         } yield {}
       } else Future.successful(())
     }
@@ -190,107 +191,109 @@ class PushServiceImpl(selfUserId:           UserId,
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
   verbose(l"SYNC PushService created with the time offset: $timeOffset")
 
-  wsPushService.notifications(storeNotifications)
+  wsPushService.notifications(nots => syncNotifications(StoreNotifications(nots)))
 
   wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){ source =>
     verbose(l"sync history due to web socket change")
-    syncHistory(source)
+    syncNotifications(SyncHistory(source))
   }
 
-  private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Unit] =
-    if (nots.nonEmpty) synchronized {
+  override def syncNotifications(syncMode: SyncMode): Future[Option[Results]] = synchronized {
+    syncMode match {
+      case StoreNotifications(notifications)              => storeNotifications(notifications)
+      case SyncHistory(source, withRetries)               => syncHistory(source, withRetries)
+      case Load(lastId, firstSync, attempts, withRetries) => load(lastId, firstSync, attempts, withRetries)
+    }
+  }
+
+  private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Option[Results]] =
+    if (nots.nonEmpty) {
       verbose(l"SYNC storeNotifications")
       for {
         _   <- fcmService.markNotificationsWithState(nots.map(_.id).toSet, Fetched)
         _   <- notificationStorage.saveAll(nots)
-        res = nots.lift(nots.lastIndexWhere(!_.transient))
+        res =  nots.lift(nots.lastIndexWhere(!_.transient))
         _   <- if (res.nonEmpty) idPref := res.map(_.id) else Future.successful(())
-      } yield ()
-    } else Future.successful(())
+      } yield None
+    } else Future.successful(None)
 
   private def isOtrEventJson(ev: JSONObject) =
     ev.getString("type").equals("conversation.otr-message-add")
 
-  case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
-
   private def futureHistoryResults(notifications: Vector[PushNotificationEncoded] = Vector.empty,
-                                   time: Option[Instant] = None,
-                                   firstSync: Boolean = false,
-                                   historyLost: Boolean = false) =
-    CancellableFuture.successful(Results(notifications, time, firstSync, historyLost))
+                                   time:          Option[Instant] = None,
+                                   firstSync:     Boolean = false,
+                                   historyLost:   Boolean = false): Future[Option[Results]] =
+    Future.successful(Some(Results(notifications, time, firstSync, historyLost)))
 
-  //expose retry loop to tests
-  protected[push] val waitingForRetry: SourceSignal[Boolean] = Signal(false).disableAutowiring()
-
-  override def syncHistory(source: SyncSource, withRetries: Boolean = true): Future[Unit] = {
-    verbose(l"SYNC syncHistory($source, $withRetries)")
-    def load(lastId: Option[Uid], firstSync: Boolean = false, attempts: Int = 0): CancellableFuture[Results] =
-      (lastId match {
-        case None => if (firstSync) client.loadLastNotification(clientId) else client.loadNotifications(None, clientId)
-        case id   => client.loadNotifications(id, clientId)
-      }).flatMap {
-        case Right(LoadNotificationsResult(response, historyLost)) if !response.hasMore && !historyLost =>
-          futureHistoryResults(response.notifications, response.beTime, firstSync = firstSync)
-        case Right(LoadNotificationsResult(response, historyLost)) if response.hasMore && !historyLost =>
-          load(response.notifications.lastOption.map(_.id)).flatMap { results =>
+  private def load(lastId: Option[Uid], firstSync: Boolean = false, attempts: Int = 0, withRetries: Boolean = true): Future[Option[Results]] =
+    (lastId match {
+      case None if firstSync => client.loadLastNotification(clientId)
+      case id                => client.loadNotifications(id, clientId)
+    }).future.flatMap {
+      case Right(LoadNotificationsResult(response, historyLost)) if !response.hasMore && !historyLost =>
+        futureHistoryResults(response.notifications, response.beTime, firstSync = firstSync)
+      case Right(LoadNotificationsResult(response, historyLost)) if response.hasMore && !historyLost =>
+        syncNotifications(Load(response.notifications.lastOption.map(_.id))).flatMap {
+          case Some(results) =>
             futureHistoryResults(
               response.notifications ++ results.notifications,
               if (results.time.isDefined) results.time else response.beTime,
               historyLost = results.historyLost
             )
-          }
-        case Right(LoadNotificationsResult(response, historyLost)) if lastId.isDefined && historyLost =>
-          warn(l"/notifications failed with 404, history lost")
-          futureHistoryResults(response.notifications, response.beTime, historyLost)
-        case Left(e @ ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
-          warn(l"Logged out, failing sync request")
-          CancellableFuture.failed(FetchFailedException(e))
-        case Left(err) =>
-          warn(l"Request failed due to $err: attempting to load last page (since id: $lastId) again? $withRetries")
-          if (!withRetries) CancellableFuture.failed(FetchFailedException(err))
-          else {
-            //We want to retry the download after the backoff is elapsed and the network is available,
-            //OR on a network state change (that is not offline/unknown)
-            //OR on a websocket state change
-            val retry = Promise[Unit]()
+          case None => Future.successful(None)
+        }
+      case Right(LoadNotificationsResult(response, historyLost)) if lastId.isDefined && historyLost =>
+        warn(l"/notifications failed with 404, history lost")
+        futureHistoryResults(response.notifications, response.beTime, historyLost)
+      case Left(e@ErrorResponse(ResponseCode.Unauthorized, _, _)) =>
+        warn(l"Logged out, failing sync request")
+        Future.failed(FetchFailedException(e))
+      case Left(err) =>
+        warn(l"Request failed due to $err: attempting to load last page (since id: $lastId) again? $withRetries")
+        if (!withRetries) CancellableFuture.failed(FetchFailedException(err))
+        else {
+          //We want to retry the download after the backoff is elapsed and the network is available,
+          //OR on a network state change (that is not offline/unknown)
+          //OR on a websocket state change
+          val retry = Promise[Unit]()
 
-            network.networkMode.onChanged.filter(!Set(UNKNOWN, OFFLINE).contains(_)).next.map(_ => retry.trySuccess({}))
-            wsPushService.connected().onChanged.next.map(_ => retry.trySuccess({}))
+          network.networkMode.onChanged.filter(!NetworkOff.contains(_)).next.map(_ => retry.trySuccess({}))
+          wsPushService.connected().onChanged.next.map(_ => retry.trySuccess({}))
 
-            for {
-              _ <- CancellableFuture.delay(syncHistoryBackoff.delay(attempts))
-              _ <- lift(network.networkMode.filter(!Set(UNKNOWN, OFFLINE).contains(_)).head)
-            } yield retry.trySuccess({})
+          for {
+            _ <- CancellableFuture.delay(syncHistoryBackoff.delay(attempts))
+            _ <- lift(network.networkMode.filter(!NetworkOff.contains(_)).head)
+          } yield retry.trySuccess({})
 
-            waitingForRetry ! true
-            lift(retry.future).flatMap { _ =>
-              waitingForRetry ! false
-              load(lastId, firstSync, attempts + 1)
-            }
-          }
-      }
-
-    def syncHistory(lastId: Option[Uid]): Future[Unit] = load(lastId, firstSync = lastId.isEmpty).future.flatMap {
-      case Results(nots, _, true, _) =>
-        idPref := nots.headOption.map(_.id)
-      case Results(_, time, _, true) =>
-        sync.performFullSync()
-          .map(_ => onHistoryLost ! clock.instant())
-          .flatMap(_ => beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v)))
-      case Results(nots, time, _, _) if nots.nonEmpty =>
-        beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
-          .flatMap(_ => storeNotifications(nots))
-          .flatMap(_ => idPref().flatMap(syncHistory))
-      case Results(_, time, _, _) =>
-        beDriftPref.mutate(v => time.map(clock.instant.until(_)).getOrElse(v))
+          retry.future.flatMap { _ => syncNotifications(Load(lastId, firstSync, attempts + 1)) }
+        }
     }
 
+  private def syncHistory(source: SyncSource, withRetries: Boolean = true): Future[Option[Results]] = {
     verbose(l"SYNC Sync history in response to $source ($timePassed)")
-    idPref().flatMap(syncHistory)
+    idPref().flatMap(lastId =>
+      syncNotifications(Load(lastId, firstSync = lastId.isEmpty, withRetries = withRetries))
+    ).flatMap {
+      case Some(Results(nots, _, true, _)) =>
+        idPref := nots.headOption.map(_.id)
+      case Some(Results(_, time, _, true)) =>
+        sync.performFullSync()
+          .map(_ => onHistoryLost ! clock.instant())
+          .flatMap(_ => updateDrift(time))
+      case Some(Results(nots, time, _, _)) if nots.nonEmpty =>
+        updateDrift(time)
+          .flatMap(_ => syncNotifications(StoreNotifications(nots)))
+          .flatMap(_ => syncNotifications(SyncHistory(source, withRetries = withRetries)).map(_ => None))
+      case Some(Results(_, time, _, _)) =>
+        updateDrift(time)
+      case None => Future.successful(())
+    }.map(_ => None)
   }
 }
 
 object PushService {
+  val NetworkOff = Set(UNKNOWN, OFFLINE)
 
   //These are the most important event types that generate push notifications
   val TrackingEvents = Set("conversation.otr-message-add", "conversation.create", "conversation.rename", "conversation.member-join")
@@ -314,4 +317,15 @@ object PushService {
       case WebSocketChange(connected) => l"WebSocketChange(connected: $connected)"
       case ForceSync => l"ForcePush"
     }
+
+  sealed trait SyncMode
+  case class StoreNotifications(notifications: Seq[PushNotificationEncoded]) extends SyncMode
+
+  //set withRetries to false if the caller is to handle their own retry logic
+  case class SyncHistory(source: SyncSource, withRetries: Boolean = true) extends SyncMode
+
+  case class Load(lastId: Option[Uid], firstSync: Boolean = false, attempts: Int = 0, withRetries: Boolean = true) extends SyncMode
+
+  case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
+
 }

@@ -25,7 +25,7 @@ import com.waz.model.{FoldersEvent, PropertyEvent, ReadReceiptEnabledPropertyEve
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.assets2.Codec
 import com.waz.service.push.PushService
-import com.waz.service.push.PushService.ForceSync
+import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.utils.RichFuture
 import com.waz.utils.events.Signal
@@ -55,7 +55,7 @@ class PropertiesServiceImpl(prefs: UserPreferences, syncServiceHandle: SyncServi
     if readReceipts.isEmpty
     syncId <- syncServiceHandle.syncProperties()
     _ <- requestService.await(syncId)
-    _ <- pushService.syncHistory(ForceSync) // Force fetch to clear the sync event
+    _ <- pushService.syncNotifications(SyncHistory(ForceSync)) // Force fetch to clear the sync event
   } ()
 
   private def processEvent(event: PropertyEvent): Future[Unit] =

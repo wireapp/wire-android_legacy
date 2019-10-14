@@ -24,7 +24,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InBackground
 import com.waz.service.ZMessaging
-import com.waz.service.push.PushService.FetchFromJob
+import com.waz.service.push.PushService.{FetchFromJob, SyncHistory}
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.log.LogUI._
@@ -46,7 +46,7 @@ class FetchJob extends Job with DerivedLogTag {
     def syncAccount(userId: UserId, nId: Option[Uid]): Future[Unit] =
       for {
         Some(zms) <- ZMessaging.accountsService.flatMap(_.getZms(userId))
-        _ <- zms.push.syncHistory(FetchFromJob(nId), withRetries = false)
+        _         <- zms.push.syncNotifications(SyncHistory(FetchFromJob(nId), withRetries = false))
       } yield {}
 
     val result = account.fold(Future.successful({})) { id =>
