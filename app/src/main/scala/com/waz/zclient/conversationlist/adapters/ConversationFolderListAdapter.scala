@@ -22,7 +22,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, FolderData, Uid}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
-import com.waz.zclient.conversationlist.FolderStateController.{FolderState, FolderUiStates}
+import com.waz.zclient.conversationlist.FolderStateController.FolderState
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
@@ -45,7 +45,7 @@ class ConversationFolderListAdapter(implicit context: Context)
               groups: Seq[ConversationData],
               oneToOnes: Seq[ConversationData],
               custom: Seq[(FolderData, Seq[ConversationData])],
-              folderStates: FolderUiStates): Unit = {
+              folderStates: Map[Uid, Boolean]): Unit = {
 
     var newItems = List.empty[Item]
 

@@ -34,7 +34,7 @@ class FolderStateController(implicit val injector: Injector)
 
   private lazy val userPreferences = inject[Signal[UserPreferences]]
 
-  lazy val folderUiStates: Signal[FolderUiStates] = for {
+  lazy val folderUiStates: Signal[Map[Uid, Boolean]] = for {
     prefs  <- userPreferences
     states <- prefs(ConversationFoldersUiState).signal
   } yield states
@@ -51,15 +51,13 @@ class FolderStateController(implicit val injector: Injector)
     _                   <- store(state -- unusedFolderStates)
   } yield {}
 
-  private def store(states: FolderUiStates): Future[Unit] = for {
+  private def store(states: Map[Uid, Boolean]): Future[Unit] = for {
     prefs <- userPreferences.head
     _     <- prefs(ConversationFoldersUiState).update(states)
   } yield {}
 }
 
 object FolderStateController {
-
-  type FolderUiStates = Map[Uid, Boolean]
 
   case class FolderState(id: Uid, isExpanded: Boolean)
 
