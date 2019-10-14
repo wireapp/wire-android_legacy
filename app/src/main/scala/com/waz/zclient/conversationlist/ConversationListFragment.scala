@@ -326,8 +326,11 @@ class ConversationFolderListFragment extends NormalConversationFragment {
         a.setData(incoming, favorites, groups, oneToOnes, custom, states)
       }
 
-      a.onFolderStateChanged(convListController.folderStateController.update)
-      a.onFoldersChanged(convListController.folderStateController.prune)
+      a.onFoldersChanged.onUi(convListController.folderStateController.prune)
+
+      a.onFolderStateChanged.onUi { case (id, isExpanded) =>
+        convListController.folderStateController.update(id, isExpanded)
+      }
     }
   }
 }

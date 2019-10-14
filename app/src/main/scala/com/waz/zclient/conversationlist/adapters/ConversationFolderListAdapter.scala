@@ -22,7 +22,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
-import com.waz.zclient.conversationlist.FolderStateController.FolderState
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
@@ -35,7 +34,7 @@ class ConversationFolderListAdapter(implicit context: Context)
   extends ConversationListAdapter
     with DerivedLogTag {
 
-  val onFolderStateChanged: SourceStream[FolderState] = EventStream()
+  val onFolderStateChanged: SourceStream[(FolderId, Boolean)] = EventStream()
   val onFoldersChanged: SourceStream[Set[FolderId]] = EventStream()
 
   private var folders = Seq.empty[Folder]
@@ -114,7 +113,7 @@ class ConversationFolderListAdapter(implicit context: Context)
   private def updateHeader(header: Item.Header, position: Int, isExpanded: Boolean): Unit = {
     items.update(position, header.copy(isExpanded = isExpanded))
     notifyItemChanged(position)
-    onFolderStateChanged ! FolderState(header.id, isExpanded)
+    onFolderStateChanged ! (header.id, isExpanded)
   }
 }
 

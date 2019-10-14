@@ -30,7 +30,6 @@ import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
-import com.waz.zclient.conversationlist.FolderStateController.FolderState
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
@@ -175,7 +174,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   def addToFavorites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavoritesFolder()
-    _        <- folderStateController.update(FolderState(Folder.FavoritesId, isExpanded = true))
+    _        <- folderStateController.update(Folder.FavoritesId, isExpanded = true)
     _        <- service.addConversationTo(convId, favId, uploadAllChanges = true)
   } yield ()).recoverWith { case e: Exception =>
       error(l"exception while adding conv $convId to favorites", e)
@@ -208,7 +207,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     service      <- foldersService.head
     customFolder <- getCustomFolderId(convId)
     _            <- customFolder.fold(Future.successful(()))(removeFromFolder(convId, _))
-    _            <- folderStateController.update(FolderState(folderId, isExpanded = true))
+    _            <- folderStateController.update(folderId, isExpanded = true)
     _            <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
   } yield ()
 

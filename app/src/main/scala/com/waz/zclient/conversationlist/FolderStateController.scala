@@ -23,7 +23,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.FolderId
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.events.Signal
-import com.waz.zclient.conversationlist.FolderStateController._
 import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
@@ -39,9 +38,9 @@ class FolderStateController(implicit val injector: Injector)
     states <- prefs(ConversationFoldersUiState).signal
   } yield states
 
-  def update(folderState: FolderState): Future[Unit] = for {
+  def update(id: FolderId, isExpanded: Boolean): Future[Unit] = for {
     state <- folderUiStates.head
-    _     <- store(state + (folderState.id -> folderState.isExpanded))
+    _     <- store(state + (id -> isExpanded))
   } yield {}
 
   def prune(folderIds: Set[FolderId]): Future[Unit] = for {
@@ -57,7 +56,3 @@ class FolderStateController(implicit val injector: Injector)
   } yield {}
 }
 
-object FolderStateController {
-
-  case class FolderState(id: FolderId, isExpanded: Boolean)
-}
