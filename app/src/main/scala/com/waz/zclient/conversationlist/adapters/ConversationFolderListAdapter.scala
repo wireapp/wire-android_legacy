@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
+import java.util.Locale
+
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -72,9 +74,9 @@ class ConversationFolderListAdapter(implicit context: Context)
     Seq(favoritesFolder, groupsFolder, oneToOnesFolder).flatten
   }
 
-  private def calculateCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] = {
+  private def calculateCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] =
     custom.flatMap { case (folderData, conversations) => Folder(folderData, conversations) }
-  }
+          .sortBy(_.title.toLowerCase(Locale.getDefault))
 
   override def onClick(position: Int): Unit = items(position) match {
     case header: Item.Header => collapseOrExpand(header, position)

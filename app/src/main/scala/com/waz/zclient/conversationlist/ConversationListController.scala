@@ -148,7 +148,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     for {
       customFolderIds  <- customFolderIds
       customFoldersOpt <- Signal.sequence(customFolderIds.toSeq.map(folder): _*)
-      customFolders     = customFoldersOpt.flatten.sortBy(_.name.str)
+      customFolders     = customFoldersOpt.flatten
       conversations    <- Signal.sequence(customFolders.map(f => folderConversations(f.id)): _*)
       result            = customFolders.zip(conversations)
     } yield result
