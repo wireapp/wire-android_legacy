@@ -206,7 +206,9 @@
             android:launchMode="singleTask">
         </activity>
 
-        <activity android:name=".conversation.folders.moveto.MoveToFolderActivity"/>
+        <activity
+            android:name=".conversation.folders.moveto.MoveToFolderActivity"
+            android:screenOrientation="portrait" />
 
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
