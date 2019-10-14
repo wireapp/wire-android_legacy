@@ -39,7 +39,8 @@ import com.waz.zclient.assets2.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
-import com.waz.zclient.conversationlist.ConversationListController
+import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder
+import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.{Callback, currentRotation, rotate}
@@ -330,8 +331,11 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set(), false, false)
 
-  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] =
-    convsUi.head.flatMap(_.createGroupConversation(name, users, teamOnly, if (readReceipts) 1 else 0)).map(_._1)
+  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] = for {
+    convsUi   <- convsUi.head
+    _         <- inject[FolderStateController].update(Folder.GroupId, isExpanded = true)
+    (conv, _) <- convsUi.createGroupConversation(name, users, teamOnly, if (readReceipts) 1 else 0)
+  } yield conv
 
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
 
