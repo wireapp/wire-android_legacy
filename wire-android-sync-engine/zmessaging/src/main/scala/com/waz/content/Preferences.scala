@@ -151,17 +151,17 @@ object Preferences {
 
       implicit lazy val UserInfoCodec = apply[UserInfo](JsonEncoder.encode(_).toString, JsonDecoder.decode[UserInfo], null.asInstanceOf[UserInfo])
 
-      implicit lazy val ConversationFoldersUiStateCodec = apply[Map[Uid, Boolean]](ConversationFoldersUiState.encode, ConversationFoldersUiState.decode, Map.empty)
+      implicit lazy val ConversationFoldersUiStateCodec = apply[Map[FolderId, Boolean]](ConversationFoldersUiState.encode, ConversationFoldersUiState.decode, Map.empty)
 
       object ConversationFoldersUiState extends CirceJSONSupport {
         import io.circe.{Decoder, Encoder, ObjectEncoder, parser}
 
-        lazy val encoder: ObjectEncoder[Map[Uid, Boolean]] = Encoder.encodeMap[Uid, Boolean]
-        lazy val decoder: Decoder[Map[Uid, Boolean]] = Decoder.decodeMap[Uid, Boolean]
+        lazy val encoder: ObjectEncoder[Map[FolderId, Boolean]] = Encoder.encodeMap[FolderId, Boolean]
+        lazy val decoder: Decoder[Map[FolderId, Boolean]] = Decoder.decodeMap[FolderId, Boolean]
 
-        def encode(o: Map[Uid, Boolean]): String = encoder(o).toString()
+        def encode(o: Map[FolderId, Boolean]): String = encoder(o).toString()
 
-        def decode(json: String): Map[Uid, Boolean] =
+        def decode(json: String): Map[FolderId, Boolean] =
           parser.decode(json)(decoder).right.toOption.getOrElse(Map.empty)
       }
     }
@@ -484,5 +484,5 @@ object UserPreferences {
   lazy val AskedForLocationPermission       = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
 
   lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
-  lazy val ConversationFoldersUiState       = PrefKey[Map[Uid, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
+  lazy val ConversationFoldersUiState       = PrefKey[Map[FolderId, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
 }

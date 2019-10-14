@@ -30,6 +30,7 @@ import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversationlist.ConversationListManagerFragment.ConvListUpdateThrottling
+import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.{UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, Injector, R}
@@ -46,6 +47,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   val zms = inject[Signal[ZMessaging]]
   val membersCache = zms map { new MembersCache(_) }
   val lastMessageCache = zms map { new LastMessageCache(_) }
+
+  lazy val folderStateController = inject[FolderStateController]
 
   private lazy val foldersService = inject[Signal[FoldersService]]
   private lazy val convService = inject[Signal[ConversationsService]]
@@ -171,7 +174,8 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   def addToFavorites(convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     favId    <- service.ensureFavoritesFolder()
-    _        <- service.addConversationTo(convId, favId, true)
+    _        <- folderStateController.update(Folder.FavoritesId, isExpanded = true)
+    _        <- service.addConversationTo(convId, favId, uploadAllChanges = true)
   } yield ()).recoverWith { case e: Exception =>
       error(l"exception while adding conv $convId to favorites", e)
       Future.successful({})
@@ -200,15 +204,14 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
     }
 
   def moveToCustomFolder(convId: ConvId, folderId: FolderId): Future[Unit] = for {
-    service       <- foldersService.head
-    folders       <- service.foldersForConv(convId)
-    favId         <- favoritesFolderId.head
-    customFolders =  favId.fold(folders)(folders - _)
-    _             <- Future.sequence(customFolders.map(removeFromFolder(convId, _)))
-    _             <- Future.successful(service.addConversationTo(convId, folderId, uploadAllChanges = true))
+    service      <- foldersService.head
+    customFolder <- getCustomFolderId(convId)
+    _            <- customFolder.fold(Future.successful(()))(removeFromFolder(convId, _))
+    _            <- folderStateController.update(folderId, isExpanded = true)
+    _            <- service.addConversationTo(convId, folderId, uploadAllChanges = true)
   } yield ()
 
-  def createNewFolderWithConversation(folderName: String, convId: ConvId) = (for {
+  def createNewFolderWithConversation(folderName: String, convId: ConvId): Future[Unit] = (for {
     service  <- foldersService.head
     folderId <- service.addFolder(Name(folderName), uploadAllChanges = false)
     _        <- moveToCustomFolder(convId, folderId)

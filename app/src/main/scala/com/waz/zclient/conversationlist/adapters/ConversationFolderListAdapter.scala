@@ -19,10 +19,9 @@ package com.waz.zclient.conversationlist.adapters
 
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, FolderData, Uid}
+import com.waz.model._
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.R
-import com.waz.zclient.conversationlist.ConversationFolderListFragment.{FolderState, FoldersUiState}
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
@@ -35,8 +34,8 @@ class ConversationFolderListAdapter(implicit context: Context)
   extends ConversationListAdapter
     with DerivedLogTag {
 
-  val onFolderStateChanged: SourceStream[FolderState] = EventStream[FolderState]()
-  val onFoldersChanged: SourceStream[Set[Uid]] = EventStream[Set[Uid]]()
+  val onFolderStateChanged: SourceStream[(FolderId, Boolean)] = EventStream()
+  val onFoldersChanged: SourceStream[Set[FolderId]] = EventStream()
 
   private var folders = Seq.empty[Folder]
 
@@ -45,7 +44,7 @@ class ConversationFolderListAdapter(implicit context: Context)
               groups: Seq[ConversationData],
               oneToOnes: Seq[ConversationData],
               custom: Seq[(FolderData, Seq[ConversationData])],
-              folderStates: FoldersUiState): Unit = {
+              folderStates: Map[FolderId, Boolean]): Unit = {
 
     var newItems = List.empty[Item]
 
@@ -88,47 +87,51 @@ class ConversationFolderListAdapter(implicit context: Context)
   }
 
   private def collapseSection(header: Item.Header, headerPosition: Int): Unit = {
-    folderConversations(header.id).fold() { conversations =>
-      updateHeader(header, headerPosition, isExpanded = false)
-      items.remove(headerPosition + 1, conversations.size)
-      notifyItemRangeRemoved(headerPosition + 1, conversations.size)
+    if (header.isExpanded) {
+      folderConversations(header.id).fold() { conversations =>
+        updateHeader(header, headerPosition, isExpanded = false)
+        items.remove(headerPosition + 1, conversations.size)
+        notifyItemRangeRemoved(headerPosition + 1, conversations.size)
+      }
     }
   }
 
   private def expandSection(header: Item.Header, headerPosition: Int): Unit = {
-    folderConversations(header.id).fold() { conversations =>
-      updateHeader(header, headerPosition, isExpanded = true)
-      items.insertAll(headerPosition + 1, conversations)
-      notifyItemRangeInserted(headerPosition + 1, conversations.size)
+    if (!header.isExpanded) {
+      folderConversations(header.id).fold() { conversations =>
+        updateHeader(header, headerPosition, isExpanded = true)
+        items.insertAll(headerPosition + 1, conversations)
+        notifyItemRangeInserted(headerPosition + 1, conversations.size)
+      }
     }
   }
 
-  private def folderConversations(id: Uid): Option[Seq[Item.Conversation]] = {
+  private def folderConversations(id: FolderId): Option[Seq[Item.Conversation]] = {
     folders.find(_.id == id).map(_.conversations)
   }
 
   private def updateHeader(header: Item.Header, position: Int, isExpanded: Boolean): Unit = {
     items.update(position, header.copy(isExpanded = isExpanded))
     notifyItemChanged(position)
-    onFolderStateChanged ! FolderState(header.id, isExpanded)
+    onFolderStateChanged ! (header.id, isExpanded)
   }
 }
 
 object ConversationFolderListAdapter {
 
-  case class Folder(id: Uid, title: String, conversations: Seq[Item.Conversation])
+  case class Folder(id: FolderId, title: String, conversations: Seq[Item.Conversation])
 
   object Folder {
 
-    val FavoritesId = Uid("Favorites")
-    val GroupId = Uid("Groups")
-    val OneToOnesId = Uid("OneToOnes")
+    val FavoritesId = FolderId("Favorites")
+    val GroupId = FolderId("Groups")
+    val OneToOnesId = FolderId("OneToOnes")
 
     def apply(folderData: FolderData, conversations: Seq[ConversationData]): Option[Folder] = {
-      Folder(Uid(folderData.id.str), folderData.name, conversations)
+      Folder(folderData.id, folderData.name, conversations)
     }
 
-    def apply(id: Uid, title: String, conversations: Seq[ConversationData]): Option[Folder] = {
+    def apply(id: FolderId, title: String, conversations: Seq[ConversationData]): Option[Folder] = {
       if (conversations.isEmpty) None
       else Some(Folder(id, title, conversations.map(d => Item.Conversation(d, sectionTitle = Some(title)))))
     }
