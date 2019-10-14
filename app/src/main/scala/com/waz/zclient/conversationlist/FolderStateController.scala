@@ -21,13 +21,18 @@ import com.waz.content.UserPreferences
 import com.waz.content.UserPreferences.ConversationFoldersUiState
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{FolderId, Uid}
-import com.waz.zclient.conversationlist.FolderStateController._
 import com.waz.threading.Threading.Implicits.Ui
 import com.waz.utils.events.Signal
+import com.waz.zclient.conversationlist.FolderStateController._
+import com.waz.zclient.{Injectable, Injector}
 
 import scala.concurrent.Future
 
-class FolderStateController(userPreferences: Signal[UserPreferences]) extends DerivedLogTag {
+class FolderStateController(implicit val injector: Injector)
+  extends Injectable
+    with DerivedLogTag {
+
+  private lazy val userPreferences = inject[Signal[UserPreferences]]
 
   lazy val folderUiStates: Signal[FolderUiStates] = for {
     prefs  <- userPreferences

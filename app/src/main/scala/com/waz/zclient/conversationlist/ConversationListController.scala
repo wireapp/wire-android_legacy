@@ -18,7 +18,7 @@
 package com.waz.zclient.conversationlist
 
 import com.waz.api.Message
-import com.waz.content.{ConversationStorage, UserPreferences}
+import com.waz.content.ConversationStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
@@ -49,10 +49,10 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   val membersCache = zms map { new MembersCache(_) }
   val lastMessageCache = zms map { new LastMessageCache(_) }
 
+  lazy val folderStateController = inject[FolderStateController]
+
   private lazy val foldersService = inject[Signal[FoldersService]]
   private lazy val convService = inject[Signal[ConversationsService]]
-
-  val folderStateController = new FolderStateController(inject[Signal[UserPreferences]])
 
   def members(conv: ConvId) = membersCache.flatMap(_.apply(conv))
 
