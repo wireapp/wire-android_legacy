@@ -35,5 +35,6 @@
   "force_app_lock": false,
   "app_lock_timeout": 10,
   "block_on_password_policy": false,
-  "wipe_on_cookie_invalid": false
+  "wipe_on_cookie_invalid": false,
+  "force_private_keyboard": false
 }

@@ -22,6 +22,7 @@ import java.io.File
 import android.annotation.TargetApi
 import android.content.Context
 import android.media.{MediaCodec, MediaExtractor, MediaFormat, MediaMuxer}
+import android.os.Build
 import com.waz.bitmap.video.VideoTranscoder.CodecResponse.{CodecBuffer, FormatChanged, TryAgain}
 import com.waz.bitmap.video.VideoTranscoder.{MediaCodecIterator, OutputWriter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -29,7 +30,7 @@ import com.waz.log.LogSE._
 import com.waz.utils.{Cleanup, Managed, returning}
 
 
-@TargetApi(18)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 class VideoTranscoder18(context: Context) extends BaseTranscoder(context) {
 
   implicit lazy val MuxerCleanup = new Cleanup[MediaMuxer] {
@@ -80,7 +81,7 @@ class VideoTranscoder18(context: Context) extends BaseTranscoder(context) {
   }
 }
 
-@TargetApi(18)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 class MuxerWriter(muxer: MediaMuxer, sources: MediaCodecIterator*) extends OutputWriter with DerivedLogTag {
   case class SourceWithTrack(source: MediaCodecIterator, var track: Option[Int] = None, var positionMs: Long = 0)
 

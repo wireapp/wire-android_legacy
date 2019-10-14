@@ -136,3 +136,8 @@
   **[] $VALUES;
   public *;
 }
+
+# Required for reflection @ BottomNavigationExtensions#disableShiftMode
+-keepclassmembers class android.support.design.internal.BottomNavigationMenuView {
+    boolean mShiftingMode;
+}

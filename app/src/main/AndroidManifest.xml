@@ -102,11 +102,6 @@
         </activity>
 
         <activity
-            android:name=".security.SecureActivity"
-            android:launchMode="singleTask"
-            />
-
-        <activity
             android:name=".security.AppLockActivity"
             android:launchMode="singleTask" />
 
@@ -211,9 +206,14 @@
             android:launchMode="singleTask">
         </activity>
 
+        <activity
+            android:name=".conversation.folders.moveto.MoveToFolderActivity"
+            android:screenOrientation="portrait" />
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
+            android:permission="android.permission.INSTALL_PACKAGES"
             tools:ignore="ExportedReceiver"
             >
             <intent-filter>
@@ -325,9 +325,18 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="com.waz.services.calling.CallingNotificationsService" />
-        <service android:name="com.waz.services.calling.CallWakeService" android:exported="true" />
-        <service android:name="com.waz.services.notifications.NotificationsHandlerService" />
+        <service
+            android:name="com.waz.services.calling.CallingNotificationsService"
+            android:exported="false"
+        />
+        <service
+            android:name="com.waz.services.calling.CallWakeService"
+            android:exported="true"
+        />
+        <service
+            android:name="com.waz.services.notifications.NotificationsHandlerService"
+            android:exported="false"
+        />
 
     </application>
 

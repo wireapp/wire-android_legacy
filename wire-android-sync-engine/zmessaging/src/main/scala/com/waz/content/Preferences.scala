@@ -33,7 +33,7 @@ import com.waz.sync.client.OAuth2Client.RefreshToken
 import com.waz.threading.{DispatchQueue, SerialDispatchQueue, Threading}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.events.{Signal, SourceSignal}
-import com.waz.utils.{CachedStorageImpl, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
+import com.waz.utils.{CachedStorageImpl, CirceJSONSupport, JsonDecoder, JsonEncoder, Serialized, TrimmingLruCache, returning}
 import com.waz.zms.BuildConfig
 import org.json.JSONObject
 import org.threeten.bp.{Duration, Instant}
@@ -150,6 +150,20 @@ object Preferences {
       implicit lazy val PhoneNumberCodec = apply[PhoneNumber](_.str, PhoneNumber(_), PhoneNumber(""))
 
       implicit lazy val UserInfoCodec = apply[UserInfo](JsonEncoder.encode(_).toString, JsonDecoder.decode[UserInfo], null.asInstanceOf[UserInfo])
+
+      implicit lazy val ConversationFoldersUiStateCodec = apply[Map[FolderId, Boolean]](ConversationFoldersUiState.encode, ConversationFoldersUiState.decode, Map.empty)
+
+      object ConversationFoldersUiState extends CirceJSONSupport {
+        import io.circe.{Decoder, Encoder, ObjectEncoder, parser}
+
+        lazy val encoder: ObjectEncoder[Map[FolderId, Boolean]] = Encoder.encodeMap[FolderId, Boolean]
+        lazy val decoder: Decoder[Map[FolderId, Boolean]] = Decoder.decodeMap[FolderId, Boolean]
+
+        def encode(o: Map[FolderId, Boolean]): String = encoder(o).toString()
+
+        def decode(json: String): Map[FolderId, Boolean] =
+          parser.decode(json)(decoder).right.toOption.getOrElse(Map.empty)
+      }
     }
   }
 
@@ -384,10 +398,8 @@ object GlobalPreferences {
 
   lazy val RootDetected: PrefKey[Boolean] = PrefKey[Boolean]("root_detected", customDefault = false)
 
-  // TODO: Remove after release 3.36
-  lazy val ShouldWarnAndroid4Users = PrefKey[Boolean]( "should_warn_android_4_users", customDefault = true)
-
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
+  lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
   lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
@@ -457,6 +469,7 @@ object UserPreferences {
   lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
   lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users_1", customDefault = true)
   lazy val ShouldSyncTeam                   = PrefKey[Boolean]("should_sync_team", customDefault = true)
+  lazy val ShouldSyncFolders                = PrefKey[Boolean]("should_sync_folders", customDefault = true)
 
   // fix for duplicated entries in the database, left there by a bug from an old version of the app
   lazy val FixDuplicatedConversations       = PrefKey[Boolean]("fix_duplicated_conversations", customDefault = true)
@@ -468,4 +481,8 @@ object UserPreferences {
   lazy val StatusNotificationsBitmask       = PrefKey[Int]("status_notifications_bitmask", customDefault = 0)
   lazy val ShouldWarnStatusNotifications    = PrefKey[Boolean]( "should_warn_status_notifications", customDefault = true)
 
+  lazy val AskedForLocationPermission       = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
+
+  lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
+  lazy val ConversationFoldersUiState       = PrefKey[Map[FolderId, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
 }

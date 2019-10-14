@@ -69,7 +69,7 @@ class AppLockActivity extends AppCompatActivity with ActivityHelper with Derived
     if (requestCode == ConfirmDeviceCredentialsRequestCode) {
       if (resultCode == Activity.RESULT_OK) {
         info(l"authentication successful")
-        inject[SecurityPolicyChecker].clearBackgroundEntryTimer()
+        inject[SecurityPolicyChecker].onAuthenticationSuccessful()
         finish()
       } else {
         info(l"authentication cancelled. Representing authentication screen.")

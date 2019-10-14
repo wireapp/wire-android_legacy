@@ -66,8 +66,7 @@ object VideoTranscoder {
   }
 
   def apply(context: Context): VideoTranscoder =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) new VideoTranscoder18(context)
-    else new FallbackTranscoder(context)
+    new VideoTranscoder18(context)
 
   trait OutputWriter {
     /**
@@ -90,11 +89,6 @@ object VideoTranscoder {
       def release() = codec.releaseOutputBuffer(bufferIndex, false)
     }
   }
-}
-
-class FallbackTranscoder(context: Context) extends VideoTranscoder {
-  override def apply(input: URI, out: File, callback: ProgressData => Unit): CancellableFuture[File] =
-    CancellableFuture.failed(new UnsupportedOperationException("Transcoding not available in this android version"))
 }
 
 abstract class BaseTranscoder(context: Context) extends VideoTranscoder with DerivedLogTag {

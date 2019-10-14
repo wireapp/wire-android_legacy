@@ -76,7 +76,7 @@ case class OptionsMenu(context: Context, controller: OptionsMenuController) exte
             }
           }
           returning(getView[TextView](itemView, R.id.text)) { v =>
-            v.setText(item.titleId)
+            v.setText(item.title)
             item.colorId.map(getColor).foreach(v.setTextColor(_))
           }
           itemView.onClick {
@@ -130,6 +130,10 @@ object OptionsMenu {
     case R.string.glyph__leave => WireStyleKit.drawLeave
     case R.string.glyph__block => WireStyleKit.drawBlock
     case R.string.glyph__minus => WireStyleKit.drawRemove
+    case R.string.glyph__add_to_favorites => WireStyleKit.drawFavoritesOff
+    case R.string.glyph__remove_from_favorites => WireStyleKit.drawFavoritesOn
+    case R.string.glyph__move_to_folder => WireStyleKit.drawMoveTo
+    case R.string.glyph__remove_from_folder => WireStyleKit.drawRemoveFrom
 
     case _ => (_, _, _, _) => ()
   }

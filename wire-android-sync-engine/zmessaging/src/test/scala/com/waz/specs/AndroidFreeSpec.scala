@@ -43,13 +43,13 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future, Promise}
 
 object FutureAwaitSyntax {
-  val DefaultTimeout: FiniteDuration = 15.seconds
+  val DefaultTimeout: FiniteDuration = 30.seconds
 }
 
 trait FutureAwaitSyntax {
   import FutureAwaitSyntax._
 
-  @deprecated("await does not fail tests if the provided future fails! Better to just always use result and discard the return value")
+  @deprecated("await does not fail tests if the provided future fails! Better to just always use result and discard the return value", "?")
   def await(future: Future[_])(implicit duration: FiniteDuration = DefaultTimeout): Unit =
     Await.ready(future, duration)
 
@@ -183,7 +183,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
 object AndroidFreeSpec {
   val clock = TestClock()
 
-  val DefaultTimeout = 15.seconds
+  val DefaultTimeout = 30.seconds
   @volatile private var swallowedFailure = Option.empty[exceptions.TestFailedException]
 }
 

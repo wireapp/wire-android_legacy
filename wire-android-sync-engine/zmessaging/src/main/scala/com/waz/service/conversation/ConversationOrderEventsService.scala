@@ -45,6 +45,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   private[service] def shouldChangeOrder(event: ConversationEvent): Boolean =
     event match {
       case _: CreateConversationEvent => true
+      case _: DeleteConversationEvent => true
       case _: CallMessageEvent        => true
       case _: OtrErrorEvent           => true
       case _: ConnectRequestEvent     => true

@@ -199,9 +199,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
     (edits.insert _).expects(editHistory).returning(Future.successful(editHistory))
     (deletions.getAll _).expects(Seq(messageId2)).returning(Future.successful(Seq(None)))
-    (storage.updateOrCreateAll _).expects(*).onCall{ updaters: Map[MessageId, Option[MessageData] => MessageData] =>
-      Future.successful(updaters.get(messageId2).map(f => f(Some(msg))).toSet)
-    }
+    (storage.updateOrCreate _).expects(*, *, *).onCall { (_, updater, _) => Future.successful(updater(msg)) }
     (storage.findQuotesOf _).expects(*).returning(Future.successful(Seq()))
     (storage.updateAll2 _).expects(*, *).onCall { (keys, updater) =>
       Future.successful(Seq((msg, updater(msg))))

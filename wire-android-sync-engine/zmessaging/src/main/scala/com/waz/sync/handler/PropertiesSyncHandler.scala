@@ -39,7 +39,7 @@ class PropertiesSyncHandler(prefsClient: PropertiesClient, propertiesService: Pr
     prefsClient.getProperty(key)
   }
 
-  def syncProperties: Future[SyncResult] = {
+  def syncProperties(): Future[SyncResult] = {
 
     def syncProperty[T: Encoder: Decoder](key: PropertyKey, default: Option[T]): Future[SyncResult] =
       getProperty[T](key).future.flatMap {

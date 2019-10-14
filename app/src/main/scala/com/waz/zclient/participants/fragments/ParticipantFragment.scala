@@ -289,6 +289,10 @@ class ParticipantFragment extends ManagerFragment
 
   override def onHideOtrClient(): Unit = getChildFragmentManager.popBackStack()
 
+  override def onMoveToFolder(convId: ConvId): Unit = {
+    //no-op
+  }
+
 }
 
 object ParticipantFragment {

@@ -171,7 +171,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (usersStorage.listSignal _).expects(*).once().returning(Signal.const(convMembers.map(users).toVector))
 
     val res = getService(false, id('me)).mentionsSearchUsersInConversation(ConvId("123"),"rn")
-    result(res.filter{u => println(u.map(_.displayName));u.size == 1}.head)
+    result(res.filter{u => u.size == 1}.head)
   }
 
   scenario("search conversation with handle containing query") {

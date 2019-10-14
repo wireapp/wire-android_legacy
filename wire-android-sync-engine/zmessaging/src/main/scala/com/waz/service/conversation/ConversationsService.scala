@@ -18,26 +18,27 @@
 package com.waz.service.conversation
 
 import com.softwaremill.macwire._
-import com.waz.log.LogSE._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
+import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
 import com.waz.service._
+import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.PushService
+import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.tracking.{GuestsAllowedToggled, TrackingService}
-import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationResponse
+import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.sync.client.ErrorOr
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future
@@ -87,7 +88,12 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                tracking:        TrackingService,
                                client:          ConversationsClient,
                                selectedConv:    SelectedConversationService,
-                               syncReqService:  SyncRequestService) extends ConversationsService with DerivedLogTag {
+                               syncReqService:  SyncRequestService,
+                               assetService:    AssetService,
+                               receiptsStorage: ReadReceiptsStorage,
+                               notificationService: NotificationService,
+                               foldersService:  FoldersService
+                              ) extends ConversationsService with DerivedLogTag {
 
   private implicit val ev = EventContext.Global
   import Threading.Implicits.Background
@@ -124,7 +130,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   errors.onErrorDismissed {
     case ErrorData(_, ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, _, _, Some(convId), _, _, _, _) =>
-      deleteConversation(convId)
+      deleteTempConversation(convId)
     case ErrorData(_, ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION, userIds, _, Some(convId), _, _, _, _) => Future.successful(())
     case ErrorData(_, ErrorType.CANNOT_ADD_USER_TO_FULL_CONVERSATION, userIds, _, Some(convId), _, _, _, _) => Future.successful(())
     case ErrorData(_, ErrorType.CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION, _, _, Some(conv), _, _, _, _) =>
@@ -164,6 +170,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
+    case DeleteConversationEvent(_, time, from) => deleteConversation(conv, time, from)
+
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
     case MemberJoinEvent(_, _, _, userIds, _) =>
@@ -326,11 +334,41 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       Future successful None
   }
 
-  private def deleteConversation(convId: ConvId) = for {
+  private def deleteTempConversation(convId: ConvId) = for {
     _ <- convsStorage.remove(convId)
     _ <- membersStorage.delete(convId)
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
   } yield ()
+
+  private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) =
+    (for {
+      _               <- notificationService.displayNotificationForDeletingConversation(from, remoteTime, convData)
+      convId          =  convData.id
+      convMessageIds  <- messages.findMessageIds(convId)
+      assetIds        <- messages.getAssetIds(convMessageIds)
+      _               <- assetService.deleteAll(assetIds)
+      _               <- convsStorage.remove(convId)
+      _               <- membersStorage.delete(convId)
+      _               <- msgContent.deleteMessagesForConversation(convId)
+      _               <- receiptsStorage.removeAllForMessages(convMessageIds)
+      _               <- checkCurrentConversationDeleted(convId)
+      _               <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
+    } yield ()).recoverWith {
+      case ex : Exception =>  {
+        error(l"error while deleting conversation $ex")
+      }
+        Future.successful(())
+    }
+
+  private def checkCurrentConversationDeleted(convId: ConvId): Future[Unit] = {
+    for {
+      selectedConvId <- selectedConv.selectedConversationId.head
+      currentConversationDeleted = selectedConvId.contains(convId)
+      _ <- if (currentConversationDeleted) selectedConv.selectConversation(None) else Future.successful(())
+    } yield {
+
+    }
+  }
 
   def forceNameUpdate(id: ConvId, defaultName: String) = {
     warn(l"forceNameUpdate($id)")
@@ -344,10 +382,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   } yield ()
 
   def groupConversation(convId: ConvId) =
-    convsStorage.signal(convId).map(c => (c.convType, c.name, c.team)).flatMap {
-      case (convType, _, _) if convType != ConversationType.Group => Signal.const(false)
-      case (_, Some(_), _) | (_, _, None) => Signal.const(true)
-      case _ => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
+    convsStorage.optSignal(convId).map(_.map(c => (c.convType, c.name, c.team))).flatMap {
+      case None => Signal.const(true) // the conversation might have been deleted - only group conversations can be deleted
+      case Some((convType, _, _)) if convType != ConversationType.Group => Signal.const(false)
+      case Some((_, Some(_), _)) | Some((_, _, None)) => Signal.const(true)
+      case Some(_) => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
     }
 
   def isGroupConversation(convId: ConvId) = groupConversation(convId).head

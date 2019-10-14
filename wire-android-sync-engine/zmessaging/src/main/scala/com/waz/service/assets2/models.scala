@@ -144,7 +144,7 @@ case class Asset(
     name: String,
     size: Long,
     details: AssetDetails,
-    @deprecated
+    @deprecated(message = "Conversation Id was only used for assets v2. No new asset should have asset v3, but we might still have v2 assets in the DB", since = "")
     convId: Option[RConvId]
 ) extends GeneralAsset
     with Identifiable[AssetId]

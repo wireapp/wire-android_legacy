@@ -82,14 +82,12 @@ class TeamsServiceImpl(selfUser:           UserId,
     val membersUpdated = events.collect { case MemberUpdate(_, u)  => u}.toSet
 
     val convsCreated = events.collect { case ConversationCreate(_, id) => id }.toSet
-    val convsDeleted = events.collect { case ConversationDelete(_, id) => id }.toSet
     for {
       _ <- RichFuture.traverseSequential(events.collect { case e:Update => e}) { case Update(id, name, icon) => onTeamUpdated(id, name, icon) }
       _ <- onMembersJoined(membersJoined -- membersLeft)
       _ <- onMembersLeft(membersLeft -- membersJoined)
       _ <- onMembersUpdated(membersUpdated)
-      _ <- onConversationsCreated(convsCreated -- convsDeleted)
-      _ <- onConversationsDeleted(convsDeleted -- convsCreated)
+      _ <- onConversationsCreated(convsCreated)
     } yield {}
   }
 
@@ -232,12 +230,6 @@ class TeamsServiceImpl(selfUser:           UserId,
         _     <- sync.syncConversations(convs)
       } yield {}
     else Future.successful({})
-  }
-
-  private def onConversationsDeleted(convs: Set[RConvId]) = {
-    verbose(l"onConversationsDeleted: convs: $convs")
-    //TODO
-    Future.successful({})
   }
 
   private def getTeamConversations = teamId match {

@@ -40,12 +40,10 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.DrawableRes;
@@ -400,18 +398,6 @@ public class SlidingPaneLayout extends ViewGroup {
     private static boolean viewIsOpaque(View v) {
         if (ViewCompat.isOpaque(v)) {
             return true;
-        }
-
-        // View#isOpaque didn't take all valid opaque scrollbar modes into account
-        // before API 18 (JB-MR2). On newer devices rely solely on isOpaque above and return false
-        // here. On older devices, check the view's background drawable directly as a fallback.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            return false;
-        }
-
-        final Drawable bg = v.getBackground();
-        if (bg != null) {
-            return bg.getOpacity() == PixelFormat.OPAQUE;
         }
         return false;
     }

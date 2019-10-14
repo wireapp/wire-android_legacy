@@ -432,7 +432,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //TODO which user from a group conversation gets passed down here?
       service.onEstablishedCall(groupConv.remoteId, otherUser)
-      println(result(service.currentCall.map(_.get.others).head))
       awaitCP(checkpoint3)
 
       service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
@@ -454,7 +453,6 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       awaitCP(checkpoint2)
 
       service.onEstablishedCall(teamGroupConv.remoteId, otherUser)
-      println(result(service.currentCall.map(_.get.others).head))
       awaitCP(checkpoint3)
 
       service.onGroupChanged(teamGroupConv.remoteId, Set(otherUser, otherUser2))

@@ -19,8 +19,6 @@ package com.waz.zclient.appentry.fragments
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.KITKAT
 import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.transition._
@@ -253,7 +251,7 @@ class SignInFragment
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
 
-    val transition = if (SDK_INT >= KITKAT) Option(new AutoTransition2()) else None
+    val transition = Option(new AutoTransition2())
 
     def switchScene(sceneIndex: Int): Unit = transition.fold[Unit]({
       container.foreach(_.removeAllViews())

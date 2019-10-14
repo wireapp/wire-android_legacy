@@ -29,8 +29,6 @@ class CallInfoSpec extends AndroidFreeSpec with DerivedLogTag {
   scenario("Test duration advances once every second") {
     val call = callInfo()
 
-    call.durationFormatted(println)
-
     clock + 1.seconds
     Thread.sleep(1050)
     result(call.durationFormatted.head) shouldEqual "00:01"

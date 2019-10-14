@@ -44,16 +44,16 @@
 
         <ImageView
             android:id="@+id/conversation_list_settings"
-            android:layout_width="@dimen/conversation_list__action_icon__size"
-            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_width="@dimen/action_icon__size"
+            android:layout_height="@dimen/action_icon__size"
             android:layout_gravity="center_vertical|start"
             android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
             />
 
         <com.waz.zclient.common.views.GlyphButton
             android:id="@+id/conversation_list_back"
-            android:layout_width="@dimen/conversation_list__action_icon__size"
-            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_width="@dimen/action_icon__size"
+            android:layout_height="@dimen/action_icon__size"
             android:layout_gravity="center_vertical|start"
             android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
             android:text="@string/glyph__previous"
@@ -64,8 +64,8 @@
 
         <com.waz.zclient.common.views.GlyphButton
             android:id="@+id/conversation_list_close"
-            android:layout_width="@dimen/conversation_list__action_icon__size"
-            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_width="@dimen/action_icon__size"
+            android:layout_height="@dimen/action_icon__size"
             android:layout_gravity="center_vertical|start"
             android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
             android:text="@string/glyph__close"
@@ -96,8 +96,8 @@
 
         <com.waz.zclient.common.views.GlyphButton
             android:id="@+id/conversation_list_close_end"
-            android:layout_width="@dimen/conversation_list__action_icon__size"
-            android:layout_height="@dimen/conversation_list__action_icon__size"
+            android:layout_width="@dimen/action_icon__size"
+            android:layout_height="@dimen/action_icon__size"
             android:layout_gravity="center"
             android:layout_marginStart="@dimen/conversation_list__avatar__outer_margin"
             android:text="@string/glyph__close"

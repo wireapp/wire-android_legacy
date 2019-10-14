@@ -56,7 +56,6 @@ class LruFileCacheSpec extends ZIntegrationSpec {
       val cache    = createLruFileCache(cacheDir)
       for {
         _ <- cache.putBytes(key, content)
-        _ = println(s"Cache directory content: ${cacheDir.listFiles().map(_.getName).mkString(" ")}")
         fromCache <- cache.findBytes(key)
       } yield {
         fromCache.nonEmpty shouldBe true

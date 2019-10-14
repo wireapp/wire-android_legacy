@@ -29,6 +29,7 @@ import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.conversationlist.ConversationListController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
@@ -38,7 +39,7 @@ import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.participants.ConversationOptionsMenuController._
 import com.waz.zclient.participants.OptionsMenuController._
 import com.waz.zclient.utils.ContextUtils.{getInt, getString}
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector, R, WireApplication}
 
 import scala.concurrent.duration._
 
@@ -47,7 +48,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   extends OptionsMenuController
     with Injectable
     with DerivedLogTag {
-  
+
   import Threading.Implicits.Ui
 
   private val zMessaging             = inject[Signal[ZMessaging]]
@@ -58,6 +59,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   private val callingController      = inject[CallStartController]
   private val cameraController       = inject[ICameraController]
   private val screenController       = inject[IConversationScreenController]
+  private val convListController     = inject[ConversationListController]
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
   override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
@@ -99,6 +101,9 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant
+    favoriteConvIds     <- convListController.favoriteConversations.map(convs => convs.map(_.id))
+    customFolderId      <- Signal.future(convListController.getCustomFolderId(convId))
+    customFolderData    <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -128,7 +133,12 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           else
             Unmute
 
-        builder += (if (conv.archived) Unarchive else Archive)
+        val isConvFavorite = favoriteConvIds.contains(convId)
+        
+        (conv.archived, isConvFavorite) match {
+          case (true, _)           => builder += Unarchive
+          case (false, isFavorite) => builder ++= List(Archive, if (isFavorite) RemoveFromFavorites else AddToFavorites)
+        }
 
         if (isGroup) {
           if (conv.isActive) builder += Leave
@@ -141,8 +151,13 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
         }
+
+        builder += MoveToFolder
+        customFolderData.foreach(data => builder += RemoveFromFolder(data))
     }
     builder.result().toSeq.sortWith {
+      case (_: RemoveFromFolder, b) => OrderSeq.indexOf(RemoveFromFolderPlaceHolder).compareTo(OrderSeq.indexOf(b)) < 0
+      case (a, _: RemoveFromFolder) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(RemoveFromFolderPlaceHolder)) < 0
       case (a, b) => OrderSeq.indexOf(a).compareTo(OrderSeq.indexOf(b)) < 0
     }
   }
@@ -177,6 +192,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           }
         case Call      => callConversation(cId)
         case Picture   => takePictureInConversation(cId)
+        case AddToFavorites      => convListController.addToFavorites(cId)
+        case RemoveFromFavorites => convListController.removeFromFavorites(cId)
+        case MoveToFolder        => screenController.showMoveToFolder(cId)
+        case i: RemoveFromFolder => convListController.removeFromFolder(cId, i.folderData.id)
         case _ =>
       }
     case _ =>
@@ -279,23 +298,36 @@ object ConversationOptionsMenuController {
     case class Leaving(inConversationList: Boolean) extends Mode
   }
 
-  object Mute           extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
-  object Unmute         extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
-  object Picture        extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
-  object Call           extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
-  object Notifications  extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
-  object Archive        extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
-  object Unarchive      extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
-  object Delete         extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
-  object Leave          extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
-  object Block          extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
-  object Unblock        extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
-  object RemoveMember   extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
+  case class RemoveFromFolder(folderData: FolderData) extends BaseMenuItem(
+    WireApplication.APP_INSTANCE.getString(R.string.conversation__action__remove_from_folder, folderData.name.str),
+    Some(R.string.glyph__remove_from_folder)
+  )
+
+  // Dummy object to hold place in OrderSeq
+  object RemoveFromFolderPlaceHolder extends RemoveFromFolder(FolderData(name = ""))
+
+  object Mute                extends BaseMenuItem(R.string.conversation__action__silence, Some(R.string.glyph__silence))
+  object Unmute              extends BaseMenuItem(R.string.conversation__action__unsilence, Some(R.string.glyph__notify))
+  object Picture             extends BaseMenuItem(R.string.conversation__action__picture, Some(R.string.glyph__camera))
+  object Call                extends BaseMenuItem(R.string.conversation__action__call, Some(R.string.glyph__call))
+  object Notifications       extends BaseMenuItem(R.string.conversation__action__notifications, Some(R.string.glyph__notify))
+  object Archive             extends BaseMenuItem(R.string.conversation__action__archive, Some(R.string.glyph__archive))
+  object Unarchive           extends BaseMenuItem(R.string.conversation__action__unarchive, Some(R.string.glyph__archive))
+  object AddToFavorites      extends BaseMenuItem(R.string.conversation__action__add_to_favorites, Some(R.string.glyph__add_to_favorites))
+  object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__remove_from_favorites))
+  object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__move_to_folder))
+
+  object Delete              extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
+  object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
+  object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
+  object Unblock             extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
+  object RemoveMember        extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
 
   object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
   object LeaveAndDelete extends BaseMenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
   object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
   object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
 
-  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
+  val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder,
+    RemoveFromFolderPlaceHolder, Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
 }

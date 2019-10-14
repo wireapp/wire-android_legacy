@@ -1,0 +1,40 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+  <path
+      android:pathData="M15,7L15,14C15,15.1046 14.1046,16 13,16L3,16C1.8954,16 1,15.1046 1,14L1,7L15,7ZM9,9L7,9C6.4477,9 6,9.4477 6,10C6,10.5128 6.386,10.9355 6.8834,10.9933L7,11L9,11C9.5523,11 10,10.5523 10,10C10,9.4477 9.5523,9 9,9ZM13.4908,0C14.3167,0 14.6509,0.0928 14.9768,0.2671C15.3028,0.4414 15.5586,0.6972 15.7329,1.0232C15.9072,1.3491 16,1.6833 16,2.5092L16,4C16,4.5523 15.5523,5 15,5L1,5C0.4477,5 0,4.5523 0,4L0,2.5092C0,1.6833 0.0928,1.3491 0.2671,1.0232C0.4414,0.6972 0.6972,0.4414 1.0232,0.2671C1.3491,0.0928 1.6833,0 2.5092,0L13.4908,0Z"
+      android:strokeWidth="1"
+      android:fillColor="#33373A"
+      android:fillType="nonZero"
+      android:strokeColor="#00000000"/>
+  <group>
+    <clip-path android:pathData="M15,7L15,14C15,15.1046 14.1046,16 13,16L3,16C1.8954,16 1,15.1046 1,14L1,7L15,7ZM9,9L7,9C6.4477,9 6,9.4477 6,10C6,10.5128 6.386,10.9355 6.8834,10.9933L7,11L9,11C9.5523,11 10,10.5523 10,10C10,9.4477 9.5523,9 9,9ZM13.4908,0C14.3167,0 14.6509,0.0928 14.9768,0.2671C15.3028,0.4414 15.5586,0.6972 15.7329,1.0232C15.9072,1.3491 16,1.6833 16,2.5092L16,4C16,4.5523 15.5523,5 15,5L1,5C0.4477,5 0,4.5523 0,4L0,2.5092C0,1.6833 0.0928,1.3491 0.2671,1.0232C0.4414,0.6972 0.6972,0.4414 1.0232,0.2671C1.3491,0.0928 1.6833,0 2.5092,0L13.4908,0Z M 0,0"/>
+    <path
+        android:pathData="M0,0h16v16h-16z"
+        android:strokeWidth="1"
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:strokeColor="#00000000"/>
+  </group>
+</vector>

@@ -238,6 +238,7 @@
 
     <string name="content__location__no_map_placeholder">THE LOCATION WILL APPEAR ON THE MAP WHEN YOU ARE BACK ONLINE.</string>
 
+
     <!-- Conversation actions -->
     <string name="conversation__action__delete">Delete content…</string>
     <string name="conversation__action__archive">Archive</string>
@@ -254,6 +255,10 @@
     <string name="conversation__action__block">Block…</string>
     <string name="conversation__action__unblock">Unblock</string>
     <string name="conversation__action__remove_member">Remove from group…</string>
+    <string name="conversation__action__add_to_favorites">Add to Favorites</string>
+    <string name="conversation__action__remove_from_favorites">Remove from Favorites</string>
+    <string name="conversation__action__move_to_folder">Move to…</string>
+    <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
 
     <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
@@ -463,7 +468,7 @@
     <string name="pref_options_ringtones_silent">Silent</string>
     <string name="pref_options_dark_theme_title">Dark theme</string>
     <string name="pref_options_hide_screen_title">Hide screen content</string>
-    <string name="pref_options_hide_screen_summary">Wire\'s contents will not longer be visible in the task switcher</string>
+    <string name="pref_options_hide_screen_summary">Wire\'s contents will no longer be visible in the task switcher</string>
     <string name="pref_options_image_download_title">Download pictures</string>
     <string name="pref_options_image_download_always">Always</string>
     <string name="pref_options_image_download_wifi">Wi-Fi only</string>
@@ -475,6 +480,8 @@
     <string name="pref_options_message_previews_summary">Display message content in notifications.</string>
     <string name="pref_options_app_lock_title">Lock with Passphrase</string>
     <string name="pref_options_app_lock_summary">Lock Wire after %1$s seconds in the background. Unlock with Pin, Pattern, Password or Biometrics.</string>
+    <string name="pref_options_incognito_keyboard">Incognito keyboard</string>
+    <string name="pref_options_incognito_keyboard_summary">The keyboard will not show suggestions when typing messages</string>
 
     <!-- Devices -->
     <string name="pref_devices_screen_title">Devices</string>
@@ -634,6 +641,8 @@
     <string name="notification__message__liked">\u2764 ‘%1$s’</string>
     <string name="notification__message__liked_message">\u2764 your message</string>
     <string name="notification__message__liked_picture">\u2764 your picture</string>
+    <string name="notification__message__conversation_deleted">Someone deleted the group</string>
+    <string name="notification__message__conversation_deleted_by">%1$s deleted the group</string>
 
     <!-- ephemeral -->
     <string name="notification__message__ephemeral_someone">Someone</string>
@@ -789,6 +798,11 @@
     <string name="location_sharing__enable_system_location__confirm">Settings</string>
     <string name="location_sharing__enable_system_location__cancel">Cancel</string>
     <string name="location_sharing__missing_play_services">Google Play Services is needed for location sharing</string>
+    <string name="location_sharing__permission__message">Do you want to allow Wire to access your location?</string>
+    <string name="location_sharing__permission__title">Location sharing</string>
+    <string name="location_sharing__permission__cancel">Cancel</string>
+    <string name="location_sharing__permission__continue">OK</string>
+
 
     <!-- From SyncEngine -->
     <string name="new_reg__phone_signup__create_account">Create an account</string>
@@ -1062,6 +1076,7 @@
     <string name="conversation_list__left_you">You left</string>
     <string name="conversation_list__removed_you">[[%1$s]] removed you</string>
     <string name="conversation_list__header__title">CONVERSATIONS</string>
+    <string name="conversation_list__header__folders_title">FOLDERS</string>
     <string name="conversation_list__header__archive_title">ARCHIVE</string>
     <string name="conversation_list__single_with_quote">Reply: %1$s</string>
     <string name="conversation_list__group_with_quote">Reply from %1$s: %2$s</string>
@@ -1384,4 +1399,17 @@
 
     <string name="invalid_cookie_dialog_title">Your session expired</string>
     <string name="invalid_cookie_dialog_message">The application did not communicate with the server for a long period of time, or your session has been remotely invalidated.</string>
+
+    <string name="conversation_folder_name_favorites">Favorites</string>
+    <string name="conversation_folder_name_group">Groups</string>
+    <string name="conversation_folder_name_one_to_one">People</string>
+    <string name="folders_move_to">MOVE TO</string>
+    <string name="folders_no_custom_folder_found">Create a new folder by pressing the + button</string>
+    <string name="folders_create_new_folder">CREATE NEW FOLDER</string>
+    <string name="folders_create_new_folder_action">CREATE</string>
+    <string name="folders_create_new_folder_info">Move the conversation \"%1$s\" to a new folder.</string>
+    <string name="folders_folder_name_hint">FOLDER NAME</string>
+    <string name="folders_folder_name_error_text">Maximum %s characters</string>
+    <string name="folders_move_to_folder_close">Close</string>
+
 </resources>

@@ -20,6 +20,7 @@ package com.waz.service
 import android.annotation.TargetApi
 import android.content.{BroadcastReceiver, Context, Intent, IntentFilter}
 import android.net.{ConnectivityManager, NetworkInfo}
+import android.os.Build
 import android.telephony.TelephonyManager
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

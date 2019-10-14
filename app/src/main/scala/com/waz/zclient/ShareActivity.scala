@@ -23,7 +23,7 @@ import java.io.File
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.content.{ContentUris, Context, Intent}
 import android.net.Uri
-import android.os.{Build, Bundle, Environment}
+import android.os.{Bundle, Environment}
 import android.provider.DocumentsContract._
 import android.provider.MediaStore
 import android.support.v4.app.ShareCompat
@@ -140,7 +140,7 @@ object ShareActivity extends DerivedLogTag {
     */
   def getPath(context: Context, uri: Uri): Option[AndroidURI] = {
     val default = Some(new AndroidURI(uri)) // to be returned in most cases if we fail to resolve the path
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && isDocumentUri(context, uri)) {
+    if (isDocumentUri(context, uri)) {
       (uri.getAuthority match {
         case "com.android.externalstorage.documents" =>
           val split = getDocumentId(uri).split(":")

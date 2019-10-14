@@ -66,7 +66,6 @@ class ExpiredUsersServiceSpec extends AndroidFreeSpec {
 
     val finished = EventStream[Unit]()
     (sync.syncUsers _).expects(*).once().onCall { (us: Set[UserId]) =>
-      println(s"us: $us")
       if (!us.contains(wirelessId)) fail("Called sync for wrong user")
       finished ! {}
       Future.successful(SyncId())

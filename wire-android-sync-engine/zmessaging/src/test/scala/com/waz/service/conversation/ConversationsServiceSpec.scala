@@ -20,8 +20,9 @@ import com.waz.api.Message
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
+import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
-import com.waz.service.push.PushService
+import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
@@ -53,12 +54,17 @@ class ConversationsServiceSpec extends AndroidFreeSpec {
   val selectedConv =    mock[SelectedConversationService]
   val messagesStorage = mock[MessagesStorage]
   val deletions =       mock[MsgDeletionStorage]
+  val assetService =    mock[AssetService]
+  val receiptStorage =  mock[ReadReceiptsStorage]
+  val notificationService = mock[NotificationService]
+  val foldersService =  mock[FoldersService]
 
   val prefs = new TestGlobalPreferences()
 
   private def getService(teamId: Option[TeamId] = None): ConversationsServiceImpl = {
     val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, prefs)
-    new ConversationsServiceImpl(teamId, selfUserId, push, users, usersStorage, membersStorage, convsStorage, content, sync, errors, messages, msgContent, userPrefs, null, tracking, client, selectedConv, requests)
+    new ConversationsServiceImpl(teamId, selfUserId, push, users, usersStorage, membersStorage, convsStorage, content, sync, errors, messages, msgContent, userPrefs, null, tracking, client, selectedConv, requests,
+      assetService, receiptStorage, notificationService, foldersService)
   }
 
   scenario("updateConversationsWithDeviceStartMessage happy path") {

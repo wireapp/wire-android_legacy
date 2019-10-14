@@ -35,7 +35,10 @@ case class NotificationData(override val id:   NotId                = NotId(),
                             isSelfMentioned:   Boolean              = false,
                             likedContent:      Option[LikedContent] = None,
                             isReply:           Boolean              = false,
-                            hasBeenDisplayed:  Boolean              = false) extends Identifiable[NotId]
+                            hasBeenDisplayed:  Boolean              = false
+                           ) extends Identifiable[NotId] {
+  lazy val isConvDeleted: Boolean = msgType == NotificationType.CONVERSATION_DELETED
+}
 
 object NotificationData {
 
@@ -53,7 +56,8 @@ object NotificationData {
         isSelfMentioned  = 'isSelfMentioned,
         likedContent     = decodeOptString('likedContent).map(LikedContentCodec.decode),
         isReply          = 'isReply,
-        hasBeenDisplayed = 'hasBeenDisplayed)
+        hasBeenDisplayed = 'hasBeenDisplayed
+      )
   }
 
   implicit lazy val Encoder: JsonEncoder[NotificationData] = new JsonEncoder[NotificationData] {
@@ -107,5 +111,6 @@ object NotificationData {
     case NotificationType.LIKE => "Like"
     case NotificationType.LOCATION => "Location"
     case NotificationType.MESSAGE_SENDING_FAILED => "MessageSendingFailed"
+    case NotificationType.CONVERSATION_DELETED => "ConversationDeleted"
   }
 }

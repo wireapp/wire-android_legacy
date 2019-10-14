@@ -69,7 +69,6 @@ class OkHttpWebSocketSpec extends WordSpec with MustMatchers with Inside with Be
       // binding to port 0 means the OS can choose a free port
       bindingFuture = Http().bindAndHandle(route, "localhost", 0)
       wsPort = Await.result(bindingFuture, 5.seconds).localAddress.getPort()
-      println(s"Akka-http websocket server started at ${testPath}")
     }
 
     def stop(): Unit = {

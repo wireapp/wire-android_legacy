@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.appentry.fragments
 
-import android.os.{Build, Bundle, Handler}
+import android.os.{Bundle, Handler}
 import android.support.v4.content.ContextCompat
 import android.text.{Editable, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -37,8 +37,6 @@ import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Register, SignI
 import com.waz.zclient.appentry.fragments.VerifyEmailWithCodeFragment._
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
-import com.waz.zclient.controllers.navigation.Page
 import com.waz.zclient.newreg.views.PhoneConfirmationButton
 import com.waz.zclient.tracking.GlobalTrackingController._
 import com.waz.zclient.tracking.{EnteredCodeEvent, RegistrationSuccessfulEvent}
@@ -109,9 +107,7 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
     findById[View](view, R.id.fl__confirmation_checkmark).setVisibility(View.GONE)
     findById[View](view, R.id.gtv__not_now__close).setVisibility(View.GONE)
     resendCodeButton.setVisibility(View.GONE)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-      editTextCode.setLetterSpacing(1)
-    }
+    editTextCode.setLetterSpacing(1)
     getStringArg(EmailArg).foreach { email =>
       val text = String.format(getResources.getString(R.string.activation_code_info_manual), email)
       textViewInfo.setText(DeprecationUtils.fromHtml(text))
@@ -130,7 +126,6 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
     phoneConfirmationButton.setAccentColor(color)
     resendCodeButton.setTextColor(color)
     textViewInfo.setTextColor(color)
-    inject[IGlobalLayoutController].setSoftInputModeForPage(Page.PHONE_VERIFY_CODE)
     KeyboardUtils.showKeyboard(getActivity)
     startResendCodeTimer()
   }

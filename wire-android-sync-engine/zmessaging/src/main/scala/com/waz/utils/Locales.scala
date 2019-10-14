@@ -24,8 +24,7 @@ import java.util.{Comparator, Locale}
 
 import android.annotation.TargetApi
 import android.content.res.Configuration
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.{JELLY_BEAN_MR2, LOLLIPOP}
+import android.os.Build
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -44,7 +43,7 @@ object Locales extends DerivedLogTag {
       locale    <- localeOptFromConfig(config)
     } yield locale) getOrElse Locale.getDefault
 
-  lazy val bcp47 = if (SDK_INT >= LOLLIPOP) AndroidLanguageTags.create else FallbackLanguageTags.create
+  lazy val bcp47 = AndroidLanguageTags.create
 
   def localeOptFromConfig(config: Configuration): Option[Locale] = Option(config.locale)
 
@@ -81,34 +80,12 @@ trait LanguageTags {
   def localeFor(languageTag: String): Option[Locale]
 }
 
-@TargetApi(LOLLIPOP)
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 object AndroidLanguageTags {
   def create(implicit logTag: LogTag): LanguageTags = new LanguageTags {
     debug(l"using built-in Android language tag support")(logTag)
     def languageTagOf(l: Locale): String = l.toLanguageTag
     def localeFor(t: String): Option[Locale] = Try(Locale.forLanguageTag(t)).toOption
-  }
-}
-
-object FallbackLanguageTags {
-  def create(implicit logTag: LogTag): LanguageTags = new LanguageTags {
-    debug(l"using fallback language tag support")(logTag)
-    def languageTagOf(l: Locale): String = {
-      val language = if (l.getLanguage.nonEmpty) l.getLanguage else "und"
-      val country = l.getCountry
-      if (country.isEmpty) language else s"$language-$country"
-    }
-
-    val LanguageTag = s"([a-zA-Z]{2,8})(?:-[a-zA-Z]{4})?(?:-([a-zA-Z]{2}|[0-9]{3}))?".r
-
-    def localeFor(t: String): Option[Locale] = t match {
-      case LanguageTag(language, region) =>
-        Some(
-          if (region ne null) new Locale(language, region)
-          else new Locale(language))
-      case _ =>
-        None
-    }
   }
 }
 
@@ -126,7 +103,7 @@ object Transliteration extends DerivedLogTag {
   }
 }
 
-@TargetApi(JELLY_BEAN_MR2)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 object LibcoreTransliteration {
   def create(id: String)(implicit logTag: LogTag): Transliteration = new Transliteration {
     debug(l"using libcore transliteration")(logTag)
@@ -147,7 +124,7 @@ trait Indexing {
   def labelFor(s: String): String
 }
 
-@TargetApi(JELLY_BEAN_MR2)
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 object LibcoreIndexing {
   def create(locale: Locale)(implicit logTag: LogTag): Indexing = new Indexing {
 

@@ -35,6 +35,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
+import com.waz.zclient.common.views.TextViewHelpers.TextViewFlagsImprovement
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
@@ -271,8 +272,14 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setFocusableInTouchMode(true)
 
+  cursorEditText.setPrivateModeFromPreferences()
+
   controller.sendButtonEnabled.onUi { enabled =>
-    cursorEditText.setImeOptions(if (enabled) EditorInfo.IME_ACTION_NONE else EditorInfo.IME_ACTION_SEND)
+    if (enabled) {
+      cursorEditText.addImeOption(EditorInfo.IME_ACTION_SEND)
+    } else {
+      cursorEditText.removeImeOption(EditorInfo.IME_ACTION_SEND)
+    }
   }
 
   accentColor.map(_.color).onUi(cursorEditText.setAccentColor)

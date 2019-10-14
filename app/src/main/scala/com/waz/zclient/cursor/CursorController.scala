@@ -34,6 +34,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers._
+import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.conversationlist.ConversationListController
@@ -43,6 +44,7 @@ import com.waz.zclient.messages.controllers.MessageActionsController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor.{CursorMenuItem => JCursorMenuItem}
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DraftMap
 import com.waz.zclient.{Injectable, Injector, R}
@@ -277,6 +279,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   private lazy val permissions        = inject[PermissionsService]
   private lazy val activity           = inject[Activity]
   private lazy val screenController   = inject[ScreenController]
+  private lazy val accentColorController  = inject[AccentColorController]
+
 
   import CursorMenuItem._
 
@@ -301,18 +305,50 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     case VideoMessage =>
       checkIfCalling(isVideoMessage = true)(cursorCallback.foreach(_.captureVideo()))
     case Location =>
-      val googleAPI = GoogleApiAvailability.getInstance
-      if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
-        KeyboardUtils.hideKeyboard(activity)
-        locationController.showShareLocation()
-      }
-      else showToast(R.string.location_sharing__missing_play_services)
+      showLocationIfAllowed()
     case Gif =>
       enteredText.head.foreach { case (CursorText(text, _), _) => screenController.showGiphy ! Some(text) }
     case Send =>
       enteredText.head.foreach { case (CursorText(text, mentions), _) => submit(text, mentions) }
     case _ =>
       // ignore
+  }
+
+  /**
+    * Display location dialog, if Google Play Services are available, and the user confirmed
+    * the permission to access location
+    */
+  private def showLocationIfAllowed(): Unit = {
+    for {
+      color <- accentColorController.accentColor.head
+
+      // Check if the user was asked before
+      preferences <- zms.map(_.userPrefs).head
+      askedForLocationPermissionPreference = preferences.preference(UserPreferences.AskedForLocationPermission)
+      askedForLocation <- askedForLocationPermissionPreference.apply()
+
+      // Show dialog only if the user didn't accept it before
+      response <- if (!askedForLocation) ContextUtils.showConfirmationDialog(
+        getString(R.string.location_sharing__permission__title),
+        getString(R.string.location_sharing__permission__message),
+        R.string.location_sharing__permission__continue,
+        R.string.location_sharing__permission__cancel,
+        color
+      ) else { Future.successful(true) } // skip dialog
+    } yield {
+      if(response) { // user canceled
+        // store that we asked and the user clicked "OK", so that we don't ask anymore
+        // this is not a synchronous operation, but we are not interested in waiting
+        askedForLocationPermissionPreference.update(true)
+
+        val googleAPI = GoogleApiAvailability.getInstance
+        if (ConnectionResult.SUCCESS == googleAPI.isGooglePlayServicesAvailable(ctx)) {
+          KeyboardUtils.hideKeyboard(activity)
+          locationController.showShareLocation()
+        }
+        else showToast(R.string.location_sharing__missing_play_services)
+      }
+    }
   }
 
   private def checkIfCalling(isVideoMessage: Boolean)(f: => Unit) =

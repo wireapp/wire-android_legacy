@@ -322,7 +322,6 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (sync.deletePushToken _).expects(oldToken).once().returning(Future.successful(SyncId()))
 
       (sync.registerPush _).expects(newToken).once().onCall { _: PushToken =>
-        println("registerPush")
         Future {
           service.onTokenRegistered(newToken)
           SyncId()

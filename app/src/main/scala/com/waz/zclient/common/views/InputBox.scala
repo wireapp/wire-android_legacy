@@ -20,7 +20,6 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.content.res.{ColorStateList, TypedArray}
 import android.graphics.Color
-import android.os.Build
 import android.util.AttributeSet
 import android.view.{KeyEvent, ViewGroup}
 import android.view.inputmethod.EditorInfo
@@ -30,6 +29,7 @@ import com.waz.model.EmailAddress
 import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.common.views.InputBox._
+import com.waz.zclient.common.views.TextViewHelpers.TextViewFlagsImprovement
 import com.waz.zclient.ui.cursor.CursorEditText
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.TextViewUtils
@@ -81,9 +81,10 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   progressBar.setVisible(false)
   confirmationButton.setVisible(hasButtonAttr)
   errorText.setVisible(false)
-  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-    progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
+  progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
   editText.setImeOptions(EditorInfo.IME_ACTION_DONE)
+
+  editText.setPrivateModeFromPreferences()
 
   editText.setOnEditorActionListener(new OnEditorActionListener {
     override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
@@ -167,6 +168,7 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
 object InputBox {
 
   case class Validator(f: String => Boolean) {
+    def isValid(s: String) : Boolean = f(s)
     def shouldTrim: Boolean = true
   }
 

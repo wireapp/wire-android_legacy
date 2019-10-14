@@ -44,7 +44,6 @@ class PermissionsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   def newProvider = new PermissionProvider {
     def requestPermissions(ps: ListSet[PermissionsService.Permission]) = {
-      println(s"requestPermissions from Provider: $ps")
       requestInput ! ps
       requestCalls += 1
       systemState.head
@@ -167,7 +166,6 @@ class PermissionsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     result(req) shouldEqual expectedPerms
     result(signal.filter { p =>
-      println(s"Testing $p")
       p == expectedPerms
     }.head)
 
@@ -283,7 +281,6 @@ class PermissionsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     */
   def userAccepts(toGrant: ListSet[Permission]) = {
     await(requestInput.filter(_.map(_.key) == toGrant.map(_.key)).head)
-    println(s"User will accept: $toGrant")
     systemState.mutate(ps => ps.map(p => toGrant.find(_.key == p.key).getOrElse(p)))
     Threading.Ui(service.onPermissionsResult(toGrant))
     requestInput ! ListSet.empty
