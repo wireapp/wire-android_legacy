@@ -63,7 +63,7 @@ import scala.concurrent.{Future, Promise}
   */
 
 trait PushService {
-  def syncNotifications(syncMode: SyncMode): Future[Option[Results]]
+  def syncNotifications(syncMode: SyncMode): Future[Unit]
 
   def onHistoryLost: SourceSignal[Instant] with BgEventSource
   def processing: Signal[Boolean]
@@ -191,27 +191,30 @@ class PushServiceImpl(selfUserId:           UserId,
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
   verbose(l"SYNC PushService created with the time offset: $timeOffset")
 
-  wsPushService.notifications(nots => syncNotifications(StoreNotifications(nots)))
+  wsPushService.notifications { nots =>
+    verbose(l"SYNC notifications received: ${nots.size}")
+    syncNotifications(StoreNotifications(nots))
+  }
 
   wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){ source =>
-    verbose(l"sync history due to web socket change")
+    verbose(l"SYNC sync history due to web socket change")
     syncNotifications(SyncHistory(source))
   }
 
-  private var fetchInProgress: Future[Option[Results]] = Future.successful(None)
+  private var fetchInProgress: Future[Unit] = Future.successful(())
 
-  override def syncNotifications(syncMode: SyncMode): Future[Option[Results]] = synchronized {
-    def sync: Future[Option[Results]] = syncMode match {
-      case StoreNotifications(notifications)              => storeNotifications(notifications)
-      case SyncHistory(source, withRetries)               => syncHistory(source, withRetries)
-      case Load(lastId, firstSync, attempts, withRetries) => load(lastId, firstSync, attempts, withRetries)
+  override def syncNotifications(syncMode: SyncMode): Future[Unit] = {
+    verbose(l"SYNC syncNotifications $syncMode")
+    def fetch(syncMode: SyncMode) = syncMode match {
+      case StoreNotifications(notifications) => storeNotifications(notifications)
+      case SyncHistory(source, withRetries)  => syncHistory(source, withRetries)
     }
 
-    fetchInProgress = if (!fetchInProgress.isCompleted) fetchInProgress.flatMap(_ => sync) else sync
+    fetchInProgress = if (!fetchInProgress.isCompleted) fetchInProgress.flatMap(_ => fetch(syncMode)) else fetch(syncMode)
     fetchInProgress
   }
 
-  private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Option[Results]] =
+  private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Unit] =
     if (nots.nonEmpty) {
       verbose(l"SYNC storeNotifications")
       for {
@@ -239,7 +242,7 @@ class PushServiceImpl(selfUserId:           UserId,
       case Right(LoadNotificationsResult(response, historyLost)) if !response.hasMore && !historyLost =>
         futureHistoryResults(response.notifications, response.beTime, firstSync = firstSync)
       case Right(LoadNotificationsResult(response, historyLost)) if response.hasMore && !historyLost =>
-        syncNotifications(Load(response.notifications.lastOption.map(_.id))).flatMap {
+        load(response.notifications.lastOption.map(_.id)).flatMap {
           case Some(results) =>
             futureHistoryResults(
               response.notifications ++ results.notifications,
@@ -271,29 +274,30 @@ class PushServiceImpl(selfUserId:           UserId,
             _ <- lift(network.networkMode.filter(!NetworkOff.contains(_)).head)
           } yield retry.trySuccess({})
 
-          retry.future.flatMap { _ => syncNotifications(Load(lastId, firstSync, attempts + 1)) }
+          retry.future.flatMap { _ => load(lastId, firstSync, attempts + 1) }
         }
     }
 
-  private def syncHistory(source: SyncSource, withRetries: Boolean = true): Future[Option[Results]] = {
-    verbose(l"SYNC Sync history in response to $source ($timePassed)")
+  private def syncHistory(source: SyncSource, withRetries: Boolean = true): Future[Unit] = {
+    verbose(l"Sync history in response to $source ($timePassed)")
     idPref().flatMap(lastId =>
-      syncNotifications(Load(lastId, firstSync = lastId.isEmpty, withRetries = withRetries))
+      load(lastId, firstSync = lastId.isEmpty, withRetries = withRetries)
     ).flatMap {
       case Some(Results(nots, _, true, _)) =>
-        idPref := nots.headOption.map(_.id)
+        idPref.update(nots.headOption.map(_.id)).map(_ => None)
       case Some(Results(_, time, _, true)) =>
         sync.performFullSync()
           .map(_ => onHistoryLost ! clock.instant())
-          .flatMap(_ => updateDrift(time))
+          .map(_ => updateDrift(time))
+          .map(_ => None)
       case Some(Results(nots, time, _, _)) if nots.nonEmpty =>
         updateDrift(time)
-          .flatMap(_ => syncNotifications(StoreNotifications(nots)))
-          .flatMap(_ => syncNotifications(SyncHistory(source, withRetries = withRetries)).map(_ => None))
+          .flatMap(_ => storeNotifications(nots))
+          .flatMap(_ => syncHistory(source, withRetries = withRetries))
       case Some(Results(_, time, _, _)) =>
-        updateDrift(time)
-      case None => Future.successful(())
-    }.map(_ => None)
+        updateDrift(time).map(_ => None)
+      case None => Future.successful(None)
+    }
   }
 }
 
@@ -315,21 +319,18 @@ object PushService {
   case class WebSocketChange(connected: Boolean) extends SyncSource
   object ForceSync extends SyncSource
 
-  implicit val SyncSourceLogShow: LogShow[SyncSource] =
-    LogShow.createFrom {
-      case FetchFromJob(nId) => l"FetchFromJob(nId: $nId)"
-      case FetchFromIdle(nId) => l"FetchFromIdle(nId: $nId)"
-      case WebSocketChange(connected) => l"WebSocketChange(connected: $connected)"
-      case ForceSync => l"ForcePush"
-    }
+  implicit val SyncSourceLogShow: LogShow[SyncSource] = LogShow.createFrom {
+    case FetchFromJob(nId)          => l"FetchFromJob(nId: $nId)"
+    case FetchFromIdle(nId)         => l"FetchFromIdle(nId: $nId)"
+    case WebSocketChange(connected) => l"WebSocketChange(connected: $connected)"
+    case ForceSync                  => l"ForcePush"
+  }
 
   sealed trait SyncMode
   case class StoreNotifications(notifications: Seq[PushNotificationEncoded]) extends SyncMode
 
   //set withRetries to false if the caller is to handle their own retry logic
   case class SyncHistory(source: SyncSource, withRetries: Boolean = true) extends SyncMode
-
-  case class Load(lastId: Option[Uid], firstSync: Boolean = false, attempts: Int = 0, withRetries: Boolean = true) extends SyncMode
 
   case class Results(notifications: Vector[PushNotificationEncoded], time: Option[Instant], firstSync: Boolean, historyLost: Boolean)
 
