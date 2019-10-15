@@ -46,7 +46,7 @@ import scala.util.Left
 trait WSPushService {
   def activate(): Unit
   def deactivate(): Unit
-  def notifications(): EventStream[Seq[PushNotificationEncoded]]
+  val notifications: EventStream[Seq[PushNotificationEncoded]]
   def connected(): Signal[Boolean]
 }
 

@@ -24,7 +24,7 @@ import com.waz.model.{Uid, UserId}
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.clock
 import com.waz.service._
-import com.waz.service.push.PushService.FetchFromIdle
+import com.waz.service.push.PushService.{FetchFromIdle, SyncHistory}
 import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
@@ -167,8 +167,8 @@ object FCMHandlerService {
           * online at once. For that reason, we start a job which can run for as long as we need to avoid the app from being
           * killed mid-processing messages.
           */
-        _ <-     if (idle)  push.syncHistory(FetchFromIdle(nId))
-                 else Serialized.future("fetch")(Future(FetchJob(userId, nId)))
+        _ <- if (idle) push.syncNotifications(SyncHistory(FetchFromIdle(nId)))
+              else Serialized.future("fetch")(Future(FetchJob(userId, nId)))
       } yield {}
   }
 

@@ -198,9 +198,9 @@ class AndroidSyncServiceHandle(account:         UserId,
       userIds <- usersStorage.list().map(_.map(_.id).toSet)
       id8     <- syncUsers(userIds)
       id9     <- syncFolders()
-      _ = verbose(l"SYNC waiting for full sync to finish...")
-      _ <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9))
-      _ = verbose(l"SYNC ... and done")
+      _       =  verbose(l"SYNC waiting for full sync to finish...")
+      _       <- service.await(Set(id1, id2, id3, id4, id5, id6, id7, id8, id9))
+      _       =  verbose(l"SYNC ... and done")
     } yield ()
   }
 }
