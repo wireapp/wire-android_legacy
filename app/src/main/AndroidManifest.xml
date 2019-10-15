@@ -56,6 +56,8 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false"
@@ -79,6 +81,12 @@
         android:vmSafeMode="${applicationVmSafeMode}"
         tools:replace="android:allowBackup"
         >
+
+<!--    TODO: not required when using play-services-maps:16.1.0 and above
+           https://developer.android.com/about/versions/pie/android-9.0-changes-28#apache-p
+           https://developers.google.com/maps/documentation/android-sdk/config#specify_requirement_for_apache_http_legacy_library
+-->
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 
         <!-- main activity -->
         <activity

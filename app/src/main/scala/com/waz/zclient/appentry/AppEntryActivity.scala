@@ -17,12 +17,11 @@
  */
 package com.waz.zclient.appentry
 
-import android.app.FragmentManager
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.os.Bundle
 import android.support.v4.app.FragmentManager.OnBackStackChangedListener
-import android.support.v4.app.{Fragment, FragmentTransaction}
+import android.support.v4.app.{Fragment, FragmentManager, FragmentTransaction}
 import android.view.View
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
@@ -197,7 +196,7 @@ class AppEntryActivity extends BaseActivity {
               verbose(l"switched backend")
 
               // re-present fragment for updated ui.
-              getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+              getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
               showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
           }
         }
@@ -235,7 +234,7 @@ class AppEntryActivity extends BaseActivity {
     // if the SSO token is present we use it to log in the user
     userAccountsController.ssoToken.head.foreach {
       case Some(_) =>
-        getFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
       case _ =>
     }(Threading.Ui)

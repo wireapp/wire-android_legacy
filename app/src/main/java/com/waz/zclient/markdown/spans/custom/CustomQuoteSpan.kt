@@ -29,12 +29,12 @@ import android.text.style.QuoteSpan
  */
 class CustomQuoteSpan(
     color: Int,
-    val stripeWidth: Int,
-    val gapWidth: Int,
+    stripeWidth: Int,
+    gapWidth: Int,
     private val density: Float = 1f,
     val beforeSpacing: Int = 0,
     val afterSpacing: Int = 0
-) : QuoteSpan(color) {
+) : QuoteSpan(color, stripeWidth, gapWidth) {
 
     override fun getLeadingMargin(first: Boolean): Int {
         return ((stripeWidth + gapWidth) * density).toInt()

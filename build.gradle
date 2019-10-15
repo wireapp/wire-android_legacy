@@ -63,11 +63,11 @@ task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
 licenseFormat.dependsOn licenseFormatAndroid
 
 ext {
-    compileSdkVersion = 27
+    compileSdkVersion = 28
     // When upgrading minimum sdk you might want to search for occurrences of Build.VERSION_CODES.
     // There are some classes with possibility of being simplified.
     minSdkVersion = 21
-    targetSdkVersion = 27
+    targetSdkVersion = 28
 
     buildToolsVersion = '28.0.3'
     sourceCompatibilityVersion = JavaVersion.VERSION_1_8
