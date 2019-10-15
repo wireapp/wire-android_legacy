@@ -308,9 +308,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       case e: MemberLeaveEvent if e.userIds.contains(e.from) => false
       case _ => true
     }.map(_.from).toSet
-    if (potentiallyUnexpectedMembers.nonEmpty)
-      convsService.addUnexpectedMembersToConv(convId, potentiallyUnexpectedMembers)
-    else Future.successful(())
+    convsService.addUnexpectedMembersToConv(convId, potentiallyUnexpectedMembers)
   }
 
   private def applyRecalls(convId: ConvId, toProcess: Seq[MessageEvent]) = {
