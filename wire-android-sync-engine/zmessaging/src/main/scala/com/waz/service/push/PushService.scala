@@ -198,12 +198,17 @@ class PushServiceImpl(selfUserId:           UserId,
     syncNotifications(SyncHistory(source))
   }
 
+  private var fetchInProgress: Future[Option[Results]] = Future.successful(None)
+
   override def syncNotifications(syncMode: SyncMode): Future[Option[Results]] = synchronized {
-    syncMode match {
+    def sync: Future[Option[Results]] = syncMode match {
       case StoreNotifications(notifications)              => storeNotifications(notifications)
       case SyncHistory(source, withRetries)               => syncHistory(source, withRetries)
       case Load(lastId, firstSync, attempts, withRetries) => load(lastId, firstSync, attempts, withRetries)
     }
+
+    fetchInProgress = if (!fetchInProgress.isCompleted) fetchInProgress.flatMap(_ => sync) else sync
+    fetchInProgress
   }
 
   private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Option[Results]] =
