@@ -1,40 +1,27 @@
 @file:JvmName("BottomNavigationUtil")
-
+/**
+ * Wire
+ * Copyright (C) 2019 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.waz.zclient.utils.extensions
 
-import android.annotation.SuppressLint
 import android.support.annotation.IdRes
 import android.support.design.internal.BottomNavigationMenuView
 import android.support.design.widget.BottomNavigationView
-import android.support.design.internal.BottomNavigationItemView
 import android.view.View
-import timber.log.Timber
-
-@SuppressLint("RestrictedApi")
-//TODO: Use app:labelVisibilityMode="unlabeled" when support lib updated to 28.x
-// & delete relevant proguard rule
-fun BottomNavigationView.disableShiftMode() {
-    val menuView: BottomNavigationMenuView = getChildAt(0) as BottomNavigationMenuView
-    try {
-        menuView.javaClass.getDeclaredField("mShiftingMode").let {
-            it.isAccessible = true
-            it.setBoolean(menuView, false)
-            it.isAccessible = false
-        }
-
-        for (i in 0 until menuView.childCount) {
-            val item = menuView.getChildAt(i) as BottomNavigationItemView
-            item.setShiftingMode(false)
-            // set once again checked value, so view will be updated
-            item.setChecked(item.itemData.isChecked)
-        }
-    } catch (e: NoSuchFieldException) {
-        Timber.e(e, "Unable to get shift mode field")
-    } catch (e: IllegalAccessException) {
-        Timber.e(e, "Unable to change value of shift mode")
-    }
-
-}
 
 fun BottomNavigationView.setItemVisible(@IdRes id: Int, visible: Boolean) {
     val menuView: BottomNavigationMenuView = getChildAt(0) as BottomNavigationMenuView
