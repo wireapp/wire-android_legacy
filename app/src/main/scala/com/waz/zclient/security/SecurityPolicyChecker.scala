@@ -26,7 +26,7 @@ import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.services.SecurityPolicyService
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
@@ -39,13 +39,19 @@ import org.threeten.bp.temporal.ChronoUnit
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
+class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Ui
 
   private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences     = inject[GlobalPreferences]
   private lazy val accountManager        = inject[Signal[AccountManager]]
+
+  inject[ActivityLifecycle].appInBackground.onUi {
+    case (true, _)               => updateBackgroundEntryTimer()
+    case (false, Some(activity)) => run(activity)
+    case _ => warn(l"The app is coming to the foreground, but the information about the activity is missing")
+  }
 
   def run(activity: Activity): Unit = {
     for {

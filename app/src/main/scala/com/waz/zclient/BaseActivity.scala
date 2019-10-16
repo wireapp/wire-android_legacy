@@ -17,13 +17,14 @@
  */
 package com.waz.zclient
 
+import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Bundle
+import android.os.{Build, Bundle}
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import android.view.WindowManager
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.InternalLog
@@ -38,10 +39,11 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.ActivityLifecycle
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
-import WindowManager.LayoutParams.FLAG_SECURE
 
+import scala.collection.JavaConverters._
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
 import scala.concurrent.duration._
@@ -54,9 +56,12 @@ class BaseActivity extends AppCompatActivity
 
   import BaseActivity._
 
-  protected lazy val themeController = inject[ThemeController]
-  protected lazy val permissions     = inject[PermissionsService]
-  protected lazy val userPreferences = inject[Signal[UserPreferences]]
+  protected lazy val themeController   = inject[ThemeController]
+  protected lazy val permissions       = inject[PermissionsService]
+  protected lazy val userPreferences   = inject[Signal[UserPreferences]]
+  protected lazy val activityLifecycle = inject[ActivityLifecycle]
+  protected lazy val activityManager   = inject[ActivityManager]
+  protected lazy val uiLifeCycle       = inject[UiLifeCycle]
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
@@ -70,10 +75,21 @@ class BaseActivity extends AppCompatActivity
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
 
-    shouldHideScreenContent.onUi {
-      case true  => getWindow.addFlags(FLAG_SECURE)
-      case false => getWindow.clearFlags(FLAG_SECURE)
+    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
+      shouldHideScreenContent.zip(activityLifecycle.appInBackground).onUi {
+        case (true, (true, _)) =>
+          // there should be only one task but since we have access only to tasks
+          // associated with our app we can safely exclude them all
+          activityManager.getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(true))
+        case _ =>
+      }
+    } else {
+      shouldHideScreenContent.onUi {
+        case true  => getWindow.addFlags(FLAG_SECURE)
+        case false => getWindow.clearFlags(FLAG_SECURE)
+      }
     }
+
   }
 
   override def onStart(): Unit = {
@@ -85,7 +101,7 @@ class BaseActivity extends AppCompatActivity
   def onBaseActivityStart(): Unit = {
     getControllerFactory.setActivity(this)
     ZMessaging.currentUi.onStart()
-    inject[UiLifeCycle].acquireUi()
+    uiLifeCycle.acquireUi()
     permissions.registerProvider(this)
     Option(ViewUtils.getContentView(getWindow)).foreach(getControllerFactory.setGlobalLayout)
   }
@@ -130,7 +146,7 @@ class BaseActivity extends AppCompatActivity
   override def onStop() = {
     verbose(l"onStop")
     ZMessaging.currentUi.onPause()
-    inject[UiLifeCycle].releaseUi()
+    uiLifeCycle.releaseUi()
     InternalLog.flush()
     super.onStop()
   }
