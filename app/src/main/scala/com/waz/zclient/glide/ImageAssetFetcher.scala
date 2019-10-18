@@ -29,9 +29,8 @@ import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
 import com.waz.zclient.log.LogUI._
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   extends DataFetcher[InputStream] with DerivedLogTag {
