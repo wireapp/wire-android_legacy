@@ -485,4 +485,6 @@ object UserPreferences {
 
   lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
   lazy val ConversationFoldersUiState       = PrefKey[Map[FolderId, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
+
+  lazy val SecurityPolicyFailedPwdAttempts  = PrefKey[Int]("security_policy_failed_pwd_attempts", customDefault = 0)
 }

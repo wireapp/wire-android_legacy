@@ -19,9 +19,18 @@ package com.waz.services
 
 import android.app.admin.{DeviceAdminReceiver, DevicePolicyManager}
 import android.content.{ComponentName, Context, Intent}
+import android.os.UserHandle
+import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.zclient.Injectable
+import com.waz.model.UserId
+import com.waz.service.ZMessaging
+import com.waz.utils.events.Signal
+import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.security.actions.WipeDataAction
+
+import scala.concurrent.Future
+import com.waz.zclient.BuildConfig
 
 /**
   * This class performs two functions, firstly it serves as the required DeviceAdminReceived instance
@@ -31,8 +40,9 @@ import com.waz.zclient.log.LogUI._
   * `getManager` method to get the policy manager service, rather than pass it in as a parameter
   * which we would have to do if we used a companion object.
   */
-class SecurityPolicyService
+class SecurityPolicyService(implicit inj: Injector)
   extends DeviceAdminReceiver with DerivedLogTag with Injectable {
+  import com.waz.threading.Threading.Implicits.Background
 
   override def onEnabled(context: Context, intent: Intent): Unit = {
     verbose(l"admin rights enabled, setting policy")
@@ -58,6 +68,42 @@ class SecurityPolicyService
     dpm.setPasswordMinimumUpperCase(secPolicy, 1)
     dpm.setPasswordMinimumLowerCase(secPolicy, 1)
   }
+
+  override def onPasswordFailed(context: Context, intent: Intent, user: UserHandle): Unit = {
+    super.onPasswordFailed(context, intent, user)
+
+    if (isSecurityPolicyEnabled(context) && android.os.Process.myUserHandle().equals(user))
+      passwordFailed(context)
+  }
+
+  def passwordFailed(context: Context): Future[Boolean] =
+    for {
+      zms      <- inject[Signal[ZMessaging]].head
+      userId   <- inject[Signal[UserId]].head
+      pref     =  zms.userPrefs.preference(UserPreferences.SecurityPolicyFailedPwdAttempts)
+      attempts <- pref.apply()
+    } yield
+      if (attempts >= BuildConfig.PASSWORD_MAX_ATTEMPTS) {
+        new WipeDataAction(Some(userId))(context).execute()
+        true
+      } else {
+        pref.update(attempts + 1)
+        false
+      }
+
+  override def onPasswordSucceeded(context: Context, intent: Intent, user: UserHandle): Unit = {
+    super.onPasswordSucceeded(context, intent, user)
+
+    if (isSecurityPolicyEnabled(context) && android.os.Process.myUserHandle().equals(user))
+      passwordSucceeded()
+  }
+
+  def passwordSucceeded(): Future[Unit] =
+    for {
+      zms      <- inject[Signal[ZMessaging]].head
+      pref     =  zms.userPrefs.preference(UserPreferences.SecurityPolicyFailedPwdAttempts)
+      _        <- pref.update(0)
+    } yield ()
 
   def isSecurityPolicyEnabled(implicit context: Context): Boolean =
     getManager(context).isAdminActive(new ComponentName(context, classOf[SecurityPolicyService]))

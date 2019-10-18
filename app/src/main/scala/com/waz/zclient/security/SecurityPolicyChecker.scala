@@ -39,7 +39,7 @@ import org.threeten.bp.temporal.ChronoUnit
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
-class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with DerivedLogTag {
+class SecurityPolicyChecker(implicit context: Context, injector: Injector) extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Ui
 
@@ -72,7 +72,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
         BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
       )
 
-      checksAndActions += rootDetectionCheck ->  rootDetectionActions
+      checksAndActions += rootDetectionCheck -> rootDetectionActions
     }
 
     if (BuildConfig.BLOCK_ON_PASSWORD_POLICY) {
@@ -100,7 +100,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
       )
 
       checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
-    }
+   }
 
     if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
       verbose(l"check WIPE_ON_COOKIE_INVALID")
@@ -145,6 +145,7 @@ class SecurityPolicyChecker(implicit injector: Injector) extends Injectable with
   def onAuthenticationSuccessful(): Unit = {
     timeEnteredBackground = None
     authenticationNeeded ! false
+    securityPolicyService.passwordSucceeded()
   }
 
   def authenticateIfNeeded(parentActivity: Activity): Unit = {

@@ -23,6 +23,8 @@ import android.os.Bundle
 import android.provider.Settings
 import android.support.v7.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.services.SecurityPolicyService
+import com.waz.threading.Threading
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{ActivityHelper, R}
 
@@ -68,12 +70,13 @@ class AppLockActivity extends AppCompatActivity with ActivityHelper with Derived
 
     if (requestCode == ConfirmDeviceCredentialsRequestCode) {
       if (resultCode == Activity.RESULT_OK) {
-        info(l"authentication successful")
         inject[SecurityPolicyChecker].onAuthenticationSuccessful()
         finish()
       } else {
-        info(l"authentication cancelled. Representing authentication screen.")
-        showAuthenticationScreen()
+        inject[SecurityPolicyService].passwordFailed(this).foreach {
+          case true  => finish()
+          case false => showAuthenticationScreen()
+        }(Threading.Ui)
       }
     }
   }
