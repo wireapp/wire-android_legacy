@@ -378,24 +378,21 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   }
 
   private def getPictureForNotifications(userId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
-    if (nots.exists(_.ephemeral))
-      Future.successful(None)
-    else {
+    if (nots.size == 1 && !nots.exists(_.ephemeral)) {
       val result = for {
         Some(userStorage) <- inject[AccountToUsersStorage].apply(userId)
-        userIds = nots.map(_.user).toSet
-        users <- userStorage.getAll(userIds).map(_.flatten)
-        pictures = users.flatMap(_.picture)
-        Some(picture) = if (pictures.size == 1) pictures.headOption else None
+        user <- userStorage.get(nots.head.user)
+        Some(picture) = user.flatMap(_.picture)
         bitmap <- loadPicture(picture)
       } yield bitmap
 
       result.recoverWith {
         case ex: Exception =>
-          error(l"Error getting avatar.", ex)
+          warn(l"Could not get avatar.", ex)
           Future.successful(None)
       }
     }
+    else Future.successful(None)
 
   private def loadPicture(picture: Picture): Future[Option[Bitmap]] = {
     Threading.Background {
