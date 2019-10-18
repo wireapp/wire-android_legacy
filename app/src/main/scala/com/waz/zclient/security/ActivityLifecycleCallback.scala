@@ -24,7 +24,7 @@ import com.waz.utils.events._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Injectable, Injector, LaunchActivity}
 
-class ActivityLifecycle(implicit injector: Injector)
+class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks with Injectable with DerivedLogTag {
 
   private val activitiesRunning = Signal[(Int, Option[Activity])]((0, None))

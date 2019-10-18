@@ -47,7 +47,7 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
   private lazy val globalPreferences     = inject[GlobalPreferences]
   private lazy val accountManager        = inject[Signal[AccountManager]]
 
-  inject[ActivityLifecycle].appInBackground.onUi {
+  inject[ActivityLifecycleCallback].appInBackground.onUi {
     case (true, _)               => updateBackgroundEntryTimer()
     case (false, Some(activity)) => run(activity)
     case _ => warn(l"The app is coming to the foreground, but the information about the activity is missing")

@@ -89,7 +89,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneContr
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
-import com.waz.zclient.security.{ActivityLifecycle, SecurityPolicyChecker}
+import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
@@ -273,7 +273,7 @@ object WireApplication extends DerivedLogTag {
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
 
-    bind[ActivityLifecycle] to new ActivityLifecycle()
+    bind[ActivityLifecycleCallback] to new ActivityLifecycleCallback()
 
     bind[SecurityPolicyService] to new SecurityPolicyService()
 
@@ -447,10 +447,10 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       inject[MessageNotificationsController],
       assets2Module)
 
-    val securityCallback = inject[ActivityLifecycle]
+    val activityLifecycleCallback = inject[ActivityLifecycleCallback]
     // we're unable to check if the callback is already registered - we have to re-register it to be sure
-    unregisterActivityLifecycleCallbacks(securityCallback)
-    registerActivityLifecycleCallbacks(securityCallback)
+    unregisterActivityLifecycleCallbacks(activityLifecycleCallback)
+    registerActivityLifecycleCallbacks(activityLifecycleCallback)
 
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]

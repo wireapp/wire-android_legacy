@@ -39,7 +39,7 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.ActivityLifecycle
+import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.ViewUtils
 
@@ -59,7 +59,7 @@ class BaseActivity extends AppCompatActivity
   protected lazy val themeController   = inject[ThemeController]
   protected lazy val permissions       = inject[PermissionsService]
   protected lazy val userPreferences   = inject[Signal[UserPreferences]]
-  protected lazy val activityLifecycle = inject[ActivityLifecycle]
+  protected lazy val activityLifecycle = inject[ActivityLifecycleCallback]
   protected lazy val activityManager   = inject[ActivityManager]
   protected lazy val uiLifeCycle       = inject[UiLifeCycle]
 
