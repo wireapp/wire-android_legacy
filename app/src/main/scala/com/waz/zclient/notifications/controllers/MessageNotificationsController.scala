@@ -380,10 +380,10 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private def getPictureForNotifications(userId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
     if (nots.size == 1 && !nots.exists(_.ephemeral)) {
       val result = for {
-        Some(userStorage) <- inject[AccountToUsersStorage].apply(userId)
-        user <- userStorage.get(nots.head.user)
-        Some(picture) = user.flatMap(_.picture)
-        bitmap <- loadPicture(picture)
+        Some(storage) <- inject[AccountToUsersStorage].apply(userId)
+        user          <- storage.get(nots.head.user)
+        picture        = user.flatMap(_.picture)
+        bitmap        <- picture.fold(Future.successful(Option.empty[Bitmap]))(loadPicture)
       } yield bitmap
 
       result.recoverWith {
