@@ -30,7 +30,7 @@ import com.waz.utils.events.Signal
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 
 class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
@@ -54,12 +54,12 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
         case _ =>
           CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
-    }
+    }.withTimeout(30.seconds)
 
     currentData.foreach(_.cancel())
     currentData = Some(data)
 
-    Try { Await.result(data, Duration.Inf) } match {
+    data.onComplete {
       case Failure(err) =>
         verbose(l"Asset loading failed $request, $err")
         callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: $err"))
