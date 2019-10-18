@@ -30,6 +30,7 @@ import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.content.{UserPreferences, _}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.service.push.NotificationUiController
 import com.waz.service.{AccountsService, UiLifeCycle}
@@ -377,35 +378,35 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   }
 
   private def getPictureForNotifications(userId: UserId, nots: Seq[NotificationData]): Future[Option[Bitmap]] =
-    if (nots.exists(_.ephemeral)) Future.successful(None)
+    if (nots.exists(_.ephemeral))
+      Future.successful(None)
     else {
-      inject[AccountToUsersStorage].apply(userId).flatMap {
-        case Some(st) =>
-          for {
-            //TODO if a user doesn't have a picture, should we default to some bitmap?
-            assetId <- st.getAll(nots.map(_.user).toSet).map(_.flatten.flatMap(_.picture)).map { pictures =>
-              if (pictures.size == 1) pictures.headOption else None
-            }
-            bitmap <- for {
-              bmp <- assetId.fold {
-                Future.successful(Option.empty[android.graphics.Bitmap])
-              } { picture =>
-                Threading.Background {
-                  Option(WireGlide(cxt)
-                    .asBitmap()
-                    .load(picture)
-                    .apply(new RequestOptions().circleCrop())
-                    .submit(128, 128)
-                    .get())
-                }.future
-              }
-            } yield
-              bmp.map(Bitmap.fromAndroid)
+      val result = for {
+        Some(userStorage) <- inject[AccountToUsersStorage].apply(userId)
+        userIds = nots.map(_.user).toSet
+        users <- userStorage.getAll(userIds).map(_.flatten)
+        pictures = users.flatMap(_.picture)
+        Some(picture) = if (pictures.size == 1) pictures.headOption else None
+        bitmap <- loadPicture(picture)
+      } yield bitmap
 
-          } yield bitmap
-        case _ => Future.successful(None)
+      result.recoverWith {
+        case ex: Exception =>
+          error(l"Error getting avatar.", ex)
+          Future.successful(None)
       }
     }
+
+  private def loadPicture(picture: Picture): Future[Option[Bitmap]] = {
+    Threading.Background {
+      Option(WireGlide(cxt)
+        .asBitmap()
+        .load(picture)
+        .apply(new RequestOptions().circleCrop())
+        .submit(128, 128)
+        .get()).map(Bitmap.fromAndroid)
+    }.future
+  }
 
   private def getSound(ns: Seq[NotificationData]) = {
     if (soundController.soundIntensityNone) None
