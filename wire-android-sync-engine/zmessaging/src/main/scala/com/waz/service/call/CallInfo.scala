@@ -21,6 +21,7 @@ import com.sun.jna.Pointer
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
+import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
@@ -103,7 +104,7 @@ case class CallInfo(convId:             ConvId,
     }
   }
 
-  def updateVideoState(userId: UserId, videoState: VideoState): CallInfo = {
+  def updateVideoState(convId: ConvId, userId: UserId, clientId: ClientId, videoState: VideoState): CallInfo = {
 
     val newCall: CallInfo =
       if (userId == account) this.copy(videoSendState = videoState)

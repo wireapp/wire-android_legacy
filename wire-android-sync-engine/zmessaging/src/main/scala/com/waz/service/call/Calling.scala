@@ -136,7 +136,7 @@ object Calling {
   }
 
   trait VideoReceiveStateHandler extends Callback {
-    def onVideoReceiveStateChanged(userId: String, state: Int, arg: Pointer): Unit
+    def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit
   }
 
   trait GroupChangedHandler extends Callback {

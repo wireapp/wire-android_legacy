@@ -353,10 +353,10 @@ class CallingServiceImpl(val accountId:       UserId,
       call.copy(isCbrEnabled = enabled)
     }("onBitRateStateChanged")
 
-  def onVideoStateChanged(userId: String, videoReceiveState: VideoState): Future[Unit] =
+  def onVideoStateChanged(convId: String, userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      call.updateVideoState(UserId(userId), videoReceiveState)
+      call.updateVideoState(ConvId(convId), UserId(userId), ClientId(clientId), videoReceiveState)
     }("onVideoStateChanged")
 
   def onGroupChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =

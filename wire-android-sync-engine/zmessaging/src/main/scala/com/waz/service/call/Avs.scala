@@ -130,8 +130,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onBitRateStateChanged(enabled)
       },
       new VideoReceiveStateHandler {
-        override def onVideoReceiveStateChanged(userId: String, state: Int, arg: Pointer): Unit =
-          cs.onVideoStateChanged(userId, VideoState(state))
+        override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit =
+          cs.onVideoStateChanged(convId, userId, clientId, VideoState(state))
       },
       null
     )
