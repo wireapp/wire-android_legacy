@@ -28,6 +28,8 @@ object Calling {
   // The wrapped `wcall` instance.
   type Handle = Uint32_t
 
+  val WCALL_ENV_DEFAULT: Int = 0
+
   private val available = Promise[Unit]()
   val avsAvailable = available.future
 
@@ -39,7 +41,7 @@ object Calling {
     case e: Throwable => available.failure(e)
   }
 
-  @native def wcall_init(): Int
+  @native def wcall_init(env: Int): Int
 
   @native def wcall_close(): Unit
 
