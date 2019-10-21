@@ -26,7 +26,7 @@ import com.waz.model.otr.ClientId
 import com.waz.service.call.Calling._
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.jna.{Size_t, Uint32_t}
-import com.waz.utils.returning
+import com.waz.utils.{CirceJSONSupport, returning}
 import org.threeten.bp.Instant
 
 import scala.concurrent.{Future, Promise}
@@ -138,13 +138,13 @@ class AvsImpl() extends Avs with DerivedLogTag {
     )
 
     callingReady.future.map { _ =>
-      //TODO it would be nice to convince AVS to move this last method into the method wcall_init.
       Calling.wcall_set_group_changed_handler(wCall, new GroupChangedHandler {
-        override def onGroupChanged(convId: String, arg: Pointer) = {
-          //TODO change this set to an ordered set to for special audio effects?
-          val mStruct = wcall_get_members(wCall, convId)
-          val members = if (mStruct.membc.intValue() > 0) mStruct.toArray(mStruct.membc.intValue()).map(u => UserId(u.userid)).toSet else Set.empty[UserId]
-          wcall_free_members(mStruct.getPointer)
+        override def onGroupChanged(convId: String, data: String, arg: Pointer): Unit = {
+          val members = ParticipantsChangeDecoder.decode(data) match {
+            case Some(participantsChange) => participantsChange.members.map(_.userid).toSet
+            case None                     => Set.empty[UserId]
+          }
+
           cs.onGroupChanged(RConvId(convId), members)
         }
       })
@@ -288,4 +288,16 @@ object Avs extends DerivedLogTag {
   val LogLevelInfo  = 1
   val LogLevelWarn  = 2
   val LogLevelError = 3
+
+  object ParticipantsChangeDecoder extends CirceJSONSupport {
+    import io.circe.{Decoder, parser}
+
+    case class AvsParticipantsChange(convid: ConvId, members: Seq[Member])
+    case class Member(userid: UserId, clientid: ClientId, aestab: Int, vrecv: Int)
+
+    private lazy val decoder: Decoder[AvsParticipantsChange] = Decoder.apply
+
+    def decode(json: String): Option[AvsParticipantsChange] =
+      parser.decode(json)(decoder).right.toOption
+  }
 }
