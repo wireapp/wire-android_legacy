@@ -161,7 +161,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def audioTranscader   = global.audioTranscoder
   def avs               = global.avs
   def loadService       = global.loaderService
-  def flowmanager       = global.flowmanager
   def mediamanager      = global.mediaManager
   def notifcationsUi    = global.notificationsUi
   def tracking          = global.trackingService
