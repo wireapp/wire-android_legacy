@@ -490,14 +490,13 @@ class CallingServiceImpl(val accountId:       UserId,
       call
     } ("onInterrupted")
 
-  override def setCallMuted(muted: Boolean): Unit =
-    fm.foreach { f =>
-      verbose(l"setCallMuted: $muted")
-      updateActiveCall { c =>
-        f.setMute(muted)
-        c.copy(muted = muted)
-      }("setCallMuted")
-    }
+  override def setCallMuted(muted: Boolean): Unit = {
+    verbose(l"setCallMuted: $muted")
+    updateActiveCallAsync { (w, _, call) =>
+      avs.setCallMuted(w, muted)
+      call.copy(muted = muted)
+    }("setCallMuted")
+  }
 
   /**
     * This method should NOT be called before we have permissions AND while the call is still incoming. Once established,

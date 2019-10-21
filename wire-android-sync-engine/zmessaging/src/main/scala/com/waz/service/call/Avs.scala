@@ -44,6 +44,7 @@ trait Avs {
   def endCall(wCall: WCall, convId: RConvId): Unit
   def rejectCall(wCall: WCall, convId: RConvId): Unit
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
+  def setCallMuted(wCall: WCall, muted: Boolean): Unit
 }
 
 /**
@@ -192,6 +193,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
 
   override def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value) =
     withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
+
+  override def setCallMuted(wCall: WCall, muted: Boolean): Unit =
+    withAvs(wcall_set_mute(wCall, muted))
 
 }
 

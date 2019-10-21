@@ -88,6 +88,10 @@ object Calling {
 
   @native def wcall_set_log_handler(wcall_log_h: LogHandler, arg: Pointer): Unit
 
+  @native def wcall_get_mute(inst: Handle): Int
+
+  @native def wcall_set_mute(inst: Handle, muted: Boolean): Unit
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.
