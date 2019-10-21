@@ -50,6 +50,7 @@ import com.waz.zclient.ui.views.{CursorIconButton, SketchEditText}
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.utils.debug.ShakeEventListener
+import com.waz.zclient.utils.extensions.ViewExtensionsKt
 import com.waz.zclient.{FragmentHelper, R}
 
 import scala.collection.immutable.ListSet
@@ -165,7 +166,6 @@ class DrawingFragment extends FragmentHelper
     vh.onClick { _ =>
       inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).foreach {
         case true =>
-          sketchEditTextView.foreach(_.destroyDrawingCache())
           assetIntentsManager.openGalleryForSketch()
         case _ =>
       }
@@ -550,20 +550,16 @@ class DrawingFragment extends FragmentHelper
       //This has to be on a post otherwise the setAlpha and setCursor won't be noticeable in the drawing cache
       getView.post(new Runnable() {
         override def run(): Unit = {
-          sk.setDrawingCacheEnabled(true)
-          val bitmapDrawingCache = sk.getDrawingCache
-          if (bitmapDrawingCache != null) {
-            val params = sk.getLayoutParams.asInstanceOf[FrameLayout.LayoutParams]
-            canv.showText()
-            canv.drawTextBitmap(
-              bitmapDrawingCache.copy(bitmapDrawingCache.getConfig, true),
-              params.leftMargin,
-              params.topMargin,
-              sk.getText.toString,
-              sk.getSketchScale)
-          }
-          else canv.drawTextBitmap(null, 0, 0, "", 1.0f)
-          sk.setDrawingCacheEnabled(false)
+          val viewBitmap = ViewExtensionsKt.getViewBitmap(sk)
+          val params = sk.getLayoutParams.asInstanceOf[FrameLayout.LayoutParams]
+          canv.showText()
+          canv.drawTextBitmap(
+            viewBitmap,
+            params.leftMargin,
+            params.topMargin,
+            sk.getText.toString,
+            sk.getSketchScale
+          )
           sk.setAlpha(TextAlphaInvisible)
         }
       })

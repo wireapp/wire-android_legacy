@@ -91,10 +91,7 @@ class ConversationListManagerFragment extends Fragment
   private var bottomNavigationBorder : View                 = _
 
   private lazy val bottomNavigationView = returning(view[BottomNavigationView](R.id.fragment_conversation_list_manager_bottom_navigation)) { vh =>
-    vh.foreach { view =>
-      BottomNavigationUtil.disableShiftMode(view)
-      view.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
-    }
+    vh.foreach { _.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)}
 
     convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
       vh.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, hasArchive))

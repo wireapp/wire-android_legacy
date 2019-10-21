@@ -1,4 +1,3 @@
-@file:JvmName("BottomNavigationUtil")
 /**
  * Wire
  * Copyright (C) 2019 Wire Swiss GmbH
@@ -18,12 +17,16 @@
  */
 package com.waz.zclient.utils.extensions
 
-import android.support.annotation.IdRes
-import android.support.design.internal.BottomNavigationMenuView
-import android.support.design.widget.BottomNavigationView
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.view.View
 
-fun BottomNavigationView.setItemVisible(@IdRes id: Int, visible: Boolean) {
-    val menuView: BottomNavigationMenuView = getChildAt(0) as BottomNavigationMenuView
-    menuView.findViewById<View>(id).visibility = if (visible) View.VISIBLE else View.GONE
+//TODO: use View.drawToBitmap() after migration to androidx
+fun View.getViewBitmap(): Bitmap {
+    val returnedBitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas (returnedBitmap)
+    background?.let { it.draw(canvas) } ?: canvas.drawColor(Color.WHITE)
+    draw(canvas)
+    return returnedBitmap
 }
