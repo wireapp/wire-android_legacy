@@ -19,6 +19,7 @@ package com.waz.utils
 import java.net.{URI, URL}
 
 import com.waz.model._
+import com.waz.model.otr.ClientId
 import io.circe.generic.AutoDerivation
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 import org.threeten.bp.{Duration, Instant}
@@ -43,6 +44,8 @@ trait CirceJSONSupport extends AutoDerivation {
 
   implicit def UserIdDecoder: Decoder[UserId] = Decoder[String].map(UserId.apply)
   implicit def TeamIdDecoder: Decoder[TeamId] = Decoder[String].map(TeamId.apply)
+  implicit def ConvIdDecoder: Decoder[ConvId] = Decoder[String].map(ConvId.apply)
+  implicit def ClientIdDecoder: Decoder[ClientId] = Decoder[String].map(ClientId.apply)
 
   implicit def RAssetIdDecoder: Decoder[RAssetId] = Decoder[String].map(RAssetId.apply)
   implicit def AssetIdDecoder: Decoder[AssetId] = Decoder[String].map(AssetId.apply)
