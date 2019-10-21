@@ -60,9 +60,9 @@ object Calling {
 
   @native def wcall_destroy(arg: Handle): Unit
 
-  @native def wcall_start(inst: Handle, convid: String, call_type: Int, conv_type: Int, audio_cbr: Boolean): Int
+  @native def wcall_start(inst: Handle, convid: String, call_type: Int, conv_type: Int, audio_cbr: Int): Int
 
-  @native def wcall_answer(inst: Handle, convid: String, call_type: Int, audio_cbr: Boolean): Unit
+  @native def wcall_answer(inst: Handle, convid: String, call_type: Int, audio_cbr: Int): Unit
 
   @native def wcall_resp(inst: Handle, status: Int, reason: String, arg: Pointer): Int
 
@@ -90,7 +90,7 @@ object Calling {
 
   @native def wcall_get_mute(inst: Handle): Int
 
-  @native def wcall_set_mute(inst: Handle, muted: Boolean): Unit
+  @native def wcall_set_mute(inst: Handle, muted: Int): Unit
 
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use

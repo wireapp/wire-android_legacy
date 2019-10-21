@@ -169,10 +169,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
     withAvs(Calling.wcall_network_changed(wCall))
 
   override def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) =
-    withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, cbrEnabled), -1)
+    withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, if (cbrEnabled) 1 else 0), -1)
 
   override def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean) =
-    withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, cbrEnabled))
+    withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, if (cbrEnabled) 1 else 0))
 
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) =
     withAvs(wcall_resp(wCall, status, reason, arg))
@@ -195,7 +195,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
     withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
 
   override def setCallMuted(wCall: WCall, muted: Boolean): Unit =
-    withAvs(wcall_set_mute(wCall, muted))
+    withAvs(wcall_set_mute(wCall, if (muted) 1 else 0))
 
 }
 
