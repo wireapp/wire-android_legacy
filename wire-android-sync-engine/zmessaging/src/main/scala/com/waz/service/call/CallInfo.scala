@@ -104,7 +104,7 @@ case class CallInfo(convId:             ConvId,
     }
   }
 
-  def updateVideoState(convId: ConvId, userId: UserId, clientId: ClientId, videoState: VideoState): CallInfo = {
+  def updateVideoState(userId: UserId, videoState: VideoState): CallInfo = {
 
     val newCall: CallInfo =
       if (userId == account) this.copy(videoSendState = videoState)
