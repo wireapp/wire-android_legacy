@@ -60,7 +60,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
   private val available = Calling.avsAvailable.map { _ =>
     returning(Calling.wcall_init()) { res =>
       Calling.wcall_set_log_handler(new LogHandler {
-        override def onLog(level: Int, msg: String, arg: WCall): Unit = {
+        override def onLog(level: Int, msg: String, arg: Pointer): Unit = {
           val log = l"${showString(msg)}"
           level match {
             case LogLevelDebug => debug(log)(AvsLogTag)
