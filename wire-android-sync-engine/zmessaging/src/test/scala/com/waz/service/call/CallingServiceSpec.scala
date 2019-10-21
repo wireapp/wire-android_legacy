@@ -39,6 +39,7 @@ import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.RichInstant
 import com.waz.utils.events.Signal
+import com.waz.utils.jna.Uint32_t
 import com.waz.utils.wrappers.Context
 import org.junit.Ignore
 import org.threeten.bp.{Duration, Instant}
@@ -83,9 +84,9 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   lazy val service: CallingServiceImpl = initCallingService()
 
   scenario("CallingService intialization") {
-    val pointer = new Pointer(0L)
-    val service = initCallingService(pointer)
-    result(service.wCall) shouldEqual pointer
+    val handle = 1.asInstanceOf[Uint32_t]
+    val service = initCallingService(handle)
+    result(service.wCall) shouldEqual handle
   }
 
   feature("Incoming 1:1 calls") {
@@ -901,7 +902,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(signal.filter(test).head)
   }
 
-  def initCallingService(wCall: WCall = new Pointer(0L)) = {
+  def initCallingService(wCall: WCall = 1.asInstanceOf[Uint32_t]) = {
     val prefs = new TestUserPreferences()
 
     (convs.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
