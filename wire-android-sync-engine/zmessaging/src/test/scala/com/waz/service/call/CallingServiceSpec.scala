@@ -55,6 +55,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val context        = mock[Context]
   val avs            = mock[Avs]
+  val flows          = mock[FlowManagerService]
   val members        = mock[MembersStorage]
   val media          = mock[MediaManagerService]
   val network        = mock[NetworkModeService]
@@ -950,6 +951,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (permissions.allPermissions _).expects(*).anyNumberOfTimes().returning(Signal.const(true))
 
     (context.startService _).expects(*).anyNumberOfTimes().returning(true)
+    (flows.flowManager _).expects().once().returning(None)
     (messages.addMissedCallMessage(_:RConvId, _:UserId, _:RemoteInstant)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
     (messages.addMissedCallMessage(_:ConvId, _:UserId, _:RemoteInstant)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(None))
     (messages.addSuccessfulCallMessage _).expects(*, *, *, *).anyNumberOfTimes().returning(Future.successful(None))
@@ -962,7 +964,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val s = new CallingServiceImpl(
       selfUserId, clientId, null, context, avs, convs, convsService, members, null,
-      messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking
+      flows, messages, media, push, network, null, prefs, globalPrefs, permissions, usersStorage, tracking
     )
     result(s.wCall)
     s

@@ -156,6 +156,7 @@ class CallingServiceImpl(val accountId:       UserId,
                          convsService:        ConversationsService,
                          members:             MembersStorage,
                          otrSyncHandler:      OtrSyncHandler,
+                         flowManagerService:  FlowManagerService,
                          messagesService:     MessagesService,
                          mediaManagerService: MediaManagerService,
                          pushService:         PushService,
@@ -171,6 +172,8 @@ class CallingServiceImpl(val accountId:       UserId,
 
   private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "CallingService")
 
+  //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
+  private val fm = flowManagerService.flowManager
   private var closingPromise = Option.empty[Promise[Unit]]
 
   private[call] val callProfile = Signal(CallProfile.Empty)

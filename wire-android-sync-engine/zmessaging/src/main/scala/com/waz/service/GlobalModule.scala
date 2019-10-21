@@ -103,6 +103,7 @@ trait GlobalModule {
   def factory:                  ZMessagingFactory
   def lifecycle:                UiLifeCycle
 
+  def flowmanager:              FlowManagerService
   def mediaManager:             MediaManagerService
 
   def trackingService:          TrackingService
@@ -193,6 +194,7 @@ class GlobalModuleImpl(val context:                 AContext,
 
   lazy val factory                                               = new ZMessagingFactory(this)
 
+  lazy val flowmanager:         FlowManagerService               = wire[DefaultFlowManagerService]
   lazy val mediaManager:        MediaManagerService              = wire[DefaultMediaManagerService]
 
   lazy val logsService:         LogsService                      = new LogsServiceImpl(prefs)
@@ -241,6 +243,7 @@ class EmptyGlobalModule extends GlobalModule {
   override def blacklist:                VersionBlacklistService                             = ???
   override def factory:                  ZMessagingFactory                                   = ???
   override def lifecycle:                UiLifeCycle                                         = ???
+  override def flowmanager:              FlowManagerService                                  = ???
   override def mediaManager:             MediaManagerService                                 = ???
   override def urlCreator:               UrlCreator                                          = ???
   override def httpClient:               HttpClient                                          = ???
