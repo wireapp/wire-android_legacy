@@ -122,15 +122,15 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onMetricsReady(RConvId(convId), metricsJson)
       },
       new CallConfigRequestHandler {
-        override def onConfigRequest(inst: WCall, arg: WCall): Int =
+        override def onConfigRequest(inst: WCall, arg: Pointer): Int =
           cs.onConfigRequest(inst)
       },
       new CbrStateChangeHandler {
-        override def onBitRateStateChanged(userId: String, enabled: Boolean, arg: WCall): Unit =
+        override def onBitRateStateChanged(userId: String, enabled: Boolean, arg: Pointer): Unit =
           cs.onBitRateStateChanged(enabled)
       },
       new VideoReceiveStateHandler {
-        override def onVideoReceiveStateChanged(userId: String, state: Int, arg: WCall): Unit =
+        override def onVideoReceiveStateChanged(userId: String, state: Int, arg: Pointer): Unit =
           cs.onVideoStateChanged(userId, VideoState(state))
       },
       null
@@ -199,7 +199,7 @@ object Avs extends DerivedLogTag {
 
   val AvsLogTag: LogTag = LogTag("AVS")
 
-  type WCall = Pointer
+  type WCall = Calling.Handle
 
   def remoteInstant(uint32_t: Uint32_t) = RemoteInstant.ofEpochMilli(uint32_t.value.toLong * 1000)
 

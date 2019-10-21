@@ -25,6 +25,9 @@ import scala.concurrent.Promise
 
 object Calling {
 
+  // The wrapped `wcall` instance.
+  type Handle = Uint32_t
+
   private val available = Promise[Unit]()
   val avsAvailable = available.future
 
@@ -53,35 +56,35 @@ object Calling {
                            confreqh:  CallConfigRequestHandler,
                            acbrh:     CbrStateChangeHandler,
                            vstateh:   VideoReceiveStateHandler,
-                           arg:       Pointer): Pointer
+                           arg:       Pointer): Handle
 
-  @native def wcall_destroy(arg: Pointer): Unit
+  @native def wcall_destroy(arg: Handle): Unit
 
-  @native def wcall_start(inst: Pointer, convid: String, call_type: Int, conv_type: Int, audio_cbr: Boolean): Int
+  @native def wcall_start(inst: Handle, convid: String, call_type: Int, conv_type: Int, audio_cbr: Boolean): Int
 
-  @native def wcall_answer(inst: Pointer, convid: String, call_type: Int, audio_cbr: Boolean): Unit
+  @native def wcall_answer(inst: Handle, convid: String, call_type: Int, audio_cbr: Boolean): Unit
 
-  @native def wcall_resp(inst: Pointer, status: Int, reason: String, arg: Pointer): Int
+  @native def wcall_resp(inst: Handle, status: Int, reason: String, arg: Pointer): Int
 
-  @native def wcall_config_update(inst: Pointer, err: Int, json_str: String): Unit
+  @native def wcall_config_update(inst: Handle, err: Int, json_str: String): Unit
 
-  @native def wcall_recv_msg(inst: Pointer, msg: Array[Byte], len: Int, curr_time: Uint32_t, msg_time: Uint32_t, convId: String, userId: String, clientId: String): Int
+  @native def wcall_recv_msg(inst: Handle, msg: Array[Byte], len: Int, curr_time: Uint32_t, msg_time: Uint32_t, convId: String, userId: String, clientId: String): Int
 
-  @native def wcall_end(inst: Pointer, convId: String): Unit
+  @native def wcall_end(inst: Handle, convId: String): Unit
 
-  @native def wcall_reject(inst: Pointer, convId: String): Unit
+  @native def wcall_reject(inst: Handle, convId: String): Unit
 
-  @native def wcall_set_video_send_state(inst: Pointer, convid: String, state: Int): Unit
+  @native def wcall_set_video_send_state(inst: Handle, convid: String, state: Int): Unit
 
-  @native def wcall_network_changed(inst: Pointer): Unit
+  @native def wcall_network_changed(inst: Handle): Unit
 
-  @native def wcall_set_group_changed_handler(inst: Pointer, wcall_group_changed_h: GroupChangedHandler): Unit
+  @native def wcall_set_group_changed_handler(inst: Handle, wcall_group_changed_h: GroupChangedHandler): Unit
 
-  @native def wcall_get_members(inst: Pointer, convid: String): Members
+  @native def wcall_get_members(inst: Handle, convid: String): Members
 
   @native def wcall_free_members(pointer: Pointer): Unit
 
-  @native def wcall_set_state_handler(inst: Pointer, wcall_state_change_h: CallStateChangeHandler): Unit
+  @native def wcall_set_state_handler(inst: Handle, wcall_state_change_h: CallStateChangeHandler): Unit
 
   @native def wcall_set_log_handler(wcall_log_h: LogHandler, arg: Pointer): Unit
 
@@ -149,7 +152,7 @@ object Calling {
   }
 
   trait CallConfigRequestHandler extends Callback {
-    def onConfigRequest(inst: Pointer, arg: Pointer): Int
+    def onConfigRequest(inst: Handle, arg: Pointer): Int
   }
 
 }
