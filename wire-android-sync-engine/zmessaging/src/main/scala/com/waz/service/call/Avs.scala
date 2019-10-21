@@ -33,6 +33,7 @@ import scala.concurrent.{Future, Promise}
 
 trait Avs {
   import Avs._
+  def libraryVersion: Future[String]
   def registerAccount(callingService: CallingServiceImpl): Future[WCall]
   def unregisterAccount(wCall: WCall): Future[Unit]
   def onNetworkChanged(wCall: WCall): Future[Unit]
@@ -45,6 +46,7 @@ trait Avs {
   def rejectCall(wCall: WCall, convId: RConvId): Unit
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
   def setCallMuted(wCall: WCall, muted: Boolean): Unit
+  def setProxy(host: String, port: Int): Unit
 }
 
 /**
@@ -71,13 +73,17 @@ class AvsImpl() extends Avs with DerivedLogTag {
           }
         }
       }, null)
-      verbose(l"AVS initialized: $res")
+      verbose(l"AVS ${Calling.wcall_library_version()} initialized: $res")
     }
   }.map(_ => {})
 
   available.onFailure {
     case e: Throwable =>
       error(l"Failed to initialise AVS - calling will not work", e)
+  }
+
+  override def libraryVersion: Future[String] = {
+    withAvsReturning(wcall_library_version(), "Unknown AVS version")
   }
 
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
@@ -197,6 +203,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def setCallMuted(wCall: WCall, muted: Boolean): Unit =
     withAvs(wcall_set_mute(wCall, if (muted) 1 else 0))
 
+  override def setProxy(host: String, port: Int): Unit =
+    withAvs(wcall_set_proxy(host, port))
 }
 
 object Avs extends DerivedLogTag {
