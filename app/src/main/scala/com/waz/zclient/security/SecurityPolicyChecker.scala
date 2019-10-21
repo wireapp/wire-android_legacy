@@ -100,7 +100,7 @@ class SecurityPolicyChecker(implicit context: Context, injector: Injector) exten
       )
 
       checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
-   }
+    }
 
     if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
       verbose(l"check WIPE_ON_COOKIE_INVALID")

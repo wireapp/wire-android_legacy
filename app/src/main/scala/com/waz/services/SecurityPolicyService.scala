@@ -25,12 +25,10 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{BuildConfig, Injectable, WireApplication}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.actions.WipeDataAction
-
 import scala.concurrent.Future
-import com.waz.zclient.BuildConfig
 
 /**
   * This class performs two functions, firstly it serves as the required DeviceAdminReceived instance
@@ -40,9 +38,16 @@ import com.waz.zclient.BuildConfig
   * `getManager` method to get the policy manager service, rather than pass it in as a parameter
   * which we would have to do if we used a companion object.
   */
-class SecurityPolicyService(implicit inj: Injector)
+class SecurityPolicyService
   extends DeviceAdminReceiver with DerivedLogTag with Injectable {
+
   import com.waz.threading.Threading.Implicits.Background
+
+  // we can't pass the injector by parameter
+  implicit lazy val inj = {
+    WireApplication.ensureInitialized()
+    WireApplication.APP_INSTANCE.module
+  }
 
   override def onEnabled(context: Context, intent: Intent): Unit = {
     verbose(l"admin rights enabled, setting policy")
@@ -50,6 +55,7 @@ class SecurityPolicyService(implicit inj: Injector)
   }
 
   private def setPasswordPolicy(context: Context): Unit = {
+    verbose(l"setPasswordPolicy")
     val dpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE).asInstanceOf[DevicePolicyManager]
     val secPolicy = new ComponentName(context, classOf[SecurityPolicyService])
     /**
@@ -72,6 +78,8 @@ class SecurityPolicyService(implicit inj: Injector)
   override def onPasswordFailed(context: Context, intent: Intent, user: UserHandle): Unit = {
     super.onPasswordFailed(context, intent, user)
 
+    verbose(l"onPasswordFailed")
+
     if (isSecurityPolicyEnabled(context) && android.os.Process.myUserHandle().equals(user))
       passwordFailed(context)
   }
@@ -84,9 +92,11 @@ class SecurityPolicyService(implicit inj: Injector)
       attempts <- pref.apply()
     } yield
       if (attempts >= BuildConfig.PASSWORD_MAX_ATTEMPTS) {
+        verbose(l"wipe data")
         new WipeDataAction(Some(userId))(context).execute()
         true
       } else {
+        verbose(l"update attempts from $attempts to ${attempts + 1}")
         pref.update(attempts + 1)
         false
       }
@@ -100,9 +110,9 @@ class SecurityPolicyService(implicit inj: Injector)
 
   def passwordSucceeded(): Future[Unit] =
     for {
-      zms      <- inject[Signal[ZMessaging]].head
-      pref     =  zms.userPrefs.preference(UserPreferences.SecurityPolicyFailedPwdAttempts)
-      _        <- pref.update(0)
+      zms  <- inject[Signal[ZMessaging]].head
+      pref =  zms.userPrefs.preference(UserPreferences.SecurityPolicyFailedPwdAttempts)
+      _    <- pref.update(0)
     } yield ()
 
   def isSecurityPolicyEnabled(implicit context: Context): Boolean =
