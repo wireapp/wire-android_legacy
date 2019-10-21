@@ -240,7 +240,7 @@
 
 
     <!-- Conversation actions -->
-    <string name="conversation__action__delete">Delete content…</string>
+    <string name="conversation__action__clear_content">Clear content…</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
@@ -260,10 +260,10 @@
     <string name="conversation__action__move_to_folder">Move to…</string>
     <string name="conversation__action__remove_from_folder">Remove from \"%1$s\"</string>
 
-    <string name="conversation__action__leave_and_delete">\tLeave and delete content</string>
+    <string name="conversation__action__leave_and_clear">\tLeave and clear content</string>
     <string name="conversation__action__leave_only">\tLeave group</string>
-    <string name="conversation__action__delete_and_leave">\tDelete content and leave</string>
-    <string name="conversation__action__delete_only">\tDelete content</string>
+    <string name="conversation__action__clear_and_leave">\tClear content and leave</string>
+    <string name="conversation__action__clear_only">\tClear content</string>
 
     <string name="conversation__action__notifications_everything">Everything</string>
     <string name="conversation__action__notifications_mentions_and_replies">Mentions and Replies</string>
