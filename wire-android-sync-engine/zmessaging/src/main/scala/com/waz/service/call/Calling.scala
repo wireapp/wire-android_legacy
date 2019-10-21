@@ -41,6 +41,8 @@ object Calling {
     case e: Throwable => available.failure(e)
   }
 
+  @native def wcall_library_version(): String
+
   @native def wcall_init(env: Int): Int
 
   @native def wcall_close(): Unit
@@ -93,6 +95,8 @@ object Calling {
   @native def wcall_get_mute(inst: Handle): Int
 
   @native def wcall_set_mute(inst: Handle, muted: Int): Unit
+
+  @native def wcall_set_proxy(host: String, port: Int): Int
 
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
