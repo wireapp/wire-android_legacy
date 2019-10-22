@@ -130,9 +130,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] = {
     for {
-      cZms              <- callingZms
-      ids               <- orderedParticipants(take)
-      users             <- cZms.usersStorage.listSignal(ids)
+      cZms        <- callingZms
+      ids         <- orderedParticipants(take)
+      users       <- cZms.usersStorage.listSignal(ids)
       videoStates <- mergedVideoStates
     } yield users.map { user =>
       CallParticipantInfo(
