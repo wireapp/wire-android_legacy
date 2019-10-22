@@ -18,7 +18,7 @@ ext {
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
 
-    avsVersion = '5.1.186@aar'
+    avsVersion = '5.3.191@aar'
     avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
     avsName = 'avs'
     avsGroup = 'com.wire'
