@@ -25,8 +25,8 @@ import android.widget.{FrameLayout, ImageView, TextView}
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.Picture
-import com.waz.model.UserId
 import com.waz.service.call.Avs.VideoState
+import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -39,16 +39,16 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
 import com.waz.zclient.{FragmentHelper, R, ViewHelper}
 
-abstract class UserVideoView(context: Context, val userId: UserId) extends FrameLayout(context, null, 0) with ViewHelper {
+abstract class UserVideoView(context: Context, val participant: Participant) extends FrameLayout(context, null, 0) with ViewHelper {
   protected lazy val controller: CallController = inject[CallController]
 
-  private implicit val dispatcher = new SerialDispatchQueue(name = s"UserVideoView-$userId")
+  private implicit val dispatcher = new SerialDispatchQueue(name = s"UserVideoView-$participant")
 
   inflate(R.layout.video_call_info_view)
 
   private val pictureId: Signal[Picture] = for {
     z             <- controller.callingZms
-    Some(picture) <- z.usersStorage.signal(userId).map(_.picture)
+    Some(picture) <- z.usersStorage.signal(participant.userId).map(_.picture)
   } yield picture
 
   protected val imageView = returning(findById[ImageView](R.id.image_view)) { view =>
@@ -57,7 +57,7 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
 
   protected val pausedText = findById[TextView](R.id.paused_text_view)
 
-  protected val stateMessageText = controller.stateMessageText(userId)
+  protected val stateMessageText = controller.stateMessageText(participant.userId)
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
   protected val pausedTextVisible = stateMessageText.map(_.exists(_.nonEmpty))
   pausedTextVisible.onUi(pausedText.setVisible)
@@ -67,13 +67,13 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
   }
 
   protected def registerHandler(view: View) = {
-    controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
+    controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
       case VideoState.Paused | VideoState.Stopped => view.fadeOut()
       case _                 => view.fadeIn()
     }
     view match {
       case vr: VideoRenderer =>
-        controller.allVideoReceiveStates.map(_.getOrElse(userId, VideoState.Unknown)).onUi {
+        controller.allVideoReceiveStates.map(_.getOrElse(participant, VideoState.Unknown)).onUi {
           case VideoState.ScreenShare =>
             vr.setShouldFill(false)
             vr.setFillRatio(1.5f)
@@ -94,8 +94,8 @@ abstract class UserVideoView(context: Context, val userId: UserId) extends Frame
   val shouldShowInfo: Signal[Boolean]
 }
 
-class SelfVideoView(context: Context, userId: UserId)
-  extends UserVideoView(context, userId) with DerivedLogTag {
+class SelfVideoView(context: Context, participant: Participant)
+  extends UserVideoView(context, participant) with DerivedLogTag {
 
   protected val muteIcon = returning(findById[GenericStyleKitView](R.id.mute_icon)) { icon =>
     icon.setOnDraw(WireStyleKit.drawMute)
@@ -119,9 +119,9 @@ class SelfVideoView(context: Context, userId: UserId)
   }
 }
 
-class OtherVideoView(context: Context, userId: UserId) extends UserVideoView(context, userId) {
+class OtherVideoView(context: Context, participant: Participant) extends UserVideoView(context, participant) {
   override lazy val shouldShowInfo = pausedTextVisible
-  registerHandler(returning(new VideoRenderer(getContext, userId.str, false)) { v =>
+  registerHandler(returning(new VideoRenderer(getContext, participant.userId.str, participant.clientId.str, false)) { v =>
     v.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
     addView(v, 1)
   })
@@ -134,30 +134,33 @@ class CallingFragment extends FragmentHelper {
   private lazy val controlsFragment = ControlsFragment.newInstance
   private lazy val previewCardView  = view[CardView](R.id.preview_card_view)
 
-  private var viewMap = Map[UserId, UserVideoView]()
+  private var viewMap = Map[Participant, UserVideoView]()
 
   private lazy val videoGrid = returning(view[GridLayout](R.id.video_grid)) { vh =>
-    Signal(controller.allVideoReceiveStates, controller.callingZms.map(_.selfUserId), controller.isVideoCall, controller.isCallIncoming).onUi { case (vrs, selfId, videoCall, incoming) =>
+    Signal(
+      controller.allVideoReceiveStates,
+      controller.callingZms.map(zms => Participant(zms.selfUserId, zms.clientId)),
+      controller.isVideoCall,
+      controller.isCallIncoming)
+      .onUi { case (vrs, selfParticipant, videoCall, incoming) =>
 
-      def createView(userId: UserId): UserVideoView = returning {
-        if (controller.callingZms.currentValue.map(_.selfUserId).contains(userId))
-          new SelfVideoView(getContext, userId)
-        else
-          new OtherVideoView(getContext, userId)
+      def createView(participant: Participant): UserVideoView = returning {
+        if (participant == selfParticipant) new SelfVideoView(getContext, participant)
+        else new OtherVideoView(getContext, participant)
       } { v =>
-        viewMap = viewMap.updated(userId, v)
+        viewMap = viewMap.updated(participant, v)
       }
 
-      val isVideoBeingSent = !vrs.get(selfId).contains(VideoState.Stopped)
+      val isVideoBeingSent = !vrs.get(selfParticipant).contains(VideoState.Stopped)
 
       vh.foreach { v =>
         val videoUsers = vrs.toSeq.collect {
-          case (userId, _) if userId == selfId && videoCall && incoming => userId
-          case (userId, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => userId
+          case (participant, _) if participant == selfParticipant && videoCall && incoming => participant
+          case (participant, VideoState.Started | VideoState.Paused | VideoState.BadConnection | VideoState.NoCameraPermission | VideoState.ScreenShare) => participant
         }
-        val views = videoUsers.map { uId => viewMap.getOrElse(uId, createView(uId))}
+        val views = videoUsers.map { participant => viewMap.getOrElse(participant, createView(participant)) }
 
-        viewMap.get(selfId).foreach { selfView =>
+        viewMap.get(selfParticipant).foreach { selfView =>
           previewCardView.foreach { cardView =>
             if (views.size == 2 && isVideoBeingSent) {
               verbose(l"Showing card preview")
@@ -185,7 +188,7 @@ class CallingFragment extends FragmentHelper {
           case _ => true
         }.sortWith {
           case (_:SelfVideoView, _) => true
-          case (v1, v2)             => v1.userId.str.hashCode > v2.userId.str.hashCode
+          case (v1, v2)             => v1.hashCode > v2.hashCode
         }
 
         gridViews.zipWithIndex.foreach { case (r, index) =>
@@ -209,11 +212,11 @@ class CallingFragment extends FragmentHelper {
         }
 
         val viewsToRemove = viewMap.filter {
-          case (uid, selfView) if uid == selfId => !gridViews.contains(selfView)
-          case (uId, _)                         => !videoUsers.contains(uId)
+          case (participant, selfView) if participant == selfParticipant => !gridViews.contains(selfView)
+          case (participant, _)                                          => !videoUsers.contains(participant)
         }
         viewsToRemove.foreach { case (_, view) => v.removeView(view) }
-        viewMap = viewMap.filter { case (uId, _) => videoUsers.contains(uId) }
+        viewMap = viewMap.filter { case (participant, _) => videoUsers.contains(participant) }
       }
     }
   }
