@@ -196,9 +196,11 @@ class PushServiceImpl(selfUserId:           UserId,
     syncNotifications(StoreNotifications(nots))
   }
 
-  wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){ source =>
-    verbose(l"SYNC sync history due to web socket change")
-    syncNotifications(SyncHistory(source))
+  wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){
+    case source@WebSocketChange(true) =>
+      verbose(l"SYNC sync history due to web socket change")
+      syncNotifications(SyncHistory(source))
+    case _ =>
   }
 
   private var fetchInProgress: Future[Unit] = Future.successful(())
