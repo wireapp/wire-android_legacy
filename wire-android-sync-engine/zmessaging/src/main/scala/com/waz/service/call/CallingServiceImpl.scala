@@ -353,10 +353,10 @@ class CallingServiceImpl(val accountId:       UserId,
       call.copy(isCbrEnabled = enabled)
     }("onBitRateStateChanged")
 
-  def onVideoStateChanged(userId: String, videoReceiveState: VideoState): Future[Unit] =
+  def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      call.updateVideoState(UserId(userId), videoReceiveState)
+      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
   def onGroupChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
@@ -510,7 +510,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
-      call.updateVideoState(accountId, targetSt)
+      call.updateVideoState(Participant(accountId, clientId), targetSt)
     }("setVideoSendState")
 
   val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {

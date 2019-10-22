@@ -46,7 +46,7 @@ case class CallInfo(convId:             ConvId,
                     isCbrEnabled:       Boolean                           = false,
                     startedAsVideoCall: Boolean                           = false,
                     videoSendState:     VideoState                        = VideoState.Stopped,
-                    videoReceiveStates: Map[UserId, VideoState]           = Map.empty,
+                    videoReceiveStates: Map[Participant, VideoState]      = Map.empty,
                     wasVideoToggled:    Boolean                           = false, //for tracking
                     startTime:          LocalInstant                      = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
                     joinedTime:         Option[LocalInstant]              = None, //the time the call was joined, if any
@@ -69,7 +69,7 @@ case class CallInfo(convId:             ConvId,
     case None => ""
   }
 
-  val allVideoReceiveStates = videoReceiveStates + (selfParticipant.userId -> videoSendState)
+  val allVideoReceiveStates = videoReceiveStates + (selfParticipant -> videoSendState)
 
   val isVideoCall = state match {
     case OtherCalling => startedAsVideoCall
@@ -104,13 +104,13 @@ case class CallInfo(convId:             ConvId,
     }
   }
 
-  def updateVideoState(userId: UserId, videoState: VideoState): CallInfo = {
+  def updateVideoState(participant: Participant, videoState: VideoState): CallInfo = {
 
     val newCall: CallInfo =
-      if (userId == selfParticipant.userId) this.copy(videoSendState = videoState)
-      else this.copy(videoReceiveStates = this.videoReceiveStates + (userId -> videoState))
+      if (participant == selfParticipant) this.copy(videoSendState = videoState)
+      else this.copy(videoReceiveStates = this.videoReceiveStates + (participant -> videoState))
 
-    verbose(l"updateVideoSendState: $userId, $videoState, newCall: $newCall")
+    verbose(l"updateVideoSendState: $participant, $videoState, newCall: $newCall")
 
     val wasVideoToggled = newCall.wasVideoToggled || (newCall.isVideoCall != this.isVideoCall)
     newCall.copy(wasVideoToggled = wasVideoToggled)
