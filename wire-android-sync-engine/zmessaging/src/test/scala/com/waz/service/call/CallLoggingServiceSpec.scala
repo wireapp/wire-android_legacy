@@ -21,7 +21,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, RemoteInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason
-import com.waz.service.call.CallInfo.CallState
+import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService

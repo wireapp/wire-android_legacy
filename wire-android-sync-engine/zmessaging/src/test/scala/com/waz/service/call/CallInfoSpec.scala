@@ -20,6 +20,7 @@ package com.waz.service.call
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, LocalInstant, UserId}
 import com.waz.service.call.CallInfo.CallState.{Ended, SelfConnected}
+import com.waz.service.call.CallInfo.Participant
 import com.waz.specs.AndroidFreeSpec
 
 import scala.concurrent.duration._
