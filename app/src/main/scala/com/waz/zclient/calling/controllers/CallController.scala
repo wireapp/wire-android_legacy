@@ -116,7 +116,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val others                = currentCall.map(_.others)
 
   val lastCallAccountId: SourceSignal[UserId] = Signal()
-  currentCall.map(_.account) { account => lastCallAccountId ! account }
+  currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
 
   val theme: Signal[Theme] = isVideoCall.flatMap {
     case true  => Signal.const(Theme.Dark)

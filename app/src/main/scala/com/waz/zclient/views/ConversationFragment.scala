@@ -209,9 +209,9 @@ class ConversationFragment extends FragmentHelper {
       (convId, isConvActive) <- convController.currentConv.map(c => (c.id, c.isActive))
       isGroup                <- convController.groupConversation(convId)
       participantsNumber     <- Signal.future(convController.participantsIds(convId).map(_.size))
-      acc                    <- zms.map(_.selfUserId)
+      selfUserId             <- zms.map(_.selfUserId)
       call                   <- callController.currentCallOpt
-      isCallActive           = call.exists(_.convId == convId) && call.exists(_.account == acc)
+      isCallActive           = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
       isTeam                 <- accountsController.isTeam
     } yield {
       if (isCallActive || !isConvActive || participantsNumber <= 1)

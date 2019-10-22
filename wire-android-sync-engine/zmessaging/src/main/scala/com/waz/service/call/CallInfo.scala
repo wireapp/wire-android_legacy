@@ -26,7 +26,7 @@ import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
-import com.waz.service.call.CallInfo.CallState
+import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.utils.events.{ClockSignal, Signal}
 import org.threeten.bp.Duration
@@ -35,7 +35,7 @@ import org.threeten.bp.Duration.between
 import scala.concurrent.duration._
 
 case class CallInfo(convId:             ConvId,
-                    account:            UserId,
+                    selfParticipant:    Participant,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
@@ -69,7 +69,7 @@ case class CallInfo(convId:             ConvId,
     case None => ""
   }
 
-  val allVideoReceiveStates = videoReceiveStates + (account -> videoSendState)
+  val allVideoReceiveStates = videoReceiveStates + (selfParticipant.userId -> videoSendState)
 
   val isVideoCall = state match {
     case OtherCalling => startedAsVideoCall
@@ -107,7 +107,7 @@ case class CallInfo(convId:             ConvId,
   def updateVideoState(userId: UserId, videoState: VideoState): CallInfo = {
 
     val newCall: CallInfo =
-      if (userId == account) this.copy(videoSendState = videoState)
+      if (userId == selfParticipant.userId) this.copy(videoSendState = videoState)
       else this.copy(videoReceiveStates = this.videoReceiveStates + (userId -> videoState))
 
     verbose(l"updateVideoSendState: $userId, $videoState, newCall: $newCall")
@@ -119,6 +119,8 @@ case class CallInfo(convId:             ConvId,
 }
 
 object CallInfo {
+
+  case class Participant(userId: UserId, clientId: ClientId)
 
   sealed trait CallState extends SafeToLog
 

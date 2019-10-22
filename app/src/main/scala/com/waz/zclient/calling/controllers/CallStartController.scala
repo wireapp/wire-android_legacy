@@ -53,7 +53,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
   for {
     Some(call) <- currentCallOpt
     autoAnswer <- prefs.flatMap(_.preference(AutoAnswerCallPrefKey).signal)
-  } if (call.state == CallState.OtherCalling && autoAnswer) startCall(call.account, call.convId)
+  } if (call.state == CallState.OtherCalling && autoAnswer) startCall(call.selfParticipant.userId, call.convId)
 
   def startCallInCurrentConv(withVideo: Boolean, forceOption: Boolean = false) = {
     (for {
@@ -68,7 +68,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
 
   def acceptCall(): Future[Unit] =
     currentCallOpt.head.flatMap {
-      case Some(call) => startCall(call.account, call.convId)
+      case Some(call) => startCall(call.selfParticipant.userId, call.convId)
       case None => Future.successful(warn(l"No active call to accept..."))
     }
 
@@ -83,7 +83,7 @@ class CallStartController(implicit inj: Injector, cxt: WireContext, ec: EventCon
         Some(newCallZms)  <- accounts.getZms(account)
         Some(newCallConv) <- newCallZms.convsStorage.get(conv)
         ongoingCalls      <- newCallZms.calling.joinableCalls.head
-        acceptingCall     =  curCall.exists(c => c.convId == conv && c.account == account) //the call we're trying to start is the same as the current one
+        acceptingCall     =  curCall.exists(c => c.convId == conv && c.selfParticipant.userId == account) //the call we're trying to start is the same as the current one
         isJoiningCall     =  ongoingCalls.contains(conv) //the call we're trying to start is ongoing in the background (note, this will also contain the incoming call)
         _                 =  verbose(l"accepting? $acceptingCall, isJoiningCall?: $isJoiningCall, curCall: $curCall")
         color             <- inject[AccentColorController].accentColor.head
