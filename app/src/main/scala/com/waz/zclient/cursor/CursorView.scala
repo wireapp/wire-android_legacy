@@ -18,10 +18,10 @@
 package com.waz.zclient.cursor
 
 import android.content.Context
-import android.graphics.{Color, Rect}
 import android.graphics.drawable.ColorDrawable
+import android.graphics.{Color, Rect}
 import android.text.method.TransformationMethod
-import android.text.{Editable, Spanned, TextUtils, TextWatcher}
+import android.text._
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view._
@@ -35,12 +35,9 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
-import com.waz.zclient.common.views.TextViewHelpers.TextViewFlagsImprovement
-import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
 import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
-import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor.CursorEditText.OnBackspaceListener
 import com.waz.zclient.ui.cursor._
@@ -50,7 +47,7 @@ import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
-import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
+import com.waz.zclient.{R, ViewHelper}
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends LinearLayout(context, attrs, defStyleAttr)
@@ -63,12 +60,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   import CursorView._
   import Threading.Implicits.Ui
 
-
-  val clipboard                    = inject[ClipboardUtils]
-  val layoutController             = inject[IGlobalLayoutController]
-  val accentColor                  = inject[Signal[AccentColor]]
-  val messages                     = inject[MessagesController]
-  private val controller           = inject[CursorController]
+  private lazy val accentColor     = inject[Signal[AccentColor]]
+  private lazy val controller      = inject[CursorController]
   private lazy val replyController = inject[ReplyController]
 
   setOrientation(LinearLayout.VERTICAL)
@@ -272,14 +265,9 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setFocusableInTouchMode(true)
 
-  cursorEditText.setPrivateModeFromPreferences()
-
-  controller.sendButtonEnabled.onUi { enabled =>
-    if (enabled) {
-      cursorEditText.addImeOption(EditorInfo.IME_ACTION_SEND)
-    } else {
-      cursorEditText.removeImeOption(EditorInfo.IME_ACTION_SEND)
-    }
+  controller.inputViewMode.onUi { case (inputType, imeOptions) =>
+    cursorEditText.setInputType(inputType | InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+    cursorEditText.setImeOptions(imeOptions)
   }
 
   accentColor.map(_.color).onUi(cursorEditText.setAccentColor)
@@ -431,7 +419,11 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
 object CursorView {
   import CursorMenuItem._
+  import InputType._
 
   private val MainCursorItems = Seq(Camera, Mention, Sketch, Gif, AudioMessage, More)
   private val SecondaryCursorItems = Seq(VideoMessage, Ping, File, Location, Dummy, Less)
+
+  private val StandardInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL | TYPE_TEXT_FLAG_MULTI_LINE
+  private val PrivateInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL | TYPE_TEXT_FLAG_MULTI_LINE | TYPE_TEXT_FLAG_NO_SUGGESTIONS | TYPE_TEXT_FLAG_AUTO_COMPLETE
 }

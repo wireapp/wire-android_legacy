@@ -21,10 +21,12 @@ import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO,
 import android.app.Activity
 import android.content.Context
 import android.text.TextUtils
+import android.view.inputmethod.EditorInfo
 import android.view.{MotionEvent, View}
 import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
+import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -59,11 +61,12 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   import CursorController._
   import Threading.Implicits.Ui
 
-  val zms                     = inject[Signal[ZMessaging]]
-  val conversationController  = inject[ConversationController]
-  lazy val convListController = inject[ConversationListController]
-  lazy val callController     = inject[CallController]
-  private lazy val replyController = inject[ReplyController]
+  private lazy val zms                     = inject[Signal[ZMessaging]]
+  private lazy val conversationController  = inject[ConversationController]
+  private lazy val convListController      = inject[ConversationListController]
+  private lazy val callController          = inject[CallController]
+  private lazy val replyController         = inject[ReplyController]
+  private lazy val userPrefs               = inject[Signal[UserPreferences]]
 
   val conv = conversationController.currentConv
 
@@ -106,9 +109,24 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   val onEphemeralExpirationSelected = EventStream[Option[FiniteDuration]]()
 
   val sendButtonEnabled: Signal[Boolean] = for {
-    sendPref <- zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
-    emoji <- emojiKeyboardVisible
+    prefs    <- userPrefs
+    sendPref <- prefs(UserPreferences.SendButtonEnabled).signal
+    emoji    <- emojiKeyboardVisible
   } yield emoji || sendPref
+
+  private val keyboardPrivateMode = for {
+    prefs <- userPrefs
+    mode  <- prefs(IncognitoKeyboardEnabled).signal
+  } yield mode
+
+  val inputViewMode = Signal(sendButtonEnabled, keyboardPrivateMode).map {
+    case (true,  false) => (StandardInputType, EditorInfo.IME_ACTION_NONE)
+    case (false, false) => (StandardInputType, EditorInfo.IME_ACTION_SEND)
+    // this disables autocomplete because it implies that you will provide your
+    // own autocomplete facility. We don't, so no autocomplete is shown
+    case (true,  true)  => (PrivateInputType, EditorInfo.IME_ACTION_NONE | EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+    case (false, true)  => (PrivateInputType, EditorInfo.IME_ACTION_SEND | EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+  }
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
@@ -323,7 +341,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
       color <- accentColorController.accentColor.head
 
       // Check if the user was asked before
-      preferences <- zms.map(_.userPrefs).head
+      preferences <- userPrefs.head
       askedForLocationPermissionPreference = preferences.preference(UserPreferences.AskedForLocationPermission)
       askedForLocation <- askedForLocationPermissionPreference.apply()
 
@@ -378,6 +396,10 @@ object CursorController {
   )
 
   def keyboardPermissions(tpe: ExtendedCursorContainer.Type): ListSet[PermissionsService.PermissionKey] = KeyboardPermissions.getOrElse(tpe, ListSet.empty)
+
+  import android.text.InputType._
+  private val StandardInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL
+  private val PrivateInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL | TYPE_TEXT_FLAG_NO_SUGGESTIONS | TYPE_TEXT_FLAG_AUTO_COMPLETE
 }
 
 // temporary for compatibility with ConversationFragment
