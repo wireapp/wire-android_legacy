@@ -20,22 +20,24 @@ package com.waz.zclient.security
 import android.app.{Activity, Application}
 import android.os.Bundle
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.zclient.{Injectable, Injector, LaunchActivity}
+import com.waz.utils.events._
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.{Injectable, Injector, LaunchActivity}
 
-class SecurityLifecycleCallback(implicit injector: Injector)
+class ActivityLifecycleCallback(implicit injector: Injector)
   extends Application.ActivityLifecycleCallbacks with Injectable with DerivedLogTag {
 
-  private var activitiesStarted = 0
+  private val activitiesRunning = Signal[(Int, Option[Activity])]((0, None))
+
+  val appInBackground: Signal[(Boolean, Option[Activity])] = activitiesRunning.map { case (running, lastAct) => (running == 0, lastAct) }
 
   override def onActivityPaused(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
       case _: AppLockActivity =>
       case _ =>
-        activitiesStarted -= 1
-        verbose(l"onActivityPaused, activities still active: $activitiesStarted, ${activity.getClass.getName}")
-        if (activitiesStarted == 0) inject[SecurityPolicyChecker].updateBackgroundEntryTimer()
+        verbose(l"onActivityPaused, activities still active: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
+        activitiesRunning.mutate { case (running, _) => (running - 1, Option(activity))}
     }
   }
 
@@ -44,9 +46,9 @@ class SecurityLifecycleCallback(implicit injector: Injector)
       case _: LaunchActivity =>
       case _: AppLockActivity =>
       case _ =>
-        activitiesStarted += 1
-        verbose(l"onActivityResumed, activities active now: $activitiesStarted, ${activity.getClass.getName}")
-        if (activitiesStarted == 1) inject[SecurityPolicyChecker].run(activity)
+        verbose(l"onActivityResumed, activities active now: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
+        activitiesRunning.mutate { case (running, _) => (running + 1, Option(activity))}
+
     }
   }
 

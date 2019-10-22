@@ -89,7 +89,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneContr
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
-import com.waz.zclient.security.{SecurityLifecycleCallback, SecurityPolicyChecker}
+import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
@@ -273,6 +273,8 @@ object WireApplication extends DerivedLogTag {
 
     bind[MediaRecorderController] to new MediaRecorderControllerImpl(ctx)
 
+    bind[ActivityLifecycleCallback] to new ActivityLifecycleCallback()
+
     bind[SecurityPolicyService] to new SecurityPolicyService()
 
     bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
@@ -445,6 +447,11 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
       inject[MessageNotificationsController],
       assets2Module)
 
+    val activityLifecycleCallback = inject[ActivityLifecycleCallback]
+    // we're unable to check if the callback is already registered - we have to re-register it to be sure
+    unregisterActivityLifecycleCallbacks(activityLifecycleCallback)
+    registerActivityLifecycleCallbacks(activityLifecycleCallback)
+
     inject[NotificationManagerWrapper]
     inject[ImageNotificationsController]
     inject[CallingNotificationsController]
@@ -457,12 +464,7 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
 
-    // we're unable to check if the callback is already registered - we have to re-register it to be sure
-    unregisterActivityLifecycleCallbacks(securityCallback)
-    registerActivityLifecycleCallbacks(securityCallback)
   }
-
-  private lazy val securityCallback = new SecurityLifecycleCallback()
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {
     val proxyHost = if(!url.equalsIgnoreCase("none")) Some(url) else None
