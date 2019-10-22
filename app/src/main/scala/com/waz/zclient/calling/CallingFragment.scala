@@ -59,6 +59,7 @@ abstract class UserVideoView(context: Context, val participant: Participant) ext
 
   protected val stateMessageText = controller.stateMessageText(participant)
   stateMessageText.onUi(msg => pausedText.setText(msg.getOrElse("")))
+
   protected val pausedTextVisible = stateMessageText.map(_.exists(_.nonEmpty))
   pausedTextVisible.onUi(pausedText.setVisible)
 
