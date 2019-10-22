@@ -28,7 +28,7 @@ object Calling {
   // The wrapped `wcall` instance.
   type Handle = Uint32_t
 
-  // A magic number required by all mobile platforms used to initialize AVS.
+  // A magic number used to initialize AVS (required for all mobile platforms).
   val WCALL_ENV_DEFAULT: Int = 0
 
   private val available = Promise[Unit]()
