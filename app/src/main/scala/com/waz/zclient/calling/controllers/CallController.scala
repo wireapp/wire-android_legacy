@@ -123,27 +123,35 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     case false => themeController.currentTheme
   }
 
-  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
+  private val mergedVideoStates: Signal[Map[UserId, Set[VideoState]]] = {
+    allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
+  }
+
+  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] = {
     for {
-      cZms        <- callingZms
-      ids         <- others.map { os =>
-        val ordered = os.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
-        take.fold(ordered)(t => ordered.take(t))
-      }
-      users       <- cZms.usersStorage.listSignal(ids)
-      videoStates <- allVideoReceiveStates
-    } yield
-      users.map { u =>
-        CallParticipantInfo(
-          u.id,
-          u.picture,
-          u.getDisplayName,
-          u.isGuest(cZms.teamId),
-          u.isVerified,
-          videoStates.get(u.id).exists(Set(VideoState.Started, VideoState.ScreenShare).contains),
-          Some(cZms)
-        )
-      }
+      cZms              <- callingZms
+      ids               <- orderedParticipants(take)
+      users             <- cZms.usersStorage.listSignal(ids)
+      videoStates <- mergedVideoStates
+    } yield users.map { user =>
+      CallParticipantInfo(
+        user.id,
+        user.picture,
+        user.getDisplayName,
+        user.isGuest(cZms.teamId),
+        user.isVerified,
+        isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started, ScreenShare)).nonEmpty),
+        Some(cZms)
+      )
+    }
+  }
+
+  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[UserId]] = {
+    others.map { others =>
+      val orderedByTimeDescending = others.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
+      take.fold(orderedByTimeDescending)(orderedByTimeDescending.take)
+    }
+  }
 
   val flowManager = callingZms.map(_.flowmanager)
 
