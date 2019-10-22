@@ -34,7 +34,7 @@ import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState, WCall}
-import com.waz.service.call.CallInfo.CallState
+import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallingService.GlobalCallProfile
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
@@ -60,13 +60,13 @@ class GlobalCallingService extends DerivedLogTag {
 
   lazy val globalCallProfile: Signal[GlobalCallProfile] =
     ZMessaging.currentAccounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.calling.callProfile).toSeq: _*)).map { profiles =>
-      GlobalCallProfile(profiles.flatMap(_.calls.map(c => (c._2.account, c._2.convId) -> c._2)).toMap)
+      GlobalCallProfile(profiles.flatMap(_.calls.map(c => (c._2.selfParticipant.userId, c._2.convId) -> c._2)).toMap)
     }
 
   lazy val services: Signal[Set[(UserId, CallingServiceImpl)]] = ZMessaging.currentAccounts.zmsInstances.map(_.map(z => z.selfUserId -> z.calling))
 
   //If there is an active call in one or more of the logged in accounts, returns the account id for the one with the oldest call
-  lazy val activeAccount: Signal[Option[UserId]] = globalCallProfile.map(_.activeCall.map(_.account))
+  lazy val activeAccount: Signal[Option[UserId]] = globalCallProfile.map(_.activeCall.map(_.selfParticipant.userId))
 
   //can be used to drop all active calls in case of GCM
   def dropActiveCalls(): Unit = services.head.map(_.map(_._2)).map(_.foreach(_.onInterrupted()))
@@ -226,7 +226,7 @@ class CallingServiceImpl(val accountId:       UserId,
 
       val newCall = CallInfo(
         conv.id,
-        accountId,
+        selfParticipant = Participant(accountId, clientId),
         isGroup,
         userId,
         OtherCalling,
@@ -353,10 +353,10 @@ class CallingServiceImpl(val accountId:       UserId,
       call.copy(isCbrEnabled = enabled)
     }("onBitRateStateChanged")
 
-  def onVideoStateChanged(userId: String, videoReceiveState: VideoState): Future[Unit] =
+  def onVideoStateChanged(userId: String, clientId: String, videoReceiveState: VideoState): Future[Unit] =
     updateActiveCallAsync { (_, _, call) =>
       verbose(l"video state changed: $videoReceiveState")
-      call.updateVideoState(UserId(userId), videoReceiveState)
+      call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
   def onGroupChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
@@ -434,7 +434,7 @@ class CallingServiceImpl(val accountId:       UserId,
                       //Assume that when a video call starts, sendingVideo will be true. From here on, we can then listen to state handler
                       val newCall = CallInfo(
                         conv.id,
-                        accountId,
+                        selfParticipant = Participant(accountId, clientId),
                         isGroup,
                         accountId,
                         SelfCalling,
@@ -490,14 +490,13 @@ class CallingServiceImpl(val accountId:       UserId,
       call
     } ("onInterrupted")
 
-  override def setCallMuted(muted: Boolean): Unit =
-    fm.foreach { f =>
-      verbose(l"setCallMuted: $muted")
-      updateActiveCall { c =>
-        f.setMute(muted)
-        c.copy(muted = muted)
-      }("setCallMuted")
-    }
+  override def setCallMuted(muted: Boolean): Unit = {
+    verbose(l"setCallMuted: $muted")
+    updateActiveCallAsync { (w, _, call) =>
+      avs.setCallMuted(w, muted)
+      call.copy(muted = muted)
+    }("setCallMuted")
+  }
 
   /**
     * This method should NOT be called before we have permissions AND while the call is still incoming. Once established,
@@ -511,7 +510,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }
       verbose(l"setVideoSendActive: $convId, providedState: $state, targetState: $targetSt")
       if (state != NoCameraPermission) avs.setVideoSendState(w, conv.remoteId, targetSt)
-      call.updateVideoState(accountId, targetSt)
+      call.updateVideoState(Participant(accountId, clientId), targetSt)
     }("setVideoSendState")
 
   val callMessagesStage: Stage.Atomic = EventScheduler.Stage[CallMessageEvent] {

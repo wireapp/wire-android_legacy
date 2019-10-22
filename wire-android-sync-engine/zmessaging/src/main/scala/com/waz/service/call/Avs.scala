@@ -26,13 +26,14 @@ import com.waz.model.otr.ClientId
 import com.waz.service.call.Calling._
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.jna.{Size_t, Uint32_t}
-import com.waz.utils.returning
+import com.waz.utils.{CirceJSONSupport, returning}
 import org.threeten.bp.Instant
 
 import scala.concurrent.{Future, Promise}
 
 trait Avs {
   import Avs._
+  def libraryVersion: Future[String]
   def registerAccount(callingService: CallingServiceImpl): Future[WCall]
   def unregisterAccount(wCall: WCall): Future[Unit]
   def onNetworkChanged(wCall: WCall): Future[Unit]
@@ -44,6 +45,8 @@ trait Avs {
   def endCall(wCall: WCall, convId: RConvId): Unit
   def rejectCall(wCall: WCall, convId: RConvId): Unit
   def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value): Unit
+  def setCallMuted(wCall: WCall, muted: Boolean): Unit
+  def setProxy(host: String, port: Int): Unit
 }
 
 /**
@@ -57,9 +60,9 @@ class AvsImpl() extends Avs with DerivedLogTag {
   import Avs._
 
   private val available = Calling.avsAvailable.map { _ =>
-    returning(Calling.wcall_init()) { res =>
+    returning(Calling.wcall_init(Calling.WCALL_ENV_DEFAULT)) { res =>
       Calling.wcall_set_log_handler(new LogHandler {
-        override def onLog(level: Int, msg: String, arg: WCall): Unit = {
+        override def onLog(level: Int, msg: String, arg: Pointer): Unit = {
           val log = l"${showString(msg)}"
           level match {
             case LogLevelDebug => debug(log)(AvsLogTag)
@@ -70,13 +73,17 @@ class AvsImpl() extends Avs with DerivedLogTag {
           }
         }
       }, null)
-      verbose(l"AVS initialized: $res")
+      verbose(l"AVS ${Calling.wcall_library_version()} initialized: $res")
     }
   }.map(_ => {})
 
   available.onFailure {
     case e: Throwable =>
       error(l"Failed to initialise AVS - calling will not work", e)
+  }
+
+  override def libraryVersion: Future[String] = {
+    withAvsReturning(wcall_library_version(), "Unknown AVS version")
   }
 
   override def registerAccount(cs: CallingServiceImpl) = available.flatMap { _ =>
@@ -122,28 +129,28 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onMetricsReady(RConvId(convId), metricsJson)
       },
       new CallConfigRequestHandler {
-        override def onConfigRequest(inst: WCall, arg: WCall): Int =
+        override def onConfigRequest(inst: WCall, arg: Pointer): Int =
           cs.onConfigRequest(inst)
       },
       new CbrStateChangeHandler {
-        override def onBitRateStateChanged(userId: String, enabled: Boolean, arg: WCall): Unit =
+        override def onBitRateStateChanged(userId: String, enabled: Boolean, arg: Pointer): Unit =
           cs.onBitRateStateChanged(enabled)
       },
       new VideoReceiveStateHandler {
-        override def onVideoReceiveStateChanged(userId: String, state: Int, arg: WCall): Unit =
-          cs.onVideoStateChanged(userId, VideoState(state))
+        override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit =
+          cs.onVideoStateChanged(userId, clientId, VideoState(state))
       },
       null
     )
 
     callingReady.future.map { _ =>
-      //TODO it would be nice to convince AVS to move this last method into the method wcall_init.
       Calling.wcall_set_group_changed_handler(wCall, new GroupChangedHandler {
-        override def onGroupChanged(convId: String, arg: Pointer) = {
-          //TODO change this set to an ordered set to for special audio effects?
-          val mStruct = wcall_get_members(wCall, convId)
-          val members = if (mStruct.membc.intValue() > 0) mStruct.toArray(mStruct.membc.intValue()).map(u => UserId(u.userid)).toSet else Set.empty[UserId]
-          wcall_free_members(mStruct.getPointer)
+        override def onGroupChanged(convId: String, data: String, arg: Pointer): Unit = {
+          val members = ParticipantsChangeDecoder.decode(data) match {
+            case Some(participantsChange) => participantsChange.members.map(_.userid).toSet
+            case None                     => Set.empty[UserId]
+          }
+
           cs.onGroupChanged(RConvId(convId), members)
         }
       })
@@ -168,10 +175,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
     withAvs(Calling.wcall_network_changed(wCall))
 
   override def startCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, convType: WCallConvType.Value, cbrEnabled: Boolean) =
-    withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, cbrEnabled), -1)
+    withAvsReturning(wcall_start(wCall, convId.str, callType.id, convType.id, if (cbrEnabled) 1 else 0), -1)
 
   override def answerCall(wCall: WCall, convId: RConvId, callType: WCallType.Value, cbrEnabled: Boolean) =
-    withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, cbrEnabled))
+    withAvs(wcall_answer(wCall: WCall, convId.str, callType.id, if (cbrEnabled) 1 else 0))
 
   override def onHttpResponse(wCall: WCall, status: Int, reason: String, arg: Pointer) =
     withAvs(wcall_resp(wCall, status, reason, arg))
@@ -193,13 +200,18 @@ class AvsImpl() extends Avs with DerivedLogTag {
   override def setVideoSendState(wCall: WCall, convId: RConvId, state: VideoState.Value) =
     withAvs(wcall_set_video_send_state(wCall, convId.str, state.id))
 
+  override def setCallMuted(wCall: WCall, muted: Boolean): Unit =
+    withAvs(wcall_set_mute(wCall, if (muted) 1 else 0))
+
+  override def setProxy(host: String, port: Int): Unit =
+    withAvs(wcall_set_proxy(host, port))
 }
 
 object Avs extends DerivedLogTag {
 
   val AvsLogTag: LogTag = LogTag("AVS")
 
-  type WCall = Pointer
+  type WCall = Calling.Handle
 
   def remoteInstant(uint32_t: Uint32_t) = RemoteInstant.ofEpochMilli(uint32_t.value.toLong * 1000)
 
@@ -284,4 +296,16 @@ object Avs extends DerivedLogTag {
   val LogLevelInfo  = 1
   val LogLevelWarn  = 2
   val LogLevelError = 3
+
+  object ParticipantsChangeDecoder extends CirceJSONSupport {
+    import io.circe.{Decoder, parser}
+
+    case class AvsParticipantsChange(convid: ConvId, members: Seq[Member])
+    case class Member(userid: UserId, clientid: ClientId, aestab: Int, vrecv: Int)
+
+    private lazy val decoder: Decoder[AvsParticipantsChange] = Decoder.apply
+
+    def decode(json: String): Option[AvsParticipantsChange] =
+      parser.decode(json)(decoder).right.toOption
+  }
 }

@@ -21,11 +21,12 @@ import com.sun.jna.Pointer
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
+import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, GenericMessage, LocalInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState._
 import com.waz.service.call.Avs.{AvsClosedReason, VideoState}
-import com.waz.service.call.CallInfo.CallState
+import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.utils.events.{ClockSignal, Signal}
 import org.threeten.bp.Duration
@@ -34,7 +35,7 @@ import org.threeten.bp.Duration.between
 import scala.concurrent.duration._
 
 case class CallInfo(convId:             ConvId,
-                    account:            UserId,
+                    selfParticipant:    Participant,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
@@ -45,7 +46,7 @@ case class CallInfo(convId:             ConvId,
                     isCbrEnabled:       Boolean                           = false,
                     startedAsVideoCall: Boolean                           = false,
                     videoSendState:     VideoState                        = VideoState.Stopped,
-                    videoReceiveStates: Map[UserId, VideoState]           = Map.empty,
+                    videoReceiveStates: Map[Participant, VideoState]      = Map.empty,
                     wasVideoToggled:    Boolean                           = false, //for tracking
                     startTime:          LocalInstant                      = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
                     joinedTime:         Option[LocalInstant]              = None, //the time the call was joined, if any
@@ -68,7 +69,7 @@ case class CallInfo(convId:             ConvId,
     case None => ""
   }
 
-  val allVideoReceiveStates = videoReceiveStates + (account -> videoSendState)
+  val allVideoReceiveStates = videoReceiveStates + (selfParticipant -> videoSendState)
 
   val isVideoCall = state match {
     case OtherCalling => startedAsVideoCall
@@ -103,13 +104,13 @@ case class CallInfo(convId:             ConvId,
     }
   }
 
-  def updateVideoState(userId: UserId, videoState: VideoState): CallInfo = {
+  def updateVideoState(participant: Participant, videoState: VideoState): CallInfo = {
 
     val newCall: CallInfo =
-      if (userId == account) this.copy(videoSendState = videoState)
-      else this.copy(videoReceiveStates = this.videoReceiveStates + (userId -> videoState))
+      if (participant == selfParticipant) this.copy(videoSendState = videoState)
+      else this.copy(videoReceiveStates = this.videoReceiveStates + (participant -> videoState))
 
-    verbose(l"updateVideoSendState: $userId, $videoState, newCall: $newCall")
+    verbose(l"updateVideoSendState: $participant, $videoState, newCall: $newCall")
 
     val wasVideoToggled = newCall.wasVideoToggled || (newCall.isVideoCall != this.isVideoCall)
     newCall.copy(wasVideoToggled = wasVideoToggled)
@@ -118,6 +119,8 @@ case class CallInfo(convId:             ConvId,
 }
 
 object CallInfo {
+
+  case class Participant(userId: UserId, clientId: ClientId)
 
   sealed trait CallState extends SafeToLog
 

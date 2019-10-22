@@ -68,7 +68,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
                          .calls
                          .values
                          .filter(c => c.state == OtherCalling || (curCallId.contains(c.convId) && c.state != Ongoing))
-                         .map(c => c.convId -> (c.caller, c.account))
+                         .map(c => c.convId -> (c.caller, c.selfParticipant.userId))
                          .toSeq
     } yield (curCallId, allCalls)
 
@@ -108,7 +108,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
                                     CallNotification(
                                       convId.str.hashCode,
                                       convId,
-                                      callInfo.account,
+                                      callInfo.selfParticipant.userId,
                                       callInfo.startTime,
                                       title,
                                       conv.fold(Name.Empty)(_.displayName),

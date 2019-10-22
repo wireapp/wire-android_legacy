@@ -29,6 +29,7 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
+import com.waz.service.call.CallInfo.Participant
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -116,34 +117,42 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val others                = currentCall.map(_.others)
 
   val lastCallAccountId: SourceSignal[UserId] = Signal()
-  currentCall.map(_.account) { account => lastCallAccountId ! account }
+  currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
 
   val theme: Signal[Theme] = isVideoCall.flatMap {
     case true  => Signal.const(Theme.Dark)
     case false => themeController.currentTheme
   }
 
-  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
+  private val mergedVideoStates: Signal[Map[UserId, Set[VideoState]]] = {
+    allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
+  }
+
+  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] = {
     for {
       cZms        <- callingZms
-      ids         <- others.map { os =>
-        val ordered = os.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
-        take.fold(ordered)(t => ordered.take(t))
-      }
+      ids         <- orderedParticipants(take)
       users       <- cZms.usersStorage.listSignal(ids)
-      videoStates <- allVideoReceiveStates
-    } yield
-      users.map { u =>
-        CallParticipantInfo(
-          u.id,
-          u.picture,
-          u.getDisplayName,
-          u.isGuest(cZms.teamId),
-          u.isVerified,
-          videoStates.get(u.id).exists(Set(VideoState.Started, VideoState.ScreenShare).contains),
-          Some(cZms)
-        )
-      }
+      videoStates <- mergedVideoStates
+    } yield users.map { user =>
+      CallParticipantInfo(
+        user.id,
+        user.picture,
+        user.getDisplayName,
+        user.isGuest(cZms.teamId),
+        user.isVerified,
+        isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started, ScreenShare)).nonEmpty),
+        Some(cZms)
+      )
+    }
+  }
+
+  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[UserId]] = {
+    others.map { others =>
+      val orderedByTimeDescending = others.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
+      take.fold(orderedByTimeDescending)(orderedByTimeDescending.take)
+    }
+  }
 
   val flowManager = callingZms.map(_.flowmanager)
 
@@ -400,15 +409,17 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       case _ => ""
     }
 
-  def stateMessageText(userId: UserId): Signal[Option[String]] = Signal(callState, cameraFailed, allVideoReceiveStates.map(_.getOrElse(userId, Unknown))).map { vs =>
-    verbose(l"Message Text: (callstate: ${vs._1}, cameraFailed: ${vs._2}, videoState: ${vs._3}")
-    (vs match {
-      case (SelfCalling,   true, _)                  => Some(R.string.calling__self_preview_unavailable_long)
-      case (SelfConnected, _,    BadConnection)      => Some(R.string.ongoing__poor_connection_message)
-      case (SelfConnected, _,    Paused)             => Some(R.string.video_paused)
-      case (OtherCalling,  _,    NoCameraPermission) => Some(R.string.calling__cannot_start__no_camera_permission__message)
-      case _                                         => None
-    }).map(getString)
+  def stateMessageText(participant: Participant): Signal[Option[String]] = {
+    Signal(callState, cameraFailed, videoReceiveStates.map(_.getOrElse(participant, Unknown))).map { vs =>
+      verbose(l"Message Text: (callstate: ${vs._1}, cameraFailed: ${vs._2}, videoState: ${vs._3}")
+      (vs match {
+        case (SelfCalling,   true, _)                  => Some(R.string.calling__self_preview_unavailable_long)
+        case (SelfConnected, _,    BadConnection)      => Some(R.string.ongoing__poor_connection_message)
+        case (SelfConnected, _,    Paused)             => Some(R.string.video_paused)
+        case (OtherCalling,  _,    NoCameraPermission) => Some(R.string.calling__cannot_start__no_camera_permission__message)
+        case _                                         => None
+      }).map(getString)
+    }
   }
 
   lazy val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {

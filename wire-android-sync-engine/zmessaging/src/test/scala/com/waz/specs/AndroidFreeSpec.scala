@@ -24,6 +24,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.LogSE._
 import com.waz.log.{InternalLog, LogSE, LogsService}
 import com.waz.model.UserId
+import com.waz.model.otr.ClientId
 import com.waz.service.AccountsService.{AccountState, InForeground, LoggedOut}
 import com.waz.service._
 import com.waz.service.tracking.TrackingService
@@ -84,6 +85,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
   val clock = AndroidFreeSpec.clock
 
   val account1Id  = UserId("account1")
+  val client1Id   = ClientId("client1")
   val accounts    = mock[AccountsService]
   val tracking    = mock[TrackingService]
 

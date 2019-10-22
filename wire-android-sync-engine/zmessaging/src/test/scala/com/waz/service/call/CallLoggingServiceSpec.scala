@@ -18,9 +18,10 @@
 package com.waz.service.call
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.otr.ClientId
 import com.waz.model.{ConvId, RemoteInstant, UserId}
 import com.waz.service.call.Avs.AvsClosedReason
-import com.waz.service.call.CallInfo.CallState
+import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
@@ -38,6 +39,8 @@ class CallLoggingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   import Threading.Implicits.Background
 
   val selfUserId = UserId("self-user")
+  val selfClientId = ClientId("self-client")
+  val selfParticipant = Participant(selfUserId, selfClientId)
 
   val calling   = mock[CallingService]
   val messages  = mock[MessagesService]
@@ -49,7 +52,7 @@ class CallLoggingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val convId = ConvId("conv")
 
-    lazy val outgoingCall        = CallInfo(convId, selfUserId, isGroup = false, selfUserId, SelfCalling)
+    lazy val outgoingCall        = CallInfo(convId, selfParticipant, isGroup = false, selfUserId, SelfCalling)
     lazy val joiningCall         = outgoingCall   .updateCallState(SelfJoining)
     lazy val establishedCall     = joiningCall    .updateCallState(SelfConnected)
     lazy val endedCall           = establishedCall.updateCallState(Ended)
@@ -110,8 +113,8 @@ class CallLoggingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     val convId1 = ConvId("conv1")
     val convId2 = ConvId("conv2")
 
-    val incomingCall1 = CallInfo(convId1, selfUserId, isGroup = false, UserId("other-user1"), OtherCalling)
-    val incomingCall2 = CallInfo(convId2, selfUserId, isGroup = false, UserId("other-user2"), OtherCalling)
+    val incomingCall1 = CallInfo(convId1, selfParticipant, isGroup = false, UserId("other-user1"), OtherCalling)
+    val incomingCall2 = CallInfo(convId2, selfParticipant, isGroup = false, UserId("other-user2"), OtherCalling)
 
     val trackingCalledConv1 = Signal(0)
     val trackingCalledConv2 = Signal(0)
