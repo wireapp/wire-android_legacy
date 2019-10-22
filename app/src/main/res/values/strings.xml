@@ -241,6 +241,7 @@
 
     <!-- Conversation actions -->
     <string name="conversation__action__clear_content">Clear content…</string>
+    <string name="conversation__action__delete_group">Delete group</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>

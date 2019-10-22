@@ -60,6 +60,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   private val cameraController       = inject[ICameraController]
   private val screenController       = inject[IConversationScreenController]
   private val convListController     = inject[ConversationListController]
+  private val userAccountsController = inject[UserAccountsController]
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
   override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
@@ -94,6 +95,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     teamId              <- zMessaging.map(_.teamId)
     Some(conv)          <- conv
     isGroup             <- isGroup
+    admin               <- userAccountsController.isAdmin
     connectStatus       <- otherUser.map(_.map(_.connection))
     teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot               <- otherUser.map(_.exists(_.isWireBot))
@@ -144,6 +146,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
+          if (admin) builder += DeleteGroup
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)
@@ -317,17 +320,18 @@ object ConversationOptionsMenuController {
   object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__remove_from_favorites))
   object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__move_to_folder))
 
-  object Clear              extends BaseMenuItem(R.string.conversation__action__clear_content, Some(R.string.glyph__delete_me))
+  object Clear               extends BaseMenuItem(R.string.conversation__action__clear_content, Some(R.string.glyph__clear))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
+  object DeleteGroup         extends BaseMenuItem(R.string.conversation__action__delete_group, Some(R.string.glyph__delete_me))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
   object Unblock             extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
   object RemoveMember        extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
 
-  object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
+  object LeaveOnly     extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
   object LeaveAndClear extends BaseMenuItem(R.string.conversation__action__leave_and_clear, Some(R.string.empty_string))
   object ClearOnly     extends BaseMenuItem(R.string.conversation__action__clear_only, Some(R.string.empty_string))
   object ClearAndLeave extends BaseMenuItem(R.string.conversation__action__clear_and_leave, Some(R.string.empty_string))
 
   val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder,
-    RemoveFromFolderPlaceHolder, Clear, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndClear, ClearOnly, ClearAndLeave)
+    RemoveFromFolderPlaceHolder, Clear, Leave, DeleteGroup, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndClear, ClearOnly, ClearAndLeave)
 }
