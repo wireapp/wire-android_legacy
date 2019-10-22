@@ -134,6 +134,7 @@ object OptionsMenu {
     case R.string.glyph__remove_from_favorites => WireStyleKit.drawFavoritesOn
     case R.string.glyph__move_to_folder => WireStyleKit.drawMoveTo
     case R.string.glyph__remove_from_folder => WireStyleKit.drawRemoveFrom
+    case R.string.glyph__delete_group => WireStyleKit.drawEraser
 
     case _ => (_, _, _, _) => ()
   }

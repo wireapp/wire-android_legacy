@@ -22,7 +22,6 @@ import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Path;
 import java.util.Stack;
 
@@ -4396,16 +4395,13 @@ public class WireStyleKit {
         private static Path bezierPath = new Path();
     }
 
-    public static void drawEraser(Canvas canvas) {
-        WireStyleKit.drawEraser(canvas, new RectF(0f, 0f, 64f, 64f), ResizingBehavior.AspectFit);
+    public static void drawEraser(Canvas canvas, int color) {
+        WireStyleKit.drawEraser(canvas, new RectF(0f, 0f, 64f, 64f), ResizingBehavior.AspectFit, color);
     }
 
-    public static void drawEraser(Canvas canvas, RectF targetFrame, ResizingBehavior resizing) {
+    public static void drawEraser(Canvas canvas, RectF targetFrame, ResizingBehavior resizing, int color) {
         // General Declarations
         Paint paint = CacheForEraser.paint;
-
-        // Local Colors
-        int fillColor6 = Color.argb(255, 0, 0, 0);
 
         // Resize to Target Frame
         canvas.save();
@@ -4465,7 +4461,7 @@ public class WireStyleKit {
         paint.reset();
         paint.setFlags(Paint.ANTI_ALIAS_FLAG);
         paint.setStyle(Paint.Style.FILL);
-        paint.setColor(fillColor6);
+        paint.setColor(color);
         canvas.drawPath(bezierPath, paint);
 
         canvas.restore();

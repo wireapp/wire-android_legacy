@@ -142,4 +142,5 @@
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__remove_from_favorites">\uE739</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__move_to_folder">\uE739</string>
     <string translatable="false" tools:ignore="UnusedResources" name="glyph__remove_from_folder">\uE740</string>
+    <string translatable="false" tools:ignore="UnusedResources" name="glyph__delete_group">\uE741</string>
 </resources>
