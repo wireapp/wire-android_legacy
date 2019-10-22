@@ -29,6 +29,7 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
+import com.waz.service.call.CallInfo.Participant
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -408,15 +409,17 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       case _ => ""
     }
 
-  def stateMessageText(userId: UserId): Signal[Option[String]] = Signal(callState, cameraFailed, allVideoReceiveStates.map(_.getOrElse(userId, Unknown))).map { vs =>
-    verbose(l"Message Text: (callstate: ${vs._1}, cameraFailed: ${vs._2}, videoState: ${vs._3}")
-    (vs match {
-      case (SelfCalling,   true, _)                  => Some(R.string.calling__self_preview_unavailable_long)
-      case (SelfConnected, _,    BadConnection)      => Some(R.string.ongoing__poor_connection_message)
-      case (SelfConnected, _,    Paused)             => Some(R.string.video_paused)
-      case (OtherCalling,  _,    NoCameraPermission) => Some(R.string.calling__cannot_start__no_camera_permission__message)
-      case _                                         => None
-    }).map(getString)
+  def stateMessageText(participant: Participant): Signal[Option[String]] = {
+    Signal(callState, cameraFailed, videoReceiveStates.map(_.getOrElse(participant, Unknown))).map { vs =>
+      verbose(l"Message Text: (callstate: ${vs._1}, cameraFailed: ${vs._2}, videoState: ${vs._3}")
+      (vs match {
+        case (SelfCalling,   true, _)                  => Some(R.string.calling__self_preview_unavailable_long)
+        case (SelfConnected, _,    BadConnection)      => Some(R.string.ongoing__poor_connection_message)
+        case (SelfConnected, _,    Paused)             => Some(R.string.video_paused)
+        case (OtherCalling,  _,    NoCameraPermission) => Some(R.string.calling__cannot_start__no_camera_permission__message)
+        case _                                         => None
+      }).map(getString)
+    }
   }
 
   lazy val speakerButton = ButtonSignal(callingZms.map(_.mediamanager), callingZms.flatMap(_.mediamanager.isSpeakerOn)) {
