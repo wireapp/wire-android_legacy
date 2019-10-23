@@ -20,7 +20,6 @@ package com.waz.service.conversation
 import com.softwaremill.macwire._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
-import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -170,7 +169,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
-    case DeleteConversationEvent(_, time, from) => deleteConversation(conv, time, from)
+    case DeleteConversationEvent(_, time, from) =>
+      error(l"received event. time: $time, from: $from")
+      deleteConversation(conv, time, from)
 
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
@@ -340,25 +341,27 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
   } yield ()
 
-  private def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) =
+  def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) = {
+    error(l"delete Conv")
     (for {
-      _               <- notificationService.displayNotificationForDeletingConversation(from, remoteTime, convData)
-      convId          =  convData.id
-      convMessageIds  <- messages.findMessageIds(convId)
-      assetIds        <- messages.getAssetIds(convMessageIds)
-      _               <- assetService.deleteAll(assetIds)
-      _               <- convsStorage.remove(convId)
-      _               <- membersStorage.delete(convId)
-      _               <- msgContent.deleteMessagesForConversation(convId)
-      _               <- receiptsStorage.removeAllForMessages(convMessageIds)
-      _               <- checkCurrentConversationDeleted(convId)
-      _               <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
+      _ <- notificationService.displayNotificationForDeletingConversation(from, remoteTime, convData)
+      convId = convData.id
+      convMessageIds <- messages.findMessageIds(convId)
+      assetIds <- messages.getAssetIds(convMessageIds)
+      _ <- assetService.deleteAll(assetIds)
+      _ <- convsStorage.remove(convId)
+      _ <- membersStorage.delete(convId)
+      _ <- msgContent.deleteMessagesForConversation(convId)
+      _ <- receiptsStorage.removeAllForMessages(convMessageIds)
+      _ <- checkCurrentConversationDeleted(convId)
+      _ <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
     } yield ()).recoverWith {
-      case ex : Exception =>  {
-        error(l"error while deleting conversation $ex")
+      case ex: Exception => {
+        error(l"error while deleting conversation", ex)
       }
         Future.successful(())
     }
+  }
 
   private def checkCurrentConversationDeleted(convId: ConvId): Future[Unit] = {
     for {

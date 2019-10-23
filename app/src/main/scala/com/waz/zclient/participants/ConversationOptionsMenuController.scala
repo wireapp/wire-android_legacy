@@ -91,8 +91,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     members <- conv.fold(Signal.const(Set.empty[UserId]))(cd => zms.membersStorage.activeMembers(cd.id))
   } yield members.contains(zms.selfUserId)
 
+  val teamId: Signal[Option[TeamId]] = zMessaging.map(_.teamId)
+
   val optionItems: Signal[Seq[MenuItem]] = for {
-    teamId              <- zMessaging.map(_.teamId)
+    teamId              <- teamId
     Some(conv)          <- conv
     isGroup             <- isGroup
     admin               <- userAccountsController.isAdmin
@@ -146,7 +148,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
-          if (admin) builder += DeleteGroup
+          if (admin) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)
@@ -185,7 +187,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
         case Unarchive => convController.archive(cId, archive = false)
         case Notifications => OptionsMenu(context, new NotificationsOptionsMenuController(convId, mode.inConversationList)).show()
         case Leave     => leaveConversation(cId)
-        case Clear    => deleteConversation(cId)
+        case Clear     => clearConversation(cId)
         case Block     => user.map(_.id).foreach(showBlockConfirmation(cId, _))
         case Unblock   => user.map(_.id).foreach(uId => zMessaging.head.flatMap(_.connection.unblockConnection(uId)))
         case RemoveMember =>
@@ -199,6 +201,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
         case RemoveFromFavorites => convListController.removeFromFavorites(cId)
         case MoveToFolder        => screenController.showMoveToFolder(cId)
         case i: RemoveFromFolder => convListController.removeFromFolder(cId, i.folderData.id)
+        case DeleteGroupConv     => deleteConversation(cId)
         case _ =>
       }
     case _ =>
@@ -223,7 +226,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     dialog.show()
   }
 
-  def deleteConversation(convId: ConvId): Unit = {
+  def clearConversation(convId: ConvId): Unit = {
     isGroup.head.flatMap { isGroup =>
       isMember.head.map { isMember =>
         val dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
@@ -285,6 +288,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     }
   }
 
+  private def deleteConversation(convId: ConvId) = teamId.head.flatMap(
+    convListController.deleteConversation(_, convId)
+  )
+
   override def finalize(): Unit = {
     verbose(l"finalized!")
   }
@@ -322,7 +329,7 @@ object ConversationOptionsMenuController {
 
   object Clear               extends BaseMenuItem(R.string.conversation__action__clear_content, Some(R.string.glyph__clear))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
-  object DeleteGroup         extends BaseMenuItem(R.string.conversation__action__delete_group, Some(R.string.glyph__delete_me))
+  object DeleteGroupConv     extends BaseMenuItem(R.string.conversation__action__delete_group, Some(R.string.glyph__delete_me))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
   object Unblock             extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
   object RemoveMember        extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
@@ -333,5 +340,5 @@ object ConversationOptionsMenuController {
   object ClearAndLeave extends BaseMenuItem(R.string.conversation__action__clear_and_leave, Some(R.string.empty_string))
 
   val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder,
-    RemoveFromFolderPlaceHolder, Clear, Leave, DeleteGroup, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndClear, ClearOnly, ClearAndLeave)
+    RemoveFromFolderPlaceHolder, Clear, Leave, DeleteGroupConv, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndClear, ClearOnly, ClearAndLeave)
 }

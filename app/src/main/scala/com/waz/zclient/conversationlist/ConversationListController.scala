@@ -25,6 +25,7 @@ import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.service.conversation.{ConversationsService, FoldersService}
+import com.waz.service.teams.TeamsService
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
 import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal}
@@ -218,6 +219,20 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
   } yield ()).recoverWith {
     case ex: Exception => error(l"error while creating custom folder $folderName for conv $convId", ex)
       Future.failed(ex)
+  }
+
+  def deleteConversation(teamId: Option[TeamId], convId: ConvId): Future[Unit] = (for {
+      contUpdater <- convService.head.map(_.content)
+      Some(tid)    = teamId
+      convOpt     <- contUpdater.convById(convId)
+      Some(conv)   = convOpt
+      rConvId      = conv.remoteId
+      teamService <- inject[Signal[TeamsService]].head
+      _           <- teamService.deleteGroupConversation(tid, rConvId)
+  } yield ()).recoverWith {
+    case e: Exception =>
+      error(l"Error while deleting group conversation", e)
+      Future.successful(())
   }
 }
 

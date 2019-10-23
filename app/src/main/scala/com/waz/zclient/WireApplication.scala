@@ -47,6 +47,7 @@ import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
 import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
+import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
 import com.waz.services.SecurityPolicyService
 import com.waz.services.fcm.FetchJob
@@ -198,6 +199,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[FoldersStorage]]                to inject[Signal[ZMessaging]].map(_.foldersStorage)
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
+    bind [Signal[TeamsService]]                  to inject[Signal[ZMessaging]].map(_.teams)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers

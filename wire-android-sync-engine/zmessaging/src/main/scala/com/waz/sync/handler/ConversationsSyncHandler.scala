@@ -37,6 +37,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
+import scala.util.Right
 import scala.util.control.NonFatal
 
 object ConversationsSyncHandler {

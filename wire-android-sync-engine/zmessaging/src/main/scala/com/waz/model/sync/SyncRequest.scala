@@ -323,6 +323,8 @@ object SyncRequest {
     override def mergeKey: Any = (cmd, key)
   }
 
+  case class DeleteGroupConversation(teamId: TeamId, convId: RConvId) extends BaseRequest(Cmd.DeleteGroupConv)
+
   private def mergeHelper[A <: SyncRequest : ClassTag](other: SyncRequest)(f: A => MergeResult[A]): MergeResult[A] = other match {
     case req: A if req.mergeKey == other.mergeKey => f(req)
     case _ => Unchanged
@@ -333,8 +335,10 @@ object SyncRequest {
 
     override def apply(implicit js: JSONObject): SyncRequest = {
       def convId = decodeId[ConvId]('conv)
+      def rConvId = decodeId[RConvId]('rConv)
       def userId = decodeId[UserId]('user)
       def messageId = decodeId[MessageId]('message)
+      def teamId = decodeId[TeamId]('teamId)
       def users = decodeUserIdSeq('users).toSet
       val cmd = js.getString("cmd")
 
@@ -393,6 +397,7 @@ object SyncRequest {
           case Cmd.SyncProperties            => SyncProperties
           case Cmd.PostFolders               => PostFolders
           case Cmd.SyncFolders               => SyncFolders
+          case Cmd.DeleteGroupConv           => DeleteGroupConversation(teamId, rConvId)
           case Cmd.Unknown                   => Unknown
         }
       } catch {
@@ -508,6 +513,9 @@ object SyncRequest {
           o.put("value", value)
         case PostFolders | SyncFolders | SyncSelf | SyncTeam | DeleteAccount | SyncConversations | SyncConnections |
              SyncSelfClients | SyncSelfPermissions | SyncClientsLocation | SyncProperties | Unknown => () // nothing to do
+        case DeleteGroupConversation(teamId, rConvId)  =>
+          o.put("teamId", teamId.str)
+          o.put("rConv", rConvId.str)
       }
     }
   }

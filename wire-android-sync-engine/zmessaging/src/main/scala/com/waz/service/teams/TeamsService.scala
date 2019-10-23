@@ -17,13 +17,14 @@
  */
 package com.waz.service.teams
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
-import com.waz.service.conversation.ConversationsContentUpdater
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.{EventScheduler, SearchKey}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
@@ -49,6 +50,13 @@ trait TeamsService {
   def onMemberSynced(member: TeamMember): Future[Unit]
 
   def guests: Signal[Set[UserId]]
+
+  def deleteGroupConversation(teamId: TeamId, rConvId: RConvId): Future[SyncId]
+
+  def onGroupConversationDeleted(convId: RConvId): Future[Unit]
+
+  def onGroupConversationDeleteError(error: ErrorResponse): Future[ErrorResponse]
+
 }
 
 class TeamsServiceImpl(selfUser:           UserId,
@@ -58,6 +66,7 @@ class TeamsServiceImpl(selfUser:           UserId,
                        convsStorage:       ConversationStorage,
                        convMemberStorage:  MembersStorage,
                        convsContent:       ConversationsContentUpdater,
+                       convsService:       ConversationsService,
                        sync:               SyncServiceHandle,
                        syncRequestService: SyncRequestService,
                        userPrefs:          UserPreferences) extends TeamsService with DerivedLogTag {
@@ -179,6 +188,10 @@ class TeamsServiceImpl(selfUser:           UserId,
         .map(_ => ())
   }
 
+  override def deleteGroupConversation(tid: TeamId, rConvId: RConvId) = {
+    sync.deleteGroupConversation(tid, rConvId)
+  }
+
   private def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId) = {
     verbose(l"onTeamUpdated: $id, name: $name, icon: $icon")
     teamStorage.update(id, team => team.copy (
@@ -239,4 +252,11 @@ class TeamsServiceImpl(selfUser:           UserId,
       convsStorage.find(_.team.contains(id), db => iterating(find(Team, Some(id))(db)), identity).map(_.toSet)
   }
 
+  override def onGroupConversationDeleted(convId: RConvId): Future[Unit] = {
+    Future.successful(()) //todo!!!
+  }
+
+  override def onGroupConversationDeleteError(error: ErrorResponse): Future[ErrorResponse] = {
+    Future.successful(error) //todo show pop up in ui layer
+  }
 }

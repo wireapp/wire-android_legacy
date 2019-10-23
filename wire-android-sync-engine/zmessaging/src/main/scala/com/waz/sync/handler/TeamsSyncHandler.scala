@@ -34,6 +34,7 @@ trait TeamsSyncHandler {
   def syncTeam(): Future[SyncResult]
   def syncMember(id: UserId): Future[SyncResult]
   def syncSelfPermissions(): Future[SyncResult]
+  def deleteConversations(tId: TeamId, convId: RConvId): Future[SyncResult]
 }
 
 class TeamsSyncHandlerImpl(userId:    UserId,
@@ -90,6 +91,21 @@ class TeamsSyncHandlerImpl(userId:    UserId,
         }
       case None => Future.successful(SyncResult.Success) // no team - nothing to do
     }
+
+  override def deleteConversations(tId: TeamId, convId: RConvId): Future[SyncResult] = {
+    teamId match {
+      case Some(id) if tId == id =>
+        client.deleteTeamConversation(id, convId).future.flatMap {
+          case Left(error) =>
+            service.onGroupConversationDeleteError(error)
+            Future.successful(SyncResult(error))
+          case Right(_) =>
+            service.onGroupConversationDeleted(convId)
+            Future.successful(SyncResult.Success)
+        }
+      case _ => Future.successful(SyncResult.Success)
+    }
+  }
 }
 
 object TeamsSyncHandler {

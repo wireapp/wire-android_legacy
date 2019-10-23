@@ -74,6 +74,7 @@ public enum SyncCommand {
     PostStringProperty("post-string-property"),
     PostFolders("post-folders-favorites"),
     SyncFolders("sync-folders"),
+    DeleteGroupConv("delete-group-conv"),
     Unknown("unknown");
 
     public final String name;
