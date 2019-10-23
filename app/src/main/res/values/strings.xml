@@ -1412,5 +1412,8 @@
     <string name="folders_folder_name_hint">FOLDER NAME</string>
     <string name="folders_folder_name_error_text">Maximum %s characters</string>
     <string name="folders_move_to_folder_close">Close</string>
-
+    
+    <string name="delete_group_conversation_error_title">Group not deleted</string>
+    <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
+    <string name="delete_group_conversation_error_message_with_group_name">An error occurred while trying to delete the group %1$s. Please try again.</string>
 </resources>

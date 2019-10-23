@@ -17,6 +17,7 @@
  */
 package com.waz.service.teams
 
+import com.waz.api.ErrorType
 import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -25,7 +26,7 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{EventScheduler, SearchKey}
+import com.waz.service.{ErrorsService, EventScheduler, SearchKey}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -55,7 +56,7 @@ trait TeamsService {
 
   def onGroupConversationDeleted(convId: RConvId): Future[Unit]
 
-  def onGroupConversationDeleteError(error: ErrorResponse): Future[ErrorResponse]
+  def onGroupConversationDeleteError(error: ErrorResponse, rConvId: RConvId): Future[Unit]
 
 }
 
@@ -69,7 +70,8 @@ class TeamsServiceImpl(selfUser:           UserId,
                        convsService:       ConversationsService,
                        sync:               SyncServiceHandle,
                        syncRequestService: SyncRequestService,
-                       userPrefs:          UserPreferences) extends TeamsService with DerivedLogTag {
+                       userPrefs:          UserPreferences,
+                       errorsService:      ErrorsService) extends TeamsService with DerivedLogTag {
 
   private implicit val dispatcher = SerialDispatchQueue()
 
@@ -255,7 +257,14 @@ class TeamsServiceImpl(selfUser:           UserId,
   override def onGroupConversationDeleted(convId: RConvId): Future[Unit] =
     convsService.deleteConversation(convId)
 
-  override def onGroupConversationDeleteError(err: ErrorResponse): Future[ErrorResponse] = {
-    Future.successful(err) //todo show pop up in ui layer
+  override def onGroupConversationDeleteError(err: ErrorResponse, rConvId: RConvId): Future[Unit] = {
+    convsContent.convByRemoteId(rConvId).map { data =>
+      Future.successful(errorsService.addErrorWhenActive(
+        data match {
+          case Some(convData) => ErrorData(ErrorType.CANNOT_DELETE_GROUP_CONVERSATION, err, convData.id)
+          case None => ErrorData(ErrorType.CANNOT_DELETE_GROUP_CONVERSATION, err)
+        }
+      ))
+    }
   }
 }

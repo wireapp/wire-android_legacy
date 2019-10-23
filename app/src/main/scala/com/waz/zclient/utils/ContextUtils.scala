@@ -171,11 +171,15 @@ object ContextUtils {
 
   //INFORMATION ABOUT DIALOGS: https://developer.android.com/guide/topics/ui/dialogs
   def showErrorDialog(headerRes: Int, msgRes: Int)(implicit context: Context): Future[Unit] = {
+    showErrorDialog(getString(headerRes), getString(msgRes))
+  }
+
+  def showErrorDialog(headerText: String, msg: String)(implicit context: Context): Future[Unit] = {
     val p = Promise[Unit]()
     val dialog = new AlertDialog.Builder(context)
       .setCancelable(false)
-      .setTitle(headerRes)
-      .setMessage(msgRes)
+      .setTitle(headerText)
+      .setMessage(msg)
       .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
         def onClick(dialog: DialogInterface, which: Int): Unit = {
           dialog.dismiss()

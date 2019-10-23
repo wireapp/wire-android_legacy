@@ -97,7 +97,7 @@ class TeamsSyncHandlerImpl(userId:    UserId,
       case Some(id) if tId == id =>
         client.deleteTeamConversation(id, convId).future.flatMap {
           case Left(error) =>
-            service.onGroupConversationDeleteError(error)
+            service.onGroupConversationDeleteError(error, convId)
             Future.successful(SyncResult(error))
           case Right(_) =>
             service.onGroupConversationDeleted(convId)
