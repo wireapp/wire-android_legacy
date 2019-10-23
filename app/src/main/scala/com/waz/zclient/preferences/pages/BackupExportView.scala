@@ -21,7 +21,7 @@ import android.app.{Activity, FragmentTransaction}
 import android.content.pm.PackageManager
 import android.content.{Context, Intent}
 import android.os.Bundle
-import android.support.v4.app.ShareCompat
+import androidx.core.app.ShareCompat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout

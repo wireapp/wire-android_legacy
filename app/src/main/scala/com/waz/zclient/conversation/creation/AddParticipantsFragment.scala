@@ -19,14 +19,14 @@ package com.waz.zclient.conversation.creation
 
 import android.content.Context
 import android.os.Bundle
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TabLayout.OnTabSelectedListener
-import android.support.v4.graphics.ColorUtils
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{ImageView, TextView}
+import androidx.core.graphics.ColorUtils
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging

@@ -17,9 +17,8 @@
  */
 package com.waz.zclient.glide
 
-import com.waz.model.UserData.Picture
+import com.waz.model.{AssetId, GeneralAssetId, PictureNotUploaded, Picture, UploadAssetId, PictureUploaded}
 import com.waz.api.MessageContent.Location
-import com.waz.model.{AssetId, GeneralAssetId, UploadAssetId}
 import com.waz.service.assets2.Asset
 
 sealed trait AssetRequest {
@@ -35,8 +34,8 @@ object AssetRequest {
     }
   }
   def apply(picture: Picture): AssetRequest = picture match {
-    case Picture.Uploaded(assetId) => PublicAssetIdRequest(assetId)
-    case Picture.NotUploaded(assetId) => UploadAssetIdRequest(assetId)
+    case PictureUploaded(assetId) => PublicAssetIdRequest(assetId)
+    case PictureNotUploaded(assetId) => UploadAssetIdRequest(assetId)
   }
 }
 

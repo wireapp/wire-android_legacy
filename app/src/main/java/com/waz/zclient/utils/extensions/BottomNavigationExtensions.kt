@@ -18,10 +18,10 @@
  */
 package com.waz.zclient.utils.extensions
 
-import android.support.annotation.IdRes
-import android.support.design.internal.BottomNavigationMenuView
-import android.support.design.widget.BottomNavigationView
 import android.view.View
+import androidx.annotation.IdRes
+import com.google.android.material.bottomnavigation.BottomNavigationMenuView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 fun BottomNavigationView.setItemVisible(@IdRes id: Int, visible: Boolean) {
     val menuView: BottomNavigationMenuView = getChildAt(0) as BottomNavigationMenuView

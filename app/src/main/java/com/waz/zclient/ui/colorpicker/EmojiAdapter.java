@@ -19,7 +19,7 @@ package com.waz.zclient.ui.colorpicker;
 
 import android.content.Context;
 import android.os.Build;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;

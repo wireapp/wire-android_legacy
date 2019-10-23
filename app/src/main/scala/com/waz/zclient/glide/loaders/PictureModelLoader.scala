@@ -24,7 +24,7 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader.LoadData
 import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiModelLoaderFactory}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.glide.{AssetKey, AssetRequest, ImageAssetFetcher}
@@ -58,5 +58,4 @@ object PictureModelLoader {
 
     override def teardown(): Unit = {}
   }
-
 }

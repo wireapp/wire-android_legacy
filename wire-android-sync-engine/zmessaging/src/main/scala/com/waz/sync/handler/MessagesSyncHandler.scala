@@ -261,11 +261,11 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
         time <- postOriginal(rawAssetWithMetadata)
         uploadAssetOriginal <- uploadAssetOriginal.preview match {
-          case NotReady => assets.createAndSavePreview(rawAssetWithMetadata).toCancellable
+          case PreviewNotReady => assets.createAndSavePreview(rawAssetWithMetadata).toCancellable
           case _ => CancellableFuture.successful(rawAssetWithMetadata)
         }
         previewAsset <- uploadAssetOriginal.preview match {
-          case NotUploaded(uploadAssetPreviewId) =>
+          case PreviewNotUploaded(uploadAssetPreviewId) =>
             for {
               previewAsset <- assets.uploadAsset(uploadAssetPreviewId)
               proto = GenericMessage(
@@ -275,15 +275,15 @@ class MessagesSyncHandler(selfUserId: UserId,
               )
               _ <- postAssetMessage(proto, uploadAssetOriginal.id)
             } yield Some(previewAsset)
-          case Uploaded(assetId) =>
+          case PreviewUploaded(assetId) =>
             assetStorage.get(assetId).map(Some.apply).toCancellable
-          case Empty =>
+          case PreviewEmpty =>
             CancellableFuture.successful(None)
-          case NotReady =>
+          case PreviewNotReady =>
             CancellableFuture.failed(FailedExpectationsError("We should never get not ready preview in this place"))
         }
         _ <- (previewAsset match {
-          case Some(p) => uploadAssetStorage.update(uploadAssetOriginal.id, _.copy(preview = Uploaded(p.id)))
+          case Some(p) => uploadAssetStorage.update(uploadAssetOriginal.id, _.copy(preview = PreviewUploaded(p.id)))
           case None => Future.successful(())
         }).toCancellable
         asset <- assets.uploadAsset(uploadAssetOriginal.id)
@@ -342,7 +342,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         case _ => Future.failed(FailedExpectationsError(s"We expect not uploaded asset id. Got ${msg.assetId}."))
       }
       uploadAssetPreview <- uploadAsset.preview match {
-        case Uploaded(id) => assetStorage.find(id)
+        case PreviewUploaded(id) => assetStorage.find(id)
         case _ => Future.successful(None)
       }
       genericAsset <- uploadAsset.status match {

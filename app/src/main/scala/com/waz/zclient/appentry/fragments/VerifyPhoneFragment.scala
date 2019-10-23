@@ -18,7 +18,7 @@
 package com.waz.zclient.appentry.fragments
 
 import android.os.{Bundle, Handler}
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.text.{Editable, TextWatcher}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView

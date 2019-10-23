@@ -22,12 +22,12 @@ import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.animation.{Animator, ValueAnimator}
 import android.content.Context
 import android.graphics._
-import android.support.v4.view.ViewCompat
 import android.text.{SpannableStringBuilder, Spanned}
 import android.text.style.ReplacementSpan
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.{FrameLayout, TextView}
+import androidx.core.view.ViewCompat
 import com.waz.zclient.messages.LikesController._
 import com.waz.model.{MessageContent, MessageId}
 import com.waz.service.messages.MessageAndLikes

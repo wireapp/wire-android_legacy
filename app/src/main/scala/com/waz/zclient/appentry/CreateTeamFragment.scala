@@ -20,9 +20,9 @@ package com.waz.zclient.appentry
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.view.View.OnLayoutChangeListener
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.fragment.app.Fragment
 import com.waz.service.AccountsService
 import com.waz.utils.returning
 import com.waz.zclient.appentry.CreateTeamFragment._

@@ -32,7 +32,7 @@
         android:orientation="vertical"
         android:background="@color/light_graphite_8">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/pickuser_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -51,7 +51,7 @@
                 android:textColor="@color/white"
                 />
 
-        </android.support.v7.widget.Toolbar>
+        </androidx.appcompat.widget.Toolbar>
 
         <com.waz.zclient.usersearch.views.SearchEditText
             android:id="@+id/sbv__search_box"
@@ -61,7 +61,7 @@
             app:hintText="@string/pick_user_search_hint"
             />
 
-        <android.support.design.widget.TabLayout
+        <com.google.android.material.tabs.TabLayout
             android:id="@+id/pick_user_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,19 +74,19 @@
             app:tabIndicatorHeight="@dimen/wire__divider__height"
             >
 
-            <android.support.design.widget.TabItem
+            <com.google.android.material.tabs.TabItem
                 android:text="@string/people_picker__search_people"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout="@layout/tab_layout"/>
 
-            <android.support.design.widget.TabItem
+            <com.google.android.material.tabs.TabItem
                 android:text="@string/people_picker__search_services"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout="@layout/tab_layout"/>
 
-        </android.support.design.widget.TabLayout>
+        </com.google.android.material.tabs.TabLayout>
 
     </LinearLayout>
 
@@ -138,7 +138,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv__pickuser__header_list_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>

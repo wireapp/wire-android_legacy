@@ -18,8 +18,9 @@
 package com.waz.zclient.ui.text;
 
 import android.content.Context;
-import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
+
+import androidx.appcompat.widget.AppCompatTextView;
 
 import com.waz.zclient.ui.utils.TypefaceUtils;
 

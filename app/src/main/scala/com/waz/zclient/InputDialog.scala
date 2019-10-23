@@ -20,13 +20,13 @@ package com.waz.zclient
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
-import android.support.annotation.StringRes
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
 import android.text.TextWatcher
 import android.view.View.OnAttachStateChangeListener
 import android.view.{LayoutInflater, View}
 import android.widget.{EditText, TextView}
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.DialogFragment
 import com.waz.utils.returning
 import com.waz.zclient.utils.RichTextView
 

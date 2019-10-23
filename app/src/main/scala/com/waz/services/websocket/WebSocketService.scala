@@ -22,8 +22,8 @@ import android.app._
 import android.content
 import android.content.{BroadcastReceiver, Context, Intent}
 import android.os.{Build, IBinder}
-import android.support.v4.app.NotificationCompat
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

@@ -17,9 +17,9 @@
  */
 package com.waz.zclient.messages
 
-import android.arch.paging.{PagedList, PagedListAdapter}
-import android.support.v7.util.DiffUtil
 import android.view.ViewGroup
+import androidx.paging.{PagedList, PagedListAdapter}
+import androidx.recyclerview.widget.DiffUtil
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes

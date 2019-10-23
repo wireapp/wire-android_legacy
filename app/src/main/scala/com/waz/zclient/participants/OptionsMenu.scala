@@ -20,9 +20,9 @@ package com.waz.zclient.participants
 import android.content.Context
 import android.graphics.{Canvas, Rect, RectF}
 import android.os.Bundle
-import android.support.design.widget.BottomSheetDialog
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior

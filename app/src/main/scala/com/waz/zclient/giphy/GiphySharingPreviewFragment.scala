@@ -19,10 +19,11 @@ package com.waz.zclient.giphy
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.support.v7.widget.{RecyclerView, StaggeredGridLayoutManager, Toolbar}
 import android.text.TextUtils
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{EditText, ImageView, TextView}
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.{RecyclerView, StaggeredGridLayoutManager}
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener

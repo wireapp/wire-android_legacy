@@ -19,7 +19,6 @@ package com.waz.model
 
 import com.waz.db.Dao
 import com.waz.model
-import com.waz.model.UserData.Picture
 import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.DBCursor
 
@@ -29,7 +28,7 @@ case class TeamData(override val id: TeamId,
                     icon:            AssetId) extends Identifiable[TeamId] {
 
   def picture: Option[Picture] = {
-    if (hasValidIconId) Some(Picture.Uploaded(icon))
+    if (hasValidIconId) Some(PictureUploaded(icon))
     else None
   }
 

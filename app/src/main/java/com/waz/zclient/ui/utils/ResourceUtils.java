@@ -19,8 +19,9 @@ package com.waz.zclient.ui.utils;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.support.annotation.DimenRes;
 import android.util.TypedValue;
+
+import androidx.annotation.DimenRes;
 
 import com.waz.utils.crypto.ZSecureRandom;
 import com.waz.zclient.R;

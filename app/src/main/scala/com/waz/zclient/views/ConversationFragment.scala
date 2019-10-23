@@ -23,12 +23,13 @@ import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO,
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
-import android.support.annotation.Nullable
-import android.support.v7.widget.{ActionMenuView, LinearLayoutManager, RecyclerView, Toolbar}
+import androidx.annotation.Nullable
 import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
+import androidx.appcompat.widget.{ActionMenuView, Toolbar}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.ErrorType
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType

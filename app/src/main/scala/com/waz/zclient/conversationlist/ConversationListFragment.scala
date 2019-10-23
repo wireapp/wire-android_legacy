@@ -20,7 +20,7 @@ package com.waz.zclient.conversationlist
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.{GONE, VISIBLE}
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}

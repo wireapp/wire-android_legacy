@@ -18,8 +18,8 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.DialogFragment.STYLE_NO_FRAME
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.DialogFragment.STYLE_NO_FRAME
 import android.text.TextUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import android.widget.TextView

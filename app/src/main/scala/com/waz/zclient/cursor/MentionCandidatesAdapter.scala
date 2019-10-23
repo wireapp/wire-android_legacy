@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.cursor
 
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.{TeamId, UserData}

@@ -20,7 +20,7 @@ package com.waz.zclient.views
 import android.content.Context
 import android.graphics.drawable.{BitmapDrawable, Drawable}
 import android.os.Bundle
-import android.support.design.widget.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener

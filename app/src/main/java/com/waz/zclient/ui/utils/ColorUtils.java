@@ -23,8 +23,10 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
+
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+
 import com.waz.zclient.utils.ViewUtils;
 
 public class ColorUtils {
@@ -34,11 +36,11 @@ public class ColorUtils {
     }
 
     public static int injectAlpha(int alpha, int color) {
-        return android.support.v4.graphics.ColorUtils.setAlphaComponent(color, alpha);
+        return androidx.core.graphics.ColorUtils.setAlphaComponent(color, alpha);
     }
 
     public static int injectAlpha(float alpha, int color) {
-        return android.support.v4.graphics.ColorUtils.setAlphaComponent(color, (int) (255 * alpha));
+        return androidx.core.graphics.ColorUtils.setAlphaComponent(color, (int) (255 * alpha));
     }
 
 

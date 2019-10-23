@@ -27,7 +27,7 @@ import android.widget.{ImageView, LinearLayout}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model.otr.Client
 import com.waz.model.{AccentColor, Availability, UserPermissions}
 import com.waz.service.tracking.TrackingService

@@ -20,9 +20,9 @@ package com.waz.zclient.appentry
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.os.Bundle
-import android.support.v4.app.FragmentManager.OnBackStackChangedListener
-import android.support.v4.app.{Fragment, FragmentManager, FragmentTransaction}
 import android.view.View
+import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
+import androidx.fragment.app.FragmentManager.OnBackStackChangedListener
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, GlobalModule}

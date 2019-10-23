@@ -18,7 +18,7 @@
 package com.waz.zclient.ui.animation;
 
 import android.animation.IntEvaluator;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
 

@@ -22,14 +22,14 @@ import android.app.{Dialog, Service}
 import android.content.res.Resources
 import android.content.{Context, ContextWrapper, DialogInterface}
 import android.os.Bundle
-import android.support.annotation.IdRes
-import android.support.v4.app.{Fragment, FragmentActivity, FragmentManager}
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.preference.Preference
 import android.view.View.OnClickListener
 import android.view.animation.{AlphaAnimation, Animation, AnimationUtils}
 import android.view.{LayoutInflater, View, ViewGroup, ViewStub}
 import android.widget.TextView
+import androidx.annotation.IdRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.{Fragment, FragmentActivity, FragmentManager}
+import androidx.preference.Preference
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events._

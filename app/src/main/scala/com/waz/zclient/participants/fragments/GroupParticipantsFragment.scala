@@ -20,8 +20,8 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.annotation.Nullable
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.api.NetworkMode
 import com.waz.model.{UserData, UserId}

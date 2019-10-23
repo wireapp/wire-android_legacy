@@ -31,7 +31,7 @@
         android:orientation="vertical"
         >
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/t_conversation_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -40,7 +40,7 @@
             style="?conversationToolbar"
             >
 
-            <android.support.v7.widget.ActionMenuView
+            <androidx.appcompat.widget.ActionMenuView
                 android:id="@+id/conversation_left_menu"
                 android:layout_width="wrap_content"
                 android:layout_height="?attr/actionBarSize"
@@ -85,7 +85,7 @@
 
             </LinearLayout>
 
-        </android.support.v7.widget.Toolbar>
+        </androidx.appcompat.widget.Toolbar>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -135,7 +135,7 @@
                 android:visibility="gone"
                 android:layout_height="match_parent"/>
 
-            <android.support.v7.widget.RecyclerView
+            <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/mentions_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

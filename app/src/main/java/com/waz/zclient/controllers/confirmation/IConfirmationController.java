@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.controllers.confirmation;
 
-import android.support.annotation.IntDef;
+import androidx.annotation.IntDef;
 
 public interface IConfirmationController {
 

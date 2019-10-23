@@ -18,8 +18,8 @@
 package com.waz.zclient.collection.adapters
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.RecyclerView.{AdapterDataObserver, ViewHolder}
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.{AdapterDataObserver, ViewHolder}
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}

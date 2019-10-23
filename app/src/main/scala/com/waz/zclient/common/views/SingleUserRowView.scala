@@ -19,11 +19,11 @@ package com.waz.zclient.common.views
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
-import android.support.v7.widget.AppCompatCheckBox
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
+import androidx.appcompat.widget.AppCompatCheckBox
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning

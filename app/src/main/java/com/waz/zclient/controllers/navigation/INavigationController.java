@@ -18,7 +18,8 @@
 package com.waz.zclient.controllers.navigation;
 
 import android.os.Bundle;
-import android.support.v4.view.ViewPager;
+
+import androidx.viewpager.widget.ViewPager;
 
 public interface INavigationController extends ViewPager.OnPageChangeListener {
 

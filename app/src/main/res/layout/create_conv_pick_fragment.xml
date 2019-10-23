@@ -26,7 +26,7 @@
              android:background="?wireBackgroundCollection"
              >
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?android:actionBarSize"
@@ -55,7 +55,7 @@
             app:w_font="@string/wire__typeface__medium"
             android:layout_marginEnd="@dimen/wire__padding__regular"/>
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -70,7 +70,7 @@
                 app:hintText="@string/pick_user_search_hint"
                 />
 
-            <android.support.design.widget.TabLayout
+            <com.google.android.material.tabs.TabLayout
                 android:id="@+id/add_users_tabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -83,19 +83,19 @@
                 app:tabIndicatorHeight="@dimen/wire__divider__height"
                 >
 
-                <android.support.design.widget.TabItem
+                <com.google.android.material.tabs.TabItem
                     android:text="@string/people_picker__search_people"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout="@layout/tab_with_theme_layout"/>
 
-                <android.support.design.widget.TabItem
+                <com.google.android.material.tabs.TabItem
                     android:text="@string/people_picker__search_services"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout="@layout/tab_with_theme_layout"/>
 
-            </android.support.design.widget.TabLayout>
+            </com.google.android.material.tabs.TabLayout>
     </LinearLayout>
 
     <FrameLayout
@@ -103,7 +103,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <android.support.v7.widget.RecyclerView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>

@@ -17,8 +17,8 @@
  */
 package com.waz.zclient.collection
 
-import android.support.v7.widget.{GridLayoutManager, RecyclerView}
 import android.util.SparseArray
+import androidx.recyclerview.widget.{GridLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events.EventContext
 import com.waz.utils.returning

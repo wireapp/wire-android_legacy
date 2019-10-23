@@ -109,7 +109,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
       case Some(a: AssetId) =>
         WireGlide(context)
           .load(a)
-          .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(10)))
+          .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(10)))
           .into(image)
         image.setVisibility(View.VISIBLE)
       case _ =>

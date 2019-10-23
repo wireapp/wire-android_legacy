@@ -46,7 +46,7 @@
                 app:w_font="@string/wire__typeface__light"
                 android:textColor="?wirePrimaryTextColor"/>
 
-            <android.support.v7.widget.SwitchCompat
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/guest_toggle"
                 android:layout_gravity="end|center_vertical"
                 android:layout_width="wrap_content"

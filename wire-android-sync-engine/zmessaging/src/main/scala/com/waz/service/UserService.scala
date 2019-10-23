@@ -21,7 +21,7 @@ import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.content._
 import com.waz.model.AccountData.Password
-import com.waz.model.UserData.{ConnectionStatus, Picture}
+import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{AccentColor, _}
 import com.waz.service.AccountsService.UserDeleted
 import com.waz.service.EventScheduler.Stage
@@ -328,7 +328,7 @@ class UserServiceImpl(selfUserId:        UserId,
     val contentForUpload = ContentForUpload("profile-picture", content)
     for {
       asset <- assets.createAndSaveUploadAsset(contentForUpload, NoEncryption, public = true, Retention.Eternal, None)
-      _     <- updateAndSync(_.copy(picture = Some(Picture.NotUploaded(asset.id))), _ => sync.postSelfPicture(asset.id))
+      _     <- updateAndSync(_.copy(picture = Some(PictureNotUploaded(asset.id))), _ => sync.postSelfPicture(asset.id))
     } yield ()
   }
 

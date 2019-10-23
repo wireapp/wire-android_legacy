@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import android.content.Context
 import android.net.Uri
-import android.support.v4.content.FileProvider
+import androidx.core.content.FileProvider
 import org.robolectric.annotation.{Implementation, Implements}
 
 import scala.annotation.tailrec

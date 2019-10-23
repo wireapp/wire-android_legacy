@@ -19,7 +19,7 @@ package com.waz.zclient.pages.extendedcursor.image;
 
 
 import android.graphics.Rect;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 
 public class CursorImagesItemDecoration extends RecyclerView.ItemDecoration {

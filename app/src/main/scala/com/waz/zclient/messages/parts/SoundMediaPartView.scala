@@ -20,9 +20,9 @@ package com.waz.zclient.messages.parts
 
 import android.content.Context
 import android.graphics.drawable.{ColorDrawable, Drawable}
-import android.support.v7.widget.CardView
 import android.util.AttributeSet
 import android.widget.{ImageView, TextView}
+import androidx.cardview.widget.CardView
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition

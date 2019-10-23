@@ -17,20 +17,22 @@
  */
 package com.waz.zclient
 
-import android.app.ActivityManager
-import android.content.Intent
+import android.app.admin.DevicePolicyManager
+import android.app.{Activity, ActivityManager}
 import android.content.pm.PackageManager
+import android.content.{ComponentName, Context, Intent}
 import android.os.{Build, Bundle}
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.InternalLog
 import com.waz.permissions.PermissionsService
 import com.waz.permissions.PermissionsService.{Permission, PermissionProvider}
 import com.waz.service.{UiLifeCycle, ZMessaging}
+import com.waz.services.SecurityPolicyService
 import com.waz.services.websocket.WebSocketService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
@@ -39,9 +41,11 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.ActivityLifecycleCallback
+import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.utils.ViewUtils
+import com.waz.zclient.utils.{ContextUtils, ViewUtils}
+import com.waz.content.GlobalPreferences
+import com.waz.content.GlobalPreferences.AppLockEnabled
 
 import scala.collection.JavaConverters._
 import scala.collection.breakOut
@@ -57,11 +61,13 @@ class BaseActivity extends AppCompatActivity
   import BaseActivity._
 
   protected lazy val themeController   = inject[ThemeController]
-  protected lazy val permissions       = inject[PermissionsService]
   protected lazy val userPreferences   = inject[Signal[UserPreferences]]
-  protected lazy val activityLifecycle = inject[ActivityLifecycleCallback]
-  protected lazy val activityManager   = inject[ActivityManager]
-  protected lazy val uiLifeCycle       = inject[UiLifeCycle]
+
+  private lazy val permissions       = inject[PermissionsService]
+  private lazy val activityLifecycle = inject[ActivityLifecycleCallback]
+  private lazy val uiLifeCycle       = inject[UiLifeCycle]
+  private lazy val secPolicy         = new ComponentName(this, classOf[SecurityPolicyService])
+  private lazy val dpm               = getSystemService(Context.DEVICE_POLICY_SERVICE).asInstanceOf[DevicePolicyManager]
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
@@ -69,6 +75,11 @@ class BaseActivity extends AppCompatActivity
     prefs             <- userPreferences
     hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
   } yield hideScreenContent
+
+
+  private lazy val appLockEnabled: Signal[Boolean] =
+    if (BuildConfig.FORCE_APP_LOCK) Signal.const(true)
+    else inject[GlobalPreferences].preference(AppLockEnabled).signal
 
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(l"onCreate")
@@ -80,7 +91,7 @@ class BaseActivity extends AppCompatActivity
         case (true, (true, _)) =>
           // there should be only one task but since we have access only to tasks
           // associated with our app we can safely exclude them all
-          activityManager.getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(true))
+          inject[ActivityManager].getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(true))
         case _ =>
       }
     } else {
@@ -90,6 +101,41 @@ class BaseActivity extends AppCompatActivity
       }
     }
 
+    activityLifecycle.appInBackground.zip(appLockEnabled).onUi {
+      case ((false, Some(act)), true) => checkAdminEnabled(act)
+      case _ =>
+    }
+  }
+
+  private def checkAdminEnabled(implicit activity: Activity): Unit = {
+    verbose(l"checkAdminEnabled(${activity.getClass.getName})")
+    if (!dpm.isAdminActive(secPolicy)) {
+      verbose(l"admin not active, sending request")
+      val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+        .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+        .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
+
+      startActivityForResult(intent, RequestPoliciesEnable)
+    } else {
+      verbose(l"admin active")
+      checkPassword(activity)
+    }
+  }
+
+  private def checkPassword(activity: Activity) = {
+    dpm.setPasswordQuality(secPolicy, DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+    dpm.setPasswordMinimumLength(secPolicy, SecurityPolicyChecker.PasswordMinimumLength)
+    dpm.setPasswordMinimumLetters(secPolicy, 2)
+    dpm.setPasswordMinimumUpperCase(secPolicy, 1)
+    dpm.setPasswordMinimumLowerCase(secPolicy, 1)
+    if (dpm.isActivePasswordSufficient) {
+      verbose(l"current password is sufficient")
+      inject[SecurityPolicyChecker].authenticateIfNeeded(activity)
+    }
+    else {
+      verbose(l"current password is insufficient")
+      startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD))
+    }
   }
 
   override def onStart(): Unit = {
@@ -131,6 +177,11 @@ class BaseActivity extends AppCompatActivity
     verbose(l"onActivityResult: requestCode: $requestCode, resultCode: $resultCode, data: ${RichIntent(data)}")
     super.onActivityResult(requestCode, resultCode, data)
     permissions.registerProvider(this)
+
+    if (requestCode == RequestPoliciesEnable && resultCode == Activity.RESULT_OK) {
+      verbose(l"enabling policies now")
+      checkPassword(this)
+    }
   }
 
   override protected def onPause(): Unit = {
@@ -183,4 +234,5 @@ class BaseActivity extends AppCompatActivity
 
 object BaseActivity {
   val PermissionsRequestId = 162
+  val RequestPoliciesEnable = 163
 }

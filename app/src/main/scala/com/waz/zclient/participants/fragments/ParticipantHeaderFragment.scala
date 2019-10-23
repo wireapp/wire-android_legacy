@@ -19,7 +19,7 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.view._
 import android.widget.TextView
 import com.waz.threading.{CancellableFuture, Threading}

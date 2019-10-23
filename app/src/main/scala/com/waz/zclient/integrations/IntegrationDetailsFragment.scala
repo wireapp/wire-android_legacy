@@ -20,8 +20,8 @@ package com.waz.zclient.integrations
 import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.v4.app.FragmentManager
+import androidx.annotation.Nullable
+import androidx.fragment.app.FragmentManager
 import android.view._
 import android.widget.ImageView
 import com.bumptech.glide.request.RequestOptions
@@ -104,7 +104,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
         case Some(id) =>
           WireGlide(ctx)
             .load(id)
-            .apply(new RequestOptions().placeholder(placeholder).transforms(new IntegrationBackgroundCrop()))
+            .apply(new RequestOptions().placeholder(placeholder).transform(new IntegrationBackgroundCrop()))
             .into(iv)
         case _ =>
           iv.setImageDrawable(placeholder)

@@ -18,7 +18,7 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController

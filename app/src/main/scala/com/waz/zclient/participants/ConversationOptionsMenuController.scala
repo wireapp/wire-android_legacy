@@ -18,7 +18,7 @@
 package com.waz.zclient.participants
 
 import android.content.{Context, DialogInterface}
-import android.support.v7.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging

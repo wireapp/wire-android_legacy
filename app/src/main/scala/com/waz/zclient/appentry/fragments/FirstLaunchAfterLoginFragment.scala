@@ -24,8 +24,8 @@ import android.Manifest.permission._
 import android.app.FragmentTransaction
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.core.content.ContextCompat
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.AccountData.Password

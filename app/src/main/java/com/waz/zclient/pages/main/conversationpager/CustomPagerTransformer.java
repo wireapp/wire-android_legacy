@@ -17,9 +17,11 @@
  */
 package com.waz.zclient.pages.main.conversationpager;
 
-import android.support.annotation.IntDef;
-import android.support.v4.view.ViewPager;
 import android.view.View;
+
+import androidx.annotation.IntDef;
+import androidx.viewpager.widget.ViewPager;
+
 import com.waz.zclient.utils.ViewUtils;
 
 public class CustomPagerTransformer implements ViewPager.PageTransformer {

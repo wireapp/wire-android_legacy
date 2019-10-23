@@ -26,7 +26,7 @@ import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.ConversationData.{ConversationType, UnreadCount}
 import com.waz.model.GenericContent.{EncryptionAlgorithm, Text}
 import com.waz.model.SearchQuery.{Recommended, TopPeople}
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserInfo.ProfilePicture
 import com.waz.model._
@@ -245,7 +245,7 @@ object Generators {
   implicit lazy val arbAssetIdGeneral: Arbitrary[GeneralAssetId] = Arbitrary(sideEffect(AssetId()))
   implicit lazy val arbAssetId: Arbitrary[AssetId]       = Arbitrary(sideEffect(AssetId()))
   implicit lazy val arbUploadAssetId: Arbitrary[UploadAssetId]       = Arbitrary(sideEffect(UploadAssetId()))
-  implicit lazy val arbPublicAssetId: Arbitrary[Picture]       = Arbitrary(sideEffect(Picture.Uploaded(AssetId())))
+  implicit lazy val arbPublicAssetId: Arbitrary[Picture]       = Arbitrary(sideEffect(PictureUploaded(AssetId())))
   implicit lazy val arbSyncId: Arbitrary[SyncId]         = Arbitrary(sideEffect(SyncId()))
   implicit lazy val arbGcmId: Arbitrary[PushToken]           = Arbitrary(sideEffect(PushToken()))
   implicit lazy val arbMessageId: Arbitrary[MessageId]   = Arbitrary(sideEffect(MessageId()))

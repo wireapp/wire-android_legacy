@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
                                             xmlns:app="http://schemas.android.com/apk/res-auto"
                                             android:layout_width="match_parent"
                                             android:layout_height="@dimen/quick_reply__content_height"
@@ -36,4 +36,4 @@
         app:w_font="@string/wire__typeface__regular"
         />
 
-</android.support.v4.widget.NestedScrollView>
+</androidx.core.widget.NestedScrollView>

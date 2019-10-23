@@ -27,7 +27,7 @@
               android:fitsSystemWindows="true"
     >
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/t__participants__toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -94,6 +94,6 @@
         </FrameLayout>
 
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
 </LinearLayout>

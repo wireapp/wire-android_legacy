@@ -18,10 +18,10 @@
 package com.waz.zclient.cursor
 
 import android.content.Context
-import android.support.v7.view.ContextThemeWrapper
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, NumberPicker}
+import androidx.appcompat.view.ContextThemeWrapper
 import com.waz.utils.events.{EventStream, Subscription}
 import com.waz.zclient.conversation.ConversationController._
 import com.waz.zclient.log.LogUI._

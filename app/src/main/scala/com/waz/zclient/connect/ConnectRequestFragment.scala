@@ -18,8 +18,8 @@
 package com.waz.zclient.connect
 
 import android.os.Bundle
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.model.UserId
 import com.waz.utils.events.Signal
 import com.waz.utils.returning

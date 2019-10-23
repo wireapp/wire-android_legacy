@@ -23,7 +23,7 @@ import com.waz.db.Dao
 import com.waz.model
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ManagedBy.ManagedBy
-import com.waz.model.UserData.{ConnectionStatus, Picture}
+import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserPermissions._
 import com.waz.service.SearchKey
 import com.waz.service.UserSearchService.UserSearchEntry
@@ -39,7 +39,7 @@ case class UserData(override val id:       UserId,
                     email:                 Option[EmailAddress]  = None,
                     phone:                 Option[PhoneNumber]   = None,
                     trackingId:            Option[TrackingId]    = None,
-                    picture:               Option[UserData.Picture] = None,
+                    picture:               Option[Picture] = None,
                     accent:                Int                   = 0, // accent color id
                     searchKey:             SearchKey,
                     connection:            ConnectionStatus       = ConnectionStatus.Unconnected,
@@ -80,7 +80,7 @@ case class UserData(override val id:       UserId,
     accent        = user.accentId.getOrElse(accent),
     trackingId    = user.trackingId.orElse(trackingId),
     searchKey     = SearchKey(if (withSearchKey) user.name.getOrElse(name).str else ""),
-    picture       = user.picture.flatMap(_.collectFirst { case p if p.tag == Medium => Picture.Uploaded(p.id) }).orElse(picture),
+    picture       = user.picture.flatMap(_.collectFirst { case p if p.tag == Medium => PictureUploaded(p.id) }).orElse(picture),
     deleted       = user.deleted,
     providerId    = user.service.map(_.provider).orElse(providerId),
     integrationId = user.service.map(_.id).orElse(integrationId),
@@ -144,15 +144,13 @@ case class UserData(override val id:       UserId,
   }
 }
 
+trait Picture
+case class PictureNotUploaded(id: UploadAssetId) extends Picture
+case class PictureUploaded(id: AssetId)          extends Picture
+
 object UserData {
 
   lazy val Empty = UserData(UserId("EMPTY"), "")
-
-  trait Picture
-  object Picture {
-    case class NotUploaded(id: UploadAssetId) extends Picture
-    case class Uploaded(id: AssetId)          extends Picture
-  }
 
   type ConnectionStatus = com.waz.api.User.ConnectionStatus
   object ConnectionStatus {
@@ -200,7 +198,7 @@ object UserData {
     val Email = opt(emailAddress('email))(_.email)
     val Phone = opt(phoneNumber('phone))(_.phone)
     val TrackingId = opt(id[TrackingId]('tracking_id))(_.trackingId)
-    val Picture = opt(text[UserData.Picture]('picture, UserPictureCodec.serialize, UserPictureCodec.deserialize))(_.picture)
+    val Picture = opt(text[Picture]('picture, UserPictureCodec.serialize, UserPictureCodec.deserialize))(_.picture)
     val Accent = int('accent)(_.accent)
     val SKey = text[SearchKey]('skey, _.asciiRepresentation, SearchKey.unsafeRestore)(_.searchKey)
     val Conn = text[ConnectionStatus]('connection, _.code, ConnectionStatus(_))(_.connection)

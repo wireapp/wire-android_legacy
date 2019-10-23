@@ -20,7 +20,7 @@ package com.waz.zclient
 
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
