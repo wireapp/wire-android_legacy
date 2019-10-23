@@ -68,6 +68,8 @@ trait ConversationsService {
     * who we didn't expect to be there - we need to expose these users to the self user
     */
   def addUnexpectedMembersToConv(convId: ConvId, us: Set[UserId]): Future[Unit]
+
+  def deleteConversation(rConvId: RConvId): Future[Unit]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -169,9 +171,13 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   private def processUpdateEvent(conv: ConversationData, ev: ConversationEvent) = ev match {
-    case DeleteConversationEvent(_, time, from) =>
-      error(l"received event. time: $time, from: $from")
-      deleteConversation(conv, time, from)
+    case DeleteConversationEvent(_, time, from) => (for {
+      _ <- notificationService.displayNotificationForDeletingConversation(from, time, conv)
+      _ <- deleteConversation(conv)
+    } yield ()).recoverWith {
+      case e: Exception => error(l"error while processing DeleteConversationEvent", e)
+      Future.successful(())
+    }
 
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
@@ -341,12 +347,18 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- msgContent.deleteMessagesForConversation(convId: ConvId)
   } yield ()
 
-  def deleteConversation(convData: ConversationData, remoteTime: RemoteInstant, from: UserId) = {
-    error(l"delete Conv")
-    (for {
-      _ <- notificationService.displayNotificationForDeletingConversation(from, remoteTime, convData)
+  override def deleteConversation(rConvId: RConvId): Future[Unit] = {
+    content.convByRemoteId(rConvId) flatMap {
+      case Some(conv) => deleteConversation(conv)
+      case None =>
+        verbose(l"Conversation w/ remote id $rConvId not found. Ignoring deletion.")
+        Future.successful(())
+    }
+  }
+
+  private def deleteConversation(convData: ConversationData): Future[Unit] = (for {
+      convMessageIds <- messages.findMessageIds(convData.id)
       convId = convData.id
-      convMessageIds <- messages.findMessageIds(convId)
       assetIds <- messages.getAssetIds(convMessageIds)
       _ <- assetService.deleteAll(assetIds)
       _ <- convsStorage.remove(convId)
@@ -361,7 +373,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       }
         Future.successful(())
     }
-  }
 
   private def checkCurrentConversationDeleted(convId: ConvId): Future[Unit] = {
     for {

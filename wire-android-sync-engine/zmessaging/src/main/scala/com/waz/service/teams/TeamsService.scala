@@ -252,11 +252,10 @@ class TeamsServiceImpl(selfUser:           UserId,
       convsStorage.find(_.team.contains(id), db => iterating(find(Team, Some(id))(db)), identity).map(_.toSet)
   }
 
-  override def onGroupConversationDeleted(convId: RConvId): Future[Unit] = {
-    Future.successful(()) //todo!!!
-  }
+  override def onGroupConversationDeleted(convId: RConvId): Future[Unit] =
+    convsService.deleteConversation(convId)
 
-  override def onGroupConversationDeleteError(error: ErrorResponse): Future[ErrorResponse] = {
-    Future.successful(error) //todo show pop up in ui layer
+  override def onGroupConversationDeleteError(err: ErrorResponse): Future[ErrorResponse] = {
+    Future.successful(err) //todo show pop up in ui layer
   }
 }
