@@ -210,14 +210,17 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       //The service should attempt to re-register the global device token
       (client.getPushTokens _).expects().once().returning(CancellableFuture.successful(Right(registeredTokens)))
-      (sync.registerPush _).expects(deviceToken).returning(Future.successful(SyncId()))
+      (sync.registerPush _).expects(deviceToken).anyNumberOfTimes().onCall{ token: PushToken =>
+        loggedInAccounts ! Set(accountData(account1Id, token))
+        Future.successful(SyncId())
+      }
 
       val accountToken = accountSignal(account1Id).map(_.pushToken)
       service.checkCurrentUserTokens()
 
-      await(accountToken.head.filter(_.isEmpty)) //token gets deleted
+      await(accountToken.filter(_.isEmpty).head) //token gets deleted
       awaitAllTasks
-      await(accountToken.head.filter(_ == deviceToken)) //token is reset
+      await(accountToken.filter(_.contains(deviceToken)).head) //token is reset
     }
 
     scenario("Check current push tokens registered with backend - if token is registered we do nothing") {
@@ -243,7 +246,7 @@ class PushTokenServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.checkCurrentUserTokens()
 
       awaitAllTasks
-      await(accountToken.head.filter(_ == deviceToken)) //token should be the same
+      await(accountToken.filter(_.contains(deviceToken)).head) //token should be the same
     }
 
     scenario("Remove Push Token event should create new token and delete all previous tokens") {
