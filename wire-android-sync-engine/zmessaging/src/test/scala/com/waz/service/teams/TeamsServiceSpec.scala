@@ -20,8 +20,8 @@ package com.waz.service.teams
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.SearchKey
-import com.waz.service.conversation.ConversationsContentUpdater
+import com.waz.service.{ErrorsService, SearchKey}
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.TestUserPreferences
@@ -29,6 +29,7 @@ import com.waz.utils.events.EventStream
 import com.waz.content.UserPreferences.{CopyPermissions, SelfPermissions}
 import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.TeamMember
+
 import scala.collection.breakOut
 import scala.concurrent.Future
 
@@ -46,8 +47,10 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val convsStorage = mock[ConversationStorage]
   val convMembers =  mock[MembersStorage]
   val convsContent = mock[ConversationsContentUpdater]
+  val convsService = mock[ConversationsService]
   val sync =         mock[SyncServiceHandle]
   val syncRequests = mock[SyncRequestService]
+  val errorsService = mock[ErrorsService]
   val userPrefs =    new TestUserPreferences
 
   (sync.syncTeam _).stubs(*).returning(Future.successful(SyncId()))
@@ -233,7 +236,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   }
 
   def createService = {
-    new TeamsServiceImpl(selfUser, teamId, teamStorage, userStorage, convsStorage, convMembers, convsContent, sync, syncRequests, userPrefs)
+    new TeamsServiceImpl(selfUser, teamId, teamStorage, userStorage, convsStorage, convMembers, convsContent, convsService,
+      sync, syncRequests, userPrefs, errorsService)
   }
 
 }
