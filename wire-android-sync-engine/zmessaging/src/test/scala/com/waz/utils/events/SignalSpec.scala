@@ -25,12 +25,14 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.specs.AndroidFreeSpec.DefaultTimeout
 import com.waz.testutils.Implicits._
 import com.waz.threading.{SerialDispatchQueue, Threading}
+import org.scalacheck.Gen
+import org.scalatest.prop.PropertyChecks
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
+class SignalSpec extends AndroidFreeSpec with DerivedLogTag with PropertyChecks {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   var received = Seq[Int]()
@@ -60,32 +62,53 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Basic subscriber lifecycle") {
       val s = Signal(1)
       s.hasSubscribers shouldEqual false
-      val sub = s { value => () }
+      val sub = s { _ => () }
       s.hasSubscribers shouldEqual true
       sub.destroy()
       s.hasSubscribers shouldEqual false
     }
 
-    scenario("Don't receive events after unregistering a single observer")  {
-      val s = Signal(1)
-      val sub = s(capture)
-      s ! 2
-      received shouldEqual Seq(1, 2)
+    val listGen: Gen[Seq[Int]] = Gen.containerOfN[Set, Int](3, Gen.choose(Integer.MIN_VALUE, Integer.MAX_VALUE)).map(_.toSeq)
+    implicit val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfig(minSuccessful = 10000)
 
-      sub.destroy()
-      s ! 3
-      received shouldEqual Seq(1, 2)
+    scenario("Don't receive events after unregistering a single observer")  {
+      forAll(listGen) { l: Seq[Int] =>
+        //use local variables instead of ones above since this was causing this test to be flaky
+        var recv = Seq[Int]()
+        val cap = (value: Int) => recv = recv :+ value
+        val sentValues = l.take(2)
+
+        eventContext.onContextStart()
+        val s = Signal(sentValues.head)
+        val sub = s(cap)
+        s ! sentValues.tail.head
+        recv shouldEqual sentValues
+
+        sub.destroy()
+        s ! l.last
+        recv shouldEqual sentValues
+        eventContext.onContextStop()
+      }
     }
 
-    scenario("Don't receive events after unregistering all observers") {
-      val s = Signal(1)
-      s(capture)
-      s ! 2
-      received shouldEqual Seq(1, 2)
+    scenario("Don't receive events after unregistering all observers")  {
+      forAll(listGen) { l: Seq[Int] =>
+        //use local variables instead of ones above since this was causing this test to be flaky
+        var recv = Seq[Int]()
+        val cap = (value: Int) => recv = recv :+ value
+        val sentValues = l.take(2)
 
-      s.unsubscribeAll()
-      s ! 3
-      received shouldEqual Seq(1, 2)
+        eventContext.onContextStart()
+        val s = Signal(sentValues.head)
+        s(cap)
+        s ! sentValues.tail.head
+        recv shouldEqual sentValues
+
+        s.unsubscribeAll()
+        s ! l.last
+        recv shouldEqual sentValues
+        eventContext.onContextStop()
+      }
     }
 
     scenario("Signal mutation") {
@@ -314,7 +337,7 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (1 to dispatches).foreach(n => Future(f(signal, n))(actualExecutionContext))
 
-      await(p.future)
+      Await.result(p.future, 30.seconds)
 
       additionalAssert(signal)
       signal.currentValue.get shouldEqual lastSent
