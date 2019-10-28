@@ -144,16 +144,16 @@ class AvsImpl() extends Avs with DerivedLogTag {
     )
 
     callingReady.future.map { _ =>
-      Calling.wcall_set_group_changed_handler(wCall, new GroupChangedHandler {
-        override def onGroupChanged(convId: String, data: String, arg: Pointer): Unit = {
-          val members = ParticipantsChangeDecoder.decode(data) match {
-            case Some(participantsChange) => participantsChange.members.map(_.userid).toSet
-            case None                     => Set.empty[UserId]
+      val participantChangedHandler = new ParticipantChangedHandler {
+        override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
+          ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
+            val members = participantsChange.members.map(_.userid).toSet
+            cs.onParticipantsChanged(RConvId(convId), members)
           }
-
-          cs.onGroupChanged(RConvId(convId), members)
         }
-      })
+      }
+
+      Calling.wcall_set_participant_changed_handler(wCall, participantChangedHandler, arg = null)
       wCall
     }
   }
@@ -163,7 +163,6 @@ class AvsImpl() extends Avs with DerivedLogTag {
       error(l"Tried to perform action on avs after it failed to initialise", err)
       onFailure
   }
-
 
   private def withAvs(f: => Unit): Future[Unit] =
     withAvsReturning(f, {})

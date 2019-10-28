@@ -83,7 +83,7 @@ object Calling {
 
   @native def wcall_network_changed(inst: Handle): Unit
 
-  @native def wcall_set_group_changed_handler(inst: Handle, wcall_group_changed_h: GroupChangedHandler): Unit
+  @native def wcall_set_participant_changed_handler(inst: Handle, wcall_participant_changed_h: ParticipantChangedHandler, arg: Pointer): Unit
 
   @native def wcall_get_members(inst: Handle, convid: String): Members
 
@@ -150,7 +150,8 @@ object Calling {
     def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit
   }
 
-  trait GroupChangedHandler extends Callback {
+  trait ParticipantChangedHandler extends Callback {
+
     // Example of `data`
     //  {
     //      "convid": "df371578-65cf-4f07-9f49-c72a49877ae7",
@@ -163,7 +164,7 @@ object Calling {
     //          }
     //      ]
     //}
-    def onGroupChanged(convId: String, data: String, arg: Pointer): Unit
+    def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit
   }
 
   trait MetricsHandler extends Callback {

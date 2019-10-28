@@ -409,7 +409,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUser)
-        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+        service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       }
 
       service.startCall(groupConv.id)
@@ -435,7 +435,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onEstablishedCall(groupConv.remoteId, otherUser)
       awaitCP(checkpoint3)
 
-      service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       awaitCP(checkpoint4)
     }
 
@@ -456,7 +456,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       service.onEstablishedCall(teamGroupConv.remoteId, otherUser)
       awaitCP(checkpoint3)
 
-      service.onGroupChanged(teamGroupConv.remoteId, Set(otherUser, otherUser2))
+      service.onParticipantsChanged(teamGroupConv.remoteId, Set(otherUser, otherUser2))
       awaitCP(checkpoint4)
     }
 
@@ -472,7 +472,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUser)
-        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+        service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       }
       service.startCall(groupConv.id)
       awaitCP(checkpoint1)
@@ -538,7 +538,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUser)
-        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+        service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       }
 
       service.startCall(groupConv.id)
@@ -565,7 +565,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (_, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUser)
-        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+        service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       }
 
       service.startCall(groupConv.id)
@@ -600,7 +600,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       awaitCP(checkpoint7)
 
-      service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+      service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
 
       awaitCP(checkpoint8)
 
@@ -830,7 +830,7 @@ class CallingServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (avs.answerCall _).expects(*, *, *, *).once().onCall { (rId, _, _, _) =>
         service.onEstablishedCall(groupConv.remoteId, otherUser)
-        service.onGroupChanged(groupConv.remoteId, Set(otherUser, otherUser2))
+        service.onParticipantsChanged(groupConv.remoteId, Set(otherUser, otherUser2))
       }
       service.startCall(groupConv.id)
 

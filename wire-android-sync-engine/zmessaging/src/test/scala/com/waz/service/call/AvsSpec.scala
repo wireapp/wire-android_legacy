@@ -36,6 +36,12 @@ class AvsSpec extends AndroidFreeSpec with DerivedLogTag  {
         |      "clientid": "24cc758f602fb1f4",
         |      "aestab": 1,
         |      "vrecv": 0
+        |    },
+        |    {
+        |      "userid": "7cc36a2e-88d3-ac76-86ba-d02faca478ed",
+        |      "clientid": "64ca916f366fcc56",
+        |      "aestab": 0,
+        |      "vrecv": 1
         |    }
         |  ]
         |}
@@ -47,12 +53,18 @@ class AvsSpec extends AndroidFreeSpec with DerivedLogTag  {
     // Then
     result.isDefined shouldEqual true
     result.get.convid shouldEqual ConvId("df371578-65cf-4f07-9f49-c72a49877ae7")
-    result.get.members.size shouldEqual 1
+    result.get.members.size shouldEqual 2
 
-    val member = result.get.members.head
-    member.userid shouldEqual UserId("3f49da1d-0d52-4696-9ef3-0dd181383e8a")
-    member.clientid shouldEqual ClientId("24cc758f602fb1f4")
-    member.aestab shouldEqual 1
-    member.vrecv shouldEqual 0
+    val member1 = result.get.members.head
+    member1.userid shouldEqual UserId("3f49da1d-0d52-4696-9ef3-0dd181383e8a")
+    member1.clientid shouldEqual ClientId("24cc758f602fb1f4")
+    member1.aestab shouldEqual 1
+    member1.vrecv shouldEqual 0
+
+    val member2 = result.get.members.last
+    member2.userid shouldEqual UserId("7cc36a2e-88d3-ac76-86ba-d02faca478ed")
+    member2.clientid shouldEqual ClientId("64ca916f366fcc56")
+    member2.aestab shouldEqual 0
+    member2.vrecv shouldEqual 1
   }
 }
