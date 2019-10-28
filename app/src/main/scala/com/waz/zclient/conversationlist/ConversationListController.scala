@@ -221,18 +221,21 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       Future.failed(ex)
   }
 
-  def deleteConversation(teamId: Option[TeamId], convId: ConvId): Future[Unit] = (for {
-      contUpdater <- convService.head.map(_.content)
-      Some(tid)    = teamId
-      convOpt     <- contUpdater.convById(convId)
-      Some(conv)   = convOpt
-      rConvId      = conv.remoteId
-      teamService <- inject[Signal[TeamsService]].head
-      _           <- teamService.deleteGroupConversation(tid, rConvId)
-  } yield ()).recoverWith {
-    case e: Exception =>
-      error(l"Error while deleting group conversation", e)
-      Future.successful(())
+  def deleteConversation(teamId: Option[TeamId], convId: ConvId): Future[Unit] = teamId match {
+    case None    => Future.successful(())
+    case Some(tid) =>
+      (for {
+        contUpdater <- convService.head.map(_.content)
+        convOpt     <- contUpdater.convById(convId)
+        Some(conv)   = convOpt
+        rConvId      = conv.remoteId
+        teamService <- inject[Signal[TeamsService]].head
+        _           <- teamService.deleteGroupConversation(tid, rConvId)
+      } yield ()).recoverWith {
+        case e: Exception =>
+          error(l"Error while deleting group conversation", e)
+          Future.successful(())
+      }
   }
 }
 
