@@ -54,8 +54,6 @@ trait TeamsService {
 
   def deleteGroupConversation(teamId: TeamId, rConvId: RConvId): Future[SyncId]
 
-  def onGroupConversationDeleted(convId: RConvId): Future[Unit]
-
   def onGroupConversationDeleteError(error: ErrorResponse, rConvId: RConvId): Future[Unit]
 
 }
@@ -190,9 +188,10 @@ class TeamsServiceImpl(selfUser:           UserId,
         .map(_ => ())
   }
 
-  override def deleteGroupConversation(tid: TeamId, rConvId: RConvId) = {
-    sync.deleteGroupConversation(tid, rConvId)
-  }
+  override def deleteGroupConversation(tid: TeamId, rConvId: RConvId) = for {
+    _      <- convsService.deleteConversation(rConvId)
+    result <- sync.deleteGroupConversation(tid, rConvId)
+  } yield { result }
 
   private def onTeamUpdated(id: TeamId, name: Option[Name], icon: AssetId) = {
     verbose(l"onTeamUpdated: $id, name: $name, icon: $icon")
@@ -253,9 +252,6 @@ class TeamsServiceImpl(selfUser:           UserId,
       import ConversationDataDao._
       convsStorage.find(_.team.contains(id), db => iterating(find(Team, Some(id))(db)), identity).map(_.toSet)
   }
-
-  override def onGroupConversationDeleted(convId: RConvId): Future[Unit] =
-    convsService.deleteConversation(convId)
 
   override def onGroupConversationDeleteError(err: ErrorResponse, rConvId: RConvId): Future[Unit] = {
     convsContent.convByRemoteId(rConvId).map { data =>
