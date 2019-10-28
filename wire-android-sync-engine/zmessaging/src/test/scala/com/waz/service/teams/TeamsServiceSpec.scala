@@ -249,7 +249,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       }
 
       //EXPECT
-      (convsService.deleteConversation _).expects(rConvId).anyNumberOfTimes().returning(Future.successful({}))
+      (convsService.deleteConversation _).expects(rConvId).once().returning(Future.successful({}))
 
       //WHEN
       result(service.deleteGroupConversation(teamId, rConvId))
