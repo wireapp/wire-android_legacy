@@ -41,11 +41,9 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.IControllerFactory
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
+import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
-import com.waz.content.GlobalPreferences
-import com.waz.content.GlobalPreferences.AppLockEnabled
 
 import scala.collection.JavaConverters._
 import scala.collection.breakOut
@@ -76,11 +74,6 @@ class BaseActivity extends AppCompatActivity
     hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
   } yield hideScreenContent
 
-
-  private lazy val appLockEnabled: Signal[Boolean] =
-    if (BuildConfig.FORCE_APP_LOCK) Signal.const(true)
-    else inject[GlobalPreferences].preference(AppLockEnabled).signal
-
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(l"onCreate")
     super.onCreate(savedInstanceState)
@@ -101,41 +94,12 @@ class BaseActivity extends AppCompatActivity
       }
     }
 
-    activityLifecycle.appInBackground.zip(appLockEnabled).onUi {
-      case ((false, Some(act)), true) => checkAdminEnabled(act)
-      case _ =>
-    }
-  }
-
-  private def checkAdminEnabled(implicit activity: Activity): Unit = {
-    verbose(l"checkAdminEnabled(${activity.getClass.getName})")
-    if (!dpm.isAdminActive(secPolicy)) {
-      verbose(l"admin not active, sending request")
-      val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-        .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
-        .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
-
-      startActivityForResult(intent, RequestPoliciesEnable)
-    } else {
-      verbose(l"admin active")
-      checkPassword(activity)
-    }
-  }
-
-  private def checkPassword(activity: Activity) = {
-    dpm.setPasswordQuality(secPolicy, DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
-    dpm.setPasswordMinimumLength(secPolicy, SecurityPolicyChecker.PasswordMinimumLength)
-    dpm.setPasswordMinimumLetters(secPolicy, 2)
-    dpm.setPasswordMinimumUpperCase(secPolicy, 1)
-    dpm.setPasswordMinimumLowerCase(secPolicy, 1)
-    if (dpm.isActivePasswordSufficient) {
-      verbose(l"current password is sufficient")
-      inject[SecurityPolicyChecker].authenticateIfNeeded(activity)
-    }
-    else {
-      verbose(l"current password is insufficient")
-      startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD))
-    }
+    if (BuildConfig.BLOCK_ON_PASSWORD_POLICY)
+      activityLifecycle.appInBackground.onUi {
+        case (false, Some(act)) =>
+          SecurityPolicyService.checkAdminEnabled(dpm, secPolicy, ContextUtils.getString(R.string.security_policy_description)(act))(act)
+        case _ =>
+      }
   }
 
   override def onStart(): Unit = {
@@ -180,7 +144,7 @@ class BaseActivity extends AppCompatActivity
 
     if (requestCode == RequestPoliciesEnable && resultCode == Activity.RESULT_OK) {
       verbose(l"enabling policies now")
-      checkPassword(this)
+      SecurityPolicyService.checkPassword(dpm, secPolicy)(this)
     }
   }
 

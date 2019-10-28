@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.preferences.pages
 
-import android.app.{AlertDialog, FragmentTransaction}
+import android.app.AlertDialog
 import android.content.{Context, DialogInterface}
 import android.os.Bundle
 import android.util.AttributeSet
@@ -74,7 +74,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) { v =>
     v.onClickEvent { v =>
-      registerClient(v)
+      registerClient()(v)
     }
   }
 
@@ -97,31 +97,21 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     }
   }
 
-  private def registerClient(v: View, password: Option[Password] = None): Future[Unit] = {
+  private def registerClient(password: Option[Password] = None)(implicit v: View): Future[Unit] =
     am.head.flatMap(_.registerNewClient()).map {
-      case Right(Registered(id)) => showToast(s"Registered new client: $id")
+      case Right(Registered(id))  => showToast(s"Registered new client: $id")
       case Right(PasswordMissing) =>
         inject[PasswordController].password.head.map {
-          case Some(p) => registerClient(v, Some(p))
-          case _ => showPasswordDialog(v)
+          case Some(p) => registerClient(Some(p))
+          case _       => showPasswordDialog()
         }
-      case Right(LimitReached) => v.setEnabled(false)
-      case Right(Unregistered) => showToast("Something went wrong, failed to register client")
-      case Left(err) =>
-        showPasswordDialog(v, Some(err.message))
+      case Right(LimitReached)   => v.setEnabled(false)
+      case Right(Unregistered)   => showToast("Something went wrong, failed to register client")
+      case Left(err)             => showPasswordDialog(Some(err.message))
     }
-  }
 
-  private def showPasswordDialog(v: View, error: Option[String] = None): Unit = {
-    val fragment = returning(RequestPasswordDialog.newInstance(error))(_.onPassword(p => registerClient(v, Some(p))))
-    context.asInstanceOf[BaseActivity]
-      .getSupportFragmentManager
-      .beginTransaction
-      .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-      .add(fragment, RequestPasswordDialog.Tag)
-      .addToBackStack(RequestPasswordDialog.Tag)
-      .commit
-  }
+  private def showPasswordDialog(error: Option[String] = None)(implicit v: View): Unit =
+    RequestPasswordDialog((p: Password) => registerClient(Some(p)), error)
 
   randomLastIdButton.onClickEvent { _ =>
     val randomUid = Uid()

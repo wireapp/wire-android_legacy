@@ -29,6 +29,7 @@ import com.waz.service.push._
 import com.waz.services.ZMessagingService
 import com.waz.services.fcm.FCMHandlerService._
 import com.waz.threading.Threading
+import com.waz.utils.events.EventContext
 import com.waz.utils.{JsonDecoder, RichInstant, Serialized}
 import com.waz.zclient.WireApplication
 import com.waz.zclient.log.LogUI._
@@ -69,13 +70,14 @@ class FCMHandlerService extends FirebaseMessagingService with ZMessagingService 
     getData(remoteMessage).foreach { data =>
       verbose(l"processing remote message with data: ${redactedString(data.toString())}")
       implicit val context: Context = this
+      implicit val ec: EventContext = EventContext.Global
 
       Option(ZMessaging.currentGlobal) match {
         case None =>
           warn(l"No ZMessaging global available - calling too early")
         case Some(globalModule) if !isSenderKnown(globalModule, remoteMessage.getFrom) =>
           warn(l"Received FCM notification from unknown sender: ${redactedString(remoteMessage.getFrom)}. Ignoring...")
-        case _ => SecurityPolicyChecker.backgroundSecurityChecklist(context).run().foreach { allChecksPassed =>
+        case _ => SecurityPolicyChecker.runBackgroundSecurityChecklist().foreach { allChecksPassed =>
           if (allChecksPassed) {
             getTargetAccount(data) match {
               case None =>

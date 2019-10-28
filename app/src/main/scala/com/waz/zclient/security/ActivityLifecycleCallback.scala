@@ -34,7 +34,6 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   override def onActivityPaused(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
-      case _: AppLockActivity =>
       case _ =>
         verbose(l"onActivityPaused, activities still active: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
         activitiesRunning.mutate { case (running, _) => (running - 1, Option(activity))}
@@ -44,7 +43,6 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   override def onActivityResumed(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
-      case _: AppLockActivity =>
       case _ =>
         verbose(l"onActivityResumed, activities active now: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
         activitiesRunning.mutate { case (running, _) => (running + 1, Option(activity))}

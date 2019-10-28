@@ -47,13 +47,15 @@ class SecondPageFragment extends FragmentHelper
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val conversationController = inject[ConversationController]
 
-  override def setUserVisibleHint(isVisibleToUser: Boolean): Unit = {
+  // TODO: The method is deprecated.  If it's necessary to inform Android that SecondPageFragment is invisible,
+  // try ViewPager.addOnPageChangeListener: https://stackoverflow.com/a/25822814/2975925
+/*  override def setUserVisibleHint(isVisibleToUser: Boolean): Unit = {
     super.setUserVisibleHint(isVisibleToUser)
     if (isAdded) {
       val fragment = getChildFragmentManager.findFragmentById(R.id.fl__second_page_container)
       if (fragment != null) fragment.setUserVisibleHint(isVisibleToUser)
     }
-  }
+  }*/
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     inflater.inflate(R.layout.fragment_pager_second, container, false)

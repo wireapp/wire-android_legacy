@@ -462,6 +462,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
+
+    inject[SecurityPolicyChecker]
   }
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {

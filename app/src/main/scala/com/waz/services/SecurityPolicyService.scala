@@ -17,9 +17,11 @@
  */
 package com.waz.services
 
-import android.app.admin.DeviceAdminReceiver
-import android.content.{Context, Intent}
+import android.app.Activity
+import android.app.admin.{DeviceAdminReceiver, DevicePolicyManager}
+import android.content.{ComponentName, Context, Intent}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.zclient.BaseActivity.RequestPoliciesEnable
 import com.waz.zclient.Injectable
 import com.waz.zclient.log.LogUI._
 
@@ -34,5 +36,34 @@ import com.waz.zclient.log.LogUI._
 class SecurityPolicyService extends DeviceAdminReceiver with DerivedLogTag with Injectable {
   override def onEnabled(context: Context, intent: Intent): Unit = {
     verbose(l"admin rights enabled, setting policy")
+  }
+}
+
+object SecurityPolicyService extends DerivedLogTag {
+  def checkAdminEnabled(dpm: DevicePolicyManager, secPolicy: ComponentName, secPolicyDescription: String)(implicit activity: Activity): Unit = {
+    verbose(l"checkAdminEnabled(${activity.getClass.getName})")
+    if (!dpm.isAdminActive(secPolicy)) {
+      verbose(l"admin not active, sending request")
+      val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+        .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
+        .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, secPolicyDescription)
+
+      activity.startActivityForResult(intent, RequestPoliciesEnable)
+    } else {
+      verbose(l"admin active")
+      checkPassword(dpm, secPolicy)
+    }
+  }
+
+  def checkPassword(dpm: DevicePolicyManager, secPolicy: ComponentName)(implicit activity: Activity) = {
+    dpm.setPasswordQuality(secPolicy, DevicePolicyManager.PASSWORD_QUALITY_COMPLEX)
+    dpm.setPasswordMinimumLength(secPolicy, 8)
+    dpm.setPasswordMinimumLetters(secPolicy, 2)
+    dpm.setPasswordMinimumUpperCase(secPolicy, 1)
+    dpm.setPasswordMinimumLowerCase(secPolicy, 1)
+    if (!dpm.isActivePasswordSufficient) {
+      verbose(l"current password is insufficient")
+      activity.startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD))
+    }
   }
 }

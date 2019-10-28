@@ -108,6 +108,15 @@
     <string name="crashes_and_analytics_request_no">No</string>
     <string name="crashes_and_analytics_request_agree">I Agree</string>
 
+    <!-- Request Password dialog -->
+    <string name="request_password_title">Provide account password</string>
+    <string name="request_password_ok">OK</string>
+    <string name="request_password_cancel">Cancel</string>
+    <string name="request_password_biometric_title">Biometric Prompt</string>
+    <string name="request_password_biometric_description">Use the biometric authentication or click cancel and provide the password</string>
+    <string name="request_password_biometric_cancel">Cancel</string>
+    <string name="request_password_error">Wrong password</string>
+
     <!-- Bots / Integrations / Services -->
     <string name="integrations_picker__section_title">Services</string>
 
