@@ -151,7 +151,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
             case None                     => Set.empty[UserId]
           }
 
-          cs.onGroupChanged(RConvId(convId), members)
+          cs.onParticipantsChanged(RConvId(convId), members)
         }
       }
 

@@ -359,7 +359,7 @@ class CallingServiceImpl(val accountId:       UserId,
       call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
-  def onGroupChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
+  def onParticipantsChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
     updateCallIfActive(rConvId) { (w, conv, call) =>
       verbose(l"group members changed, convId: ${conv.id}, other members: $members")
       val updated = members.map { userId =>
