@@ -244,20 +244,18 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val rConvId = RConvId()
       val service = createService
 
-      (sync.deleteGroupConversation _).expects(teamId, rConvId).anyNumberOfTimes().onCall { (_, rId) =>
-        service.onGroupConversationDeleted(rId)
+      (sync.deleteGroupConversation _).expects(teamId, rConvId).anyNumberOfTimes().onCall { (_, _) =>
         Future.successful(SyncId())
       }
 
       //EXPECT
-      (convsService.deleteConversation _).expects(rConvId).once()
+      (convsService.deleteConversation _).expects(rConvId).anyNumberOfTimes().returning(Future.successful({}))
 
       //WHEN
       result(service.deleteGroupConversation(teamId, rConvId))
     }
 
-    //FIXME: gets success individually but failing on full test suite
-    ignore("When delete group conversation request returns error, post error to ui") {
+    scenario("When delete group conversation request returns error, post error to ui") {
       //GIVEN
       val teamId = TeamId()
       val convId = ConvId()
@@ -267,6 +265,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       (convsContent.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
+      (convsService.deleteConversation _).expects(*).anyNumberOfTimes().returning(Future.successful({}))
 
       val errorResponse = ErrorResponse(404, message = "not found", label = "")
 
