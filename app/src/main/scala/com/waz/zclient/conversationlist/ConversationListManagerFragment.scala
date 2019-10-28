@@ -537,7 +537,7 @@ class ConversationListManagerFragment extends Fragment
           getString(R.string.delete_group_conversation_error_title),
           getString(R.string.delete_group_conversation_error_message_with_group_name, data.displayName))
           Future.successful(())
-        case None => showDefaultGroupConvDeleteError()
+        case _ => showDefaultGroupConvDeleteError()
           Future.successful(())
       }.recoverWith {
         case ex: Exception =>

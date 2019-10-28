@@ -227,10 +227,10 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       (for {
         contUpdater <- convService.head.map(_.content)
         convOpt     <- contUpdater.convById(convId)
-        Some(conv)   = convOpt
-        rConvId      = conv.remoteId
-        teamService <- inject[Signal[TeamsService]].head
-        _           <- teamService.deleteGroupConversation(tid, rConvId)
+        rConvIdOpt   = convOpt.collect { case c => c.remoteId }
+        _            = rConvIdOpt.collect { case rConvId =>
+                         inject[Signal[TeamsService]].head.flatMap(_.deleteGroupConversation(tid, rConvId))
+                       }
       } yield ()).recoverWith {
         case e: Exception =>
           error(l"Error while deleting group conversation", e)
