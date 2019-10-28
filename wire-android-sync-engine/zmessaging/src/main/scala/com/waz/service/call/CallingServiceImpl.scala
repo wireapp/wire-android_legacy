@@ -367,7 +367,7 @@ class CallingServiceImpl(val accountId:       UserId,
       }.toMap
 
       call.copy(others = updated, maxParticipants = math.max(call.maxParticipants, members.size + 1))
-    } ("onGroupChanged")
+    } ("onParticipantsChanged")
 
   network.networkMode.onChanged { _ =>
     currentCall.head.flatMap {
