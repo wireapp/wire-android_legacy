@@ -146,12 +146,10 @@ class AvsImpl() extends Avs with DerivedLogTag {
     callingReady.future.map { _ =>
       val participantChangedHandler = new ParticipantChangedHandler {
         override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
-          val members = ParticipantsChangeDecoder.decode(data) match {
-            case Some(participantsChange) => participantsChange.members.map(_.userid).toSet
-            case None                     => Set.empty[UserId]
+          ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
+            val members = participantsChange.members.map(_.userid).toSet
+            cs.onParticipantsChanged(RConvId(convId), members)
           }
-
-          cs.onParticipantsChanged(RConvId(convId), members)
         }
       }
 
