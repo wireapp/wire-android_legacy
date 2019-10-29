@@ -22,14 +22,14 @@ import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
-import com.waz.model.UserData.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
-import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
+import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -38,7 +38,6 @@ import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
@@ -53,12 +52,12 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   import Threading.Implicits.Background
   import VideoState._
 
+  val networkMode     = inject[NetworkModeService].networkMode
+  val accounts        = inject[AccountsService]
+  val themeController = inject[ThemeController]
+
   private lazy val screenManager  = new ScreenManager
-  private lazy val soundController        = inject[SoundController]
-  private lazy val conversationController = inject[ConversationController]
-  val networkMode            = inject[NetworkModeService].networkMode
-  val accounts               = inject[AccountsService]
-  val themeController        = inject[ThemeController]
+  private lazy val soundController = inject[SoundController]
 
   inject[GlobalPreferences].apply(GlobalPreferences.SkipTerminatingState) := true
 
@@ -99,9 +98,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val callState             = callStateOpt.collect { case Some(s) => s }
   val callStateCollapseJoin = currentCall.map(_.stateCollapseJoin)
 
-  val isCallEstablished = callStateOpt.map(_.contains(SelfConnected))
-  val isCallOutgoing    = callStateOpt.map(_.contains(SelfCalling))
-  val isCallIncoming    = callStateOpt.map(_.contains(OtherCalling))
+  val isCallEstablished     = callStateOpt.map(_.contains(SelfConnected))
+  val isCallOutgoing        = callStateOpt.map(_.contains(SelfCalling))
+  val isCallIncoming        = callStateOpt.map(_.contains(OtherCalling))
 
   val callConvId            = currentCall.map(_.convId)
   val isMuted               = currentCall.map(_.muted)
@@ -202,10 +201,12 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   } yield members
 
   private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.keys.toSeq.headOption)).flatMap {
-    // 1:1 conversation has the same id as the other user, so we can access it directly
-    case (false, usersStorage, Some(participant)) => usersStorage.optSignal(participant.userId)
-    // Need a none signal to help with further signals
-    case _                                        => Signal.const[Option[UserData]](None)
+    case (false, usersStorage, Some(participant)) =>
+      // 1:1 conversation has the same id as the other user, so we can access it directly
+      usersStorage.optSignal(participant.userId)
+    case _ =>
+      // Need a none signal to help with further signals
+      Signal.const[Option[UserData]](None)
   }
 
   val memberForPicture: Signal[Option[UserId]] = for {

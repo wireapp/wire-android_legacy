@@ -388,11 +388,6 @@ class CallingServiceImpl(val accountId:       UserId,
         isGroup <- convsService.isGroupConversation(convId)
         vbr     <- userPrefs.preference(UserPreferences.VBREnabled).apply()
         mems    <- members.getActiveUsers(conv.id)
-        others  =
-           (if (isGroup) Set.empty[UserId]
-           else if (conv.team.isEmpty) Set(UserId(conv.id.str))
-           else mems.filter(_ != accountId).toSet)
-            .map(_ -> Some(LocalInstant.Now)).toMap
         callType =
           if (mems.size > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
           else if (isVideo) Avs.WCallType.Video
