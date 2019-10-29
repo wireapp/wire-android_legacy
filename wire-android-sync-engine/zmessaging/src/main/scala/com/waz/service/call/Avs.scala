@@ -23,6 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.Calling._
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.jna.{Size_t, Uint32_t}
@@ -147,8 +148,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
       val participantChangedHandler = new ParticipantChangedHandler {
         override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
           ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
-            val members = participantsChange.members.map(_.userid).toSet
-            cs.onParticipantsChanged(RConvId(convId), members)
+            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid)).toSet
+            cs.onParticipantsChanged(RConvId(convId), participants)
           }
         }
       }

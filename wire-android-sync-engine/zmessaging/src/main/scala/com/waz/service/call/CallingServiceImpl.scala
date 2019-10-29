@@ -359,14 +359,14 @@ class CallingServiceImpl(val accountId:       UserId,
       call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
-  def onParticipantsChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
-    updateCallIfActive(rConvId) { (w, conv, call) =>
-      verbose(l"group members changed, convId: ${conv.id}, other members: $members")
-      val updated = members.map { userId =>
-        userId -> call.others.getOrElse(userId, Some(LocalInstant.Now))
+  def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
+    updateCallIfActive(rConvId) { (_, conv, call) =>
+      verbose(l"group participants changed, convId: ${conv.id}, other participants: $participants")
+      val updated = participants.map { p =>
+        p -> call.otherParticipants.getOrElse(p, Some(LocalInstant.Now))
       }.toMap
 
-      call.copy(others = updated, maxParticipants = math.max(call.maxParticipants, members.size + 1))
+      call.copy(otherParticipants = updated, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
     } ("onParticipantsChanged")
 
   network.networkMode.onChanged { _ =>
