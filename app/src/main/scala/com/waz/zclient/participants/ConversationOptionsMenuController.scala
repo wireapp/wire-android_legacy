@@ -41,6 +41,7 @@ import com.waz.zclient.participants.OptionsMenuController._
 import com.waz.zclient.utils.ContextUtils.{getInt, getString}
 import com.waz.zclient.{Injectable, Injector, R, WireApplication}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink: Boolean = false)
@@ -288,9 +289,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     }
   }
 
-  private def deleteConversation(convId: ConvId) = teamId.head.flatMap(
-    convListController.deleteConversation(_, convId)
-  )
+  private def deleteConversation(convId: ConvId): Future[Unit] = teamId.head.flatMap {
+    case Some(tId) => convListController.deleteConversation(tId, convId)
+    case None     => Future.successful(())
+  }
 
   override def finalize(): Unit = {
     verbose(l"finalized!")

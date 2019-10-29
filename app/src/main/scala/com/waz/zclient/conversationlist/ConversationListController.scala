@@ -221,21 +221,20 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       Future.failed(ex)
   }
 
-  def deleteConversation(teamId: Option[TeamId], convId: ConvId): Future[Unit] = teamId match {
-    case None    => Future.successful(())
-    case Some(tid) =>
-      (for {
-        contUpdater <- convService.head.map(_.content)
-        convOpt     <- contUpdater.convById(convId)
-        rConvIdOpt   = convOpt.collect { case c => c.remoteId }
-        _            = rConvIdOpt.collect { case rConvId =>
-                         inject[Signal[TeamsService]].head.flatMap(_.deleteGroupConversation(tid, rConvId))
-                       }
-      } yield ()).recoverWith {
-        case e: Exception =>
-          error(l"Error while deleting group conversation", e)
-          Future.successful(())
-      }
+  def deleteConversation(teamId: TeamId, convId: ConvId): Future[Unit] = {
+    val result = for {
+      contUpdater <- convService.head.map(_.content)
+      convOpt     <- contUpdater.convById(convId)
+      service     <- inject[Signal[TeamsService]].head
+    } yield convOpt match {
+      case Some(conv) => service.deleteGroupConversation(teamId, conv.remoteId).mapTo[Unit]
+      case None       => Future.successful(())
+    }
+
+    result.flatten.recoverWith { case e: Exception =>
+        error(l"Error while deleting group conversation", e)
+        Future.successful(())
+    }
   }
 }
 
