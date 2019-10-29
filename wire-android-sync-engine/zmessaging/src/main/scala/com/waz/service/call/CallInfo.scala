@@ -86,8 +86,7 @@ case class CallInfo(convId:             ConvId,
     case (s,             _)                  => s
   }
 
-  // TODO: If otherParticipants includes the self partcipant, then... better to rename this.
-  def hasOtherParticipants: Boolean = otherParticipants.size > 1
+  def canOthersDialogue: Boolean = otherParticipants.size > 1
 
   def updateCallState(newState: CallState): CallInfo = {
     val changedState = newState != this.state

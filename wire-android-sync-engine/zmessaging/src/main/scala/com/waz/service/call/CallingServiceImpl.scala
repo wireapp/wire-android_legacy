@@ -293,7 +293,7 @@ class CallingServiceImpl(val accountId:       UserId,
             call.updateCallState(call.state match {
               case SelfConnected if !hasIncomingCall && !skipTerminatingUltimate => Terminating
               case OtherCalling => Ongoing //go straight to state "Ongoing" for incoming calls
-              case _ if call.hasOtherParticipants => Ongoing
+              case _ if call.canOthersDialogue => Ongoing
               case _ => Ended
             })
           }
@@ -308,7 +308,7 @@ class CallingServiceImpl(val accountId:       UserId,
     updateActiveCallAsync { (_, conv, call) =>
       verbose(l"dismissCall(): ${conv.id}")
       call.state match {
-        case Terminating => call.updateCallState(if (call.hasOtherParticipants) Ongoing else Ended)
+        case Terminating => call.updateCallState(if (call.canOthersDialogue) Ongoing else Ended)
         case _ => call
       }
     }("dismissCall")
