@@ -230,7 +230,6 @@ class CallingServiceImpl(val accountId:       UserId,
         isGroup,
         userId,
         OtherCalling,
-        others = Map(userId -> Some(LocalInstant.Now)),
         startedAsVideoCall = videoCall,
         videoSendState = VideoState.NoCameraPermission,
         shouldRing = !conv.muted.isAllMuted && shouldRing)
@@ -272,11 +271,12 @@ class CallingServiceImpl(val accountId:       UserId,
   def onEstablishedCall(rConvId: RConvId, userId: UserId): Future[Unit] =
     updateCallIfActive(rConvId) { (_, conv, c) =>
       verbose(l"call established for conv: ${conv.id}, userId: $userId, time: ${clock.instant}")
-      setVideoSendState(conv.id, c.videoSendState) //will upgrade call videoSendState
-      setCallMuted(c.muted) //Need to set muted only after call is established
-      //on est. group call, switch from self avatar to other user now in case `onGroupChange` is delayed
-      val others = c.others + (userId -> Some(LocalInstant.Now))
-      c.updateCallState(SelfConnected).copy(others = others, maxParticipants = others.size + 1)
+      setVideoSendState(conv.id, c.videoSendState) // Will upgrade call videoSendState
+      setCallMuted(c.muted) // Need to set muted only after call is established
+      c.updateCallState(SelfConnected)
+
+      // TODO: In AVS 5.4, we will have access to the client id here. We should then update the
+      // participants and maxParticipants property.
     }("onEstablishedCall")
 
   override def endCall(convId: ConvId, skipTerminating: Boolean = false) = {
@@ -438,7 +438,6 @@ class CallingServiceImpl(val accountId:       UserId,
                         isGroup,
                         accountId,
                         SelfCalling,
-                        others = others,
                         startedAsVideoCall = isVideo,
                         videoSendState = if (isVideo) VideoState.Started else VideoState.Stopped)
                       callProfile.mutate(_.copy(calls = profile.calls + (newCall.convId -> newCall)))
