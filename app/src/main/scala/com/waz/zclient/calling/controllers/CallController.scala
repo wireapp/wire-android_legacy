@@ -114,7 +114,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val isGroupCall           = currentCall.map(_.isGroup)
   val cbrEnabled            = currentCall.map(_.isCbrEnabled)
   val duration              = currentCall.flatMap(_.durationFormatted)
-  val others                = currentCall.map(_.others)
+  val otherParticipants     = currentCall.map(_.otherParticipants)
 
   val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
@@ -130,10 +130,11 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] = {
     for {
-      cZms        <- callingZms
-      ids         <- orderedParticipants(take)
-      users       <- cZms.usersStorage.listSignal(ids)
-      videoStates <- mergedVideoStates
+      cZms         <- callingZms
+      participants <- orderedParticipants(take)
+      ids           = participants.map(_.userId)
+      users        <- cZms.usersStorage.listSignal(ids)
+      videoStates  <- mergedVideoStates
     } yield users.map { user =>
       CallParticipantInfo(
         user.id,
@@ -147,9 +148,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }
 
-  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[UserId]] = {
-    others.map { others =>
-      val orderedByTimeDescending = others.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
+  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[Participant]] = {
+    otherParticipants.map { participants =>
+      val orderedByTimeDescending = participants.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
       take.fold(orderedByTimeDescending)(orderedByTimeDescending.take)
     }
   }
@@ -200,10 +201,11 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     members <- zms.membersStorage.activeMembers(cId)
   } yield members
 
-  private lazy val otherUser = Signal(isGroupCall, userStorage, others.map(_.keys.toSeq.headOption)).flatMap {
-    case (false, usersStorage, Some(o)) =>
-      usersStorage.optSignal(o) // one-to-one conversation has the same id as the other user, so we can access it directly
-    case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
+  private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.keys.toSeq.headOption)).flatMap {
+    // 1:1 conversation has the same id as the other user, so we can access it directly
+    case (false, usersStorage, Some(participant)) => usersStorage.optSignal(participant.userId)
+    // Need a none signal to help with further signals
+    case _                                        => Signal.const[Option[UserData]](None)
   }
 
   val memberForPicture: Signal[Option[UserId]] = for {
