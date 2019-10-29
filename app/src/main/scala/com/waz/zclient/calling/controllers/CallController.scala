@@ -530,5 +530,8 @@ object CallController {
                                  isGuest: Boolean,
                                  isVerified: Boolean,
                                  isVideoEnabled: Boolean,
-                                 zms: Option[ZMessaging])
+                                 zms: Option[ZMessaging]) {
+
+    def isSelf: Boolean = zms.exists(_.selfUserId == userId)
+  }
 }
