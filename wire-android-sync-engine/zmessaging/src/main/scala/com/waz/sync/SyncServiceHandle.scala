@@ -19,9 +19,10 @@ package com.waz.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.NetworkMode
-import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.content.UserPreferences.{ShouldSyncConversations, ShouldSyncInitial}
+import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
@@ -32,7 +33,6 @@ import com.waz.service.assets2.UploadAssetStatus
 import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
 import org.threeten.bp.Instant
-import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -97,6 +97,8 @@ trait SyncServiceHandle {
   def postSessionReset(conv: ConvId, user: UserId, client: ClientId): Future[SyncId]
 
   def performFullSync(): Future[Unit]
+
+  def deleteGroupConversation(teamId: TeamId, rConvId: RConvId): Future[SyncId]
 }
 
 class AndroidSyncServiceHandle(account:         UserId,
@@ -203,6 +205,14 @@ class AndroidSyncServiceHandle(account:         UserId,
       _       =  verbose(l"SYNC ... and done")
     } yield ()
   }
+
+  override def deleteGroupConversation(teamId: TeamId, rConvId: RConvId) = {
+    addRequest(DeleteGroupConversation(teamId, rConvId)).recoverWith {
+      case e: Exception =>
+        error(l"Error deleting group conv", e)
+        Future.failed(e)
+    }
+  }
 }
 
 trait SyncHandler {
@@ -243,6 +253,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncConnections                                     => zms.connectionsSync.syncConnections()
           case SyncSelf                                            => zms.usersSync.syncSelfUser()
           case SyncSelfPermissions                                 => zms.teamsSync.syncSelfPermissions()
+          case DeleteGroupConversation(teamId, convId)             => zms.teamsSync.deleteConversations(teamId, convId)
           case DeleteAccount                                       => zms.usersSync.deleteAccount()
           case PostSelf(info)                                      => zms.usersSync.postSelfUser(info)
           case PostSelfPicture(assetId)                            => zms.usersSync.postSelfPicture(assetId)

@@ -41,6 +41,7 @@ import com.waz.zclient.participants.OptionsMenuController._
 import com.waz.zclient.utils.ContextUtils.{getInt, getString}
 import com.waz.zclient.{Injectable, Injector, R, WireApplication}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink: Boolean = false)
@@ -60,6 +61,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   private val cameraController       = inject[ICameraController]
   private val screenController       = inject[IConversationScreenController]
   private val convListController     = inject[ConversationListController]
+  private val userAccountsController = inject[UserAccountsController]
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
   override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
@@ -90,10 +92,13 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     members <- conv.fold(Signal.const(Set.empty[UserId]))(cd => zms.membersStorage.activeMembers(cd.id))
   } yield members.contains(zms.selfUserId)
 
+  val teamId: Signal[Option[TeamId]] = zMessaging.map(_.teamId)
+
   val optionItems: Signal[Seq[MenuItem]] = for {
-    teamId              <- zMessaging.map(_.teamId)
+    teamId              <- teamId
     Some(conv)          <- conv
     isGroup             <- isGroup
+    admin               <- userAccountsController.isAdmin
     connectStatus       <- otherUser.map(_.map(_.connection))
     teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot               <- otherUser.map(_.exists(_.isWireBot))
@@ -111,10 +116,10 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
 
     mode match {
       case Mode.Leaving(_) =>
-        builder ++= Set(LeaveOnly, LeaveAndDelete)
+        builder ++= Set(LeaveOnly, LeaveAndClear)
 
       case Mode.Deleting(_) =>
-        builder ++= Set(DeleteOnly, DeleteAndLeave)
+        builder ++= Set(ClearOnly, ClearAndLeave)
 
       case Mode.Normal(false) if fromDeepLink =>
         if (connectStatus.contains(ACCEPTED) || connectStatus.contains(PENDING_FROM_USER)) builder += Block
@@ -143,10 +148,11 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
         if (isGroup) {
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
-          builder += Delete
+          builder += Clear
+          if (admin) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
-            builder ++= Set(notifications, Delete)
+            builder ++= Set(notifications, Clear)
             if (!teamMember && connectStatus.contains(ACCEPTED)) builder += Block
           }
           else if (connectStatus.contains(PENDING_FROM_USER)) builder += Block
@@ -182,7 +188,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
         case Unarchive => convController.archive(cId, archive = false)
         case Notifications => OptionsMenu(context, new NotificationsOptionsMenuController(convId, mode.inConversationList)).show()
         case Leave     => leaveConversation(cId)
-        case Delete    => deleteConversation(cId)
+        case Clear     => clearConversation(cId)
         case Block     => user.map(_.id).foreach(showBlockConfirmation(cId, _))
         case Unblock   => user.map(_.id).foreach(uId => zMessaging.head.flatMap(_.connection.unblockConnection(uId)))
         case RemoveMember =>
@@ -196,6 +202,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
         case RemoveFromFavorites => convListController.removeFromFavorites(cId)
         case MoveToFolder        => screenController.showMoveToFolder(cId)
         case i: RemoveFromFolder => convListController.removeFromFolder(cId, i.folderData.id)
+        case DeleteGroupConv     => deleteConversation(cId)
         case _ =>
       }
     case _ =>
@@ -211,7 +218,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           convController.leave(convId)
           switchToConversationList()
         }
-      }).setNegativeButton(R.string.conversation__action__leave_and_delete, new DialogInterface.OnClickListener {
+      }).setNegativeButton(R.string.conversation__action__leave_and_clear, new DialogInterface.OnClickListener {
       override def onClick(dialog: DialogInterface, which: Int): Unit = {
         convController.delete(convId, alsoLeave = true)
         switchToConversationList()
@@ -220,18 +227,18 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     dialog.show()
   }
 
-  def deleteConversation(convId: ConvId): Unit = {
+  def clearConversation(convId: ConvId): Unit = {
     isGroup.head.flatMap { isGroup =>
       isMember.head.map { isMember =>
         val dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
           .setCancelable(true)
           .setTitle(R.string.confirmation_menu__meta_delete)
           .setMessage(R.string.confirmation_menu__meta_delete_text)
-          .setPositiveButton(R.string.conversation__action__delete_only, new DialogInterface.OnClickListener {
+          .setPositiveButton(R.string.conversation__action__clear_only, new DialogInterface.OnClickListener {
             override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = false)
           })
         if (isGroup && isMember) {
-          dialogBuilder.setNegativeButton(R.string.conversation__action__delete_and_leave, new DialogInterface.OnClickListener {
+          dialogBuilder.setNegativeButton(R.string.conversation__action__clear_and_leave, new DialogInterface.OnClickListener {
             override def onClick(dialog: DialogInterface, which: Int): Unit = {
               convController.delete(convId, alsoLeave = true)
               switchToConversationList()
@@ -282,6 +289,11 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     }
   }
 
+  private def deleteConversation(convId: ConvId): Future[Unit] = teamId.head.flatMap {
+    case Some(tId) => convListController.deleteConversation(tId, convId)
+    case None     => Future.successful(())
+  }
+
   override def finalize(): Unit = {
     verbose(l"finalized!")
   }
@@ -317,17 +329,18 @@ object ConversationOptionsMenuController {
   object RemoveFromFavorites extends BaseMenuItem(R.string.conversation__action__remove_from_favorites, Some(R.string.glyph__remove_from_favorites))
   object MoveToFolder        extends BaseMenuItem(R.string.conversation__action__move_to_folder, Some(R.string.glyph__move_to_folder))
 
-  object Delete              extends BaseMenuItem(R.string.conversation__action__delete, Some(R.string.glyph__delete_me))
+  object Clear               extends BaseMenuItem(R.string.conversation__action__clear_content, Some(R.string.glyph__clear))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
+  object DeleteGroupConv     extends BaseMenuItem(R.string.conversation__action__delete_group, Some(R.string.glyph__delete_me))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
   object Unblock             extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
   object RemoveMember        extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
 
-  object LeaveOnly      extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
-  object LeaveAndDelete extends BaseMenuItem(R.string.conversation__action__leave_and_delete, Some(R.string.empty_string))
-  object DeleteOnly     extends BaseMenuItem(R.string.conversation__action__delete_only, Some(R.string.empty_string))
-  object DeleteAndLeave extends BaseMenuItem(R.string.conversation__action__delete_and_leave, Some(R.string.empty_string))
+  object LeaveOnly     extends BaseMenuItem(R.string.conversation__action__leave_only, Some(R.string.empty_string))
+  object LeaveAndClear extends BaseMenuItem(R.string.conversation__action__leave_and_clear, Some(R.string.empty_string))
+  object ClearOnly     extends BaseMenuItem(R.string.conversation__action__clear_only, Some(R.string.empty_string))
+  object ClearAndLeave extends BaseMenuItem(R.string.conversation__action__clear_and_leave, Some(R.string.empty_string))
 
   val OrderSeq = Seq(Mute, Unmute, Notifications, Archive, Unarchive, AddToFavorites, RemoveFromFavorites, MoveToFolder,
-    RemoveFromFolderPlaceHolder, Delete, Leave, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndDelete, DeleteOnly, DeleteAndLeave)
+    RemoveFromFolderPlaceHolder, Clear, Leave, DeleteGroupConv, Block, Unblock, RemoveMember, LeaveOnly, LeaveAndClear, ClearOnly, ClearAndLeave)
 }

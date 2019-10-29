@@ -25,6 +25,7 @@ import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
 import android.widget.FrameLayout
+import com.waz.api.ErrorType
 import com.waz.api.SyncState._
 import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.model._
@@ -55,7 +56,7 @@ import com.waz.zclient.utils.extensions.{BottomNavigationUtil, FragmentUtils}
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.views.LoadingIndicatorView.{InfiniteLoadingBar, Spinner}
 import com.waz.zclient.views.menus.ConfirmationMenu
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.zclient.{ErrorsController, FragmentHelper, R}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -83,6 +84,7 @@ class ConversationListManagerFragment extends Fragment
   private lazy val navController        = inject[INavigationController]
   private lazy val convScreenController = inject[IConversationScreenController]
   private lazy val convListController   = inject[ConversationListController]
+  private lazy val errorsController     = inject[ErrorsController]
 
   private var startUiLoadingIndicator: LoadingIndicatorView = _
   private var listLoadingIndicator   : LoadingIndicatorView = _
@@ -186,7 +188,11 @@ class ConversationListManagerFragment extends Fragment
         Option(listLoadingIndicator).foreach(_.setColor(c))
         setUpBottomNavigationTintColors(c)
       }
+
+    zms.flatMap(_.errors.getErrors).onUi {
+      _.foreach(err => if (err.errType == ErrorType.CANNOT_DELETE_GROUP_CONVERSATION) handleGroupConvError(err))
     }
+  }
 
   private def setUpBottomNavigationTintColors(color: Int): Unit = {
     import android.content.res.ColorStateList
@@ -520,6 +526,31 @@ class ConversationListManagerFragment extends Fragment
     startActivityForResult(
       MoveToFolderActivity.newIntent(requireContext(), convId),
       MoveToFolderActivity.REQUEST_CODE_MOVE_CREATE
+    )
+  }
+
+  private def handleGroupConvError(errorData: ErrorData) =  {
+    errorsController.dismissSyncError(errorData.id)
+    errorData.convId.fold(showDefaultGroupConvDeleteError())(cId =>
+      convController.conversationData(cId).head.flatMap {
+        case Some(data) if data.name.nonEmpty => showErrorDialog(
+          getString(R.string.delete_group_conversation_error_title),
+          getString(R.string.delete_group_conversation_error_message_with_group_name, data.displayName))
+          Future.successful(())
+        case _ => showDefaultGroupConvDeleteError()
+          Future.successful(())
+      }.recoverWith {
+        case ex: Exception =>
+          error(l"Error while fetching deleted conversation name. Conv id: ${errorData.convId}", ex)
+          Future.successful(())
+      }
+    )
+  }
+
+  private def showDefaultGroupConvDeleteError(): Unit = {
+    showErrorDialog(
+      R.string.delete_group_conversation_error_title,
+      R.string.delete_group_conversation_error_message
     )
   }
 }
