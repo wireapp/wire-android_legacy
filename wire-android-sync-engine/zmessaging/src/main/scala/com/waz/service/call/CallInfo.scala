@@ -39,22 +39,23 @@ case class CallInfo(convId:             ConvId,
                     isGroup:            Boolean,
                     caller:             UserId,
                     state:              CallState,
-                    prevState:          Option[CallState]                 = None,
-                    others:             Map[UserId, Option[LocalInstant]] = Map.empty,
-                    maxParticipants:    Int                               = 0, //maintains the largest number of users that were ever in the call (for tracking)
-                    muted:              Boolean                           = false,
-                    isCbrEnabled:       Boolean                           = false,
-                    startedAsVideoCall: Boolean                           = false,
-                    videoSendState:     VideoState                        = VideoState.Stopped,
-                    videoReceiveStates: Map[Participant, VideoState]      = Map.empty,
-                    wasVideoToggled:    Boolean                           = false, //for tracking
-                    startTime:          LocalInstant                      = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
-                    joinedTime:         Option[LocalInstant]              = None, //the time the call was joined, if any
-                    estabTime:          Option[LocalInstant]              = None, //the time that a joined call was established, if any
-                    endTime:            Option[LocalInstant]              = None,
-                    endReason:          Option[AvsClosedReason]           = None,
-                    outstandingMsg:     Option[(GenericMessage, Pointer)] = None, //Any messages we were unable to send due to conv degradation
-                    shouldRing:         Boolean                           = true) extends DerivedLogTag {
+                    prevState:          Option[CallState]                      = None,
+                    others:             Map[UserId, Option[LocalInstant]]      = Map.empty,
+                    otherParticipants:  Map[Participant, Option[LocalInstant]] = Map.empty,
+                    maxParticipants:    Int                                    = 0, //maintains the largest number of users that were ever in the call (for tracking)
+                    muted:              Boolean                                = false,
+                    isCbrEnabled:       Boolean                                = false,
+                    startedAsVideoCall: Boolean                                = false,
+                    videoSendState:     VideoState                             = VideoState.Stopped,
+                    videoReceiveStates: Map[Participant, VideoState]           = Map.empty,
+                    wasVideoToggled:    Boolean                                = false, //for tracking
+                    startTime:          LocalInstant                           = LocalInstant.Now, //the time we start/receive a call - always the time at which the call info object was created
+                    joinedTime:         Option[LocalInstant]                   = None, //the time the call was joined, if any
+                    estabTime:          Option[LocalInstant]                   = None, //the time that a joined call was established, if any
+                    endTime:            Option[LocalInstant]                   = None,
+                    endReason:          Option[AvsClosedReason]                = None,
+                    outstandingMsg:     Option[(GenericMessage, Pointer)]      = None, //Any messages we were unable to send due to conv degradation
+                    shouldRing:         Boolean                                = true) extends DerivedLogTag {
 
   val duration = estabTime match {
     case Some(est) => ClockSignal(1.second).map(_ => Option(between(est.instant, LocalInstant.Now.instant)))
@@ -85,6 +86,9 @@ case class CallInfo(convId:             ConvId,
     case (SelfJoining,   _)                  => SelfCalling //the _ should always be Some(SelfCalling) here
     case (s,             _)                  => s
   }
+
+  // TODO: If otherParticipants includes the self partcipant, then... better to rename this.
+  def hasOtherParticipants: Boolean = otherParticipants.size > 1
 
   def updateCallState(newState: CallState): CallInfo = {
     val changedState = newState != this.state
