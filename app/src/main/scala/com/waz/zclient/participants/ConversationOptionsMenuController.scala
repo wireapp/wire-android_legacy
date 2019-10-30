@@ -231,7 +231,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
       isMember.head.map { isMember =>
         val dialogBuilder = new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
           .setCancelable(true)
-          .setTitle(R.string.confirmation_menu__meta_delete)
+          .setTitle(R.string.confirmation_menu__clear_popup_title)
           .setMessage(R.string.confirmation_menu__meta_delete_text)
           .setPositiveButton(R.string.conversation__action__clear_only, new DialogInterface.OnClickListener {
             override def onClick(dialog: DialogInterface, which: Int): Unit = convController.delete(convId, alsoLeave = false)
@@ -288,9 +288,21 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     }
   }
 
-  private def deleteConversation(convId: ConvId): Future[Unit] = teamId.head.flatMap {
-    case Some(tId) => convListController.deleteConversation(tId, convId)
-    case None     => Future.successful(())
+  private def deleteConversation(convId: ConvId): Unit = {
+    new AlertDialog.Builder(context, R.style.Theme_Light_Dialog_Alert_Destructive)
+      .setCancelable(true)
+      .setTitle(R.string.confirmation_menu__delete_popup_title)
+      .setMessage(R.string.confirmation_menu__delete_popup_text)
+      .setPositiveButton(R.string.confirmation_menu__delete_popup_positive_button, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = {
+          teamId.head.flatMap {
+            case Some(tId) => convListController.deleteConversation(tId, convId)
+            case _         => Future.successful(())
+          }
+        }
+      })
+      .setNegativeButton(R.string.confirmation_menu__cancel, null)
+      .create.show()
   }
 
   override def finalize(): Unit = {

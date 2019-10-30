@@ -241,7 +241,7 @@
 
     <!-- Conversation actions -->
     <string name="conversation__action__clear_content">Clear content…</string>
-    <string name="conversation__action__delete_group">Delete group</string>
+    <string name="conversation__action__delete_group">Delete group…</string>
     <string name="conversation__action__archive">Archive</string>
     <string name="conversation__action__unarchive">Unarchive</string>
     <string name="conversation__action__add_participants">ADD PARTICIPANTS</string>
@@ -379,9 +379,14 @@
     <!-- RE-USING: confirmation_menu.cancel -->
     <string name="connect_request__footer__blocked_label">Blocked</string>
 
-    <!-- Delete conversation -->
-    <string name="confirmation_menu__meta_delete">Delete content?</string>
+    <!-- Clear conversation -->
+    <string name="confirmation_menu__clear_popup_title">Clear content?</string>
     <string name="confirmation_menu__meta_delete_text">This will clear the conversation history on all your devices.</string>
+
+    <!-- Delete conversation -->
+    <string name="confirmation_menu__delete_popup_title">Delete group conversation?</string>
+    <string name="confirmation_menu__delete_popup_text">This will delete the group and all content for all participants on all devices. There is no option to restore the content. All participants will be notified.</string>
+    <string name="confirmation_menu__delete_popup_positive_button">DELETE GROUP</string>
 
     <!-- Rich media -->
     <string name="content__youtube__error__text">video not found</string>
