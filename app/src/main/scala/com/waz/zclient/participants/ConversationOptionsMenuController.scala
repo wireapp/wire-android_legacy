@@ -61,7 +61,6 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   private val cameraController       = inject[ICameraController]
   private val screenController       = inject[IConversationScreenController]
   private val convListController     = inject[ConversationListController]
-  private val userAccountsController = inject[UserAccountsController]
 
   override val onMenuItemClicked: SourceStream[MenuItem] = EventStream()
   override val selectedItems: Signal[Set[MenuItem]] = Signal.const(Set())
@@ -98,7 +97,6 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     teamId              <- teamId
     Some(conv)          <- conv
     isGroup             <- isGroup
-    admin               <- userAccountsController.isAdmin
     connectStatus       <- otherUser.map(_.map(_.connection))
     teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot               <- otherUser.map(_.exists(_.isWireBot))
@@ -109,6 +107,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     favoriteConvIds     <- convListController.favoriteConversations.map(convs => convs.map(_.id))
     customFolderId      <- Signal.future(convListController.getCustomFolderId(convId))
     customFolderData    <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
+    selfUserId          <- users.selfUserId
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -149,7 +148,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
-          if (!inConversationList && admin) builder += DeleteGroupConv
+          if (!inConversationList && conv.team.nonEmpty && conv.creator == selfUserId) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)
