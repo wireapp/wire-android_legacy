@@ -227,7 +227,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
       convOpt     <- contUpdater.convById(convId)
       service     <- inject[Signal[TeamsService]].head
     } yield convOpt match {
-      case Some(conv) => service.deleteGroupConversation(teamId, conv.remoteId).mapTo[Unit]
+      case Some(conv) => service.deleteGroupConversation(teamId, conv.remoteId).map(_ => ())
       case None       => Future.successful(())
     }
 
