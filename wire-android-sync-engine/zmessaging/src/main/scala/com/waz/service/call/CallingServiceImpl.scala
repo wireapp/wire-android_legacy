@@ -230,7 +230,6 @@ class CallingServiceImpl(val accountId:       UserId,
         isGroup,
         userId,
         OtherCalling,
-        others = Map(userId -> Some(LocalInstant.Now)),
         startedAsVideoCall = videoCall,
         videoSendState = VideoState.NoCameraPermission,
         shouldRing = !conv.muted.isAllMuted && shouldRing)
@@ -272,11 +271,12 @@ class CallingServiceImpl(val accountId:       UserId,
   def onEstablishedCall(rConvId: RConvId, userId: UserId): Future[Unit] =
     updateCallIfActive(rConvId) { (_, conv, c) =>
       verbose(l"call established for conv: ${conv.id}, userId: $userId, time: ${clock.instant}")
-      setVideoSendState(conv.id, c.videoSendState) //will upgrade call videoSendState
-      setCallMuted(c.muted) //Need to set muted only after call is established
-      //on est. group call, switch from self avatar to other user now in case `onGroupChange` is delayed
-      val others = c.others + (userId -> Some(LocalInstant.Now))
-      c.updateCallState(SelfConnected).copy(others = others, maxParticipants = others.size + 1)
+      setVideoSendState(conv.id, c.videoSendState) // Will upgrade call videoSendState
+      setCallMuted(c.muted) // Need to set muted only after call is established
+      c.updateCallState(SelfConnected)
+
+      // TODO: In AVS 5.4, we will have access to the client id here. We should then update the
+      // participants and maxParticipants property.
     }("onEstablishedCall")
 
   override def endCall(convId: ConvId, skipTerminating: Boolean = false) = {
@@ -293,7 +293,7 @@ class CallingServiceImpl(val accountId:       UserId,
             call.updateCallState(call.state match {
               case SelfConnected if !hasIncomingCall && !skipTerminatingUltimate => Terminating
               case OtherCalling => Ongoing //go straight to state "Ongoing" for incoming calls
-              case _ if call.others.size > 1 => Ongoing
+              case _ if call.canOthersDialogue => Ongoing
               case _ => Ended
             })
           }
@@ -308,7 +308,7 @@ class CallingServiceImpl(val accountId:       UserId,
     updateActiveCallAsync { (_, conv, call) =>
       verbose(l"dismissCall(): ${conv.id}")
       call.state match {
-        case Terminating => call.updateCallState(if (call.others.size > 1) Ongoing else Ended)
+        case Terminating => call.updateCallState(if (call.canOthersDialogue) Ongoing else Ended)
         case _ => call
       }
     }("dismissCall")
@@ -359,14 +359,14 @@ class CallingServiceImpl(val accountId:       UserId,
       call.updateVideoState(Participant(UserId(userId), ClientId(clientId)), videoReceiveState)
     }("onVideoStateChanged")
 
-  def onParticipantsChanged(rConvId: RConvId, members: Set[UserId]): Future[Unit] =
-    updateCallIfActive(rConvId) { (w, conv, call) =>
-      verbose(l"group members changed, convId: ${conv.id}, other members: $members")
-      val updated = members.map { userId =>
-        userId -> call.others.getOrElse(userId, Some(LocalInstant.Now))
+  def onParticipantsChanged(rConvId: RConvId, participants: Set[Participant]): Future[Unit] =
+    updateCallIfActive(rConvId) { (_, conv, call) =>
+      verbose(l"group participants changed, convId: ${conv.id}, other participants: $participants")
+      val updated = participants.map { p =>
+        p -> call.otherParticipants.getOrElse(p, Some(LocalInstant.Now))
       }.toMap
 
-      call.copy(others = updated, maxParticipants = math.max(call.maxParticipants, members.size + 1))
+      call.copy(otherParticipants = updated, maxParticipants = math.max(call.maxParticipants, participants.size + 1))
     } ("onParticipantsChanged")
 
   network.networkMode.onChanged { _ =>
@@ -388,11 +388,6 @@ class CallingServiceImpl(val accountId:       UserId,
         isGroup <- convsService.isGroupConversation(convId)
         vbr     <- userPrefs.preference(UserPreferences.VBREnabled).apply()
         mems    <- members.getActiveUsers(conv.id)
-        others  =
-           (if (isGroup) Set.empty[UserId]
-           else if (conv.team.isEmpty) Set(UserId(conv.id.str))
-           else mems.filter(_ != accountId).toSet)
-            .map(_ -> Some(LocalInstant.Now)).toMap
         callType =
           if (mems.size > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
           else if (isVideo) Avs.WCallType.Video
@@ -438,7 +433,6 @@ class CallingServiceImpl(val accountId:       UserId,
                         isGroup,
                         accountId,
                         SelfCalling,
-                        others = others,
                         startedAsVideoCall = isVideo,
                         videoSendState = if (isVideo) VideoState.Started else VideoState.Stopped)
                       callProfile.mutate(_.copy(calls = profile.calls + (newCall.convId -> newCall)))

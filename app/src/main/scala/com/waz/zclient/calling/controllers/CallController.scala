@@ -22,14 +22,14 @@ import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
-import com.waz.model.UserData.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
-import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
+import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
 import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
@@ -38,7 +38,6 @@ import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
@@ -53,12 +52,12 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   import Threading.Implicits.Background
   import VideoState._
 
+  val networkMode     = inject[NetworkModeService].networkMode
+  val accounts        = inject[AccountsService]
+  val themeController = inject[ThemeController]
+
   private lazy val screenManager  = new ScreenManager
-  private lazy val soundController        = inject[SoundController]
-  private lazy val conversationController = inject[ConversationController]
-  val networkMode            = inject[NetworkModeService].networkMode
-  val accounts               = inject[AccountsService]
-  val themeController        = inject[ThemeController]
+  private lazy val soundController = inject[SoundController]
 
   inject[GlobalPreferences].apply(GlobalPreferences.SkipTerminatingState) := true
 
@@ -99,9 +98,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val callState             = callStateOpt.collect { case Some(s) => s }
   val callStateCollapseJoin = currentCall.map(_.stateCollapseJoin)
 
-  val isCallEstablished = callStateOpt.map(_.contains(SelfConnected))
-  val isCallOutgoing    = callStateOpt.map(_.contains(SelfCalling))
-  val isCallIncoming    = callStateOpt.map(_.contains(OtherCalling))
+  val isCallEstablished     = callStateOpt.map(_.contains(SelfConnected))
+  val isCallOutgoing        = callStateOpt.map(_.contains(SelfCalling))
+  val isCallIncoming        = callStateOpt.map(_.contains(OtherCalling))
 
   val callConvId            = currentCall.map(_.convId)
   val isMuted               = currentCall.map(_.muted)
@@ -114,7 +113,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val isGroupCall           = currentCall.map(_.isGroup)
   val cbrEnabled            = currentCall.map(_.isCbrEnabled)
   val duration              = currentCall.flatMap(_.durationFormatted)
-  val others                = currentCall.map(_.others)
+  val otherParticipants     = currentCall.map(_.otherParticipants)
 
   val lastCallAccountId: SourceSignal[UserId] = Signal()
   currentCall.map(_.selfParticipant.userId) { selfUserId => lastCallAccountId ! selfUserId }
@@ -130,10 +129,11 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] = {
     for {
-      cZms        <- callingZms
-      ids         <- orderedParticipants(take)
-      users       <- cZms.usersStorage.listSignal(ids)
-      videoStates <- mergedVideoStates
+      cZms         <- callingZms
+      participants <- orderedParticipants(take)
+      ids           = participants.map(_.userId)
+      users        <- cZms.usersStorage.listSignal(ids)
+      videoStates  <- mergedVideoStates
     } yield users.map { user =>
       CallParticipantInfo(
         user.id,
@@ -147,9 +147,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     }
   }
 
-  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[UserId]] = {
-    others.map { others =>
-      val orderedByTimeDescending = others.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
+  private def orderedParticipants(take: Option[Int] = None): Signal[Seq[Participant]] = {
+    otherParticipants.map { participants =>
+      val orderedByTimeDescending = participants.toSeq.sortBy(_._2.getOrElse(LocalInstant.Epoch)).reverse.map(_._1)
       take.fold(orderedByTimeDescending)(orderedByTimeDescending.take)
     }
   }
@@ -200,10 +200,13 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     members <- zms.membersStorage.activeMembers(cId)
   } yield members
 
-  private lazy val otherUser = Signal(isGroupCall, userStorage, others.map(_.keys.toSeq.headOption)).flatMap {
-    case (false, usersStorage, Some(o)) =>
-      usersStorage.optSignal(o) // one-to-one conversation has the same id as the other user, so we can access it directly
-    case _ => Signal.const[Option[UserData]](None) //Need a none signal to help with further signals
+  private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.keys.toSeq.headOption)).flatMap {
+    case (false, usersStorage, Some(participant)) =>
+      // 1:1 conversation has the same id as the other user, so we can access it directly
+      usersStorage.optSignal(participant.userId)
+    case _ =>
+      // Need a none signal to help with further signals
+      Signal.const[Option[UserData]](None)
   }
 
   val memberForPicture: Signal[Option[UserId]] = for {
@@ -527,5 +530,8 @@ object CallController {
                                  isGuest: Boolean,
                                  isVerified: Boolean,
                                  isVideoEnabled: Boolean,
-                                 zms: Option[ZMessaging])
+                                 zms: Option[ZMessaging]) {
+
+    def isSelf: Boolean = zms.exists(_.selfUserId == userId)
+  }
 }
