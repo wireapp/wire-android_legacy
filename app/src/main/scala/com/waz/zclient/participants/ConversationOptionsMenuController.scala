@@ -342,7 +342,7 @@ object ConversationOptionsMenuController {
 
   object Clear               extends BaseMenuItem(R.string.conversation__action__clear_content, Some(R.string.glyph__clear))
   object Leave               extends BaseMenuItem(R.string.conversation__action__leave, Some(R.string.glyph__leave))
-  object DeleteGroupConv     extends BaseMenuItem(R.string.conversation__action__delete_group, Some(R.string.glyph__delete_me))
+  object DeleteGroupConv     extends BaseMenuItem(R.string.conversation__action__delete_group, Some(R.string.glyph__delete_me), Some(R.color.accent_red))
   object Block               extends BaseMenuItem(R.string.conversation__action__block, Some(R.string.glyph__block))
   object Unblock             extends BaseMenuItem(R.string.conversation__action__unblock, Some(R.string.glyph__block))
   object RemoveMember        extends BaseMenuItem(R.string.conversation__action__remove_member, Some(R.string.glyph__minus))
