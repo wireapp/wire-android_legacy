@@ -128,7 +128,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
       case Mode.Normal(false) if isGroup && selectedParticipant.isDefined =>
         if (removePerm && !isGuest) builder += RemoveMember
 
-      case Mode.Normal(_) =>
+      case Mode.Normal(inConversationList) =>
 
         def notifications: MenuItem =
           if (teamId.isDefined)
@@ -149,7 +149,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
-          if (admin) builder += DeleteGroupConv
+          if (!inConversationList && admin) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)
