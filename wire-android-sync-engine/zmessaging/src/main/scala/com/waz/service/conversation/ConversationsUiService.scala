@@ -437,19 +437,28 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     _   <- sync.postMessage(msg.id, id, msg.editTime)
   } yield Some(msg)
 
+  def shouldSendReadReceipts(convId: ConvId, readReceiptSettings: ReadReceiptSettings): Future[Boolean] =
+    convs.isGroupConversation(convId).map {
+      case true =>
+        readReceiptSettings.convSetting.contains(1)
+      case false =>
+        readReceiptSettings.selfSettings && readReceiptSettings.convSetting.contains(1)
+    }
+
   override def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]] = {
+
     def sendReadReceipts(from: RemoteInstant, to: RemoteInstant, readReceiptSettings: ReadReceiptSettings): Future[Seq[SyncId]] = {
-      if (!readReceiptSettings.selfSettings && readReceiptSettings.convSetting.isEmpty) {
-        Future.successful(Seq())
-      } else {
-        messagesStorage.findMessagesBetween(convId, from, to).flatMap { messages =>
-          val msgs = messages.filter { m =>
-            m.userId != selfUserId && m.expectsRead.contains(true)
+      shouldSendReadReceipts(convId, readReceiptSettings).flatMap {
+        case true =>
+          messagesStorage.findMessagesBetween(convId, from, to).flatMap { messages =>
+            val msgs = messages.filter { m =>
+              m.userId != selfUserId && m.expectsRead.contains(true)
+            }
+            RichFuture.traverseSequential(msgs.groupBy(_.userId).toSeq)({ case (u, ms) if ms.nonEmpty =>
+              sync.postReceipt(convId, ms.map(_.id), u, ReceiptType.Read)
+            })
           }
-          RichFuture.traverseSequential(msgs.groupBy(_.userId).toSeq)( { case (u, ms) if ms.nonEmpty =>
-            sync.postReceipt(convId, ms.map(_.id), u, ReceiptType.Read)
-          })
-        }
+        case false => Future.successful(Seq())
       }
     }
 
