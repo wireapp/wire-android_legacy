@@ -50,6 +50,8 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
   private lazy val useBiometric = Option(getBooleanArg(UseBiometric)).getOrElse(false)
   private lazy val title = getStringArg(TitleArg).getOrElse("")
   private lazy val message = getStringArg(MessageArg).getOrElse("")
+  private lazy val biometricDescription = getStringArg(BiometricDescriptionArg).getOrElse(message)
+  private lazy val error = getStringArg(ErrorArg)
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
 
@@ -77,8 +79,10 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     passwordEditText.requestFocus()
     textInputLayout
 
-    verbose(l"error: ${Option(getArguments.getString(ErrorArg))}")
-    Option(getArguments.getString(ErrorArg)).foreach(textInputLayout.setError)
+    error.foreach { err =>
+      verbose(l"error: $err")
+      textInputLayout.setError(err)
+    }
 
     val builder = new AlertDialog.Builder(getActivity)
       .setView(root)
@@ -115,8 +119,8 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
   }
 
   private lazy val promptInfo: BiometricPrompt.PromptInfo = new BiometricPrompt.PromptInfo.Builder()
-    .setTitle(getString(R.string.request_password_biometric_title))
-    .setDescription(getString(R.string.request_password_biometric_description))
+    .setTitle(title)
+    .setDescription(biometricDescription)
     .setNegativeButtonText(getString(R.string.request_password_biometric_cancel))
     .build
 
@@ -158,10 +162,12 @@ object RequestPasswordDialog {
 
   private val TitleArg = "TITLE"
   private val MessageArg = "MESSAGE"
+  private val BiometricDescriptionArg = "BIOMETRIC_DESCRIPTION"
 
   def apply(title:         String,
-            message:       String,
             onPassword:    Password => Unit,
+            message:       Option[String]                  = None,
+            biometricDesc: Option[String]                  = None,
             error:         Option[String]                  = None,
             isCancellable: Boolean                         = true,
             onBiometric:   Option[BiometricAnswer => Unit] = None
@@ -169,7 +175,8 @@ object RequestPasswordDialog {
     val fragment = returning(new RequestPasswordDialog) { dialog =>
       dialog.setArguments(returning(new Bundle()) { b =>
         b.putString(TitleArg, title)
-        b.putString(MessageArg, message)
+        message.foreach(b.putString(MessageArg, _))
+        biometricDesc.foreach(b.putString(BiometricDescriptionArg, _))
         error.foreach(b.putString(ErrorArg, _))
         b.putBoolean(IsCancellable, isCancellable)
         b.putBoolean(UseBiometric, onBiometric.isDefined)

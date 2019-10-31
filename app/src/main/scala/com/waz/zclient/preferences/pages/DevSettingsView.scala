@@ -113,7 +113,7 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
   private def showPasswordDialog(error: Option[String] = None)(implicit v: View): Unit =
     RequestPasswordDialog(
       title      = ContextUtils.getString(R.string.pref_dev_register_new_client_title),
-      message    = "",
+      message    = None,
       onPassword = (p: Password) => registerClient(Some(p)),
       error      = error
     )

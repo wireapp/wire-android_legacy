@@ -80,7 +80,8 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
   private def showPasswordDialog(promise: Promise[Boolean], error: Option[String] = None): Unit =
     RequestPasswordDialog(
       title         = ContextUtils.getString(R.string.app_lock_locked_title),
-      message       = ContextUtils.getString(R.string.app_lock_locked_message),
+      message       = Some(ContextUtils.getString(R.string.app_lock_locked_message)),
+      biometricDesc = Some(ContextUtils.getString(R.string.request_password_biometric_description)),
       onPassword    = checkPassword(_, promise),
       error         = error,
       isCancellable = false,
