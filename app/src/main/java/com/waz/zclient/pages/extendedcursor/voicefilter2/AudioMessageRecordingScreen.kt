@@ -42,7 +42,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     private val audioService: AudioService = KotlinServices.audioService
     private val recordFile: File = File(context.cacheDir, "record_temp.pcm")
-    private val compressedRecordFile: File = File(context.cacheDir, "record_temp.mp4")
+    private val compressedRecordFile: File = File(context.cacheDir, "record_temp.m4a")
     private val recordWithEffectFile: File = File(context.cacheDir, "record_with_effect_temp.pcm")
     private val normalizedRecordLevels: MutableList<Float> = mutableListOf()
     private var audioTrack: AudioTrack? = null

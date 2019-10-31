@@ -40,6 +40,8 @@ interface AudioService {
     /**
      * Returns Observable which is responsible for audio recording. Audio recording starts when
      * somebody subscribes to it and stops on unsubscribe.
+     * We record PCM directly instead of using MediaRecorder, because our voice filter code only
+     * supports .pcm and .wav files
      */
     fun recordPcmAudio(pcmFile: File, onFinish: () -> Unit = {}): Observable<RecordingProgress>
 
