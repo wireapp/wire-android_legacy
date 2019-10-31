@@ -28,7 +28,7 @@
               android:background="@color/white"
     >
 
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/t_drawing_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -57,7 +57,7 @@
 
         </FrameLayout>
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
     <HorizontalScrollView
         android:id="@+id/hsv_color_picker_scroll_view"

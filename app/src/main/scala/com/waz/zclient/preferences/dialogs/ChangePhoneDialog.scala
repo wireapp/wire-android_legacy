@@ -26,18 +26,17 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.{Drawable, DrawableContainer, InsetDrawable}
 import android.os.Build.VERSION_CODES._
 import android.os.{Build, Bundle}
-import android.support.annotation.NonNull
-import android.support.v4.app.DialogFragment
-import android.support.v4.view.animation.{FastOutLinearInInterpolator, LinearOutSlowInInterpolator}
-import android.support.v4.view.{ViewCompat, ViewPropertyAnimatorListenerAdapter}
-import android.support.v7.graphics.drawable.DrawableWrapper
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.AppCompatDrawableManager.getPorterDuffColorFilter
-import android.support.v7.widget.DrawableUtils.canSafelyMutateDrawable
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
+import androidx.annotation.NonNull
+import androidx.appcompat.graphics.drawable.DrawableWrapper
+import androidx.appcompat.widget.{AppCompatDrawableManager, DrawableUtils => AxDrawableUtils}
+import androidx.core.view.{ViewCompat, ViewPropertyAnimatorListenerAdapter}
+import androidx.interpolator.view.animation.{FastOutLinearInInterpolator, LinearOutSlowInInterpolator}
 import com.waz.model.PhoneNumber
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
@@ -242,11 +241,11 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   private def updateEditTextBackground(editText: EditText) = {
     ensureBackgroundDrawableStateWorkaround(editText)
     Option(editText.getBackground).map { bg =>
-      if (canSafelyMutateDrawable(bg)) bg.mutate else bg
+      if (AxDrawableUtils.canSafelyMutateDrawable(bg)) bg.mutate else bg
     }.foreach { bg =>
       if (errorView.isVisible) {
         // Set a color filter of the error color
-        bg.setColorFilter(getPorterDuffColorFilter(errorView.getCurrentTextColor, PorterDuff.Mode.SRC_IN))
+        bg.setColorFilter(AppCompatDrawableManager.getPorterDuffColorFilter(errorView.getCurrentTextColor, PorterDuff.Mode.SRC_IN))
       }
       else {
         // Else reset the color filter and refresh the drawable state so that the

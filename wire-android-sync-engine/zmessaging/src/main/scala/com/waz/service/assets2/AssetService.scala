@@ -329,13 +329,13 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
         previewName = s"preview_for_${ uploadAsset.id.str}"
         contentForUpload = ContentForUpload(previewName, content)
         previewUploadAsset <- createUploadAsset(contentForUpload, uploadAsset.encryption, uploadAsset.public, uploadAsset.retention)
-        updatedUploadAsset = uploadAsset.copy(preview = NotUploaded(previewUploadAsset.id))
+        updatedUploadAsset = uploadAsset.copy(preview = PreviewNotUploaded(previewUploadAsset.id))
         _ <- uploadAssetStorage.save(previewUploadAsset)
         _ <- uploadAssetStorage.save(updatedUploadAsset)
       } yield updatedUploadAsset
     } else {
       for {
-        updatedUploadAsset <- Future.successful(uploadAsset.copy(preview = Empty))
+        updatedUploadAsset <- Future.successful(uploadAsset.copy(preview = PreviewEmpty))
         _ <- uploadAssetStorage.save(updatedUploadAsset)
       } yield updatedUploadAsset
     }
@@ -431,7 +431,7 @@ class AssetServiceImpl(assetsStorage: AssetStorage,
       md5            = encryptedMd5,
       sha            = encryptedSha,
       mime           = transformedMime,
-      preview        = NotReady,
+      preview        = PreviewNotReady,
       uploaded       = 0,
       size           = encryptedSize,
       retention      = retention,

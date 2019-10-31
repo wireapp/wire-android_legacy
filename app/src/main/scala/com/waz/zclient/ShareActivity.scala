@@ -26,7 +26,7 @@ import android.net.Uri
 import android.os.{Bundle, Environment}
 import android.provider.DocumentsContract._
 import android.provider.MediaStore
-import android.support.v4.app.ShareCompat
+import androidx.core.app.ShareCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.permissions.PermissionsService
 import com.waz.service.AccountsService

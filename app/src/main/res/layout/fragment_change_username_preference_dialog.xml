@@ -58,7 +58,7 @@
                 android:layout_marginStart="@dimen/prefs__dialog__padding"
                 android:layout_marginEnd="@dimen/prefs__dialog__padding"
                 >
-                <android.support.design.widget.TextInputLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/til__change_username"
                     android:layout_height="wrap_content"
                     android:layout_width="match_parent"
@@ -66,7 +66,7 @@
                     app:errorEnabled="true"
                     >
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/acet__change_username"
                         android:visibility="visible"
                         android:layout_width="match_parent"
@@ -77,9 +77,9 @@
                         android:inputType="textNoSuggestions|textVisiblePassword"
                         />
 
-                </android.support.design.widget.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <android.support.v7.widget.AppCompatTextView
+                <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/act__at"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"

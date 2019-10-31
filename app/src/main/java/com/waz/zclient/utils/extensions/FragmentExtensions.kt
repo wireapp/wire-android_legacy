@@ -1,7 +1,7 @@
 @file:JvmName("FragmentUtils")
 package com.waz.zclient.utils.extensions
 
-import android.support.v4.app.Fragment
+import androidx.fragment.app.Fragment
 
 /**
  * Returns the latest child fragment that is added to this fragment.

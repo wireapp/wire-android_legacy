@@ -19,12 +19,12 @@ package com.waz.zclient.conversation
 
 import android.content.Context
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TabLayout.OnTabSelectedListener
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.annotation.Nullable
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
 import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading

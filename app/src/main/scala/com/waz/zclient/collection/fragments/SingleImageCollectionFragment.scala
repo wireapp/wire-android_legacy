@@ -21,12 +21,12 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.support.v4.view.ViewPager.OnPageChangeListener
-import android.support.v4.view.{PagerAdapter, ViewPager}
 import android.util.AttributeSet
 import android.view.View.OnLongClickListener
 import android.view.ViewGroup.LayoutParams
 import android.view._
+import androidx.viewpager.widget.{PagerAdapter, ViewPager}
+import androidx.viewpager.widget.ViewPager.OnPageChangeListener
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.MessageFilter

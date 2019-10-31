@@ -25,7 +25,7 @@ import android.content.Intent
 import android.graphics.{Bitmap, BitmapFactory}
 import android.hardware.{Sensor, SensorManager}
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.view._
 import android.widget.{FrameLayout, TextView}
 import com.waz.api.MemoryImageCache

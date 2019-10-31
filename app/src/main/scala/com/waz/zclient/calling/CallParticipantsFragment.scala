@@ -19,7 +19,7 @@ package com.waz.zclient.calling
 
 import android.graphics.Color
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController

@@ -20,14 +20,13 @@ package com.waz.zclient.preferences.dialogs
 import java.util.Locale
 
 import android.os.Bundle
-import android.support.design.widget.TextInputLayout
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.DialogFragment.STYLE_NO_FRAME
-import android.support.v7.widget.AppCompatEditText
 import android.text.{Editable, TextWatcher}
 import android.view.View.OnClickListener
 import android.view.animation.AnimationUtils
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
+import androidx.appcompat.widget.AppCompatEditText
+import androidx.fragment.app.DialogFragment
+import com.google.android.material.textfield.TextInputLayout
 import com.waz.model.Handle
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -168,7 +167,7 @@ class ChangeHandleFragment extends DialogFragment with FragmentHelper {
 
   override def onCreate(savedInstanceState: Bundle) = {
     super.onCreate(savedInstanceState)
-    setStyle(STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
+    setStyle(DialogFragment.STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {

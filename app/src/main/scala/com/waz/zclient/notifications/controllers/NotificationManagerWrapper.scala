@@ -26,10 +26,10 @@ import android.graphics.{Color, Typeface}
 import android.net.Uri
 import android.os.{Build, Environment}
 import android.provider.MediaStore
-import android.support.v4.app.NotificationCompat.Style
-import android.support.v4.app.{NotificationCompat, RemoteInput}
+import androidx.core.app.NotificationCompat.Style
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
+import androidx.core.app.{NotificationCompat, RemoteInput}
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

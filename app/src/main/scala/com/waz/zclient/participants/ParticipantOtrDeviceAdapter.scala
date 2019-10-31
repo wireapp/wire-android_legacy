@@ -21,8 +21,8 @@ package com.waz.zclient.participants
 import java.util.Locale
 
 import android.content.Context
-import android.support.annotation.StringRes
-import android.support.v7.widget.RecyclerView
+import androidx.annotation.StringRes
+import androidx.recyclerview.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, TextView}
 import com.waz.api.{OtrClientType, Verification}

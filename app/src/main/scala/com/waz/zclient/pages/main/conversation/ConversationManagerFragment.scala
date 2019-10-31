@@ -20,8 +20,8 @@ package com.waz.zclient.pages.main.conversation
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.MessageContent
 import com.waz.model.{MessageContent => _, _}
 import com.waz.service.assets2.{Content, ContentForUpload}

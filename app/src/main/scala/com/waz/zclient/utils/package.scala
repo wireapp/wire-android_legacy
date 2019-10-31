@@ -21,15 +21,15 @@ import java.util.Locale
 
 import android.graphics.drawable.{Drawable, LayerDrawable}
 import android.graphics.{Bitmap => AndroidBitmap, _}
-import android.support.media.ExifInterface
-import android.support.v7.preference.Preference
-import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import android.text.{Editable, TextWatcher}
 import android.view.View._
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.{View, ViewGroup}
 import android.widget.{EditText, SeekBar, TextView}
+import androidx.exifinterface.media.ExifInterface
+import androidx.preference.Preference
+import androidx.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import com.waz.model.otr.Client
 import com.waz.utils.events.Signal
 import com.waz.utils.returning

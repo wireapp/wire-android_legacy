@@ -19,7 +19,7 @@ package com.waz.services.notifications
 
 import android.app.{NotificationManager, PendingIntent}
 import android.content.{Context, Intent}
-import android.support.v4.app.RemoteInput
+import androidx.core.app.RemoteInput
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging

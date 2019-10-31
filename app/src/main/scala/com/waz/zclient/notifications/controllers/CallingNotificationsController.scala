@@ -22,7 +22,7 @@ import android.app.{NotificationManager, PendingIntent}
 import android.content
 import android.graphics.{Bitmap, Color}
 import android.os.Build
-import android.support.v4.app.NotificationCompat
+import androidx.core.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
 import com.waz.model._

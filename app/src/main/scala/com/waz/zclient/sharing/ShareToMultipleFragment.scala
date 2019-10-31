@@ -20,9 +20,9 @@ package com.waz.zclient.sharing
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
-import android.support.v7.widget.RecyclerView.ViewHolder
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.text.format.Formatter
 import android.view.View.OnClickListener
 import android.view._

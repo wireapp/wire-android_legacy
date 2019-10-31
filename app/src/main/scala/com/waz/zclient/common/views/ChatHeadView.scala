@@ -44,7 +44,8 @@ import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, CircleCrop}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.UserData.{ConnectionStatus, Picture}
+import com.waz.model.UserData.ConnectionStatus
+import com.waz.model.Picture
 import com.waz.model._
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
@@ -118,7 +119,7 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
 
   private def optionsForIntegration(integration: IntegrationData, attributes: Attributes): ChatHeadViewOptions =
     ChatHeadViewOptions(
-      integration.asset.map(Picture.Uploaded),
+      integration.asset.map(PictureUploaded),
       attributes.defaultBackground,
       grayScale = false,
       NameParts.parseFrom(integration.name).initials,
@@ -203,7 +204,7 @@ object ChatHeadView {
 
       val transformationsResult = transformations.result()
       if (transformationsResult.nonEmpty)
-        requestOptions.transforms(transformationsResult:_*)
+        requestOptions.transform(transformationsResult:_*)
       request.apply(requestOptions)
     }
   }

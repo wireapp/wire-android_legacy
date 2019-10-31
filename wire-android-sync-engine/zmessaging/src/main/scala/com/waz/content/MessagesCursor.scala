@@ -17,7 +17,7 @@
  */
 package com.waz.content
 
-import android.support.v4.util.LruCache
+import androidx.collection.LruCache
 import com.waz.content.MessagesCursor.Entry
 import com.waz.db.{CursorIterator, Reader, ReverseCursorIterator}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

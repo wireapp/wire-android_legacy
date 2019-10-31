@@ -18,11 +18,11 @@
 package com.waz.zclient.appentry.fragments
 
 import android.os.Bundle
-import android.support.v7.widget.RecyclerView.AdapterDataObserver
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.RecyclerView.AdapterDataObserver
 import android.text.InputType
 import android.view.View
 import android.view.View.OnLayoutChangeListener
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, Forbidden, InternalErrorCode}
 import com.waz.model.EmailAddress

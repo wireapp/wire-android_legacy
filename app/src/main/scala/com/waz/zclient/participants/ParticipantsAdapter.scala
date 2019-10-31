@@ -19,14 +19,15 @@ package com.waz.zclient.participants
 
 import android.content.Context
 import android.graphics.Color
-import android.support.v7.widget.{RecyclerView, SwitchCompat}
-import android.support.v7.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import android.text.Selection
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.CompoundButton.OnCheckedChangeListener
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{CompoundButton, ImageView, TextView}
+import androidx.appcompat.widget.SwitchCompat
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.api.Verification
 import com.waz.model._
 import com.waz.utils.events._

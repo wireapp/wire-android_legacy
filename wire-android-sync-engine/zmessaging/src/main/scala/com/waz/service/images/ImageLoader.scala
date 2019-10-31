@@ -24,7 +24,7 @@ import android.content.ContentResolver
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.media.ExifInterface._
-import android.support.v4.content.FileProvider
+import androidx.core.content.FileProvider
 import com.waz.bitmap.gif.{Gif, GifReader}
 import com.waz.bitmap.{BitmapDecoder, BitmapUtils}
 import com.waz.cache.{CacheEntry, CacheService, LocalData}

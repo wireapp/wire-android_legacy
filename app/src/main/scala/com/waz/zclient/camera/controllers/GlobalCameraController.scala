@@ -25,8 +25,8 @@ import android.content.Context
 import android.content.res.Configuration
 import android.graphics._
 import android.hardware.Camera
-import android.support.media.ExifInterface
 import android.view.{OrientationEventListener, Surface, WindowManager}
+import androidx.exifinterface.media.ExifInterface
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.images.ImageAssetGenerator
@@ -368,8 +368,8 @@ object GlobalCameraController {
 }
 
 object WireCamera {
-  val FOCUS_MODE_AUTO = null.asInstanceOf[Camera].Parameters.FOCUS_MODE_AUTO
-  val FOCUS_MODE_CONTINUOUS_PICTURE = null.asInstanceOf[Camera].Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
+  val FOCUS_MODE_AUTO = "auto"
+  val FOCUS_MODE_CONTINUOUS_PICTURE = "continuous-picture"
   val ASPECT_TOLERANCE: Double = 0.1
   val camCoordsRange = 2000
   val camCoordsOffset = 1000

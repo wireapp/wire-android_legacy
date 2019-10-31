@@ -19,7 +19,7 @@ package com.waz.utils
 
 import java.util.concurrent.ConcurrentHashMap
 
-import android.support.v4.util.LruCache
+import androidx.collection.LruCache
 
 import scala.collection.JavaConverters._
 

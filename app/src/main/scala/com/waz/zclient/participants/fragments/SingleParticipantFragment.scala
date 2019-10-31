@@ -19,12 +19,11 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TabLayout.OnTabSelectedListener
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.annotation.Nullable
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import com.google.android.material.tabs.TabLayout
 import com.waz.model.UserField
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
@@ -66,7 +65,7 @@ class SingleParticipantFragment extends FragmentHelper {
       if (fromDeepLink)
         layout.setVisibility(View.GONE)
       else {
-        layout.addOnTabSelectedListener(new OnTabSelectedListener {
+        layout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener {
           override def onTabSelected(tab: TabLayout.Tab): Unit = {
             visibleTab ! SingleParticipantFragment.Tab.tabs.find(_.pos == tab.getPosition).getOrElse(DetailsTab)
           }

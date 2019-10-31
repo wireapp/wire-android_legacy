@@ -18,7 +18,6 @@
 package com.waz.service.assets2
 
 import android.util.Base64
-import com.waz.model.UserData.Picture
 import com.waz.model._
 import com.waz.model.errors.FailedExpectationsError
 import com.waz.sync.client.AssetClient2.Retention
@@ -84,19 +83,19 @@ trait StorageCodecs {
     val UploadedPrefix = "uploaded__"
 
     override def serialize(value: Preview): String = value match {
-      case NotReady => NotReadyStr
-      case Empty => WithoutPreviewStr
-      case NotUploaded(rawAssetId) => NotUploadedPrefix + rawAssetId.str
-      case Uploaded(assetId) => UploadedPrefix + assetId.str
+      case PreviewNotReady => NotReadyStr
+      case PreviewEmpty => WithoutPreviewStr
+      case PreviewNotUploaded(rawAssetId) => NotUploadedPrefix + rawAssetId.str
+      case PreviewUploaded(assetId) => UploadedPrefix + assetId.str
     }
 
     override def deserialize(value: String): Preview = value match {
-      case NotReadyStr => NotReady
-      case WithoutPreviewStr => Empty
+      case NotReadyStr => PreviewNotReady
+      case WithoutPreviewStr => PreviewEmpty
       case str if str.startsWith(NotUploadedPrefix) =>
-        NotUploaded(UploadAssetId(str.substring(NotUploadedPrefix.length)))
+        PreviewNotUploaded(UploadAssetId(str.substring(NotUploadedPrefix.length)))
       case str if str.startsWith(UploadedPrefix) =>
-        Uploaded(AssetId(str.substring(UploadedPrefix.length)))
+        PreviewUploaded(AssetId(str.substring(UploadedPrefix.length)))
     }
   }
 
@@ -206,11 +205,11 @@ trait StorageCodecs {
   }
 
   implicit val UserPictureCodec: Codec[Picture, String] = Codec[GeneralAssetId, String].imap({
-    case Picture.NotUploaded(id) => id
-    case Picture.Uploaded(id) => id
+    case PictureNotUploaded(id) => id
+    case PictureUploaded(id) => id
   }, {
-    case id: AssetId => Picture.Uploaded(id)
-    case id: UploadAssetId => Picture.NotUploaded(id)
+    case id: AssetId => PictureUploaded(id)
+    case id: UploadAssetId => PictureNotUploaded(id)
     case id => throw FailedExpectationsError(s"We do not expect asset id of type ${id.getClass.getSimpleName}. Asset id: $id.")
   })
 

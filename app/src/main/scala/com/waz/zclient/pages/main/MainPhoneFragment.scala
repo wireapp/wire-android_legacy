@@ -19,7 +19,7 @@ package com.waz.zclient.pages.main
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.FragmentManager
+import androidx.fragment.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}

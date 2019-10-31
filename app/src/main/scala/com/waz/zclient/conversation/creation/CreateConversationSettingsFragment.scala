@@ -18,12 +18,12 @@
 package com.waz.zclient.conversation.creation
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v7.widget.SwitchCompat
+import androidx.fragment.app.Fragment
 import android.text.InputFilter.LengthFilter
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, TextView}
 import android.widget.CompoundButton.OnCheckedChangeListener
+import androidx.appcompat.widget.SwitchCompat
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController

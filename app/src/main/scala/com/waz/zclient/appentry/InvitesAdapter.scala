@@ -18,8 +18,8 @@
 package com.waz.zclient.appentry
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.model.EmailAddress
 import com.waz.utils.events.EventContext
 import com.waz.zclient.appentry.InvitesAdapter._

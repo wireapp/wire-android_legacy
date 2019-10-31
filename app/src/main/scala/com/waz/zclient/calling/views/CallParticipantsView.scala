@@ -18,9 +18,8 @@
 package com.waz.zclient.calling.views
 
 import android.content.Context
-import android.support.v7.widget.LinearLayoutManager.VERTICAL
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
 import android.util.AttributeSet
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.utils.events.EventStream
 import com.waz.zclient.calling.CallParticipantsAdapter
 import com.waz.zclient.{R, ViewHelper}
@@ -41,9 +40,9 @@ class CallParticipantsView(val context: Context, val attrs: AttributeSet, val de
 
   private val layoutManager =
     if (isScrollable)
-      new LinearLayoutManager(context, VERTICAL, false)
+      new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
     else
-      new LinearLayoutManager(context, VERTICAL, false) {
+      new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false) {
         override def canScrollVertically: Boolean = false
       }
 

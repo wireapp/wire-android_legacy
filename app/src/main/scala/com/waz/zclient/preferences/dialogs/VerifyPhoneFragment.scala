@@ -18,9 +18,9 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.os.Bundle
-import android.support.design.widget.TextInputLayout
-import android.support.v4.app.DialogFragment
-import android.support.v4.app.DialogFragment.STYLE_NO_FRAME
+import com.google.android.material.textfield.TextInputLayout
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.DialogFragment.STYLE_NO_FRAME
 import android.text.{Editable, TextUtils}
 import android.view.View.OnKeyListener
 import android.view.WindowManager.LayoutParams.{SOFT_INPUT_ADJUST_RESIZE, SOFT_INPUT_STATE_ALWAYS_HIDDEN}

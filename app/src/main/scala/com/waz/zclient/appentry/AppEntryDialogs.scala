@@ -19,7 +19,7 @@ package com.waz.zclient.appentry
 
 import android.content.DialogInterface.OnDismissListener
 import android.content.{Context, DialogInterface}
-import android.support.v7.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.R
 import com.waz.zclient.common.controllers.BrowserController

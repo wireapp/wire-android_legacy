@@ -27,11 +27,9 @@ object Deps {
   lazy val avsVersion = Option(System.getenv("AVS_VERSION")).getOrElse("2.7.19")
   lazy val avsName = Option(System.getenv("AVS_NAME")).getOrElse("avs")
 
-  val supportLibVersion = "24.0.0"
   val playServicesVersion = "10.0.1"
   val audioVersion = "1.195.0"
   val checkstyleVersion = "6.17"
-
 
   def zMessaging(version: String) = "com.wire" % "zmessaging-android" % version
   lazy val avsDep = "com.wearezeta.avs" % avsName % avsVersion
@@ -45,16 +43,6 @@ object Deps {
   lazy val lintchecks = "com.android.tools.lint" % "lint-checks" % "24.5.0"
 
   lazy val checkstyleapi = "com.puppycrawl.tools" % "checkstyle" % checkstyleVersion
-
-  lazy val supportv4 = "com.android.support" % "support-v4" % supportLibVersion
-  lazy val supportv13 = "com.android.support" % "support-v13" % supportLibVersion
-  lazy val supportdesign = "com.android.support" % "design" % supportLibVersion
-  lazy val appcompatv7 = "com.android.support" % "appcompat-v7" % supportLibVersion
-  lazy val recyclerview = "com.android.support" % "recyclerview-v7" % supportLibVersion
-  lazy val preferences = "com.android.support" % "preference-v7" % supportLibVersion
-  lazy val multidex = "com.android.support" % "multidex" % "1.0.1"
-  lazy val supportannotations = "com.android.support" % "support-annotations" % supportLibVersion
-  lazy val cardview = "com.android.support" % "cardview-v7" % supportLibVersion
 
   lazy val psBase = "com.google.android.gms" % "play-services-base" % playServicesVersion
   lazy val psGcm = "com.google.android.gms" % "play-services-gcm" % playServicesVersion

@@ -46,7 +46,7 @@
             android:layout_marginTop="@dimen/wire__padding__8"
             >
 
-            <android.support.v7.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/ttv__voice_filter__tap_to_record_1st_line"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
                 android:layout_marginTop="@dimen/wire__padding__4"
                 >
 
-                <android.support.v7.widget.AppCompatTextView
+                <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/ttv__voice_filter__tap_to_record_2nd_line_begin"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -85,7 +85,7 @@
                     />
 
 
-                <android.support.v7.widget.AppCompatTextView
+                <androidx.appcompat.widget.AppCompatTextView
                     android:id="@+id/ttv__voice_filter__tap_to_record_2nd_line_end"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -231,7 +231,7 @@
             android:layout_height="match_parent"
             >
 
-            <android.support.v7.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/time_label"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -240,7 +240,7 @@
                 android:textSize="@dimen/wire__text_size__small"
                 />
 
-            <android.support.v7.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/audio_filters_hint"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

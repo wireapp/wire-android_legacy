@@ -18,7 +18,9 @@
 package com.waz.zclient.pages;
 
 import android.app.Activity;
-import android.support.v4.app.Fragment;
+
+import androidx.fragment.app.Fragment;
+
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.ServiceContainer;
 import com.waz.zclient.controllers.IControllerFactory;

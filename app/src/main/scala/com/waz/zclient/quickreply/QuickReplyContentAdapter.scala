@@ -18,9 +18,9 @@
 package com.waz.zclient.quickreply
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._

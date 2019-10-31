@@ -18,32 +18,25 @@
 package com.waz.zclient.security
 
 import android.app.Activity
-import android.app.admin.DevicePolicyManager
-import android.content.{ComponentName, Context, Intent}
-import android.provider.Settings
+import android.content.{Context, Intent}
 import com.waz.content.GlobalPreferences
-import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, ZMessaging}
-import com.waz.services.SecurityPolicyService
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
 import com.waz.zclient.security.checks._
-import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
 
 class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Ui
 
-  private lazy val securityPolicyService = inject[SecurityPolicyService]
   private lazy val globalPreferences     = inject[GlobalPreferences]
   private lazy val accountManager        = inject[Signal[AccountManager]]
 
@@ -53,15 +46,10 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
     case _ => warn(l"The app is coming to the foreground, but the information about the activity is missing")
   }
 
-  def run(activity: Activity): Unit = {
-    for {
-      allChecksPassed  <- foregroundSecurityChecklist(activity).run()
-      isAppLockEnabled <- if (allChecksPassed) appLockEnabled else Future.successful(false)
-      _ = verbose(l"all checks passed: $allChecksPassed, is app lock enabled: $isAppLockEnabled")
-    } yield {
-      if (isAppLockEnabled) authenticateIfNeeded(activity)
+  def run(activity: Activity): Unit =
+    foregroundSecurityChecklist(activity).run().foreach { allChecksPassed =>
+      verbose(l"all checks passed: $allChecksPassed")
     }
-  }
 
   /**
     * Security checklist for foreground activity
@@ -81,33 +69,6 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
       checksAndActions += rootDetectionCheck ->  rootDetectionActions
     }
 
-    if (BuildConfig.BLOCK_ON_PASSWORD_POLICY) {
-      verbose(l"check BLOCK_ON_PASSWORD_POLICY")
-      val deviceAdminCheck = new DeviceAdminCheck(securityPolicyService)
-      val deviceAdminActions = List(
-        ShowDialogAction(
-          R.string.security_policy_setup_dialog_title,
-          R.string.security_policy_setup_dialog_message,
-          R.string.security_policy_setup_dialog_button,
-          action = { () => showDeviceAdminScreen(parentActivity) }
-        )
-      )
-
-      checksAndActions += deviceAdminCheck -> deviceAdminActions
-
-      val devicePasswordComplianceCheck = new DevicePasswordComplianceCheck(securityPolicyService)
-      val devicePasswordComplianceActions =  List(
-        new ShowDialogAction(
-          ContextUtils.getString(R.string.security_policy_invalid_password_dialog_title),
-          ContextUtils.getString(R.string.security_policy_invalid_password_dialog_message, SecurityPolicyService.PasswordMinimumLength.toString),
-          ContextUtils.getString(R.string.security_policy_setup_dialog_button),
-          action = { () => showSecuritySettings(parentActivity) }
-        )
-      )
-
-      checksAndActions += devicePasswordComplianceCheck -> devicePasswordComplianceActions
-    }
-
     if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
       verbose(l"check WIPE_ON_COOKIE_INVALID")
 
@@ -120,21 +81,6 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
 
     new SecurityChecklist(checksAndActions.toList)
   }
-
-  private def showDeviceAdminScreen(implicit parentActivity: Activity): Unit = {
-    val secPolicy = new ComponentName(parentActivity, classOf[SecurityPolicyService])
-    val intent = new android.content.Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-      .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, secPolicy)
-      .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ContextUtils.getString(R.string.security_policy_description))
-
-    parentActivity.startActivity(intent)
-  }
-
-  private def showSecuritySettings(implicit parentActivity: Activity): Unit =
-    parentActivity.startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS))
-
-  def appLockEnabled: Future[Boolean] =
-    if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences(AppLockEnabled).apply()
 
   // This ensures asking for password when the app is first opened.
   private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
@@ -154,6 +100,7 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
   }
 
   def authenticateIfNeeded(parentActivity: Activity): Unit = {
+    verbose(l"authenticate if needed")
     authenticationNeeded.mutate {
       case false if timerExpired => true
       case b => b
@@ -167,11 +114,45 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
       case _ =>
     }
   }
+
+  // TODO: Implement the biometric prompt using this code and add it as a part of the password check
+
+  /*
+  val executor = ExecutorWrapper(Threading.Ui)
+  val callback = new BiometricPrompt.AuthenticationCallback {
+    override def onAuthenticationError(errorCode: Int, errString: CharSequence): Unit = {
+      super.onAuthenticationError(errorCode, errString)
+      verbose(l"SEC on error, code: $errorCode, str: $errString")
+
+    override def onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult): Unit = {
+      super.onAuthenticationSucceeded(result)
+      verbose(l"SEC on success, result: $result")
+
+    override def onAuthenticationFailed(): Unit = {
+      super.onAuthenticationFailed()
+      verbose(l"SEC on failed")
+    }
+
+  verbose(l"SEC create prompt")
+  val prompt = new BiometricPrompt(parentActivity.asInstanceOf[FragmentActivity], executor, callback)
+  verbose(l"SEC authenticating...")
+  prompt.authenticate(promptInfo)
+  verbose(l"SEC here")
+
+  private lazy val promptInfo = new BiometricPrompt.PromptInfo.Builder()
+    .setTitle("Set the title to display.")
+    .setSubtitle("Set the subtitle to display.")
+    .setDescription("Set the description to display")
+    .setNegativeButtonText("Negative Button")
+    .build()
+
+  */
 }
 
 object SecurityPolicyChecker extends DerivedLogTag {
-
   import com.waz.threading.Threading.Implicits.Ui
+
+  val PasswordMinimumLength: Int = 8
 
   /**
     * Security checklist for background activities (e.g. receiving notifications). This is

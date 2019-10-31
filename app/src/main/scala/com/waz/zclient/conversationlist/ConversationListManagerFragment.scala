@@ -20,12 +20,12 @@ package com.waz.zclient.conversationlist
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.annotation.Nullable
-import android.support.design.widget.BottomNavigationView
-import android.support.v4.app.{Fragment, FragmentManager}
 import android.view.{LayoutInflater, MenuItem, View, ViewGroup}
 import android.widget.FrameLayout
 import com.waz.api.ErrorType
+import androidx.annotation.Nullable
+import androidx.fragment.app.{Fragment, FragmentManager}
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.waz.api.SyncState._
 import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.model._

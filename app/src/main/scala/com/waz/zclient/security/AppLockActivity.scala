@@ -21,7 +21,7 @@ import android.app.{Activity, AlertDialog, KeyguardManager}
 import android.content.{Context, DialogInterface, Intent}
 import android.os.Bundle
 import android.provider.Settings
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{ActivityHelper, R}

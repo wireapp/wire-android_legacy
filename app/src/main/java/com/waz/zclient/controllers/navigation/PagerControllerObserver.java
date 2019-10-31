@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.controllers.navigation;
 
-import android.support.v4.view.ViewPager;
+import androidx.viewpager.widget.ViewPager;
 
 public interface PagerControllerObserver extends ViewPager.OnPageChangeListener {
     void onPagerEnabledStateHasChanged(boolean enabled);

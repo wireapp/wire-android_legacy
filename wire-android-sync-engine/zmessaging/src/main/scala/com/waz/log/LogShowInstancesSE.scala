@@ -28,7 +28,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.log.LogSE._
 import com.waz.model.AccountData.Password
 import com.waz.model.ManagedBy.ManagedBy
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model.UserInfo.ProfilePicture
 import com.waz.model.messages.media.{ArtistData, TrackData}
 import com.waz.model._

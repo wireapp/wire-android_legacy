@@ -19,8 +19,8 @@ package com.waz.zclient.messages
 
 import java.util.concurrent.Executor
 
-import android.arch.paging.PagedList
 import android.content.Context
+import androidx.paging.PagedList
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.MessageData.MessageDataDao
 import com.waz.model._

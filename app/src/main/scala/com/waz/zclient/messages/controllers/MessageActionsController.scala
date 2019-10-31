@@ -20,8 +20,8 @@ package com.waz.zclient.messages.controllers
 import android.app.{Activity, ProgressDialog}
 import android.content.DialogInterface.OnDismissListener
 import android.content._
-import android.support.v4.app.ShareCompat
-import android.support.v7.app.AlertDialog
+import androidx.core.app.ShareCompat
+import androidx.appcompat.app.AlertDialog
 import android.widget.Toast
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._

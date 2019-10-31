@@ -71,7 +71,7 @@
                 android:layout_marginBottom="@dimen/prefs__verification__margins_small"
                 />
 
-            <android.support.design.widget.TextInputLayout
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til__verification_code"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -85,7 +85,7 @@
                     android:layout_weight="6"
                     >
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/et__verification_code__1"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -98,7 +98,7 @@
                         android:gravity="center"
                         />
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/et__verification_code__2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -111,7 +111,7 @@
                         android:gravity="center"
                         />
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/et__verification_code__3"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -124,7 +124,7 @@
                         android:gravity="center"
                         />
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/et__verification_code__4"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -137,7 +137,7 @@
                         android:gravity="center"
                         />
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/et__verification_code__5"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -150,7 +150,7 @@
                         android:gravity="center"
                         />
 
-                    <android.support.v7.widget.AppCompatEditText
+                    <androidx.appcompat.widget.AppCompatEditText
                         android:id="@+id/et__verification_code__6"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -165,7 +165,7 @@
 
                 </LinearLayout>
 
-            </android.support.design.widget.TextInputLayout>
+            </com.google.android.material.textfield.TextInputLayout>
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"

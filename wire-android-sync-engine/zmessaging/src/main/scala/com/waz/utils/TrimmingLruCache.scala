@@ -20,7 +20,7 @@ package com.waz.utils
 import android.app.ActivityManager
 import android.content.res.Configuration
 import android.content.{ComponentCallbacks2, Context}
-import android.support.v4.util.LruCache
+import androidx.collection.LruCache
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.utils.TrimmingLruCache.CacheSize

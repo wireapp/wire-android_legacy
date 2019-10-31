@@ -19,9 +19,9 @@ package com.waz.zclient.conversation.creation
 
 import android.app.FragmentManager
 import android.os.Bundle
-import android.support.annotation.IdRes
-import android.support.v4.app.FragmentManager.OnBackStackChangedListener
+import androidx.fragment.app.FragmentManager.OnBackStackChangedListener
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.annotation.IdRes
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal

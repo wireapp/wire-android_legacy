@@ -28,7 +28,7 @@
               android:paddingLeft="@dimen/wire__padding__16"
               android:paddingRight="@dimen/wire__padding__16">
 
-    <android.support.v7.widget.AppCompatCheckBox
+    <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/rb__conversation_selected"
         android:layout_width="@dimen/share_extension__row__checkbox_size"
         android:layout_height="@dimen/share_extension__row__checkbox_size"

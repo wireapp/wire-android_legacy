@@ -27,10 +27,10 @@ import android.hardware.SensorManager
 import android.media.AudioManager
 import android.os.{Build, PowerManager, Vibrator}
 import android.renderscript.RenderScript
-import android.support.multidex.MultiDexApplication
-import android.support.v4.app.{FragmentActivity, FragmentManager}
 import android.telephony.TelephonyManager
 import android.util.Log
+import androidx.fragment.app.{FragmentActivity, FragmentManager}
+import androidx.multidex.MultiDexApplication
 import com.evernote.android.job.{JobCreator, JobManager}
 import com.google.android.gms.security.ProviderInstaller
 import com.waz.api.NetworkMode
@@ -49,7 +49,6 @@ import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
-import com.waz.services.SecurityPolicyService
 import com.waz.services.fcm.FetchJob
 import com.waz.services.gps.GoogleApiImpl
 import com.waz.services.websocket.WebSocketController
@@ -277,8 +276,6 @@ object WireApplication extends DerivedLogTag {
 
     bind[ActivityLifecycleCallback] to new ActivityLifecycleCallback()
 
-    bind[SecurityPolicyService] to new SecurityPolicyService()
-
     bind[SecurityPolicyChecker] to new SecurityPolicyChecker()
 
     bind[FolderStateController] to new FolderStateController()
@@ -465,7 +462,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
-
   }
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {

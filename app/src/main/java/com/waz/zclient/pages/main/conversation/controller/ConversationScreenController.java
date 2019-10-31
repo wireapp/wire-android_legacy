@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.pages.main.conversation.controller;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.waz.model.ConvId;
 import com.waz.model.UserId;

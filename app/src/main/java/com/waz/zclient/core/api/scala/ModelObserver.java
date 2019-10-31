@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.core.api.scala;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import com.waz.api.UiObservable;
 import com.waz.api.UpdateListener;
 

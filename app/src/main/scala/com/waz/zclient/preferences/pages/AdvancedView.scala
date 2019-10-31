@@ -20,10 +20,10 @@ package com.waz.zclient.preferences.pages
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{LinearLayout, TextView, Toast}
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.GlobalPreferences.WsForegroundKey
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogsService

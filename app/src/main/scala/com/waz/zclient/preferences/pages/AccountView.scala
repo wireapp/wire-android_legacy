@@ -22,25 +22,24 @@ import android.content.{Context, DialogInterface, Intent}
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.os.{Bundle, Parcel, Parcelable}
-import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.zclient.{BuildConfig, _}
+import com.waz.zclient._
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
-import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.preferences.dialogs._
@@ -132,7 +131,7 @@ class AccountViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   override def setPicture(picture: Picture) = {
     WireGlide(context)
       .load(picture)
-      .apply(new RequestOptions().transforms(new CircleCrop()))
+      .apply(new RequestOptions().transform(new CircleCrop()))
       .into(new CustomViewTarget[View, Drawable](pictureButton) {
       override def onResourceCleared(placeholder: Drawable): Unit =
         pictureButton.setDrawableStart(None)
@@ -266,7 +265,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
     } (Threading.Ui)
   }
 
-  view.onEmailClick.filter( _ => BuildConfig.ALLOW_CHANGE_OF_EMAIL).onUi { _ =>
+  if (BuildConfig.ALLOW_CHANGE_OF_EMAIL) view.onEmailClick.onUi { _ =>
     import Threading.Implicits.Ui
     accounts.activeAccountManager.head.map(_.foreach(_.hasPassword().foreach {
       case Left(ex) =>
