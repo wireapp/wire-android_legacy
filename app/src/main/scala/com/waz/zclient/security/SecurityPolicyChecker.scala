@@ -110,11 +110,6 @@ object SecurityPolicyChecker extends DerivedLogTag {
       verbose(l"check WIPE_ON_COOKIE_INVALID")
       val check = new CookieValidationCheck(accountManager.auth)
       val actions = List(new WipeDataAction(Some(accountManager.userId)))
-
-      val a = Option('a)
-      val b = Option('b)
-      val c = a.zip(b)
-
       Future.successful(Some(check, actions))
     } else EmptyCheck
 

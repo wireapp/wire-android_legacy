@@ -31,6 +31,7 @@ import com.waz.zclient.security.SecurityChecklist
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.R
+import com.waz.zclient.preferences.dialogs.RequestPasswordDialog.{BiometricAnswer, BiometricAnswerCancelled, BiometricAnswerError, BiometricAnswerSuccess}
 
 import scala.concurrent.{Future, Promise}
 
@@ -39,6 +40,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
   import RequestPasswordCheck._
 
   private lazy val failedAttempts = prefs(UserPreferences.FailedPasswordAttempts)
+  private var useBiometric = true
 
   override def isSatisfied: Future[Boolean] =
     returning(Promise[Boolean])(showPasswordDialog(_)).future
@@ -65,14 +67,24 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
     }
   }
 
-  private def checkBiometric(result: Boolean, promise: Promise[Boolean]): Unit = if (result) promise.success(true)
+  private def checkBiometric(answer: BiometricAnswer, promise: Promise[Boolean]): Unit = answer match {
+    case BiometricAnswerSuccess => promise.success(true)
+    case BiometricAnswerCancelled =>
+      useBiometric = false
+    case BiometricAnswerError(err) =>
+      ContextUtils.showToast(err)
+      useBiometric = false
+    case _ =>
+  }
 
   private def showPasswordDialog(promise: Promise[Boolean], error: Option[String] = None): Unit =
     RequestPasswordDialog(
+      title         = ContextUtils.getString(R.string.app_lock_locked_title),
+      message       = ContextUtils.getString(R.string.app_lock_locked_message),
       onPassword    = checkPassword(_, promise),
       error         = error,
       isCancellable = false,
-      onBiometric   = Some(checkBiometric(_, promise))
+      onBiometric   = if (useBiometric) Some(checkBiometric(_, promise)) else None
     )
 
 }

@@ -39,7 +39,7 @@ import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.preferences.dialogs.RequestPasswordDialog
 import com.waz.zclient.preferences.views.{SwitchPreference, TextButton}
 import com.waz.zclient.security.checks.RootDetectionCheck
-import com.waz.zclient.utils.BackStackKey
+import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.utils.ContextUtils.showToast
 
 import scala.concurrent.Future
@@ -111,7 +111,12 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     }
 
   private def showPasswordDialog(error: Option[String] = None)(implicit v: View): Unit =
-    RequestPasswordDialog((p: Password) => registerClient(Some(p)), error)
+    RequestPasswordDialog(
+      title      = ContextUtils.getString(R.string.pref_dev_register_new_client_title),
+      message    = "",
+      onPassword = (p: Password) => registerClient(Some(p)),
+      error      = error
+    )
 
   randomLastIdButton.onClickEvent { _ =>
     val randomUid = Uid()

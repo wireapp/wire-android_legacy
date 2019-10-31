@@ -1400,7 +1400,7 @@
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
     
     <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
-    <string name="app_lock_locked_message">Please enter your device credentials.</string>
+    <string name="app_lock_locked_message">Please enter your account password</string>
     <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
     <string name="app_lock_setup_dialog_button">Open settings</string>
 
