@@ -23,7 +23,7 @@ import android.content.Context
 import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
-import android.widget._
+import android.widget.{FrameLayout, TextView}
 import com.waz.service.assets2.{AssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
