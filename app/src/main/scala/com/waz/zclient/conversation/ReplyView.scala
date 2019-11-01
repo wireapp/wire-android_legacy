@@ -22,7 +22,7 @@ import android.graphics._
 import android.graphics.drawable.Drawable
 import android.util.{AttributeSet, TypedValue}
 import android.view.{View, ViewGroup}
-import android.widget._
+import android.widget.{FrameLayout, ImageButton, ImageView, TextView}
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message.Type

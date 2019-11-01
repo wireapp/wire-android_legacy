@@ -27,8 +27,9 @@ import androidx.appcompat.app.AlertDialog
 import android.view._
 import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
+import android.widget.{CheckBox, CompoundButton, ImageView, RelativeLayout, TextView}
 import android.widget.TextView.OnEditorActionListener
-import android.widget._
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus

@@ -28,7 +28,7 @@ import androidx.annotation.Nullable
 import androidx.fragment.app.Fragment
 import androidx.appcompat.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
-import android.widget._
+import android.widget.{FrameLayout, Toast}
 import com.waz.content.UserPreferences
 import com.waz.service.assets2.Content
 import com.waz.service.{AccountsService, ZMessaging}
