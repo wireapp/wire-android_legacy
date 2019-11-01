@@ -35,7 +35,7 @@ import com.waz.service.{UiLifeCycle, ZMessaging}
 import com.waz.services.SecurityPolicyService
 import com.waz.services.websocket.WebSocketService
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.ThemeController
@@ -49,6 +49,7 @@ import scala.collection.JavaConverters._
 import scala.collection.breakOut
 import scala.collection.immutable.ListSet
 import scala.concurrent.duration._
+import scala.collection.mutable
 
 class BaseActivity extends AppCompatActivity
   with ServiceContainer
@@ -69,6 +70,8 @@ class BaseActivity extends AppCompatActivity
 
   def injectJava[T](cls: Class[T]) = inject[T](reflect.Manifest.classType(cls), injector)
 
+  private val subs = mutable.HashSet[Subscription]()
+
   private lazy val shouldHideScreenContent = for {
     prefs             <- userPreferences
     hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
@@ -80,7 +83,7 @@ class BaseActivity extends AppCompatActivity
     setTheme(getBaseTheme)
 
     if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
-      shouldHideScreenContent.zip(activityLifecycle.appInBackground).onUi {
+      subs += shouldHideScreenContent.zip(activityLifecycle.appInBackground).onUi {
         case (true, (true, _)) =>
           // there should be only one task but since we have access only to tasks
           // associated with our app we can safely exclude them all
@@ -88,18 +91,14 @@ class BaseActivity extends AppCompatActivity
         case _ =>
       }
     } else {
-      shouldHideScreenContent.onUi {
+      subs += shouldHideScreenContent.onUi {
         case true  => getWindow.addFlags(FLAG_SECURE)
         case false => getWindow.clearFlags(FLAG_SECURE)
       }
     }
 
     if (BuildConfig.BLOCK_ON_PASSWORD_POLICY)
-      activityLifecycle.appInBackground.onUi {
-        case (false, Some(act)) =>
-          SecurityPolicyService.checkAdminEnabled(dpm, secPolicy, ContextUtils.getString(R.string.security_policy_description)(act))(act)
-        case _ =>
-      }
+      SecurityPolicyService.checkAdminEnabled(dpm, secPolicy, ContextUtils.getString(R.string.security_policy_description)(this))(this)
   }
 
   override def onStart(): Unit = {
@@ -168,6 +167,8 @@ class BaseActivity extends AppCompatActivity
 
   override def onDestroy() = {
     verbose(l"onDestroy")
+    subs.foreach(_.unsubscribe())
+    subs.clear()
     inject[GlobalTrackingController].flushEvents()
     permissions.unregisterProvider(this)
     super.onDestroy()
