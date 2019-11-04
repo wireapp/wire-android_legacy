@@ -77,24 +77,26 @@ class BaseActivity extends AppCompatActivity
     hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
   } yield hideScreenContent
 
+  // there should be only one task but since we have access only to tasks
+  // associated with our app we can safely exclude them all
+  private def excludeFromRecents(exclude: Boolean): Unit =
+    inject[ActivityManager].getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(exclude))
+
   override protected def onCreate(savedInstanceState: Bundle): Unit = {
     verbose(l"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
 
-    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1) {
-      subs += shouldHideScreenContent.zip(activityLifecycle.appInBackground).onUi {
-        case (true, (true, _)) =>
-          // there should be only one task but since we have access only to tasks
-          // associated with our app we can safely exclude them all
-          inject[ActivityManager].getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(true))
-        case _ =>
-      }
-    } else {
-      subs += shouldHideScreenContent.onUi {
-        case true  => getWindow.addFlags(FLAG_SECURE)
-        case false => getWindow.clearFlags(FLAG_SECURE)
-      }
+    (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1, BuildConfig.FORCE_HIDE_SCREEN_CONTENT) match {
+      case (true, true)  => excludeFromRecents(true)
+      case (false, true) => getWindow.addFlags(FLAG_SECURE)
+      case (true, false) =>
+        shouldHideScreenContent.onUi(excludeFromRecents)
+      case (false, false) =>
+        shouldHideScreenContent.onUi {
+          case true  => getWindow.addFlags(FLAG_SECURE)
+          case false => getWindow.clearFlags(FLAG_SECURE)
+        }
     }
 
     if (BuildConfig.BLOCK_ON_PASSWORD_POLICY)
