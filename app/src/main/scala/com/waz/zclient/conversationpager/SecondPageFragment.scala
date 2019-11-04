@@ -47,8 +47,7 @@ class SecondPageFragment extends FragmentHelper
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val conversationController = inject[ConversationController]
 
-  // TODO: The method is deprecated.  If it's necessary to inform Android that SecondPageFragment is invisible,
-  // try ViewPager.addOnPageChangeListener: https://stackoverflow.com/a/25822814/2975925
+  // TODO: The method is deprecated.  https://wearezeta.atlassian.net/browse/AN-6484
 /*  override def setUserVisibleHint(isVisibleToUser: Boolean): Unit = {
     super.setUserVisibleHint(isVisibleToUser)
     if (isAdded) {

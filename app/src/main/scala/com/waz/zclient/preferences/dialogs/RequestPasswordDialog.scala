@@ -18,40 +18,38 @@
 package com.waz.zclient.preferences.dialogs
 
 import android.app.Dialog
-import android.content.Context
-import android.content.DialogInterface.BUTTON_POSITIVE
+import android.content.DialogInterface
+import android.content.DialogInterface.{BUTTON_POSITIVE, OnClickListener}
 import android.os.Bundle
-import com.google.android.material.textfield.{TextInputEditText, TextInputLayout}
-import androidx.fragment.app.DialogFragment
-import androidx.appcompat.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.TextView
-import androidx.biometric.{BiometricManager, BiometricPrompt}
+import androidx.appcompat.app.AlertDialog
+import androidx.biometric.{BiometricConstants, BiometricManager, BiometricPrompt}
+import androidx.fragment.app.{DialogFragment, FragmentActivity}
+import com.google.android.material.textfield.{TextInputEditText, TextInputLayout}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventContext, EventStream}
 import com.waz.utils.returning
-import com.waz.zclient.{BaseActivity, FragmentHelper, R}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.ExecutorWrapper
 import com.waz.zclient.ui.utils.KeyboardUtils
+import com.waz.zclient.{FragmentHelper, R}
 
-import scala.util.Try
 import scala.concurrent.duration._
+import scala.util.Try
 
 class RequestPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
   import RequestPasswordDialog._
 
-  private val onPassword = EventStream[Password]()
-  private val onBiometric = EventStream[BiometricAnswer]()
+  private val onAnswer = EventStream[PromptAnswer]()
 
-  private lazy val useBiometric = Option(getBooleanArg(UseBiometric)).getOrElse(false)
-  private lazy val title = getStringArg(TitleArg).getOrElse("")
-  private lazy val message = getStringArg(MessageArg).getOrElse("")
+  private lazy val useBiometric         = Option(getBooleanArg(UseBiometric)).getOrElse(false)
+  private lazy val title                = getStringArg(TitleArg).getOrElse("")
+  private lazy val message              = getStringArg(MessageArg).getOrElse("")
   private lazy val biometricDescription = getStringArg(BiometricDescriptionArg).getOrElse(message)
-  private lazy val error = getStringArg(ErrorArg)
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.remove_otr_device_dialog, null)
 
@@ -60,29 +58,65 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
       def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
         actionId match {
           case EditorInfo.IME_ACTION_DONE =>
-            sendPassword(v.getText.toString)
+            onAnswer ! PasswordAnswer(Password(v.getText.toString))
             true
           case _ => false
         }
     })
   }
 
-  private def sendPassword(password: String): Unit = {
-    onPassword ! Password(password)
+  private lazy val errorLayout = findById[TextInputLayout](root, R.id.til__remove_otr_device)
+
+  private lazy val promptInfo: BiometricPrompt.PromptInfo = new BiometricPrompt.PromptInfo.Builder()
+    .setTitle(title)
+    .setDescription(biometricDescription)
+    .setNegativeButtonText(getString(R.string.request_password_biometric_cancel))
+    .build
+
+  private lazy val prompt: BiometricPrompt = new BiometricPrompt(getActivity, ExecutorWrapper(Threading.Ui), new BiometricPrompt.AuthenticationCallback {
+    override def onAuthenticationError(errorCode: Int, errString: CharSequence): Unit = {
+      super.onAuthenticationError(errorCode, errString)
+      verbose(l"onAuthenticationError, code: $errorCode, str: $errString")
+      onAnswer ! (if (errorCode == BiometricConstants.ERROR_NEGATIVE_BUTTON) BiometricCancelled else BiometricError(errString.toString))
+    }
+
+    override def onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult): Unit = {
+      super.onAuthenticationSucceeded(result)
+      verbose(l"onAuthenticationSucceeded: $result")
+      onAnswer ! BiometricSuccess
+    }
+
+    override def onAuthenticationFailed(): Unit = {
+      super.onAuthenticationFailed()
+      verbose(l"onAuthenticationFailed")
+      onAnswer ! BiometricFailure
+    }
+  })
+
+  def show(activity: FragmentActivity): Unit =
+    activity.getSupportFragmentManager
+      .beginTransaction
+      .add(this, RequestPasswordDialog.Tag)
+      .addToBackStack(RequestPasswordDialog.Tag)
+      .commit
+
+  def close(): Unit = {
     KeyboardUtils.closeKeyboardIfShown(getActivity)
     dismiss()
   }
 
-  private lazy val textInputLayout = findById[TextInputLayout](root, R.id.til__remove_otr_device)
+  def cancelBiometric(): Unit = prompt.cancelAuthentication()
+
+  def clearText(): Unit = passwordEditText.setText("")
+
+  def showError(error: Option[String]): Unit = error match {
+    case Some(err) => errorLayout.setError(err)
+    case None      => errorLayout.setErrorEnabled(false)
+  }
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
     passwordEditText.requestFocus()
-    textInputLayout
-
-    error.foreach { err =>
-      verbose(l"error: $err")
-      textInputLayout.setError(err)
-    }
+    errorLayout
 
     val builder = new AlertDialog.Builder(getActivity)
       .setView(root)
@@ -91,7 +125,9 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
       .setPositiveButton(R.string.request_password_ok, null)
 
     Option(getBooleanArg(IsCancellable)).foreach(
-      if (_) builder.setNegativeButton(R.string.request_password_cancel, null)
+      if (_) builder.setNegativeButton(R.string.request_password_cancel, new OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! PasswordCancelled
+      })
     )
 
     builder.create
@@ -102,7 +138,7 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     verbose(l"onStart")
     Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
       d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) = sendPassword(passwordEditText.getText.toString)
+        def onClick(v: View) = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
       })
     }
 
@@ -117,86 +153,43 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     super.onActivityCreated(savedInstanceState)
     getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
   }
-
-  private lazy val promptInfo: BiometricPrompt.PromptInfo = new BiometricPrompt.PromptInfo.Builder()
-    .setTitle(title)
-    .setDescription(biometricDescription)
-    .setNegativeButtonText(getString(R.string.request_password_biometric_cancel))
-    .build
-
-  private lazy val executor: ExecutorWrapper = ExecutorWrapper(Threading.Ui)
-
-  private lazy val callback: BiometricPrompt.AuthenticationCallback = new BiometricPrompt.AuthenticationCallback {
-    override def onAuthenticationError(errorCode: Int, errString: CharSequence): Unit = {
-      super.onAuthenticationError(errorCode, errString)
-      verbose(l"onAuthenticationError, code: $errorCode, str: $errString")
-      // the cancellation code is 13; I couldn't find a constant for it
-      onBiometric ! (if (errorCode == 13) BiometricAnswerCancelled else BiometricAnswerError(errString.toString))
-      prompt.cancelAuthentication()
-    }
-
-    override def onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult): Unit = {
-      super.onAuthenticationSucceeded(result)
-      verbose(l"onAuthenticationSucceeded: $result")
-      onBiometric ! BiometricAnswerSuccess
-      KeyboardUtils.closeKeyboardIfShown(getActivity)
-      dismiss()
-    }
-
-    override def onAuthenticationFailed(): Unit = {
-      super.onAuthenticationFailed()
-      verbose(l"onAuthenticationFailed")
-      onBiometric ! BiometricAnswerFailure
-    }
-  }
-
-  private lazy val prompt: BiometricPrompt = new BiometricPrompt(getActivity, executor, callback)
 }
 
 object RequestPasswordDialog {
   val Tag = RequestPasswordDialog.getClass.getSimpleName
 
-  private val ErrorArg = "ARG_ERROR"
-  private val IsCancellable = "IS_CANCELLABLE"
-  private val UseBiometric = "USE_BIOMETRIC"
-
-  private val TitleArg = "TITLE"
-  private val MessageArg = "MESSAGE"
+  private val IsCancellable           = "IS_CANCELLABLE"
+  private val UseBiometric            = "USE_BIOMETRIC"
+  private val TitleArg                = "TITLE"
+  private val MessageArg              = "MESSAGE"
   private val BiometricDescriptionArg = "BIOMETRIC_DESCRIPTION"
 
   def apply(title:         String,
-            onPassword:    Password => Unit,
-            message:       Option[String]                  = None,
-            biometricDesc: Option[String]                  = None,
-            error:         Option[String]                  = None,
-            isCancellable: Boolean                         = true,
-            onBiometric:   Option[BiometricAnswer => Unit] = None
-           )(implicit context: Context, evContext: EventContext): Unit = {
-    val fragment = returning(new RequestPasswordDialog) { dialog =>
+            onAnswer:      PromptAnswer => Unit,
+            message:       Option[String] = None,
+            biometricDesc: Option[String] = None,
+            isCancellable: Boolean        = true,
+            useBiometric:  Boolean        = false
+           )(implicit evContext: EventContext): RequestPasswordDialog =
+    returning(new RequestPasswordDialog) { dialog =>
       dialog.setArguments(returning(new Bundle()) { b =>
         b.putString(TitleArg, title)
         message.foreach(b.putString(MessageArg, _))
         biometricDesc.foreach(b.putString(BiometricDescriptionArg, _))
-        error.foreach(b.putString(ErrorArg, _))
         b.putBoolean(IsCancellable, isCancellable)
-        b.putBoolean(UseBiometric, onBiometric.isDefined)
+        b.putBoolean(UseBiometric, useBiometric)
       })
-      dialog.onPassword.onUi(onPassword)
-      onBiometric.foreach(f => dialog.onBiometric.onUi(f))
+      dialog.onAnswer.onUi(onAnswer)
       dialog.setCancelable(isCancellable)
     }
-    context.asInstanceOf[BaseActivity].getSupportFragmentManager
-      .beginTransaction
-      .add(fragment, RequestPasswordDialog.Tag)
-      .addToBackStack(RequestPasswordDialog.Tag)
-      .commit
-  }
 
-  sealed trait BiometricAnswer
-  case object BiometricAnswerSuccess extends BiometricAnswer
-  case object BiometricAnswerFailure extends BiometricAnswer
-  case object BiometricAnswerCancelled extends BiometricAnswer
-  case class BiometricAnswerError(err: String) extends BiometricAnswer
+  sealed trait PromptAnswer
+  case object BiometricSuccess extends PromptAnswer
+  case object BiometricFailure extends PromptAnswer
+  case object BiometricCancelled extends PromptAnswer
+  case object PasswordCancelled extends PromptAnswer
+  case class BiometricError(err: String) extends PromptAnswer
+  case class PasswordAnswer(password: Password) extends PromptAnswer
 }
 
 

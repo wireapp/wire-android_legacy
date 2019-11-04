@@ -33,7 +33,6 @@
     <suppress checks="." files="TouchImageView\.java" />
     <suppress checks="." files="CursorDragHelper\.java" />
     <suppress checks="." files="AppEntryError\.java" />
-    <suppress checks="." files="SecondPageFragment\.scala" />
     <suppress checks="." files="[\\/]\.gradle[\\/]" />
     <suppress checks="." files="[\\/]gradle[\\/]" />
     <suppress checks="." files="[\\/]\.idea[\\/]" />
