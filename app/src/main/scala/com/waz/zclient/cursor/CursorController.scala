@@ -21,7 +21,6 @@ import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO,
 import android.app.Activity
 import android.content.Context
 import android.text.TextUtils
-import android.view.inputmethod.EditorInfo
 import android.view.{MotionEvent, View}
 import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
@@ -50,6 +49,7 @@ import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DraftMap
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.BuildConfig
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
@@ -114,19 +114,13 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     emoji    <- emojiKeyboardVisible
   } yield emoji || sendPref
 
-  private val keyboardPrivateMode = for {
-    prefs <- userPrefs
-    mode  <- prefs(IncognitoKeyboardEnabled).signal
-  } yield mode
-
-  val inputViewMode = Signal(sendButtonEnabled, keyboardPrivateMode).map {
-    case (true,  false) => (StandardInputType, EditorInfo.IME_ACTION_NONE)
-    case (false, false) => (StandardInputType, EditorInfo.IME_ACTION_SEND)
-    // this disables autocomplete because it implies that you will provide your
-    // own autocomplete facility. We don't, so no autocomplete is shown
-    case (true,  true)  => (PrivateInputType, EditorInfo.IME_ACTION_NONE | EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
-    case (false, true)  => (PrivateInputType, EditorInfo.IME_ACTION_SEND | EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
-  }
+  val keyboardPrivateMode =
+    if(BuildConfig.FORCE_PRIVATE_KEYBOARD) Signal.const(true) else {
+      for {
+        prefs <- userPrefs
+        mode  <- prefs(IncognitoKeyboardEnabled).signal
+      } yield mode
+    }
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
@@ -396,10 +390,6 @@ object CursorController {
   )
 
   def keyboardPermissions(tpe: ExtendedCursorContainer.Type): ListSet[PermissionsService.PermissionKey] = KeyboardPermissions.getOrElse(tpe, ListSet.empty)
-
-  import android.text.InputType._
-  private val StandardInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL
-  private val PrivateInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL | TYPE_TEXT_FLAG_NO_SUGGESTIONS | TYPE_TEXT_FLAG_AUTO_COMPLETE
 }
 
 // temporary for compatibility with ConversationFragment

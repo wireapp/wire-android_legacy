@@ -20,12 +20,13 @@ package com.waz.zclient.cursor
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Rect}
+import android.text.InputType._
 import android.text.method.TransformationMethod
 import android.text._
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view._
-import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.EditorInfo._
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, LinearLayout, TextView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -238,8 +239,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setOnEditorActionListener(new OnEditorActionListener {
     override def onEditorAction(textView: TextView, actionId: Int, event: KeyEvent): Boolean = {
-      if (actionId == EditorInfo.IME_ACTION_SEND ||
-        (cursorEditText.getImeOptions == EditorInfo.IME_ACTION_SEND &&
+      if (actionId == IME_ACTION_SEND ||
+        (cursorEditText.getImeOptions == IME_ACTION_SEND &&
           event != null &&
           event.getKeyCode == KeyEvent.KEYCODE_ENTER &&
           event.getAction == KeyEvent.ACTION_DOWN)) {
@@ -265,9 +266,28 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setFocusableInTouchMode(true)
 
-  controller.inputViewMode.onUi { case (inputType, imeOptions) =>
-    cursorEditText.setInputType(inputType | InputType.TYPE_TEXT_FLAG_MULTI_LINE)
-    cursorEditText.setImeOptions(imeOptions)
+  cursorEditText.setInputType(TYPE_TEXT_FLAG_MULTI_LINE | TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL)
+
+  controller.keyboardPrivateMode.onUi {
+    case true =>
+      cursorEditText.addInputType(TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+      cursorEditText.addInputType(TYPE_TEXT_FLAG_AUTO_COMPLETE)
+      cursorEditText.addImeOption(IME_FLAG_NO_PERSONALIZED_LEARNING)
+      cursorEditText.setPrivateMode(true)
+    case false =>
+      cursorEditText.removeInputType(TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+      cursorEditText.removeInputType(TYPE_TEXT_FLAG_AUTO_COMPLETE)
+      cursorEditText.removeImeOption(IME_FLAG_NO_PERSONALIZED_LEARNING)
+      cursorEditText.setPrivateMode(false)
+  }
+
+  controller.sendButtonEnabled.onUi {
+    case true =>
+      cursorEditText.addImeOption(IME_ACTION_NONE)
+      cursorEditText.removeImeOption(IME_ACTION_SEND)
+    case false =>
+      cursorEditText.removeImeOption(IME_ACTION_NONE)
+      cursorEditText.addImeOption(IME_ACTION_SEND)
   }
 
   accentColor.map(_.color).onUi(cursorEditText.setAccentColor)
