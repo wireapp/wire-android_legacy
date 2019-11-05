@@ -76,11 +76,8 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
 
   val registerAnotherClient = returning(findById[TextButton](R.id.register_another_client)) {
     _.onClickEvent(_ => registerClient().foreach {
-      case Right(true)  =>
-      case Right(false) => dialog.show(context.asInstanceOf[PreferencesActivity])
-      case Left(err)    =>
-        dialog.showError(Some(err))
-        dialog.show(context.asInstanceOf[PreferencesActivity])
+      case Right(registered) => if(!registered) dialog.show(context.asInstanceOf[PreferencesActivity])
+      case Left(err) => dialog.showError(Some(err))
     })
   }
 
@@ -103,8 +100,25 @@ class DevSettingsViewImpl(context: Context, attrs: AttributeSet, style: Int)
     }
   }
 
+  /**
+    * Used to test how the app handles having multiple client devices connected to one account
+    * while we actually don't have access to so many different devices / don't want to waste time.
+    *
+    * When called, the method tries to create a new fake client on the backend. It may fail for
+    * a number of reasons, one of them being that the password is missing or it's invalid. We need
+    * to distinguish this reason from others and open RequestPasswordDialog if it happens.
+    * Another reason can be that the user reached the maximum allowed number of client devices -
+    * in that case we simply disallow to create another one. In other case swe display a toast with
+    * the error.
+    *
+    * @param password optional; password provided from RequestPasswordDialog
+    * @return `Either` of an error message (left) or a boolean if the dialog should be opened. Note
+    *        that Right(true) might mean that the new client was created, but it also might mean
+    *        that the maximum number of clients was reached and therefore we don't want to open
+    *        the dialog.
+    */
   private def registerClient(password: Option[Password] = None): Future[Either[String, Boolean]] =
-    am.head.flatMap(_.registerNewClient()).flatMap {
+    am.head.flatMap(_.registerNewClient(password)).flatMap {
       case Right(Registered(id))  =>
         showToast(s"Registered new client: $id")
         Future.successful(Right(true))

@@ -39,7 +39,8 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
 
   private lazy val failedAttempts = prefs(UserPreferences.FailedPasswordAttempts)
 
-  private lazy val promise = Promise[Boolean]
+  private lazy val passwordCheckSatisfied = Promise[Boolean]
+
   private lazy val dialog = RequestPasswordDialog(
     title         = ContextUtils.getString(R.string.app_lock_locked_title),
     message       = Some(ContextUtils.getString(R.string.app_lock_locked_message)),
@@ -51,7 +52,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
 
   override def isSatisfied: Future[Boolean] = {
     dialog.show(context.asInstanceOf[BaseActivity])
-    promise.future
+    passwordCheckSatisfied.future
   }
 
   private def checkPassword(password: Password): Future[PasswordCheck] = {
@@ -80,7 +81,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
     case PasswordAnswer(password) => checkPassword(password).foreach {
                                        case PasswordCheckSuccessful  =>
                                          dialog.close()
-                                         promise.success(true)
+                                         passwordCheckSatisfied.success(true)
                                        case PasswordCheckFailed =>
                                          dialog.showError(Some(ContextUtils.getString(R.string.request_password_error)))
                                          dialog.clearText()
@@ -89,7 +90,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
                                          dialog.clearText()
                                        case MaxAttemptsReached =>
                                          dialog.close()
-                                         promise.success(false)
+                                         passwordCheckSatisfied.success(false)
                                      }(Threading.Ui)
     case PasswordCancelled =>
     case BiometricError(err) =>
@@ -97,7 +98,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
       dialog.cancelBiometric()
     case BiometricSuccess =>
       dialog.close()
-      promise.success(true)
+      passwordCheckSatisfied.success(true)
     case BiometricFailure =>
     case BiometricCancelled =>
       dialog.cancelBiometric()
