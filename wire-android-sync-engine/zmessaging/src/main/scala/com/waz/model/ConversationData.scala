@@ -107,6 +107,8 @@ case class ConversationData(override val id:      ConvId                 = ConvI
   def onlyMentionsAllowed: Boolean = muted.onlyMentionsAllowed
 
   def readReceiptsAllowed: Boolean = team.isDefined && receiptMode.exists(_ > 0)
+
+  def hasUnreadMessages: Boolean = unreadCount.total > 0
 }
 
 

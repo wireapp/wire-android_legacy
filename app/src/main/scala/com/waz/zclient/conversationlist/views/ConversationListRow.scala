@@ -569,8 +569,10 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
 
   private val expandIcon = ViewUtils.getView(this, R.id.conv_list_section_imageview_expand).asInstanceOf[ImageView]
   private val title = ViewUtils.getView(this, R.id.conv_list_section_textview_title).asInstanceOf[TypefaceTextView]
+  private val badge = ViewUtils.getView(this, R.id.folder_badge).asInstanceOf[FolderBadge]
 
   def setTitle(title: String): Unit = this.title.setText(title)
+  def setCount(count: Int): Unit = badge.setCount(count)
 
   def setIsFirstHeader(isFirstHeader: Boolean): Unit = {
     val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
