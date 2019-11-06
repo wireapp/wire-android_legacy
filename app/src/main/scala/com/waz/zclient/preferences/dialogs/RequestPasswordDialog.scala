@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.waz.zclient.preferences.dialogs
 
 import android.app.Dialog
@@ -46,7 +47,8 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
 
   private val onAnswer = EventStream[PromptAnswer]()
 
-  private lazy val useBiometric         = Option(getBooleanArg(UseBiometric)).getOrElse(false)
+  private lazy val useBiometric = Option(getBooleanArg(UseBiometric)).getOrElse(false) &&
+    BiometricManager.from(getContext).canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS
   private lazy val title                = getStringArg(TitleArg).getOrElse("")
   private lazy val message              = getStringArg(MessageArg).getOrElse("")
   private lazy val biometricDescription = getStringArg(BiometricDescriptionArg).getOrElse(message)
@@ -105,7 +107,11 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     dismiss()
   }
 
-  def cancelBiometric(): Unit = prompt.cancelAuthentication()
+  def cancelBiometric(): Unit = {
+    prompt.cancelAuthentication()
+    getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+    passwordEditText.requestFocus()
+  }
 
   def clearText(): Unit = passwordEditText.setText("")
 
@@ -115,7 +121,7 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
   }
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
-    passwordEditText.requestFocus()
+    if (!useBiometric) passwordEditText.requestFocus()
     errorLayout
 
     val builder = new AlertDialog.Builder(getActivity)
@@ -145,13 +151,12 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     // FIXME: the delay is necessary because of a bug introduced in androidx.biometric:1.0.0-alpha04
     // https://stackoverflow.com/questions/55934108/fragmentmanager-is-already-executing-transactions-when-executing-biometricprompt
     // try to apply the proposed solution
-    if (useBiometric && BiometricManager.from(getContext).canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS)
-      CancellableFuture.delay(100.millis).map { _ => prompt.authenticate(promptInfo) }(Threading.Ui)
+    if (useBiometric) CancellableFuture.delay(100.millis).map { _ => prompt.authenticate(promptInfo) }(Threading.Ui)
   }
 
   override def onActivityCreated(savedInstanceState: Bundle) = {
     super.onActivityCreated(savedInstanceState)
-    getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+    if (!useBiometric) getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
   }
 }
 
@@ -191,5 +196,3 @@ object RequestPasswordDialog {
   case class BiometricError(err: String) extends PromptAnswer
   case class PasswordAnswer(password: Password) extends PromptAnswer
 }
-
-
