@@ -268,18 +268,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setInputType(TYPE_TEXT_FLAG_MULTI_LINE | TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL)
 
-  controller.keyboardPrivateMode.onUi {
-    case true =>
-      cursorEditText.addInputType(TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-      cursorEditText.addInputType(TYPE_TEXT_FLAG_AUTO_COMPLETE)
-      cursorEditText.addImeOption(IME_FLAG_NO_PERSONALIZED_LEARNING)
-      cursorEditText.setPrivateMode(true)
-    case false =>
-      cursorEditText.removeInputType(TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-      cursorEditText.removeInputType(TYPE_TEXT_FLAG_AUTO_COMPLETE)
-      cursorEditText.removeImeOption(IME_FLAG_NO_PERSONALIZED_LEARNING)
-      cursorEditText.setPrivateMode(false)
-  }
+  controller.keyboardPrivateMode.onUi(cursorEditText.setPrivateMode)
 
   controller.sendButtonEnabled.onUi {
     case true =>
@@ -439,11 +428,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
 object CursorView {
   import CursorMenuItem._
-  import InputType._
 
   private val MainCursorItems = Seq(Camera, Mention, Sketch, Gif, AudioMessage, More)
   private val SecondaryCursorItems = Seq(VideoMessage, Ping, File, Location, Dummy, Less)
-
-  private val StandardInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL | TYPE_TEXT_FLAG_MULTI_LINE
-  private val PrivateInputType = TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL | TYPE_TEXT_FLAG_MULTI_LINE | TYPE_TEXT_FLAG_NO_SUGGESTIONS | TYPE_TEXT_FLAG_AUTO_COMPLETE
 }

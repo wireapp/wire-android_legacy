@@ -20,7 +20,6 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.content.res.{ColorStateList, TypedArray}
 import android.graphics.Color
-import android.text.InputType._
 import android.util.AttributeSet
 import android.view.{KeyEvent, ViewGroup}
 import android.view.inputmethod.EditorInfo._
@@ -86,20 +85,8 @@ class InputBox(context: Context, attrs: AttributeSet, style: Int) extends Linear
   errorText.setVisible(false)
   progressBar.setIndeterminateTintList(ColorStateList.valueOf(ContextUtils.getColor(R.color.teams_inactive_button)))
   editText.setImeOptions(IME_ACTION_DONE | IME_ACTION_SEND)
-  editText.setInputType(TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL)
 
-  cursorController.keyboardPrivateMode.onUi {
-    case true =>
-      editText.addInputType(TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-      editText.addInputType(TYPE_TEXT_FLAG_AUTO_COMPLETE)
-      editText.addImeOption(IME_FLAG_NO_PERSONALIZED_LEARNING)
-      editText.setPrivateMode(true)
-    case false =>
-      editText.removeInputType(TYPE_TEXT_FLAG_NO_SUGGESTIONS)
-      editText.removeInputType(TYPE_TEXT_FLAG_AUTO_COMPLETE)
-      editText.removeImeOption(IME_FLAG_NO_PERSONALIZED_LEARNING)
-      editText.setPrivateMode(false)
-  }
+  cursorController.keyboardPrivateMode.onUi(editText.setPrivateMode)
 
   editText.setOnEditorActionListener(new OnEditorActionListener {
     override def onEditorAction(v: TextView, actionId: Int, event: KeyEvent): Boolean = {
