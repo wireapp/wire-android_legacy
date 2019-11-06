@@ -31,30 +31,28 @@ class ActivityLifecycleCallback(implicit injector: Injector)
 
   val appInBackground: Signal[(Boolean, Option[Activity])] = activitiesRunning.map { case (running, lastAct) => (running == 0, lastAct) }
 
-  override def onActivityPaused(activity: Activity): Unit = synchronized {
+  override def onActivityStopped(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
-      case _: AppLockActivity =>
       case _ =>
-        verbose(l"onActivityPaused, activities still active: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
+        verbose(l"onActivityStopped, activities still active: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
         activitiesRunning.mutate { case (running, _) => (running - 1, Option(activity))}
     }
   }
 
-  override def onActivityResumed(activity: Activity): Unit = synchronized {
+  override def onActivityStarted(activity: Activity): Unit = synchronized {
     activity match {
       case _: LaunchActivity =>
-      case _: AppLockActivity =>
       case _ =>
-        verbose(l"onActivityResumed, activities active now: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
+        verbose(l"onActivityStarted, activities active now: ${activitiesRunning.currentValue}, ${activity.getClass.getName}")
         activitiesRunning.mutate { case (running, _) => (running + 1, Option(activity))}
 
     }
   }
 
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
-  override def onActivityStarted(activity: Activity): Unit = {}
-  override def onActivityStopped(activity: Activity): Unit = {}
+  override def onActivityResumed(activity: Activity): Unit = {}
+  override def onActivityPaused(activity: Activity): Unit = {}
   override def onActivityDestroyed(activity: Activity): Unit = {}
   override def onActivitySaveInstanceState(activity: Activity, bundle: Bundle): Unit = {}
 }

@@ -42,7 +42,7 @@
             android:layout_width="match_parent"
             >
 
-            <androidx.appcompat.widget.AppCompatEditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/acet__remove_otr__password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

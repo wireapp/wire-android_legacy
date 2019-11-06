@@ -399,6 +399,7 @@ object GlobalPreferences {
   lazy val RootDetected: PrefKey[Boolean] = PrefKey[Boolean]("root_detected", customDefault = false)
 
   lazy val AppLockEnabled: PrefKey[Boolean] = PrefKey[Boolean]("app_lock_enabled", customDefault = false)
+
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
@@ -485,4 +486,6 @@ object UserPreferences {
 
   lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
   lazy val ConversationFoldersUiState       = PrefKey[Map[FolderId, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
+
+  lazy val FailedPasswordAttempts           = PrefKey[Int]("failed_password_attempts", customDefault = 0)
 }
