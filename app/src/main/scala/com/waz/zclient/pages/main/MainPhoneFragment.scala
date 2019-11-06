@@ -19,14 +19,14 @@ package com.waz.zclient.pages.main
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
@@ -87,8 +87,15 @@ class MainPhoneFragment extends FragmentHelper
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val pickUserController     = inject[IPickUserController]
 
+  protected var subs = Set.empty[Subscription]
+
+  override def onDestroyView(): Unit = {
+    subs.foreach(_.destroy())
+    super.onDestroyView()
+  }
+
   private lazy val confirmationMenu = returning(view[ConfirmationMenu](R.id.cm__confirm_action_light)) { vh =>
-    accentColorController.accentColor.map(_.color).onUi(color => vh.foreach(_.setButtonColor(color)))
+    subs += accentColorController.accentColor.map(_.color).onUi(color => vh.foreach(_.setButtonColor(color)))
   }
 
   private lazy val consentDialog = for {
@@ -143,11 +150,11 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     confirmationMenu.foreach(_.setVisibility(View.GONE))
-    zms.flatMap(_.errors.getErrors).onUi {
+    subs += zms.flatMap(_.errors.getErrors).onUi {
       _.foreach(handleSyncError)
     }
 
-    deepLinkService.deepLink.collect { case Some(result) => result } onUi {
+    subs +=  deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
         pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true

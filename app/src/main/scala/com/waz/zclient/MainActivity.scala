@@ -34,7 +34,7 @@ import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.ZMessaging.clock
 import com.waz.service.{AccountManager, AccountsService, ZMessaging}
 import com.waz.threading.Threading
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.{RichInstant, returning}
 import com.waz.zclient.Intents.{RichIntent, _}
 import com.waz.zclient.SpinnerController.{Hide, Show}
@@ -92,6 +92,9 @@ class MainActivity extends BaseActivity
   private lazy val deepLinkService        = inject[DeepLinkService]
   private lazy val usersController        = inject[UsersController]
 
+  protected var subs = Set.empty[Subscription]
+
+
   override def onAttachedToWindow(): Unit = {
     super.onAttachedToWindow()
     getWindow.setFormat(PixelFormat.RGBA_8888)
@@ -116,7 +119,7 @@ class MainActivity extends BaseActivity
       fragmentTransaction.commit
     } else getControllerFactory.getNavigationController.onActivityCreated(savedInstanceState)
 
-    accentColorController.accentColor.map(_.color).onUi(
+    subs += accentColorController.accentColor.map(_.color).onUi(
       getControllerFactory.getUserPreferencesController.setLastAccentColor
     )
 
@@ -124,7 +127,7 @@ class MainActivity extends BaseActivity
 
     val currentlyDarkTheme = themeController.darkThemeSet.currentValue.contains(true)
 
-    themeController.darkThemeSet.onUi {
+    subs += themeController.darkThemeSet.onUi {
       case theme if theme != currentlyDarkTheme =>
         info(l"restartActivity")
         finish()
@@ -133,13 +136,13 @@ class MainActivity extends BaseActivity
       case _ =>
     }
 
-    userAccountsController.mostRecentLoggedOutAccount.onUi {
+    subs += userAccountsController.mostRecentLoggedOutAccount.onUi {
       case Some((_, reason)) =>
         showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.mostRecentLoggedOutAccount ! None)
       case None =>
     }
 
-    userAccountsController.allAccountsLoggedOut.onUi {
+    subs += userAccountsController.allAccountsLoggedOut.onUi {
       case true =>
         getControllerFactory.getPickUserController.hideUserProfile()
         getControllerFactory.getNavigationController.resetPagerPositionToDefault()
@@ -186,14 +189,14 @@ class MainActivity extends BaseActivity
 
     val loadingIndicator = findViewById[LoadingIndicatorView](R.id.progress_spinner)
 
-    spinnerController.spinnerShowing.onUi {
+    subs += spinnerController.spinnerShowing.onUi {
       case Show(animation, forcedIsDarkTheme) =>
         themeController.darkThemeSet.head.foreach(theme => loadingIndicator.show(animation, forcedIsDarkTheme.getOrElse(theme), 300))(Threading.Ui)
       case Hide(Some(message)) => loadingIndicator.hideWithMessage(message, 750)
       case Hide(_) => loadingIndicator.hide()
     }
 
-    deepLinkService.deepLink.onUi {
+    subs += deepLinkService.deepLink.onUi {
       case None =>
 
       case Some(OpenDeepLink(SSOLoginToken(token), _)) =>
@@ -254,6 +257,7 @@ class MainActivity extends BaseActivity
 
   override def onDestroy(): Unit = {
     verbose(l"[BE]: onDestroy")
+    subs.foreach(_.destroy())
     super.onDestroy()
   }
 

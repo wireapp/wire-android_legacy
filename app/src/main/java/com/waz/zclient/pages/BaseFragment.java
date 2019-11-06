@@ -21,14 +21,19 @@ import android.app.Activity;
 
 import androidx.fragment.app.Fragment;
 
+import com.waz.utils.events.Subscription;
 import com.waz.zclient.BaseActivity;
 import com.waz.zclient.ServiceContainer;
 import com.waz.zclient.controllers.IControllerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class BaseFragment<T> extends Fragment implements ServiceContainer {
 
     private T container;
     private IControllerFactory controllerFactory;
+    protected Set<Subscription> subs = new HashSet<>();
 
     @Override
     public final void onAttach(Activity activity) {
@@ -72,5 +77,13 @@ public class BaseFragment<T> extends Fragment implements ServiceContainer {
         } else {
             return null;
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        for (Subscription s: subs) {
+            s.destroy();
+        }
+        super.onDestroyView();
     }
 }
