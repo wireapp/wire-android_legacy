@@ -205,6 +205,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
     override def afterTextChanged(editable: Editable): Unit = {}
   })
+
   cursorEditText.setBackspaceListener(new OnBackspaceListener {
 
     //XXX: This is a bit ugly...
@@ -266,7 +267,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setFocusableInTouchMode(true)
 
-  cursorEditText.setInputType(TYPE_TEXT_FLAG_MULTI_LINE | TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL)
+  cursorEditText.addInputType(TYPE_TEXT_FLAG_MULTI_LINE | TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL)
 
   controller.keyboardPrivateMode.onUi(cursorEditText.setPrivateMode)
 
