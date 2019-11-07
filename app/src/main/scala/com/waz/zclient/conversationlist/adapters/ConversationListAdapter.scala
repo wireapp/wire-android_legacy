@@ -125,7 +125,7 @@ object ConversationListAdapter {
   }
 
   object Item {
-    case class Header(id: FolderId, title: String, isExpanded: Boolean, count: Int = 0) extends Item {
+    case class Header(id: FolderId, title: String, isExpanded: Boolean, unreadCount: Int = 0) extends Item {
       override val contentDescription: String = {
         s"$title (${if (isExpanded) "expanded" else "collapsed"})"
       }
@@ -179,7 +179,7 @@ object ConversationListAdapter {
 
     def bind(item: Item.Header, isFirst: Boolean): Unit = {
       row.setTitle(item.title)
-      row.setCount(item.count)
+      row.setUnreadCount(item.unreadCount)
       row.setIsExpanded(item.isExpanded)
       row.setContentDescription(item.contentDescription)
       row.setIsFirstHeader(isFirst)

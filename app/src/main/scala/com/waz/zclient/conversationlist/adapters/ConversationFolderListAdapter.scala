@@ -63,7 +63,7 @@ class ConversationFolderListAdapter(implicit context: Context)
     folders = calculateDefaultFolders(favorites, groups, oneToOnes) ++ calculateCustomFolders(custom)
 
     newItems ++= folders.foldLeft(List.empty[Item]) { (acc, next) =>
-      val header = Item.Header(next.id, next.title, isExpanded = folderStates.getOrElse(next.id, true), count = countMap(next.id))
+      val header = Item.Header(next.id, next.title, isExpanded = folderStates.getOrElse(next.id, true), unreadCount = countMap(next.id))
       val conversations = if (header.isExpanded) next.conversations.toList else List.empty
       acc ++ (header :: conversations)
     }

@@ -36,12 +36,12 @@ class FolderBadge(context: Context, attrs: AttributeSet, style: Int) extends Fra
 
   private lazy val textView = findById[TypefaceTextView](R.id.folder_badge_text)
 
-  def setCount(count: Int): Unit = {
-    verbose(l"badge count: $count")
-    this.setVisible(count > 0)
-    textView.setVisible(count > 0)
-    if (count > MaxBadgeCount) textView.setText(OverMaxBadge)
-    else if (count > 0) textView.setText(count.toString)
+  def setUnreadCount(unreadCount: Int): Unit = {
+    verbose(l"badge count: $unreadCount")
+    this.setVisible(unreadCount > 0)
+    textView.setVisible(unreadCount > 0)
+    if (unreadCount > MaxBadgeCount) textView.setText(OverMaxBadge)
+    else if (unreadCount > 0) textView.setText(unreadCount.toString)
   }
 }
 
