@@ -104,6 +104,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val accountsController     = inject[UserAccountsController]
   private lazy val globalPrefs            = inject[GlobalPreferences]
   private lazy val replyController        = inject[ReplyController]
+  private lazy val accentColor            = inject[Signal[AccentColor]]
 
   //TODO remove use of old java controllers
   private lazy val globalLayoutController     = inject[IGlobalLayoutController]
@@ -125,14 +126,14 @@ class ConversationFragment extends FragmentHelper {
   private var assetIntentsManager: Option[AssetIntentsManager] = None
 
   private lazy val loadingIndicatorView = returning(view[LoadingIndicatorView](R.id.lbv__conversation__loading_indicator)) { vh =>
-    inject[Signal[AccentColor]].map(_.color)(c => vh.foreach(_.setColor(c)))
+    accentColor.map(_.color)(c => vh.foreach(_.setColor(c)))
   }
 
 
   private var containerPreview: ViewGroup = _
   private lazy val cursorView = returning(view[CursorView](R.id.cv__cursor)) { vh =>
     mentionCandidatesAdapter.onUserClicked.onUi { info =>
-      vh.foreach(v => v.accentColor.head.foreach { ac =>
+      vh.foreach(v => accentColor.head.foreach { ac =>
         v.createMention(info.id, info.name, v.cursorEditText, v.cursorEditText.getSelectionStart, ac.color)
       })
     }
@@ -142,7 +143,7 @@ class ConversationFragment extends FragmentHelper {
 
   private var audioMessageRecordingView: AudioMessageRecordingView = _
   private lazy val extendedCursorContainer = returning(view[ExtendedCursorContainer](R.id.ecc__conversation)) { vh =>
-    inject[Signal[AccentColor]].map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
+    accentColor.map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
   }
   private var toolbarTitle: TextView = _
   private lazy val listView = view[MessagesListView](R.id.messages_list_view)
