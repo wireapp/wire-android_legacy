@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
  * @return the topmost fragment in the child fragment stack.
  */
 fun Fragment.getTopMostFragment() : Fragment? {
+    if (!isAdded) return null
     childFragmentManager.run {
         return when (backStackEntryCount) {
             0 -> null
