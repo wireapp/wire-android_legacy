@@ -15,23 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/**
-  * Wire
-  * Copyright (C) 2018 Wire Swiss GmbH
-  *
-  * This program is free software: you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation, either version 3 of the License, or
-  * (at your option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  * GNU General Public License for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
 package com.waz.zclient.conversationlist
 
 import android.app.Activity
@@ -49,7 +32,7 @@ import com.waz.model._
 import com.waz.model.sync.SyncCommand._
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -69,7 +52,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.usersearch.SearchUIFragment
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.utils.extensions.{BottomNavigationUtil}
+import com.waz.zclient.utils.extensions.BottomNavigationUtil
 import com.waz.zclient.views.LoadingIndicatorView
 import com.waz.zclient.views.LoadingIndicatorView.{InfiniteLoadingBar, Spinner}
 import com.waz.zclient.views.menus.ConfirmationMenu
@@ -109,10 +92,11 @@ class ConversationListManagerFragment extends Fragment
   private var confirmationMenu: ConfirmationMenu = _
   private var bottomNavigationBorder: View = _
   private var newFragment: Fragment = _
-  private var bottomNavigation: BottomNavigationView = _
+  protected var subs = Set.empty[Subscription]
+
 
   private lazy val bottomNavigationView = returning(view[BottomNavigationView](R.id.fragment_conversation_list_manager_bottom_navigation)) { vh =>
-    convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
+    subs += convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
       vh.foreach(view => BottomNavigationUtil.setItemVisible(view, R.id.navigation_archive, hasArchive))
     }
   }
@@ -155,9 +139,7 @@ class ConversationListManagerFragment extends Fragment
 
     bottomNavigationView
 
-    bottomNavigation = findById(view, R.id.fragment_conversation_list_manager_bottom_navigation)
-
-    bottomNavigation.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
+    bottomNavigationView.get.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
 
     bottomNavigationBorder = findById(view, R.id.fragment_conversation_list_manager_view_bottom_border)
 
@@ -189,7 +171,7 @@ class ConversationListManagerFragment extends Fragment
       }
     }
 
-    convController.convChanged.map(_.requester).onUi {
+    subs += convController.convChanged.map(_.requester).onUi {
       case ConversationChangeRequester.START_CONVERSATION |
            ConversationChangeRequester.START_CONVERSATION_FOR_CALL |
            ConversationChangeRequester.START_CONVERSATION_FOR_VIDEO_CALL |
@@ -204,20 +186,22 @@ class ConversationListManagerFragment extends Fragment
       case _ => //
     }
 
-    inject[AccentColorController].accentColor.map(_.color).onUi { c =>
+     subs += inject[AccentColorController].accentColor.map(_.color).onUi { c =>
       Option(startUiLoadingIndicator).foreach(_.setColor(c))
       Option(listLoadingIndicator).foreach(_.setColor(c))
       setUpBottomNavigationTintColors(c)
     }
 
-    zms.flatMap(_.errors.getErrors).onUi {
+    subs += zms.flatMap(_.errors.getErrors).onUi {
       _.foreach(err => if (err.errType == ErrorType.CANNOT_DELETE_GROUP_CONVERSATION) handleGroupConvError(err))
     }
   }
 
   override def onDestroyView(): Unit = {
      super.onDestroyView()
-     bottomNavigation.setOnNavigationItemSelectedListener(null)
+    bottomNavigationView.get.setOnNavigationItemSelectedListener(null)
+    subs.foreach(_.unsubscribe())
+    subs.foreach(_.destroy())
    }
 
   private def setUpBottomNavigationTintColors(color: Int): Unit = {
@@ -529,9 +513,6 @@ class ConversationListManagerFragment extends Fragment
         .commit
       setConversationListType(listType)
 
-    }
-    if (navController.getCurrentLeftPage != Page.START) {
-      navController.setLeftPage(Page.CONVERSATION_LIST, Tag)
     }
     if (navController.getCurrentLeftPage != Page.START) {
       navController.setLeftPage(Page.CONVERSATION_LIST, Tag)
