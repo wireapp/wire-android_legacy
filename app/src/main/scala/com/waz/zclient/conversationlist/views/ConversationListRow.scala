@@ -559,7 +559,12 @@ class IncomingConversationListRow(context: Context, attrs: AttributeSet, style: 
 class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: Int)
   extends LinearLayout(context, attrs, style)
   with ConversationListRow
-  with ViewHelper {
+  with ViewHelper
+  with DerivedLogTag {
+
+  import ConversationFolderListRow._
+  import com.waz.zclient.utils._
+  import com.waz.zclient.log.LogUI._
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
@@ -567,10 +572,18 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   inflate(R.layout.conv_list_section_header)
   setLayoutParameters()
 
-  private val expandIcon = ViewUtils.getView(this, R.id.conv_list_section_imageview_expand).asInstanceOf[ImageView]
-  private val title = ViewUtils.getView(this, R.id.conv_list_section_textview_title).asInstanceOf[TypefaceTextView]
+  private val expandIcon = findById[ImageView](R.id.conv_list_section_imageview_expand)
+  private val title = findById[TypefaceTextView](R.id.conv_list_section_textview_title)
+  private val badge = findById[TypefaceTextView](R.id.folder_badge_text)
 
   def setTitle(title: String): Unit = this.title.setText(title)
+
+  def setUnreadCount(unreadCount: Int): Unit = {
+    verbose(l"badge count: $unreadCount")
+    badge.setVisible(unreadCount > 0)
+    if (unreadCount > MaxBadgeCount) badge.setText(OverMaxBadge)
+    else if (unreadCount > 0) badge.setText(unreadCount.toString)
+  }
 
   def setIsFirstHeader(isFirstHeader: Boolean): Unit = {
     val params = getLayoutParams.asInstanceOf[RecyclerView.LayoutParams]
@@ -589,4 +602,9 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
     setOrientation(LinearLayout.HORIZONTAL)
     setPadding(getDimenPx(R.dimen.wire__padding__24), getDimenPx(R.dimen.wire__padding__10), 0, getDimenPx(R.dimen.wire__padding__10))
   }
+}
+
+object ConversationFolderListRow {
+  val MaxBadgeCount = 99
+  val OverMaxBadge = "99+"
 }

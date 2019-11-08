@@ -35,18 +35,36 @@
         android:layout_height="10dp"
         android:layout_gravity="center_vertical|start"
         android:src="@drawable/icon_arrow_down_white"
-        android:tint="@color/text__primary_dark" />
+        android:tint="@color/text__primary_dark"/>
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/conv_list_section_textview_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|start"
+        android:gravity="start"
         android:layout_marginStart="@dimen/wire__padding__8"
+        android:layout_weight="1"
         app:w_font="@string/wire__typeface__light"
         android:textColor="@color/text__primary_dark"
         android:textSize="@dimen/wire__text_size__small"
         android:textAllCaps="true"
-        tools:text="Title" />
+        tools:text="Title"/>
 
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/folder_badge_text"
+        style="?startUiUserRowSubLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|end"
+        android:gravity="end"
+        android:layout_marginStart="@dimen/wire__padding__8"
+        app:w_font="@string/wire__typeface__light"
+        android:textColor="@color/text__primary_dark_40"
+        android:textSize="@dimen/wire__text_size__small"
+        android:paddingStart="@dimen/conversation_list__badge__text_padding"
+        android:paddingEnd="@dimen/conversation_list__badge__text_padding"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:visibility="gone"
+        />
 </merge>

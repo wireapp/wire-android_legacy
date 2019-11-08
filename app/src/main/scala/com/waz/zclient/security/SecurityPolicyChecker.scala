@@ -18,11 +18,13 @@
 package com.waz.zclient.security
 
 import android.app.Activity
-import android.content.{Context, Intent}
-import com.waz.content.GlobalPreferences
+import android.content.Context
+import com.waz.content.{GlobalPreferences, UserPreferences}
+import com.waz.content.GlobalPreferences.AppLockEnabled
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountManager, ZMessaging}
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.common.controllers.global.PasswordController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.security.SecurityChecklist.{Action, Check}
 import com.waz.zclient.security.actions._
@@ -31,56 +33,37 @@ import com.waz.zclient.{BuildConfig, Injectable, Injector, R}
 import org.threeten.bp.Instant
 import org.threeten.bp.temporal.ChronoUnit
 
-import scala.collection.mutable.ListBuffer
+import scala.concurrent.Future
 
 class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
-
+  import SecurityPolicyChecker._
   import com.waz.threading.Threading.Implicits.Ui
 
-  private lazy val globalPreferences     = inject[GlobalPreferences]
-  private lazy val accountManager        = inject[Signal[AccountManager]]
+  private lazy val globalPreferences  = inject[GlobalPreferences]
+  private lazy val accountManager     = inject[Signal[AccountManager]]
+  private lazy val userPreferences    = inject[Signal[UserPreferences]]
+  private lazy val passwordController = inject[PasswordController]
 
   inject[ActivityLifecycleCallback].appInBackground.onUi {
     case (true, _)               => updateBackgroundEntryTimer()
-    case (false, Some(activity)) => run(activity)
-    case _ => warn(l"The app is coming to the foreground, but the information about the activity is missing")
+    case (false, Some(activity)) => run()(activity)
+    case _                       =>
+      warn(l"The app is coming to the foreground, but the information about the activity is missing")
   }
 
-  def run(activity: Activity): Unit =
-    foregroundSecurityChecklist(activity).run().foreach { allChecksPassed =>
+  def run()(implicit activity: Activity): Unit =
+    for {
+      authNeeded      <- isAuthenticationNeeded()
+      accManager      <- accountManager.head
+      userPrefs       <- userPreferences.head
+      allChecksPassed <- runSecurityChecklist(Some(passwordController), globalPreferences, Some(userPrefs), Some(accManager), isForeground = true, authNeeded = authNeeded)
+    } yield {
       verbose(l"all checks passed: $allChecksPassed")
-    }
-
-  /**
-    * Security checklist for foreground activity
-    */
-  private def foregroundSecurityChecklist(implicit parentActivity: Activity): SecurityChecklist = {
-    verbose(l"securityChecklist")
-    val checksAndActions = new ListBuffer[(Check, List[Action])]()
-
-    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
-      val rootDetectionCheck = RootDetectionCheck(globalPreferences)
-      val rootDetectionActions = List(
-        new WipeDataAction(None),
-        BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)
-      )
-
-      checksAndActions += rootDetectionCheck ->  rootDetectionActions
-    }
-
-    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
-      verbose(l"check WIPE_ON_COOKIE_INVALID")
-
-      accountManager.head.foreach { am =>
-        val cookieCheck = new CookieValidationCheck(am.auth)
-        val cookieActions = List(new WipeDataAction(Some(am.userId)))
-        checksAndActions += cookieCheck -> cookieActions
+      if (allChecksPassed && authNeeded) {
+        timeEnteredBackground = None
+        authenticationNeeded ! false
       }
     }
-
-    new SecurityChecklist(checksAndActions.toList)
-  }
 
   // This ensures asking for password when the app is first opened.
   private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
@@ -94,94 +77,93 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
 
   def updateBackgroundEntryTimer(): Unit = timeEnteredBackground = Some(Instant.now())
 
-  def onAuthenticationSuccessful(): Unit = {
-    timeEnteredBackground = None
-    authenticationNeeded ! false
-  }
-
-  def authenticateIfNeeded(parentActivity: Activity): Unit = {
-    verbose(l"authenticate if needed")
-    authenticationNeeded.mutate {
-      case false if timerExpired => true
-      case b => b
-    }
-
-    authenticationNeeded.head.foreach {
+  private def isAuthenticationNeeded(): Future[Boolean] =
+    if (BuildConfig.FORCE_APP_LOCK) Future.successful(true)
+    else globalPreferences.preference(AppLockEnabled).apply().flatMap {
+      case false => Future.successful(false)
       case true =>
-        val intent = new Intent(parentActivity, classOf[AppLockActivity])
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        parentActivity.startActivity(intent)
-      case _ =>
+        authenticationNeeded.mutate {
+          case false if timerExpired => true
+          case b => b
+        }
+        authenticationNeeded.head
     }
-  }
-
-  // TODO: Implement the biometric prompt using this code and add it as a part of the password check
-
-  /*
-  val executor = ExecutorWrapper(Threading.Ui)
-  val callback = new BiometricPrompt.AuthenticationCallback {
-    override def onAuthenticationError(errorCode: Int, errString: CharSequence): Unit = {
-      super.onAuthenticationError(errorCode, errString)
-      verbose(l"SEC on error, code: $errorCode, str: $errString")
-
-    override def onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult): Unit = {
-      super.onAuthenticationSucceeded(result)
-      verbose(l"SEC on success, result: $result")
-
-    override def onAuthenticationFailed(): Unit = {
-      super.onAuthenticationFailed()
-      verbose(l"SEC on failed")
-    }
-
-  verbose(l"SEC create prompt")
-  val prompt = new BiometricPrompt(parentActivity.asInstanceOf[FragmentActivity], executor, callback)
-  verbose(l"SEC authenticating...")
-  prompt.authenticate(promptInfo)
-  verbose(l"SEC here")
-
-  private lazy val promptInfo = new BiometricPrompt.PromptInfo.Builder()
-    .setTitle("Set the title to display.")
-    .setSubtitle("Set the subtitle to display.")
-    .setDescription("Set the description to display")
-    .setNegativeButtonText("Negative Button")
-    .build()
-
-  */
 }
 
 object SecurityPolicyChecker extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Ui
 
-  val PasswordMinimumLength: Int = 8
+  private val EmptyCheck = Future.successful(Option.empty[(Check, List[Action])])
+
+  private def blockOnJailbreak(globalPreferences: GlobalPreferences, isForeground: Boolean)(implicit context: Context) =
+    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
+      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
+      val check = RootDetectionCheck(globalPreferences)
+      val actions: List[Action] = List(new WipeDataAction(None)) ++
+        (if (isForeground) List(BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)) else Nil)
+
+      Future.successful(Some((check, actions)))
+    } else EmptyCheck
+
+  private def wipeOnCookieInvalid(accountManager: AccountManager)(implicit context: Context) =
+    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
+      verbose(l"check WIPE_ON_COOKIE_INVALID")
+      val check = new CookieValidationCheck(accountManager.auth)
+      val actions = List(new WipeDataAction(Some(accountManager.userId)))
+      Future.successful(Some(check, actions))
+    } else EmptyCheck
+
+  private def requestPassword(passwordController: PasswordController,
+                              userPreferences: UserPreferences,
+                              accountManager: AccountManager,
+                              authNeeded: Boolean)(implicit context: Context, eventContext: EventContext) =
+    if (authNeeded) {
+      verbose(l"check request password")
+      val check = RequestPasswordCheck(passwordController, userPreferences)
+      val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction(Some(accountManager.userId))) else Nil
+      Future.successful(Some(check, actions))
+    } else EmptyCheck
+
+  /**
+    * Security checklist for foreground activity
+    */
+  private def runSecurityChecklist(passwordController: Option[PasswordController],
+                                   globalPreferences : GlobalPreferences,
+                                   userPreferences   : Option[UserPreferences],
+                                   accountManager    : Option[AccountManager],
+                                   isForeground      : Boolean,
+                                   authNeeded        : Boolean
+                                  )(implicit context: Context, eventContext: EventContext): Future[Boolean] = {
+    def unpack[A, B, C](a: Option[A], b: Option[B], c: Option[C]): Option[(A, B, C)] = (a, b, c) match {
+      case (Some(aa), Some(bb), Some(cc)) => Some((aa, bb, cc))
+      case _ => None
+    }
+
+    for {
+      blockOnJailbreak    <- blockOnJailbreak(globalPreferences, isForeground)
+      wipeOnCookieInvalid <- accountManager.fold(EmptyCheck)(wipeOnCookieInvalid)
+      requestPassword     <- unpack(passwordController, userPreferences, accountManager).fold(EmptyCheck) {
+                               case (ctrl, prefs, am) => requestPassword(ctrl, prefs, am, authNeeded)
+                             }
+      list                =  new SecurityChecklist(List(blockOnJailbreak, wipeOnCookieInvalid, requestPassword).flatten)
+      allChecksPassed     <- list.run()
+    } yield allChecksPassed
+  }
 
   /**
     * Security checklist for background activities (e.g. receiving notifications). This is
     * static so that it can be accessible from `FCMHandlerService`.
     */
-  def backgroundSecurityChecklist(implicit context: Context): SecurityChecklist = {
-    val checksAndActions = new ListBuffer[(Check, List[Action])]()
+  def runBackgroundSecurityChecklist()(implicit context: Context, eventContext: EventContext): Future[Boolean] =
+    ZMessaging.currentAccounts.activeAccountManager.head.flatMap(am =>
+      runSecurityChecklist(
+        passwordController = None,
+        globalPreferences  = ZMessaging.currentGlobal.prefs,
+        userPreferences    = None,
+        accountManager     = am,
+        isForeground       = false,
+        authNeeded         = false
+      )
+    )
 
-    if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
-      verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
-
-      val rootDetectionCheck = RootDetectionCheck(ZMessaging.currentGlobal.prefs)
-      val rootDetectionActions = List(new WipeDataAction(None))
-
-      checksAndActions += rootDetectionCheck ->  rootDetectionActions
-    }
-
-    if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
-      verbose(l"check WIPE_ON_COOKIE_INVALID")
-
-      ZMessaging.currentAccounts.activeAccountManager.head.foreach {
-        case Some(am) =>
-          val cookieCheck = new CookieValidationCheck(am.auth)
-          val cookieActions = List(new WipeDataAction(Some(am.userId)))
-          checksAndActions += cookieCheck -> cookieActions
-        case None =>
-      }
-    }
-
-    new SecurityChecklist(checksAndActions.toList)
-  }
 }

@@ -76,7 +76,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   lazy val adapter: ConversationListAdapter = returning(createAdapter())(configureAdapter)
 
   lazy val conversationListView = returning(view[SwipeListView](R.id.conversation_list_view)) { vh =>
-    userAccountsController.currentUser.onChanged.onUi(_ => vh.foreach(_.scrollToPosition(0)))
+    subs += userAccountsController.currentUser.onChanged.onUi(_ => vh.foreach(_.scrollToPosition(0)))
   }
 
   lazy val conversationsListScrollListener = new RecyclerView.OnScrollListener {
@@ -101,6 +101,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   override def onDestroyView() = {
     conversationListView.foreach(_.removeOnScrollListener(conversationsListScrollListener))
+    subs.foreach(_.unsubscribe())
     subs.foreach(_.destroy())
     super.onDestroyView()
   }
@@ -122,7 +123,7 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
   private def configureAdapter(adapter: ConversationListAdapter): Unit = {
     adapter.setMaxAlpha(getResourceFloat(R.dimen.list__swipe_max_alpha))
     
-    userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
+    subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
     adapter.onConversationClick { conv =>
       verbose(l"handleItemClick, switching conv to $conv")
@@ -166,7 +167,7 @@ class ArchiveListFragment extends ConversationListFragment with OnBackPressedLis
 
   override protected def createAdapter(): ConversationListAdapter =
     returning(new ArchiveConversationListAdapter) { a =>
-      convListController.archiveConversationListData.onUi { archive =>
+      subs += convListController.archiveConversationListData.onUi { archive =>
         a.setData(archive)
       }
   }
@@ -203,7 +204,7 @@ class NormalConversationFragment extends ConversationListFragment {
   } yield processing || waitingAcc != z.selfUserId
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
-    accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
+    subs += accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
     Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
@@ -212,18 +213,18 @@ class NormalConversationFragment extends ConversationListFragment {
   lazy val loadingListView = view[View](R.id.conversation_list_loading_indicator)
 
   lazy val noConvsTitle = returning(view[TypefaceTextView](R.id.conversation_list_empty_title)) { vh =>
-    convListController.hasConversationsAndArchive.map {
+    subs += convListController.hasConversationsAndArchive.map {
       case (false, true) => Some(R.string.all_archived__header)
       case _ => None
     }.onUi(_.foreach(text => vh.foreach(_.setText(text))))
-    convListController.hasConversationsAndArchive.map {
+    subs += convListController.hasConversationsAndArchive.map {
       case (false, true) => VISIBLE
       case _ => GONE
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
   }
 
   private lazy val noConvsMessage = returning(view[LinearLayout](R.id.empty_list_message)) { vh =>
-    convListController.hasConversationsAndArchive.map {
+    subs += convListController.hasConversationsAndArchive.map {
       case (false, false) => VISIBLE
       case _ => GONE
     }.onUi(visibility => vh.foreach(_.setVisibility(visibility)))
@@ -290,7 +291,7 @@ class NormalConversationFragment extends ConversationListFragment {
         incoming <- convListController.incomingConversationListData
       } yield (regular, incoming)
 
-      dataSource.onUi { case (regular, incoming) =>
+      subs += dataSource.onUi { case (regular, incoming) =>
         a.setData(regular, incoming)
       }
     }
@@ -322,13 +323,13 @@ class ConversationFolderListFragment extends NormalConversationFragment {
         states    <- convListController.folderStateController.folderUiStates
       } yield (incoming, favorites, groups, oneToOnes, custom, states)
 
-      dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom, states) =>
+      subs += dataSource.onUi { case (incoming, favorites, groups, oneToOnes, custom, states) =>
         a.setData(incoming, favorites, groups, oneToOnes, custom, states)
       }
 
-      a.onFoldersChanged.onUi(convListController.folderStateController.prune)
+      subs += a.onFoldersChanged.onUi(convListController.folderStateController.prune)
 
-      a.onFolderStateChanged.onUi { case (id, isExpanded) =>
+      subs += a.onFolderStateChanged.onUi { case (id, isExpanded) =>
         convListController.folderStateController.update(id, isExpanded)
       }
     }

@@ -19,10 +19,12 @@ package com.waz.zclient.common.controllers.global
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.service.{AccountsService, GlobalModule, UiLifeCycle}
+import com.waz.service.{AccountsService, GlobalModule, UserService}
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.waz.utils.events.{EventContext, Signal}
+import com.waz.zclient.security.ActivityLifecycleCallback
 import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 
@@ -31,10 +33,10 @@ class PasswordController(implicit inj: Injector, ec: EventContext)
 
   import Threading.Implicits.Background
 
-  val accounts = inject[AccountsService]
-  val global   = inject[GlobalModule]
-  val password = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
-  val lifecycle = inject[UiLifeCycle]
+  private lazy val accounts = inject[AccountsService]
+  private lazy val users    = inject[Signal[UserService]]
+
+  lazy val password = accounts.activeAccount.map(_.flatMap(_.password)).disableAutowiring()
 
   //The password is never saved in the database, this will just update the in-memory version of the current account
   //so that the password is globally correct.
@@ -42,11 +44,22 @@ class PasswordController(implicit inj: Injector, ec: EventContext)
   def setPassword(p: Option[Password]): Future[Unit] =
     for {
       Some(accountData) <- accounts.activeAccount.head
-      _                 <- global.accountsStorage.update(accountData.id, _.copy(password = p))
+      _                 <- inject[GlobalModule].accountsStorage.update(accountData.id, _.copy(password = p))
     } yield {}
 
-  lifecycle.uiActive.onUi{
-    case false => setPassword(None)
+  inject[ActivityLifecycleCallback].appInBackground.onUi {
+    case (true, _) => setPassword(None)
     case _ =>
   }
+
+  def checkPassword(password: Password): Future[Boolean] =
+    for {
+      users <- users.head
+      res   <- users.checkPassword(password)
+    } yield res match {
+      case Right(_) => true
+      case Left(err) =>
+        verbose(l"Check password error: $err")
+        false
+    }
 }

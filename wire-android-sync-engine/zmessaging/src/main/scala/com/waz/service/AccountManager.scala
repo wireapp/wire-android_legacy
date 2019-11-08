@@ -196,14 +196,15 @@ class AccountManager(val userId:   UserId,
   }
 
   //Note: this method should only be externally called from tests and debug preferences. User `registerClient` for all normal flows.
-  def registerNewClient(): ErrorOr[ClientRegistrationState] = {
+  def registerNewClient(password: Option[Password] = None): ErrorOr[ClientRegistrationState] = {
     for {
-      account  <- account.head
-      client   <- cryptoBox.createClient()
-      resp <- client match {
+      account <- account.head
+      pwd     = password.orElse(if (account.ssoId.isEmpty) account.password else None)
+      client  <- cryptoBox.createClient()
+      resp    <- client match {
         case None => Future.successful(Left(internalError("CryptoBox missing")))
         case Some((c, lastKey, keys)) =>
-          otrClient.postClient(userId, c, lastKey, keys, if (account.ssoId.isEmpty) account.password else None).future.flatMap {
+          otrClient.postClient(userId, c, lastKey, keys, pwd).future.flatMap {
             case Right(cl) =>
               verbose(l"new client: $cl")
               clientsStorage.updateClients(Map(userId -> Seq(c.copy(id = cl.id).updated(cl))))
