@@ -213,7 +213,7 @@ object CallingNotificationsController {
 
   val CallImageSizeDp = 64
 
-  def androidNotificationBuilder(not: CallNotification)(implicit cxt: content.Context): NotificationCompat.Builder = {
+  def androidNotificationBuilder(not: CallNotification, treatAsIncomingCall: Boolean = false)(implicit cxt: content.Context): NotificationCompat.Builder = {
     val title = if (not.isGroup) not.convName else not.caller
 
     val message = (not.isGroup, not.videoCall) match {
@@ -227,9 +227,7 @@ object CallingNotificationsController {
       .setBigContentTitle(title)
       .bigText(message)
 
-    // On Android 10+ we can't start the calling activity from the background, so we treat the
-    // notification like other incoming call notifications.
-    val isIncomingCall = !not.isMainCall || Build.VERSION.SDK_INT >= 29
+    val isIncomingCall = !not.isMainCall || treatAsIncomingCall
     val channelId = if (isIncomingCall) IncomingCallNotificationsChannelId else OngoingNotificationsChannelId
     val priority = if (isIncomingCall) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_MAX
 
