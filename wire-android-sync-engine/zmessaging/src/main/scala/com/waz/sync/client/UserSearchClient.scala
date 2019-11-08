@@ -20,10 +20,10 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.SearchQuery.{Recommended, RecommendedHandle, TopPeople}
 import com.waz.model._
+import com.waz.service.SearchQuery
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchResponse}
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -47,23 +47,11 @@ class UserSearchClientImpl(implicit
     objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
   override def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse] = {
-    debug(l"graphSearch('$query', $limit)")
-
-    //TODO Get rid of this
-    if (query.isInstanceOf[TopPeople.type]) {
-      warn(l"A request to /search/top was made - this is now only handled locally")
-      CancellableFuture.successful(Right(Seq.empty))
-    }
-
-    val prefix = (query: @unchecked) match {
-      case Recommended(p)        => p
-      case RecommendedHandle(p)  => p
-    }
-
+    verbose(l"getContacts($query, $limit)")
     Request
       .Get(
         relativePath = ContactsPath,
-        queryParameters = queryParameters("q" -> prefix, "size" -> limit, "l" -> Relation.Third.id, "d" -> 1)
+        queryParameters = queryParameters("q" -> query.str, "size" -> limit)
       )
       .withResultType[UserSearchResponse]
       .withErrorType[ErrorResponse]
@@ -96,9 +84,9 @@ object UserSearchClient extends DerivedLogTag {
   // Response types
 
   case class ExactHandleResponse(user: String)
-  case class UserSearchResponse(documents: Seq[UserSearchResponse.User])
+  case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: String, accent_id: Option[Int])
+    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int])
   }
 }

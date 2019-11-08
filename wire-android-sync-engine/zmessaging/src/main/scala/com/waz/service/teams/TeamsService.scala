@@ -26,7 +26,7 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ErrorsService, EventScheduler, SearchKey}
+import com.waz.service.{ErrorsService, EventScheduler, SearchKey, SearchQuery}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -42,7 +42,7 @@ trait TeamsService {
 
   def eventsProcessingStage: Stage.Atomic
 
-  def searchTeamMembers(query: Option[SearchKey] = None, handleOnly: Boolean = false): Signal[Set[UserData]]
+  def searchTeamMembers(query: SearchQuery): Signal[Set[UserData]]
 
   val selfTeam: Signal[Option[TeamData]]
 
@@ -86,9 +86,9 @@ class TeamsServiceImpl(selfUser:           UserId,
     verbose(l"Handling events: $events")
     import TeamEvent._
 
-    val membersJoined  = events.collect { case MemberJoin(_, u) => u}.toSet
-    val membersLeft    = events.collect { case MemberLeave(_, u)  => u}.toSet
-    val membersUpdated = events.collect { case MemberUpdate(_, u)  => u}.toSet
+    val membersJoined  = events.collect { case MemberJoin(_, u)    => u }.toSet
+    val membersLeft    = events.collect { case MemberLeave(_, u)   => u }.toSet
+    val membersUpdated = events.collect { case MemberUpdate(_, u)  => u }.toSet
 
     val convsCreated = events.collect { case ConversationCreate(_, id) => id }.toSet
     for {
@@ -100,7 +100,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     } yield {}
   }
 
-  override def searchTeamMembers(query: Option[SearchKey] = None, handleOnly: Boolean = false) = teamId match {
+  override def searchTeamMembers(query: SearchQuery): Signal[Set[UserData]] = teamId match {
     case None => Signal.empty
     case Some(tId) =>
 
@@ -110,12 +110,11 @@ class TeamsServiceImpl(selfUser:           UserId,
         userStorage.onDeleted.map(_.map(Removed(_)))
       )
 
-      def load = query match {
-        case Some(q) => userStorage.searchByTeam(tId, q, handleOnly)
-        case None    => userStorage.getByTeam(Set(tId))
-      }
+      def load =
+        if (!query.isEmpty) userStorage.searchByTeam(tId, SearchKey(query.str), query.handleOnly)
+        else userStorage.getByTeam(Set(tId))
 
-      def userMatches(data: UserData) = data.isInTeam(teamId) && data.matchesQuery(query, handleOnly)
+      def userMatches(data: UserData) = data.isInTeam(teamId) && data.matchesQuery(query)
 
       new AggregatingSignal[Seq[ContentChange[UserId, UserData]], Set[UserData]](changesStream, load, { (current, changes) =>
         val added = changes.collect {
@@ -138,7 +137,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     case Some(id) => new RefreshingSignal(CancellableFuture.lift(teamStorage.get(id)), teamStorage.onChanged.map(_.map(_.id)))
   }
 
-  override lazy val guests = {
+  override lazy val guests: Signal[Set[UserId]] = {
     def load(id: TeamId): Future[Set[UserId]] = for {
       convs       <- getTeamConversations.map(_.map(_.id))
       allUsers    <- convMemberStorage.getByConvs(convs).map(_.map(_.userId).toSet)
@@ -157,7 +156,7 @@ class TeamsServiceImpl(selfUser:           UserId,
     }
   }
 
-  override def onTeamSynced(team: TeamData, members: Seq[TeamMember]) = {
+  override def onTeamSynced(team: TeamData, members: Seq[TeamMember]): Future[Unit] = {
     verbose(l"onTeamSynced: team: $team \nmembers: $members")
 
     val memberIds = members.map(_.user).toSet

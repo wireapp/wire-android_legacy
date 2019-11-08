@@ -26,17 +26,16 @@ case class Handle(string: String) extends AnyVal {
 
   def startsWithQuery(query: String): Boolean =
     query.nonEmpty && string.startsWith(Handle.stripSymbol(query).toLowerCase)
-  
 
   def exactMatchQuery(query: String): Boolean =
     string == Handle.stripSymbol(query).toLowerCase
-
 
   def withSymbol: String = if (string.startsWith("@")) string else s"@$string"
 }
 
 object Handle extends (String => Handle){
-  def apply(): Handle = Handle("")
+  val Empty: Handle = Handle("")
+  def apply(): Handle = Empty
   def random: Handle = Handle(UUID.randomUUID().toString)
   val handlePattern = """@(.+)""".r
   def transliterated(s: String): String = Locales.transliteration.transliterate(s).trim
@@ -47,5 +46,4 @@ object Handle extends (String => Handle){
     case Handle.handlePattern(handle) => handle
     case _ => input
   }
-
 }
