@@ -46,7 +46,7 @@ class AudioTranscoder(tempFiles: TempFileService, context: Context) {
   import AudioTranscoder._
   import Threading.Implicits.Background
 
-  def apply(uri: URI, mp4File: File, callback: ProgressIndicator.Callback): CancellableFuture[File] =
+  def apply(uri: URI, m4aFile: File, callback: ProgressIndicator.Callback): CancellableFuture[File] =
     ContentURIs.queryContentUriMetaData(context, uri).map(_.size.getOrElse(0L)).lift.flatMap { size =>
       val promisedFile = Promise[File]
 
@@ -64,11 +64,11 @@ class AudioTranscoder(tempFiles: TempFileService, context: Context) {
           val movie = returning(new Movie)(_.addTrack(aacTrack))
           val container = new DefaultMp4Builder().build(movie)
 
-          if (! promisedFile.isCompleted) Managed(new FileOutputStream(mp4File)).foreach(stream => container.writeContainer(stream.getChannel))
+          if (! promisedFile.isCompleted) Managed(new FileOutputStream(m4aFile)).foreach(stream => container.writeContainer(stream.getChannel))
           progress.fold2(callback.apply(ProgressData(0, -1, State.COMPLETED)), _.completed)
         }
 
-        mp4File
+        m4aFile
       })
 
       new CancellableFuture(promisedFile)
