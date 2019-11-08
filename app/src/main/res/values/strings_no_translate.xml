@@ -145,8 +145,6 @@
     <string translatable="false" name="pref_dev_register_new_client_title">Register Another Client</string>
     <string translatable="false" name="pref_dev_register_new_client_summary">Useful for testing too many devices. This button will grey itself out when you reach the limit</string>
 
-    <string translatable="false" name="pref_dev_provide_password">Provide account password</string>
-
     <!--Notifications preferences-->
     <string translatable="false" name="pref_dev_category_notifications_key">PREF_NOTIFICATIONS_CATEGORY</string>
     <string translatable="false" name="pref_dev_category_notifications_title">Notifications</string>
@@ -206,6 +204,5 @@
     <string translatable="false" name="url_contact_support">https://support.wire.com/hc/requests/new</string>
     <string translatable="false" name="url_invalid_email_help">https://support.wire.com/hc/en-us/articles/115004082129-My-email-address-is-already-in-use-and-I-cannot-create-an-account-What-can-I-do-</string>
     <string translatable="false" name="url_teams_set_email_about">https://support.wire.com/hc/en-us/articles/115004082129</string>
-
 </resources>
 

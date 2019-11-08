@@ -24,7 +24,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.3.17@aar'
+    customAvsVersion = '5.3.20@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -139,6 +139,7 @@ android {
         buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$buildtimeConfiguration.configuration.block_on_password_policy"
         buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
         buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
+        buildConfigField 'Integer', 'PASSWORD_MAX_ATTEMPTS',         "$buildtimeConfiguration.configuration.password_max_attempts"
     }
 
     packagingOptions {
@@ -400,7 +401,7 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
 
     // biometric prompt
-    implementation 'androidx.biometric:biometric:1.0.0-alpha03'
+    implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
     // Test dependencies
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
