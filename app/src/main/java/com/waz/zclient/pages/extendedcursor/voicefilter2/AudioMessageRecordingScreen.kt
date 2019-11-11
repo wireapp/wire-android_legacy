@@ -218,7 +218,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         val pcm = if (recordWithEffectFile.exists()) recordWithEffectFile else recordFile
         compressedRecordFile.delete()
         compressedRecordFile.createNewFile()
-        audioService.recodePcmToMp4(pcm, compressedRecordFile)
+        audioService.recodePcmToM4A(pcm, compressedRecordFile)
         listener?.sendRecording("audio/mp4a-latm", compressedRecordFile)
     }
 
