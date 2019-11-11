@@ -76,7 +76,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     })
 
     builder.setCancelable(false)
-    builder.create().show()
+    if (!isFinishing())  builder.create().show()
 
     // QA needs to be able to switch backends via intents. Any changes to the backend
     // preference while the dialog is open will be treated as a user selection.
