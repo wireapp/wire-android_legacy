@@ -234,11 +234,11 @@ class AudioMessageRecordingView (val context: Context, val attrs: AttributeSet, 
   }
 
   def show(): Unit = {
-    def onFinishRecording(mp4File: File): Unit = currentAssetKey.foreach { key =>
+    def onFinishRecording(m4aFile: File): Unit = currentAssetKey.foreach { key =>
       verbose(l"recording succeeded")
-      val content = ContentForUpload(s"recording-${System.currentTimeMillis}", Content.File(Mime.Audio.MP4, mp4File))
+      val content = ContentForUpload(s"recording-${System.currentTimeMillis}", Content.File(Mime.Audio.M4A, m4aFile))
       currentAudio = Some(content)
-      playbackControls ! new PlaybackControls(key.id, URI.fromFile(mp4File), recordAndPlay)
+      playbackControls ! new PlaybackControls(key.id, URI.fromFile(m4aFile), recordAndPlay)
       recordingController.duration.foreach(d => recordingSeekBar.setMax(d.toInt))
     }
 

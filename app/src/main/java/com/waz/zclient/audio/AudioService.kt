@@ -47,9 +47,9 @@ interface AudioService {
 
     fun preparePcmAudioTrack(pcmFile: File): AudioTrack
 
-    fun recodePcmToMp4(pcmFile: File, mp4File: File)
+    fun recodePcmToM4A(pcmFile: File, m4aFile: File)
 
-    fun recordMp4Audio(mp4File: File, onFinish: (File) -> Unit = {}): Observable<RecordingProgress>
+    fun recordM4AAudio(m4aFile: File, onFinish: (File) -> Unit = {}): Observable<RecordingProgress>
 }
 
 class AudioServiceImpl(private val context: Context): AudioService {
@@ -152,7 +152,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Throws(IOException::class)
-    override fun recodePcmToMp4(pcmFile: File, mp4File: File) {
+    override fun recodePcmToM4A(pcmFile: File, m4aFile: File) {
         val codecTimeout = 5000
         val compressedAudioMime = "audio/mp4a-latm"
         val channelCount = 1
@@ -172,7 +172,7 @@ class AudioServiceImpl(private val context: Context): AudioService {
 
         val bufferInfo = MediaCodec.BufferInfo()
 
-        val mediaMuxer = MediaMuxer(mp4File.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        val mediaMuxer = MediaMuxer(m4aFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         var totalBytesRead = 0
         var presentationTimeUs = 0.0
 
@@ -238,14 +238,14 @@ class AudioServiceImpl(private val context: Context): AudioService {
         mediaMuxer.release()
     }
 
-    override fun recordMp4Audio(mp4File: File, onFinish: (File) -> Unit): Observable<AudioService.Companion.RecordingProgress> {
-        val pcmFile = File(mp4File.parent, "${mp4File.nameWithoutExtension}_${System.currentTimeMillis()}.pcm")
+    override fun recordM4AAudio(m4aFile: File, onFinish: (File) -> Unit): Observable<AudioService.Companion.RecordingProgress> {
+        val pcmFile = File(m4aFile.parent, "${m4aFile.nameWithoutExtension}_${System.currentTimeMillis()}.pcm")
         if (pcmFile.exists()) pcmFile.delete()
         pcmFile.createNewFile()
         try {
             return recordPcmAudio(pcmFile) {
-                recodePcmToMp4(pcmFile, mp4File)
-                onFinish(mp4File)
+                recodePcmToM4A(pcmFile, m4aFile)
+                onFinish(m4aFile)
             }
         } finally {
             pcmFile.delete()

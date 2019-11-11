@@ -41,7 +41,7 @@ trait MediaRecorderController {
 
 class MediaRecorderControllerImpl(context: Context)(implicit injector: Injector) extends MediaRecorderController with Injectable with DerivedLogTag {
 
-  private lazy val mp4File = new File(context.getCacheDir, "record_temp.mp4")
+  private lazy val m4aFile = new File(context.getCacheDir, "record_temp.m4a")
 
   private var recordingDisposable  = Option.empty[Disposable]
   private var startRecordingOffset = Option.empty[Long]
@@ -55,14 +55,14 @@ class MediaRecorderControllerImpl(context: Context)(implicit injector: Injector)
     verbose(l"startRecording")
     cancelRecording()
 
-    if (mp4File.exists()) mp4File.delete()
-    mp4File.createNewFile()
+    if (m4aFile.exists()) m4aFile.delete()
+    m4aFile.createNewFile()
 
     startRecordingOffset = Option(System.currentTimeMillis)
     recordingDuration = None
 
     recordingDisposable = Option(
-      audioService.recordMp4Audio(mp4File, { file: File =>
+      audioService.recordM4AAudio(m4aFile, { file: File =>
         recordingDuration = startRecordingOffset.map(System.currentTimeMillis - _)
         onFinish(file)
         recordingDisposable = None
@@ -102,7 +102,7 @@ class MediaRecorderControllerImpl(context: Context)(implicit injector: Injector)
   override def isRecording: Boolean = recordingDisposable.isDefined
 
   private def reset(): Unit = {
-    if (mp4File.exists()) mp4File.delete()
+    if (m4aFile.exists()) m4aFile.delete()
     recordingDuration = None
     recordingDisposable = None
     startRecordingOffset = None

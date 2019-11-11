@@ -54,6 +54,7 @@ public class DocumentResolver {
         add("wma");
         add("ac3");
         add("ogg");
+        add("m4a");
     }};
     private final static List<String> IMAGE_EXTENSIONS = new ArrayList<String>() {{
         add("gif");

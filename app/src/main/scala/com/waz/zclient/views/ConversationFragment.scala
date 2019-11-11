@@ -614,7 +614,7 @@ class ConversationFragment extends FragmentHelper {
           }
 
           override def sendRecording(mime: String, audioFile: File): Unit = {
-            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.mp4", Content.File(Mime.Audio.MP4, audioFile))
+            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.m4a", Content.File(Mime.Audio.M4A, audioFile))
             convController.sendAssetMessage(content, getActivity, None)
             extendedCursorContainer.foreach(_.close(true))
           }
