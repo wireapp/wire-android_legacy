@@ -40,6 +40,8 @@ import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
 
+import scala.collection.mutable
+
 class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[RecyclerView.ViewHolder]
     with Injectable
@@ -52,7 +54,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   private val userAccountsController = inject[UserAccountsController]
   private val searchController       = new SearchController()
 
-  private var mergedResult = Seq[SearchResult]()
+  private var mergedResult = mutable.ListBuffer[SearchResult]()
   private var collapsedContacts = true
   private var collapsedGroups = true
 
@@ -70,7 +72,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   val tab    = searchController.tab
   val searchResults = searchController.searchUserOrServices
 
-  (for {
+  val dataUpdateSub = (for {
     curUser <- userAccountsController.currentUser
     team    <- userAccountsController.teamData
     isAdmin <- userAccountsController.isAdmin
@@ -109,85 +111,79 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
       updateMergedResults()
   }
 
+  override def onDetachedFromRecyclerView(recyclerView: RecyclerView): Unit = {
+    dataUpdateSub.unsubscribe()
+    super.onDetachedFromRecyclerView(recyclerView)
+  }
+
   private def updateMergedResults(): Unit = {
-    mergedResult = Seq()
+    mergedResult.clear()
 
     val teamName = team.map(_.name).getOrElse(Name.Empty)
 
     def addTopPeople(): Unit = {
       if (topUsers.nonEmpty) {
-        mergedResult = mergedResult ++ Seq(SearchResult(SectionHeader, TopUsersSection, 0))
-        mergedResult = mergedResult ++ Seq(SearchResult(TopUsers, TopUsersSection, 0))
+        mergedResult += SearchResult(SectionHeader, TopUsersSection, 0)
+        mergedResult += SearchResult(TopUsers, TopUsersSection, 0)
       }
     }
 
     def addContacts(): Unit = {
       if (localResults.nonEmpty) {
-        mergedResult = mergedResult ++ Seq(SearchResult(SectionHeader, ContactsSection, 0, teamName))
-        var contactsSection = Seq[SearchResult]()
+        mergedResult += SearchResult(SectionHeader, ContactsSection, 0, teamName)
+        val contactsSection = mutable.ListBuffer[SearchResult]()
 
-        contactsSection = contactsSection ++ localResults.indices.map { i =>
+        contactsSection ++= localResults.indices.map { i =>
           SearchResult(ConnectedUser, ContactsSection, i, localResults(i).id.str.hashCode, localResults(i).getDisplayName)
         }
 
         val shouldCollapse = filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
 
-        contactsSection = contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
-
-        mergedResult = mergedResult ++ contactsSection
-        if (shouldCollapse) {
-          mergedResult = mergedResult ++ Seq(SearchResult(Expand, ContactsSection, 0))
-        }
+        mergedResult ++= contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
+        if (shouldCollapse) mergedResult += SearchResult(Expand, ContactsSection, 0)
       }
     }
 
-    def addGroupConversations(): Unit = {
-      if (conversations.nonEmpty) {
-        mergedResult = mergedResult ++ Seq(SearchResult(SectionHeader, GroupConversationsSection, 0, teamName))
+    def addGroupConversations(): Unit = if (conversations.nonEmpty) {
+      mergedResult += SearchResult(SectionHeader, GroupConversationsSection, 0, teamName)
 
-        val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
+      val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
 
-        mergedResult = mergedResult ++ conversations.indices.map { i =>
-          SearchResult(GroupConversation, GroupConversationsSection, i, conversations(i).id.str.hashCode)
-        }.take(if (shouldCollapse) CollapsedGroups else conversations.size)
-        if (shouldCollapse) {
-          mergedResult = mergedResult ++ Seq(SearchResult(Expand, GroupConversationsSection, 0))
-        }
+      mergedResult ++= conversations.indices.map { i =>
+        SearchResult(GroupConversation, GroupConversationsSection, i, conversations(i).id.str.hashCode)
+      }.take(if (shouldCollapse) CollapsedGroups else conversations.size)
+
+      if (shouldCollapse) mergedResult += SearchResult(Expand, GroupConversationsSection, 0)
+    }
+
+    def addConnections(): Unit = if (directoryResults.nonEmpty) {
+      mergedResult += SearchResult(SectionHeader, DirectorySection, 0)
+      mergedResult ++= directoryResults.indices.map { i =>
+        SearchResult(UnconnectedUser, DirectorySection, i, directoryResults(i).id.str.hashCode)
       }
     }
 
-    def addConnections(): Unit = {
-      if (directoryResults.nonEmpty) {
-        mergedResult = mergedResult ++ Seq(SearchResult(SectionHeader, DirectorySection, 0))
-        mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          SearchResult(UnconnectedUser, DirectorySection, i, directoryResults(i).id.str.hashCode)
-        }
-      }
-    }
-
-    def addIntegrations(): Unit = {
-      if (integrations.nonEmpty) {
-        mergedResult = mergedResult ++ integrations.indices.map { i =>
-          SearchResult(Integration, IntegrationsSection, i, integrations(i).id.str.hashCode)
-        }
+    def addIntegrations(): Unit = if (integrations.nonEmpty) {
+      mergedResult ++= integrations.indices.map { i =>
+        SearchResult(Integration, IntegrationsSection, i, integrations(i).id.str.hashCode)
       }
     }
 
     def addGroupCreationButton(): Unit =
-      mergedResult = mergedResult ++ Seq(SearchResult(NewConversation, TopUsersSection, 0))
+      mergedResult += SearchResult(NewConversation, TopUsersSection, 0)
 
     def addGuestRoomCreationButton(): Unit =
-      mergedResult = mergedResult ++ Seq(SearchResult(NewGuestRoom, TopUsersSection, 0))
+      mergedResult += SearchResult(NewGuestRoom, TopUsersSection, 0)
 
     def addManageServicesButton(): Unit =
-      mergedResult = mergedResult ++ Seq(SearchResult(ManageServices, TopUsersSection, 0))
+      mergedResult += SearchResult(ManageServices, TopUsersSection, 0)
 
     if (team.isDefined) {
       if (tab.currentValue.contains(Tab.Services)) {
         if (currentUserIsAdmin && !noServices) addManageServicesButton()
         addIntegrations()
       } else {
-        if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get){
+        if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.contains(true)){
           addGroupCreationButton()
           addGuestRoomCreationButton()
         }
@@ -196,7 +192,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
         addConnections()
       }
     } else  {
-      if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get)
+      if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.contains(true))
         addGroupCreationButton()
       addTopPeople()
       addContacts()
@@ -207,28 +203,22 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
     notifyDataSetChanged()
   }
 
-  override def getItemCount =
-    mergedResult.size
+  override def getItemCount = mergedResult.size
 
   override def onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = {
     val item = mergedResult(position)
     item.itemType match {
       case TopUsers =>
         holder.asInstanceOf[TopUsersViewHolder].bind(topUsers)
-
       case GroupConversation =>
         holder.asInstanceOf[ConversationViewHolder].bind(conversations(item.index))
-
       case ConnectedUser =>
         val user = localResults(item.index)
         holder.asInstanceOf[UserViewHolder].bind(user, team.map(_.id))
-
       case UnconnectedUser =>
         holder.asInstanceOf[UserViewHolder].bind(directoryResults(item.index))
-
       case SectionHeader =>
         holder.asInstanceOf[SectionHeaderViewHolder].bind(item.section, item.name)
-
       case Expand =>
         val itemCount = if (item.section == ContactsSection) localResults.size else conversations.size
         holder.asInstanceOf[SectionExpanderViewHolder].bind(itemCount, new View.OnClickListener() {
@@ -236,10 +226,8 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
             if (item.section == ContactsSection) expandContacts() else expandGroups()
           }
         })
-
       case Integration =>
         holder.asInstanceOf[IntegrationViewHolder].bind(integrations(item.index))
-
       case _ =>
     }
   }
@@ -274,14 +262,11 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
     }
   }
 
-  override def getItemViewType(position: Int) =
-    mergedResult.lift(position).fold(-1)(_.itemType)
+  override def getItemViewType(position: Int) = mergedResult.lift(position).fold(-1)(_.itemType)
 
-  override def getItemId(position: Int) =
-    mergedResult.lift(position).fold(-1L)(_.id)
+  override def getItemId(position: Int) = mergedResult.lift(position).fold(-1L)(_.id)
 
-  def getSectionIndexForPosition(position: Int) =
-    mergedResult.lift(position).fold(-1)(_.index)
+  def getSectionIndexForPosition(position: Int) = mergedResult.lift(position).fold(-1)(_.index)
 
   private def expandContacts() = {
     collapsedContacts = false

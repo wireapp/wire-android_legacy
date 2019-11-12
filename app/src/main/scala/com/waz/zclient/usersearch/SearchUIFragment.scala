@@ -100,10 +100,12 @@ class SearchUIFragment extends BaseFragment[Container]
   private lazy val searchResultRecyclerView = view[RecyclerView](R.id.rv__pickuser__header_list_view)
   private lazy val startUiToolbar           = view[Toolbar](R.id.pickuser_toolbar)
 
+  private var subs = Set.empty[Subscription]
+
   private val convCreationInProgress = Signal(false)
 
   private lazy val inviteButton = returning(view[FlatWireButton](R.id.invite_button)) { vh =>
-    userAccountsController.isTeam.flatMap {
+    subs += userAccountsController.isTeam.flatMap {
       case true => Signal.const(false)
       case _    => keyboard.isKeyboardVisible.map(!_)
     }.onUi(vis => vh.foreach(_.setVisible(vis)))
@@ -112,7 +114,7 @@ class SearchUIFragment extends BaseFragment[Container]
   private var scheduledSearchQuery = Option.empty[CancellableFuture[Unit]]
 
   private lazy val searchBox = returning(view[SearchEditText](R.id.sbv__search_box)) { vh =>
-    accentColor.onUi(color => vh.foreach(_.setCursorColor(color)))
+    subs += accentColor.onUi(color => vh.foreach(_.setCursorColor(color)))
 
     vh.foreach(_.setCallback(new SearchEditText.Callback {
       override def onRemovedTokenSpan(element: PickableElement): Unit = {}
@@ -135,7 +137,7 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val toolbarTitle = returning(view[TypefaceTextView](R.id.pickuser_title)) { vh =>
-    userAccountsController.isTeam.flatMap {
+    subs += userAccountsController.isTeam.flatMap {
       case false => userAccountsController.currentUser.map(_.map(_.name))
       case _     => userAccountsController.teamData.map(_.map(_.name))
     }.map(_.getOrElse(Name.Empty))
@@ -143,14 +145,14 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val emptyServicesIcon = returning(view[ImageView](R.id.empty_services_icon)) { vh =>
-    adapter.searchResults.map {
+    subs += adapter.searchResults.map {
       case SearchUserListState.NoServices => View.VISIBLE
       case _ => View.GONE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
   }
 
   private lazy val emptyServicesButton = returning(view[TypefaceTextView](R.id.empty_services_button)) { vh =>
-    (for {
+    subs += (for {
       isAdmin  <- userAccountsController.isAdmin
       res      <- adapter.searchResults
     } yield res match {
@@ -162,12 +164,12 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val errorMessageView = returning(view[TypefaceTextView](R.id.pickuser__error_text)) { vh =>
-    adapter.searchResults.map {
+    subs += adapter.searchResults.map {
       case SearchUserListState.Services(_) | SearchUserListState.Users(_) => View.GONE
       case _ => View.VISIBLE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
-    (for {
+    subs += (for {
       isAdmin  <- userAccountsController.isAdmin
       res      <- adapter.searchResults
     } yield res match {
@@ -183,11 +185,11 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
-    (for {
-      zms <- zms
+    subs += (for {
+      zms         <- zms
       permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[UserPermissions.Permission]))
-      members <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
-      searching <- adapter.filter.map(_.nonEmpty)
+      members     <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
+      searching   <- adapter.filter.map(_.nonEmpty)
      } yield
        zms.teamId.nonEmpty && permissions(UserPermissions.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))
@@ -269,12 +271,11 @@ class SearchUIFragment extends BaseFragment[Container]
       }
 
       override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
-
       override def onTabReselected(tab: TabLayout.Tab): Unit = {}
     })
 
-    (for {
-      isTeam <- userAccountsController.isTeam
+    subs += (for {
+      isTeam    <- userAccountsController.isTeam
       isPartner <- userAccountsController.isPartner
     } yield isTeam && !isPartner).onUi(tabs.setVisible)
 
@@ -322,9 +323,11 @@ class SearchUIFragment extends BaseFragment[Container]
     super.onPause()
   }
 
-  override def onDestroyView(): Unit = {
+  override def onDestroy(): Unit = {
     containerSub.foreach(_.destroy())
     containerSub = None
+    subs.foreach(_.destroy())
+    subs = Set.empty
     super.onDestroyView()
   }
 
