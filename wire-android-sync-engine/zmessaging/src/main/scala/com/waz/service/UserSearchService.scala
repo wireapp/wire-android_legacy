@@ -24,17 +24,15 @@ import com.waz.log.LogSE._
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model.UserPermissions.{PartnerPermissions, decodeBitmask}
 import com.waz.model._
-import com.waz.service.ZMessaging.clock
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.waz.utils._
 import com.waz.utils.events._
 
-import scala.collection.breakOut
 import scala.collection.immutable.Set
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -192,9 +190,6 @@ class UserSearchService(selfUserId:           UserId,
     verbose(l"search($queryStr)")
     val query = SearchQuery(queryStr)
 
-
-    val shouldShowDirectorySearch    = !queryStr.isEmpty
-
     exactMatchUser ! None // reset the exact match to None on any query change
 
     val topUsers: Signal[IndexedSeq[UserData]] =
@@ -226,13 +221,11 @@ class UserSearchService(selfUserId:           UserId,
         _     =  verbose(l"directory search results: $dir")
         exact <- exactMatchUser.orElse(Signal.const(None))
         _     =  verbose(l"exact match: $exact")
-      } yield {
+      } yield
         (dir, exact) match {
-          case (_, None) => dir
-          case (IndexedSeq(), Some(ex)) => IndexedSeq(ex)
+          case (_, None)           => dir
           case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
         }
-      }
 
     for {
       top       <- topUsers
