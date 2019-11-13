@@ -142,4 +142,5 @@
     boolean mShiftingMode;
 }
 
--keep class com.google.android.gms.** { *; }
+#Push Notification dependency
+-keep class com.google.android.gms.tasks.** { *; }
