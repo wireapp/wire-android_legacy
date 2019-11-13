@@ -93,7 +93,7 @@ object VideoTranscoder {
 
 abstract class BaseTranscoder(context: Context) extends VideoTranscoder with DerivedLogTag {
   import VideoTranscoder._
-  private implicit val ec = com.waz.threading.Threading.BlockingIO
+  private implicit val ec = com.waz.threading.Threading.IO
 
   def apply(input: URI, out: File, callback: ProgressData => Unit): CancellableFuture[File] = CancellableFuture {
 

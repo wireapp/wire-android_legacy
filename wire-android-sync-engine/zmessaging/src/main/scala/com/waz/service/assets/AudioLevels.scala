@@ -70,7 +70,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
           }
 
           overview.acquire(levels => Some(Loudness(levels)))
-        }(Threading.BlockingIO).recover {
+        }(Threading.IO).recover {
           case c: CancelException => throw c
           case NonFatal(cause) =>
             error(l"PCM overview generation failed", cause)
@@ -100,7 +100,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
       }
 
       overview.acquire(levels => Some(Loudness(levels)))
-    }(Threading.BlockingIO).recover {
+    }(Threading.Background).recover {
       case c: CancelException => throw c
       case NonFatal(cause) =>
         error(l"overview generation failed", cause)

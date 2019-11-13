@@ -222,7 +222,7 @@ class AssetLoaderImpl(context:         Context,
 
     // important: this file needs to be stored unencrypted so we can process it (for e.g. video thumbnails); specifying an explicit cache location "forces" that (for now)
     promise.tryCompleteWith {
-      cache.addStream(cacheKey, new CancellableStream(stream, cancelled), mime, name, cacheLocation = Some(cache.cacheDir), execution = Threading.BlockingIO)
+      cache.addStream(cacheKey, new CancellableStream(stream, cancelled), mime, name, cacheLocation = Some(cache.cacheDir), execution = Threading.IO)
     }
     new CancellableFuture(promise) {
       override def cancel()(implicit tag: LogTag): Boolean = cancelled.compareAndSet(false, true)

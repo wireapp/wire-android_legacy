@@ -29,7 +29,7 @@ import org.threeten.bp
 import scala.concurrent.{Future, Promise}
 
 class DefaultPlayer private (delegate: MediaPlayer, initialContent: UnauthenticatedContent) extends Player {
-  import Threading.Implicits.BlockingIO
+  import Threading.Implicits.IO
 
   override def start(): Future[Unit] = serialized(Future(delegate.start()))
   override def pause(): Future[MediaPointer] = serialized(Future {

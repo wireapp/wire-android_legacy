@@ -35,7 +35,7 @@ object Threading {
     implicit lazy val Background: DispatchQueue    = Threading.ThreadPool
     implicit lazy val Ui:         DispatchQueue    = Threading.Ui
     implicit lazy val Image:      DispatchQueue    = Threading.ImageDispatcher
-    implicit lazy val BlockingIO: ExecutionContext = Threading.BlockingIO
+    implicit lazy val IO: ExecutionContext = Threading.IO
   }
 
   var AssertsEnabled = BuildConfig.DEBUG
@@ -68,16 +68,6 @@ object Threading {
     * Image decoding/encoding dispatch queue. This operations are quite cpu intensive, we don't want them to use all cores (leaving one spare core for other tasks).
     */
   val ImageDispatcher = new LimitedDispatchQueue(Cpus - 1, ThreadPool, "ImageDispatcher")
-
-  val BlockingIO: ExecutionContext = new ExecutionContext {
-    val delegate = ExecutionContext.fromExecutor(null: Executor) // default impl that handles block contexts correctly
-    override def execute(runnable: Runnable): Unit = delegate.execute(new Runnable {
-        override def run(): Unit = blocking(runnable.run())
-      })
-    override def reportFailure(cause: Throwable): Unit = {
-      delegate.reportFailure(cause)
-    }
-  }
 
   // var for tests
   private var _ui: Option[DispatchQueue] = None

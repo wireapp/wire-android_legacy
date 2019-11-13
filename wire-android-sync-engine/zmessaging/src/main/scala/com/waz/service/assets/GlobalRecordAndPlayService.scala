@@ -319,7 +319,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
           Audio(AssetMediaKey(id), file, PCM.durationFromByteCount(file.length()), Mime.Audio.PCM, applyAudioEffect)
         } finally fx.destroy
       }(_ => file.delete)
-    }(Threading.BlockingIO)
+    }(Threading.IO)
   }
 
   private def abandonAudioFocus(): Unit = audioManager.abandonAudioFocus(AudioFocusListener)
