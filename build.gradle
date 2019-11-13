@@ -63,6 +63,7 @@ task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
         "**/*target*",
         "**/*gen*",
         "**/*generated*",
+        ".idea/**"
     ])
 }
 licenseFormat.dependsOn licenseFormatAndroid
