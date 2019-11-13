@@ -56,7 +56,7 @@ object Threading {
   val ThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool())(LogTag("CpuThreadPool")), "CpuThreadPool")
 
   /**
-   * Thread pool for blocking IO tasks.
+   * Thread pool for IO tasks.
    */
   val IOThreadPool: DispatchQueue = new LimitedDispatchQueue(Cpus, executionContext(Executors.newCachedThreadPool())(LogTag("IoThreadPool")), "IoThreadPool")
 
