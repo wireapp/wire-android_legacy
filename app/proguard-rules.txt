@@ -141,3 +141,6 @@
 -keepclassmembers class android.support.design.internal.BottomNavigationMenuView {
     boolean mShiftingMode;
 }
+
+#Push Notification dependency
+-keep class com.google.android.gms.tasks.** { *; }
