@@ -44,6 +44,11 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://dl.bintray.com/wire-android/releases" }
+        maven { url "https://dl.bintray.com/wire-android/snapshots" }
+        maven { url "https://dl.bintray.com/wire-android/third-party" }
+        maven { url 'https://maven.google.com' }
+        mavenCentral()
     }
 }
 
@@ -157,17 +162,6 @@ def prepareCustomizationEnvironment() {
     }
 
     return new BuildtimeConfiguration(defaultConfig, customDirPath)
-}
-
-allprojects {
-    repositories {
-        mavenLocal()
-        maven { url "https://dl.bintray.com/wire-android/releases" }
-        maven { url "https://dl.bintray.com/wire-android/snapshots" }
-        maven { url "https://dl.bintray.com/wire-android/third-party" }
-        maven { url 'https://maven.google.com' }
-        mavenCentral()
-    }
 }
 
 task ci(dependsOn: [
