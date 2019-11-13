@@ -101,9 +101,13 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
 
   override def onDestroyView() = {
     conversationListView.foreach(_.removeOnScrollListener(conversationsListScrollListener))
-    subs.foreach(_.unsubscribe())
-    subs.foreach(_.destroy())
     super.onDestroyView()
+  }
+
+  override def onDestroy(): Unit = {
+    subs.foreach(_.destroy())
+    subs = Set.empty
+    super.onDestroy()
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
@@ -125,12 +129,12 @@ abstract class ConversationListFragment extends BaseFragment[ConversationListFra
     
     subs += userAccountsController.currentUser.onUi(user => topToolbar.get.setTitle(adapterMode, user))
 
-    adapter.onConversationClick { conv =>
+    subs += adapter.onConversationClick { conv =>
       verbose(l"handleItemClick, switching conv to $conv")
       conversationController.selectConv(Option(conv), ConversationChangeRequester.CONVERSATION_LIST)
     }
 
-    adapter.onConversationLongClick { conv =>
+    subs += adapter.onConversationLongClick { conv =>
       if (Set(Group, OneToOne, WaitForConnection).contains(conv.convType))
         screenController.showConversationMenu(true, conv.id)
     }
@@ -183,7 +187,7 @@ class NormalConversationFragment extends ConversationListFragment {
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val accentColor = inject[AccentColorController].accentColor
-  lazy val incomingClients = for{
+  lazy val incomingClients = for {
     z       <- zms
     clients <- z.otrClientsStorage.incomingClientsSignal(z.selfUserId, z.clientId)
   } yield clients
@@ -205,7 +209,7 @@ class NormalConversationFragment extends ConversationListFragment {
 
   override lazy val topToolbar = returning(view[NormalTopToolbar](R.id.conversation_list_top_toolbar)) { vh =>
     subs += accentColor.map(_.color).onUi(color => vh.foreach(_.setIndicatorColor(color)))
-    Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
+    subs += Signal(unreadCount, incomingClients, readReceiptsChanged).onUi {
       case (count, clients, rrChanged) => vh.foreach(_.setIndicatorVisible(clients.nonEmpty || count > 0 || rrChanged))
     }
   }
@@ -245,7 +249,6 @@ class NormalConversationFragment extends ConversationListFragment {
         getActivity.startActivityForResult(PreferencesActivity.getDefaultIntent(getContext), PreferencesActivity.SwitchAccountCode)
       }
     }
-
 
     val pickUserController = inject[IPickUserController]
     noConvsMessage.foreach(_.onClick(pickUserController.showPickUser()))

@@ -90,10 +90,10 @@ class ConversationListManagerFragment extends Fragment
   private var listLoadingIndicator: LoadingIndicatorView = _
   private var mainContainer: FrameLayout = _
   private var confirmationMenu: ConfirmationMenu = _
-  private var bottomNavigationBorder: View = _
-  private var newFragment: Fragment = _
-  protected var subs = Set.empty[Subscription]
 
+  private lazy val bottomNavigationBorder = view[View](R.id.fragment_conversation_list_manager_view_bottom_border)
+
+  protected var subs = Set.empty[Subscription]
 
   private lazy val bottomNavigationView = returning(view[BottomNavigationView](R.id.fragment_conversation_list_manager_bottom_navigation)) { vh =>
     subs += convListController.hasConversationsAndArchive.onUi { case (_, hasArchive) =>
@@ -137,11 +137,8 @@ class ConversationListManagerFragment extends Fragment
       v.resetFullScreenPadding()
     }
 
-    bottomNavigationView
-
-    bottomNavigationView.get.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this)
-
-    bottomNavigationBorder = findById(view, R.id.fragment_conversation_list_manager_view_bottom_border)
+    bottomNavigationView.foreach(_.setOnNavigationItemSelectedListener(ConversationListManagerFragment.this))
+    bottomNavigationBorder
 
     if (savedInstanceState == null) {
       val fm = getChildFragmentManager
@@ -158,16 +155,16 @@ class ConversationListManagerFragment extends Fragment
     }
 
     (for {
-      z <- inject[Signal[ZMessaging]]
+      z        <- inject[Signal[ZMessaging]]
       syncSate <- z.syncRequests.syncState(z.selfUserId, SyncMatchers)
       animType <- inject[ConversationListController].establishedConversations.map(_.nonEmpty).map {
         case true => InfiniteLoadingBar
-        case _ => Spinner
+        case _    => Spinner
       }
     } yield (syncSate, animType)).onUi { case (state, animType) =>
       state match {
         case SYNCING | WAITING => listLoadingIndicator.show(animType)
-        case _ => listLoadingIndicator.hide()
+        case _                 => listLoadingIndicator.hide()
       }
     }
 
@@ -186,7 +183,7 @@ class ConversationListManagerFragment extends Fragment
       case _ => //
     }
 
-     subs += inject[AccentColorController].accentColor.map(_.color).onUi { c =>
+    subs += inject[AccentColorController].accentColor.map(_.color).onUi { c =>
       Option(startUiLoadingIndicator).foreach(_.setColor(c))
       Option(listLoadingIndicator).foreach(_.setColor(c))
       setUpBottomNavigationTintColors(c)
@@ -198,11 +195,15 @@ class ConversationListManagerFragment extends Fragment
   }
 
   override def onDestroyView(): Unit = {
-     super.onDestroyView()
-    bottomNavigationView.get.setOnNavigationItemSelectedListener(null)
-    subs.foreach(_.unsubscribe())
+    super.onDestroyView()
+    bottomNavigationView.foreach(_.setOnNavigationItemSelectedListener(null))
+  }
+
+  override def onDestroy(): Unit = {
     subs.foreach(_.destroy())
-   }
+    subs = Set.empty
+    super.onDestroy()
+  }
 
   private def setUpBottomNavigationTintColors(color: Int): Unit = {
     import android.content.res.ColorStateList
@@ -363,7 +364,7 @@ class ConversationListManagerFragment extends Fragment
 
     val conversationsVisible = page == Page.START || page == Page.CONVERSATION_LIST
     bottomNavigationView.foreach(_.setVisible(conversationsVisible))
-    bottomNavigationBorder.setVisible(conversationsVisible)
+    bottomNavigationBorder.foreach(_.setVisible(conversationsVisible))
     if (conversationsVisible) {
       selectDefaultConversationType()
     }
@@ -492,31 +493,22 @@ class ConversationListManagerFragment extends Fragment
   }
 
   private def replaceConversationFragment(tag: String, @ConversationListType listType: Int): Unit = {
-    val fragment = getChildFragmentManager.findFragmentByTag(tag)
-    if (fragment == null) {
-      if (tag == NormalConversationFragment.TAG) {
-        newFragment = ConversationListFragment.newNormalInstance()
+    val fragment = Option(getChildFragmentManager.findFragmentByTag(tag)).getOrElse {
+      if (tag == NormalConversationFragment.TAG) ConversationListFragment.newNormalInstance()
+      else if (tag == ConversationFolderListFragment.TAG) ConversationListFragment.newFoldersInstance()
+      else {
+        error(l"Unexpected Fragment tag: $tag, defaulting to the normal instance")
+        ConversationListFragment.newNormalInstance()
       }
-      else if (tag == ConversationFolderListFragment.TAG) {
-        newFragment = ConversationListFragment.newFoldersInstance()
-      }
-      getChildFragmentManager.beginTransaction
-        .replace(R.id.fl__conversation_list_main, newFragment, tag)
-        .addToBackStack(tag)
-        .commit
-      setConversationListType(listType)
     }
-    else {
-      getChildFragmentManager.beginTransaction
-        .replace(R.id.fl__conversation_list_main, fragment, tag)
-        .addToBackStack(tag)
-        .commit
-      setConversationListType(listType)
 
-    }
-    if (navController.getCurrentLeftPage != Page.START) {
-      navController.setLeftPage(Page.CONVERSATION_LIST, Tag)
-    }
+    getChildFragmentManager.beginTransaction
+      .replace(R.id.fl__conversation_list_main, fragment, tag)
+      .addToBackStack(tag)
+      .commit
+    setConversationListType(listType)
+
+    if (navController.getCurrentLeftPage != Page.START) navController.setLeftPage(Page.CONVERSATION_LIST, Tag)
   }
 
   private def selectDefaultConversationType(): Unit = bottomNavigationView.foreach { view =>
