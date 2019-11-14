@@ -574,7 +574,7 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
 
   private val expandIcon = findById[ImageView](R.id.conv_list_section_imageview_expand)
   private val title = findById[TypefaceTextView](R.id.conv_list_section_textview_title)
-  private val badge = findById[TypefaceTextView](R.id.folder_badge_text)
+  private val badge = findById[ConversationBadge](R.id.folder_badge_text)
 
   def setTitle(title: String): Unit = this.title.setText(title)
 
