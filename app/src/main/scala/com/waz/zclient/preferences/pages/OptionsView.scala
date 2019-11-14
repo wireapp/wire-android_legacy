@@ -111,7 +111,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     appLockSwitch.setVisibility(View.GONE)
   }
 
-
   incognitoKeyboardSwitch.setPreference(IncognitoKeyboardEnabled, global = true)
   if (BuildConfig.FORCE_PRIVATE_KEYBOARD) {
     incognitoKeyboardSwitch.setVisibility(View.GONE)
@@ -123,7 +122,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-    hideScreenContentSwitch.setDisabled(true)
+    hideScreenContentSwitch.setVisible(false)
     hideScreenContentSwitch.pref.foreach(_ := true)
   }
 
