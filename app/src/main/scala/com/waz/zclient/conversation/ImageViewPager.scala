@@ -20,8 +20,8 @@ package com.waz.zclient.conversation
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.support.v4.view.ViewPager.OnPageChangeListener
-import android.support.v4.view.{PagerAdapter, ViewPager}
+import androidx.viewpager.widget.ViewPager.OnPageChangeListener
+import androidx.viewpager.widget.{PagerAdapter, ViewPager}
 import android.util.AttributeSet
 import android.view.ViewGroup.LayoutParams
 import android.view.{View, ViewGroup}

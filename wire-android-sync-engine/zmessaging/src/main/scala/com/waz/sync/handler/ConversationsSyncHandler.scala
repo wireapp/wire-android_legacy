@@ -37,6 +37,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
+import scala.util.Right
 import scala.util.control.NonFatal
 
 object ConversationsSyncHandler {
@@ -81,7 +82,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       case Right(ConversationsResult(convs, hasMore)) =>
         debug(l"syncConversations received ${convs.size}")
         val future = convService.updateConversationsWithDeviceStartMessage(convs)
-        if (hasMore) syncConversations(convs.lastOption.map(_.id)).flatMap(res => future.map(_ => res))
+        if (hasMore) future.flatMap(_ => syncConversations(convs.lastOption.map(_.id)))
         else future.map(_ => Success)
       case Left(error) =>
         warn(l"ConversationsClient.loadConversations($start) failed with error: $error")

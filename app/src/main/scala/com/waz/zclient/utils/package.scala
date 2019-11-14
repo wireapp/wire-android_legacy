@@ -21,20 +21,22 @@ import java.util.Locale
 
 import android.graphics.drawable.{Drawable, LayerDrawable}
 import android.graphics.{Bitmap => AndroidBitmap, _}
-import android.support.media.ExifInterface
-import android.support.v7.preference.Preference
-import android.support.v7.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
-import android.text.{Editable, TextWatcher}
+import android.text.{Editable, InputType, TextWatcher}
 import android.view.View._
 import android.view.ViewGroup.LayoutParams
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.inputmethod.EditorInfo
 import android.view.{View, ViewGroup}
 import android.widget.{EditText, SeekBar, TextView}
+import androidx.exifinterface.media.ExifInterface
+import androidx.preference.Preference
+import androidx.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
 import com.waz.model.otr.Client
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.paintcode.WireDrawable
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
+import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 import io.reactivex.functions.Consumer
@@ -213,6 +215,58 @@ package object utils {
 
     def setEndCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Unit = {
       textView.setCompoundDrawablesRelative(null, null, getCompoundDrawable(drawMethod, color), null)
+    }
+
+    /**
+      * Add an ime option to the existing options
+      * @param option
+      */
+    def addImeOption(option: Int): Unit = {
+      textView.setImeOptions(textView.getImeOptions() | option)
+    }
+
+    /**
+      * Remove an ime option from the existing options, if present
+      * @param option
+      */
+    def removeImeOption(option: Int): Unit = {
+      textView.setImeOptions(MathUtils.removeBinaryFlag(textView.getImeOptions(), option))
+    }
+
+    /**
+      * Add an input type to the existing input types
+      * @param inputType
+      */
+    def addInputType(inputType: Int): Unit = {
+      textView.setInputType(textView.getInputType() | inputType)
+    }
+
+    /**
+      * Remove an input type from the existing input types, if present
+      * @param inputType
+      */
+    def removeInputType(inputType: Int): Unit = {
+      textView.setInputType(MathUtils.removeBinaryFlag(textView.getInputType(), inputType))
+    }
+
+    /**
+      * Enable or disable private mode and suggestions on the field
+      * - If enabled, enables incognito mode and disables suggestions
+      * - If disabled, disables incognito mode and enables suggestions
+      * @param on true if private mode should be switched on, false if it should be switched off
+      */
+    def setPrivateMode(on: Boolean): Unit = {
+      if(on) {
+        textView.addInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+        // this disables autocomplete because it implies that you will provide your
+        // own autocomplete facility. We don't, so no autocomplete is shown
+        textView.addInputType(InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE)
+        textView.addImeOption(EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+      } else {
+        textView.removeInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
+        textView.removeInputType(InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE)
+        textView.removeImeOption(EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING)
+      }
     }
   }
 

@@ -185,7 +185,7 @@ class AssetLoaderImpl(context:         Context,
 
     audioTranscoder(uri, entry.cacheFile, callback).flatMap { _ =>
 //      verbose(s"loaded audio from ${asset.cacheKey}, resulting file size: ${entry.length}")
-      CancellableFuture.lift(cache.move(asset.cacheKey, entry, Mime.Audio.MP4, asset.name, cacheLocation = Some(cache.cacheDir)))
+      CancellableFuture.lift(cache.move(asset.cacheKey, entry, Mime.Audio.M4A, asset.name, cacheLocation = Some(cache.cacheDir)))
     }.recoverWith {
       case ex: CancelException => CancellableFuture.failed(ex)
       case NonFatal(ex) =>

@@ -25,11 +25,11 @@ import android.content.pm.PackageManager
 import android.content.{Context, Intent}
 import android.net.Uri
 import android.os.Environment
-import android.support.v7.app.AppCompatDialog
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
+import androidx.appcompat.app.AppCompatDialog
 import com.waz.api.Message
 import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
@@ -119,8 +119,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   def assetPreviewId(assetId: Signal[GeneralAssetId]): Signal[Option[GeneralAssetId]] =
     assetSignal(assetId).map {
       case u: UploadAsset => u.preview match {
-        case Uploaded(aId) => Option(aId)
-        case NotUploaded(aId) => Option(aId)
+        case PreviewUploaded(aId) => Option(aId)
+        case PreviewNotUploaded(aId) => Option(aId)
         case _ => Option.empty[GeneralAssetId]
       }
       case d: DownloadAsset => d.preview
@@ -159,7 +159,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     (a.details, a) match {
       case (_: Audio, audioAsset: Asset) =>
 
-        val file = new File(context.getCacheDir, s"${audioAsset.id.str}.mp4")
+        val file = new File(context.getCacheDir, s"${audioAsset.id.str}.m4a")
         Signal.future((if (!file.exists()) {
           file.createNewFile()
           assets.head.flatMap(_.loadContent(audioAsset)).map { is =>

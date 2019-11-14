@@ -20,16 +20,16 @@ package com.waz.zclient.sharing
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
-import android.support.v7.widget.RecyclerView.ViewHolder
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.text.format.Formatter
 import android.view.View.OnClickListener
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout.LayoutParams
+import android.widget.{CheckBox, CompoundButton, ImageView, LinearLayout, RelativeLayout, TextView}
 import android.widget.TextView.OnEditorActionListener
-import android.widget._
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.impl.ContentUriAssetForUpload
@@ -52,7 +52,7 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
 import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
-import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast, getString}
+import com.waz.zclient.utils.ContextUtils.{getDimenPx, getString, showToast}
 import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success

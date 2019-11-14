@@ -19,8 +19,8 @@ package com.waz.zclient.ui.text
 
 import android.content.Context
 import android.content.res.TypedArray
-import android.support.v7.widget.AppCompatTextView
 import android.util.AttributeSet
+import androidx.appcompat.widget.AppCompatTextView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}

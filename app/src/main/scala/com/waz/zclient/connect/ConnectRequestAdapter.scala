@@ -18,7 +18,7 @@
 package com.waz.zclient.connect
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserId

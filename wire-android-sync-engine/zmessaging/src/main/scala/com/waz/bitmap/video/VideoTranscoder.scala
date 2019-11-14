@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.ByteBuffer
 
 import android.content.Context
+import android.media.MediaCodec.CodecException
 import android.media._
 import android.os.Build
 import android.view.Surface
@@ -275,7 +276,7 @@ abstract class BaseTranscoder(context: Context) extends VideoTranscoder with Der
   private lazy val infos = Vector.tabulate(numberOfCodecs)(codecInfoAtIndex)
 }
 
-class TrackDecoder(extractor: MediaExtractor, decoder: MediaCodecHelper) extends Iterator[Option[CodecBuffer]] {
+class TrackDecoder(extractor: MediaExtractor, decoder: MediaCodecHelper) extends Iterator[Option[CodecBuffer]] with DerivedLogTag {
   override def hasNext: Boolean = decoder.hasNext
 
   override def next(): Option[CodecBuffer] = {
@@ -286,7 +287,7 @@ class TrackDecoder(extractor: MediaExtractor, decoder: MediaCodecHelper) extends
     }
   }
 
-  def extractFrame(): Unit =
+  private def extractFrame(): Unit =
     decoder.withInputBuffer { case (codec, index, buffer) =>
       val size = extractor.readSampleData(buffer, 0)
       val presentationTime = extractor.getSampleTime
@@ -294,8 +295,10 @@ class TrackDecoder(extractor: MediaExtractor, decoder: MediaCodecHelper) extends
         codec.queueInputBuffer(index, 0, size, presentationTime, extractor.getSampleFlags)
       }
       val done = !extractor.advance
-      if (done) {
+      if (done) try {
         codec.queueInputBuffer(index, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+      } catch {
+        case ex: CodecException => error(l"Error while extracting frame", ex)
       }
     }
 }

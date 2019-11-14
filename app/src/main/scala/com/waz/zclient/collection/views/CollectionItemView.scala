@@ -20,12 +20,13 @@ package com.waz.zclient.collection.views
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.support.v7.widget.{CardView, RecyclerView}
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.View.OnClickListener
 import android.webkit.URLUtil
 import android.widget.{ImageView, TextView}
+import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
@@ -127,7 +128,7 @@ class CollectionImageView(context: Context) extends ImageView(context) with Coll
       verbose(l"Set image asset $id")
       WireGlide(context)
         .load(id)
-        .apply(new RequestOptions().transforms(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
+        .apply(new RequestOptions().transform(new CenterCrop(), new RoundedCorners(CornerRadius)).placeholder(new ColorDrawable(Color.TRANSPARENT)))
         .transition(DrawableTransitionOptions.withCrossFade())
         .into(target)
     case (_, Some(ephemeralDrawable)) =>

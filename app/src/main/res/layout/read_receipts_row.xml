@@ -56,7 +56,7 @@
             android:textSize="@dimen/wire__text_size__regular"
             android:textColor="?wirePrimaryTextColor"/>
 
-        <android.support.v7.widget.SwitchCompat
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/participants_read_receipts_toggle"
             android:gravity="end"
             android:layout_weight="1"

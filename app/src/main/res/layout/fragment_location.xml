@@ -26,7 +26,7 @@
               android:orientation="vertical"
               style="?wireBackground"
     >
-    <android.support.v7.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/t_location_toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -56,7 +56,7 @@
 
         </FrameLayout>
 
-    </android.support.v7.widget.Toolbar>
+    </androidx.appcompat.widget.Toolbar>
 
     <com.waz.zclient.ui.views.TouchRegisteringFrameLayout
         android:id="@+id/trfl_location_touch_registerer"

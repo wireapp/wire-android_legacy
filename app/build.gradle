@@ -7,12 +7,6 @@ apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 ext {
     majorVersion = "3.42."
 
@@ -24,7 +18,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.3.3@aar'
+    customAvsVersion = '5.3.29@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -139,6 +133,7 @@ android {
         buildConfigField 'boolean', 'BLOCK_ON_PASSWORD_POLICY',      "$buildtimeConfiguration.configuration.block_on_password_policy"
         buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
         buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
+        buildConfigField 'Integer', 'PASSWORD_MAX_ATTEMPTS',         "$buildtimeConfiguration.configuration.password_max_attempts"
     }
 
     packagingOptions {
@@ -164,6 +159,7 @@ android {
                 events "passed", "skipped", "failed", "standardOut", "standardError"
                 outputs.upToDateWhen { false }
                 showStandardStreams = true
+                exceptionFormat = 'full'
             }
         }
     }
@@ -301,7 +297,7 @@ dexinfo {
 }
 
 def versions = [
-    playServices : "15.0.1", //TODO can be independent now.
+    playServices : "17.0.0", //TODO can be independent now.
     stetho: "1.5.0",
     work_manager : "1.0.0-alpha13",
     paging : "1.0.0",
@@ -350,34 +346,32 @@ dependencies {
     implementation "$rootProject.deps.libphonenumber"
 
     //support libraries
-    implementation 'com.android.support:multidex:1.0.3'
-    implementation "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:support-v13:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:design:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:appcompat-v7:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:recyclerview-v7:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:preference-v7:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:cardview-v7:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:gridlayout-v7:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:support-annotations:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:cardview-v7:$rootProject.ext.versions.supportLib"
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation "android.arch.paging:runtime:$versions.paging"
-    implementation "com.android.support:exifinterface:$rootProject.ext.versions.supportLib"
-    implementation "com.android.support:support-media-compat:$rootProject.ext.versions.supportLib"
+    implementation 'androidx.multidex:multidex:2.0.0'
+    implementation "com.google.android.material:material:1.0.0"
+    implementation "androidx.appcompat:appcompat:1.0.0"
+    implementation "androidx.recyclerview:recyclerview:1.0.0"
+    implementation "androidx.preference:preference:1.0.0"
+    implementation "androidx.cardview:cardview:1.0.0"
+    implementation "androidx.gridlayout:gridlayout:1.0.0"
+    annotationProcessor "androidx.annotation:annotation:1.0.0"
+    implementation "androidx.cardview:cardview:1.0.0"
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation "androidx.paging:paging-runtime:2.0.0"
+    implementation "androidx.exifinterface:exifinterface:1.0.0"
+    implementation "androidx.media:media:1.0.0"
 
     // Play services
     implementation "com.google.android.gms:play-services-base:$versions.playServices"
     implementation "com.google.android.gms:play-services-maps:$versions.playServices"
     implementation "com.google.android.gms:play-services-location:$versions.playServices"
     implementation "com.google.android.gms:play-services-gcm:$versions.playServices"
-    implementation ('com.google.firebase:firebase-messaging:17.3.0') {
+    implementation ('com.google.firebase:firebase-messaging:19.0.0') {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
 
     //WorkManager
-    implementation "android.arch.work:work-runtime:$versions.work_manager"
+    implementation "androidx.work:work-runtime:2.0.1"
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
@@ -394,8 +388,14 @@ dependencies {
     devImplementation "com.facebook.stetho:stetho:$versions.stetho"
     experimentalImplementation "com.facebook.stetho:stetho:$versions.stetho"
     internalImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    implementation "com.github.bumptech.glide:glide:4.8.0"
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.8.0'
+    implementation("com.github.bumptech.glide:glide:4.10.0"){
+        exclude group: 'com.android.support'
+        transitive = true
+    }
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
+
+    // biometric prompt
+    implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
     // Test dependencies
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
@@ -407,18 +407,18 @@ dependencies {
     testImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
     testImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
     testImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
-    testImplementation "android.arch.paging:common:$versions.paging"
+    testImplementation "androidx.paging:paging-common:2.0.0"
 
     androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
     androidTestImplementation 'org.mockito:mockito-core:1.10.19'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test:rules:1.1.1'
 
     //The dexmaker stuff is needed for Mockito to work completely
     androidTestImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
     androidTestImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
     androidTestImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
-    androidTestImplementation "android.arch.work:work-testing:$versions.work_manager"
+    androidTestImplementation "androidx.work:work-testing:2.0.1"
 
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true

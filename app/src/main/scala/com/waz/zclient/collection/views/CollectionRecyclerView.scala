@@ -18,11 +18,11 @@
 package com.waz.zclient.collection.views
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView.OnScrollListener
-import android.support.v7.widget.{GridLayoutManager, LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener
 import android.util.AttributeSet
 import android.view.View.OnTouchListener
 import android.view.{MotionEvent, View}
+import androidx.recyclerview.widget.{GridLayoutManager, LinearLayoutManager, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Dim2
 import com.waz.utils.events.Signal

@@ -17,8 +17,10 @@
  */
 package com.waz.zclient.controllers.confirmation;
 
-import android.support.annotation.DrawableRes;
 import android.text.TextUtils;
+
+import androidx.annotation.DrawableRes;
+
 import com.waz.zclient.ui.theme.OptionsTheme;
 
 public class ConfirmationRequest {

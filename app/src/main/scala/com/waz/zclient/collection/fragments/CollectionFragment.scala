@@ -19,15 +19,16 @@ package com.waz.zclient.collection.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.FragmentManager
-import android.support.v7.widget.RecyclerView.State
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
+import androidx.fragment.app.FragmentManager
+import androidx.recyclerview.widget.RecyclerView.State
 import android.text.{Editable, TextWatcher}
 import android.view.View.{OnClickListener, OnFocusChangeListener, OnLayoutChangeListener}
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, TextView}
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal

@@ -19,7 +19,7 @@ package com.waz.zclient.notifications.controllers
 
 import android.app.NotificationManager
 import android.graphics.Bitmap
-import android.support.v4.app.NotificationCompat
+import androidx.core.app.NotificationCompat
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AssetId

@@ -58,7 +58,7 @@
         android:layout_height="@dimen/wire__divider__height"
         android:background="@color/light_graphite_16"/>
 
-    <android.support.v7.widget.RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/lv__conversation_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"

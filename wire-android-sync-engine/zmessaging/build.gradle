@@ -29,6 +29,12 @@ android {
 
             jvmArgs "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled",
                 "-Djava.net.preferIPv4Stack=true", "-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=n"
+            testLogging {
+                events "passed", "skipped", "failed", "standardOut", "standardError"
+                outputs.upToDateWhen { false }
+                showStandardStreams = true
+                exceptionFormat = 'full'
+            }
         }
     }
 }
@@ -88,7 +94,7 @@ dependencies {
     compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:2.3.3"
     compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
     compileOnly "com.wire:avs:3.4.100"
-    compileOnly "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
     compileOnly "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
     compileOnly "$rootProject.deps.robolectric_android_all"
@@ -111,7 +117,7 @@ dependencies {
     testImplementation "com.typesafe.akka:akka-actor_$rootProject.ext.scalaMajorVersion:2.5.22"
     testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
     testImplementation "com.wire:avs:3.4.100"
-    testImplementation "com.android.support:support-v4:$rootProject.ext.versions.supportLib"
+    testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
     testImplementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
     testImplementation "net.java.dev.jna:jna:4.4.0@aar"
 

@@ -39,7 +39,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:appcompat-v7:$rootProject.ext.versions.supportLib"
+    implementation "androidx.appcompat:appcompat:1.0.0"
     implementation 'com.google.code.gson:gson:2.2.4'
     implementation 'com.google.guava:guava:19.0'
 }

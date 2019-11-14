@@ -29,7 +29,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"/>
 
-    <android.support.constraint.ConstraintLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/conversation_row_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -84,9 +84,7 @@
 
         <com.waz.zclient.conversationlist.views.ConversationBadge
             android:id="@+id/conversation_badge"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/conversation_list__badge__height"
-            android:layout_marginEnd="@dimen/wire__padding__regular"
+            style="@style/ConversationBadge"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
@@ -99,5 +97,5 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@id/conversation_title"/>
 
-    </android.support.constraint.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </merge>

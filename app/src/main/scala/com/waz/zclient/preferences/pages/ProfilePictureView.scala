@@ -23,7 +23,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{ImageView, LinearLayout}
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.views.GlyphButton

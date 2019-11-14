@@ -19,7 +19,7 @@ package com.waz.zclient;
 
 import android.app.Activity;
 import android.graphics.Typeface;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.waz.model.AccentColor;
 import com.waz.zclient.controllers.IControllerFactory;

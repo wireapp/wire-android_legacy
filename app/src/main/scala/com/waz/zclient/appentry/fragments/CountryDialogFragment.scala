@@ -20,10 +20,10 @@ package com.waz.zclient.appentry.fragments
 import android.app.{AlertDialog, Dialog}
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v4.content.ContextCompat
 import android.view.{LayoutInflater, View}
 import android.widget.{AdapterView, ListView}
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.newreg.fragments.country.CountryCodeAdapter
 import com.waz.zclient.utils.ViewUtils
@@ -55,8 +55,8 @@ class CountryDialogFragment extends DialogFragment with FragmentHelper with Adap
 
   def activity = getActivity.asInstanceOf[AppEntryActivity]
 
-  override def onItemClick(adapterView: AdapterView[_], view: View, i: Int, l: Long): Unit = {
-    activity.getCountryController.setCountry(countryAdapter.getItem(i))
+  override def onItemClick(parent: AdapterView[_], view: View, position: Int, id: Long): Unit = {
+    activity.getCountryController.setCountry(countryAdapter.getItem(position))
     dismiss()
   }
 }

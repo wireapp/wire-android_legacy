@@ -19,12 +19,12 @@ package com.waz.zclient.ui
 
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.support.annotation.{ColorInt, IdRes, NonNull, Nullable}
-import android.support.v4.app.Fragment
-import android.support.v4.content.ContextCompat
-import android.support.v7.widget.Toolbar
+import androidx.fragment.app.Fragment
+import androidx.core.content.ContextCompat
+import androidx.appcompat.widget.Toolbar
 import android.view.View
 import android.view.animation.Animation
+import androidx.annotation.{ColorInt, IdRes, NonNull, Nullable}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.pages.BaseFragment
 import com.waz.zclient.ui.text.TypefaceTextView

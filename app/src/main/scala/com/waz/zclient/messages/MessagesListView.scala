@@ -18,12 +18,12 @@
 package com.waz.zclient.messages
 
 import android.app.Activity
-import android.arch.paging.PagedList
+import androidx.paging.PagedList
 import android.content.Context
-import android.support.v7.widget.RecyclerView.{OnScrollListener, ViewHolder}
-import android.support.v7.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.RecyclerView.{OnScrollListener, ViewHolder}
 import android.util.AttributeSet
 import android.view.WindowManager
+import androidx.recyclerview.widget.{DefaultItemAnimator, LinearLayoutManager, RecyclerView}
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Dim2, MessageData}

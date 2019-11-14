@@ -19,8 +19,8 @@ package com.waz.zclient
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
 import android.view.View
+import androidx.appcompat.widget.Toolbar
 import com.waz.utils.returning
 import com.waz.zclient.Intents._
 import com.waz.zclient.log.LogUI._

@@ -79,10 +79,10 @@ case class ContentForUpload(name: String, content: Content)
 case class LocalSource(uri: URI, sha: Sha256)
 
 sealed trait Preview
-case object NotReady                              extends Preview
-case object Empty                                 extends Preview
-case class NotUploaded(rawAssetId: UploadAssetId) extends Preview
-case class Uploaded(assetId: AssetId)             extends Preview
+case object PreviewNotReady                              extends Preview
+case object PreviewEmpty                                 extends Preview
+case class PreviewNotUploaded(rawAssetId: UploadAssetId) extends Preview
+case class PreviewUploaded(assetId: AssetId)             extends Preview
 
 sealed trait GeneralAsset {
   def id: GeneralAssetId
@@ -274,7 +274,7 @@ object Asset {
       encryption = uploadAsset.encryption,
       localSource = uploadAsset.localSource,
       preview = uploadAsset.preview match {
-        case Uploaded(previewId) => Some(previewId)
+        case PreviewUploaded(previewId) => Some(previewId)
         case _ => None
       },
       details = uploadAsset.details.asInstanceOf[AssetDetails],

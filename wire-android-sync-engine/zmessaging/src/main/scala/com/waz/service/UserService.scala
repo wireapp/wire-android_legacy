@@ -17,11 +17,12 @@
  */
 package com.waz.service
 
+import com.waz.api.impl.ErrorResponse
 import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.content._
 import com.waz.model.AccountData.Password
-import com.waz.model.UserData.{ConnectionStatus, Picture}
+import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{AccentColor, _}
 import com.waz.service.AccountsService.UserDeleted
 import com.waz.service.EventScheduler.Stage
@@ -72,6 +73,7 @@ trait UserService {
   def updatePhone(phone: PhoneNumber): ErrorOr[Unit]
   def clearPhone(): ErrorOr[Unit]
   def setPassword(password: Password): ErrorOr[Unit]
+  def checkPassword(password: Password): ErrorOr[Unit]
   def changePassword(newPassword: Password, oldPassword: Password): ErrorOr[Unit]
   def updateHandle(handle: Handle): ErrorOr[Unit]
 
@@ -282,6 +284,17 @@ class UserServiceImpl(selfUserId:        UserId,
     } yield resp
   }
 
+  // A hacky solution for now: we pretend to change the password to itself and interpret
+  // the error message "password must differ" as the correct one and all others as failures.
+  // Note that it's not possible to get `Right` as the response from BE.
+  override def checkPassword(password: Password): ErrorOr[Unit] = {
+    verbose(l"checkPassword: $password")
+    credentialsClient.updatePassword(password, Some(password)).future.map {
+      case Left(err) if err.code == PasswordMustDifferCode && err.label == PasswordMustDifferLabel => Right(())
+      case otherErr => otherErr
+    }
+  }
+
   override def changePassword(newPassword: Password, currentPassword: Password) = {
     verbose(l"changePassword: $newPassword, $currentPassword")
     credentialsClient.updatePassword(newPassword, Some(currentPassword)).future.flatMap {
@@ -328,7 +341,7 @@ class UserServiceImpl(selfUserId:        UserId,
     val contentForUpload = ContentForUpload("profile-picture", content)
     for {
       asset <- assets.createAndSaveUploadAsset(contentForUpload, NoEncryption, public = true, Retention.Eternal, None)
-      _     <- updateAndSync(_.copy(picture = Some(Picture.NotUploaded(asset.id))), _ => sync.postSelfPicture(asset.id))
+      _     <- updateAndSync(_.copy(picture = Some(PictureNotUploaded(asset.id))), _ => sync.postSelfPicture(asset.id))
     } yield ()
   }
 
@@ -347,6 +360,9 @@ object UserService {
   val UnsplashUrl = AndroidURIUtil.parse("https://source.unsplash.com/800x800/?landscape")
 
   lazy val AcceptedOrBlocked = Set(ConnectionStatus.Accepted, ConnectionStatus.Blocked)
+
+  val PasswordMustDifferCode = 409
+  val PasswordMustDifferLabel = "password-must-differ"
 }
 
 /**

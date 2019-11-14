@@ -18,11 +18,12 @@
 package com.waz.zclient.ui.views;
 
 import android.content.Context;
-import android.support.v7.widget.AppCompatEditText;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+
+import androidx.appcompat.widget.AppCompatEditText;
 
 import com.waz.zclient.R;
 import com.waz.zclient.ui.utils.TypefaceUtils;

@@ -19,7 +19,7 @@ package com.waz.zclient.giphy
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.view.{View, ViewGroup}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

@@ -25,12 +25,19 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.specs.AndroidFreeSpec.DefaultTimeout
 import com.waz.testutils.Implicits._
 import com.waz.threading.{SerialDispatchQueue, Threading}
+import org.scalatest.concurrent.Eventually
+import org.scalatest.prop.PropertyChecks
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
 import scala.concurrent.duration._
 
-class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
+/**
+  * This test class uses the eventually construct because many of these operations,
+  * such as `hasSubscribers()` calls, are asynchronous, and thus you get sporadic
+  * test failures otherwise.
+  */
+class SignalSpec extends AndroidFreeSpec with DerivedLogTag with Eventually {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   var received = Seq[Int]()
@@ -53,49 +60,48 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("Receive initial value") {
       val s = Signal(1)
       s(capture)
-      Thread.sleep(100)
-      received shouldEqual Seq(1)
+      eventually { received shouldEqual Seq(1) }
     }
 
     scenario("Basic subscriber lifecycle") {
       val s = Signal(1)
-      s.hasSubscribers shouldEqual false
-      val sub = s { value => () }
-      s.hasSubscribers shouldEqual true
+      eventually { s.hasSubscribers shouldEqual false }
+      val sub = s { _ => () }
+      eventually { s.hasSubscribers shouldEqual true }
       sub.destroy()
-      s.hasSubscribers shouldEqual false
+      eventually { s.hasSubscribers shouldEqual false }
     }
 
     scenario("Don't receive events after unregistering a single observer")  {
       val s = Signal(1)
       val sub = s(capture)
       s ! 2
-      received shouldEqual Seq(1, 2)
+      eventually { received shouldEqual Seq(1, 2) }
 
       sub.destroy()
       s ! 3
-      received shouldEqual Seq(1, 2)
+      eventually { received shouldEqual Seq(1, 2) }
     }
 
-    scenario("Don't receive events after unregistering all observers") {
+    scenario("Don't receive events after unregistering all observers")  {
       val s = Signal(1)
       s(capture)
       s ! 2
-      received shouldEqual Seq(1, 2)
+      eventually { received shouldEqual Seq(1, 2) }
 
       s.unsubscribeAll()
       s ! 3
-      received shouldEqual Seq(1, 2)
+      eventually { received shouldEqual Seq(1, 2) }
     }
 
     scenario("Signal mutation") {
       val s = Signal(42)
       s(capture)
-      received shouldEqual Seq(42)
+      eventually { received shouldEqual Seq(42) }
       s.mutate(_ + 1)
-      received shouldEqual Seq(42, 43)
+      eventually { received shouldEqual Seq(42, 43) }
       s.mutate(_ - 1)
-      received shouldEqual Seq(42, 43, 42)
+      eventually { received shouldEqual Seq(42, 43, 42) }
     }
   }
 
@@ -104,15 +110,15 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
       val s = Signal(1)
       s(capture)
       Seq(1, 2, 2, 1) foreach (s ! _)
-      received shouldEqual Seq(1, 2, 1)
+      eventually { received shouldEqual Seq(1, 2, 1) }
     }
 
     scenario("Idempotent signal mutation") {
       val s = Signal(42)
       s(capture)
-      received shouldEqual Seq(42)
+      eventually { received shouldEqual Seq(42) }
       s.mutate(_ + 1 - 1)
-      received shouldEqual Seq(42)
+      eventually { received shouldEqual Seq(42) }
     }
   }
 
@@ -126,10 +132,10 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
         y <- Seq(s1, s2)(x)
       } yield y * 2
       r(capture)
-      r.currentValue.get shouldEqual 2
+      eventually { r.currentValue.get shouldEqual 2 }
       s ! 1
-      r.currentValue.get shouldEqual 4
-      received shouldEqual Seq(2, 4)
+      eventually { r.currentValue.get shouldEqual 4 }
+      eventually { received shouldEqual Seq(2, 4) }
     }
   }
 
@@ -145,11 +151,11 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
       })
 
       val subs = Await.result(Future.sequence(Seq.fill(50)(add(barrier))), 10.seconds)
-      s.hasSubscribers shouldEqual true
-      num.getAndSet(0) shouldEqual 50
+      eventually { s.hasSubscribers shouldEqual true }
+      eventually { num.getAndSet(0) shouldEqual 50 }
 
       s ! 42
-      num.getAndSet(0) shouldEqual 50
+      eventually { num.getAndSet(0) shouldEqual 50 }
 
       val chaosBarrier = new CyclicBarrier(75)
       val removals = Future.traverse(subs.take(25)) (sub => Future(blocking {
@@ -166,16 +172,16 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
       Await.result(removals, 10.seconds)
       Await.result(sending, 10.seconds)
 
-      num.get should be <= 75*25
-      num.get should be >= 25*25
-      s.hasSubscribers shouldEqual true
+      eventually { num.get should be <= 75*25 }
+      eventually { num.get should be >= 25*25 }
+      eventually { s.hasSubscribers shouldEqual true }
 
       barrier.reset()
       Await.result(Future.traverse(moreSubs ++ subs.drop(25)) (sub => Future(blocking {
         barrier.await()
         sub.destroy()
       })), 10.seconds)
-      s.hasSubscribers shouldEqual false
+      eventually { s.hasSubscribers shouldEqual false }
     }
 
     scenario("Concurrent updates with incremental values") {
@@ -215,10 +221,10 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
 
         done.await(DefaultTimeout.toMillis, TimeUnit.MILLISECONDS)
 
-        signal.currentValue.get shouldEqual send.get()
+        eventually { signal.currentValue.get shouldEqual send.get() }
 
         val arr = received.asScala.toVector
-        arr shouldEqual arr.sorted
+        eventually { arr shouldEqual arr.sorted }
       }
     }
 
@@ -297,7 +303,7 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
     concurrentUpdates(dispatches, several, (s, n) => s.set(Some(n), dispatchExecutionContext), actualExecutionContext, subscribe)
 
   def concurrentMutations(dispatches: Int, several: Int, eventContext: EventContext, actualExecutionContext: ExecutionContext)(subscribe: Signal[Int] => (Int => Unit) => Subscription = s => g => s(g)(eventContext)): Unit =
-    concurrentUpdates(dispatches, several, (s, n) => s.mutate(_ + n), actualExecutionContext, subscribe, _.currentValue.get shouldEqual 55)
+    concurrentUpdates(dispatches, several, (s, n) => s.mutate(_ + n), actualExecutionContext, subscribe, eventually { _.currentValue.get shouldEqual 55 })
 
   def concurrentUpdates(dispatches: Int, several: Int, f: (SourceSignal[Int], Int) => Unit, actualExecutionContext: ExecutionContext, subscribe: Signal[Int] => (Int => Unit) => Subscription, additionalAssert: Signal[Int] => Unit = _ => ()): Unit =
     several times {
@@ -307,16 +313,16 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag {
       val received = new AtomicInteger(0)
       val p = Promise[Unit]()
 
-      val subscriber = subscribe(signal) { i =>
+      val _ = subscribe(signal) { i =>
         lastSent = i
         if (received.incrementAndGet() == dispatches + 1) p.trySuccess({})
       }
 
       (1 to dispatches).foreach(n => Future(f(signal, n))(actualExecutionContext))
 
-      await(p.future)
+      Await.result(p.future, 30.seconds)
 
       additionalAssert(signal)
-      signal.currentValue.get shouldEqual lastSent
+      eventually { signal.currentValue.get shouldEqual lastSent }
     }
 }

@@ -19,12 +19,13 @@ package com.waz.zclient.calling
 
 import android.content.Context
 import android.os.Bundle
-import android.support.v7.widget.{CardView, GridLayout}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{FrameLayout, ImageView, TextView}
+import androidx.cardview.widget.CardView
+import androidx.gridlayout.widget.GridLayout
 import com.waz.avs.{VideoPreview, VideoRenderer}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.Participant
 import com.waz.threading.{SerialDispatchQueue, Threading}

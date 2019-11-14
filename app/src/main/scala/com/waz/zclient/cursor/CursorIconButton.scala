@@ -37,9 +37,9 @@ package com.waz.zclient.cursor
 import android.content.Context
 import android.graphics._
 import android.graphics.drawable.{Drawable, StateListDrawable}
-import android.support.v4.content.res.ResourcesCompat
 import android.util.AttributeSet
 import android.view.{HapticFeedbackConstants, MotionEvent, View}
+import androidx.core.content.res.ResourcesCompat
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccentColor
 import com.waz.threading.Threading

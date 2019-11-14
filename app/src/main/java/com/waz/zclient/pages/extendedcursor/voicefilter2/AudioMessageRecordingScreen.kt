@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.Animation
 import android.widget.ViewAnimator
-import androidx.work.impl.Schedulers
 import com.waz.api.AudioEffect
 import com.waz.zclient.KotlinServices
 import com.waz.zclient.R
@@ -42,7 +41,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
 
     private val audioService: AudioService = KotlinServices.audioService
     private val recordFile: File = File(context.cacheDir, "record_temp.pcm")
-    private val compressedRecordFile: File = File(context.cacheDir, "record_temp.mp4")
+    private val compressedRecordFile: File = File(context.cacheDir, "record_temp.m4a")
     private val recordWithEffectFile: File = File(context.cacheDir, "record_with_effect_temp.pcm")
     private val normalizedRecordLevels: MutableList<Float> = mutableListOf()
     private var audioTrack: AudioTrack? = null
@@ -219,7 +218,7 @@ class AudioMessageRecordingScreen @JvmOverloads constructor(context: Context, at
         val pcm = if (recordWithEffectFile.exists()) recordWithEffectFile else recordFile
         compressedRecordFile.delete()
         compressedRecordFile.createNewFile()
-        audioService.recodePcmToMp4(pcm, compressedRecordFile)
+        audioService.recodePcmToM4A(pcm, compressedRecordFile)
         listener?.sendRecording("audio/mp4a-latm", compressedRecordFile)
     }
 

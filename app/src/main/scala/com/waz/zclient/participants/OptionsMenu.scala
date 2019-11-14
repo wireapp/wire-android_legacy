@@ -20,9 +20,9 @@ package com.waz.zclient.participants
 import android.content.Context
 import android.graphics.{Canvas, Rect, RectF}
 import android.os.Bundle
-import android.support.design.widget.BottomSheetDialog
 import android.view.{View, ViewGroup}
 import android.widget.{LinearLayout, TextView}
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.paintcode.WireStyleKit.ResizingBehavior
@@ -134,6 +134,7 @@ object OptionsMenu {
     case R.string.glyph__remove_from_favorites => WireStyleKit.drawFavoritesOn
     case R.string.glyph__move_to_folder => WireStyleKit.drawMoveTo
     case R.string.glyph__remove_from_folder => WireStyleKit.drawRemoveFrom
+    case R.string.glyph__clear => WireStyleKit.drawEraser
 
     case _ => (_, _, _, _) => ()
   }

@@ -18,23 +18,20 @@
 package com.waz.sync.client
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model.UserPermissions.PermissionsMasks
 import com.waz.model._
 import com.waz.sync.client.TeamsClient.TeamMember
-import com.waz.utils.{CirceJSONSupport, JsonDecoder}
+import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.http.{HttpClient, RawBodyDeserializer, Request}
-
-import scala.util.Try
+import com.waz.znet2.http.{HttpClient, Request}
 
 trait TeamsClient {
   def getTeamMembers(id: TeamId): ErrorOrResponse[Seq[TeamMember]]
   def getTeamData(id: TeamId): ErrorOrResponse[TeamData]
   def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]]
   def getTeamMember(teamId: TeamId, userId: UserId): ErrorOrResponse[TeamMember]
+  def deleteTeamConversation(teamId: TeamId, convId: RConvId): ErrorOrResponse[Unit]
 }
 
 class TeamsClientImpl(implicit
@@ -42,8 +39,8 @@ class TeamsClientImpl(implicit
                       httpClient: HttpClient,
                       authRequestInterceptor: AuthRequestInterceptor) extends TeamsClient with CirceJSONSupport {
 
-  import HttpClient.dsl._
   import HttpClient.AutoDerivation._
+  import HttpClient.dsl._
   import TeamsClient._
   import com.waz.threading.Threading.Implicits.Background
 
@@ -77,6 +74,13 @@ class TeamsClientImpl(implicit
       .executeSafe
   }
 
+  override def deleteTeamConversation(teamId: TeamId, convId: RConvId): ErrorOrResponse[Unit] = {
+    Request.Delete(relativePath = teamConversationPath(teamId, convId))
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+  }
+
   private def createPermissionsMasks(permissions: Permissions): PermissionsMasks =
     (permissions.self, permissions.copy)
 
@@ -92,6 +96,8 @@ object TeamsClient {
   def teamPath(id: TeamId): String = s"$TeamsPath/${id.str}"
 
   def memberPath(teamId: TeamId, userId: UserId): String = s"${teamMembersPath(teamId)}/${userId.str}"
+
+  def teamConversationPath(id: TeamId, cid: RConvId): String = s"$TeamsPath/${id.str}/conversations/${cid.str}"
 
   case class TeamMembers(members: Seq[TeamMember])
 

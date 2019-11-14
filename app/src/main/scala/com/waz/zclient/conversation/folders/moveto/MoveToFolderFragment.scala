@@ -20,7 +20,7 @@ package com.waz.zclient.conversation.folders.moveto
 import java.util
 
 import android.os.Bundle
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import android.util.SparseArray
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.{ConvId, FolderData}

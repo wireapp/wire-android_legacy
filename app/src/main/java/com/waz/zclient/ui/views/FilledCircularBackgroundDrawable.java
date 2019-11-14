@@ -22,7 +22,8 @@ import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.ColorInt;
+
+import androidx.annotation.ColorInt;
 
 public class FilledCircularBackgroundDrawable extends Drawable {
     private final int radius;

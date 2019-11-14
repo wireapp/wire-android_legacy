@@ -23,7 +23,7 @@ import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
 import android.os.{Build, Bundle}
-import android.support.v4.app.{Fragment, FragmentTransaction}
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.content.UserPreferences._
 import com.waz.content.{TeamsStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

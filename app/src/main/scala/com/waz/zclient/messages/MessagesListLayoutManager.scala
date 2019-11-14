@@ -18,7 +18,7 @@
 package com.waz.zclient.messages
 
 import android.content.Context
-import android.support.v7.widget.{LinearLayoutManager, LinearSmoothScroller, RecyclerView}
+import androidx.recyclerview.widget.{LinearLayoutManager, LinearSmoothScroller, RecyclerView}
 
 class MessagesListLayoutManager(context: Context, orientation: Int, reverseLayout: Boolean) extends LinearLayoutManager(context, orientation, reverseLayout) {
 

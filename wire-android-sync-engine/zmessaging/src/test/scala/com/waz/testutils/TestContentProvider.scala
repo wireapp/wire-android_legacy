@@ -54,7 +54,7 @@ class TestResourceContentProvider(val authority: String = "com.waz.testresources
   mimeMap.addExtensionMimeTypMapping("png", "image/png")
   mimeMap.addExtensionMimeTypMapping("jpg", "image/jpg")
   mimeMap.addExtensionMimeTypMapping("mp4", Mime.Video.MP4.str)
-  mimeMap.addExtensionMimeTypMapping("m4a", Mime.Audio.MP4.str)
+  mimeMap.addExtensionMimeTypMapping("m4a", Mime.Audio.M4A.str)
 
   case class Resource(uri: URI, mime: Mime, size: Long) {
     def inputStream = getClass.getResourceAsStream(uri.getPath)

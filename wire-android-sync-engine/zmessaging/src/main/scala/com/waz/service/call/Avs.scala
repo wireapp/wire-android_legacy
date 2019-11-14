@@ -23,6 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.otr.ClientId
+import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.Calling._
 import com.waz.threading.SerialDispatchQueue
 import com.waz.utils.jna.{Size_t, Uint32_t}
@@ -144,16 +145,16 @@ class AvsImpl() extends Avs with DerivedLogTag {
     )
 
     callingReady.future.map { _ =>
-      Calling.wcall_set_group_changed_handler(wCall, new GroupChangedHandler {
-        override def onGroupChanged(convId: String, data: String, arg: Pointer): Unit = {
-          val members = ParticipantsChangeDecoder.decode(data) match {
-            case Some(participantsChange) => participantsChange.members.map(_.userid).toSet
-            case None                     => Set.empty[UserId]
+      val participantChangedHandler = new ParticipantChangedHandler {
+        override def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit = {
+          ParticipantsChangeDecoder.decode(data).fold(()) { participantsChange =>
+            val participants = participantsChange.members.map(m => Participant(m.userid, m.clientid)).toSet
+            cs.onParticipantsChanged(RConvId(convId), participants)
           }
-
-          cs.onGroupChanged(RConvId(convId), members)
         }
-      })
+      }
+
+      Calling.wcall_set_participant_changed_handler(wCall, participantChangedHandler, arg = null)
       wCall
     }
   }
@@ -163,7 +164,6 @@ class AvsImpl() extends Avs with DerivedLogTag {
       error(l"Tried to perform action on avs after it failed to initialise", err)
       onFailure
   }
-
 
   private def withAvs(f: => Unit): Future[Unit] =
     withAvsReturning(f, {})

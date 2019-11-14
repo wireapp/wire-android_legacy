@@ -23,12 +23,13 @@ import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO,
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
-import android.support.annotation.Nullable
-import android.support.v7.widget.{ActionMenuView, LinearLayoutManager, RecyclerView, Toolbar}
+import androidx.annotation.Nullable
 import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
+import androidx.appcompat.widget.{ActionMenuView, Toolbar}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.ErrorType
 import com.waz.content.GlobalPreferences
 import com.waz.model.ConversationData.ConversationType
@@ -103,6 +104,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val accountsController     = inject[UserAccountsController]
   private lazy val globalPrefs            = inject[GlobalPreferences]
   private lazy val replyController        = inject[ReplyController]
+  private lazy val accentColor            = inject[Signal[AccentColor]]
 
   //TODO remove use of old java controllers
   private lazy val globalLayoutController     = inject[IGlobalLayoutController]
@@ -124,14 +126,14 @@ class ConversationFragment extends FragmentHelper {
   private var assetIntentsManager: Option[AssetIntentsManager] = None
 
   private lazy val loadingIndicatorView = returning(view[LoadingIndicatorView](R.id.lbv__conversation__loading_indicator)) { vh =>
-    inject[Signal[AccentColor]].map(_.color)(c => vh.foreach(_.setColor(c)))
+    accentColor.map(_.color)(c => vh.foreach(_.setColor(c)))
   }
 
 
   private var containerPreview: ViewGroup = _
   private lazy val cursorView = returning(view[CursorView](R.id.cv__cursor)) { vh =>
     mentionCandidatesAdapter.onUserClicked.onUi { info =>
-      vh.foreach(v => v.accentColor.head.foreach { ac =>
+      vh.foreach(v => accentColor.head.foreach { ac =>
         v.createMention(info.id, info.name, v.cursorEditText, v.cursorEditText.getSelectionStart, ac.color)
       })
     }
@@ -141,7 +143,7 @@ class ConversationFragment extends FragmentHelper {
 
   private var audioMessageRecordingView: AudioMessageRecordingView = _
   private lazy val extendedCursorContainer = returning(view[ExtendedCursorContainer](R.id.ecc__conversation)) { vh =>
-    inject[Signal[AccentColor]].map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
+    accentColor.map(_.color).onUi(c => vh.foreach(_.setAccentColor(c)))
   }
   private var toolbarTitle: TextView = _
   private lazy val listView = view[MessagesListView](R.id.messages_list_view)
@@ -612,7 +614,7 @@ class ConversationFragment extends FragmentHelper {
           }
 
           override def sendRecording(mime: String, audioFile: File): Unit = {
-            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.mp4", Content.File(Mime.Audio.MP4, audioFile))
+            val content = ContentForUpload(s"audio_record_${System.currentTimeMillis()}.m4a", Content.File(Mime.Audio.M4A, audioFile))
             convController.sendAssetMessage(content, getActivity, None)
             extendedCursorContainer.foreach(_.close(true))
           }

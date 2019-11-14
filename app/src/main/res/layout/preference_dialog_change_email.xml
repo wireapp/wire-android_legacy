@@ -28,14 +28,14 @@
             tools:ignore="UnusedAttribute"
     >
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til__preferences__email"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:layout_margin="@dimen/prefs__dialog__padding"
         >
 
-        <android.support.v7.widget.AppCompatEditText
+        <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/acet__preferences__email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,6 +43,6 @@
             android:inputType="textEmailAddress"
             />
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
 </ScrollView>

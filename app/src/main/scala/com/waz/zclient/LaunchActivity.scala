@@ -20,7 +20,7 @@ package com.waz.zclient
 
 import android.app.AlertDialog
 import android.content.{Context, DialogInterface, Intent}
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
@@ -76,7 +76,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     })
 
     builder.setCancelable(false)
-    builder.create().show()
+    if (!isFinishing())  builder.create().show()
 
     // QA needs to be able to switch backends via intents. Any changes to the backend
     // preference while the dialog is open will be treated as a user selection.

@@ -17,18 +17,21 @@
  */
 package com.waz.service.teams
 
+import com.waz.api.ErrorType
+import com.waz.api.impl.ErrorResponse
+import com.waz.content.UserPreferences.{CopyPermissions, SelfPermissions}
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.SearchKey
-import com.waz.service.conversation.ConversationsContentUpdater
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
+import com.waz.service.{ErrorsService, SearchKey}
 import com.waz.specs.AndroidFreeSpec
+import com.waz.sync.client.TeamsClient
+import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.TestUserPreferences
 import com.waz.utils.events.EventStream
-import com.waz.content.UserPreferences.{CopyPermissions, SelfPermissions}
-import com.waz.sync.client.TeamsClient
-import com.waz.sync.client.TeamsClient.TeamMember
+
 import scala.collection.breakOut
 import scala.concurrent.Future
 
@@ -46,8 +49,10 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   val convsStorage = mock[ConversationStorage]
   val convMembers =  mock[MembersStorage]
   val convsContent = mock[ConversationsContentUpdater]
+  val convsService = mock[ConversationsService]
   val sync =         mock[SyncServiceHandle]
   val syncRequests = mock[SyncRequestService]
+  val errorsService = mock[ErrorsService]
   val userPrefs =    new TestUserPreferences
 
   (sync.syncTeam _).stubs(*).returning(Future.successful(SyncId()))
@@ -232,8 +237,56 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     result(userPrefs(CopyPermissions).apply()) shouldEqual 0
   }
 
+  feature("Delete group conversation") {
+    scenario("Delete group conversation should delete conversation from storage") {
+      //GIVEN
+      val teamId = TeamId()
+      val rConvId = RConvId()
+      val service = createService
+
+      (sync.deleteGroupConversation _).expects(teamId, rConvId).anyNumberOfTimes().onCall { (_, _) =>
+        Future.successful(SyncId())
+      }
+
+      //EXPECT
+      (convsService.deleteConversation _).expects(rConvId).once().returning(Future.successful({}))
+
+      //WHEN
+      result(service.deleteGroupConversation(teamId, rConvId))
+    }
+
+    scenario("When delete group conversation request returns error, post error to ui") {
+      //GIVEN
+      val teamId = TeamId()
+      val convId = ConvId()
+      val rConvId = RConvId()
+      val conversationData = ConversationData(convId, rConvId)
+      val service = createService
+
+      (convsContent.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+        .returning(Future.successful(Some(conversationData)))
+      (convsService.deleteConversation _).expects(*).anyNumberOfTimes().returning(Future.successful({}))
+
+      val errorResponse = ErrorResponse(404, message = "not found", label = "")
+
+      (sync.deleteGroupConversation _).expects(teamId, rConvId).anyNumberOfTimes().onCall { (_, rId) =>
+        service.onGroupConversationDeleteError(errorResponse, rId)
+        Future.successful(SyncId())
+      }
+
+      //EXPECT
+      (errorsService.addErrorWhenActive _).expects(where { errorData: ErrorData =>
+        errorData.errType == ErrorType.CANNOT_DELETE_GROUP_CONVERSATION && errorData.convId.contains(convId)
+      }).once()
+
+      //WHEN
+      result(service.deleteGroupConversation(teamId, rConvId))
+    }
+  }
+
   def createService = {
-    new TeamsServiceImpl(selfUser, teamId, teamStorage, userStorage, convsStorage, convMembers, convsContent, sync, syncRequests, userPrefs)
+    new TeamsServiceImpl(selfUser, teamId, teamStorage, userStorage, convsStorage, convMembers, convsContent, convsService,
+      sync, syncRequests, userPrefs, errorsService)
   }
 
 }

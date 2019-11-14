@@ -22,7 +22,6 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.{Build, Bundle}
 import android.provider.Settings
-import android.support.v4.app.{Fragment, FragmentTransaction}
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
@@ -38,6 +37,7 @@ import com.waz.zclient.preferences.PreferencesActivity
 import com.waz.zclient.preferences.dialogs.SoundLevelDialog
 import com.waz.zclient.utils.{BackStackKey, RichView, RingtoneUtils}
 import OptionsView._
+import androidx.fragment.app.{Fragment, FragmentTransaction}
 import com.waz.model.UserId
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.AndroidNotificationsManager

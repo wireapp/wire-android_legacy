@@ -28,7 +28,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.log.LogSE._
 import com.waz.model.AccountData.Password
 import com.waz.model.ManagedBy.ManagedBy
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model.UserInfo.ProfilePicture
 import com.waz.model.messages.media.{ArtistData, TrackData}
 import com.waz.model._
@@ -245,8 +245,8 @@ trait LogShowInstancesSE {
       l"""
          |CallInfo(account: ${selfParticipant.userId} | clientId: ${selfParticipant.clientId} | convId: $convId | caller: $caller | state: $state | prevState: $prevState | isCbrEnabled: $isCbrEnabled
          |  isGroup: $isGroup | shouldRing: $shouldRing |  muted: $muted | startedAsVideoCall: $startedAsVideoCall | videoSendState: $videoSendState
-         |  others: $others | maxParticipants: $maxParticipants |
-           |  startTime: $startTime | joinedTime: $joinedTime | estabTime: $estabTime | endTime: $endTime
+         |  otherParticipants: $otherParticipants | maxParticipants: $maxParticipants |
+         |  startTime: $startTime | joinedTime: $joinedTime | estabTime: $estabTime | endTime: $endTime
          |  endReason: ${endReason.map(r => showString(reasonString(r)))} | wasVideoToggled: $wasVideoToggled | hasOutstandingMsg: ${outstandingMsg.isDefined})
         """.stripMargin
     }

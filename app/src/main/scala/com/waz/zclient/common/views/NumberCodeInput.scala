@@ -25,7 +25,7 @@ import android.text.{Editable, TextWatcher}
 import android.util.AttributeSet
 import android.view.View.OnTouchListener
 import android.view._
-import android.widget._
+import android.widget.{FrameLayout, LinearLayout, ProgressBar}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.ui.cursor.CursorEditText

@@ -21,15 +21,16 @@ package com.waz.zclient.usersearch
 import android.Manifest.permission.READ_CONTACTS
 import android.content.{DialogInterface, Intent}
 import android.os.Bundle
-import android.support.design.widget.TabLayout
-import android.support.design.widget.TabLayout.OnTabSelectedListener
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView, Toolbar}
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
+import androidx.appcompat.app.AlertDialog
 import android.view._
 import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
+import android.widget.{CheckBox, CompoundButton, ImageView, RelativeLayout, TextView}
 import android.widget.TextView.OnEditorActionListener
-import android.widget._
+import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._

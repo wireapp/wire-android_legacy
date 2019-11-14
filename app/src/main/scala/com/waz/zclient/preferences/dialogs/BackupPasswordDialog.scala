@@ -20,12 +20,12 @@ package com.waz.zclient.preferences.dialogs
 import android.app.Dialog
 import android.content.DialogInterface.BUTTON_POSITIVE
 import android.os.Bundle
-import android.support.design.widget.TextInputLayout
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
+import com.google.android.material.textfield.TextInputLayout
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
 import com.waz.utils.returning

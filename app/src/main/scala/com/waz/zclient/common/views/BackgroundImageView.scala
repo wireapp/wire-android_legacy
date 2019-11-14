@@ -20,7 +20,7 @@ package com.waz.zclient.common.views
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.ImageView
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
 import com.waz.zclient.ViewHelper

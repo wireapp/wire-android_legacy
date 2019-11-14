@@ -19,7 +19,7 @@ package com.waz.utils
 
 import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
 
-import android.support.v4.util.LruCache
+import androidx.collection.LruCache
 import com.waz.content.Database
 import com.waz.db.DaoIdOps
 import com.waz.log.BasicLogging.LogTag

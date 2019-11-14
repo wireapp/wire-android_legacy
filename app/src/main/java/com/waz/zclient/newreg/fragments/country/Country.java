@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.newreg.fragments.country;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class Country implements Comparable<Country> {
     private String abbreviation;

@@ -20,8 +20,8 @@ package com.waz.background
 import java.util.UUID
 import java.util.concurrent.{TimeUnit, TimeoutException}
 
-import android.arch.lifecycle.{LiveData, Observer}
 import android.content.Context
+import androidx.lifecycle.{LiveData, Observer}
 import androidx.work._
 import com.waz.api.SyncState
 import com.waz.api.impl.ErrorResponse

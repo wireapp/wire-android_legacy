@@ -20,13 +20,15 @@ package com.waz.zclient.pages.main.profile.views;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.support.annotation.LayoutRes;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.LayoutRes;
+
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.profile.validator.Validator;
 import com.waz.zclient.ui.animation.HeightEvaluator;

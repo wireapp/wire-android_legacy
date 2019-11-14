@@ -24,7 +24,7 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.Paint
 import android.net.Uri
-import android.support.v4.content.ContextCompat.startActivity
+import androidx.core.content.ContextCompat.startActivity
 import com.waz.zclient.R
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.commonmark.*

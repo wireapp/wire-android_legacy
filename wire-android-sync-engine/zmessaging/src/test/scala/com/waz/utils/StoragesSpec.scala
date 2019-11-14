@@ -17,7 +17,7 @@
  */
 package com.waz.utils
 
-import android.support.v4.util.LruCache
+import androidx.collection.LruCache
 import com.waz.ZIntegrationSpec
 import com.waz.utils.StorageTestData._
 import org.junit.runner.RunWith

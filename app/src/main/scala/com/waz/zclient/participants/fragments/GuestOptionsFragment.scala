@@ -19,10 +19,10 @@ package com.waz.zclient.participants.fragments
 
 import android.content.{ClipData, ClipboardManager, Context, DialogInterface}
 import android.os.Bundle
-import android.support.v4.app.ShareCompat
-import android.support.v7.widget.SwitchCompat
+import androidx.core.app.ShareCompat
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{CompoundButton, FrameLayout, TextView}
+import androidx.appcompat.widget.SwitchCompat
 import com.waz.service.ZMessaging
 import com.waz.service.tracking.{TrackingEvent, TrackingService}
 import com.waz.threading.Threading

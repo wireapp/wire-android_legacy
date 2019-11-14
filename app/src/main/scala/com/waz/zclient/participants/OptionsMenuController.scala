@@ -17,11 +17,11 @@
  */
 package com.waz.zclient.participants
 
-import android.support.annotation.StringRes
+import androidx.annotation.StringRes
 import com.waz.log.LogShow.SafeToLog
 import com.waz.utils.events.{SourceStream, _}
-import com.waz.zclient.{R, WireApplication}
 import com.waz.zclient.participants.OptionsMenuController._
+import com.waz.zclient.{R, WireApplication}
 
 trait OptionsMenuController {
   val title: Signal[Option[String]]
@@ -44,6 +44,12 @@ object OptionsMenuController {
     def this(@StringRes titleId: Int, iconId: Option[Int]) = this(
       WireApplication.APP_INSTANCE.getString(titleId),
       iconId
+    )
+
+    def this(@StringRes titleId: Int, iconId: Option[Int], colorId: Option[Int]) = this(
+      WireApplication.APP_INSTANCE.getString(titleId),
+      iconId,
+      colorId
     )
 
     override def toString: String = this.getClass.getSimpleName

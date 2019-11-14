@@ -22,15 +22,15 @@ import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
-import android.support.annotation.RawRes
-import android.support.v4.app.NotificationCompat
+import androidx.core.app.NotificationCompat
 import android.text.TextUtils
+import androidx.annotation.RawRes
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.NotificationsHandler.NotificationType
 import com.waz.api.NotificationsHandler.NotificationType._
 import com.waz.content.{UserPreferences, _}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model._
 import com.waz.service.push.NotificationUiController
 import com.waz.service.{AccountsService, UiLifeCycle}

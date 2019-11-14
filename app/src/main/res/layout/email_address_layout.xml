@@ -25,7 +25,7 @@
                 android:paddingStart="@dimen/wire__padding__regular"
                 android:paddingEnd="@dimen/wire__padding__regular">
 
-    <android.support.v7.widget.AppCompatCheckBox
+    <androidx.appcompat.widget.AppCompatCheckBox
         android:id="@+id/check_box"
         android:layout_width="@dimen/share_extension__row__checkbox_size"
         android:layout_height="@dimen/share_extension__row__checkbox_size"

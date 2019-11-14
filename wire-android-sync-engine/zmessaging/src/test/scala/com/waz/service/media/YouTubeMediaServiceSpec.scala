@@ -60,7 +60,7 @@ class YouTubeMediaServiceSpec extends AndroidFreeSpec {
     val previewBytes = Array.emptyByteArray
     val contentForUpload = ContentForUpload(trackTitle, Content.Bytes(mime, previewBytes))
     val previewAsset = UploadAsset(UploadAssetId("previewId"), None, trackTitle, Sha256.Empty,
-      MD5.apply(previewBytes), mime, NotReady, 0, 0, retention, public = false,
+      MD5.apply(previewBytes), mime, PreviewNotReady, 0, 0, retention, public = false,
       AES_CBC_Encryption.random, None, DetailsNotReady, UploadAssetStatus.NotStarted, None)
 
     (client.loadVideo _).expects(videoId).once().returning(Future.successful(Right(media)))

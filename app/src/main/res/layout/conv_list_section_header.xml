@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2019 Wire Swiss GmbH
@@ -23,10 +22,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="@dimen/conversation_list__row__height"
+    android:layout_marginStart="@dimen/wire__padding__big"
     android:orientation="horizontal"
     android:paddingTop="@dimen/wire__padding__20"
     android:paddingBottom="@dimen/wire__padding__20"
-    android:layout_marginStart="@dimen/wire__padding__big"
+    tools:background="@color/white_32"
     tools:parentTag="android.widget.LinearLayout">
 
     <ImageView
@@ -43,10 +43,21 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|start"
         android:layout_marginStart="@dimen/wire__padding__8"
-        app:w_font="@string/wire__typeface__light"
+        android:layout_weight="1"
+        android:gravity="start"
+        android:textAllCaps="true"
         android:textColor="@color/text__primary_dark"
         android:textSize="@dimen/wire__text_size__small"
-        android:textAllCaps="true"
+        app:w_font="@string/wire__typeface__light"
         tools:text="Title" />
+
+    <com.waz.zclient.conversationlist.views.ConversationBadge
+        android:id="@+id/folder_badge_text"
+        style="@style/ConversationBadge"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/wire__padding__8"
+        android:visibility="gone"
+        tools:background="@drawable/conversation_badge"
+        tools:visibility="visible" />
 
 </merge>

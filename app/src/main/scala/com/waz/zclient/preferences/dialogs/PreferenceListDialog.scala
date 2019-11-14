@@ -20,8 +20,8 @@ package com.waz.zclient.preferences.dialogs
 import android.content.DialogInterface
 import android.content.DialogInterface.OnClickListener
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 import com.waz.zclient.FragmentHelper
 
 abstract class PreferenceListDialog extends DialogFragment with FragmentHelper {

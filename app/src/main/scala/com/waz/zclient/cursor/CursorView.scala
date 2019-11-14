@@ -18,14 +18,15 @@
 package com.waz.zclient.cursor
 
 import android.content.Context
-import android.graphics.{Color, Rect}
 import android.graphics.drawable.ColorDrawable
+import android.graphics.{Color, Rect}
+import android.text.InputType._
 import android.text.method.TransformationMethod
-import android.text.{Editable, Spanned, TextUtils, TextWatcher}
+import android.text._
 import android.util.AttributeSet
 import android.view.View.OnClickListener
 import android.view._
-import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.EditorInfo._
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{EditText, LinearLayout, TextView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -35,12 +36,9 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
-import com.waz.zclient.common.views.TextViewHelpers.TextViewFlagsImprovement
-import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.conversation.{ConversationController, ReplyController}
 import com.waz.zclient.cursor.CursorController.{EnteredTextSource, KeyboardState}
 import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
-import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor.CursorEditText.OnBackspaceListener
 import com.waz.zclient.ui.cursor._
@@ -50,7 +48,7 @@ import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils._
 import com.waz.zclient.views.AvailabilityView
-import com.waz.zclient.{ClipboardUtils, R, ViewHelper}
+import com.waz.zclient.{R, ViewHelper}
 
 class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
   extends LinearLayout(context, attrs, defStyleAttr)
@@ -63,12 +61,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   import CursorView._
   import Threading.Implicits.Ui
 
-
-  val clipboard                    = inject[ClipboardUtils]
-  val layoutController             = inject[IGlobalLayoutController]
-  val accentColor                  = inject[Signal[AccentColor]]
-  val messages                     = inject[MessagesController]
-  private val controller           = inject[CursorController]
+  private lazy val accentColor     = inject[Signal[AccentColor]]
+  private lazy val controller      = inject[CursorController]
   private lazy val replyController = inject[ReplyController]
 
   setOrientation(LinearLayout.VERTICAL)
@@ -211,6 +205,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
     override def afterTextChanged(editable: Editable): Unit = {}
   })
+
   cursorEditText.setBackspaceListener(new OnBackspaceListener {
 
     //XXX: This is a bit ugly...
@@ -245,8 +240,8 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setOnEditorActionListener(new OnEditorActionListener {
     override def onEditorAction(textView: TextView, actionId: Int, event: KeyEvent): Boolean = {
-      if (actionId == EditorInfo.IME_ACTION_SEND ||
-        (cursorEditText.getImeOptions == EditorInfo.IME_ACTION_SEND &&
+      if (actionId == IME_ACTION_SEND ||
+        (cursorEditText.getImeOptions == IME_ACTION_SEND &&
           event != null &&
           event.getKeyCode == KeyEvent.KEYCODE_ENTER &&
           event.getAction == KeyEvent.ACTION_DOWN)) {
@@ -272,14 +267,17 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   cursorEditText.setFocusableInTouchMode(true)
 
-  cursorEditText.setPrivateModeFromPreferences()
+  cursorEditText.addInputType(TYPE_TEXT_FLAG_MULTI_LINE | TYPE_CLASS_TEXT | TYPE_TEXT_VARIATION_NORMAL)
 
-  controller.sendButtonEnabled.onUi { enabled =>
-    if (enabled) {
-      cursorEditText.addImeOption(EditorInfo.IME_ACTION_SEND)
-    } else {
-      cursorEditText.removeImeOption(EditorInfo.IME_ACTION_SEND)
-    }
+  controller.keyboardPrivateMode.onUi(cursorEditText.setPrivateMode)
+
+  controller.sendButtonEnabled.onUi {
+    case true =>
+      cursorEditText.addImeOption(IME_ACTION_NONE)
+      cursorEditText.removeImeOption(IME_ACTION_SEND)
+    case false =>
+      cursorEditText.removeImeOption(IME_ACTION_NONE)
+      cursorEditText.addImeOption(IME_ACTION_SEND)
   }
 
   accentColor.map(_.color).onUi(cursorEditText.setAccentColor)

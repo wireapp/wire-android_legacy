@@ -26,7 +26,7 @@ import android.widget.{ImageView, LinearLayout}
 import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.resource.bitmap.{CenterCrop, CircleCrop}
 import com.bumptech.glide.request.RequestOptions
-import com.waz.model.UserData.Picture
+import com.waz.model.Picture
 import com.waz.model.{ConvId, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
@@ -71,7 +71,7 @@ object BlockedUserProfileFragment {
       ts += new CenterCrop()
       ts += new CircleCrop()
     }
-    r.transforms(transformations.result():_*)
+    r.transform(transformations.result():_*)
   }
 }
 

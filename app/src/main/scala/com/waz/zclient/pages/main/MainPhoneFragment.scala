@@ -19,7 +19,7 @@ package com.waz.zclient.pages.main
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.v4.app.FragmentManager
+import androidx.fragment.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
@@ -325,6 +325,7 @@ class MainPhoneFragment extends FragmentHelper
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
            CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
+      case CANNOT_DELETE_GROUP_CONVERSATION => //Handled in ConversationListManagerFragment
       case _ =>
         LogUI.error(l"Unexpected error ${error.errType}")
     }

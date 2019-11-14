@@ -17,8 +17,7 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
-import android.support.v7.util.DiffUtil
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.{DiffUtil, RecyclerView}
 import android.view.{View, ViewGroup}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, FolderId}
@@ -71,7 +70,7 @@ abstract class ConversationListAdapter
 
   override def getItemId(position: Int): Long = items(position) match {
     case Item.IncomingRequests(first, _)  => first.str.hashCode
-    case Item.Header(id, _, _)            => id.str.hashCode
+    case Item.Header(id, _, _, _)         => id.str.hashCode
     case Item.Conversation(data, section) => (data.id.str + section.getOrElse("")).hashCode
   }
 
@@ -126,7 +125,7 @@ object ConversationListAdapter {
   }
 
   object Item {
-    case class Header(id: FolderId, title: String, isExpanded: Boolean) extends Item {
+    case class Header(id: FolderId, title: String, isExpanded: Boolean, unreadCount: Int = 0) extends Item {
       override val contentDescription: String = {
         s"$title (${if (isExpanded) "expanded" else "collapsed"})"
       }
@@ -180,6 +179,7 @@ object ConversationListAdapter {
 
     def bind(item: Item.Header, isFirst: Boolean): Unit = {
       row.setTitle(item.title)
+      row.setUnreadCount(item.unreadCount)
       row.setIsExpanded(item.isExpanded)
       row.setContentDescription(item.contentDescription)
       row.setIsFirstHeader(isFirst)
@@ -241,8 +241,8 @@ object ConversationListAdapter {
 
     override def areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
       (oldList(oldItemPosition), newList(newItemPosition)) match {
-        case (Header(_, title, isExpanded), Header(_, newTitle, newIsExpanded)) =>
-          title == newTitle && isExpanded && newIsExpanded
+        case (Header(_, title, isExpanded, oldCount), Header(_, newTitle, newIsExpanded, newCount)) =>
+          title == newTitle && isExpanded && newIsExpanded && oldCount == newCount
         case (Conversation(data, _), Conversation(newData, _)) =>
           data == newData
         case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>

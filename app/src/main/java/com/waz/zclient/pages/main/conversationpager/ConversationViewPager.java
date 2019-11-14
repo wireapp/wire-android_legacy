@@ -18,7 +18,7 @@
 package com.waz.zclient.pages.main.conversationpager;
 
 import android.content.Context;
-import android.support.v4.view.ViewPager;
+import androidx.viewpager.widget.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import com.waz.zclient.ui.animation.interpolators.penner.Expo;

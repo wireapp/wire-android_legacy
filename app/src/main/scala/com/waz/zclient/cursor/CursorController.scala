@@ -25,6 +25,7 @@ import android.view.{MotionEvent, View}
 import android.widget.Toast
 import com.google.android.gms.common.{ConnectionResult, GoogleApiAvailability}
 import com.waz.api.NetworkMode
+import com.waz.content.GlobalPreferences.IncognitoKeyboardEnabled
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -48,6 +49,7 @@ import com.waz.zclient.utils.ContextUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DraftMap
 import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.BuildConfig
 
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
@@ -59,11 +61,12 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   import CursorController._
   import Threading.Implicits.Ui
 
-  val zms                     = inject[Signal[ZMessaging]]
-  val conversationController  = inject[ConversationController]
-  lazy val convListController = inject[ConversationListController]
-  lazy val callController     = inject[CallController]
-  private lazy val replyController = inject[ReplyController]
+  private lazy val zms                     = inject[Signal[ZMessaging]]
+  private lazy val conversationController  = inject[ConversationController]
+  private lazy val convListController      = inject[ConversationListController]
+  private lazy val callController          = inject[CallController]
+  private lazy val replyController         = inject[ReplyController]
+  private lazy val userPrefs               = inject[Signal[UserPreferences]]
 
   val conv = conversationController.currentConv
 
@@ -106,9 +109,18 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   val onEphemeralExpirationSelected = EventStream[Option[FiniteDuration]]()
 
   val sendButtonEnabled: Signal[Boolean] = for {
-    sendPref <- zms.map(_.userPrefs).flatMap(_.preference(UserPreferences.SendButtonEnabled).signal)
-    emoji <- emojiKeyboardVisible
+    prefs    <- userPrefs
+    sendPref <- prefs(UserPreferences.SendButtonEnabled).signal
+    emoji    <- emojiKeyboardVisible
   } yield emoji || sendPref
+
+  val keyboardPrivateMode =
+    if(BuildConfig.FORCE_PRIVATE_KEYBOARD) Signal.const(true) else {
+      for {
+        prefs <- userPrefs
+        mode  <- prefs(IncognitoKeyboardEnabled).signal
+      } yield mode
+    }
 
   val enteredTextEmpty = enteredText.map(_._1.isEmpty).orElse(Signal const true)
   val sendButtonVisible = Signal(emojiKeyboardVisible, enteredTextEmpty, sendButtonEnabled, isEditingMessage) map {
@@ -323,7 +335,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
       color <- accentColorController.accentColor.head
 
       // Check if the user was asked before
-      preferences <- zms.map(_.userPrefs).head
+      preferences <- userPrefs.head
       askedForLocationPermissionPreference = preferences.preference(UserPreferences.AskedForLocationPermission)
       askedForLocation <- askedForLocationPermissionPreference.apply()
 

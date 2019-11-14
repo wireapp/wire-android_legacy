@@ -19,7 +19,7 @@ package com.waz.zclient.usersearch
 
 import android.content.Context
 import android.graphics.Rect
-import android.support.v7.widget.{LinearLayoutManager, RecyclerView}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag

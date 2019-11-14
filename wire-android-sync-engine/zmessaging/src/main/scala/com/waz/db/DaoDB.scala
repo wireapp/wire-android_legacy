@@ -43,6 +43,7 @@ class DaoDB(context:    Context,
       c.moveToNext()
       verbose(l"PRAGMA secure_delete set to: ${c.getString(0).toInt == 1}")
     }
+    c.close()
   }
 
   override def onOpen(db: SQLiteDatabase) = {
@@ -57,6 +58,7 @@ class DaoDB(context:    Context,
       c.moveToNext()
       verbose(l"PRAGMA wal_checkpoint performed. Busy?: ${c.getInt(0) == 1}. WAL pages modified: ${c.getInt(1)}. WAL pages moved back: ${c.getInt(2)}")
     }
+    c.close()
   }
 
   override def onCreate(db: SQLiteDatabase): Unit = {
