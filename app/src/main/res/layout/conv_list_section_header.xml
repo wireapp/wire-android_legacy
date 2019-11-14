@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2019 Wire Swiss GmbH
@@ -23,10 +22,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="@dimen/conversation_list__row__height"
+    android:layout_marginStart="@dimen/wire__padding__big"
     android:orientation="horizontal"
     android:paddingTop="@dimen/wire__padding__20"
     android:paddingBottom="@dimen/wire__padding__20"
-    android:layout_marginStart="@dimen/wire__padding__big"
+    tools:background="@color/white_32"
     tools:parentTag="android.widget.LinearLayout">
 
     <ImageView
@@ -35,36 +35,29 @@
         android:layout_height="10dp"
         android:layout_gravity="center_vertical|start"
         android:src="@drawable/icon_arrow_down_white"
-        android:tint="@color/text__primary_dark"/>
+        android:tint="@color/text__primary_dark" />
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/conv_list_section_textview_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|start"
-        android:gravity="start"
         android:layout_marginStart="@dimen/wire__padding__8"
         android:layout_weight="1"
-        app:w_font="@string/wire__typeface__light"
+        android:gravity="start"
+        android:textAllCaps="true"
         android:textColor="@color/text__primary_dark"
         android:textSize="@dimen/wire__text_size__small"
-        android:textAllCaps="true"
-        tools:text="Title"/>
-
-    <com.waz.zclient.ui.text.TypefaceTextView
-        android:id="@+id/folder_badge_text"
-        style="?startUiUserRowSubLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|end"
-        android:gravity="end"
-        android:layout_marginStart="@dimen/wire__padding__8"
         app:w_font="@string/wire__typeface__light"
-        android:textColor="@color/text__primary_dark_40"
-        android:textSize="@dimen/wire__text_size__small"
-        android:paddingStart="@dimen/conversation_list__badge__text_padding"
-        android:paddingEnd="@dimen/conversation_list__badge__text_padding"
-        android:layout_marginEnd="@dimen/wire__padding__regular"
+        tools:text="Title" />
+
+    <com.waz.zclient.conversationlist.views.ConversationBadge
+        android:id="@+id/folder_badge_text"
+        style="@style/ConversationBadge"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="@dimen/wire__padding__8"
         android:visibility="gone"
-        />
+        tools:background="@drawable/conversation_badge"
+        tools:visibility="visible" />
+
 </merge>
