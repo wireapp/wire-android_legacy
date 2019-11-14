@@ -7,12 +7,6 @@ apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 ext {
     majorVersion = "3.42."
 
