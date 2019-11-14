@@ -365,7 +365,7 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$versions.playServices"
     implementation "com.google.android.gms:play-services-location:$versions.playServices"
     implementation "com.google.android.gms:play-services-gcm:$versions.playServices"
-    implementation ('com.google.firebase:firebase-messaging:20.0.1') {
+    implementation ('com.google.firebase:firebase-messaging:19.0.0') {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
