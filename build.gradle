@@ -44,6 +44,11 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://dl.bintray.com/wire-android/releases" }
+        maven { url "https://dl.bintray.com/wire-android/snapshots" }
+        maven { url "https://dl.bintray.com/wire-android/third-party" }
+        maven { url 'https://maven.google.com' }
+        mavenCentral()
     }
 }
 
@@ -58,6 +63,7 @@ task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
         "**/*target*",
         "**/*gen*",
         "**/*generated*",
+        ".idea/**"
     ])
 }
 licenseFormat.dependsOn licenseFormatAndroid
@@ -157,17 +163,6 @@ def prepareCustomizationEnvironment() {
     }
 
     return new BuildtimeConfiguration(defaultConfig, customDirPath)
-}
-
-allprojects {
-    repositories {
-        mavenLocal()
-        maven { url "https://dl.bintray.com/wire-android/releases" }
-        maven { url "https://dl.bintray.com/wire-android/snapshots" }
-        maven { url "https://dl.bintray.com/wire-android/third-party" }
-        maven { url 'https://maven.google.com' }
-        mavenCentral()
-    }
 }
 
 task ci(dependsOn: [
