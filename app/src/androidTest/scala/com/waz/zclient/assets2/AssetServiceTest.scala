@@ -61,7 +61,7 @@ class AssetServiceTest {
   val uriHelperImpl = new AndroidUriHelper(getContext)
   val detailsService = new AssetDetailsServiceImpl(uriHelperImpl)(getContext, global)
   val contentCache = new AssetContentCacheImpl(cacheDirectory = lruCacheDirectory, directorySizeThreshold = 1024 * 1024 * 200L, sizeCheckingInterval = 30.seconds)(Threading.BlockingIO, EventContext.Global)
-  val uploadContentCache = new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.BlockingIO)
+  val uploadContentCache = new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.IO)
   val transformationsService = new AssetTransformationsServiceImpl(List(new ImageDownscalingCompressing(new AndroidImageRecoder)))
   val restrictionsService = new AssetRestrictionsServiceImpl(uriHelperImpl, None)
   val previewService = new AssetPreviewServiceImpl()(getContext, global)
@@ -97,9 +97,9 @@ class AssetServiceTest {
     val context = InstrumentationRegistry.getTargetContext
     testDB = new TestSingleDaoDb(context, DatabaseName, AssetDao).getWritableDatabase
 
-    downloadAssetStorage = new assets2.DownloadAssetStorageImpl(context, testDB)(Threading.BlockingIO)
-    uploadAssetStorage = new assets2.UploadAssetStorageImpl(context, testDB)(Threading.BlockingIO)
-    assetStorage = new assets2.AssetStorageImpl(context, testDB, Threading.BlockingIO)
+    downloadAssetStorage = new assets2.DownloadAssetStorageImpl(context, testDB)(Threading.IO)
+    uploadAssetStorage = new assets2.UploadAssetStorageImpl(context, testDB)(Threading.IO)
+    assetStorage = new assets2.AssetStorageImpl(context, testDB, Threading.IO)
   }
 
   @After

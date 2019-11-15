@@ -28,7 +28,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.log.LogShow.SafeToLog
 import com.waz.threading.Threading
-import com.waz.threading.Threading.BlockingIO
+import com.waz.threading.Threading.IO
 import com.waz.utils._
 
 import scala.annotation.tailrec
@@ -96,7 +96,7 @@ object PCMRecorder extends DerivedLogTag {
           recorder.stop()
           verbose(l"audio recording stopped: $cause")
         }
-      }(BlockingIO).flatMap { cause =>
+      }(IO).flatMap { cause =>
         writer.finish()
         writer.completion.map(_ => cause)
       }.andThenFuture { case Failure(cause) =>
