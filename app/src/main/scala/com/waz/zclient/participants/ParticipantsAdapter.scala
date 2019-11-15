@@ -46,7 +46,6 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 import com.waz.content.UsersStorage
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.SearchQuery
 
 //TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
@@ -56,7 +55,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
                           showArrow: Boolean = true,
                           createSubtitle: Option[(UserData) => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
+  extends RecyclerView.Adapter[ViewHolder] with Injectable {
   import ParticipantsAdapter._
 
   private lazy val usersStorage = inject[Signal[UsersStorage]]
