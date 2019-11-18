@@ -395,7 +395,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     else Future.successful(None)
 
   private def loadPicture(picture: Picture): Future[Option[Bitmap]] = {
-    Threading.Background {
+    Threading.ImageDispatcher {
       Option(WireGlide(cxt)
         .asBitmap()
         .load(picture)
