@@ -76,7 +76,7 @@ class GroupParticipantsFragment extends FragmentHelper {
     shouldEnableAddParticipants.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
   }
 
-  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.otherParticipants.map(_.toSeq), Some(7))) { adapter =>
+  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.otherParticipants.map(_.toSeq), Some(4))) { adapter =>
     new FutureEventStream[UserId, Option[UserData]](adapter.onClick, participantsController.getUser).onUi {
       case Some(user) => (user.providerId, user.integrationId) match {
         case (Some(pId), Some(iId)) =>
