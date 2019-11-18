@@ -8,7 +8,7 @@ apply from: 'config/quality.gradle'
 
 
 ext {
-    majorVersion = "3.42."
+    majorVersion = "3.43."
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
 
@@ -297,7 +297,7 @@ dexinfo {
 }
 
 def versions = [
-    playServices : "15.0.1", //TODO can be independent now.
+    playServices : "17.0.0", //TODO can be independent now.
     stetho: "1.5.0",
     work_manager : "1.0.0-alpha13",
     paging : "1.0.0",
@@ -365,7 +365,7 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$versions.playServices"
     implementation "com.google.android.gms:play-services-location:$versions.playServices"
     implementation "com.google.android.gms:play-services-gcm:$versions.playServices"
-    implementation ('com.google.firebase:firebase-messaging:17.3.0') {
+    implementation ('com.google.firebase:firebase-messaging:19.0.0') {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }

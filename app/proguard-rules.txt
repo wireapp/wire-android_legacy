@@ -136,6 +136,3 @@
   **[] $VALUES;
   public *;
 }
-
-#Push Notification dependency
--keep class com.google.android.gms.tasks.** { *; }

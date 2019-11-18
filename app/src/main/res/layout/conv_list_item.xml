@@ -84,9 +84,7 @@
 
         <com.waz.zclient.conversationlist.views.ConversationBadge
             android:id="@+id/conversation_badge"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/conversation_list__badge__height"
-            android:layout_marginEnd="@dimen/wire__padding__regular"
+            style="@style/ConversationBadge"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
