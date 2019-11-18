@@ -123,7 +123,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-    hideScreenContentSwitch.setDisabled(true)
+    hideScreenContentSwitch.setVisible(false)
     hideScreenContentSwitch.pref.foreach(_ := true)
   }
 
