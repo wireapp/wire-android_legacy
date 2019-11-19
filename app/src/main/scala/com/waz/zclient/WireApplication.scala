@@ -491,10 +491,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
   }
 
   override def onTerminate(): Unit = {
-    verbose(l"onTerminate")
-    //  This ensures asking for password when the app is restarted in an emulator
-    inject[SecurityPolicyChecker].clearBackgroundEntryTimer()
-
     controllerFactory.tearDown()
     controllerFactory = null
     if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1){

@@ -85,11 +85,6 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
     timeEnteredBackground = Some(Instant.now())
   }
 
-  def clearBackgroundEntryTimer(): Unit = {
-    verbose(l"clearBackgroundEntryTimer")
-    timeEnteredBackground = None
-  }
-
   private def isAuthenticationNeeded(): Future[Boolean] =
     (if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences.preference(AppLockEnabled).apply()).flatMap {
       case false => Future.successful(false)
