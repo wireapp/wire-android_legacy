@@ -79,15 +79,14 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
 
   private def timerExpired: Boolean = {
     val secondsSinceEnteredBackground = timeEnteredBackground.fold(0L)(_.until(Instant.now(), ChronoUnit.SECONDS))
-    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground")
+    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground, timeout is: ${BuildConfig.APP_LOCK_TIMEOUT}")
     secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
   }
 
   def updateBackgroundEntryTimer(): Unit = timeEnteredBackground = Some(Instant.now())
 
   private def isAuthenticationNeeded(): Future[Boolean] =
-    if (BuildConfig.FORCE_APP_LOCK) Future.successful(true)
-    else globalPreferences.preference(AppLockEnabled).apply().flatMap {
+    (if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences.preference(AppLockEnabled).apply()).flatMap {
       case false => Future.successful(false)
       case true =>
         authenticationNeeded.mutate {

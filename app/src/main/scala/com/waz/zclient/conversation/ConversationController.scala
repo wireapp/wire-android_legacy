@@ -218,7 +218,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       val rotation = currentRotation(path)
       if (rotation == 0) Future.successful(Success(image))
       // rotation and compression is time-consuming - better not to do it on the Ui thread
-      else Future { rotate(path, rotation).map(ImageCompressUtils.toJpg) }(Threading.Background)
+      else Future { rotate(path, rotation).map(ImageCompressUtils.toJpg) }(Threading.ImageDispatcher)
     }
 
     (image match {
