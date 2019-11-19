@@ -209,7 +209,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
         1f)
   }
 
-  override def onCreateView(inflater: LayoutInflater, viewContainer: ViewGroup, savedInstanceState: Bundle) =
+  override def onCreateView(inflater: LayoutInflater, viewContainer: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_pick_user, viewContainer, false)
 
   private var containerSub = Option.empty[Subscription] //TODO remove subscription...
