@@ -221,7 +221,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       rv.setAdapter(adapter)
     }
 
-    retrieveSearchResults.resultsLiveData.observe(this, new Observer[Seq[SearchViewItem]] {
+    retrieveSearchResults.resultsData.observe(this, new Observer[Seq[SearchViewItem]] {
       override def onChanged(results: Seq[SearchViewItem]): Unit = {
         adapter.updateResults(results)
       }

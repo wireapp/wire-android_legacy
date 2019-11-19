@@ -120,9 +120,6 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
 
   override def getItemId(position: Int): Long =
     results.lift(position).fold(-1L)(_.id)
-
-  def getSectionIndexForPosition(position: Int): Int =
-    results.lift(position).fold(-1)(_.index)
 }
 
 object SearchUIAdapter {

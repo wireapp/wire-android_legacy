@@ -17,7 +17,7 @@
   */
 package com.waz.zclient.usersearch.domain
 
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.{LiveData, MutableLiveData}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.utils.events.{EventContext, NoAutowiring, Signal, SourceSignal}
@@ -51,7 +51,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private var currentUserIsAdmin = false
   private var noServices         = false
 
-  val resultsLiveData: MutableLiveData[Seq[SearchViewItem]] = new MutableLiveData[Seq[SearchViewItem]]
+  private val resultsLiveData: MutableLiveData[Seq[SearchViewItem]] = new MutableLiveData[Seq[SearchViewItem]]
+  def resultsData: LiveData[Seq[SearchViewItem]] = resultsLiveData
 
   val filter       : SourceSignal[String] with NoAutowiring = searchController.filter
   val tab          : SourceSignal[Tab] with NoAutowiring    = searchController.tab
