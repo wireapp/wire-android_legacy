@@ -27,7 +27,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
-import com.waz.service.ZMessaging
+import com.waz.service.{SearchQuery, ZMessaging}
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
 import com.waz.threading.{SerialDispatchQueue, Threading}
@@ -108,7 +108,7 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     for {
       zms          <- zmsArg.fold(zmsOpt.head)(z => Future.successful(Some(z)))
       teamSize <- zms match {
-        case Some(z) => z.teamId.fold(Future.successful(0))(_ => z.teams.searchTeamMembers().head.map(_.size))
+        case Some(z) => z.teamId.fold(Future.successful(0))(_ => z.teams.searchTeamMembers(SearchQuery.Empty).head.map(_.size))
         case _ => Future.successful(0)
       }
     } yield {
