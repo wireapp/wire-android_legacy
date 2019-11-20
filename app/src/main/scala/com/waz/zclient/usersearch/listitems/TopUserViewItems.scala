@@ -19,7 +19,7 @@ package com.waz.zclient.usersearch.listitems
 
 import com.waz.model.UserData
 
-class TopUserViewItem(val data: TopUserViewModel) extends SearchViewItem {
+case class TopUserViewItem(data: TopUserViewModel) extends SearchViewItem {
 
   import SearchViewItem._
   import SectionViewItem._
@@ -34,7 +34,7 @@ class TopUserViewItem(val data: TopUserViewModel) extends SearchViewItem {
 case class TopUserViewModel(indexVal: Int,
                             topUsers: Seq[UserData])
 
-class TopUserButtonViewItem(val data: TopUserButtonViewModel) extends SearchViewItem {
+case class TopUserButtonViewItem(data: TopUserButtonViewModel) extends SearchViewItem {
 
   override def section: Int = data.section
 
