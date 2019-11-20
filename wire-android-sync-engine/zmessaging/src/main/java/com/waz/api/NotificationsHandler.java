@@ -23,7 +23,7 @@ public interface NotificationsHandler {
         CONNECT_REQUEST,
         CONNECT_ACCEPTED,
         CONTACT_JOIN,
-        ASSET,
+        IMAGE_ASSET,
         ANY_ASSET,
         VIDEO_ASSET,
         AUDIO_ASSET,

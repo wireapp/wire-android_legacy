@@ -244,7 +244,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
     import com.waz.model.GenericContent.{Asset => GenericAsset}
 
     val tpe = asset.details match {
-      case _: Asset.Image => Message.Type.ASSET
+      case _: Asset.Image => Message.Type.IMAGE_ASSET
       case _: Asset.Video => Message.Type.VIDEO_ASSET
       case _: Asset.Audio => Message.Type.AUDIO_ASSET
       case _              => Message.Type.ANY_ASSET

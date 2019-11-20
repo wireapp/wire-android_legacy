@@ -306,15 +306,15 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         case _ if n.ephemeral && n.isReply            => ResString(R.string.notification__message_with_quote__ephemeral)
         case _ if n.ephemeral                         => ResString(R.string.notification__message__ephemeral)
         case TEXT if messagePreview                   => ResString(message)
-        case TEXT                                     => ResString(R.string.notification__message_one_to_one_message_preview)
-        case MISSED_CALL                              => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
-        case KNOCK                                    => ResString(R.string.notification__message__one_to_one__pinged)
-        case ANY_ASSET                                => ResString(R.string.notification__message__one_to_one__shared_file)
-        case ASSET                                    => ResString(R.string.notification__message__one_to_one__shared_picture)
-        case VIDEO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_video)
-        case AUDIO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_audio)
-        case LOCATION                                 => ResString(R.string.notification__message__one_to_one__shared_location)
-        case RENAME                                   => ResString(R.string.notification__message__group__renamed_conversation, convName)
+        case TEXT        => ResString(R.string.notification__message_one_to_one_message_preview)
+        case MISSED_CALL => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
+        case KNOCK       => ResString(R.string.notification__message__one_to_one__pinged)
+        case ANY_ASSET   => ResString(R.string.notification__message__one_to_one__shared_file)
+        case IMAGE_ASSET => ResString(R.string.notification__message__one_to_one__shared_picture)
+        case VIDEO_ASSET => ResString(R.string.notification__message__one_to_one__shared_video)
+        case AUDIO_ASSET => ResString(R.string.notification__message__one_to_one__shared_audio)
+        case LOCATION    => ResString(R.string.notification__message__one_to_one__shared_location)
+        case RENAME      => ResString(R.string.notification__message__group__renamed_conversation, convName)
         case MEMBER_LEAVE                             => ResString(R.string.notification__message__group__remove)
         case MEMBER_JOIN                              => ResString(R.string.notification__message__group__add)
         case CONNECT_ACCEPTED                         => ResString(R.string.notification__message__single__accept_request, userName)
@@ -409,7 +409,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     if (soundController.soundIntensityNone) None
     else if (!soundController.soundIntensityFull && (ns.size > 1 && ns.lastOption.forall(_.msgType != KNOCK))) None
     else ns.map(_.msgType).lastOption.fold(Option.empty[Uri]) {
-      case ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
+      case IMAGE_ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
            LOCATION | TEXT | CONNECT_ACCEPTED | CONNECT_REQUEST | RENAME |
            LIKE  => Option(getSelectedSoundUri(soundController.currentTonePrefs._2, R.raw.new_message_gcm))
       case KNOCK => Option(getSelectedSoundUri(soundController.currentTonePrefs._3, R.raw.ping_from_them))
