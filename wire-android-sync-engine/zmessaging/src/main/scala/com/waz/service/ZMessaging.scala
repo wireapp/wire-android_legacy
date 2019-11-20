@@ -99,7 +99,6 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
   lazy val convsStorage:      ConversationStorage     = wire[ConversationStorageImpl]
   lazy val msgDeletions:      MsgDeletionStorage      = wire[MsgDeletionStorageImpl]
-  lazy val searchQueryCache:  SearchQueryCacheStorage = wire[SearchQueryCacheStorageImpl]
   lazy val msgEdits:          EditHistoryStorage      = wire[EditHistoryStorageImpl]
   lazy val propertiesStorage:   PropertiesStorage       = new PropertiesStorageImpl()(context, db2, Threading.IO)
 
@@ -181,7 +180,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def convsStorage      = storage.convsStorage
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
-  def searchQueryCache  = storage.searchQueryCache
   def propertiesStorage = storage.propertiesStorage
 
   lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]

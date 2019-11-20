@@ -28,6 +28,8 @@ import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.usersearch.listitems._
 import com.waz.zclient.{Injectable, Injector}
 
+import scala.collection.mutable
+
 class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventContext) extends Injectable
   with DerivedLogTag {
 
@@ -37,7 +39,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private val userAccountsController = inject[UserAccountsController]
   private val searchController       = new SearchController()
 
-  private var mergedResult      = Seq[SearchViewItem]()
+  private var mergedResult      = mutable.ListBuffer[SearchViewItem]()
   private var collapsedContacts = true
   private var collapsedGroups   = true
 
@@ -51,8 +53,9 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private var currentUserIsAdmin = false
   private var noServices         = false
 
-  private val resultsLiveData: MutableLiveData[Seq[SearchViewItem]] = new MutableLiveData[Seq[SearchViewItem]]
-  def resultsData: LiveData[Seq[SearchViewItem]] = resultsLiveData
+  private val resultsLiveData: MutableLiveData[mutable.ListBuffer[SearchViewItem]] = new MutableLiveData[mutable.ListBuffer[SearchViewItem]]
+
+  def resultsData: LiveData[mutable.ListBuffer[SearchViewItem]] = resultsLiveData
 
   val filter       : SourceSignal[String] with NoAutowiring = searchController.filter
   val tab          : SourceSignal[Tab] with NoAutowiring    = searchController.tab
@@ -62,8 +65,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     curUser <- userAccountsController.currentUser
     team <- userAccountsController.teamData
     isAdmin <- userAccountsController.isAdmin
-    res <- searchResults
-  } yield (curUser, team, isAdmin, res)).onUi {
+    results <- searchResults
+  } yield (curUser, team, isAdmin, results)).onUi {
     case (curUser, team, isAdmin, res) =>
 
       verbose(l"Search user list state: $res")
@@ -107,7 +110,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   }
 
   private def updateMergedResults(): Unit = {
-    mergedResult = Seq()
+    mergedResult = mutable.ListBuffer[SearchViewItem]()
 
     val teamName = team.map(_.name).getOrElse(Name.Empty)
 

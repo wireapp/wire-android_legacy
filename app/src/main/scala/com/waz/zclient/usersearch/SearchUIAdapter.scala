@@ -36,12 +36,14 @@ import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
 
+import scala.collection.mutable
+
 class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[RecyclerView.ViewHolder] {
 
   import SearchUIAdapter._
   import SearchViewItem._
 
-  private var results: Seq[SearchViewItem] = Seq()
+  private var results = mutable.ListBuffer[SearchViewItem]()
 
   setHasStableIds(true)
 
@@ -108,7 +110,7 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
     }
   }
 
-  def updateResults(results: Seq[SearchViewItem]): Unit = {
+  def updateResults(results: mutable.ListBuffer[SearchViewItem]): Unit = {
     this.results = results
     notifyDataSetChanged()
   }
