@@ -20,7 +20,7 @@ package com.waz.zclient.usersearch.listitems
 import com.waz.model
 import com.waz.model.Name
 
-class SectionViewItem(val data: SectionViewModel) extends SearchViewItem {
+case class SectionViewItem(data: SectionViewModel) extends SearchViewItem {
 
   import SearchViewItem._
 
@@ -33,9 +33,9 @@ class SectionViewItem(val data: SectionViewModel) extends SearchViewItem {
   override def name: model.Name = data.name
 }
 
-case class SectionViewModel(section: Int,
+case class SectionViewModel(section:  Int,
                             indexVal: Int,
-                            name: Name = Name.Empty)
+                            name:     Name = Name.Empty)
 
 object SectionViewItem {
   val TopUsersSection           = 0

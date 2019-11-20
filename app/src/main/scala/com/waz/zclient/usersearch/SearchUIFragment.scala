@@ -57,6 +57,7 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.ManageServicesIcon
+import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.usersearch.domain.RetrieveSearchResults
@@ -99,8 +100,9 @@ class SearchUIFragment extends BaseFragment[Container]
   private lazy val shareContactsPref      = zms.map(_.userPrefs.preference(UserPreferences.ShareContacts))
   private lazy val showShareContactsPref  = zms.map(_.userPrefs.preference(UserPreferences.ShowShareContacts))
 
-  private lazy val adapter = new SearchUIAdapter(this)
-  private lazy val retrieveSearchResults = new RetrieveSearchResults()
+  private lazy val adapter                = new SearchUIAdapter(this)
+  private lazy val searchController       = inject[SearchController]
+  private lazy val retrieveSearchResults  = new RetrieveSearchResults()
 
   private lazy val startUiToolbar         = view[Toolbar](R.id.pickuser_toolbar)
 
@@ -131,7 +133,7 @@ class SearchUIFragment extends BaseFragment[Container]
         scheduledSearchQuery = Option(CancellableFuture.delay(PERFORM_SEARCH_DELAY).map { _ =>
           vh.foreach { view =>
             val filter = view.getSearchFilter
-            if (filter != "@") retrieveSearchResults.filter ! filter
+            if (filter != "@") searchController.filter! filter
           } // should be safe; if the fragment is destroyed, vh will be None
           scheduledSearchQuery = None
         })
@@ -148,7 +150,7 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val emptyServicesIcon = returning(view[ImageView](R.id.empty_services_icon)) { vh =>
-    subs += retrieveSearchResults.searchResults.map {
+    subs += searchController.searchUserOrServices.map {
       case SearchUserListState.NoServices => View.VISIBLE
       case _ => View.GONE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
@@ -157,7 +159,7 @@ class SearchUIFragment extends BaseFragment[Container]
   private lazy val emptyServicesButton = returning(view[TypefaceTextView](R.id.empty_services_button)) { vh =>
     subs += (for {
       isAdmin  <- userAccountsController.isAdmin
-      res      <- retrieveSearchResults.searchResults
+      res      <- searchController.searchUserOrServices
     } yield res match {
       case SearchUserListState.NoServices if isAdmin => View.VISIBLE
       case _ => View.GONE
@@ -167,14 +169,14 @@ class SearchUIFragment extends BaseFragment[Container]
   }
 
   private lazy val errorMessageView = returning(view[TypefaceTextView](R.id.pickuser__error_text)) { vh =>
-    subs += retrieveSearchResults.searchResults.map {
+    subs += searchController.searchUserOrServices.map {
       case SearchUserListState.Services(_) | SearchUserListState.Users(_) => View.GONE
       case _ => View.VISIBLE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
     subs += (for {
       isAdmin  <- userAccountsController.isAdmin
-      res      <- retrieveSearchResults.searchResults
+      res      <- searchController.searchUserOrServices
     } yield res match {
       case SearchUserListState.NoUsers               => R.string.new_conv_no_contacts
       case SearchUserListState.NoUsersFound          => R.string.new_conv_no_results
@@ -192,7 +194,7 @@ class SearchUIFragment extends BaseFragment[Container]
       zms         <- zms
       permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[UserPermissions.Permission]))
       members <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
-      searching <- retrieveSearchResults.filter.map(_.nonEmpty)
+      searching <- searchController.filter.map(_.nonEmpty)
      } yield
        zms.teamId.nonEmpty && permissions(UserPermissions.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))
@@ -268,13 +270,13 @@ class SearchUIFragment extends BaseFragment[Container]
     }))
 
     val tabs = findById[TabLayout](rootView, R.id.pick_user_tabs)
-    retrieveSearchResults.tab.map(_ == Tab.People).map(if (_) 0 else 1).head.foreach(tabs.getTabAt(_).select())
+    searchController.tab.map(_ == Tab.People).map(if (_) 0 else 1).head.foreach(tabs.getTabAt(_).select())
 
     tabs.addOnTabSelectedListener(new OnTabSelectedListener {
       override def onTabSelected(tab: TabLayout.Tab): Unit = {
         tab.getPosition match {
-          case 0 => retrieveSearchResults.tab ! Tab.People
-          case 1 => retrieveSearchResults.tab ! Tab.Services
+          case 0 => searchController.tab ! Tab.People
+          case 1 => searchController.tab ! Tab.Services
         }
         searchBox.foreach(_.removeAllElements())
       }
@@ -288,7 +290,7 @@ class SearchUIFragment extends BaseFragment[Container]
       isPartner <- userAccountsController.isPartner
     } yield isTeam && !isPartner).onUi(tabs.setVisible)
 
-    retrieveSearchResults.filter ! ""
+    searchController.filter! ""
 
     containerSub = Some((for {
       kb <- keyboard.isKeyboardVisible
@@ -427,8 +429,8 @@ class SearchUIFragment extends BaseFragment[Container]
 
   private def closeStartUI(): Unit = {
     keyboard.hideKeyboardIfVisible()
-    retrieveSearchResults.filter ! ""
-    retrieveSearchResults.tab ! Tab.People
+    searchController.filter! ""
+    searchController.tab ! Tab.People
     pickUserController.hidePickUser()
   }
 

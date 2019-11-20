@@ -80,19 +80,19 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
   override def onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int): Unit = {
     val item: SearchViewItem = results(position)
     item.itemType match {
-      case TopUsers                        =>
+      case TopUsers =>
         val topUserData = item.asInstanceOf[TopUserViewItem].data
         holder.asInstanceOf[TopUsersViewHolder].bind(topUserData)
-      case GroupConversation               =>
+      case GroupConversation =>
         val groupConversationData = item.asInstanceOf[GroupConversationViewItem].data
         holder.asInstanceOf[ConversationViewHolder].bind(groupConversationData)
       case ConnectedUser | UnconnectedUser =>
         val userConnectionData = item.asInstanceOf[ConnectionViewItem].data
         holder.asInstanceOf[UserViewHolder].bind(userConnectionData)
-      case SectionHeader                   =>
+      case SectionHeader =>
         val sectionData = item.asInstanceOf[SectionViewItem].data
         holder.asInstanceOf[SectionHeaderViewHolder].bind(sectionData)
-      case Expand                          =>
+      case Expand =>
         val expandData = item.asInstanceOf[ExpandViewItem].data
         holder.asInstanceOf[SectionExpanderViewHolder].bind(expandData, new View.OnClickListener {
           override def onClick(view: View): Unit = {
@@ -103,10 +103,10 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
             }
           }
         })
-      case Integration                     =>
+      case Integration =>
         val integrationData = item.asInstanceOf[IntegrationViewItem].data
         holder.asInstanceOf[IntegrationViewHolder].bind(integrationData)
-      case _                               =>
+      case _ =>
     }
   }
 

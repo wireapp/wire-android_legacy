@@ -20,7 +20,7 @@ package com.waz.zclient.usersearch.domain
 import androidx.lifecycle.{LiveData, MutableLiveData}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.{EventContext, NoAutowiring, Signal, SourceSignal}
+import com.waz.utils.events.EventContext
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
@@ -37,44 +37,41 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   import SectionViewItem._
 
   private val userAccountsController = inject[UserAccountsController]
-  private val searchController       = new SearchController()
+  private val searchController       = inject[SearchController]
 
-  private var mergedResult      = mutable.ListBuffer[SearchViewItem]()
-  private var collapsedContacts = true
-  private var collapsedGroups   = true
+  private var mergedResult           = mutable.ListBuffer[SearchViewItem]()
+  private var collapsedContacts      = true
+  private var collapsedGroups        = true
 
-  private var team               = Option.empty[TeamData]
-  private var topUsers           = Seq.empty[UserData]
-  private var localResults       = Seq.empty[UserData]
-  private var conversations      = Seq.empty[ConversationData]
-  private var directoryResults   = Seq.empty[UserData]
-  private var integrations       = Seq.empty[IntegrationData]
-  private var currentUser        = Option.empty[UserData]
-  private var currentUserIsAdmin = false
-  private var noServices         = false
+  private var team                   = Option.empty[TeamData]
+  private var topUsers               = Seq.empty[UserData]
+  private var localResults           = Seq.empty[UserData]
+  private var conversations          = Seq.empty[ConversationData]
+  private var directoryResults       = Seq.empty[UserData]
+  private var integrations           = Seq.empty[IntegrationData]
+  private var currentUser            = Option.empty[UserData]
+  private var currentUserIsAdmin     = false
+  private var noServices             = false
 
-  private val resultsLiveData: MutableLiveData[mutable.ListBuffer[SearchViewItem]] = new MutableLiveData[mutable.ListBuffer[SearchViewItem]]
+  private val resultsLiveData: MutableLiveData[mutable.ListBuffer[SearchViewItem]] =
+    new MutableLiveData[mutable.ListBuffer[SearchViewItem]]
 
   def resultsData: LiveData[mutable.ListBuffer[SearchViewItem]] = resultsLiveData
 
-  val filter       : SourceSignal[String] with NoAutowiring = searchController.filter
-  val tab          : SourceSignal[Tab] with NoAutowiring    = searchController.tab
-  val searchResults: Signal[SearchUserListState]            = searchController.searchUserOrServices
-
   (for {
-    curUser <- userAccountsController.currentUser
-    team <- userAccountsController.teamData
-    isAdmin <- userAccountsController.isAdmin
-    results <- searchResults
-  } yield (curUser, team, isAdmin, results)).onUi {
-    case (curUser, team, isAdmin, res) =>
+    curUser  <- userAccountsController.currentUser
+    teamData <- userAccountsController.teamData
+    isAdmin  <- userAccountsController.isAdmin
+    results  <- searchController.searchUserOrServices
+  } yield (curUser, teamData, isAdmin, results)).onUi {
+    case (curUser, teamData, isAdmin, results) =>
 
-      verbose(l"Search user list state: $res")
-      this.team = team
+      verbose(l"Search user list state: $results")
+      team = teamData
       currentUserIsAdmin = isAdmin
       currentUser = curUser
 
-      res match {
+      results match {
         case SearchUserListState.Users(search) =>
           topUsers = search.top
           localResults = search.local
@@ -87,12 +84,12 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
           directoryResults = Seq.empty
       }
 
-      noServices = res match {
+      noServices = results match {
         case SearchUserListState.NoServices => true
         case _                              => false
       }
 
-      integrations = res match {
+      integrations = results match {
         case SearchUserListState.Services(svs) => svs.toIndexedSeq.sortBy(_.name)
         case _                                 => IndexedSeq.empty
       }
@@ -133,7 +130,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
           new ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, localResults, localResults(i).displayName))
         }
 
-        val shouldCollapse = filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
+        val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
 
         contactsSection = contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
 
@@ -190,11 +187,11 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       mergedResult = mergedResult ++ Seq(new TopUserButtonViewItem(TopUserButtonViewModel(ManageServices, TopUsersSection, 0)))
 
     if (team.isDefined) {
-      if (tab.currentValue.contains(Tab.Services)) {
+      if (searchController.tab.currentValue.contains(Tab.Services)) {
         if (currentUserIsAdmin && !noServices) addManageServicesButton()
         addIntegrations()
       } else {
-        if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get) {
+        if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get) {
           addGroupCreationButton()
           addGuestRoomCreationButton()
         }
@@ -203,7 +200,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         addConnections()
       }
     } else {
-      if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get)
+      if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get)
         addGroupCreationButton()
       addTopPeople()
       addContacts()

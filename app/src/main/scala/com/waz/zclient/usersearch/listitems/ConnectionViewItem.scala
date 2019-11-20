@@ -20,7 +20,7 @@ package com.waz.zclient.usersearch.listitems
 import com.waz.model
 import com.waz.model.{Name, TeamData, UserData}
 
-class ConnectionViewItem(val data: ConnectionViewModel) extends SearchViewItem {
+case class ConnectionViewItem(data: ConnectionViewModel) extends SearchViewItem {
 
   import SearchViewItem._
   import SectionViewItem._
@@ -36,9 +36,9 @@ class ConnectionViewItem(val data: ConnectionViewModel) extends SearchViewItem {
   override def name: model.Name = if (data.isConnected) data.name else super.name
 }
 
-case class ConnectionViewModel(indexVal: Int,
-                               idVal: Long,
+case class ConnectionViewModel(indexVal:    Int,
+                               idVal:       Long,
                                isConnected: Boolean,
-                               results: Seq[UserData],
-                               name: Name = Name.Empty,
-                               team: Option[TeamData] = None)
+                               results:     Seq[UserData],
+                               name:        Name = Name.Empty,
+                               team:        Option[TeamData] = None)

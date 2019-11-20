@@ -19,9 +19,10 @@ package com.waz.zclient.usersearch.listitems
 
 import com.waz.model.ConversationData
 
-class GroupConversationViewItem(val data: GroupConversationViewModel) extends SearchViewItem {
+case class GroupConversationViewItem(data: GroupConversationViewModel) extends SearchViewItem {
 
-  import SectionViewItem._, SearchViewItem._
+  import SearchViewItem._
+  import SectionViewItem._
 
   override def section: Int = GroupConversationsSection
 
@@ -32,6 +33,6 @@ class GroupConversationViewItem(val data: GroupConversationViewModel) extends Se
   override def id: Long = data.idVal
 }
 
-case class GroupConversationViewModel(indexVal: Int,
-                                      idVal: Long,
+case class GroupConversationViewModel(indexVal:      Int,
+                                      idVal:         Long,
                                       conversations: Seq[ConversationData])
