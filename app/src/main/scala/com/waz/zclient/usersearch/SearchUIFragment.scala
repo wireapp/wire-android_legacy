@@ -28,7 +28,6 @@ import android.widget.TextView.OnEditorActionListener
 import android.widget._
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
@@ -36,8 +35,8 @@ import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.{SearchQuery, ZMessaging}
 import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, TrackingService}
+import com.waz.service.{SearchQuery, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
@@ -60,16 +59,14 @@ import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.usersearch.domain.RetrieveSearchResults
-import com.waz.zclient.usersearch.listitems.SearchViewItem
 import com.waz.zclient.usersearch.SearchUIFragment.{Container, PERFORM_SEARCH_DELAY, SHOW_KEYBOARD_THRESHOLD, TAG}
+import com.waz.zclient.usersearch.domain.RetrieveSearchResults
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, ResColor, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views._
 
 import scala.collection.immutable.ListSet
-import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -124,6 +121,7 @@ class SearchUIFragment extends BaseFragment[Container]
 
     vh.foreach(_.setCallback(new SearchEditText.Callback {
       override def onRemovedTokenSpan(element: PickableElement): Unit = {}
+
       override def onFocusChange(hasFocus: Boolean): Unit = {}
 
       override def onClearButton(): Unit = closeStartUI()
@@ -234,11 +232,10 @@ class SearchUIFragment extends BaseFragment[Container]
       rv.setAdapter(adapter)
     }
 
-    retrieveSearchResults.resultsData.observe(this, new Observer[mutable.ListBuffer[SearchViewItem]] {
-      override def onChanged(results: mutable.ListBuffer[SearchViewItem]): Unit = {
-        adapter.updateResults(results)
-      }
-    })
+    retrieveSearchResults.resultsData.onUi { results =>
+       adapter.updateResults(results)
+    }
+
     searchBox
 
     inviteButton.foreach { btn =>

@@ -17,10 +17,9 @@
   */
 package com.waz.zclient.usersearch.domain
 
-import androidx.lifecycle.{LiveData, MutableLiveData}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.EventContext
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
@@ -53,10 +52,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private var currentUserIsAdmin     = false
   private var noServices             = false
 
-  private val resultsLiveData: MutableLiveData[mutable.ListBuffer[SearchViewItem]] =
-    new MutableLiveData[mutable.ListBuffer[SearchViewItem]]
-
-  def resultsData: LiveData[mutable.ListBuffer[SearchViewItem]] = resultsLiveData
+  val resultsData = Signal(mergedResult)
 
   (for {
     curUser  <- userAccountsController.currentUser
@@ -127,7 +123,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         var contactsSection = Seq[SearchViewItem]()
 
         contactsSection = contactsSection ++ localResults.indices.map { i =>
-          new ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, localResults, localResults(i).displayName))
+          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, localResults, localResults(i).displayName))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -136,7 +132,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
         mergedResult = mergedResult ++ contactsSection
         if (shouldCollapse) {
-          val expandViewItem = new ExpandViewItem(ExpandViewModel(ContactsSection, 0, localResults.size))
+          val expandViewItem = ExpandViewItem(ExpandViewModel(ContactsSection, 0, localResults.size))
           mergedResult = mergedResult ++ Seq(expandViewItem)
         }
       }
@@ -150,10 +146,10 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
 
         mergedResult = mergedResult ++ conversations.indices.map { i =>
-          new GroupConversationViewItem(GroupConversationViewModel(i, conversations(i).id.str.hashCode, conversations))
+          GroupConversationViewItem(GroupConversationViewModel(i, conversations(i).id.str.hashCode, conversations))
         }.take(if (shouldCollapse) CollapsedGroups else conversations.size)
         if (shouldCollapse) {
-          val expandViewItem = new ExpandViewItem(ExpandViewModel(GroupConversationsSection, 0, conversations.size))
+          val expandViewItem = ExpandViewItem(ExpandViewModel(GroupConversationsSection, 0, conversations.size))
           mergedResult = mergedResult ++ Seq(expandViewItem)
         }
       }
@@ -161,10 +157,10 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
     def addConnections(): Unit = {
       if (directoryResults.nonEmpty) {
-        val directorySectionHeader = new SectionViewItem(SectionViewModel(DirectorySection, 0))
+        val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          new ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, directoryResults))
+          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, directoryResults))
         }
       }
     }
@@ -172,7 +168,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     def addIntegrations(): Unit = {
       if (integrations.nonEmpty) {
         mergedResult = mergedResult ++ integrations.indices.map { i =>
-          new IntegrationViewItem(IntegrationViewModel(i, integrations(i).id.str.hashCode, integrations))
+          IntegrationViewItem(IntegrationViewModel(i, integrations(i).id.str.hashCode, integrations))
         }
       }
     }
@@ -207,6 +203,6 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       addGroupConversations()
       addConnections()
     }
-    resultsLiveData.setValue(mergedResult)
+    resultsData ! mergedResult
   }
 }
