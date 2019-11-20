@@ -22,7 +22,7 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
-import com.waz.model.UserPermissions.{PartnerPermissions, decodeBitmask}
+import com.waz.model.UserPermissions.{ExternalPermissions, decodeBitmask}
 import com.waz.model._
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
@@ -65,15 +65,15 @@ class UserSearchService(selfUserId:           UserId,
 
   private val exactMatchUser = new SourceSignal[Option[UserData]]()
 
-  private lazy val isPartner = userPrefs(SelfPermissions).apply()
+  private lazy val isExternal = userPrefs(SelfPermissions).apply()
     .map(decodeBitmask)
-    .map(_ == PartnerPermissions)
+    .map(_ == ExternalPermissions)
 
-  private def filterForPartner(query: SearchQuery, searchResults: IndexedSeq[UserData]): Future[IndexedSeq[UserData]] = {
+  private def filterForExternal(query: SearchQuery, searchResults: IndexedSeq[UserData]): Future[IndexedSeq[UserData]] = {
     lazy val knownUsers = membersStorage.getByUsers(searchResults.map(_.id).toSet).map(_.map(_.userId).toSet)
-    isPartner.flatMap {
+    isExternal.flatMap {
       case true if teamId.isDefined =>
-        verbose(l"filterForPartner1 Q: $query, RES: ${searchResults.map(_.getDisplayName)}) with partner = true and teamId")
+        verbose(l"filterForExternal1 Q: $query, RES: ${searchResults.map(_.getDisplayName)}) with partner = true and teamId")
         for {
           Some(self)    <- userService.getSelfUser
           filteredUsers <- knownUsers.map(knownUsersIds =>
@@ -81,13 +81,13 @@ class UserSearchService(selfUserId:           UserId,
                            )
         } yield filteredUsers
       case false if teamId.isDefined =>
-        verbose(l"filterForPartner2 Q: $query, RES: ${searchResults.map(_.getDisplayName)}) with partner = false and teamId")
+        verbose(l"filterForExternal2 Q: $query, RES: ${searchResults.map(_.getDisplayName)}) with partner = false and teamId")
         knownUsers.map { knownUsersIds =>
           searchResults.filter { u =>
             u.createdBy.contains(selfUserId) ||
             knownUsersIds.contains(u.id) ||
               u.teamId != teamId ||
-              (u.teamId == teamId && !u.isPartner(teamId)) ||
+              (u.teamId == teamId && !u.isExternal(teamId)) ||
               u.handle.exists(_.exactMatchQuery(query.str))
           }
         }
@@ -95,12 +95,12 @@ class UserSearchService(selfUserId:           UserId,
     }
   }
 
-  // a utility method for using `filterForPartner` with signals more easily
-  private def filterForPartner(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
-    searchResults.flatMap(res => Signal.future(filterForPartner(query, res)))
+  // a utility method for using `filterForExternal` with signals more easily
+  private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
+    searchResults.flatMap(res => Signal.future(filterForExternal(query, res)))
 
   def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[IndexedSeq[UserData]] =
-    filterForPartner(
+    filterForExternal(
       query,
       searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
     )
@@ -109,7 +109,7 @@ class UserSearchService(selfUserId:           UserId,
     for {
       curr <- membersStorage.activeMembers(toConv)
       conv <- convsStorage.signal(toConv)
-      res  <- filterForPartner(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
+      res  <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
     } yield res
 
   def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
@@ -228,11 +228,11 @@ class UserSearchService(selfUserId:           UserId,
         }
 
     for {
-      top       <- topUsers
-      local     <- filterForPartner(query, searchLocal(query, showBlockedUsers = true))
-      convs     <- conversations
-      isPartner <- Signal.future(isPartner)
-      dir       <- filterForPartner(query, if (isPartner) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
+      top        <- topUsers
+      local      <- filterForExternal(query, searchLocal(query, showBlockedUsers = true))
+      convs      <- conversations
+      isExternal <- Signal.future(isExternal)
+      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
     } yield SearchResults(top, local, convs, dir)
   }
 
@@ -269,7 +269,7 @@ class UserSearchService(selfUserId:           UserId,
       usersStorage.onDeleted.map(_.map(Removed(_)))
     )
 
-    def load = localSearch(query).flatMap(filterForPartner(query, _))
+    def load = localSearch(query).flatMap(filterForExternal(query, _))
 
     new AggregatingSignal[Seq[ContentChange[UserId, UserData]], IndexedSeq[UserData]](changesStream, load, { (current, changes) =>
       val added = changes.collect {

@@ -201,6 +201,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
     bind [Signal[TeamsService]]                  to inject[Signal[ZMessaging]].map(_.teams)
+    bind [Signal[MessageIndexStorage]]           to inject[Signal[ZMessaging]].map(_.messagesIndexStorage)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers

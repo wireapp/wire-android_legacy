@@ -283,9 +283,9 @@ class SearchUIFragment extends BaseFragment[Container]
     })
 
     subs += (for {
-      isTeam    <- userAccountsController.isTeam
-      isPartner <- userAccountsController.isPartner
-    } yield isTeam && !isPartner).onUi(tabs.setVisible)
+      isTeam     <- userAccountsController.isTeam
+      isExternal <- userAccountsController.isExternal
+    } yield isTeam && !isExternal).onUi(tabs.setVisible)
 
     searchController.filter! ""
 

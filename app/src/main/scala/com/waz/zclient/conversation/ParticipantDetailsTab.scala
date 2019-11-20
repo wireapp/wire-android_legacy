@@ -67,12 +67,12 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
     isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
     isGroupOrBot   <- participantsController.isGroupOrBot
     canCreateConv  <- userAccountsController.hasCreateConvPermission
-    isPartner      <- userAccountsController.isPartner
+    isExternal     <- userAccountsController.isExternal
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
-  } else if (!isPartner && !isGroupOrBot && canCreateConv) {
+  } else if (!isExternal && !isGroupOrBot && canCreateConv) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
-  } else if (isPartner && !isGroupOrBot) {
+  } else if (isExternal && !isGroupOrBot) {
     (R.string.empty_string, R.string.empty_string)
   } else {
     (R.string.glyph__conversation, R.string.empty_string)

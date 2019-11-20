@@ -171,14 +171,14 @@ class SingleParticipantFragment extends FragmentHelper {
     isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
     isGroupOrBot   <- participantsController.isGroupOrBot
     canCreateConv  <- userAccountsController.hasCreateConvPermission
-    isPartner      <- userAccountsController.isPartner
+    isExternal     <- userAccountsController.isExternal
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
   } else if (fromDeepLink) {
     (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
-  } else if (!isPartner && !isGroupOrBot && canCreateConv) {
+  } else if (!isExternal && !isGroupOrBot && canCreateConv) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
-  } else if (isPartner && !isGroupOrBot) {
+  } else if (isExternal && !isGroupOrBot) {
     (R.string.empty_string, R.string.empty_string)
   } else {
     (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
@@ -192,13 +192,13 @@ class SingleParticipantFragment extends FragmentHelper {
       createPerm     <- userAccountsController.hasCreateConvPermission
       remPerm        <- userAccountsController.hasRemoveConversationMemberPermission(conv.id)
       selfIsGuest    <- participantsController.isCurrentUserGuest
-      selfIsPartner  <- userAccountsController.isPartner
+      selfIsExternal <- userAccountsController.isExternal
       selfIsProUser  <- userAccountsController.isTeam
       other          <- participantsController.otherParticipant
       otherIsGuest    = other.isGuest(conv.team)
     } yield {
       if (fromDeepLink) !selfIsProUser || otherIsGuest
-      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsPartner)
+      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsExternal)
     }).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string

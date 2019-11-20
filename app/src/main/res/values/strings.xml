@@ -1226,6 +1226,9 @@
     <string name="participants_divider_people">CONVERSATION MEMBERS (%1$s)</string>
     <string name="participants_divider_admins">CONVERSATION ADMINS (%1$s)</string>
     <string name="participants_divider_options">OPTIONS</string>
+    <string name="participants_no_admins">There are no admins.</string>
+    <string name="participants_no_results">No matching results. Try entering a different name.</string>
+
     <string name="group_name_hint">GROUP NAME</string>
     <string name="allow_guests_toggle_text">Allow guests and services</string>
     <string name="allow_guests_toggle_info_text">Open this conversation to services and people outside your team.</string>

@@ -18,13 +18,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent"
-              android:layout_height="@dimen/participants__verified_row__height"
-              android:layout_marginStart="@dimen/participants__left_margin"
-              android:layout_marginEnd="@dimen/participants__left_margin"
-    >
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/participants__left_margin"
+    android:layout_marginEnd="@dimen/participants__left_margin"
+    android:orientation="vertical">
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/separator_title"
@@ -39,4 +40,18 @@
         app:w_font="@string/wire__typeface__medium"
         />
 
-</FrameLayout>
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/empty_section_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/wire__padding__12"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__small"
+        app:w_font="@string/wire__typeface__regular"
+        android:layout_marginStart="@dimen/wire__padding__regular"
+        android:layout_marginEnd="@dimen/wire__padding__regular"
+        android:layout_marginBottom="@dimen/wire__padding__small"
+        android:visibility="gone"
+        />
+
+</LinearLayout>

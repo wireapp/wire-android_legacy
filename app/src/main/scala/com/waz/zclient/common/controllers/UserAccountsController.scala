@@ -86,9 +86,9 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   lazy val isAdmin: Signal[Boolean] =
     selfPermissions.map(AdminPermissions.subsetOf)
 
-  lazy val isPartner: Signal[Boolean] =
+  lazy val isExternal: Signal[Boolean] =
     selfPermissions
-      .map(ps => PartnerPermissions.subsetOf(ps) && PartnerPermissions.size == ps.size)
+      .map(ps => ExternalPermissions.subsetOf(ps) && ExternalPermissions.size == ps.size)
       .orElse(Signal.const(false))
 
   lazy val hasCreateConvPermission: Signal[Boolean] = teamId.flatMap {
@@ -96,8 +96,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     case  _ => Signal.const(true)
   }
 
-  lazy val hasChangeGroupSettingsPermission: Signal[Boolean] =
-    isPartner.map(!_)
+  lazy val hasChangeGroupSettingsPermission: Signal[Boolean] = isExternal.map(!_)
 
   lazy val readReceiptsEnabled: Signal[Boolean] = zms.flatMap(_.propertiesService.readReceiptsEnabled)
 

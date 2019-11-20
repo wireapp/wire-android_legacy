@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.participants
 
+import java.util.Locale
+
 import android.content.Context
 import android.graphics.Color
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
@@ -49,6 +51,7 @@ import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{SearchQuery, TeamSizeThreshold}
 import com.waz.threading.Threading
+import com.waz.zclient.log.LogUI._
 
 import scala.util.Random
 
@@ -91,14 +94,17 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
   val filter = Signal("")
 
   private lazy val users = for {
-    usersStorage  <- usersStorage
-    tId           <- team
-    userIds       <- userIds
-    selfId        <- selfId
-    users         <- usersStorage.listSignal(selfId :: userIds.toList)
-    f             <- filter
-    filteredUsers =  users.filter(_.matchesQuery(SearchQuery(f)))
-  } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot, isAdmin = Random.nextBoolean())).sortBy(_.userData.getDisplayName.str)
+    usersStorage <- usersStorage
+    tId          <- team
+    userIds      <- userIds
+    selfId       <- selfId
+    users        <- usersStorage.listSignal(selfId :: userIds.toList)
+    f            <- filter
+  } yield
+    users
+      .filter(_.matchesQuery(SearchQuery(f)))
+      .map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot, isAdmin = Random.nextBoolean(), isSelf = u.id == selfId))
+      .sortBy(_.userData.getDisplayName.str)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
 
@@ -111,15 +117,16 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
     areWeAGuest       <- participantsController.isCurrentUserGuest
     canChangeSettings <- accountsController.hasChangeGroupSettingsPermission
   } yield {
-    val (bots, people) = users.toList.partition(_.userData.isWireBot)
+    val (bots, people)    = users.toList.partition(_.userData.isWireBot)
     val (admins, members) = people.partition(_.isAdmin)
 
-    adminsCount = admins.size
+    adminsCount  = admins.size
     membersCount = members.size
-    botCount = bots.size
+    botCount     = bots.size
 
-    val filteredAdmins = maxParticipants.fold(admins)(n => if (n >= adminsCount) admins else admins.take(n - 1))
+    val filteredAdmins  = maxParticipants.fold(admins)(n => if (n >= adminsCount) admins else admins.take(n - 1))
     val filteredMembers = maxParticipants.fold(members)(n => if (n >= people.size) members else members.take(n - adminsCount - 1))
+    verbose(l"PA filter: ${filter.currentValue}, max: $maxParticipants, admins: $adminsCount, filtered admins: ${filteredAdmins.size}, members: $membersCount, filtered members: ${filteredMembers.size}")
 
     (if (!showPeopleOnly) List(Right(if (canChangeSettings) ConversationName else ConversationNameReadOnly)) else Nil) :::
     List(Right(AdminsSeparator)) ::: filteredAdmins.map(data => Left(data)) :::
@@ -213,7 +220,8 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
     case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) =>
       h.bind(membersCount + adminsCount)
     case (Left(userData), h: ParticipantRowViewHolder) if userData.isAdmin =>
-      h.bind(userData, teamId, maxParticipants.forall(adminsCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle, hideUserStatus)
+      val lastRow = maxParticipants.forall(n => if (userData.isAdmin) adminsCount <= n else membersCount <= n) && items.lift(position + 1).forall(_.isRight)
+      h.bind(userData, teamId, lastRow, createSubtitle, hideUserStatus)
     case (Left(userData), h: ParticipantRowViewHolder) =>
       h.bind(userData, teamId, maxParticipants.forall(membersCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle, hideUserStatus)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
@@ -222,15 +230,36 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
       convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
     case (Right(ConversationNameReadOnly), h: ConversationNameViewHolder) =>
       convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
-    case (Right(sepType), h: SeparatorViewHolder) if separators.contains(sepType) =>
-      val (headerId, titleId, count) = sepType match {
-        case MembersSeparator => (R.id.members_section,  R.string.participants_divider_people,   Some(membersCount))
-        case AdminsSeparator  => (R.id.admins_section,   R.string.participants_divider_admins,   Some(adminsCount))
-        case OptionsSeparator => (R.id.options_section,  R.string.participants_divider_options,  None)
-        case _                => (R.id.services_section, R.string.participants_divider_services, Some(botCount))
+    case (Right(MembersSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.members_section)
+      h.setTitle(getString(R.string.participants_divider_people, membersCount.toString))
+      h.setEmptySection()
+      h.setContentDescription(s"Members: $membersCount")
+    case (Right(OptionsSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.options_section)
+      h.setTitle(getString(R.string.participants_divider_options))
+      h.setEmptySection()
+      h.setContentDescription("Options")
+    case (Right(ServicesSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.services_section)
+      h.setTitle(getString(R.string.participants_divider_services))
+      h.setEmptySection()
+      h.setContentDescription(s"Services")
+    case (Right(AdminsSeparator), h: SeparatorViewHolder) =>
+      h.setId(R.id.admins_section)
+      if (adminsCount == 0) {
+        if (membersCount == 0) {
+          h.setTitle()
+          h.setEmptySection(getString(R.string.participants_no_results).toUpperCase(Locale.getDefault))
+        } else {
+          h.setTitle(getString(R.string.participants_divider_admins, adminsCount.toString))
+          h.setEmptySection(getString(R.string.participants_no_admins))
+        }
+      } else {
+        h.setTitle(getString(R.string.participants_divider_admins, adminsCount.toString))
+        h.setEmptySection()
       }
-      h.setTitle(count.fold(getString(titleId))(c => getString(titleId, c.toString)))
-      h.setId(headerId)
+      h.setContentDescription(s"Admins: $adminsCount")
     case _ =>
   }
 
@@ -269,7 +298,7 @@ object ParticipantsAdapter {
 
   val separators = Set(AdminsSeparator, MembersSeparator, ServicesSeparator, OptionsSeparator)
 
-  case class ParticipantData(userData: UserData, isGuest: Boolean, isAdmin: Boolean)
+  case class ParticipantData(userData: UserData, isGuest: Boolean, isAdmin: Boolean, isSelf: Boolean)
 
   case class GuestOptionsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
     private implicit val ctx = view.getContext
@@ -282,6 +311,7 @@ object ParticipantsAdapter {
       case false => getString(R.string.guests_option_on)
     }.onUi(view.findViewById[TextView](R.id.value_text).setText)
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
+    view.setContentDescription("Guest Options")
   }
 
   case class EphemeralOptionsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
@@ -295,6 +325,7 @@ object ParticipantsAdapter {
       case _ => None
     }).map(getEphemeralDisplayString)
       .onUi(view.findViewById[TextView](R.id.value_text).setText)
+    view.setContentDescription("Ephemeral Options")
   }
 
   case class NotificationsButtonViewHolder(view: View, convController: ConversationController)(implicit eventContext: EventContext) extends ViewHolder(view) {
@@ -306,13 +337,26 @@ object ParticipantsAdapter {
     convController.currentConv
       .map(c => ConversationController.muteSetDisplayStringId(c.muted))
       .onUi(textId => view.findViewById[TextView](R.id.value_text).setText(textId))
+    view.setContentDescription("Notifications")
   }
 
   case class SeparatorViewHolder(separator: View) extends ViewHolder(separator) {
     private val textView = ViewUtils.getView[TextView](separator, R.id.separator_title)
+    private val emptySectionView = ViewUtils.getView[TextView](separator, R.id.empty_section_info)
 
-    def setTitle(title: String) = textView.setText(title)
-    def setId(id: Int) = textView.setId(id)
+    def setId(id: Int): Unit = textView.setId(id)
+
+    def setTitle(title: String = ""): Unit = {
+      textView.setText(title)
+      textView.setVisible(title.nonEmpty)
+    }
+
+    def setEmptySection(text: String = ""): Unit = {
+      emptySectionView.setText(text)
+      emptySectionView.setVisible(text.nonEmpty)
+    }
+
+    def setContentDescription(text: String): Unit = textView.setContentDescription(text)
   }
 
   case class ParticipantRowViewHolder(view: SingleUserRowView, onClick: SourceStream[UserId]) extends ViewHolder(view) {
@@ -322,9 +366,10 @@ object ParticipantsAdapter {
     view.onClick(userId.foreach(onClick ! _))
 
     def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[UserData => String], hideStatus: Boolean): Unit = {
-      userId = Some(participant.userData.id)
+      if (participant.isSelf) view.showArrow(false)
+      else userId = Some(participant.userData.id)
       createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, teamId, hideStatus, f)
+        case Some(f) => view.setUserData(participant.userData, teamId, hideStatus, createSubtitle = f)
         case None    => view.setUserData(participant.userData, teamId, hideStatus)
       }
       view.setSeparatorVisible(!lastRow)
@@ -403,6 +448,8 @@ object ParticipantsAdapter {
       callInfo.setText(if (isTeam) getString(R.string.call_info_text, ConversationController.MaxParticipants.toString) else getString(R.string.empty_string))
       callInfo.setMarginTop(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
       callInfo.setMarginBottom(getDimenPx(if (isTeam) R.dimen.wire__padding__16 else R.dimen.wire__padding__8)(view.getContext))
+
+      callInfo.setContentDescription("Call Info")
     }
 
     def onBackPressed(): Boolean =
@@ -423,6 +470,7 @@ object ParticipantsAdapter {
 
     def bind(numOfParticipants: Int): Unit = {
       nameView.setText(getString(R.string.show_all_participants, numOfParticipants.toString))
+      nameView.setContentDescription(s"Show All: $numOfParticipants")
     }
   }
 
