@@ -102,7 +102,7 @@ object CollectionController {
   }
 
   case object Images extends ContentType {
-    override val msgTypes = Seq(Message.Type.ASSET)
+    override val msgTypes = Seq(Message.Type.IMAGE_ASSET)
   }
 
   //Now we can add more types to this sequence for the "others" category
@@ -114,7 +114,7 @@ object CollectionController {
     //feels a little bit messy... maybe think of a neater way to represent the types
     override val msgTypes = Images.msgTypes ++ Files.msgTypes ++ Links.msgTypes
     override lazy val typeFilter: Seq[TypeFilter] = Seq(
-      TypeFilter(Message.Type.ASSET, Some(8)),
+      TypeFilter(Message.Type.IMAGE_ASSET, Some(8)),
       TypeFilter(Message.Type.RICH_MEDIA, Some(3)),
       TypeFilter(Message.Type.ANY_ASSET, Some(3)),
       TypeFilter(Message.Type.AUDIO_ASSET, Some(3)),

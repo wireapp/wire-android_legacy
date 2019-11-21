@@ -29,8 +29,8 @@ public interface Message extends UiObservable {
 
     enum Type {
         TEXT, TEXT_EMOJI_ONLY,
-        //TODO rename to IMAGE_ASSET
-        ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET,
+
+        IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET,
 
         KNOCK, MEMBER_JOIN, RICH_MEDIA, LOCATION, RECALLED,
 
