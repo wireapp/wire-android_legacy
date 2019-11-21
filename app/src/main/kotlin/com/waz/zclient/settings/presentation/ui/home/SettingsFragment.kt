@@ -16,14 +16,12 @@ class SettingsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_settings, container, false)
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val resourceManager = ResourceManagerImpl(resources)
         settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(resourceManager))
 
     }
-
     companion object {
         fun newInstance() = SettingsFragment()
     }

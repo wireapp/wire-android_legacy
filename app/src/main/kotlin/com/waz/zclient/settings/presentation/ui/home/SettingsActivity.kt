@@ -15,7 +15,6 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         toolbar.setContentView(this, R.layout.activity_settings_new)
         toolbar.showBackArrow()
-
         replaceFragment(R.id.fragment_container, SettingsFragment.newInstance())
     }
 }
