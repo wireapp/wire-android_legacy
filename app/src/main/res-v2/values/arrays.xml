@@ -26,6 +26,9 @@
         <item>@string/pref_advanced_screen_title</item>
         <item>@string/pref_support_screen_title</item>
         <item>@string/pref_about_screen_title</item>
+    </array>
+
+    <array name="settings_developer_titles">
         <item>@string/pref_developer_screen_title</item>
         <item>@string/pref_dev_avs_screen_title</item>
     </array>
@@ -37,8 +40,12 @@
         <item>@string/glyph__tools</item>
         <item>@string/glyph__info</item>
         <item>@string/glyph__wire</item>
+    </array>
+
+    <array name="settings_developer_icons">
         <item>@string/glyph__filter_robot</item>
         <item>@string/glyph__speaker_loud</item>
     </array>
+
 </resources>
 
