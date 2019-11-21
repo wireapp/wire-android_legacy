@@ -74,22 +74,93 @@ class UserServiceSpec extends AndroidFreeSpec {
   }
 
   feature("activity status") {
-    scenario("change activity status") {
+    scenario("propagate activity status if team size is smaller than threshold") {
 
+      //given
+      val teamSizeThreshold = 5
       val id = me.id
+      val teamId = TeamId("Wire")
+      val someTeamId = Some(teamId)
       val availability = me.availability
       availability should not equal Availability.Busy
 
+      val userService = new UserServiceImpl(
+        users.head.id, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
+        userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials, selectedConv
+      )
+
+      //expect
       val before = me.copy()
       val after = me.copy(availability = Availability.Busy)
+
       (usersStorage.update _).expects(id, *).once().onCall { (id, updater) =>
         updater(before) shouldEqual after
         Future.successful(Some((before, after)))
       }
+
+      val userOne: UserData = UserData("1")
+      val userTwo: UserData = UserData("2")
+      val userSet = Set(userOne, userTwo)
+      (usersStorage.getByTeam _).expects(Set(teamId)).returning(Future.successful(userSet))
+
       (sync.postAvailability _).expects(Availability.Busy).once().returning(Future.successful(SyncId()))
 
-      val service = getService
-      result(service.updateAvailability(Availability.Busy))
+      //when
+      result(userService.updateAvailability(Availability.Busy, teamSizeThreshold))
+    }
+
+    scenario("do not propagate activity status if team size is smaller than threshold") {
+
+      //given
+      val teamSizeThreshold = 2
+      val id = me.id
+      val teamId = TeamId("Wire")
+      val someTeamId = Some(teamId)
+      val availability = me.availability
+      availability should not equal Availability.Busy
+
+      val userService = new UserServiceImpl(
+        users.head.id, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
+        userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials, selectedConv
+      )
+
+      //expect
+      val before = me.copy()
+      val after = me.copy(availability = Availability.Busy)
+
+      (usersStorage.update _).expects(id, *).once().onCall { (id, updater) =>
+        updater(before) shouldEqual after
+        Future.successful(Some((before, after)))
+      }
+
+      val userOne: UserData = UserData("1")
+      val userTwo: UserData = UserData("2")
+      val userSet = Set(userOne, userTwo)
+      (usersStorage.getByTeam _).expects(Set(teamId)).returning(Future.successful(userSet))
+
+      //when
+      result(userService.updateAvailability(Availability.Busy, teamSizeThreshold))
+    }
+
+    scenario("do not propagate activity status if there is no team") {
+
+      //given
+      val teamSizeThreshold = 3000
+      val id = me.id
+      val availability = me.availability
+      availability should not equal Availability.Busy
+
+      //expect
+      val before = me.copy()
+      val after = me.copy(availability = Availability.Busy)
+
+      (usersStorage.update _).expects(id, *).once().onCall { (id, updater) =>
+        updater(before) shouldEqual after
+        Future.successful(Some((before, after)))
+      }
+
+      //when
+      result(getService.updateAvailability(Availability.Busy, teamSizeThreshold))
     }
   }
 
