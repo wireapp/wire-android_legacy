@@ -266,7 +266,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
 
   def createWireImageDirectory(): File = {
-    val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/WireImages/")
+    val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")
     IoUtils.createDirectory(file)
     file
   }
