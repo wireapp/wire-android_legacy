@@ -27,7 +27,6 @@
         <item name="colorPrimary">@color/dark_theme_primary</item>
         <item name="colorPrimaryDark">@color/black</item>
         <item name="colorAccent">@color/accent_default</item>
-        <item name="android:windowBackground">@drawable/window_background</item>
 
         <item name="alertDialogTheme">@style/Theme.Dark.Dialog.Alert</item>
         <item name="dialogTheme">@style/Theme.Dark.Dialog</item>
@@ -196,7 +195,6 @@
         <item name="colorPrimary">@color/light_theme_primary</item>
         <item name="colorPrimaryDark">@color/black</item>
         <item name="colorAccent">@color/accent_default</item>
-        <item name="android:windowBackground">@drawable/window_background</item>
 
         <item name="alertDialogTheme">@style/Theme.Light.Dialog.Alert</item>
         <item name="dialogTheme">@style/Theme.Light.Dialog</item>
@@ -377,6 +375,10 @@
         <item name="wireSecondaryTextColor">@color/text__secondary_dark</item>
         <item name="thinDividerColor">@color/white_16</item>
         <item name="replyBorderColor">@color/white_16</item>
+    </style>
+
+    <style name="Theme.Splash" parent="Theme.Light">
+        <item name="android:windowBackground">@drawable/window_background</item>
     </style>
 
     <style name="Theme.Popup" parent="@style/Theme.Design.NoActionBar">

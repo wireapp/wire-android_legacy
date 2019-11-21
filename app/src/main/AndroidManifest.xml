@@ -80,7 +80,7 @@
         android:hardwareAccelerated="true"
         android:icon="${applicationIcon}"
         android:label="${applicationLabel}"
-        android:theme="@style/Theme.Light"
+        android:theme="@style/Theme.Splash"
         android:vmSafeMode="${applicationVmSafeMode}"
         tools:replace="android:allowBackup"
         >
@@ -166,7 +166,7 @@
             android:name=".LaunchActivity"
             android:label="@string/app_name"
             android:noHistory="true"
-            android:theme="@style/Theme.Light"
+            android:theme="@style/Theme.Splash"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
