@@ -91,6 +91,58 @@
 -->
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 
+
+
+        <activity
+            android:name=".settings.presentation.ui.misc.SettingsActivity"
+            android:label="@string/app_name"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Dark.Preferences"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+
+        <!-- <activity
+            android:name=".LaunchActivity"
+            android:label="@string/app_name"
+            android:noHistory="true"
+            android:theme="@style/Theme.Light"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <data android:host="email-verified"
+                    android:scheme="${customURLScheme}" />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
+
+            <intent-filter>
+                <data
+                    android:host="connect"
+                    android:scheme="${customURLScheme}"
+                    />
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.VIEW" />
+            </intent-filter>
+        </activity> -->
+
+
         <!-- main activity -->
         <activity
             android:name=".MainActivity"
@@ -162,41 +214,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".controllers.notifications.ShareSavedImageActivity" />
-        <activity
-            android:name=".LaunchActivity"
-            android:label="@string/app_name"
-            android:noHistory="true"
-            android:theme="@style/Theme.Light"
-            android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <intent-filter>
-                <data android:host="email-verified"
-                      android:scheme="${customURLScheme}" />
-
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.VIEW" />
-            </intent-filter>
-
-            <intent-filter>
-                <data
-                    android:host="connect"
-                    android:scheme="${customURLScheme}"
-                    />
-
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.VIEW" />
-            </intent-filter>
-        </activity>
 
         <activity
             android:name=".appentry.AppEntryActivity"
