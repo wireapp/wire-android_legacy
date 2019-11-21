@@ -256,7 +256,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     } yield targetFile
 
   def saveImageToGallery(asset: Asset): Unit =
-    saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)).onComplete {
+    saveAssetContentToFile(asset,  createWireImageDirectory()).onComplete {
       case Success(file) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
@@ -264,6 +264,12 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       case _ =>
         Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
     }
+
+  def createWireImageDirectory(): File = {
+    val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/WireImages/")
+    IoUtils.createDirectory(file)
+    file
+  }
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
