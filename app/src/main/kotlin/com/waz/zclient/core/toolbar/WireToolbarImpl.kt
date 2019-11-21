@@ -8,7 +8,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.waz.zclient.R
 
-class ToolbarCompat : WireToolbar {
+class WireToolbarImpl : WireToolbar {
 
     private lateinit var toolbar: Toolbar
 
