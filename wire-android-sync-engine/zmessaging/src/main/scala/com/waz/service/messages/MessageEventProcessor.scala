@@ -223,7 +223,7 @@ class MessageEventProcessor(selfUserId:           UserId,
         case None                      => UNKNOWN
         case Some(org) if org.hasVideo => VIDEO_ASSET
         case Some(org) if org.hasAudio => AUDIO_ASSET
-        case Some(org) if org.hasImage => ASSET
+        case Some(org) if org.hasImage => IMAGE_ASSET
         case Some(_)                   => ANY_ASSET
       }
 
