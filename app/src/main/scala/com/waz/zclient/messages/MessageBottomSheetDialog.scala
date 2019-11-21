@@ -107,7 +107,7 @@ object MessageBottomSheetDialog {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = {
         if (msg.isEphemeral) Signal.const(false)
         else msg.msgType match {
-          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA =>
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA                 =>
             Signal.const(true)
           case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET | IMAGE_ASSET =>
             isAssetDataReady(msg.assetId.get, assets)

@@ -265,11 +265,10 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
         Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
     }
 
-  def createWireImageDirectory(): File = {
-    val file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")
-    IoUtils.createDirectory(file)
-    file
-  }
+  private def createWireImageDirectory() =
+    returning(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")) {
+      IoUtils.createDirectory
+    }
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {
