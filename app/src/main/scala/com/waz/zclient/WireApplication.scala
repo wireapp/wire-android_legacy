@@ -424,9 +424,9 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     val assets2Module = new Assets2Module {
       override def uriHelper: UriHelper = inject[UriHelper]
       override def assetDetailsService: AssetDetailsService =
-        new AssetDetailsServiceImpl(uriHelper)(getApplicationContext, Threading.BlockingIO)
+        new AssetDetailsServiceImpl(uriHelper)(getApplicationContext, Threading.IO)
       override def assetPreviewService: AssetPreviewService =
-        new AssetPreviewServiceImpl()(getApplicationContext, Threading.BlockingIO)
+        new AssetPreviewServiceImpl()(getApplicationContext, Threading.IO)
 
       override def assetsTransformationsService: AssetTransformationsService =
         new AssetTransformationsServiceImpl(

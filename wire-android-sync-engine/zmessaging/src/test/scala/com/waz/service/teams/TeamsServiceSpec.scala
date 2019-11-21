@@ -24,7 +24,7 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ErrorsService, SearchKey}
+import com.waz.service.{ErrorsService, SearchKey, SearchQuery}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.TeamMember
@@ -78,7 +78,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val service = createService
 
-    val res = service.searchTeamMembers().disableAutowiring() //disable autowiring to prevent multiple loads
+    val res = service.searchTeamMembers(SearchQuery.Empty).disableAutowiring() //disable autowiring to prevent multiple loads
     result(res.filter(_ == initialTeamMembers).head)
 
     userStorageOnAdded ! Seq(newTeamMember)
@@ -108,7 +108,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val service = createService
 
-    val res = service.searchTeamMembers(Option(SearchKey.simple("user")), false).disableAutowiring() //disable autowiring to prevent multiple loads
+    val res = service.searchTeamMembers(SearchQuery("user")).disableAutowiring() //disable autowiring to prevent multiple loads
     result(res.filter(_ == Set(member1)).head)
 
     userStorageOnUpdated ! Seq(member2 -> member2Updated)
@@ -140,7 +140,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val service = createService
 
-    val res = service.searchTeamMembers().disableAutowiring() //disable autowiring to prevent multiple loads
+    val res = service.searchTeamMembers(SearchQuery.Empty).disableAutowiring() //disable autowiring to prevent multiple loads
     result(res.filter(_ == initialTeamMembers).head)
 
     userStorageOnAdded ! Seq(newTeamMember)
@@ -172,7 +172,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     val service = createService
 
-    val res = service.searchTeamMembers().disableAutowiring() //disable autowiring to prevent multiple loads
+    val res = service.searchTeamMembers(SearchQuery.Empty).disableAutowiring() //disable autowiring to prevent multiple loads
     result(res.filter(_ == initialTeamMembers).head)
 
     userStorageOnUpdated ! Seq((teamMemberToUpdate, updatedTeamMember))

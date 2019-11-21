@@ -99,14 +99,13 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
   lazy val convsStorage:      ConversationStorage     = wire[ConversationStorageImpl]
   lazy val msgDeletions:      MsgDeletionStorage      = wire[MsgDeletionStorageImpl]
-  lazy val searchQueryCache:  SearchQueryCacheStorage = wire[SearchQueryCacheStorageImpl]
   lazy val msgEdits:          EditHistoryStorage      = wire[EditHistoryStorageImpl]
   lazy val propertiesStorage:   PropertiesStorage       = new PropertiesStorageImpl()(context, db2, Threading.IO)
 
   lazy val db2: DB = DB(db.dbHelper.getWritableDatabase)
-  lazy val inProgressAssetStorage: assets2.DownloadAssetStorage = new assets2.DownloadAssetStorageImpl(context, db2)(Threading.BlockingIO)
-  lazy val rawAssetStorage: assets2.UploadAssetStorage   = new assets2.UploadAssetStorageImpl(context, db2)(Threading.BlockingIO)
-  lazy val assetsStorage: assets2.AssetStorage         = new assets2.AssetStorageImpl(context, db2, Threading.BlockingIO)
+  lazy val inProgressAssetStorage: assets2.DownloadAssetStorage = new assets2.DownloadAssetStorageImpl(context, db2)(Threading.IO)
+  lazy val rawAssetStorage: assets2.UploadAssetStorage   = new assets2.UploadAssetStorageImpl(context, db2)(Threading.IO)
+  lazy val assetsStorage: assets2.AssetStorage         = new assets2.AssetStorageImpl(context, db2, Threading.IO)
 }
 
 class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: AccountManager, val storage: StorageModule, val cryptoBox: CryptoBoxService) extends DerivedLogTag {
@@ -181,7 +180,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def convsStorage      = storage.convsStorage
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
-  def searchQueryCache  = storage.searchQueryCache
   def propertiesStorage = storage.propertiesStorage
 
   lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]
@@ -318,8 +316,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         cacheDirectory = lruCacheDirectory,
         directorySizeThreshold = 1024 * 1024 * 200L,
         sizeCheckingInterval = 30.seconds
-      )(Threading.BlockingIO, EventContext.Global),
-      new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.BlockingIO),
+      )(Threading.IO, EventContext.Global),
+      new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.IO),
       asset2Client,
       sync
     )

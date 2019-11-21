@@ -57,7 +57,8 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
 
   private def checkPassword(password: Password): Future[PasswordCheck] = {
     import Threading.Implicits.Background
-    if (MaxAttempts == 0) { // don't count attempts
+
+    if (MaxAttempts == 0 || !BuildConfig.FORCE_APP_LOCK) { // don't count attempts
       pwdCtrl.checkPassword(password).map {
         case true  => PasswordCheckSuccessful
         case false => PasswordCheckFailed

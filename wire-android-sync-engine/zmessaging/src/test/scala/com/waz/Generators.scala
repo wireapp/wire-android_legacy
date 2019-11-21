@@ -25,7 +25,6 @@ import java.util.{Date, Locale}
 import com.waz.model.AssetMetaData.Image.Tag.{Medium, Preview}
 import com.waz.model.ConversationData.{ConversationType, UnreadCount}
 import com.waz.model.GenericContent.{EncryptionAlgorithm, Text}
-import com.waz.model.SearchQuery.{Recommended, TopPeople}
 import com.waz.model.Picture
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserInfo.ProfilePicture
@@ -34,7 +33,7 @@ import com.waz.model.messages.media._
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncRequest._
 import com.waz.model.sync.{SyncJob, SyncRequest}
-import com.waz.service.SearchKey
+import com.waz.service.{SearchKey, SearchQuery}
 import com.waz.service.assets2.UploadAssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.AuthenticationManager.AccessToken
@@ -278,7 +277,7 @@ object Generators {
   implicit lazy val arbAudioMetaData: Arbitrary[AssetMetaData.Audio] = Arbitrary(resultOf(AssetMetaData.Audio(_: Duration)))
   implicit lazy val arbDim2: Arbitrary[Dim2] = Arbitrary(for (w <- genDimension; h <- genDimension) yield Dim2(w, h))
   lazy val genDimension = chooseNum(0, 10000)
-  implicit lazy val arbSearchQuery: Arbitrary[SearchQuery] = Arbitrary(frequency((1, Gen.const(TopPeople)), (3, Gen.alphaStr.map(Recommended))))
+  implicit lazy val arbSearchQuery: Arbitrary[SearchQuery] = Arbitrary(for (s <- arbitrary[String]; b <- arbitrary[Boolean]) yield SearchQuery(s, b))
   implicit lazy val arbTag: Arbitrary[AssetMetaData.Image.Tag] = Arbitrary(oneOf(AssetMetaData.Image.Tag.Preview, AssetMetaData.Image.Tag.Medium, AssetMetaData.Image.Tag.Empty))
   implicit lazy val profilePicture: Arbitrary[ProfilePicture] = Arbitrary(resultOf(ProfilePicture))
 

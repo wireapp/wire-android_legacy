@@ -21,8 +21,8 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
-import com.waz.model.{AccentColor, Availability, SearchQuery, _}
-import com.waz.service.PropertyKey
+import com.waz.model.{AccentColor, Availability, _}
+import com.waz.service.{PropertyKey, SearchQuery}
 import com.waz.service.assets2.{Codec, StorageCodecs, UploadAssetStatus}
 import com.waz.sync.client.{ConversationsClient, UsersClient}
 import com.waz.sync.queue.SyncJobMerger._

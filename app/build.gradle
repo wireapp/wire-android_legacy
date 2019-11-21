@@ -8,7 +8,7 @@ apply from: 'config/quality.gradle'
 
 
 ext {
-    majorVersion = "3.42."
+    majorVersion = "3.43."
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
 

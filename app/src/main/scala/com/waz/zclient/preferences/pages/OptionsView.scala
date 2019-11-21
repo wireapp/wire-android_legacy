@@ -104,13 +104,13 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   vibrationSwitch.setPreference(VibrateEnabled)
   sendButtonSwitch.setPreference(SendButtonEnabled)
 
-  appLockSwitch.setPreference(AppLockEnabled, global = true)
-  appLockSwitch.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
-
   if (BuildConfig.FORCE_APP_LOCK) {
-    appLockSwitch.setVisibility(View.GONE)
+    appLockSwitch.setVisible(false)
+  } else {
+    appLockSwitch.setPreference(AppLockEnabled, global = true)
+    appLockSwitch.setSubtitle(getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString))
+    appLockSwitch.setVisible(true)
   }
-
 
   incognitoKeyboardSwitch.setPreference(IncognitoKeyboardEnabled, global = true)
   if (BuildConfig.FORCE_PRIVATE_KEYBOARD) {
@@ -123,7 +123,7 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-    hideScreenContentSwitch.setDisabled(true)
+    hideScreenContentSwitch.setVisible(false)
     hideScreenContentSwitch.pref.foreach(_ := true)
   }
 

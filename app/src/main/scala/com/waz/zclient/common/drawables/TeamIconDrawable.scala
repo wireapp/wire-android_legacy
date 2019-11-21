@@ -90,7 +90,7 @@ class TeamIconDrawable(implicit inj: Injector, eventContext: EventContext, ctx: 
     asset <- imageAsset
     bitmap <- Signal.future(
       asset.fold(Future.successful(Option.empty[Bitmap])) { p =>
-        Threading.Background {
+        Threading.ImageDispatcher {
           Option(WireGlide(ctx)
             .asBitmap()
             .load(p)

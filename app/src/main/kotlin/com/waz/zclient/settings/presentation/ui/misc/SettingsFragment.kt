@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
-import com.waz.zclient.extension.withArgs
+import com.waz.zclient.utilities.extension.withArgs
 import kotlinx.android.synthetic.main.fragment_settings.*
 
 class SettingsFragment : Fragment() {

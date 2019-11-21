@@ -38,10 +38,8 @@ class WipeDataAction(affectedAccount: Option[UserId])(implicit context: Context)
     case true  => Future.successful(())
     case false =>
       (affectedAccount match {
-        case Some(id) =>
-          ZMessaging.currentAccounts.wipeData(id)
-        case _ =>
-          ZMessaging.currentAccounts.wipeDataForAllAccounts()
+        case Some(id) => ZMessaging.currentAccounts.wipeData(id)
+        case _        => ZMessaging.currentAccounts.wipeDataForAllAccounts()
       }).map { _ =>
         WireApplication.clearOldVideoFiles(context)
         context.getCacheDir.delete()
