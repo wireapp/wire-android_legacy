@@ -94,7 +94,7 @@
 
 
         <activity
-            android:name=".settings.presentation.ui.misc.SettingsActivity"
+            android:name=".settings.presentation.ui.home.SettingsActivity"
             android:label="@string/settings_title"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Dark.Preferences"

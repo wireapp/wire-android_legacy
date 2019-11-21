@@ -1,4 +1,4 @@
-package com.waz.zclient.settings.presentation.ui.misc
+package com.waz.zclient.settings.presentation.ui.home
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
