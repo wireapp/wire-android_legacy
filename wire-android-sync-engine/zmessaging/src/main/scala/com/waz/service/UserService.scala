@@ -17,7 +17,6 @@
  */
 package com.waz.service
 
-import com.waz.api.impl.ErrorResponse
 import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.content._
@@ -80,10 +79,12 @@ trait UserService {
   //These self user properties should always succeed given no fatal errors, so we update locally and create sync jobs
   def updateName(name: Name): Future[Unit]
   def updateAccentColor(color: AccentColor): Future[Unit]
-  def updateAvailability(availability: Availability): Future[Unit]
+  def updateAvailability(availability: Availability, teamSizeThreshold: Int): Future[Unit]
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(content: Content): Future[Unit]
+
+  def selfTeamSize: Future[Option[Int]]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -329,8 +330,15 @@ class UserServiceImpl(selfUserId:        UserId,
     updateAndSync(_.copy(accent = color.id), _ => sync.postSelfUser(UserInfo(selfUserId, accentId = Some(color.id))))
   }
 
-  override def updateAvailability(availability: Availability) = {
-    updateAndSync(_.copy(availability = availability), _ => sync.postAvailability(availability)).map(_ => {})
+  override def updateAvailability(availability: Availability, teamSizeThreshold: Int) = {
+    //This is a hack as part of the the ticket AN-6512 about broadcasting user status
+    //https://wearezeta.atlassian.net/browse/AN-6512
+    updateAndSync(
+      _.copy(availability = availability),
+      _ => selfTeamSize.flatMap {
+        case Some(teamSize) if teamSize < teamSizeThreshold => sync.postAvailability(availability).map(_ => {})
+        case _ => Future.successful({})
+    })
   }
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
@@ -351,6 +359,10 @@ class UserServiceImpl(selfUserId:        UserId,
       case _ => Future.successful({})
     })
 
+  override def selfTeamSize: Future[Option[Int]] = {
+    val empty: Future[Option[Int]] = Future.successful(None)
+    teamId.fold(empty)(id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size)))
+  }
 }
 
 object UserService {
