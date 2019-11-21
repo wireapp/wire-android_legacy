@@ -289,9 +289,9 @@ object MessageData extends
 
   val Empty = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""))
   val Deleted = new MessageData(MessageId(""), ConvId(""), Message.Type.UNKNOWN, UserId(""), state = Message.Status.DELETED)
-  val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION, KNOCK)
+  val isUserContent = Set(TEXT, TEXT_EMOJI_ONLY, IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION, KNOCK)
 
-  val EphemeralMessageTypes = Set(TEXT, TEXT_EMOJI_ONLY, KNOCK, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
+  val EphemeralMessageTypes = Set(TEXT, TEXT_EMOJI_ONLY, KNOCK, IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
 
   // A markdown link looks like that: [place for the text](here.goes.the.link)
   // Links of this type will be handled by our Markdown library, we should ignore them here.
@@ -304,7 +304,7 @@ object MessageData extends
   implicit lazy val MessageTypeCodec: EnumCodec[Message.Type, String] = EnumCodec.injective {
     case Message.Type.TEXT                 => "Text"
     case Message.Type.TEXT_EMOJI_ONLY      => "TextEmojiOnly"
-    case Message.Type.ASSET                => "Asset"
+    case Message.Type.IMAGE_ASSET          => "Asset"
     case Message.Type.ANY_ASSET            => "AnyAsset"
     case Message.Type.VIDEO_ASSET          => "VideoAsset"
     case Message.Type.AUDIO_ASSET          => "AudioAsset"
@@ -545,7 +545,7 @@ object MessageData extends
   object IsAsset {
     def apply(tpe: Message.Type): Boolean = unapply(tpe)
     def unapply(tpe: Message.Type): Boolean = tpe match {
-      case ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET | ASSET => true
+      case ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET | IMAGE_ASSET => true
       case _ => false
     }
   }

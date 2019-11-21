@@ -61,7 +61,7 @@ object MsgPart {
         case TEXT
              | TEXT_EMOJI_ONLY
              | RICH_MEDIA => Text
-        case ASSET        => Image
+        case IMAGE_ASSET        => Image
         case ANY_ASSET    => FileAsset
         case VIDEO_ASSET  => VideoAsset
         case AUDIO_ASSET  => AudioAsset
@@ -75,7 +75,7 @@ object MsgPart {
     import Message.Type._
     msgType match {
       case TEXT | TEXT_EMOJI_ONLY => Text
-      case ASSET => Image
+      case IMAGE_ASSET => Image
       case ANY_ASSET => FileAsset
       case VIDEO_ASSET => VideoAsset
       case AUDIO_ASSET => AudioAsset

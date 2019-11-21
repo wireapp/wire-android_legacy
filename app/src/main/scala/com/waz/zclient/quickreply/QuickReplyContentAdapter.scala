@@ -142,7 +142,7 @@ object QuickReplyContentAdapter {
           context.getString(R.string.notification__message__one_to_one__wanted_to_talk)
         case KNOCK =>
           context.getString(R.string.notification__message__one_to_one__pinged)
-        case ASSET =>
+        case IMAGE_ASSET =>
           context.getString(R.string.notification__message__one_to_one__shared_picture)
         case RENAME =>
           StringUtils.capitalise(context.getString(R.string.notification__message__group__renamed_conversation, message.contentString))

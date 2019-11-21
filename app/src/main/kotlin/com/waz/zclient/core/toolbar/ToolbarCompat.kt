@@ -2,6 +2,7 @@ package com.waz.zclient.core.toolbar
 
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.FrameLayout
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -19,7 +20,7 @@ class ToolbarCompat : WireToolbar {
         toolbar = rootView.findViewById(R.id.toolbar)
         activity.setSupportActionBar(toolbar)
 
-        val layoutContainer = rootView.findViewById<ConstraintLayout>(R.id.layout_container)
+        val layoutContainer = rootView.findViewById<FrameLayout>(R.id.layout_container)
         LayoutInflater.from(activity).inflate(layoutRes, layoutContainer, true)
 
         activity.setContentView(rootView)

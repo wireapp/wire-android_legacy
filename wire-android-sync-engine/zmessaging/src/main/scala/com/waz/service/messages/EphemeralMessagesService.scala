@@ -116,7 +116,7 @@ class EphemeralMessagesService(selfUserId: UserId,
       case VIDEO_ASSET | AUDIO_ASSET =>
         removeSource(msg)
         msg.copy(expired = true)
-      case ASSET | ANY_ASSET => // other assets are removed in removeExpired
+      case IMAGE_ASSET | ANY_ASSET => // other assets are removed in removeExpired
         msg.copy(expired = true)
       case LOCATION =>
         val (name, zoom) = msg.location.fold(("", 14)) { l => (obfuscate(l.getName), l.getZoom) }

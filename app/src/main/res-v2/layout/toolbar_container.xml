@@ -39,7 +39,7 @@
         app:popupTheme="?actionBarPopupTheme"
         app:titleMarginStart="@dimen/wire__padding__regular" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout
         android:id="@+id/layout_container"
         android:layout_width="0dp"
         android:layout_height="0dp"

@@ -321,7 +321,7 @@ object MessagesStorage {
   val filteredMessagesCacheSize = 32
   val FirstMessageTypes = {
     import Message.Type._
-    Set(TEXT, TEXT_EMOJI_ONLY, KNOCK, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, LOCATION)
+    Set(TEXT, TEXT_EMOJI_ONLY, KNOCK, IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, LOCATION)
   }
 }
 
