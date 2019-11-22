@@ -1229,7 +1229,8 @@
     <string name="participants_divider_admins_no_number">CONVERSATION ADMINS</string>
     <string name="participants_divider_options">OPTIONS</string>
     <string name="participants_no_admins">There are no admins.</string>
-    <string name="participants_no_results">No matching results. Try entering a different name.</string>
+    <string name="participants_no_results_1">No matching results.</string>
+    <string name="participants_no_results_2">Try entering a different name.</string>
 
     <string name="group_name_hint">GROUP NAME</string>
     <string name="allow_guests_toggle_text">Allow guests and services</string>

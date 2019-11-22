@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.participants
 
-import java.util.Locale
-
 import android.content.Context
 import android.graphics.Color
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
@@ -60,7 +58,7 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
                           showArrow:       Boolean = true,
-                          createSubtitle: Option[UserData => String] = None
+                          createSubtitle:  Option[UserData => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
@@ -213,6 +211,8 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.list_options_button, parent, false)
       view.onClick(onShowAllParticipantsClick ! {})
       ShowAllParticipantsViewHolder(view)
+    case NoResultsInfo =>
+      NoResultsInfoViewHolder(LayoutInflater.from(parent.getContext).inflate(R.layout.participants_no_result_info, parent, false))
     case _ => SeparatorViewHolder(getSeparatorView(parent))
   }
 
@@ -256,11 +256,11 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
         else getString(R.string.participants_divider_admins, adminsCount.toString)
       )
       if (showPeopleOnly) h.setContentDescription(s"Admins") else h.setContentDescription(s"Admins: $adminsCount")
-    case (Right(NoResultsInfo), h: SeparatorViewHolder) =>
-      h.setId(R.id.no_results_info)
+    case (Right(NoResultsInfo), h: NoResultsInfoViewHolder) =>
+/*      h.setId(R.id.no_results_info)
       h.setTitle()
       h.setEmptySection(getString(R.string.participants_no_results).toUpperCase(Locale.getDefault))
-      h.setContentDescription(s"No Results")
+      h.setContentDescription(s"No Results")*/
     case _ =>
   }
 
@@ -359,6 +359,11 @@ object ParticipantsAdapter {
     }
 
     def setContentDescription(text: String): Unit = textView.setContentDescription(text)
+  }
+
+  case class NoResultsInfoViewHolder(view: View) extends ViewHolder(view) {
+    view.setId(R.id.no_results_info)
+    view.setContentDescription(s"No Results")
   }
 
   case class ParticipantRowViewHolder(view: SingleUserRowView, onClick: SourceStream[UserId]) extends ViewHolder(view) {
