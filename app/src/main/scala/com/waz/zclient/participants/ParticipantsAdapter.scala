@@ -126,12 +126,12 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
 
     val filteredAdmins  = maxParticipants.fold(admins)(n => if (n >= adminsCount) admins else admins.take(n - 1))
     val filteredMembers = maxParticipants.fold(members)(n => if (n >= people.size) members else members.take(n - adminsCount - 1))
-    verbose(l"PA filter: ${filter.currentValue}, max: $maxParticipants, admins: $adminsCount, filtered admins: ${filteredAdmins.size}, members: $membersCount, filtered members: ${filteredMembers.size}")
+    verbose(l"filter: ${filter.currentValue}, max: $maxParticipants, admins: $adminsCount, filtered admins: ${filteredAdmins.size}, members: $membersCount, filtered members: ${filteredMembers.size}")
 
     (if (!showPeopleOnly) List(Right(if (canChangeSettings) ConversationName else ConversationNameReadOnly)) else Nil) :::
-    List(Right(AdminsSeparator)) ::: filteredAdmins.map(data => Left(data)) :::
-    (if (filteredMembers.nonEmpty) List(Right(MembersSeparator)) else Nil) :::
-    filteredMembers.map(data => Left(data)) :::
+    (if (showPeopleOnly && people.isEmpty) List(Right(NoResultsInfo)) else Nil) :::
+    (if (!showPeopleOnly || filteredAdmins.nonEmpty) List(Right(AdminsSeparator)) ::: filteredAdmins.map(data => Left(data)) else Nil) :::
+    (if (filteredMembers.nonEmpty) List(Right(MembersSeparator)) ::: filteredMembers.map(data => Left(data)) else Nil) :::
     (if (maxParticipants.exists(_ < people.size)) List(Right(AllParticipants)) else Nil) :::
     (if (!showPeopleOnly) List(Right(OptionsSeparator)) else Nil) :::
     (if (convActive && tId.isDefined && !showPeopleOnly) List(Right(Notifications)) else Nil) :::
@@ -232,9 +232,12 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
       convName.foreach(name => h.bind(name, convVerified, teamId.isDefined))
     case (Right(MembersSeparator), h: SeparatorViewHolder) =>
       h.setId(R.id.members_section)
-      h.setTitle(getString(R.string.participants_divider_people, membersCount.toString))
       h.setEmptySection()
-      h.setContentDescription(s"Members: $membersCount")
+      h.setTitle(
+        if (showPeopleOnly) getString(R.string.participants_divider_people_no_number)
+        else getString(R.string.participants_divider_people, membersCount.toString)
+      )
+      if (showPeopleOnly) h.setContentDescription(s"Member") else h.setContentDescription(s"Members: $membersCount")
     case (Right(OptionsSeparator), h: SeparatorViewHolder) =>
       h.setId(R.id.options_section)
       h.setTitle(getString(R.string.participants_divider_options))
@@ -247,19 +250,17 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
       h.setContentDescription(s"Services")
     case (Right(AdminsSeparator), h: SeparatorViewHolder) =>
       h.setId(R.id.admins_section)
-      if (adminsCount == 0) {
-        if (membersCount == 0) {
-          h.setTitle()
-          h.setEmptySection(getString(R.string.participants_no_results).toUpperCase(Locale.getDefault))
-        } else {
-          h.setTitle(getString(R.string.participants_divider_admins, adminsCount.toString))
-          h.setEmptySection(getString(R.string.participants_no_admins))
-        }
-      } else {
-        h.setTitle(getString(R.string.participants_divider_admins, adminsCount.toString))
-        h.setEmptySection()
-      }
-      h.setContentDescription(s"Admins: $adminsCount")
+      h.setEmptySection(if (adminsCount == 0) getString(R.string.participants_no_admins) else "")
+      h.setTitle(
+        if (showPeopleOnly) getString(R.string.participants_divider_admins_no_number)
+        else getString(R.string.participants_divider_admins, adminsCount.toString)
+      )
+      if (showPeopleOnly) h.setContentDescription(s"Admins") else h.setContentDescription(s"Admins: $adminsCount")
+    case (Right(NoResultsInfo), h: SeparatorViewHolder) =>
+      h.setId(R.id.no_results_info)
+      h.setTitle()
+      h.setEmptySection(getString(R.string.participants_no_results).toUpperCase(Locale.getDefault))
+      h.setContentDescription(s"No Results")
     case _ =>
   }
 
@@ -295,6 +296,7 @@ object ParticipantsAdapter {
   val ConversationNameReadOnly = 9
   val OptionsSeparator         = 10
   val AdminsSeparator          = 11
+  val NoResultsInfo = 12
 
   val separators = Set(AdminsSeparator, MembersSeparator, ServicesSeparator, OptionsSeparator)
 

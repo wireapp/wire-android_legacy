@@ -1225,6 +1225,8 @@
     <string name="participants_divider_services">SERVICES (%1$s)</string>
     <string name="participants_divider_people">CONVERSATION MEMBERS (%1$s)</string>
     <string name="participants_divider_admins">CONVERSATION ADMINS (%1$s)</string>
+    <string name="participants_divider_people_no_number">CONVERSATION MEMBERS</string>
+    <string name="participants_divider_admins_no_number">CONVERSATION ADMINS</string>
     <string name="participants_divider_options">OPTIONS</string>
     <string name="participants_no_admins">There are no admins.</string>
     <string name="participants_no_results">No matching results. Try entering a different name.</string>
