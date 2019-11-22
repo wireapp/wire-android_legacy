@@ -22,9 +22,11 @@ import android.graphics.Rect
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.EventContext
+import com.waz.service.TeamSize
+import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController.Theme
@@ -67,6 +69,8 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   private var currentUserIsAdmin = false
   private var noServices         = false
 
+  private lazy val usersStorage = inject[Signal[UsersStorage]]
+
   val filter = searchController.filter
   val tab    = searchController.tab
   val searchResults = searchController.searchUserOrServices
@@ -106,6 +110,11 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
       }
 
       updateMergedResults()
+  }
+
+  private var hideUserStatus = false
+  TeamSize.hideStatus(Signal.const(team.map(_.id)), usersStorage).onUi {
+    hideUserStatus = _
   }
 
   override def onDetachedFromRecyclerView(recyclerView: RecyclerView): Unit = {
@@ -211,9 +220,9 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
         holder.asInstanceOf[ConversationViewHolder].bind(conversations(item.index))
       case ConnectedUser =>
         val user = localResults(item.index)
-        holder.asInstanceOf[UserViewHolder].bind(user, team.map(_.id))
+        holder.asInstanceOf[UserViewHolder].bind(user, hideUserStatus, team.map(_.id))
       case UnconnectedUser =>
-        holder.asInstanceOf[UserViewHolder].bind(directoryResults(item.index))
+        holder.asInstanceOf[UserViewHolder].bind(directoryResults(item.index), hideUserStatus)
       case SectionHeader =>
         holder.asInstanceOf[SectionHeaderViewHolder].bind(item.section, item.name)
       case Expand =>
@@ -399,9 +408,9 @@ object SearchUIAdapter {
     view.showCheckbox(false)
     view.setTheme(Theme.Dark, background = false)
 
-    def bind(userData: UserData, teamId: Option[TeamId] = None): Unit = {
+    def bind(userData: UserData, hideStatus: Boolean, teamId: Option[TeamId] = None): Unit = {
       this.userData = Some(userData)
-      view.setUserData(userData, teamId)
+      view.setUserData(userData, teamId, hideStatus)
     }
   }
 

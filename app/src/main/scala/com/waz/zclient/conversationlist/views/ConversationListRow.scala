@@ -181,6 +181,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   } yield (name, av)).onUi { case (name, av) =>
     title.setText(name)
 
+    //TODO: Only display if we do not reach the Threshold
     AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 

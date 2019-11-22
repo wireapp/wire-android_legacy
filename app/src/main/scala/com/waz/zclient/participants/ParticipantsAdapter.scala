@@ -46,7 +46,7 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 import com.waz.content.UsersStorage
-import com.waz.service.SearchQuery
+import com.waz.service.{SearchQuery, TeamSize}
 
 //TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
 class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
@@ -147,6 +147,11 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
 
   private val conv = convController.currentConv
 
+  private var hideUserStatus = false
+  TeamSize.hideStatus(team, usersStorage).onUi {
+    hideUserStatus = _
+  }
+
   (for {
     name  <- conv.map(_.displayName)
     ver   <- conv.map(_.verified == Verification.VERIFIED)
@@ -211,7 +216,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) =>
       h.bind(peopleCount)
     case (Left(userData), h: ParticipantRowViewHolder) =>
-      h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle)
+      h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle, hideUserStatus)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
       h.bind(readReceiptsEnabled)
     case (Right(ConversationName), h: ConversationNameViewHolder) =>
@@ -308,11 +313,11 @@ object ParticipantsAdapter {
 
     view.onClick(userId.foreach(onClick ! _))
 
-    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[(UserData) => String]): Unit = {
+    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[(UserData) => String], hideStatus: Boolean): Unit = {
       userId = Some(participant.userData.id)
       createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, teamId, f)
-        case None    => view.setUserData(participant.userData, teamId)
+        case Some(f) => view.setUserData(participant.userData, teamId, hideStatus, f)
+        case None    => view.setUserData(participant.userData, teamId, hideStatus)
       }
       view.setSeparatorVisible(!lastRow)
     }

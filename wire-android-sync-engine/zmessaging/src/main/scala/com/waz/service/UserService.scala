@@ -79,7 +79,7 @@ trait UserService {
   //These self user properties should always succeed given no fatal errors, so we update locally and create sync jobs
   def updateName(name: Name): Future[Unit]
   def updateAccentColor(color: AccentColor): Future[Unit]
-  def updateAvailability(availability: Availability, teamSizeThreshold: Int): Future[Unit]
+  def updateAvailability(availability: Availability): Future[Unit]
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(content: Content): Future[Unit]
@@ -329,7 +329,7 @@ class UserServiceImpl(selfUserId:        UserId,
     updateAndSync(_.copy(accent = color.id), _ => sync.postSelfUser(UserInfo(selfUserId, accentId = Some(color.id))))
   }
 
-  override def updateAvailability(availability: Availability, teamSizeThreshold: Int) = {
+  override def updateAvailability(availability: Availability) = {
     updateAndSync(
       _.copy(availability = availability),
       _ => teamSize.runIfNoThreshold(() => sync.postAvailability(availability)))

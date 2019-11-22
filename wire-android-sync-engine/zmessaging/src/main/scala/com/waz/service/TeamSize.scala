@@ -20,13 +20,14 @@ package com.waz.service
 import com.waz.content._
 import com.waz.model._
 import com.waz.threading.Threading
-import com.waz.utils.events.EventContext
+import com.waz.utils.events.{EventContext, Signal}
 
 import scala.concurrent.Future
 
 
 trait TeamSize {
   def runIfNoThreshold(fnToRun: () => Future[_]): Future[Unit]
+  def membersCount: Future[Option[Int]]
 }
 
 class TeamSizeImpl(teamId:       Option[TeamId],
@@ -35,16 +36,26 @@ class TeamSizeImpl(teamId:       Option[TeamId],
   import Threading.Implicits.Background
   private implicit val ec: EventContext.Global.type = EventContext.Global
 
-  private val teamSizeThreshold = 400
-
   override def runIfNoThreshold(fnToRun: () => Future[_]): Future[Unit] =
-    selfTeamSize.flatMap {
-        case Some(teamSize) if teamSize < teamSizeThreshold => fnToRun().map(_ => ())
+    membersCount.flatMap {
+        case Some(membersCount) if membersCount < TeamSize.teamSizeThreshold => fnToRun().map(_ => ())
         case _ => Future.successful({})
     }
 
-  def selfTeamSize: Future[Option[Int]] = {
+  override def membersCount: Future[Option[Int]] = {
     val empty: Future[Option[Int]] = Future.successful(None)
     teamId.fold(empty)(id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size)))
   }
+}
+
+object TeamSize {
+
+  val teamSizeThreshold = 400
+
+  def hideStatus(teamId: Signal[Option[TeamId]], usersStorage: Signal[UsersStorage]): Signal[Boolean] =
+    for {
+      teamId <- teamId
+      usersStorage <- usersStorage
+      teamSize <- teamId.fold(Signal.const(0))(tId => Signal.future(usersStorage.getByTeam(Set(tId)).map(_.size)(Threading.Background)))
+    } yield teamSize == 0 || teamSize > teamSizeThreshold
 }
