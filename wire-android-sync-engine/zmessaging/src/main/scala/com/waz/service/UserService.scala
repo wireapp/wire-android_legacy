@@ -83,8 +83,6 @@ trait UserService {
 
   def storeAvailabilities(availabilities: Map[UserId, Availability]): Future[Seq[(UserData, UserData)]]
   def updateSelfPicture(content: Content): Future[Unit]
-
-  def selfTeamSize: Future[Option[Int]]
 }
 
 class UserServiceImpl(selfUserId:        UserId,
@@ -100,6 +98,7 @@ class UserServiceImpl(selfUserId:        UserId,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetStorage,
                       credentialsClient: CredentialsUpdateClient,
+                      teamSize:          TeamSize,
                       selectedConv:      SelectedConversationService) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -331,14 +330,9 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def updateAvailability(availability: Availability, teamSizeThreshold: Int) = {
-    //This is a hack as part of the the ticket AN-6512 about broadcasting user status
-    //https://wearezeta.atlassian.net/browse/AN-6512
     updateAndSync(
       _.copy(availability = availability),
-      _ => selfTeamSize.flatMap {
-        case Some(teamSize) if teamSize < teamSizeThreshold => sync.postAvailability(availability).map(_ => {})
-        case _ => Future.successful({})
-    })
+      _ => teamSize.runIfNoThreshold(() => sync.postAvailability(availability)))
   }
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
@@ -358,11 +352,6 @@ class UserServiceImpl(selfUserId:        UserId,
       case Some((p, u)) if p != u => sync(u).map(_ => {})
       case _ => Future.successful({})
     })
-
-  override def selfTeamSize: Future[Option[Int]] = {
-    val empty: Future[Option[Int]] = Future.successful(None)
-    teamId.fold(empty)(id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size)))
-  }
 }
 
 object UserService {

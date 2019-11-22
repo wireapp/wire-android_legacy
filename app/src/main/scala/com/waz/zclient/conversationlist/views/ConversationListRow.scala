@@ -180,6 +180,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     av <- controller.availability(convId)
   } yield (name, av)).onUi { case (name, av) =>
     title.setText(name)
+
     AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 

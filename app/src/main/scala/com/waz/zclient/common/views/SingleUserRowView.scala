@@ -100,7 +100,10 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   def setUserData(userData: UserData, teamId: Option[TeamId], createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.loadUser(userData.id)
     setTitle(userData.getDisplayName)
+
+    //TODO: Only display if we do not reach the Threshold
     if (teamId.isDefined) setAvailability(userData.availability)
+
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
     setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
