@@ -19,7 +19,6 @@ package com.waz.zclient.common.controllers
 
 import java.io.{File, FileOutputStream}
 
-import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.app.DownloadManager
 import android.content.pm.PackageManager
 import android.content.{Context, Intent}
@@ -248,22 +247,24 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] =
     for {
       permissions <- permissions.head
-      _           <- permissions.ensurePermissions(ListSet(WRITE_EXTERNAL_STORAGE))
+      _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE))
       assets      <- assets.head
       is          <- assets.loadContent(asset).future
       targetFile  =  getTargetFile(asset, targetDir)
       _           =  IoUtils.copy(is, new FileOutputStream(targetFile))
     } yield targetFile
 
-  def saveImageToGallery(asset: Asset): Unit =
-    saveAssetContentToFile(asset,  createWireImageDirectory()).onComplete {
+  def saveImageToGallery(asset: Asset): Unit = {
+    saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
       case Success(file) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
         Toast.makeText(context, R.string.message_bottom_menu_action_save_ok, Toast.LENGTH_SHORT).show()
-      case _ =>
+        context.sendBroadcast(returning(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE))(_.setData(Uri.fromFile(file))))
+      case _             =>
         Toast.makeText(context, R.string.content__file__action__save_error, Toast.LENGTH_SHORT).show()
     }
+  }
 
   private def createWireImageDirectory() =
     returning(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")) {

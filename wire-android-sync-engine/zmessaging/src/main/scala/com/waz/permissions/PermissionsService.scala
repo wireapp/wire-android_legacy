@@ -136,7 +136,7 @@ class PermissionsService extends DerivedLogTag {
       val denied = ps.toSeq.filter(!_.granted)
       if (denied.isEmpty) Future.successful(())
       else Future.failed(PermissionDeniedError(denied.map(_.key)))
-    }(Threading.Background)
+    }(Threading.Ui)
 
   //Non-blocking getter for java
   def checkPermission(key: String): Boolean = permissions.currentValue.map(_.filter(_.key == key)).exists(ps => ps.nonEmpty && ps.forall(_.granted))
