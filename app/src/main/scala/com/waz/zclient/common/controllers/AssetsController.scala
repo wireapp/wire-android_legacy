@@ -19,7 +19,6 @@ package com.waz.zclient.common.controllers
 
 import java.io.{File, FileOutputStream}
 
-import
 import android.app.DownloadManager
 import android.content.pm.PackageManager
 import android.content.{Context, Intent}
