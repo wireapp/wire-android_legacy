@@ -17,7 +17,7 @@ fun AppCompatActivity.getLabel(): String {
     return label
 }
 
-fun AppCompatActivity.addFragmenqt(frameId: Int, fragment: Fragment) {
+fun AppCompatActivity.addFragment(frameId: Int, fragment: Fragment) {
     supportFragmentManager.doTransaction { add(frameId, fragment) }
 }
 
