@@ -31,7 +31,7 @@ import com.waz.zclient.messages.UsersController._
 import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.{Injectable, Injector, BuildConfig, R}
+import com.waz.zclient.{Injectable, Injector, R}
 
 import com.waz.zclient.log.LogUI._
 
@@ -95,9 +95,7 @@ class UsersController(implicit injector: Injector, context: Context)
           }
         }
       }
-
-      val teamSizeThreshold = BuildConfig.TEAM_SIZE_THRESHOLD_HACK
-      zms.users.updateAvailability(availability, teamSizeThreshold)
+      zms.users.updateAvailability(availability)
     }
   }
 
