@@ -234,7 +234,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var maxOffset: Float = .0f
   private var moveToAnimator: ObjectAnimator = _
 
-  def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
+  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
     this.conversationData = Some(conversationData)
     title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 

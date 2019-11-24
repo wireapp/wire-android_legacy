@@ -18,9 +18,11 @@
 package com.waz.service
 
 import com.waz.content._
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
+import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
@@ -48,7 +50,7 @@ class TeamSizeImpl(teamId:       Option[TeamId],
   }
 }
 
-object TeamSize {
+object TeamSize extends DerivedLogTag {
 
   val teamSizeThreshold = 400
 
@@ -57,5 +59,7 @@ object TeamSize {
       teamId <- teamId
       usersStorage <- usersStorage
       teamSize <- teamId.fold(Signal.const(0))(tId => Signal.future(usersStorage.getByTeam(Set(tId)).map(_.size)(Threading.Background)))
-    } yield teamSize == 0 || teamSize > teamSizeThreshold
+      hiding = teamSize == 0 || teamSize > teamSizeThreshold
+      _ = verbose(l"Team size is ${teamSize} vs. threshold ${teamSizeThreshold}, hiding? ${hiding}")
+    } yield hiding
 }

@@ -22,8 +22,8 @@ import java.util.Locale
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.utils.events.{EventStream, SourceStream}
-import com.waz.zclient.R
+import com.waz.utils.events.{EventContext, EventStream, SourceStream}
+import com.waz.zclient.{Injector, R}
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.Folder._
 import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter._
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
@@ -32,7 +32,7 @@ import com.waz.zclient.utils.ContextUtils.getString
 /**
   * A list adapter for displaying conversations grouped into folders.
   */
-class ConversationFolderListAdapter(implicit context: Context)
+class ConversationFolderListAdapter(implicit context: Context, eventContext: EventContext, injector: Injector)
   extends ConversationListAdapter
     with DerivedLogTag {
 

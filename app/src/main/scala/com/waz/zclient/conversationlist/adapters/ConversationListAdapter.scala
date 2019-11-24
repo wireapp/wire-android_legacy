@@ -19,30 +19,38 @@ package com.waz.zclient.conversationlist.adapters
 
 import androidx.recyclerview.widget.{DiffUtil, RecyclerView}
 import android.view.{View, ViewGroup}
+import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, FolderId}
-import com.waz.utils.events.{EventStream, SourceStream}
+import com.waz.model.{ConvId, ConversationData, FolderId, TeamId}
+import com.waz.service.TeamSize
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, ConversationListRow, IncomingConversationListRow, NormalConversationListRow}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
-import com.waz.zclient.{R, ViewHelper}
+import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
+import android.content.Context
 
 import scala.collection.mutable.ListBuffer
 
-abstract class ConversationListAdapter
+abstract class ConversationListAdapter (implicit context: Context, eventContext: EventContext, injector: Injector)
   extends RecyclerView.Adapter[ConversationRowViewHolder]
     with RowClickListener
-    with DerivedLogTag {
+    with DerivedLogTag
+    with Injectable {
 
   setHasStableIds(true)
+
+  private lazy val usersStorage = inject[Signal[UsersStorage]]
+  private lazy val teamId = inject[Signal[Option[TeamId]]]
 
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
 
   protected val items = new ListBuffer[Item]
   protected var maxAlpha = 1.0f
+  private var hideStatus = false
 
   def setMaxAlpha(maxAlpha: Float): Unit = {
     this.maxAlpha = maxAlpha
@@ -55,9 +63,12 @@ abstract class ConversationListAdapter
     * @param newItems the new data source.
     */
   protected def updateList(newItems: List[Item]): Unit = {
-    DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
-    items.clear()
-    items.appendAll(newItems)
+    TeamSize.hideStatus(teamId, usersStorage).onUi { _hideStatus =>
+      hideStatus = _hideStatus
+      DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
+      items.clear()
+      items.appendAll(newItems)
+    }
   }
 
   override def getItemCount: Int = items.size
@@ -88,7 +99,7 @@ abstract class ConversationListAdapter
       case (header: Item.Header, viewHolder: ConversationFolderRowViewHolder) =>
         viewHolder.bind(header, isFirst = position == 0)
       case (conversation: Item.Conversation, viewHolder: NormalConversationRowViewHolder) =>
-        viewHolder.bind(conversation)
+        viewHolder.bind(conversation, hideStatus)
       case _ =>
         error(l"Invalid view holder/data pair")
     }
@@ -158,8 +169,8 @@ object ConversationListAdapter {
   class NormalConversationRowViewHolder(row: NormalConversationListRow, listener: RowClickListener)
     extends ConversationRowViewHolder(row, listener) {
 
-    def bind(item: Item.Conversation): Unit = {
-      row.setConversation(item.data)
+    def bind(item: Item.Conversation, hideStatus: Boolean): Unit = {
+      row.setConversation(item.data, hideStatus)
       row.setContentDescription(item.contentDescription)
     }
   }
