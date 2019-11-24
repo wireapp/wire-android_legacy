@@ -6,8 +6,8 @@ import android.widget.FrameLayout
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.constraintlayout.widget.ConstraintLayout
 import com.waz.zclient.R
+import com.waz.zclient.utilities.extension.getLabel
 
 class WireToolbarImpl : WireToolbar {
 
@@ -18,6 +18,7 @@ class WireToolbarImpl : WireToolbar {
         val rootView = LayoutInflater.from(activity).inflate(R.layout.toolbar_container, null, false)
 
         toolbar = rootView.findViewById(R.id.toolbar)
+        toolbar.title = activity.getLabel()
         activity.setSupportActionBar(toolbar)
 
         val layoutContainer = rootView.findViewById<FrameLayout>(R.id.layout_container)
@@ -49,4 +50,6 @@ class WireToolbarImpl : WireToolbar {
     override fun showBackArrow() {
         toolbar.navigationIcon?.setVisible(true, false)
     }
+
+
 }
