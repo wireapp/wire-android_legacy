@@ -24,6 +24,7 @@ import android.view.View.OnClickListener
 import android.view.{Gravity, View, ViewGroup}
 import android.widget.{CompoundButton, ImageView, LinearLayout, RelativeLayout}
 import androidx.appcompat.widget.AppCompatCheckBox
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
@@ -39,7 +40,7 @@ import com.waz.zclient.{R, ViewHelper}
 import org.threeten.bp.Instant
 
 class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
-  extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView {
+  extends RelativeLayout(context, attrs, style) with ViewHelper with ThemedView with DerivedLogTag {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -102,7 +103,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.loadUser(userData.id)
     setTitle(userData.getDisplayName)
-    if (teamId.isDefined && !hideStatus) setAvailability(userData.availability)
+    setAvailability(if (teamId.isDefined && !hideStatus) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
     setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
