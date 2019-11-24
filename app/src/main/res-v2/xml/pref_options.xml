@@ -20,7 +20,7 @@
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
     >
-        <SwitchPreferenceCompat
+    <SwitchPreferenceCompat
             android:key="@string/pref_key_share_contacts"
             android:title="@string/pref_options_contacts_title"
             android:summary="@string/pref_options_contacts_summary"
@@ -38,20 +38,17 @@
             app:defaultValue="true"
             />
     </PreferenceCategory>
-
-
     <PreferenceCategory
         android:title="@string/pref_options_alerts_category_title"
         app:iconSpaceReserved="false"
         >
         <SwitchPreferenceCompat
             android:key="@string/pref_key_vibrate"
-            app:title="@string/pref_options_vibration_title_o"
+            app:title="@string/pref_options_vibration_title"
             app:summary=""
             app:iconSpaceReserved="false"
             />
     </PreferenceCategory>
-
     <PreferenceCategory
         android:title="@string/pref_options_sounds_title"
         app:iconSpaceReserved="false">
@@ -68,7 +65,6 @@
             android:title="@string/pref_options_ringtones_ping_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
-
     <PreferenceCategory
         android:title="@string/pref_options_requested_category_title"
         app:iconSpaceReserved="false"
@@ -108,8 +104,6 @@
             app:defaultValue="true"
             />
     </PreferenceCategory>
-
-
     <PreferenceCategory
         android:title="@string/pref_options_media_category_title"
         app:iconSpaceReserved="false">
@@ -119,6 +113,5 @@
             app:iconSpaceReserved="false"
             app:defaultValue="true"/>
     </PreferenceCategory>
-
 </androidx.preference.PreferenceScreen>
 

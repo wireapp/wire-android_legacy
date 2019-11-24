@@ -3,13 +3,11 @@ package com.waz.zclient.settings.presentation.ui.home
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
-import com.waz.zclient.core.toolbar.WireToolbarImpl
 import com.waz.zclient.core.toolbar.WireToolbar
-import com.waz.zclient.settings.presentation.ui.home.list.OnItemClickListener
-import com.waz.zclient.settings.presentation.ui.options.OptionsFragment
+import com.waz.zclient.core.toolbar.WireToolbarImpl
 import com.waz.zclient.utilities.extension.replaceFragment
 
-class SettingsActivity : AppCompatActivity()  {
+class SettingsActivity : AppCompatActivity() {
 
     private var toolbar: WireToolbar = WireToolbarImpl()
 
@@ -17,6 +15,6 @@ class SettingsActivity : AppCompatActivity()  {
         super.onCreate(savedInstanceState)
         toolbar.setContentView(this, R.layout.activity_settings_new)
         toolbar.showBackArrow()
-        replaceFragment(R.id.fragment_container, SettingsFragment.newInstance())
+        replaceFragment(R.id.fragment_container, SettingsFragment.newInstance(),false)
     }
 }
