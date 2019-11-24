@@ -24,9 +24,9 @@
     android:layout_height="wrap_content"
     android:minHeight="@dimen/preference_button_height"
     android:orientation="horizontal"
-    android:background="@drawable/selector__transparent_button"
+    android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
-    >
+    android:focusable="true">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/settings_item_icon"

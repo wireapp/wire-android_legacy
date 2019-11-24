@@ -16,6 +16,6 @@ class SettingsActivity : AppCompatActivity() {
         toolbar.setContentView(this, R.layout.activity_settings_new)
         toolbar.setTitle(getString(R.string.settings_title))
         toolbar.showBackArrow()
-        replaceFragment(R.id.fragment_container, SettingsFragment.newInstance())
+        replaceFragment(R.id.fragment_container, SettingsFragment.newInstance(),false)
     }
 }

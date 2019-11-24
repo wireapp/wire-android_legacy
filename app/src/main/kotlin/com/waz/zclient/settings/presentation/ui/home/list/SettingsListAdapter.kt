@@ -8,7 +8,7 @@ import com.waz.zclient.R
 import com.waz.zclient.settings.presentation.model.SettingsItem
 import kotlinx.android.synthetic.main.item_settings.view.*
 
-class SettingsListAdapter(private val settingsItems: List<SettingsItem>,private val listener : OnItemClickListener) : RecyclerView.Adapter<SettingsListAdapter.SettingsViewHolder>() {
+class SettingsListAdapter(private val settingsItems: List<SettingsItem>, private val listener: OnItemClickListener) : RecyclerView.Adapter<SettingsListAdapter.SettingsViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SettingsViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_settings, parent, false)
@@ -16,7 +16,6 @@ class SettingsListAdapter(private val settingsItems: List<SettingsItem>,private 
     }
 
     override fun onBindViewHolder(holder: SettingsViewHolder, position: Int) {
-
         holder.bind(settingsItems[position])
     }
 
@@ -25,9 +24,9 @@ class SettingsListAdapter(private val settingsItems: List<SettingsItem>,private 
     inner class SettingsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         fun bind(settingsItem: SettingsItem) {
             with(itemView) {
-               settings_item_title.text = settingsItem.title
-               settings_item_icon.text = settingsItem.icon
-               setOnClickListener {   listener.onItemClicked(position) }
+                settings_item_title.text = settingsItem.title
+                settings_item_icon.text = settingsItem.icon
+                setOnClickListener { listener.onItemClicked(position) }
             }
         }
     }

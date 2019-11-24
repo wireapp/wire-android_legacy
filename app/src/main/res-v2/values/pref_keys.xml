@@ -18,7 +18,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
+    <!-- Options -->
     <string name="pref_key_share_contacts">share_contacts</string>
     <string name="pref_key_variable_bitrate">variable_bit_rate_enabled</string>
     <string name="pref_key_vibrate">vibrate_enabled</string>
@@ -29,5 +30,8 @@
     <string name="pref_key_hide_screen_content">hide_screen_content</string>
     <string name="pref_key_message_previews">message_previews_enabled</string>
     <string name="pref_key_download_images">download_images_always</string>
+    <!-- Advanced -->
+    <string name="pref_key_web_socket">websocket_foreground_service_enabled_1</string>
+
 
 </resources>

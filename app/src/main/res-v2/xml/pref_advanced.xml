@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    >
+        <SwitchPreferenceCompat
+            android:key=""
+            android:title="@string/pref_advanced_enable_logs_title"
+            android:summary="@string/pref_advanced_enable_logs_subtitle"
+            app:iconSpaceReserved="false"
+            />
+    <Preference
+        android:key=""
+        android:title="@string/pref_advanced_debug_report_title"
+        android:summary="@string/pref_advanced_debug_report_summary"
+        app:iconSpaceReserved="false"
+        />
+    <Preference
+        android:key=""
+        android:title="@string/pref_advanced_reset_push_title"
+        android:summary="@string/pref_advanced_reset_push_summary"
+        app:iconSpaceReserved="false"
+        />
+    <SwitchPreferenceCompat
+        android:key="@string/pref_key_web_socket"
+        android:title="@string/pref_advanced_ws_foreground_title"
+        android:summary="@string/pref_advanced_ws_foreground_summary"
+        app:iconSpaceReserved="false"
+        />
+    <Preference
+        android:key=""
+        android:title="@string/pref_advanced_full_sync_title"
+        android:summary="@string/pref_advanced_full_sync_summary"
+        app:iconSpaceReserved="false"
+        />
+</androidx.preference.PreferenceScreen>
+

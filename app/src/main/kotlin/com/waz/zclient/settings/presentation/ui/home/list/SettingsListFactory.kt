@@ -8,7 +8,6 @@ import com.waz.zclient.utilities.resources.ResourceManager
 class SettingsListFactory {
 
     companion object {
-
         private val configHelper: ConfigHelper = ConfigHelper()
 
         fun generateList(resourceManager: ResourceManager): List<SettingsItem> {
