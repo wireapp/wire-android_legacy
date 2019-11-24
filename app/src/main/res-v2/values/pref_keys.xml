@@ -18,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <!-- Options -->
     <string name="pref_key_share_contacts">share_contacts</string>
     <string name="pref_key_variable_bitrate">variable_bit_rate_enabled</string>

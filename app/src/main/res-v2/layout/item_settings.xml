@@ -26,7 +26,7 @@
     android:orientation="horizontal"
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
-    >
+    android:focusable="true">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/settings_item_icon"
