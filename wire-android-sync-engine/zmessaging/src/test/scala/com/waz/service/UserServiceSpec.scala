@@ -75,37 +75,6 @@ class UserServiceSpec extends AndroidFreeSpec {
     )
   }
 
-//  feature("activity status") {
-//    scenario("change activity status") {
-//
-//      //given
-//      val id = me.id
-//      val teamId = TeamId("Wire")
-//      val someTeamId = Some(teamId)
-//      val availability = me.availability
-//      availability should not equal Availability.Busy
-//
-//      //expect
-//      val before = me.copy()
-//      val after = me.copy(availability = Availability.Busy)
-//      (usersStorage.update _).expects(id, *).once().onCall { (id, updater) =>
-//        updater(before) shouldEqual after
-//        Future.successful(Some((before, after)))
-//      }
-//      val userOne: UserData = UserData("1")
-//      val userTwo: UserData = UserData("2")
-//      val userSet = Set(userOne, userTwo)
-//      (usersStorage.getByTeam _).expects(Set(teamId)).returning(Future.successful(userSet))
-//      (sync.postAvailability _).expects(Availability.Busy).once().returning(Future.successful(SyncId()))
-//      (teamSize.runIfNoThreshold _).expects(*).once()
-//      (teamSize.membersCount _).expects().returning(Future.successful(Some(10)))
-//
-//      //when
-//      val service = getService
-//      result(service.updateAvailability(Availability.Busy))
-//    }
-//  }
-
   feature("load user") {
 
     scenario("update self user") {
