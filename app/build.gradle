@@ -314,7 +314,7 @@ dependencies {
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.scala-lang:scala-library:$scalaVersion"
     implementation "org.scala-lang:scala-reflect:$scalaVersion"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation "com.chuusai:shapeless_$rootProject.ext.scalaMajorVersion:2.3.3"
 
