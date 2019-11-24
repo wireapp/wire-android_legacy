@@ -38,5 +38,4 @@
   "wipe_on_cookie_invalid": false,
   "force_private_keyboard": false,
   "password_max_attempts": 0,
-  "team_size_threshold_hack": 400
 }
