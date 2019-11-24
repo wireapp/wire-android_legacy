@@ -332,7 +332,7 @@ class UserServiceImpl(selfUserId:        UserId,
   override def updateAvailability(availability: Availability) = {
     updateAndSync(
       _.copy(availability = availability),
-      _ => teamSize.runIfNoThreshold(() => sync.postAvailability(availability)))
+      _ => teamSize.runIfBelowStatusPropagationThreshold(() => sync.postAvailability(availability)))
   }
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {

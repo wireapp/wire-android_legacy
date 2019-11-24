@@ -48,6 +48,7 @@ import scala.concurrent.duration._
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{SearchQuery, TeamSize}
+import com.waz.threading.Threading
 
 //TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
 class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
@@ -149,10 +150,11 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
   private val conv = convController.currentConv
 
   private var hideUserStatus = false
-  TeamSize.hideStatus(team, usersStorage).onUi { hide =>
-    hideUserStatus = hide
-    notifyDataSetChanged()
-  }
+  TeamSize.shouldHideStatus(team, usersStorage).onSuccess {
+    case (hide) => {}
+      hideUserStatus = hide
+      notifyDataSetChanged()
+  }(Threading.Ui)
 
   (for {
     name  <- conv.map(_.displayName)

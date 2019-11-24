@@ -56,6 +56,7 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.Set
+import scala.concurrent.Future
 
 trait ConversationListRow extends View
 
@@ -243,6 +244,9 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
     conversationId.publish(Some(conversationData.id), Threading.Ui)
+    (if (hideStatus) Future.successful(Availability.None) else controller.availability(conversationData.id).head).onComplete { av =>
+      AvailabilityView.displayLeftOfText(title, av.getOrElse(Availability.None), title.getCurrentTextColor, pushDown = true)
+    }
     closeImmediate()
   }
 

@@ -260,7 +260,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
     res           <- searchResults
     usersSelected <- usersSelected
     servsSelected <- servicesSelected
-    hideStatus <- TeamSize.hideStatus(Signal.const(teamId), usersStorage)
+    hideStatus <- Signal.future(TeamSize.shouldHideStatus(Signal.const(teamId), usersStorage))
 
   } yield (teamId, res, usersSelected, servsSelected, hideStatus)).onUi {
     case (teamId, res, usersSelected, servsSelected, hideStatus) =>

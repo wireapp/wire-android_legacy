@@ -26,6 +26,7 @@ import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.TeamSize
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
@@ -113,9 +114,9 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   }
 
   private var hideUserStatus = false
-  TeamSize.hideStatus(Signal.const(team.map(_.id)), usersStorage).onUi {
-    hideUserStatus = _
-  }
+  TeamSize.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).onSuccess {
+    case hide => hideUserStatus = hide
+  }(Threading.Ui)
 
   override def onDetachedFromRecyclerView(recyclerView: RecyclerView): Unit = {
     dataUpdateSub.destroy()

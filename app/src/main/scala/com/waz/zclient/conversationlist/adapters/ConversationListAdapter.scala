@@ -31,6 +31,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversationlist.views.ConversationCallback
 import com.waz.zclient.{Injectable, Injector, R, ViewHelper}
 import android.content.Context
+import com.waz.threading.Threading
 
 import scala.collection.mutable.ListBuffer
 
@@ -63,12 +64,14 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
     * @param newItems the new data source.
     */
   protected def updateList(newItems: List[Item]): Unit = {
-    TeamSize.hideStatus(teamId, usersStorage).onUi { _hideStatus =>
-      hideStatus = _hideStatus
-      DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
-      items.clear()
-      items.appendAll(newItems)
-    }
+    TeamSize.shouldHideStatus(teamId, usersStorage).onSuccess {
+      case hide => {
+        hideStatus = hide
+        DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
+        items.clear()
+        items.appendAll(newItems)
+      }
+    }(Threading.Ui)
   }
 
   override def getItemCount: Int = items.size

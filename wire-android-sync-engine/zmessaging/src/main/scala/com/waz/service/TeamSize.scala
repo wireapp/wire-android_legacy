@@ -22,14 +22,12 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
 
 trait TeamSize {
-  def runIfNoThreshold(fnToRun: () => Future[_]): Future[Unit]
-  def membersCount: Future[Option[Int]]
+  def runIfBelowStatusPropagationThreshold(fnToRun: () => Future[_]): Future[Unit]
 }
 
 class TeamSizeImpl(teamId:       Option[TeamId],
@@ -38,28 +36,30 @@ class TeamSizeImpl(teamId:       Option[TeamId],
   import Threading.Implicits.Background
   private implicit val ec: EventContext.Global.type = EventContext.Global
 
-  override def runIfNoThreshold(fnToRun: () => Future[_]): Future[Unit] =
-    membersCount.flatMap {
-        case Some(membersCount) if membersCount < TeamSize.teamSizeThreshold => fnToRun().map(_ => ())
-        case _ => Future.successful({})
+  override def runIfBelowStatusPropagationThreshold(fnToRun: () => Future[_]): Future[Unit] =
+    TeamSize.isAboveStatusPropagationThreshold(teamId, usersStorage).map {
+      case true => fnToRun().map(_ => ())
+      case _ => Future.successful({})
     }
-
-  override def membersCount: Future[Option[Int]] = {
-    val empty: Future[Option[Int]] = Future.successful(None)
-    teamId.fold(empty)(id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size)))
-  }
 }
 
 object TeamSize extends DerivedLogTag {
 
-  val teamSizeThreshold = 400
+  val statusPropagationThreshold = 400
+  import Threading.Implicits.Background
 
-  def hideStatus(teamId: Signal[Option[TeamId]], usersStorage: Signal[UsersStorage]): Signal[Boolean] =
+  def membersCount(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Option[Int]] = {
+    val empty: Future[Option[Int]] = Future.successful(None)
+    teamId.fold(empty)({ id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size))})
+  }
+
+  def isAboveStatusPropagationThreshold(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Boolean] =
+    membersCount(teamId, usersStorage).map { maybeSize => maybeSize.fold(false)(_ >= statusPropagationThreshold) }
+
+  def shouldHideStatus(teamId: Signal[Option[TeamId]], usersStorage: Signal[UsersStorage]): Future[Boolean] =
     for {
-      teamId <- teamId
-      usersStorage <- usersStorage
-      teamSize <- teamId.fold(Signal.const(0))(tId => Signal.future(usersStorage.getByTeam(Set(tId)).map(_.size)(Threading.Background)))
-      hiding = teamSize == 0 || teamSize > teamSizeThreshold
-      _ = verbose(l"Team size is ${teamSize} vs. threshold ${teamSizeThreshold}, hiding? ${hiding}")
+      teamId <- teamId.head
+      usersStorage <- usersStorage.head
+      hiding <- teamId.fold(Future.successful(true))(id => isAboveStatusPropagationThreshold(Some(id), usersStorage))
     } yield hiding
 }
