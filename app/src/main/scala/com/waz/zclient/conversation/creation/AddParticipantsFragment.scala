@@ -236,6 +236,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
 
   private implicit val ctx = context
   private lazy val themeController = inject[ThemeController]
+  private lazy val teamId = inject[Signal[Option[TeamId]]]
 
   private val searchController = new SearchController()
 
@@ -255,7 +256,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   val onSelectionChanged = EventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean)]()
 
   (for {
-    teamId        <- inject[Signal[Option[TeamId]]]
+    teamId        <- teamId
     res           <- searchResults
     usersSelected <- usersSelected
     servsSelected <- servicesSelected
