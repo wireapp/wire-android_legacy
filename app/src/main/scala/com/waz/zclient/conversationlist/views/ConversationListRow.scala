@@ -56,7 +56,6 @@ import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
 
 import scala.collection.Set
-import scala.concurrent.Future
 
 trait ConversationListRow extends View
 
@@ -177,13 +176,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   (for {
     name <- conversationName
-    Some(convId) <- conversationId
-    av <- controller.availability(convId)
-  } yield (name, av)).onUi { case (name, av) =>
+  } yield name).onUi { case (name) =>
     title.setText(name)
-
-    //TODO: Only display if we do not reach the Threshold
-    AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 
   subtitleText.onUi {
@@ -244,8 +238,13 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
     conversationId.publish(Some(conversationData.id), Threading.Ui)
-    (if (hideStatus) Future.successful(Availability.None) else controller.availability(conversationData.id).head).onComplete { av =>
-      AvailabilityView.displayLeftOfText(title, av.getOrElse(Availability.None), title.getCurrentTextColor, pushDown = true)
+    if (hideStatus) {
+      AvailabilityView.hideAvailabilityIcon(title)
+    } else {
+      controller.availability(conversationData.id).head.map({ s => Some(s) }).foreach {
+        case Some(status) => AvailabilityView.displayLeftOfText(title, status, title.getCurrentTextColor, pushDown = true)
+        case _ =>
+      }
     }
     closeImmediate()
   }
