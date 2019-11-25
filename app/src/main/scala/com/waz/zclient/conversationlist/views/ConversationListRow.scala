@@ -241,9 +241,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     if (hideStatus) {
       AvailabilityView.hideAvailabilityIcon(title)
     } else {
-      controller.availability(conversationData.id).head.map({ s => Some(s) }).foreach {
-        case Some(status) => AvailabilityView.displayLeftOfText(title, status, title.getCurrentTextColor, pushDown = true)
-        case _ =>
+      controller.availability(conversationData.id).head.foreach { status =>
+        AvailabilityView.displayLeftOfText(title, status, title.getCurrentTextColor, pushDown = true)
       }
     }
     closeImmediate()
