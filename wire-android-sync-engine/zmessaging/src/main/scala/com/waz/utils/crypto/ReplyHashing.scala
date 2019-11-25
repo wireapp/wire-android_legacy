@@ -91,6 +91,6 @@ class ReplyHashingImpl(storage: AssetStorage) extends ReplyHashing with DerivedL
 }
 
 object ReplyHashing {
-  private[crypto] val assetTypes = Set(ANY_ASSET, ASSET, VIDEO_ASSET, AUDIO_ASSET)
+  private[crypto] val assetTypes = Set(ANY_ASSET, IMAGE_ASSET, VIDEO_ASSET, AUDIO_ASSET)
   private[crypto] val textTypes  = Set(TEXT, RICH_MEDIA, TEXT_EMOJI_ONLY)
 }

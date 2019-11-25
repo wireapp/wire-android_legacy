@@ -50,7 +50,7 @@ class ReceiptService(messages: MessagesStorage,
     }
   }
 
-  val confirmable = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, KNOCK, RICH_MEDIA, HISTORY_LOST, LOCATION)
+  val confirmable = Set(TEXT, TEXT_EMOJI_ONLY, IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, KNOCK, RICH_MEDIA, HISTORY_LOST, LOCATION)
 
   def processDeliveryReceipts(receipts: Seq[MessageId]) =
     if (receipts.nonEmpty) {

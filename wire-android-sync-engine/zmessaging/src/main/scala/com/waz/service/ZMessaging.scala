@@ -99,7 +99,6 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
   lazy val convsStorage:      ConversationStorage     = wire[ConversationStorageImpl]
   lazy val msgDeletions:      MsgDeletionStorage      = wire[MsgDeletionStorageImpl]
-  lazy val searchQueryCache:  SearchQueryCacheStorage = wire[SearchQueryCacheStorageImpl]
   lazy val msgEdits:          EditHistoryStorage      = wire[EditHistoryStorageImpl]
   lazy val propertiesStorage:   PropertiesStorage       = new PropertiesStorageImpl()(context, db2, Threading.IO)
 
@@ -181,7 +180,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def convsStorage      = storage.convsStorage
   def msgDeletions      = storage.msgDeletions
   def msgEdits          = storage.msgEdits
-  def searchQueryCache  = storage.searchQueryCache
   def propertiesStorage = storage.propertiesStorage
 
   lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]
@@ -234,6 +232,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val assetMetaData                              = wire[com.waz.service.assets.MetaDataService]
   lazy val oldAssets: AssetService                    = wire[AssetServiceImpl]
   lazy val users: UserService                         = wire[UserServiceImpl]
+  lazy val teamSize: TeamSizeThreshold                         = wire[TeamSizeThresholdImpl]
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]
@@ -318,8 +317,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         cacheDirectory = lruCacheDirectory,
         directorySizeThreshold = 1024 * 1024 * 200L,
         sizeCheckingInterval = 30.seconds
-      )(Threading.Background, EventContext.Global),
-      new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.Background),
+      )(Threading.IO, EventContext.Global),
+      new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.IO),
       asset2Client,
       sync
     )

@@ -216,7 +216,7 @@ class AssetLoaderServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val asset = getWireAsset(MaxConcurrentLoadRequests + 1)
 
 
-      val cf1 = CancellableFuture({})(Threading.Background).flatMap(_ => service.load(asset))(Threading.Background)
+      val cf1 = CancellableFuture({})(Threading.Background).flatMap(_ => service.load(asset))(Threading.IO)
       cf1.cancel()
 
       intercept[CancelException](result(cf1))
@@ -257,7 +257,7 @@ class AssetLoaderServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       }
       def addAndCancel() = {
         val asset = nextAsset()
-        val cf1 = CancellableFuture({})(Threading.Background).flatMap(_ => service.load(asset))(Threading.Background)
+        val cf1 = CancellableFuture({})(Threading.Background).flatMap(_ => service.load(asset))(Threading.IO)
         cf1.cancel()
         intercept[CancelException](result(cf1))
         remove(asset.id)

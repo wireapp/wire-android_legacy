@@ -50,7 +50,7 @@ class LikesController(implicit ec: EventContext, injector: Injector)
 }
 
 object LikesController {
-  val LikeableMessages = Set(TEXT, TEXT_EMOJI_ONLY, ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
+  val LikeableMessages = Set(TEXT, TEXT_EMOJI_ONLY, IMAGE_ASSET, ANY_ASSET, VIDEO_ASSET, AUDIO_ASSET, RICH_MEDIA, LOCATION)
 
   def isLikeable(m: MessageData): Boolean = LikeableMessages.contains(m.msgType)
 }

@@ -19,6 +19,7 @@ package com.waz.bitmap
 
 import java.io.{BufferedInputStream, InputStream}
 
+import android.graphics
 import android.graphics.Bitmap.Config
 import android.graphics._
 import android.media.ExifInterface
@@ -111,6 +112,15 @@ object BitmapUtils extends DerivedLogTag {
     Bitmap.createBitmap(bitmap, (bitmap.getWidth - srcSize) / 2, (bitmap.getHeight - srcSize) / 2, srcSize, srcSize, m, true)
   }
 
+  def fixOrientationForUndefined(bitmap: Bitmap, orientation: Int): Bitmap = {
+    val matrix = new Matrix()
+    val rotation = getRotationForUndefined(bitmap)
+    matrix.postRotate(rotation)
+    Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth, bitmap.getHeight, matrix, true)
+  }
+
+  private def getRotationForUndefined(bitmap: Bitmap) : Float = if (bitmap.getWidth > bitmap.getHeight) 90f else 0f
+
   def fixOrientation(bitmap: Bitmap, orientation: Int): Bitmap = {
     import ExifInterface._
 
@@ -119,7 +129,7 @@ object BitmapUtils extends DerivedLogTag {
       orientation match {
         case ORIENTATION_ROTATE_180 =>      matrix.setRotate(180f)
         case ORIENTATION_ROTATE_90 =>       matrix.setRotate(90f)
-        case ORIENTATION_ROTATE_270 =>      matrix.setRotate(-90f)
+        case ORIENTATION_ROTATE_270 =>      matrix.setRotate(270f)
         case ORIENTATION_FLIP_HORIZONTAL => matrix.setScale(-1f, 1f)
         case ORIENTATION_FLIP_VERTICAL =>   matrix.setScale(1f, -1f)
         case ORIENTATION_TRANSPOSE =>       matrix.setRotate(90f);  matrix.postScale(-1f, 1f)

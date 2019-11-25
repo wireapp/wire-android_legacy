@@ -45,7 +45,7 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
   private lazy val passwordController = inject[PasswordController]
 
   private val alc = inject[ActivityLifecycleCallback]
-  private val appInBackground = alc.appInBackground.map(_._1)
+  private val appInBackground = alc.appInBackground.map(_._1).onChanged
   private val currentActivity = alc.appInBackground.map(_._2)
 
   appInBackground.onUi {
@@ -67,27 +67,26 @@ class SecurityPolicyChecker(implicit injector: Injector, ec: EventContext) exten
       allChecksPassed <- runSecurityChecklist(Some(passwordController), globalPreferences, Some(userPrefs), Some(accManager), isForeground = true, authNeeded = authNeeded)
     } yield {
       verbose(l"all checks passed: $allChecksPassed")
-      if (allChecksPassed && authNeeded) {
-        timeEnteredBackground = None
-        authenticationNeeded ! false
-      }
+      if (allChecksPassed && authNeeded) authenticationNeeded ! false
     }
 
-  // This ensures asking for password when the app is first opened.
-  private var timeEnteredBackground: Option[Instant] = Some(Instant.EPOCH)
+  //  This ensures asking for password when the app is first opened / restarted.
+  private var timeEnteredBackground: Option[Instant] = None
   val authenticationNeeded = Signal(false)
 
   private def timerExpired: Boolean = {
-    val secondsSinceEnteredBackground = timeEnteredBackground.fold(0L)(_.until(Instant.now(), ChronoUnit.SECONDS))
-    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground")
+    val secondsSinceEnteredBackground = timeEnteredBackground.fold(Long.MaxValue)(_.until(Instant.now(), ChronoUnit.SECONDS))
+    verbose(l"timeEnteredBackground: $timeEnteredBackground, secondsSinceEnteredBackground: $secondsSinceEnteredBackground, timeout is: ${BuildConfig.APP_LOCK_TIMEOUT}")
     secondsSinceEnteredBackground >= BuildConfig.APP_LOCK_TIMEOUT
   }
 
-  def updateBackgroundEntryTimer(): Unit = timeEnteredBackground = Some(Instant.now())
+  private def updateBackgroundEntryTimer(): Unit = {
+    verbose(l"updateBackgroundEntryTimer")
+    timeEnteredBackground = Some(Instant.now())
+  }
 
   private def isAuthenticationNeeded(): Future[Boolean] =
-    if (BuildConfig.FORCE_APP_LOCK) Future.successful(true)
-    else globalPreferences.preference(AppLockEnabled).apply().flatMap {
+    (if (BuildConfig.FORCE_APP_LOCK) Future.successful(true) else globalPreferences.preference(AppLockEnabled).apply()).flatMap {
       case false => Future.successful(false)
       case true =>
         authenticationNeeded.mutate {

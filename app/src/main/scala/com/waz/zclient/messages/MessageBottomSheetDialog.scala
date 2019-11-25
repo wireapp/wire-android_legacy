@@ -107,8 +107,7 @@ object MessageBottomSheetDialog {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = {
         if (msg.isEphemeral) Signal.const(false)
         else msg.msgType match {
-          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | ASSET =>
-            // TODO: Once https://wearezeta.atlassian.net/browse/CM-976 is resolved, we should handle image asset like any other asset
+          case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | IMAGE_ASSET           =>
             Signal.const(true)
           case ANY_ASSET | AUDIO_ASSET | VIDEO_ASSET =>
             isAssetDataReady(msg.assetId.get, assets)
@@ -129,7 +128,7 @@ object MessageBottomSheetDialog {
     case object Delete extends MessageAction(R.id.message_bottom_menu_item_delete, R.string.glyph__trash, R.string.message_bottom_menu_action_delete) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
         msg.msgType match {
-          case TEXT | ANY_ASSET | ASSET | AUDIO_ASSET | VIDEO_ASSET | KNOCK | LOCATION | RICH_MEDIA | TEXT_EMOJI_ONLY if p.delCollapsed =>
+          case TEXT | ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | VIDEO_ASSET | KNOCK | LOCATION | RICH_MEDIA | TEXT_EMOJI_ONLY if p.delCollapsed =>
             if (msg.userId != zms.selfUserId) Signal.const(true)
             else isMemberOfConversation(msg.convId, zms)
           case _ =>
@@ -144,7 +143,7 @@ object MessageBottomSheetDialog {
     case object DeleteGlobal extends MessageAction(R.id.message_bottom_menu_item_delete_global, R.string.glyph__delete_everywhere, R.string.message_bottom_menu_action_delete_global) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = {
         msg.msgType match {
-          case TEXT | ANY_ASSET | ASSET | AUDIO_ASSET | VIDEO_ASSET | KNOCK | LOCATION | RICH_MEDIA | TEXT_EMOJI_ONLY if !p.delCollapsed =>
+          case TEXT | ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | VIDEO_ASSET | KNOCK | LOCATION | RICH_MEDIA | TEXT_EMOJI_ONLY if !p.delCollapsed =>
             if (msg.userId != zms.selfUserId) Signal const true
             else isMemberOfConversation(msg.convId, zms)
           case _ =>
@@ -156,7 +155,7 @@ object MessageBottomSheetDialog {
     case object Like extends MessageAction(R.id.message_bottom_menu_item_like, R.string.glyph__like, R.string.message_bottom_menu_action_like) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
         msg.msgType match {
-          case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+          case ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
             for {
               isMember <- isMemberOfConversation(msg.convId, zms)
               isLiked <- isLikedBySelf(msg.id, zms)
@@ -169,7 +168,7 @@ object MessageBottomSheetDialog {
     case object Unlike extends MessageAction(R.id.message_bottom_menu_item_unlike, R.string.glyph__liked, R.string.message_bottom_menu_action_unlike) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
         msg.msgType match {
-          case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+          case ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
             for {
               isMember <- isMemberOfConversation(msg.convId, zms)
               isLiked <- isLikedBySelf(msg.id, zms)
@@ -182,7 +181,7 @@ object MessageBottomSheetDialog {
     case object Save extends MessageAction(R.id.message_bottom_menu_item_save, R.string.glyph__download, R.string.message_bottom_menu_action_save) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
         msg.msgType match {
-          case ASSET => Signal.const(zms.selfUserId == msg.userId || !msg.isEphemeral)
+          case IMAGE_ASSET => Signal.const(zms.selfUserId == msg.userId || !msg.isEphemeral)
           case AUDIO_ASSET | VIDEO_ASSET if zms.selfUserId == msg.userId || !msg.isEphemeral => isAssetDataReady(msg.assetId.get, assets)
           case _ => Signal const false
         }
@@ -216,7 +215,7 @@ object MessageBottomSheetDialog {
 
     case object Reply extends MessageAction(R.id.message_bottom_menu_item_reply, R.string.glyph__undo, R.string.message_bottom_menu_action_reply) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = msg.msgType match {
-        case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+        case ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
           isMemberOfConversation(msg.convId, zms)
         case _ =>
           Signal.const(false)
@@ -225,7 +224,7 @@ object MessageBottomSheetDialog {
 
     case object Details extends MessageAction(R.id.message_bottom_menu_item_details, R.string.glyph__view, R.string.message_bottom_menu_action_details) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = msg.msgType match {
-        case ANY_ASSET | ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+        case ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
           for {
             isGroup <- zms.conversations.groupConversation(msg.convId)
             isMember <- isMemberOfConversation(msg.convId, zms)

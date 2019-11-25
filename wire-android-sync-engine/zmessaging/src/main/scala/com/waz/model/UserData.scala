@@ -25,7 +25,7 @@ import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.UserPermissions._
-import com.waz.service.SearchKey
+import com.waz.service.{SearchKey, SearchQuery}
 import com.waz.service.UserSearchService.UserSearchEntry
 import com.waz.service.assets2.StorageCodecs
 import com.waz.utils._
@@ -128,14 +128,9 @@ case class UserData(override val id:       UserId,
 
   def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
 
-  def matchesFilter(filter: String): Boolean = {
-    val isHandleSearch = Handle.isHandle(filter)
-    matchesFilter(filter, isHandleSearch)
-  }
-
-  def matchesFilter(filter: String, handleOnly: Boolean): Boolean =
-    handle.exists(_.startsWithQuery(filter)) ||
-      (!handleOnly && (SearchKey(filter).isAtTheStartOfAnyWordIn(searchKey) || email.exists(e => filter.trim.equalsIgnoreCase(e.str))))
+  def matchesQuery(query: SearchQuery): Boolean =
+      handle.exists(_.startsWithQuery(query.str)) ||
+        (!query.handleOnly && (SearchKey(query.str).isAtTheStartOfAnyWordIn(searchKey) || email.exists(e => query.str.trim.equalsIgnoreCase(e.str))))
 
   def matchesQuery(query: Option[SearchKey] = None, handleOnly: Boolean = false): Boolean = query match {
     case Some(q) =>

@@ -124,7 +124,7 @@ import scala.concurrent.{Await, Future}
 
       val entry = service.lastMessage(conv.id)
       entry.map(_.id) shouldEqual Some(msg.id)
-      entry.map(_.msgType) shouldEqual Some(Message.Type.ASSET)
+      entry.map(_.msgType) shouldEqual Some(Message.Type.IMAGE_ASSET)
       entry.flatMap(_.imageDimensions) shouldEqual Some(Dim2(asset.width, asset.height))
     }
   }

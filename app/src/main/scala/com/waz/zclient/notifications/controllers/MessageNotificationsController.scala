@@ -310,7 +310,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
         case MISSED_CALL                              => ResString(R.string.notification__message__one_to_one__wanted_to_talk)
         case KNOCK                                    => ResString(R.string.notification__message__one_to_one__pinged)
         case ANY_ASSET                                => ResString(R.string.notification__message__one_to_one__shared_file)
-        case ASSET                                    => ResString(R.string.notification__message__one_to_one__shared_picture)
+        case IMAGE_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_picture)
         case VIDEO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_video)
         case AUDIO_ASSET                              => ResString(R.string.notification__message__one_to_one__shared_audio)
         case LOCATION                                 => ResString(R.string.notification__message__one_to_one__shared_location)
@@ -395,7 +395,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     else Future.successful(None)
 
   private def loadPicture(picture: Picture): Future[Option[Bitmap]] = {
-    Threading.Background {
+    Threading.ImageDispatcher {
       Option(WireGlide(cxt)
         .asBitmap()
         .load(picture)
@@ -409,7 +409,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     if (soundController.soundIntensityNone) None
     else if (!soundController.soundIntensityFull && (ns.size > 1 && ns.lastOption.forall(_.msgType != KNOCK))) None
     else ns.map(_.msgType).lastOption.fold(Option.empty[Uri]) {
-      case ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
+      case IMAGE_ASSET | ANY_ASSET | VIDEO_ASSET | AUDIO_ASSET |
            LOCATION | TEXT | CONNECT_ACCEPTED | CONNECT_REQUEST | RENAME |
            LIKE  => Option(getSelectedSoundUri(soundController.currentTonePrefs._2, R.raw.new_message_gcm))
       case KNOCK => Option(getSelectedSoundUri(soundController.currentTonePrefs._3, R.raw.ping_from_them))
