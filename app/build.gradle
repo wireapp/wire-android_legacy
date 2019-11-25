@@ -401,6 +401,11 @@ dependencies {
     // biometric prompt
     implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
+    //Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-protobuf:2.4.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
+
     // Test dependencies
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
     testImplementation("$rootProject.deps.scalaTest") {
