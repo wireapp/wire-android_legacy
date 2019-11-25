@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.settings.presentation.ui.about.AboutFragment
+import com.waz.zclient.settings.presentation.ui.account.AccountFragment
 import com.waz.zclient.settings.presentation.ui.advanced.AdvancedFragment
 import com.waz.zclient.settings.presentation.ui.home.list.OnItemClickListener
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListAdapter
@@ -32,6 +33,7 @@ class SettingsFragment : Fragment(),OnItemClickListener {
     override fun onItemClicked(position: Int) {
 
         when (position){
+            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AccountFragment.newInstance(),true)
             OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, OptionsFragment.newInstance(),true)
             ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AdvancedFragment.newInstance(),true)
             SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, SupportFragment.newInstance(),true)
