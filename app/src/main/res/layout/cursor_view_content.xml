@@ -81,8 +81,6 @@
                     android:maxLines="@integer/cursor__max_lines"
                     android:scrollHorizontally="false"
                     app:w_font="@string/wire__typeface__light">
-
-                    <requestFocus />
                 </com.waz.zclient.ui.cursor.CursorEditText>
 
                 <com.waz.zclient.ui.text.TypefaceTextView
