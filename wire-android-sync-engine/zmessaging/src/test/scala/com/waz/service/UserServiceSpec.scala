@@ -76,7 +76,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     )
   }
 
-  val completionHandlerThatExecutesFunction: (() => Future[_]) => Future[Unit] = { f => f().map(_ => {})(Threading.Ui)  }
+  val completionHandlerThatExecutesFunction: (() => Future[_]) => Future[Unit] = { f => f().map(_ => {})(Threading.Background) }
   val completionHandlerThatDoesNotExecuteFunction: (() => Future[_]) => Future[Unit] = { _ => Future.successful({}) }
 
 
@@ -106,8 +106,8 @@ class UserServiceSpec extends AndroidFreeSpec {
         Future.successful(Some((before, after)))
       }
 
+      (sync.postAvailability _).expects(after.availability).returning(Future.successful(SyncId()))
       (teamSize.runIfBelowStatusPropagationThreshold _).expects(*).onCall(completionHandlerThatExecutesFunction)
-      (sync.postAvailability _).expects(after.availability)
 
       //when
       result(userService.updateAvailability(Availability.Busy))
