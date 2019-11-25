@@ -22,7 +22,7 @@ import android.view.{View, ViewGroup}
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, ConversationData, FolderId, TeamId}
-import com.waz.service.TeamSize
+import com.waz.service.TeamSizeThreshold
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
@@ -64,7 +64,7 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
     * @param newItems the new data source.
     */
   protected def updateList(newItems: List[Item]): Unit = {
-    TeamSize.shouldHideStatus(teamId, usersStorage).foreach { hide =>
+    TeamSizeThreshold.shouldHideStatus(teamId, usersStorage).foreach { hide =>
       hideStatus = hide
       DiffUtil.calculateDiff(new DiffCallback(items.toList, newItems), false).dispatchUpdatesTo(this)
       items.clear()

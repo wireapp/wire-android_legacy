@@ -30,7 +30,7 @@ import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.{TeamSize, ZMessaging}
+import com.waz.service.{TeamSizeThreshold, ZMessaging}
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
 import com.waz.threading.Threading
 import com.waz.utils.events._
@@ -260,7 +260,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
     usersSelected <- usersSelected
     _teamId        <- teamId
     servsSelected <- servicesSelected
-    hideStatus <- Signal.future(TeamSize.shouldHideStatus(teamId, usersStorage))
+    hideStatus <- Signal.future(TeamSizeThreshold.shouldHideStatus(teamId, usersStorage))
 
   } yield (_teamId, res, usersSelected, servsSelected, hideStatus)).onUi {
     case (teamId, res, usersSelected, servsSelected, hideStatus) =>

@@ -35,7 +35,7 @@ import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
-import com.waz.service.{TeamSize, ZMessaging}
+import com.waz.service.{TeamSizeThreshold, ZMessaging}
 import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
@@ -205,7 +205,7 @@ class ConversationFragment extends FragmentHelper {
 
     convController.currentConvName.onUi { updateTitle }
 
-    TeamSize.shouldHideStatus(accountsController.teamId, usersStorage).foreach { hide =>
+    TeamSizeThreshold.shouldHideStatus(accountsController.teamId, usersStorage).foreach { hide =>
       hideUserStatus = hide
     }(Threading.Ui)
 

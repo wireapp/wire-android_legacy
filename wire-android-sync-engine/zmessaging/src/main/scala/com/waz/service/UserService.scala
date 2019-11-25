@@ -98,7 +98,7 @@ class UserServiceImpl(selfUserId:        UserId,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetStorage,
                       credentialsClient: CredentialsUpdateClient,
-                      teamSize:          TeamSize,
+                      teamSize:          TeamSizeThreshold,
                       selectedConv:      SelectedConversationService) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background

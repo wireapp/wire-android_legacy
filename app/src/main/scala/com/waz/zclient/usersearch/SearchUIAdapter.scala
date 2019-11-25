@@ -25,7 +25,7 @@ import android.widget.TextView
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.TeamSize
+import com.waz.service.TeamSizeThreshold
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
@@ -114,7 +114,7 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   }
 
   private var hideUserStatus = false
-  TeamSize.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
+  TeamSizeThreshold.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
     hideUserStatus = hide
   }(Threading.Ui)
 

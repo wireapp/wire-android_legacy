@@ -55,7 +55,7 @@ class UserServiceSpec extends AndroidFreeSpec {
   val assetsStorage   = mock[AssetStorage]
   val credentials     = mock[CredentialsUpdateClient]
   val selectedConv    = mock[SelectedConversationService]
-  val teamSize        = mock[TeamSize]
+  val teamSize        = mock[TeamSizeThreshold]
   val userPrefs       = new TestUserPreferences
 
   (usersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Signal.const(users.find(_.id == id)))

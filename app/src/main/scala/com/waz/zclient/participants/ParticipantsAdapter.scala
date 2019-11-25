@@ -47,7 +47,7 @@ import com.waz.zclient.{Injectable, Injector, R}
 import scala.concurrent.duration._
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.{SearchQuery, TeamSize}
+import com.waz.service.{SearchQuery, TeamSizeThreshold}
 import com.waz.threading.Threading
 
 //TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
@@ -151,7 +151,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
   private val conv = convController.currentConv
   private var hideUserStatus = false
 
-  TeamSize.shouldHideStatus(team, usersStorage).foreach { hide =>
+  TeamSizeThreshold.shouldHideStatus(team, usersStorage).foreach { hide =>
     hideUserStatus = hide
     notifyDataSetChanged()
   }

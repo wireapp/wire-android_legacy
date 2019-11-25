@@ -232,7 +232,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val assetMetaData                              = wire[com.waz.service.assets.MetaDataService]
   lazy val oldAssets: AssetService                    = wire[AssetServiceImpl]
   lazy val users: UserService                         = wire[UserServiceImpl]
-  lazy val teamSize: TeamSize                         = wire[TeamSizeImpl]
+  lazy val teamSize: TeamSizeThreshold                         = wire[TeamSizeThresholdImpl]
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]

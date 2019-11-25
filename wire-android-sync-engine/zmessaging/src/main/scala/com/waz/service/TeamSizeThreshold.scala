@@ -26,24 +26,24 @@ import com.waz.utils.events.{EventContext, Signal}
 import scala.concurrent.Future
 
 
-trait TeamSize {
+trait TeamSizeThreshold {
   def runIfBelowStatusPropagationThreshold(fnToRun: () => Future[_]): Future[Unit]
 }
 
-class TeamSizeImpl(teamId:       Option[TeamId],
-                   usersStorage: UsersStorage) extends TeamSize {
+class TeamSizeThresholdImpl(teamId:       Option[TeamId],
+                            usersStorage: UsersStorage) extends TeamSizeThreshold {
 
   import Threading.Implicits.Background
   private implicit val ec: EventContext.Global.type = EventContext.Global
 
   override def runIfBelowStatusPropagationThreshold(fnToRun: () => Future[_]): Future[Unit] =
-    TeamSize.isAboveStatusPropagationThreshold(teamId, usersStorage).map {
+    TeamSizeThreshold.isAboveStatusPropagationThreshold(teamId, usersStorage).map {
       case true => fnToRun().map(_ => ())
       case _ => Future.successful({})
     }
 }
 
-object TeamSize extends DerivedLogTag {
+object TeamSizeThreshold extends DerivedLogTag {
 
   val statusPropagationThreshold = 400
   import Threading.Implicits.Background
