@@ -17,10 +17,13 @@
  */
 package com.waz.zclient.conversationlist.adapters
 
+import android.content.Context
 import com.waz.model.{ConvId, ConversationData}
+import com.waz.utils.events.EventContext
+import com.waz.zclient.Injector
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 
-class NormalConversationListAdapter extends ConversationListAdapter {
+class NormalConversationListAdapter(implicit context: Context, eventContext: EventContext, injector: Injector) extends ConversationListAdapter {
 
   def setData(convs: Seq[ConversationData], incoming: Seq[ConvId]): Unit = {
     var newItems = List.empty[Item]

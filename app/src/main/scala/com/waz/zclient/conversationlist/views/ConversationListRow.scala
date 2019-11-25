@@ -176,11 +176,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   (for {
     name <- conversationName
-    Some(convId) <- conversationId
-    av <- controller.availability(convId)
-  } yield (name, av)).onUi { case (name, av) =>
+  } yield name).onUi { case (name) =>
     title.setText(name)
-    AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 
   subtitleText.onUi {
@@ -232,7 +229,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var maxOffset: Float = .0f
   private var moveToAnimator: ObjectAnimator = _
 
-  def setConversation(conversationData: ConversationData): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
+  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
     this.conversationData = Some(conversationData)
     title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
@@ -241,6 +238,13 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     avatar.clearImages()
     avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
     conversationId.publish(Some(conversationData.id), Threading.Ui)
+    if (hideStatus) {
+      AvailabilityView.hideAvailabilityIcon(title)
+    } else {
+      controller.availability(conversationData.id).head.foreach { status =>
+        AvailabilityView.displayLeftOfText(title, status, title.getCurrentTextColor, pushDown = true)
+      }
+    }
     closeImmediate()
   }
 
