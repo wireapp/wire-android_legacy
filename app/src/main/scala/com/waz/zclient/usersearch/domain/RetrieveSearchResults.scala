@@ -17,8 +17,11 @@
   */
 package com.waz.zclient.usersearch.domain
 
+import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.service.TeamSizeThreshold
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.log.LogUI._
@@ -51,6 +54,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private var currentUser            = Option.empty[UserData]
   private var currentUserIsAdmin     = false
   private var noServices             = false
+
+  private lazy val usersStorage      = inject[Signal[UsersStorage]]
 
   val resultsData = Signal(mergedResult)
 
@@ -92,6 +97,11 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       updateMergedResults()
   }
 
+  private var hideUserStatus = false
+  TeamSizeThreshold.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
+    hideUserStatus = hide
+  }(Threading.Ui)
+
   def expandGroups(): Unit = {
     collapsedGroups = false
     updateMergedResults()
@@ -123,7 +133,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         var contactsSection = Seq[SearchViewItem]()
 
         contactsSection = contactsSection ++ localResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, localResults, localResults(i).displayName))
+          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, hideUserStatus, localResults, localResults(i).displayName))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -160,7 +170,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, directoryResults))
+          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, hideUserStatus, directoryResults))
         }
       }
     }
@@ -174,13 +184,13 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     }
 
     def addGroupCreationButton(): Unit =
-      mergedResult = mergedResult ++ Seq(new TopUserButtonViewItem(TopUserButtonViewModel(NewConversation, TopUsersSection, 0)))
+      mergedResult = mergedResult ++ Seq(TopUserButtonViewItem(TopUserButtonViewModel(NewConversation, TopUsersSection, 0)))
 
     def addGuestRoomCreationButton(): Unit =
-      mergedResult = mergedResult ++ Seq(new TopUserButtonViewItem(TopUserButtonViewModel(NewGuestRoom, TopUsersSection, 0)))
+      mergedResult = mergedResult ++ Seq(TopUserButtonViewItem(TopUserButtonViewModel(NewGuestRoom, TopUsersSection, 0)))
 
     def addManageServicesButton(): Unit =
-      mergedResult = mergedResult ++ Seq(new TopUserButtonViewItem(TopUserButtonViewModel(ManageServices, TopUsersSection, 0)))
+      mergedResult = mergedResult ++ Seq(TopUserButtonViewItem(TopUserButtonViewModel(ManageServices, TopUsersSection, 0)))
 
     if (team.isDefined) {
       if (searchController.tab.currentValue.contains(Tab.Services)) {
