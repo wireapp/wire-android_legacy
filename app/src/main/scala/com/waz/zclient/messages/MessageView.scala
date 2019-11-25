@@ -125,7 +125,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
 
         builder ++= contentParts
 
-        if (msg.msgType == Message.Type.ASSET && !areDownloadsAlwaysEnabled)
+        if (msg.msgType == Message.Type.IMAGE_ASSET && !areDownloadsAlwaysEnabled)
           builder += PartDesc(MsgPart.WifiWarning)
 
         if (hasFooter || animateFooter)
@@ -199,7 +199,7 @@ object MessageView extends DerivedLogTag {
     TEXT,
     TEXT_EMOJI_ONLY,
     ANY_ASSET,
-    ASSET,
+    IMAGE_ASSET,
     AUDIO_ASSET,
     VIDEO_ASSET,
     LOCATION,

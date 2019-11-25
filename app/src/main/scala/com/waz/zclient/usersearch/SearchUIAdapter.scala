@@ -239,7 +239,8 @@ object SearchUIAdapter {
       val userData = connectionViewModel.results(connectionViewModel.indexVal)
       this.userData = Some(userData)
       val teamId = connectionViewModel.team.map(_.id)
-      view.setUserData(userData, teamId)
+      val userStatus = connectionViewModel.userStatus
+      view.setUserData(userData, teamId, userStatus)
     }
   }
 

@@ -95,7 +95,6 @@ class UsersController(implicit injector: Injector, context: Context)
           }
         }
       }
-
       zms.users.updateAvailability(availability)
     }
   }

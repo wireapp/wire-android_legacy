@@ -362,7 +362,7 @@ object ZMessagingDB {
       // Add asset_id to the message data, referencing the new assets
       db.execSQL(s"ALTER TABLE ${MessageDataDao.table.name} ADD COLUMN ${MessageDataDao.AssetId.name} TEXT DEFAULT null")
 
-      val messages = MessageDataDao.findByTypes(Set(Message.Type.ANY_ASSET, Message.Type.VIDEO_ASSET, Message.Type.AUDIO_ASSET, Message.Type.ASSET))(db)
+      val messages = MessageDataDao.findByTypes(Set(Message.Type.ANY_ASSET, Message.Type.VIDEO_ASSET, Message.Type.AUDIO_ASSET, Message.Type.IMAGE_ASSET))(db)
 
       messages.foreach { m =>
         m.protos.lastOption match {

@@ -114,14 +114,14 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
         KeyboardUtils.closeKeyboardIfShown(getActivity)
         controller.closeCollection
         controller.focusedItem.mutate {
-          case Some(m) if m.msgType == Message.Type.ASSET => None
+          case Some(m) if m.msgType == Message.Type.IMAGE_ASSET => None
           case m => m
         }
       case _ =>
     }
 
     controller.focusedItem.on(Threading.Ui) {
-      case Some(md) if md.msgType == Message.Type.ASSET => showSingleImage()
+      case Some(md) if md.msgType == Message.Type.IMAGE_ASSET => showSingleImage()
       case _ => closeSingleImage()
     }
 
@@ -215,7 +215,7 @@ class CollectionFragment extends BaseFragment[CollectionFragment.Container] with
     controller.conversationName.onUi(name.setText(_))
 
     Signal(collectionAdapter.adapterState, controller.focusedItem, controller.contentSearchQuery).on(Threading.Ui) {
-      case (AdapterState(_, _, _), Some(messageData), _) if messageData.msgType == Message.Type.ASSET =>
+      case (AdapterState(_, _, _), Some(messageData), _) if messageData.msgType == Message.Type.IMAGE_ASSET =>
         setNavigationIconVisibility(true)
         timestamp.setVisibility(View.VISIBLE)
         timestamp.setText(LocalDateTime.ofInstant(messageData.time.instant, ZoneId.systemDefault()).toLocalDate.toString)

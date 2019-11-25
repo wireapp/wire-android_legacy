@@ -17,7 +17,6 @@
  */
 package com.waz.service
 
-import com.waz.api.impl.ErrorResponse
 import com.waz.log.LogSE._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.content._
@@ -99,6 +98,7 @@ class UserServiceImpl(selfUserId:        UserId,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetStorage,
                       credentialsClient: CredentialsUpdateClient,
+                      teamSize:          TeamSizeThreshold,
                       selectedConv:      SelectedConversationService) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -330,7 +330,9 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   override def updateAvailability(availability: Availability) = {
-    updateAndSync(_.copy(availability = availability), _ => sync.postAvailability(availability)).map(_ => {})
+    updateAndSync(
+      _.copy(availability = availability),
+      _ => teamSize.runIfBelowStatusPropagationThreshold(() => sync.postAvailability(availability)))
   }
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
@@ -350,7 +352,6 @@ class UserServiceImpl(selfUserId:        UserId,
       case Some((p, u)) if p != u => sync(u).map(_ => {})
       case _ => Future.successful({})
     })
-
 }
 
 object UserService {

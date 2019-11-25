@@ -239,7 +239,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
           val tpe = msg.msgType match {
             case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA => Some(NotificationType.TEXT)
             case KNOCK        => Some(NotificationType.KNOCK)
-            case ASSET        => Some(NotificationType.ASSET)
+            case IMAGE_ASSET  => Some(NotificationType.IMAGE_ASSET)
             case LOCATION     => Some(NotificationType.LOCATION)
             case RENAME       => Some(NotificationType.RENAME)
             case MISSED_CALL  => Some(NotificationType.MISSED_CALL)
@@ -321,7 +321,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
           msgType   = LIKE,
           time      = r.timestamp,
           likedContent = Some(msg.msgType match {
-            case Message.Type.ASSET           => LikedContent.PICTURE
+            case Message.Type.IMAGE_ASSET     => LikedContent.PICTURE
             case Message.Type.TEXT |
                  Message.Type.TEXT_EMOJI_ONLY => LikedContent.TEXT_OR_URL
             case _                            => LikedContent.OTHER
