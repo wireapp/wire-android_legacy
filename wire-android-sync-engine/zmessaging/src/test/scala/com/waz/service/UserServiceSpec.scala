@@ -27,6 +27,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.{CredentialsUpdateClient, UsersClient}
 import com.waz.testutils.TestUserPreferences
+import com.waz.threading.Threading
 import com.waz.utils.events.{BgEventSource, Signal, SourceSignal}
 import org.threeten.bp.Instant
 
@@ -73,6 +74,65 @@ class UserServiceSpec extends AndroidFreeSpec {
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
       teamSize, selectedConv
     )
+  }
+
+  val completionHandlerThatExecutesFunction: (() => Future[_]) => Future[Unit] = { f => f().map(_ => {})(Threading.Ui)  }
+  val completionHandlerThatDoesNotExecuteFunction: (() => Future[_]) => Future[Unit] = { _ => Future.successful({}) }
+
+
+  feature("activity status") {
+
+    scenario("it does propagate activity status if team size is smaller than threshold") {
+
+      //given
+      val id = me.id
+      val teamId = TeamId("Wire")
+      val someTeamId = Some(teamId)
+      val availability = me.availability
+      availability should not equal Availability.Busy
+
+      val userService = new UserServiceImpl(
+        users.head.id, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
+        userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
+        teamSize, selectedConv
+      )
+
+      //expect
+      val before = me.copy()
+      val after = me.copy(availability = Availability.Busy)
+
+      (usersStorage.update _).expects(id, *).once().onCall { (_, updater) =>
+        updater(before) shouldEqual after
+        Future.successful(Some((before, after)))
+      }
+
+      (teamSize.runIfBelowStatusPropagationThreshold _).expects(*).onCall(completionHandlerThatExecutesFunction)
+      (sync.postAvailability _).expects(after.availability)
+
+      //when
+      result(userService.updateAvailability(Availability.Busy))
+    }
+
+    scenario("it does not propagate activity status the team is above the threshold") {
+
+      //given
+      val id = me.id
+      val teamId = TeamId("Wire")
+      val availability = me.availability
+      availability should not equal Availability.Busy
+
+      //expect
+      val before = me.copy()
+      val after = me.copy(availability = Availability.Busy)
+      (usersStorage.update _).expects(id, *).once().onCall { (_, updater) =>
+        updater(before) shouldEqual after
+        Future.successful(Some((before, after)))
+      }
+      (teamSize.runIfBelowStatusPropagationThreshold _).expects(*).onCall(completionHandlerThatDoesNotExecuteFunction)
+
+      //when
+      result(getService.updateAvailability(Availability.Busy))
+    }
   }
 
   feature("load user") {
