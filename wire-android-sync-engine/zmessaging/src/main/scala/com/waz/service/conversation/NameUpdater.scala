@@ -17,6 +17,8 @@
  */
 package com.waz.service.conversation
 
+import android.text.Html
+import androidx.core.text.HtmlCompat
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -183,7 +185,12 @@ class NameUpdater(selfUserId:     UserId,
   }
 
   private def generatedName(userNames: GenTraversable[Option[Name]]): Name = {
-    Name(userNames.flatten.filter(_.nonEmpty).mkString(", "))
+    Name(getName(userNames).toString)
+  }
+
+  private def getName(userNames: GenTraversable[Option[Name]]): String = {
+    val name = userNames.flatten.filter(_.nonEmpty).mkString(", ")
+    HtmlCompat.fromHtml(name, HtmlCompat.FROM_HTML_MODE_LEGACY).toString
   }
 }
 
