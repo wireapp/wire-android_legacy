@@ -114,8 +114,8 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
   }
 
   private var hideUserStatus = false
-  TeamSize.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).onSuccess {
-    case hide => hideUserStatus = hide
+  TeamSize.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
+    hideUserStatus = hide
   }(Threading.Ui)
 
   override def onDetachedFromRecyclerView(recyclerView: RecyclerView): Unit = {

@@ -256,13 +256,13 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   val onSelectionChanged = EventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean)]()
 
   (for {
-    teamId        <- teamId
     res           <- searchResults
     usersSelected <- usersSelected
+    _teamId        <- teamId
     servsSelected <- servicesSelected
-    hideStatus <- Signal.future(TeamSize.shouldHideStatus(Signal.const(teamId), usersStorage))
+    hideStatus <- Signal.future(TeamSize.shouldHideStatus(teamId, usersStorage))
 
-  } yield (teamId, res, usersSelected, servsSelected, hideStatus)).onUi {
+  } yield (_teamId, res, usersSelected, servsSelected, hideStatus)).onUi {
     case (teamId, res, usersSelected, servsSelected, hideStatus) =>
       team = teamId
       val prev = this.results

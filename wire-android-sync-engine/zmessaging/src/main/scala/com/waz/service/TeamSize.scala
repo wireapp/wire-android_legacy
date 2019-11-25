@@ -48,18 +48,18 @@ object TeamSize extends DerivedLogTag {
   val statusPropagationThreshold = 400
   import Threading.Implicits.Background
 
-  def membersCount(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Option[Int]] = {
+  private def membersCount(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Option[Int]] = {
     val empty: Future[Option[Int]] = Future.successful(None)
     teamId.fold(empty)({ id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size))})
   }
 
   def isAboveStatusPropagationThreshold(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Boolean] =
-    membersCount(teamId, usersStorage).map { maybeSize => maybeSize.fold(false)(_ >= statusPropagationThreshold) }
+    membersCount(teamId, usersStorage).map { maybeSize => maybeSize.exists(_ >= statusPropagationThreshold) }
 
   def shouldHideStatus(teamId: Signal[Option[TeamId]], usersStorage: Signal[UsersStorage]): Future[Boolean] =
     for {
-      teamId <- teamId.head
-      usersStorage <- usersStorage.head
-      hiding <- teamId.fold(Future.successful(true))(id => isAboveStatusPropagationThreshold(Some(id), usersStorage))
+      teamId        <- teamId.head
+      usersStorage  <- usersStorage.head
+      hiding        <- teamId.fold(Future.successful(true))(id => isAboveStatusPropagationThreshold(Some(id), usersStorage))
     } yield hiding
 }

@@ -205,8 +205,8 @@ class ConversationFragment extends FragmentHelper {
 
     convController.currentConvName.onUi { updateTitle }
 
-    TeamSize.shouldHideStatus(accountsController.teamId, usersStorage).onSuccess {
-      case hide => hideUserStatus = hide
+    TeamSize.shouldHideStatus(accountsController.teamId, usersStorage).foreach { hide =>
+      hideUserStatus = hide
     }(Threading.Ui)
 
     cancelPreviewOnChange.onUi {

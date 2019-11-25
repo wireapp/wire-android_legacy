@@ -22,7 +22,7 @@ import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.waz.model.{TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
-import com.waz.zclient.{R}
+import com.waz.zclient.R
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 

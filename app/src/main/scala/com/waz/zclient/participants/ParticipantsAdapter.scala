@@ -59,6 +59,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
+  import Threading.Implicits.Ui
 
   private lazy val usersStorage = inject[Signal[UsersStorage]]
   private lazy val team         = inject[Signal[Option[TeamId]]]
@@ -148,13 +149,12 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
   }
 
   private val conv = convController.currentConv
-
   private var hideUserStatus = false
-  TeamSize.shouldHideStatus(team, usersStorage).onSuccess {
-    case (hide) => {}
-      hideUserStatus = hide
-      notifyDataSetChanged()
-  }(Threading.Ui)
+
+  TeamSize.shouldHideStatus(team, usersStorage).foreach { hide =>
+    hideUserStatus = hide
+    notifyDataSetChanged()
+  }
 
   (for {
     name  <- conv.map(_.displayName)
