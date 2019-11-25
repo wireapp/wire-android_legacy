@@ -110,7 +110,7 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     case false => getStyledColor(R.attr.wireBackgroundColor)
   }
 
-  val lineCount = Signal(1)
+  val lineCount = Signal(getInt(R.integer.cursor_starting_lines))
 
   Signal(controller.typingIndicatorVisible, replyController.currentReplyContent)
     .map { case (typing, currentReply) => !typing && currentReply.isEmpty  }
@@ -157,7 +157,11 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     }
   }
 
-  lineCount.onUi(cursorEditText.setLines(_))
+  lineCount.onUi { lineCount =>
+    if (lineCount.<(getInt(R.integer.cursor__max_lines))) {
+      cursorEditText.setLines(lineCount)
+    }
+  }
 
   dividerColor.onUi(dividerView.setBackgroundColor)
   bgColor.onUi(setBackgroundColor)
@@ -199,8 +203,10 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
     override def onTextChanged(charSequence: CharSequence, start: Int, before: Int, count: Int): Unit = {
       val text = charSequence.toString
       controller.enteredText ! (getText, EnteredTextSource.FromView)
-      if (text.trim.nonEmpty) lineCount ! Math.max(cursorEditText.getLineCount, 1)
-      cursorText ! charSequence.toString
+      if (text.trim.nonEmpty && cursorEditText.getLineCount >= getInt(R.integer.cursor_starting_lines)) lineCount ! cursorEditText.getLineCount else {
+        lineCount ! getInt(R.integer.cursor_starting_lines)
+      }
+      cursorText ! text
     }
 
     override def afterTextChanged(editable: Editable): Unit = {}
