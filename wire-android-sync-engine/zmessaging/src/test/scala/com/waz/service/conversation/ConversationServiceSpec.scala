@@ -59,6 +59,8 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   lazy val receiptStorageMock = mock[ReadReceiptsStorage]
   lazy val notificationServiceMock = mock[NotificationService]
   lazy val foldersServiceMock = mock[FoldersService]
+  lazy val networkMock        = mock[NetworkModeService]
+  lazy val propertiesMock     = mock[PropertiesService]
 
   val selfUserId = UserId("user1")
   val convId = ConvId("conv_id1")
@@ -338,4 +340,49 @@ class ConversationServiceSpec extends AndroidFreeSpec {
 
   }
 
+  feature("Create a group conversation") {
+    scenario("Create empty group conversation") {
+      val teamId = TeamId()
+      val convName = Name("conv")
+      val conv = ConversationData(team = Some(teamId), name = Some(convName))
+      val syncId = SyncId()
+
+      (convosUpdaterMock.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *).once().returning(Future.successful(conv))
+      (messagesMock.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
+      (syncMock.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
+
+      val convsUi = createConvsUi(Some(teamId))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = Set.empty))
+      data shouldEqual conv
+      sId shouldEqual syncId
+    }
+
+    scenario("Create a group conversation with the creator and two users") {
+      val teamId = TeamId()
+      val convName = Name("conv")
+      val conv = ConversationData(team = Some(teamId), name = Some(convName))
+      val syncId = SyncId()
+      val self = UserData(selfUserId.str)
+      val user1 = UserData("user1")
+      val user2 = UserData("user2")
+      val users = Set(self, user1, user2)
+
+      (convosUpdaterMock.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *).once().returning(Future.successful(conv))
+      (messagesMock.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
+      (syncMock.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
+
+      val convsUi = createConvsUi(Some(teamId))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id)))
+      data shouldEqual conv
+      sId shouldEqual syncId
+    }
+  }
+
+  def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
+    new ConversationsUiServiceImpl(
+      selfUserId, teamId, assetServiceMock, usersStorageMock, messagesMock, msgStorageMock,
+      messageUpdaterMock, membersMock, convosUpdaterMock, convoStorageMock, networkMock,
+      service, syncMock, convosClientMock, accounts, tracking, errorMock, propertiesMock
+    )
+  }
 }

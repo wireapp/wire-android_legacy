@@ -22,7 +22,7 @@ import com.waz.api.IConversation.AccessRole._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
-import com.waz.db.{Dao, Dao2}
+import com.waz.db.{Dao, Dao2, Dao3}
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model
 import com.waz.model.ConversationData.{ConversationType, Link, UnreadCount}
@@ -116,8 +116,94 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 /**
  * Conversation user binding.
  */
-case class ConversationMemberData(userId: UserId, convId: ConvId) extends Identifiable[(UserId, ConvId)] {
+
+case class ConversationAction(name: String) extends Identifiable[String] {
+  override def id: String = name
+}
+
+object ConversationAction {
+
+  val AddMember          = ConversationAction("add_conversation_member")
+  val RemoveMember       = ConversationAction("remove_conversation_member")
+  val DeleteConversation = ConversationAction("delete_conversation")
+  val ModifyName         = ConversationAction("modify_conversation_name")
+  val ModifyMessageTimer = ConversationAction("modify_conversation_message_timer")
+  val ModifyReceiptMode  = ConversationAction("modify_conversation_receipt_mode")
+  val ModifyAccess       = ConversationAction("modify_conversation_access")
+
+  val allActions = Set(AddMember, RemoveMember, DeleteConversation, ModifyName, ModifyMessageTimer, ModifyReceiptMode, ModifyAccess)
+}
+
+case class ConversationRole(label: String, actions: Set[ConversationAction])
+
+object ConversationRole {
+  import ConversationAction._
+
+  val MemberRole = ConversationRole("member_role", Set(AddMember, RemoveMember))
+  val AdminRole  = ConversationRole("admin_role", allActions)
+
+  val defaultRoles = Set(MemberRole, AdminRole)
+}
+
+case class ConversationRoleAction(label: String, action: String, convId: Option[ConvId]) extends Identifiable[(String, String, Option[ConvId])] {
+  override def id: (String, String, Option[ConvId]) = (label, action, convId)
+}
+
+object ConversationRoleAction {
+  implicit object ConversationRoleActionDao extends Dao3[ConversationRoleAction, String, String, Option[ConvId]] {
+    val Label  = text('label).apply(_.label)
+    val Action = text('action).apply(_.action)
+    val ConvId = opt(id[ConvId]('conv_id)).apply(_.convId)
+
+    override val idCol = (Label, Action, ConvId)
+    override val table = Table("ConversationRoleAction", Label, Action, ConvId)
+    override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
+
+    override def onCreate(db: DB): Unit = {
+      super.onCreate(db)
+
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${Label.name})")
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
+    }
+
+    def findForConv(convId: Option[ConvId])(implicit db: DB) = iterating(find(ConvId, convId))
+    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs.map(Option(_))))
+    def findForRole(role: String)(implicit db: DB) = iterating(find(Label, role))
+    def findForRoles(roles: Set[String])(implicit db: DB) = iteratingMultiple(findInSet(Label, roles))
+
+    def findForRoleAndConv(role: String, convId: Option[ConvId])(implicit db: DB) = iterating(
+      db.query(table.name, null, s"${Label.name} = $role AND ${ConvId.name} = ${convId.getOrElse("")}", Array(), null, null, null)
+    )
+  }
+
+}
+
+case class ConversationMemberData(userId: UserId, convId: ConvId, role: String) extends Identifiable[(UserId, ConvId)] {
   override val id: (UserId, ConvId) = (userId, convId)
+}
+
+object ConversationMemberData {
+
+  implicit object ConversationMemberDataDao extends Dao2[ConversationMemberData, UserId, ConvId] {
+    val UserId = id[UserId]('user_id).apply(_.userId)
+    val ConvId = id[ConvId]('conv_id).apply(_.convId)
+    val Role = text('role).apply(_.role)
+
+    override val idCol = (UserId, ConvId)
+    override val table = Table("ConversationMembers", UserId, ConvId, Role)
+    override def apply(implicit cursor: DBCursor): ConversationMemberData = ConversationMemberData(UserId, ConvId, Role)
+
+    override def onCreate(db: DB): Unit = {
+      super.onCreate(db)
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${UserId.name})")
+    }
+
+    def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
+    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs))
+    def findForUser(userId: UserId)(implicit db: DB) = iterating(find(UserId, userId))
+    def findForUsers(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(UserId, users))
+  }
 }
 
 object ConversationData {
@@ -328,25 +414,3 @@ object ConversationData {
   }
 }
 
-object ConversationMemberData {
-
-  implicit object ConversationMemberDataDao extends Dao2[ConversationMemberData, UserId, ConvId] {
-    val UserId = id[UserId]('user_id).apply(_.userId)
-    val ConvId = id[ConvId]('conv_id).apply(_.convId)
-
-    override val idCol = (UserId, ConvId)
-    override val table = Table("ConversationMembers", UserId, ConvId)
-    override def apply(implicit cursor: DBCursor): ConversationMemberData = ConversationMemberData(UserId, ConvId)
-
-    override def onCreate(db: DB): Unit = {
-      super.onCreate(db)
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${UserId.name})")
-    }
-
-    def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
-    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs))
-    def findForUser(userId: UserId)(implicit db: DB) = iterating(find(UserId, userId))
-    def findForUsers(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(UserId, users))
-  }
-}
