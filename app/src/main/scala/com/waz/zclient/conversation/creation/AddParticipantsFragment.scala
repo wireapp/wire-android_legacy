@@ -27,9 +27,10 @@ import android.widget.{ImageView, TextView}
 import androidx.core.graphics.ColorUtils
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
+import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.{TeamSizeThreshold, ZMessaging}
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
 import com.waz.threading.Threading
 import com.waz.utils.events._
@@ -66,6 +67,7 @@ class AddParticipantsFragment extends FragmentHelper {
   private lazy val themeController    = inject[ThemeController]
   private lazy val userAccounts       = inject[UserAccountsController]
   private lazy val browserController  = inject[BrowserController]
+  private lazy val usersStorage       = inject[Signal[UsersStorage]]
 
   private lazy val adapter = AddParticipantsAdapter(newConvController.users, newConvController.integrations)
 
@@ -234,12 +236,17 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
 
   private implicit val ctx = context
   private lazy val themeController = inject[ThemeController]
+  private lazy val teamId = inject[Signal[Option[TeamId]]]
 
   private val searchController = new SearchController()
 
   val filter = searchController.filter
   val tab    = searchController.tab
   val searchResults = searchController.addUserOrServices
+
+  private lazy val usersStorage = inject[Signal[UsersStorage]]
+
+  private var hideUserStatus = false
 
   setHasStableIds(true)
 
@@ -249,15 +256,17 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   val onSelectionChanged = EventStream[(Either[UserId, (ProviderId, IntegrationId)], Boolean)]()
 
   (for {
-    teamId        <- inject[Signal[Option[TeamId]]]
     res           <- searchResults
     usersSelected <- usersSelected
+    _teamId        <- teamId
     servsSelected <- servicesSelected
+    hideStatus <- Signal.future(TeamSizeThreshold.shouldHideStatus(teamId, usersStorage))
 
-  } yield (teamId, res, usersSelected, servsSelected)).onUi {
-    case (teamId, res, usersSelected, servsSelected) =>
+  } yield (_teamId, res, usersSelected, servsSelected, hideStatus)).onUi {
+    case (teamId, res, usersSelected, servsSelected, hideStatus) =>
       team = teamId
       val prev = this.results
+      hideUserStatus = hideStatus
 
       import AddUserListState._
       val userResults = res match {
@@ -325,7 +334,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   }
 
   override def onBindViewHolder(holder: SelectableRowViewHolder, position: Int): Unit = results(position) match {
-    case (Left(user), selected) => holder.bind(user, team, selected = selected)
+    case (Left(user), selected) => holder.bind(user, team, selected = selected, hideUserStatus)
     case (Right(integration), selected) => holder.bind(integration, selected = selected)
   }
 }
@@ -340,9 +349,9 @@ case class SelectableRowViewHolder(v: SingleUserRowView) extends RecyclerView.Vi
 
   var selectable: Option[Either[UserData, IntegrationData]] = None
 
-  def bind(user: UserData, teamId: Option[TeamId], selected: Boolean) = {
+  def bind(user: UserData, teamId: Option[TeamId], selected: Boolean, hideStatus: Boolean) = {
     this.selectable = Some(Left(user))
-    v.setUserData(user, teamId)
+    v.setUserData(user, teamId, hideStatus)
     v.setChecked(selected)
   }
 

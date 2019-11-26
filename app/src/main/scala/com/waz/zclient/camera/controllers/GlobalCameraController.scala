@@ -231,6 +231,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
           }),
           null,
           DeprecationUtils.pictureCallback(new PictureCallbackDeprecated {
+
             override def onPictureTaken(data: Array[Byte], camera: CameraWrapper): Unit = {
               // Restart the preview as it gets stopped by camera.takePicture()
               c.startPreview()
@@ -240,13 +241,14 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
               val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
 
               val result = orientation match {
-                case ExifInterface.ORIENTATION_NORMAL | ExifInterface.ORIENTATION_UNDEFINED =>
+                case ExifInterface.ORIENTATION_NORMAL =>
                   data
+                case ExifInterface.ORIENTATION_UNDEFINED =>
+                  val corrected = BitmapUtils.fixOrientationForUndefined(BitmapFactory.decodeByteArray(data, 0, data.length), orientation)
+                  generateOutputByteArray(corrected)
                 case _ =>
                   val corrected = BitmapUtils.fixOrientation(BitmapFactory.decodeByteArray(data, 0, data.length), orientation)
-                  val output = new ByteArrayOutputStream()
-                  corrected.compress(Bitmap.CompressFormat.JPEG, 100, output)
-                  output.toByteArray
+                  generateOutputByteArray(corrected)
               }
 
               promise.success(result)
@@ -259,6 +261,12 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
     }
     promise.future
   }
+
+ private def generateOutputByteArray(corrected: Bitmap) : Array[Byte] = {
+   val output = new ByteArrayOutputStream()
+   corrected.compress(Bitmap.CompressFormat.JPEG, 100, output)
+   output.toByteArray
+ }
 
   override def getPreviewSize = previewSize.getOrElse(PreviewSize(0, 0))
 
