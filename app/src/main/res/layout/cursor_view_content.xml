@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2019 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,74 +18,69 @@
 
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <View
         android:id="@+id/v__top_bar__cursor"
         style="?wireDivider"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__divider__height__thin"
-        />
+        android:layout_height="@dimen/wire__divider__height__thin" />
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/new_cursor_height"
-    >
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:paddingEnd="@dimen/cursor_button_horizontal_margin"
-        >
+            android:paddingEnd="@dimen/cursor_button_horizontal_margin">
 
             <FrameLayout
                 android:id="@+id/fl__cursor__emoji_container"
                 android:layout_width="@dimen/cursor_anchor2"
                 android:layout_height="match_parent"
-                android:layout_gravity="start|center_vertical"
-            >
-                <com.waz.zclient.cursor.CursorIconButton android:id="@+id/cib__emoji"
-                                                         android:layout_width="@dimen/cursor__menu_button__diameter"
-                                                         android:layout_height="@dimen/cursor__menu_button__diameter"
-                                                         android:layout_gravity="end|center_vertical"
-                                                         android:layout_marginEnd="@dimen/chathead__margin"
-                                                         android:padding="@dimen/cursor__menu_button__padding"
-                                                         style="?cursorIconButton"/>
+                android:layout_gravity="start|center_vertical">
 
-                <com.waz.zclient.cursor.CursorIconButton android:id="@+id/cib__keyboard"
-                                                         android:layout_width="@dimen/cursor__menu_button__diameter"
-                                                         android:layout_height="@dimen/cursor__menu_button__diameter"
-                                                         android:layout_gravity="end|center_vertical"
-                                                         android:layout_marginEnd="@dimen/chathead__margin"
-                                                         android:padding="@dimen/cursor__menu_button__padding"
-                                                         style="?cursorIconButton"/>
+                <com.waz.zclient.cursor.CursorIconButton
+                    android:id="@+id/cib__emoji"
+                    style="?cursorIconButton"
+                    android:layout_width="@dimen/cursor__menu_button__diameter"
+                    android:layout_height="@dimen/cursor__menu_button__diameter"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="@dimen/chathead__margin"
+                    android:padding="@dimen/cursor__menu_button__padding" />
+
+                <com.waz.zclient.cursor.CursorIconButton
+                    android:id="@+id/cib__keyboard"
+                    style="?cursorIconButton"
+                    android:layout_width="@dimen/cursor__menu_button__diameter"
+                    android:layout_height="@dimen/cursor__menu_button__diameter"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="@dimen/chathead__margin"
+                    android:padding="@dimen/cursor__menu_button__padding" />
             </FrameLayout>
 
             <FrameLayout
                 android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_gravity="center_vertical"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
                 android:paddingEnd="@dimen/wire__padding__small">
 
-                <!-- Edit Text -->
                 <com.waz.zclient.ui.cursor.CursorEditText
                     android:id="@+id/cet__cursor"
                     style="?cursorEditText"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@null"
                     android:gravity="center_vertical"
                     android:imeOptions="actionNone"
                     android:inputType="textCapSentences|textMultiLine"
+                    android:lineSpacingExtra="@dimen/content__line_spacing_extra"
                     android:maxLines="@integer/cursor__max_lines"
                     android:scrollHorizontally="false"
-                    android:lineSpacingExtra="@dimen/content__line_spacing_extra"
-                    app:w_font="@string/wire__typeface__light"
-                >
-
-                    <requestFocus/>
+                    app:w_font="@string/wire__typeface__light">
                 </com.waz.zclient.ui.cursor.CursorEditText>
 
                 <com.waz.zclient.ui.text.TypefaceTextView
@@ -95,34 +89,35 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:background="@null"
+                    android:drawablePadding="@dimen/wire__padding__8"
                     android:gravity="start"
+                    android:paddingStart="@dimen/wire__padding__small"
                     android:text="@string/cursor__type_a_message"
                     android:textColor="@color/light_graphite"
                     android:textSize="@dimen/wire__text_size__small"
-                    app:w_font="@string/wire__typeface__medium"
-                    android:paddingStart="@dimen/wire__padding__small"
-                    android:drawablePadding="@dimen/wire__padding__8"
-                />
+                    app:w_font="@string/wire__typeface__medium" />
 
             </FrameLayout>
 
-            <com.waz.zclient.cursor.EphemeralTimerButton android:id="@+id/cib__ephemeral"
-                                                         android:layout_width="@dimen/wire__margin__24"
-                                                         android:layout_height="@dimen/wire__margin__24"
-                                                         android:layout_gravity="center"
-                                                         android:letterSpacing="-0.1"
-                                                         android:includeFontPadding="false"
-                                                         android:gravity="center_vertical"/>
+            <com.waz.zclient.cursor.EphemeralTimerButton
+                android:id="@+id/cib__ephemeral"
+                android:layout_width="@dimen/wire__margin__24"
+                android:layout_height="@dimen/wire__margin__24"
+                android:layout_gravity="center"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:letterSpacing="-0.1" />
 
-            <com.waz.zclient.cursor.SendButton android:id="@+id/cib__send"
-                                               android:visibility="gone"
-                                               android:layout_marginStart="@dimen/cursor_anchor1"
-                                               android:layout_width="@dimen/cursor__send_button__width"
-                                               android:layout_height="@dimen/cursor__send_button__width"
-                                               android:layout_gravity="center"
-                                               android:padding="@dimen/cursor__send_button__padding"
-                                               android:textColor="@color/text__primary_dark"
-                                               style="?cursorIconButton"/>
+            <com.waz.zclient.cursor.SendButton
+                android:id="@+id/cib__send"
+                style="?cursorIconButton"
+                android:layout_width="@dimen/cursor__send_button__width"
+                android:layout_height="@dimen/cursor__send_button__width"
+                android:layout_gravity="center"
+                android:layout_marginStart="@dimen/cursor_anchor1"
+                android:padding="@dimen/cursor__send_button__padding"
+                android:textColor="@color/text__primary_dark"
+                android:visibility="gone" />
 
 
         </LinearLayout>
@@ -134,47 +129,41 @@
             android:background="@android:drawable/toast_frame"
             android:gravity="center"
             android:textColor="@color/text__primary_dark"
-            app:w_font="@string/wire__typeface__light"
-        />
+            app:w_font="@string/wire__typeface__light" />
 
     </FrameLayout>
 
 
     <View
         android:id="@+id/v__cursor__divider"
+        style="?wireDivider"
         android:layout_width="match_parent"
         android:layout_height="@dimen/wire__divider__height__thin"
         android:layout_marginLeft="@dimen/wire__padding__regular"
-        android:layout_marginRight="@dimen/wire__padding__regular"
-        style="?wireDivider"
-    />
+        android:layout_marginRight="@dimen/wire__padding__regular" />
 
     <!-- Cursor Action -->
     <com.waz.zclient.cursor.CursorToolbarContainer
         android:id="@+id/cal__cursor"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/new_cursor_height"
-    >
+        android:layout_height="@dimen/new_cursor_height">
 
         <com.waz.zclient.cursor.CursorToolbar
             android:id="@+id/c__cursor__main"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-        />
+            android:layout_height="match_parent" />
 
         <com.waz.zclient.cursor.CursorToolbar
             android:id="@+id/c__cursor__secondary"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-        />
+            android:layout_height="match_parent" />
 
         <com.waz.zclient.cursor.EditCursorToolbar
             android:id="@+id/emct__edit_message__toolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/wire__padding__regular"
-            android:layout_marginRight="@dimen/wire__padding__regular"
-        />
+            android:layout_marginRight="@dimen/wire__padding__regular" />
 
 
     </com.waz.zclient.cursor.CursorToolbarContainer>

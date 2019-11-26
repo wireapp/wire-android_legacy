@@ -1,39 +1,42 @@
-package com.waz.zclient.settings.user.source.remote
+package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.R
-import com.waz.zclient.settings.presentation.model.SettingsItem
-import com.waz.zclient.user.data.source.remote.UserApi
-import com.waz.zclient.utilities.config.ConfigHelper
-import com.waz.zclient.utilities.resources.ResourceManager
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.protobuf.ProtoConverterFactory
 
 
-
-class Network(){
+class Network {
 
     private var retrofit: Retrofit
 
     init {
-        retrofit =  createNetworkClient(BASE_URL)
+        retrofit = createNetworkClient(BASE_URL)
     }
+
     private fun createNetworkClient(baseUrl: String): Retrofit {
+
+        val okHttpClient = OkHttpClient().newBuilder()
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
+            .build()
 
         return Retrofit.Builder()
             .baseUrl(baseUrl)
+            .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .build()
     }
 
-    fun getUserApi() : UserApi {
+    fun getUserApi(): UserApi {
         return retrofit.create(UserApi::class.java)
     }
 
     companion object {
-        private  const val BASE_URL = "https://staging-nginz-https.zinfra.io"
+        private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
     }
 
 }

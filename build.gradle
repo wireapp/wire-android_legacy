@@ -134,7 +134,7 @@ def prepareCustomizationEnvironment() {
     }
 
     def customFolder = System.getenv("CUSTOM_FOLDER") ?: properties.getProperty("CUSTOM_FOLDER") ?: ''
-    i f(customFolder.isEmpty()) {
+    if (customFolder.isEmpty()) {
         throw new GradleException('Custom repo specified, but not custom folder')
     }
 

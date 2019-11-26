@@ -1,7 +1,5 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.ui.MemoryImageCache
-import com.waz.zclient.settings.user.source.remote.Network
 import com.waz.zclient.user.data.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
