@@ -1,8 +1,9 @@
-package com.waz.zclient.settings.data.repository
+package com.waz.zclient.user.data.repository
 
-import com.waz.zclient.settings.data.model.UserEntity
-import com.waz.zclient.settings.data.source.remote.UserRemoteDataSource
-import com.waz.zclient.settings.data.source.remote.UserRemoteDataSourceImpl
+
+import com.waz.zclient.user.data.model.UserEntity
+import com.waz.zclient.user.data.source.remote.UserRemoteDataSource
+import com.waz.zclient.user.data.source.remote.UserRemoteDataSourceImpl
 import io.reactivex.Single
 
 class UserRepositoryImpl : UserRepository {

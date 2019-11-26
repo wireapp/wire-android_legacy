@@ -1,8 +1,10 @@
-package com.waz.zclient.settings.domain.usecase
+package com.waz.zclient.settings.user.usecase
 
-import com.waz.zclient.settings.data.model.UserEntity
-import com.waz.zclient.settings.data.repository.UserRepository
-import com.waz.zclient.settings.data.repository.UserRepositoryImpl
+
+import com.waz.zclient.settings.domain.usecase.UseCase
+import com.waz.zclient.user.data.model.UserEntity
+import com.waz.zclient.user.data.repository.UserRepository
+import com.waz.zclient.user.data.repository.UserRepositoryImpl
 import io.reactivex.Scheduler
 import io.reactivex.Single
 

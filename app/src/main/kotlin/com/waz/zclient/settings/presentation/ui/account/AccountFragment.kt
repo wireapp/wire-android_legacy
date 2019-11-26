@@ -13,10 +13,10 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.R
-import com.waz.zclient.settings.data.model.UserEntity
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListAdapter
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListFactory
+import com.waz.zclient.user.data.model.UserEntity
 import com.waz.zclient.utilities.config.ConfigHelper
 import com.waz.zclient.utilities.extension.remove
 import com.waz.zclient.utilities.resources.ResourceManagerImpl

@@ -1,6 +1,6 @@
-package com.waz.zclient.settings.data.source.remote
+package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.settings.data.model.UserEntity
+import com.waz.zclient.user.data.model.UserEntity
 import io.reactivex.Single
 
 interface UserRemoteDataSource {

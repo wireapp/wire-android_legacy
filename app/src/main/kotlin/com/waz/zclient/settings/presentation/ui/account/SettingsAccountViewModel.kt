@@ -2,8 +2,8 @@ package com.waz.zclient.settings.presentation.ui.account
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.waz.zclient.settings.data.model.UserEntity
-import com.waz.zclient.settings.domain.usecase.GetUserProfileUseCase
+import com.waz.zclient.settings.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.data.model.UserEntity
 import io.reactivex.observers.DisposableSingleObserver
 
 class SettingsAccountViewModel(private val getUserProfileUseCase : GetUserProfileUseCase) : ViewModel() {

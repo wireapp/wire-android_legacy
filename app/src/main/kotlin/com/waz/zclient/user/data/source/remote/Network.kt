@@ -1,7 +1,8 @@
-package com.waz.zclient.settings.data.source.remote
+package com.waz.zclient.settings.user.source.remote
 
 import com.waz.zclient.R
 import com.waz.zclient.settings.presentation.model.SettingsItem
+import com.waz.zclient.user.data.source.remote.UserApi
 import com.waz.zclient.utilities.config.ConfigHelper
 import com.waz.zclient.utilities.resources.ResourceManager
 import retrofit2.Retrofit
@@ -27,7 +28,7 @@ class Network(){
             .build()
     }
 
-    fun getUserApi() : UserApi{
+    fun getUserApi() : UserApi {
         return retrofit.create(UserApi::class.java)
     }
 

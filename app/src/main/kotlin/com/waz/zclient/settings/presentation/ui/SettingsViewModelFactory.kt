@@ -2,8 +2,8 @@ package com.waz.zclient.settings.presentation.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.waz.zclient.settings.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.settings.presentation.ui.account.SettingsAccountViewModel
+import com.waz.zclient.settings.user.usecase.GetUserProfileUseCase
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 

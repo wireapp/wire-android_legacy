@@ -1,7 +1,8 @@
-package com.waz.zclient.settings.data.source.remote
+package com.waz.zclient.user.data.source.remote
 
 import com.waz.ui.MemoryImageCache
-import com.waz.zclient.settings.data.model.UserEntity
+import com.waz.zclient.settings.user.source.remote.Network
+import com.waz.zclient.user.data.model.UserEntity
 import io.reactivex.Single
 
 class UserRemoteDataSourceImpl constructor(
