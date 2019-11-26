@@ -305,7 +305,8 @@ def versions = [
     stetho: "1.5.0",
     work_manager : "1.0.0-alpha13",
     paging : "1.0.0",
-    dexmaker : "1.4"
+    dexmaker : "1.4",
+    retrofit : "2.6.2"
 ]
 
 dependencies {
@@ -402,10 +403,11 @@ dependencies {
     implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
     //Retrofit
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-protobuf:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
-    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-protobuf:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.0'
 
     // Test dependencies
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
