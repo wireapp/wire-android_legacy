@@ -1223,10 +1223,10 @@
     <string name="new_conv_no_contacts">No contacts</string>
 
     <string name="participants_divider_services">SERVICES (%1$s)</string>
-    <string name="participants_divider_people">CONVERSATION MEMBERS (%1$s)</string>
-    <string name="participants_divider_admins">CONVERSATION ADMINS (%1$s)</string>
-    <string name="participants_divider_people_no_number">CONVERSATION MEMBERS</string>
-    <string name="participants_divider_admins_no_number">CONVERSATION ADMINS</string>
+    <string name="participants_divider_people">GROUP MEMBERS (%1$s)</string>
+    <string name="participants_divider_admins">GROUP ADMINS (%1$s)</string>
+    <string name="participants_divider_people_no_number">GROUP MEMBERS</string>
+    <string name="participants_divider_admins_no_number">GROUP ADMINS</string>
     <string name="participants_divider_options">OPTIONS</string>
     <string name="participants_no_admins">There are no admins.</string>
     <string name="participants_no_results_1">No matching results.</string>

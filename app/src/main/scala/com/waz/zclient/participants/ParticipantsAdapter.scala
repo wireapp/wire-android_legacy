@@ -213,7 +213,8 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
       ShowAllParticipantsViewHolder(view)
     case NoResultsInfo =>
       NoResultsInfoViewHolder(LayoutInflater.from(parent.getContext).inflate(R.layout.participants_no_result_info, parent, false))
-    case _ => SeparatorViewHolder(getSeparatorView(parent))
+    case _ =>
+      SeparatorViewHolder(LayoutInflater.from(parent.getContext).inflate(R.layout.participants_separator_row, parent, false))
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = (items(position), holder) match {
@@ -256,11 +257,6 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
         else getString(R.string.participants_divider_admins, adminsCount.toString)
       )
       if (showPeopleOnly) h.setContentDescription(s"Admins") else h.setContentDescription(s"Admins: $adminsCount")
-    case (Right(NoResultsInfo), h: NoResultsInfoViewHolder) =>
-/*      h.setId(R.id.no_results_info)
-      h.setTitle()
-      h.setEmptySection(getString(R.string.participants_no_results).toUpperCase(Locale.getDefault))
-      h.setContentDescription(s"No Results")*/
     case _ =>
   }
 
@@ -277,10 +273,6 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
     case Right(sepType) => sepType
     case _              => UserRow
   }
-
-  private def getSeparatorView(parent: ViewGroup): View =
-    LayoutInflater.from(parent.getContext).inflate(R.layout.participants_separator_row, parent, false)
-
 }
 
 object ParticipantsAdapter {
