@@ -31,26 +31,24 @@
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/first_line"
-        style="?userChatHeadLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginBottom="@dimen/wire__padding__small"
         android:textColor="@color/light_graphite"
-        android:textSize="@dimen/wire__text_size__regular"
+        android:textSize="@dimen/wire__text_size__regular_small"
         app:w_font="@string/wire__typeface__medium"
         android:text="@string/participants_no_results_1"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/second_line"
-        style="?userChatHeadLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginBottom="@dimen/wire__padding__small"
         android:textColor="@color/light_graphite"
-        android:textSize="@dimen/wire__text_size__regular"
+        android:textSize="@dimen/wire__text_size__regular_small"
         app:w_font="@string/wire__typeface__medium"
         android:text="@string/participants_no_results_2"
         />

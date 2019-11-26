@@ -61,7 +61,13 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val externalIcon   = findById[ImageView](R.id.external_icon)
   private lazy val separator      = findById[View](R.id.separator)
   private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
-  private lazy val youText        = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"(${getString(R.string.content__system__you).toUpperCase(Locale.getDefault)})"))
+
+  private lazy val youTextString = {
+    val str = getString(R.string.content__system__you)
+    val firstLetter = str.take(1).toUpperCase(Locale.getDefault)
+    firstLetter + str.drop(1)
+  }
+  private lazy val youText        = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"($youTextString)"))
 
   val onSelectionChanged: SourceStream[Boolean] = EventStream()
   private var solidBackground = false

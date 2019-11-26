@@ -53,7 +53,6 @@ import com.waz.zclient.log.LogUI._
 
 import scala.util.Random
 
-//TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
 class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
@@ -122,8 +121,8 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
     membersCount = members.size
     botCount     = bots.size
 
-    val filteredAdmins  = maxParticipants.fold(admins)(n => if (n >= adminsCount) admins else admins.take(n - 1))
-    val filteredMembers = maxParticipants.fold(members)(n => if (n >= people.size) members else members.take(n - adminsCount - 1))
+    val filteredAdmins  = maxParticipants.fold(admins)(n => if (n >= adminsCount) admins else admins.take(n - 2))
+    val filteredMembers = maxParticipants.fold(members)(n => if (n >= people.size) members else members.take(n - adminsCount - 2))
     verbose(l"filter: ${filter.currentValue}, max: $maxParticipants, admins: $adminsCount, filtered admins: ${filteredAdmins.size}, members: $membersCount, filtered members: ${filteredMembers.size}")
 
     (if (!showPeopleOnly) List(Right(if (canChangeSettings) ConversationName else ConversationNameReadOnly)) else Nil) :::
@@ -363,10 +362,16 @@ object ParticipantsAdapter {
     private var userId = Option.empty[UserId]
 
     view.onClick(userId.foreach(onClick ! _))
-
+    
     def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[UserData => String], hideStatus: Boolean): Unit = {
-      if (participant.isSelf) view.showArrow(false)
-      else userId = Some(participant.userData.id)
+      if (participant.isSelf) {
+        view.showArrow(false)
+        userId = None
+      }
+      else {
+        view.showArrow(true)
+        userId = Some(participant.userData.id)
+      }
       createSubtitle match {
         case Some(f) => view.setUserData(participant.userData, teamId, hideStatus, createSubtitle = f)
         case None    => view.setUserData(participant.userData, teamId, hideStatus)

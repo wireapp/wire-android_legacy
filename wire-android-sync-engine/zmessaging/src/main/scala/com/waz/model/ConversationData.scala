@@ -117,67 +117,6 @@ case class ConversationData(override val id:      ConvId                 = ConvI
  * Conversation user binding.
  */
 
-case class ConversationAction(name: String) extends Identifiable[String] {
-  override def id: String = name
-}
-
-object ConversationAction {
-
-  val AddMember          = ConversationAction("add_conversation_member")
-  val RemoveMember       = ConversationAction("remove_conversation_member")
-  val DeleteConversation = ConversationAction("delete_conversation")
-  val ModifyName         = ConversationAction("modify_conversation_name")
-  val ModifyMessageTimer = ConversationAction("modify_conversation_message_timer")
-  val ModifyReceiptMode  = ConversationAction("modify_conversation_receipt_mode")
-  val ModifyAccess       = ConversationAction("modify_conversation_access")
-
-  val allActions = Set(AddMember, RemoveMember, DeleteConversation, ModifyName, ModifyMessageTimer, ModifyReceiptMode, ModifyAccess)
-}
-
-case class ConversationRole(label: String, actions: Set[ConversationAction])
-
-object ConversationRole {
-  import ConversationAction._
-
-  val MemberRole = ConversationRole("member_role", Set(AddMember, RemoveMember))
-  val AdminRole  = ConversationRole("admin_role", allActions)
-
-  val defaultRoles = Set(MemberRole, AdminRole)
-}
-
-case class ConversationRoleAction(label: String, action: String, convId: Option[ConvId]) extends Identifiable[(String, String, Option[ConvId])] {
-  override def id: (String, String, Option[ConvId]) = (label, action, convId)
-}
-
-object ConversationRoleAction {
-  implicit object ConversationRoleActionDao extends Dao3[ConversationRoleAction, String, String, Option[ConvId]] {
-    val Label  = text('label).apply(_.label)
-    val Action = text('action).apply(_.action)
-    val ConvId = opt(id[ConvId]('conv_id)).apply(_.convId)
-
-    override val idCol = (Label, Action, ConvId)
-    override val table = Table("ConversationRoleAction", Label, Action, ConvId)
-    override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
-
-    override def onCreate(db: DB): Unit = {
-      super.onCreate(db)
-
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${Label.name})")
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
-    }
-
-    def findForConv(convId: Option[ConvId])(implicit db: DB) = iterating(find(ConvId, convId))
-    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs.map(Option(_))))
-    def findForRole(role: String)(implicit db: DB) = iterating(find(Label, role))
-    def findForRoles(roles: Set[String])(implicit db: DB) = iteratingMultiple(findInSet(Label, roles))
-
-    def findForRoleAndConv(role: String, convId: Option[ConvId])(implicit db: DB) = iterating(
-      db.query(table.name, null, s"${Label.name} = $role AND ${ConvId.name} = ${convId.getOrElse("")}", Array(), null, null, null)
-    )
-  }
-
-}
-
 case class ConversationMemberData(userId: UserId, convId: ConvId, role: String = ConversationRole.AdminRole.label) extends Identifiable[(UserId, ConvId)] {
   override val id: (UserId, ConvId) = (userId, convId)
 }

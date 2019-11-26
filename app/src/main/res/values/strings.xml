@@ -1347,7 +1347,7 @@
     <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
 
     <string name="participant_search_hint">SEARCH FOR NAMES</string>
-    <string name="participant_search_title">PEOPLE</string>
+    <string name="participant_search_title">PARTICIPANTS</string>
     <string name="generic_service_warning">Services have access to the content of this conversation</string>
     <string name="add_services_button_text">Manage services</string>
 
