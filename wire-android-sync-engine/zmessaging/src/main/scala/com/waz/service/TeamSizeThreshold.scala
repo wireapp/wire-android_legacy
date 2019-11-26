@@ -38,7 +38,7 @@ class TeamSizeThresholdImpl(teamId:       Option[TeamId],
 
   override def runIfBelowStatusPropagationThreshold(fnToRun: () => Future[_]): Future[Unit] =
     TeamSizeThreshold.isAboveStatusPropagationThreshold(teamId, usersStorage).map {
-      case true => fnToRun().map(_ => ())
+      case false => fnToRun().map(_ => ())
       case _ => Future.successful({})
     }
 }
@@ -50,11 +50,13 @@ object TeamSizeThreshold extends DerivedLogTag {
 
   private def membersCount(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Option[Int]] = {
     val empty: Future[Option[Int]] = Future.successful(None)
-    teamId.fold(empty)({ id => usersStorage.getByTeam(Set(id)).map(users => Some(users.size))})
+    teamId.fold(empty)({ id => usersStorage.getByTeam(Set(id)).map(users => Some(users.filter(!_.deleted).size))})
   }
 
   def isAboveStatusPropagationThreshold(teamId: Option[TeamId], usersStorage: UsersStorage): Future[Boolean] =
-    membersCount(teamId, usersStorage).map { maybeSize => maybeSize.exists(_ >= statusPropagationThreshold) }
+    membersCount(teamId, usersStorage).map { maybeSize =>
+      maybeSize.exists(_ >= statusPropagationThreshold)
+    }
 
   def shouldHideStatus(teamId: Signal[Option[TeamId]], usersStorage: Signal[UsersStorage]): Future[Boolean] =
     for {
