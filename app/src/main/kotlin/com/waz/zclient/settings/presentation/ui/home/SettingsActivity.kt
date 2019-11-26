@@ -1,5 +1,7 @@
 package com.waz.zclient.settings.presentation.ui.home
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
@@ -17,5 +19,10 @@ class SettingsActivity : AppCompatActivity() {
         toolbar.setTitle(getString(R.string.settings_title))
         toolbar.showBackArrow()
         replaceFragment(R.id.fragment_container, SettingsFragment.newInstance(),false)
+    }
+
+    companion object {
+        @JvmStatic
+        fun newIntent(context: Context) = Intent(context, SettingsActivity::class.java)
     }
 }
