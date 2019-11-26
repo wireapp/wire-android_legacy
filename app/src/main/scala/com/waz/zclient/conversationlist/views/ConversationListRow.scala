@@ -95,7 +95,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   var conversationData = Option.empty[ConversationData]
-  val hideAvailability: SourceSignal[Boolean] = Signal(false)
+  private val hideAvailability: SourceSignal[Boolean] = Signal(false)
 
   val conversation = for {
     Some(convId) <- conversationId
@@ -104,7 +104,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   val members = conversationId.collect { case Some(convId) => convId } flatMap controller.members
 
-  val conversationName = conversation map { conv =>
+  conversation.map { conv =>
     if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated
@@ -113,6 +113,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       Name(defaultName)
     } else
       conv.displayName
+  }.onUi { name =>
+    title.setText(name)
   }
 
   val userTyping = for {
@@ -175,23 +177,15 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     }
   }
 
-  // Conversation title
-  (for {
-    name <- conversationName
-  } yield name).onUi { case (name) =>
-    title.setText(name)
-  }
-
   // User availability (for 1:1)
   (for {
     Some(id)  <- conversationId
     av            <- controller.availability(id)
     hide          <- hideAvailability
-  } yield(av, hide)).onUi { case (av, hide) =>
-    if (hide) Availability.None else av match {
-      case Availability.None  => AvailabilityView.hideAvailabilityIcon(title)
-      case other              => AvailabilityView.displayLeftOfText(title, other, title.getCurrentTextColor, pushDown = true)
-    }
+  } yield(av, hide)).onUi {
+      case (_, true)              => AvailabilityView.hideAvailabilityIcon(title)
+      case (Availability.None, _) => AvailabilityView.hideAvailabilityIcon(title)
+      case (av, _)                => AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 
 
