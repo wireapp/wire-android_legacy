@@ -36,10 +36,10 @@ case class ConnectionViewItem(data: ConnectionViewModel) extends SearchViewItem 
   override def name: model.Name = if (data.isConnected) data.name else super.name
 }
 
-case class ConnectionViewModel(indexVal:    Int,
-                               idVal:       Long,
-                               isConnected: Boolean,
-                               userStatus:  Boolean,
-                               results:     Seq[UserData],
-                               name:        Name = Name.Empty,
-                               team:        Option[TeamData] = None)
+case class ConnectionViewModel(indexVal:              Int,
+                               idVal:                 Long,
+                               isConnected:           Boolean,
+                               shouldHideUserStatus:  Boolean,
+                               results:               Seq[UserData],
+                               name:                  Name = Name.Empty,
+                               team:                  Option[TeamData] = None)
