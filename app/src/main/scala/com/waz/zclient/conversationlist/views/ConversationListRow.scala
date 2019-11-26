@@ -34,7 +34,7 @@ import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.SelfCalling
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -54,7 +54,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ConversationSignal, StringUtils, UiStorage, UserSetSignal, UserSignal, ViewUtils}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
-
 import scala.collection.Set
 
 trait ConversationListRow extends View
@@ -96,6 +95,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   var conversationData = Option.empty[ConversationData]
+  val hideAvailability: SourceSignal[Boolean] = Signal(false)
+
   val conversation = for {
     Some(convId) <- conversationId
     conv <- ConversationSignal(convId)
@@ -174,11 +175,25 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     }
   }
 
+  // Conversation title
   (for {
     name <- conversationName
   } yield name).onUi { case (name) =>
     title.setText(name)
   }
+
+  // User availability (for 1:1)
+  (for {
+    Some(id)  <- conversationId
+    av            <- controller.availability(id)
+    hide          <- hideAvailability
+  } yield(av, hide)).onUi { case (av, hide) =>
+    if (hide) Availability.None else av match {
+      case Availability.None  => AvailabilityView.hideAvailabilityIcon(title)
+      case other              => AvailabilityView.displayLeftOfText(title, other, title.getCurrentTextColor, pushDown = true)
+    }
+  }
+
 
   subtitleText.onUi {
     case (convId, text) if conversationData.forall(_.id == convId) =>
@@ -229,23 +244,20 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var maxOffset: Float = .0f
   private var moveToAnimator: ObjectAnimator = _
 
-  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
-    this.conversationData = Some(conversationData)
-    title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
+  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = {
+    if (this.conversationData.forall(_.id != conversationData.id)) {
+      this.conversationData = Some(conversationData)
+      title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
-    badge.setStatus(ConversationBadge.Empty)
-    subtitle.setText("")
-    avatar.clearImages()
-    avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
-    conversationId.publish(Some(conversationData.id), Threading.Ui)
-    if (hideStatus) {
-      AvailabilityView.hideAvailabilityIcon(title)
-    } else {
-      controller.availability(conversationData.id).head.foreach { status =>
-        AvailabilityView.displayLeftOfText(title, status, title.getCurrentTextColor, pushDown = true)
-      }
+      badge.setStatus(ConversationBadge.Empty)
+      subtitle.setText("")
+      avatar.clearImages()
+      avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
+      conversationId.publish(Some(conversationData.id), Threading.Ui)
+      closeImmediate()
     }
-    closeImmediate()
+
+    hideAvailability ! hideStatus
   }
 
   menuIndicatorView.setClickable(false)
