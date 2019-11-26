@@ -5,7 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.settings.presentation.model.SettingsItem
+import com.waz.zclient.settings.presentation.ui.home.model.SettingsItem
 import kotlinx.android.synthetic.main.item_settings.view.*
 
 class SettingsListAdapter(private val settingsItems: List<SettingsItem>, private val listener: OnItemClickListener) : RecyclerView.Adapter<SettingsListAdapter.SettingsViewHolder>() {

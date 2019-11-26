@@ -9,5 +9,5 @@ import retrofit2.http.Header
 interface UserApi {
 
     @GET("/self")
-    fun getUserProfile(@Header("Authorization") token:String): Single<UserEntity>
+    fun getUserProfile(): Single<UserEntity>
 }

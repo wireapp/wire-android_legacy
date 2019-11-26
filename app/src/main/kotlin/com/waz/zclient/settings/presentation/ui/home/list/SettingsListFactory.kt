@@ -1,7 +1,7 @@
 package com.waz.zclient.settings.presentation.ui.home.list
 
 import com.waz.zclient.R
-import com.waz.zclient.settings.presentation.model.SettingsItem
+import com.waz.zclient.settings.presentation.ui.home.model.SettingsItem
 import com.waz.zclient.utilities.config.ConfigHelper
 import com.waz.zclient.utilities.resources.ResourceManager
 

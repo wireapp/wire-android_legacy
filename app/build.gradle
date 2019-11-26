@@ -364,6 +364,12 @@ dependencies {
     implementation "androidx.exifinterface:exifinterface:1.0.0"
     implementation "androidx.media:media:1.0.0"
 
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0-rc02"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.2.0-rc02"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0-rc02"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2"
+
     // Play services
     implementation "com.google.android.gms:play-services-base:$versions.playServices"
     implementation "com.google.android.gms:play-services-maps:$versions.playServices"
