@@ -19,27 +19,30 @@ import com.waz.zclient.utilities.extension.replaceFragment
 import com.waz.zclient.utilities.resources.ResourceManagerImpl
 import kotlinx.android.synthetic.main.fragment_settings.*
 
-class SettingsFragment : Fragment(),OnItemClickListener {
+class SettingsFragment : Fragment(), OnItemClickListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_settings, container, false)
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val resourceManager = ResourceManagerImpl(resources)
-        settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(resourceManager),this)
+        settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(resourceManager), this)
 
     }
+
     override fun onItemClicked(position: Int) {
 
-        when (position){
-            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AccountFragment.newInstance(),true)
-            OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, OptionsFragment.newInstance(),true)
-            ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AdvancedFragment.newInstance(),true)
-            SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, SupportFragment.newInstance(),true)
-            ABOUT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AboutFragment.newInstance(),true)
+        when (position) {
+            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AccountFragment.newInstance(), true)
+            OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, OptionsFragment.newInstance(), true)
+            ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AdvancedFragment.newInstance(), true)
+            SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, SupportFragment.newInstance(), true)
+            ABOUT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AboutFragment.newInstance(), true)
         }
     }
+
     companion object {
         fun newInstance() = SettingsFragment()
         const val ACCOUNT = 0
