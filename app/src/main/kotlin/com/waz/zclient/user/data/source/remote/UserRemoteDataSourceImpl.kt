@@ -3,6 +3,7 @@ package com.waz.zclient.user.data.source.remote
 import com.waz.ui.MemoryImageCache
 import com.waz.zclient.settings.user.source.remote.Network
 import com.waz.zclient.user.data.model.UserEntity
+import io.reactivex.Completable
 import io.reactivex.Single
 
 class UserRemoteDataSourceImpl constructor(
@@ -11,9 +12,12 @@ class UserRemoteDataSourceImpl constructor(
 
     private val network =  Network()
     //Hardcoded just for testing
-    private val apiToken = "4j27dTgQe-D-wcAuPRtFdzjt_y0rvQweT-oBWF5firdnTnssee4_T9kEKizHXS_fMJ3ty-PtpogmmtEzEMFHDA==.v=1.k=1.d=1574700958.t=a.l=.u=a93240b0-ba89-441e-b8ee-ff4403808f93.c=13798313379856385499"
+    private val apiToken = "dvK4kE1gKeRMYPnmJ3SXSZuKrR1-hp-8StYRigDnt0LuWc7l-Qr73ESzqm1bQe8QM4XLTt50YGunjahC6RfYAA==.v=1.k=1.d=1574777278.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=16912824850823569981"
 
-
-    override fun getUserProfile(): Single<UserEntity> = network.getUserApi().getUserProfile("Bearer "+apiToken)
+    override fun getProfile(): Single<UserEntity> = network.getUserApi().getProfile("Bearer "+apiToken)
+    override fun updateName(name: String): Completable = network.getUserApi().updateName("Bearer "+apiToken,name)
+    override fun updateHandle(handle: String): Completable = network.getUserApi().updateHandle("Bearer "+apiToken,handle)
+    override fun updateEmail(email: String): Completable = network.getUserApi().updateEmail("Bearer "+apiToken,email)
+    override fun updatePhone(phone: String): Completable = network.getUserApi().updatePhone("Bearer "+apiToken,phone)
 
 }

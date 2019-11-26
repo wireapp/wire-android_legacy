@@ -18,24 +18,20 @@
 
 -->
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference
         android:title="@string/pref_support_website_title"
         app:iconSpaceReserved="false">
-    <intent
-        android:action="android.intent.action.VIEW"
-        android:data="@string/url_support_website"
-        />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="@string/url_support_website" />
     </Preference>
     <Preference
         android:title="@string/pref_support_contact_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <intent
             android:action="android.intent.action.VIEW"
-            android:data="@string/url_contact_support"
-            />
+            android:data="@string/url_contact_support" />
     </Preference>
 </androidx.preference.PreferenceScreen>
 

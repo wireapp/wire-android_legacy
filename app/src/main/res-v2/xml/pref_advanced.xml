@@ -18,37 +18,31 @@
 
 -->
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    >
-        <SwitchPreferenceCompat
-            android:key=""
-            android:title="@string/pref_advanced_enable_logs_title"
-            android:summary="@string/pref_advanced_enable_logs_subtitle"
-            app:iconSpaceReserved="false"
-            />
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        android:key=""
+        android:title="@string/pref_advanced_enable_logs_title"
+        android:summary="@string/pref_advanced_enable_logs_subtitle"
+        app:iconSpaceReserved="false" />
     <Preference
         android:key=""
         android:title="@string/pref_advanced_debug_report_title"
         android:summary="@string/pref_advanced_debug_report_summary"
-        app:iconSpaceReserved="false"
-        />
+        app:iconSpaceReserved="false" />
     <Preference
         android:key=""
         android:title="@string/pref_advanced_reset_push_title"
         android:summary="@string/pref_advanced_reset_push_summary"
-        app:iconSpaceReserved="false"
-        />
+        app:iconSpaceReserved="false" />
     <SwitchPreferenceCompat
         android:key="@string/pref_key_web_socket"
         android:title="@string/pref_advanced_ws_foreground_title"
         android:summary="@string/pref_advanced_ws_foreground_summary"
-        app:iconSpaceReserved="false"
-        />
+        app:iconSpaceReserved="false" />
     <Preference
         android:key=""
         android:title="@string/pref_advanced_full_sync_title"
         android:summary="@string/pref_advanced_full_sync_summary"
-        app:iconSpaceReserved="false"
-        />
+        app:iconSpaceReserved="false" />
 </androidx.preference.PreferenceScreen>
 

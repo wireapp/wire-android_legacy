@@ -19,6 +19,11 @@
 
 -->
 <resources>
+    <!-- Account -->
+    <string name="pref_key_name">name</string>
+    <string name="pref_key_username">username</string>
+    <string name="pref_key_email">email</string>
+    <string name="pref_key_phone">phone</string>
     <!-- Options -->
     <string name="pref_key_share_contacts">share_contacts</string>
     <string name="pref_key_variable_bitrate">variable_bit_rate_enabled</string>
