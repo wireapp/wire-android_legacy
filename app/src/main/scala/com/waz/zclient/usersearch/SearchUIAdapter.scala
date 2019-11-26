@@ -1,243 +1,51 @@
 /**
- * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2019 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.usersearch
 
 import android.content.Context
 import android.graphics.Rect
-import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
-import com.waz.content.UsersStorage
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.model._
-import com.waz.service.TeamSizeThreshold
-import com.waz.threading.Threading
-import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.common.controllers.ThemeController.Theme
-import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.views.{SingleUserRowView, TopUserChathead}
 import com.waz.zclient.paintcode.{CreateGroupIcon, GuestIcon, ManageServicesIcon}
-import com.waz.zclient.search.SearchController
-import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.usersearch.SearchUIAdapter.Callback
 import com.waz.zclient.usersearch.SearchUIAdapter.TopUsersViewHolder.TopUserAdapter
+import com.waz.zclient.usersearch.listitems.{SearchViewItem, _}
 import com.waz.zclient.usersearch.views.SearchResultConversationRowView
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ResColor, RichView, ViewUtils}
 
 import scala.collection.mutable
 
-class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[RecyclerView.ViewHolder]
-    with Injectable
-    with DerivedLogTag {
+class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[RecyclerView.ViewHolder] {
 
   import SearchUIAdapter._
+  import SearchViewItem._
+
+  private var results = mutable.ListBuffer[SearchViewItem]()
 
   setHasStableIds(true)
-
-  private val userAccountsController = inject[UserAccountsController]
-  private val searchController       = new SearchController()
-
-  private var mergedResult = mutable.ListBuffer[SearchResult]()
-  private var collapsedContacts = true
-  private var collapsedGroups = true
-
-  private var team               = Option.empty[TeamData]
-  private var topUsers           = Seq.empty[UserData]
-  private var localResults       = Seq.empty[UserData]
-  private var conversations      = Seq.empty[ConversationData]
-  private var directoryResults   = Seq.empty[UserData]
-  private var integrations       = Seq.empty[IntegrationData]
-  private var currentUser        = Option.empty[UserData]
-  private var currentUserIsAdmin = false
-  private var noServices         = false
-
-  private lazy val usersStorage = inject[Signal[UsersStorage]]
-
-  val filter = searchController.filter
-  val tab    = searchController.tab
-  val searchResults = searchController.searchUserOrServices
-
-  val dataUpdateSub = (for {
-    curUser <- userAccountsController.currentUser
-    team    <- userAccountsController.teamData
-    isAdmin <- userAccountsController.isAdmin
-    res     <- searchResults
-  } yield (curUser, team, isAdmin, res)).onUi {
-    case (curUser, team, isAdmin, res) =>
-      this.team = team
-      currentUserIsAdmin = isAdmin
-      currentUser = curUser
-
-      res match {
-        case SearchUserListState.Users(search) =>
-          topUsers         = search.top
-          localResults     = search.local
-          conversations    = search.convs
-          directoryResults = search.dir
-        case _ =>
-          topUsers         = Seq.empty
-          localResults     = Seq.empty
-          conversations    = Seq.empty
-          directoryResults = Seq.empty
-      }
-
-      noServices = res match {
-        case SearchUserListState.NoServices => true
-        case _ => false
-      }
-
-      integrations = res match {
-        case SearchUserListState.Services(svs) => svs.toIndexedSeq.sortBy(_.name)
-        case _ => IndexedSeq.empty
-      }
-
-      updateMergedResults()
-  }
-
-  private var hideUserStatus = false
-  TeamSizeThreshold.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
-    hideUserStatus = hide
-  }(Threading.Ui)
-
-  override def onDetachedFromRecyclerView(recyclerView: RecyclerView): Unit = {
-    dataUpdateSub.destroy()
-    super.onDetachedFromRecyclerView(recyclerView)
-  }
-
-  private def updateMergedResults(): Unit = {
-    mergedResult.clear()
-
-    val teamName = team.map(_.name).getOrElse(Name.Empty)
-
-    def addTopPeople(): Unit = {
-      if (topUsers.nonEmpty) {
-        mergedResult += SearchResult(SectionHeader, TopUsersSection, 0)
-        mergedResult += SearchResult(TopUsers, TopUsersSection, 0)
-      }
-    }
-
-    def addContacts(): Unit = {
-      if (localResults.nonEmpty) {
-        mergedResult += SearchResult(SectionHeader, ContactsSection, 0, teamName)
-        val contactsSection = mutable.ListBuffer[SearchResult]()
-
-        contactsSection ++= localResults.indices.map { i =>
-          SearchResult(ConnectedUser, ContactsSection, i, localResults(i).id.str.hashCode, localResults(i).getDisplayName)
-        }
-
-        val shouldCollapse = filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
-
-        mergedResult ++= contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
-        if (shouldCollapse) mergedResult += SearchResult(Expand, ContactsSection, 0)
-      }
-    }
-
-    def addGroupConversations(): Unit = if (conversations.nonEmpty) {
-      mergedResult += SearchResult(SectionHeader, GroupConversationsSection, 0, teamName)
-
-      val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
-
-      mergedResult ++= conversations.indices.map { i =>
-        SearchResult(GroupConversation, GroupConversationsSection, i, conversations(i).id.str.hashCode)
-      }.take(if (shouldCollapse) CollapsedGroups else conversations.size)
-
-      if (shouldCollapse) mergedResult += SearchResult(Expand, GroupConversationsSection, 0)
-    }
-
-    def addConnections(): Unit = if (directoryResults.nonEmpty) {
-      mergedResult += SearchResult(SectionHeader, DirectorySection, 0)
-      mergedResult ++= directoryResults.indices.map { i =>
-        SearchResult(UnconnectedUser, DirectorySection, i, directoryResults(i).id.str.hashCode)
-      }
-    }
-
-    def addIntegrations(): Unit = if (integrations.nonEmpty) {
-      mergedResult ++= integrations.indices.map { i =>
-        SearchResult(Integration, IntegrationsSection, i, integrations(i).id.str.hashCode)
-      }
-    }
-
-    def addGroupCreationButton(): Unit =
-      mergedResult += SearchResult(NewConversation, TopUsersSection, 0)
-
-    def addGuestRoomCreationButton(): Unit =
-      mergedResult += SearchResult(NewGuestRoom, TopUsersSection, 0)
-
-    def addManageServicesButton(): Unit =
-      mergedResult += SearchResult(ManageServices, TopUsersSection, 0)
-
-    if (team.isDefined) {
-      if (tab.currentValue.contains(Tab.Services)) {
-        if (currentUserIsAdmin && !noServices) addManageServicesButton()
-        addIntegrations()
-      } else {
-        if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.contains(true)){
-          addGroupCreationButton()
-          addGuestRoomCreationButton()
-        }
-        addContacts()
-        addGroupConversations()
-        addConnections()
-      }
-    } else  {
-      if (filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.contains(true))
-        addGroupCreationButton()
-      addTopPeople()
-      addContacts()
-      addGroupConversations()
-      addConnections()
-    }
-
-    notifyDataSetChanged()
-  }
-
-  override def getItemCount = mergedResult.size
-
-  override def onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = {
-    val item = mergedResult(position)
-    item.itemType match {
-      case TopUsers =>
-        holder.asInstanceOf[TopUsersViewHolder].bind(topUsers)
-      case GroupConversation =>
-        holder.asInstanceOf[ConversationViewHolder].bind(conversations(item.index))
-      case ConnectedUser =>
-        val user = localResults(item.index)
-        holder.asInstanceOf[UserViewHolder].bind(user, hideUserStatus, team.map(_.id))
-      case UnconnectedUser =>
-        holder.asInstanceOf[UserViewHolder].bind(directoryResults(item.index), hideUserStatus)
-      case SectionHeader =>
-        holder.asInstanceOf[SectionHeaderViewHolder].bind(item.section, item.name)
-      case Expand =>
-        val itemCount = if (item.section == ContactsSection) localResults.size else conversations.size
-        holder.asInstanceOf[SectionExpanderViewHolder].bind(itemCount, new View.OnClickListener() {
-          def onClick(v: View): Unit = {
-            if (item.section == ContactsSection) expandContacts() else expandGroups()
-          }
-        })
-      case Integration =>
-        holder.asInstanceOf[IntegrationViewHolder].bind(integrations(item.index))
-      case _ =>
-    }
-  }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder = {
     val view = LayoutInflater.from(parent.getContext).inflate(viewType match {
@@ -248,9 +56,9 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
       case GroupConversation => R.layout.startui_conversation
       case SectionHeader     => R.layout.startui_section_header
       case Expand            => R.layout.startui_section_expander
-      case NewConversation   => R.layout.startui_button
-      case NewGuestRoom      => R.layout.startui_button
-      case ManageServices    => R.layout.startui_button
+      case NewConversation |
+           NewGuestRoom |
+           ManageServices    => R.layout.startui_button
       case _                 => -1
     }, parent, false)
 
@@ -269,77 +77,92 @@ class SearchUIAdapter(adapterCallback: SearchUIAdapter.Callback)(implicit inject
     }
   }
 
-  override def getItemViewType(position: Int) = mergedResult.lift(position).fold(-1)(_.itemType)
-
-  override def getItemId(position: Int) = mergedResult.lift(position).fold(-1L)(_.id)
-
-  def getSectionIndexForPosition(position: Int) = mergedResult.lift(position).fold(-1)(_.index)
-
-  private def expandContacts() = {
-    collapsedContacts = false
-    updateMergedResults()
+  override def onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int): Unit = {
+    val item: SearchViewItem = results(position)
+    item.itemType match {
+      case TopUsers =>
+        val topUserData = item.asInstanceOf[TopUserViewItem].data
+        holder.asInstanceOf[TopUsersViewHolder].bind(topUserData)
+      case GroupConversation =>
+        val groupConversationData = item.asInstanceOf[GroupConversationViewItem].data
+        holder.asInstanceOf[ConversationViewHolder].bind(groupConversationData)
+      case ConnectedUser | UnconnectedUser =>
+        val userConnectionData = item.asInstanceOf[ConnectionViewItem].data
+        holder.asInstanceOf[UserViewHolder].bind(userConnectionData)
+      case SectionHeader =>
+        val sectionData = item.asInstanceOf[SectionViewItem].data
+        holder.asInstanceOf[SectionHeaderViewHolder].bind(sectionData)
+      case Expand =>
+        val expandData = item.asInstanceOf[ExpandViewItem].data
+        holder.asInstanceOf[SectionExpanderViewHolder].bind(expandData, new View.OnClickListener {
+          override def onClick(view: View): Unit = {
+            if (item.section == SectionViewItem.ContactsSection) {
+              adapterCallback.onContactsExpanded()
+            } else {
+              adapterCallback.onGroupsExpanded()
+            }
+          }
+        })
+      case Integration =>
+        val integrationData = item.asInstanceOf[IntegrationViewItem].data
+        holder.asInstanceOf[IntegrationViewHolder].bind(integrationData)
+      case _ =>
+    }
   }
 
-  private def expandGroups() = {
-    collapsedGroups = false
-    updateMergedResults()
+  def updateResults(results: mutable.ListBuffer[SearchViewItem]): Unit = {
+    this.results = results
+    notifyDataSetChanged()
   }
+
+  override def getItemCount: Int = results.size
+
+  override def getItemViewType(position: Int): Int =
+    results.lift(position).fold(-1)(_.itemType)
+
+  override def getItemId(position: Int): Long =
+    results.lift(position).fold(-1L)(_.id)
 }
 
 object SearchUIAdapter {
 
-  //Item Types
-  val TopUsers: Int = 0
-  val ConnectedUser: Int = 1
-  val UnconnectedUser: Int = 2
-  val GroupConversation: Int = 3
-  val SectionHeader: Int = 4
-  val Expand: Int = 5
-  val Integration: Int = 6
-  val NewConversation: Int = 7
-  val NewGuestRoom: Int = 8
-  val ManageServices: Int = 9
-
-  //Sections
-  val TopUsersSection = 0
-  val GroupConversationsSection = 1
-  val ContactsSection = 2
-  val DirectorySection = 3
-  val IntegrationsSection = 4
-
-  //Constants
-  val CollapsedContacts = 5
-  val CollapsedGroups = 5
+  import SectionViewItem._
 
   trait Callback {
+
+    def onContactsExpanded(): Unit
+
+    def onGroupsExpanded(): Unit
+
     def onUserClicked(userId: UserId): Unit
+
     def onIntegrationClicked(data: IntegrationData): Unit
-    def onCreateConvClicked(): Unit
+
+    def onCreateConversationClicked(): Unit
+
     def onCreateGuestRoomClicked(): Unit
+
     def onConversationClicked(conversation: ConversationData): Unit
+
     def onManageServicesClicked(): Unit
   }
 
-  case class SearchResult(itemType: Int, section: Int, index: Int, id: Long, name: Name)
-
-  object SearchResult{
-    def apply(itemType: Int, section: Int, index: Int, id: Long): SearchResult = new SearchResult(itemType, section, index, id, Name.Empty)
-    def apply(itemType: Int, section: Int, index: Int, name: Name): SearchResult = new SearchResult(itemType, section, index, itemType + section + index, name)
-    def apply(itemType: Int, section: Int, index: Int): SearchResult = SearchResult(itemType, section, index, Name.Empty)
-  }
-
   class CreateConversationButtonViewHolder(view: View, callback: SearchUIAdapter.Callback) extends RecyclerView.ViewHolder(view) {
-    private implicit val ctx = view.getContext
-    private val iconView  = view.findViewById[View](R.id.icon)
+    private implicit val ctx: Context = view.getContext
+
+    private val iconView = view.findViewById[View](R.id.icon)
+
     iconView.setBackground(returning(CreateGroupIcon(R.color.white))(_.setPadding(new Rect(iconView.getPaddingLeft, iconView.getPaddingTop, iconView.getPaddingRight, iconView.getPaddingBottom))))
     view.findViewById[TypefaceTextView](R.id.title).setText(R.string.create_group_conversation)
-    view.onClick(callback.onCreateConvClicked())
+    view.onClick(callback.onCreateConversationClicked())
     view.setId(R.id.create_group_button)
   }
 
   class NewGuestRoomViewHolder(view: View, callback: SearchUIAdapter.Callback) extends RecyclerView.ViewHolder(view) {
-    private implicit val ctx = view.getContext
-    private val iconView  = view.findViewById[View](R.id.icon)
+    private implicit val ctx: Context = view.getContext
+
+    private val iconView = view.findViewById[View](R.id.icon)
+
     iconView.setBackground(returning(GuestIcon(R.color.white))(_.setPadding(new Rect(iconView.getPaddingLeft, iconView.getPaddingTop, iconView.getPaddingRight, iconView.getPaddingBottom))))
     view.findViewById[TypefaceTextView](R.id.title).setText(R.string.create_guest_room_conversation)
     view.onClick(callback.onCreateGuestRoomClicked())
@@ -347,8 +170,10 @@ object SearchUIAdapter {
   }
 
   class ManageServicesViewHolder(view: View, callback: SearchUIAdapter.Callback) extends RecyclerView.ViewHolder(view) {
-    private implicit val ctx = view.getContext
-    private val iconView  = view.findViewById[View](R.id.icon)
+    private implicit val ctx: Context = view.getContext
+
+    private val iconView = view.findViewById[View](R.id.icon)
+
     iconView.setBackground(returning(ManageServicesIcon(ResColor.fromId(R.color.white))) {
       _.setPadding(new Rect(iconView.getPaddingLeft, iconView.getPaddingTop, iconView.getPaddingRight, iconView.getPaddingBottom))
     })
@@ -358,15 +183,15 @@ object SearchUIAdapter {
   }
 
   class TopUsersViewHolder(view: View, topUserAdapter: TopUserAdapter, context: Context) extends RecyclerView.ViewHolder(view) {
+    val topUsersRecyclerView: RecyclerView = ViewUtils.getView[RecyclerView](view, R.id.rv_top_users)
+    val layoutManager                      = new LinearLayoutManager(context)
 
-    val topUsersRecyclerView = ViewUtils.getView[RecyclerView](view, R.id.rv_top_users)
-    val layoutManager = new LinearLayoutManager(context)
     layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL)
     topUsersRecyclerView.setLayoutManager(layoutManager)
     topUsersRecyclerView.setHasFixedSize(false)
     topUsersRecyclerView.setAdapter(this.topUserAdapter)
 
-    def bind(users: Seq[UserData]): Unit = topUserAdapter.setTopUsers(users)
+    def bind(topUserViewModel: TopUserViewModel): Unit = topUserAdapter.setTopUsers(topUserViewModel.topUsers)
   }
 
   object TopUsersViewHolder {
@@ -399,31 +224,35 @@ object SearchUIAdapter {
         view.setUser(user)
       }
     }
+
   }
 
   class UserViewHolder(view: SingleUserRowView, callback: Callback) extends RecyclerView.ViewHolder(view) {
-
     private var userData = Option.empty[UserData]
+
     view.onClick(userData.map(_.id).foreach(callback.onUserClicked))
     view.showArrow(false)
     view.showCheckbox(false)
     view.setTheme(Theme.Dark, background = false)
 
-    def bind(userData: UserData, hideStatus: Boolean, teamId: Option[TeamId] = None): Unit = {
+    def bind(connectionViewModel: ConnectionViewModel): Unit = {
+      val userData = connectionViewModel.results(connectionViewModel.indexVal)
       this.userData = Some(userData)
-      view.setUserData(userData, teamId, hideStatus)
+      val teamId = connectionViewModel.team.map(_.id)
+      view.setUserData(userData, teamId, connectionViewModel.shouldHideUserStatus)
     }
   }
 
   class ConversationViewHolder(view: View, callback: Callback) extends RecyclerView.ViewHolder(view) {
     private val conversationRowView = ViewUtils.getView[SearchResultConversationRowView](view, R.id.srcrv_startui_conversation)
-    private var conv = Option.empty[ConversationData]
+    private var conversation        = Option.empty[ConversationData]
 
-    view.onClick(conv.foreach(callback.onConversationClicked))
+    view.onClick(conversation.foreach(callback.onConversationClicked))
     conversationRowView.applyDarkTheme()
 
-    def bind(conversationData: ConversationData): Unit = {
-      conv = Some(conversationData)
+    def bind(groupConversationViewModel: GroupConversationViewModel): Unit = {
+      val conversationData = groupConversationViewModel.conversations(groupConversationViewModel.indexVal)
+      conversation = Some(conversationData)
       conversationRowView.setConversation(conversationData)
     }
   }
@@ -437,7 +266,8 @@ object SearchUIAdapter {
     view.setTheme(Theme.Dark, background = false)
     view.setSeparatorVisible(true)
 
-    def bind(integrationData: IntegrationData): Unit = {
+    def bind(integrationViewModel: IntegrationViewModel): Unit = {
+      val integrationData = integrationViewModel.integrations(integrationViewModel.indexVal)
       this.integrationData = Some(integrationData)
       view.setIntegration(integrationData)
     }
@@ -446,7 +276,8 @@ object SearchUIAdapter {
   class SectionExpanderViewHolder(val view: View) extends RecyclerView.ViewHolder(view) {
     private val viewAllTextView = ViewUtils.getView[TypefaceTextView](view, R.id.ttv_startui_section_header)
 
-    def bind(itemCount: Int, clickListener: View.OnClickListener): Unit = {
+    def bind(expandViewModel: ExpandViewModel, clickListener: View.OnClickListener): Unit = {
+      val itemCount = expandViewModel.itemCount
       val title = getString(R.string.people_picker__search_result__expander_title, Integer.toString(itemCount))(view.getContext)
       viewAllTextView.setText(title)
       viewAllTextView.setOnClickListener(clickListener)
@@ -455,19 +286,24 @@ object SearchUIAdapter {
 
   class SectionHeaderViewHolder(val view: View) extends RecyclerView.ViewHolder(view) {
     private val sectionHeaderView: TextView = ViewUtils.getView(view, R.id.ttv_startui_section_header)
-    private implicit val context = sectionHeaderView.getContext
 
-    def bind(section: Int, teamName: Name): Unit = {
+    private implicit val context: Context = sectionHeaderView.getContext
+
+    def bind(sectionViewModel: SectionViewModel): Unit = {
+      val section = sectionViewModel.section
+      val teamName = sectionViewModel.name
       val title = section match {
-        case TopUsersSection                                => getString(R.string.people_picker__top_users_header_title)
-        case GroupConversationsSection if teamName.isEmpty  => getString(R.string.people_picker__search_result_conversations_header_title)
-        case GroupConversationsSection                      => getString(R.string.people_picker__search_result_team_conversations_header_title, teamName)
-        case ContactsSection                                => getString(R.string.people_picker__search_result_connections_header_title)
-        case DirectorySection                               => getString(R.string.people_picker__search_result_others_header_title)
-        case IntegrationsSection                            => getString(R.string.integrations_picker__section_title)
+        case TopUsersSection                               => getString(R.string.people_picker__top_users_header_title)
+        case GroupConversationsSection if teamName.isEmpty => getString(R.string.people_picker__search_result_conversations_header_title)
+        case GroupConversationsSection                     => getString(R.string.people_picker__search_result_team_conversations_header_title, teamName)
+        case ContactsSection                               => getString(R.string.people_picker__search_result_connections_header_title)
+        case DirectorySection                              => getString(R.string.people_picker__search_result_others_header_title)
+        case IntegrationsSection                           => getString(R.string.integrations_picker__section_title)
       }
       sectionHeaderView.setText(title)
     }
   }
+
 }
+
 

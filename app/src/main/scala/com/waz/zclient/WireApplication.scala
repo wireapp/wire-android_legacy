@@ -89,6 +89,7 @@ import com.waz.zclient.pages.main.conversationpager.controller.ISlidingPaneContr
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
+import com.waz.zclient.search.SearchController
 import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
@@ -227,6 +228,7 @@ object WireApplication extends DerivedLogTag {
     bind [SoundController]         to new SoundControllerImpl()
     bind [ThemeController]         to new ThemeController
     bind [SpinnerController]       to new SpinnerController()
+    bind [SearchController]        to new SearchController()
 
     bind [UiStorage] to new UiStorage()
 
