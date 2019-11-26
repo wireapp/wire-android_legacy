@@ -116,8 +116,8 @@ class GroupSpanTest {
             when (span) {
                 is CustomQuoteSpan -> {
                     assertEquals(Color.GREEN, span.color)
-                    assertEquals(4, span.stripeWidth)
-                    assertEquals(8, span.gapWidth)
+                    assertEquals(4, span.stripeWidthSize)
+                    assertEquals(8, span.gapWidthSize)
                 }
                 is ParagraphSpacingSpan -> {
                     assertEquals(16, span.before)
