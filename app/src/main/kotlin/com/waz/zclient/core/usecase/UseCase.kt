@@ -1,4 +1,4 @@
-package com.waz.zclient.settings.domain.usecase
+package com.waz.zclient.core.usecase
 
 import io.reactivex.Scheduler
 import io.reactivex.Single
