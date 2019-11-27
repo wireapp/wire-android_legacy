@@ -7,7 +7,7 @@ import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.settings.presentation.ui.account.SettingsAccountViewModel
 import com.waz.zclient.settings.presentation.ui.devices.SettingsDevicesViewModel
-import com.waz.zclient.settings.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 

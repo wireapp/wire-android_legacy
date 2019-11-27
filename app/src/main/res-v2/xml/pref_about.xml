@@ -18,50 +18,40 @@
 
 -->
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference
         android:title="@string/pref_about_website_title"
         app:iconSpaceReserved="false">
-    <intent
-        android:action="android.intent.action.VIEW"
-        android:data="http://"
-        />
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="http://" />
     </Preference>
     <Preference
         android:title="@string/pref_about_tos_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <intent
             android:action="android.intent.action.VIEW"
-            android:data="http://"
-            />
+            android:data="http://" />
     </Preference>
     <Preference
         android:title="@string/pref_about_privacy_policy_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <intent
             android:action="android.intent.action.VIEW"
-            android:data="http://"
-            />
+            android:data="http://" />
     </Preference>
     <Preference
         android:title="@string/pref_about_licenses_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <intent
             android:action="android.intent.action.VIEW"
-            android:data="http://"
-            />
+            android:data="http://" />
     </Preference>
     <Preference
         android:title="@string/pref_about_version_title"
-        app:iconSpaceReserved="false"
-        />
+        app:iconSpaceReserved="false" />
     <Preference
         android:title="@string/pref_about_copyright_title"
-        app:iconSpaceReserved="false"
-        />
+        app:iconSpaceReserved="false" />
 </androidx.preference.PreferenceScreen>
 

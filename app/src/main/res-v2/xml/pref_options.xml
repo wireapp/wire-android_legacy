@@ -18,36 +18,30 @@
 
 -->
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    >
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <SwitchPreferenceCompat
-            android:key="@string/pref_key_share_contacts"
-            android:title="@string/pref_options_contacts_title"
-            android:summary="@string/pref_options_contacts_summary"
-            app:iconSpaceReserved="false"
-            />
+        android:key="@string/pref_key_share_contacts"
+        android:title="@string/pref_options_contacts_title"
+        android:summary="@string/pref_options_contacts_summary"
+        app:iconSpaceReserved="false" />
     <PreferenceCategory
         android:title="@string/pref_options_calls_category_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
             android:key="@string/pref_key_variable_bitrate"
             app:title="@string/pref_options_vbr_title"
             app:summary="@string/pref_options_vbr_summary"
             app:iconSpaceReserved="false"
-            app:defaultValue="true"
-            />
+            app:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/pref_options_alerts_category_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
             android:key="@string/pref_key_vibrate"
             app:title="@string/pref_options_vibration_title"
             app:summary=""
-            app:iconSpaceReserved="false"
-            />
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/pref_options_sounds_title"
@@ -67,8 +61,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/pref_options_requested_category_title"
-        app:iconSpaceReserved="false"
-        >
+        app:iconSpaceReserved="false">
         <SwitchPreferenceCompat
             android:key="@string/pref_key_dark_theme"
             app:title="@string/pref_options_dark_theme_title"
@@ -79,8 +72,7 @@
             app:title="@string/pref_options_cursor_send_button_title"
             app:summary="@string/pref_options_cursor_send_button_summary"
             app:iconSpaceReserved="false"
-            app:defaultValue="true"
-            />
+            app:defaultValue="true" />
         <SwitchPreferenceCompat
             android:key="@string/pref_key_app_lock"
             app:title="@string/pref_options_app_lock_title"
@@ -101,8 +93,7 @@
             app:title="@string/pref_options_message_previews"
             app:summary="@string/pref_options_message_previews_summary"
             app:iconSpaceReserved="false"
-            app:defaultValue="true"
-            />
+            app:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/pref_options_media_category_title"
@@ -111,7 +102,7 @@
             android:key="@string/pref_key_download_images"
             android:title="@string/pref_options_image_download_title"
             app:iconSpaceReserved="false"
-            app:defaultValue="true"/>
+            app:defaultValue="true" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>
 

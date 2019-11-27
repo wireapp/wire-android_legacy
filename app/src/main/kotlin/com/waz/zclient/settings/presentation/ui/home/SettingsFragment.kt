@@ -28,33 +28,37 @@ class SettingsFragment : Fragment(), OnItemClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        activity?.title = getString(R.string.settings_title)
         val resourceManager = ResourceManagerImpl(resources)
         settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(resourceManager), this)
-
     }
 
     override fun onItemClicked(position: Int) {
+
         when (position) {
-            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AccountFragment.newInstance(), true)
-            DEVICES -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, DevicesFragment.newInstance(), true)
-            OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, OptionsFragment.newInstance(), true)
-            ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AdvancedFragment.newInstance(), true)
-            SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, SupportFragment.newInstance(), true)
-            ABOUT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AboutFragment.newInstance(), true)
+            ACCOUNT -> replaceLayoutContainer(AccountFragment.newInstance())
+            DEVICES -> replaceLayoutContainer(DevicesFragment.newInstance())
+            OPTIONS -> replaceLayoutContainer(OptionsFragment.newInstance())
+            ADVANCED -> replaceLayoutContainer(AdvancedFragment.newInstance())
+            SUPPORT -> replaceLayoutContainer(SupportFragment.newInstance())
+            ABOUT -> replaceLayoutContainer(AboutFragment.newInstance())
         }
+    }
+
+    fun replaceLayoutContainer(fragment: Fragment) {
+        (activity as AppCompatActivity).replaceFragment(R.id.layout_container, fragment, true)
     }
 
     companion object {
         fun newInstance() = SettingsFragment()
-
-        private const val ACCOUNT = 0
-        private const val DEVICES = 1
-        private const val OPTIONS = 2
-        private const val ADVANCED = 3
-        private const val SUPPORT = 4
-        private const val ABOUT = 5
-        private const val DEVELOPER_SETTINGS = 6
-        private const val AVS_SETTINGS = 7
+        const val ACCOUNT = 0
+        const val DEVICES = 1
+        const val OPTIONS = 2
+        const val ADVANCED = 3
+        const val SUPPORT = 4
+        const val ABOUT = 5
+        const val DEVELOPER_SETTINGS = 6
+        const val AVS_SETTINGS = 7
     }
 
 }

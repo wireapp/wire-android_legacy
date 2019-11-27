@@ -9,7 +9,7 @@ import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.devices.model.ClientEntity
 import com.waz.zclient.settings.presentation.ui.devices.model.ClientsUiModel
-import com.waz.zclient.settings.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 
 class SettingsDevicesViewModel(private val getUserProfileUseCase: GetUserProfileUseCase,
                                private val getAllClientsUseCase: GetAllClientsUseCase,

@@ -4,35 +4,44 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
 import com.waz.zclient.R
+import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
 import com.waz.zclient.user.data.model.UserEntity
-import kotlinx.android.synthetic.main.fragment_account.*
 
-class AccountFragment : Fragment() {
+
+class AccountFragment : PreferenceFragmentCompat() {
 
     private val settingsViewModelFactory: SettingsViewModelFactory by lazy { SettingsViewModelFactory() }
     private lateinit var settingsAccountViewModel: SettingsAccountViewModel
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_account, container, false)
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.pref_account, rootKey)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        settingsAccountViewModel = ViewModelProvider(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java)
-
+        activity?.title = getString(R.string.pref_account_screen_title)
+        settingsAccountViewModel = ViewModelProviders.of(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java)
         settingsAccountViewModel.getProfile()
+        settingsAccountViewModel.profileUserData.observe(viewLifecycleOwner, Observer<UserItem> {
 
-        settingsAccountViewModel.profileUserData.observe(viewLifecycleOwner, Observer<UserEntity> {
+            val prefName: Preference? = findPreference(resources.getString(R.string.pref_key_name))
+            prefName?.title = it.name
 
-            username.text = it.name
+            val prefUserName: Preference? = findPreference(resources.getString(R.string.pref_key_username))
+            prefUserName?.title = it.handle
+
+            val prefEmail: Preference? = findPreference(resources.getString(R.string.pref_key_email))
+            prefEmail?.title = it.email
+
+            val prefPhone: Preference? = findPreference(resources.getString(R.string.pref_key_phone))
+            prefPhone?.title = it.phone
         })
-
     }
 
     companion object {
