@@ -29,12 +29,11 @@ import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.AccountManager.ClientRegistrationState.{LimitReached, PasswordMissing, Registered, Unregistered}
-import com.waz.service.UserService.UnsplashUrl
 import com.waz.service.AccountsService.ClientDeleted
+import com.waz.service.UserService.UnsplashUrl
 import com.waz.service.assets2.Content
 import com.waz.service.backup.BackupManager
 import com.waz.service.otr.OtrService.SessionId
-import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.InvitationClient.ConfirmedTeamInvitation
 import com.waz.sync.client.{ErrorOr, ErrorOrResponse, InvitationClientImpl, OtrClientImpl}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -89,6 +88,7 @@ class AccountManager(val userId:   UserId,
 
   val cryptoBox         = global.factory.cryptobox(userId, storage)
   val auth              = global.factory.auth(userId)
+  val accessToken       = auth.accessToken
   val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptorOld(auth, global.httpClient)
   val otrClient         = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
   val credentialsClient = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)

@@ -92,7 +92,7 @@ import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
 import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
-import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
+import com.waz.zclient.utils.{AndroidBase64Delegate, AuthTokenObserver, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
 import org.threeten.bp.Clock
@@ -284,6 +284,8 @@ object WireApplication extends DerivedLogTag {
     bind[FolderStateController] to new FolderStateController()
 
     KotlinServices.INSTANCE.init(ctx)
+
+    bind[AuthTokenObserver] to new AuthTokenObserver()
   }
 
   def controllers(implicit ctx: WireContext) = new Module {
@@ -467,6 +469,8 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
     Future(checkForPlayServices(prefs, googleApi))(Threading.Background)
 
     inject[SecurityPolicyChecker]
+
+    inject[AuthTokenObserver]
   }
 
   private def parseProxy(url: String, port: String): Option[Proxy] = {

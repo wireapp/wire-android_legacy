@@ -11,7 +11,7 @@ import io.reactivex.Scheduler
 
 class UpdateNameUseCase(subscribeScheduler: Scheduler,
                         postExecutionScheduler: Scheduler) : CompletableUseCase<String>(subscribeScheduler, postExecutionScheduler) {
-    private val userRepository: UserRepository = UserRepositoryImpl(UserRemoteDataSourceImpl(Network().userApi()))
+    private val userRepository: UserRepository = UserRepositoryImpl(UserRemoteDataSourceImpl(Network.userApi()))
     override fun buildUseCaseCompletable(params: String?): Completable = userRepository.name(params!!)
 }
 

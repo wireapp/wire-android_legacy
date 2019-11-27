@@ -17,15 +17,15 @@
  */
 package com.waz.sync.client
 
-import com.waz.log.LogSE._
 import com.waz.api.EmailCredentials
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.Cancelled
 import com.waz.content.{AccountStorage, AccountStorage2}
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.LogSE._
 import com.waz.model.{AccountData, UserId}
 import com.waz.service.AccountsService
-import com.waz.service.AccountsService.{InvalidCookie, InvalidCredentials, LogoutReason, UserInitiated}
+import com.waz.service.AccountsService.{InvalidCookie, InvalidCredentials, LogoutReason}
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.AccessToken
@@ -65,6 +65,11 @@ class AuthenticationManager(id: UserId,
 
   private def token  = withAccount(_.accessToken)
   private def cookie = withAccount(_.cookie)
+
+  val accessToken = accountStorage.optSignal(id).map {
+    case Some(data) => data.accessToken
+    case None => None
+  }
 
   private def withAccount[A](f: AccountData => A): Future[A] = {
     accountStorage.get(id).map {
