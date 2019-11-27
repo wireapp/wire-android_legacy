@@ -19,7 +19,9 @@ class Network {
 
         val okHttpClient = OkHttpClient().newBuilder()
             .addInterceptor { chain ->
+
                 val newRequest = chain.request().newBuilder()
+                    .addHeader("Content-Type", "application/json; charset=utf8")
                     .addHeader(
                         "Authorization", "Bearer $API_TOKEN").build()
                 chain.proceed(newRequest)
@@ -46,7 +48,7 @@ class Network {
     companion object {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
-        private const val API_TOKEN = "ACZjPD2f-Rvz4sRbiJ0m6qWewkSxWSFIRpEoVmmbka2DBd4cjW_2ioNyK-m8edQ-CLevQ5wJCjjiGW3eDmp9DQ==.v=1.k=1.d=1574848680.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=10910161535985913930"
+        private const val API_TOKEN = "MRDhAns9skru1yBSpxwnPK6WOKyKv5SZFnmMvAVSafgVQG3-azp0jbNWyyCTVZWh1-YzAzRRjriQZoC2VUwcBA==.v=1.k=1.d=1574873920.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=3712706875411023067"
 
     }
 

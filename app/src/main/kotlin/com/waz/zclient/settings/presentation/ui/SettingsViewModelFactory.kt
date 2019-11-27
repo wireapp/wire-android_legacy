@@ -3,7 +3,7 @@ package com.waz.zclient.settings.presentation.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.waz.zclient.settings.presentation.ui.account.SettingsAccountViewModel
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileSingleUseCase
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 
@@ -18,5 +18,7 @@ class SettingsViewModelFactory : ViewModelProvider.Factory {
             }
         }
 
-    private fun createSettingsViewModel() = SettingsAccountViewModel(GetUserProfileUseCase(Schedulers.io(), AndroidSchedulers.mainThread()))
+    private fun createSettingsViewModel() = SettingsAccountViewModel(
+
+    )
 }
