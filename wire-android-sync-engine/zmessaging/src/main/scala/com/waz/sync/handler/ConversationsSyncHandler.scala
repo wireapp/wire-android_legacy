@@ -146,10 +146,26 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postConversationState(conv.remoteId, state).map(SyncResult(_))
     }
 
-  def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncResult] = {
+  def postConversation(convId:      ConvId,
+                       users:       Set[UserId],
+                       name:        Option[Name],
+                       team:        Option[TeamId],
+                       access:      Set[Access],
+                       accessRole:  AccessRole,
+                       receiptMode: Option[Int],
+                       defaultRole: Option[String]
+                      ): Future[SyncResult] = {
     debug(l"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
-    val initState = ConversationInitState(users = toCreate, name = name, team = team, access = access, accessRole = accessRole, receiptMode = receiptMode)
+    val initState = ConversationInitState(
+      users                 = toCreate,
+      name                  = name,
+      team                  = team,
+      access                = access,
+      accessRole            = accessRole,
+      receiptMode           = receiptMode,
+      usersConversationRole = defaultRole
+    )
     conversationsClient.postConversation(initState).future.flatMap {
       case Right(response) =>
         convService.updateRemoteId(convId, response.id).flatMap { _ =>

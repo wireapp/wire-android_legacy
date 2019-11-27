@@ -235,7 +235,9 @@ object ConversationsClient {
                                    team: Option[TeamId],
                                    access: Set[Access],
                                    accessRole: AccessRole,
-                                   receiptMode: Option[Int])
+                                   receiptMode: Option[Int],
+                                   usersConversationRole: Option[String]
+                                  )
 
   object ConversationInitState {
     implicit lazy val Encoder: JsonEncoder[ConversationInitState] = new JsonEncoder[ConversationInitState] {
@@ -249,6 +251,7 @@ object ConversationsClient {
         o.put("access", encodeAccess(state.access))
         o.put("access_role", encodeAccessRole(state.accessRole))
         state.receiptMode.foreach(o.put("receipt_mode", _))
+        state.usersConversationRole.foreach(o.put("users_conversation_role", _))
       }
     }
   }
@@ -266,7 +269,7 @@ object ConversationsClient {
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
                                   messageTimer: Option[FiniteDuration],
-                                  members:      Set[UserId],
+                                  members:      Map[UserId, String],
                                   receiptMode:  Option[Int]
                                  )
 
@@ -293,8 +296,11 @@ object ConversationsClient {
           'link,
           decodeOptLong('message_timer).map(EphemeralDuration(_)),
           JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
-            UserId(arr.getJSONObject(i).getString("id"))
-          }),
+            val member = arr.getJSONObject(i)
+            val id = member.getString("id")
+            val role = member.optString("conversation_role", ConversationRole.AdminRole.label)
+            UserId(id) -> role
+          }).toMap,
           decodeOptInt('receipt_mode)
         )
       }

@@ -57,12 +57,13 @@ trait ConversationsContentUpdater {
                                     remoteId: RConvId,
                                     convType: ConversationType,
                                     creator: UserId,
-                                    members: Set[UserId],
+                                    members: Map[UserId, String],
                                     name: Option[Name] = None,
                                     hidden: Boolean = false,
                                     access: Set[Access] = Set(Access.PRIVATE),
                                     accessRole: AccessRole = AccessRole.PRIVATE,
-                                    receiptMode: Int = 0): Future[ConversationData]
+                                    receiptMode: Int = 0
+                                   ): Future[ConversationData]
 }
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
@@ -175,19 +176,20 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def setConversationHidden(id: ConvId, hidden: Boolean) = storage.update(id, _.copy(hidden = hidden))
 
-  override def createConversationWithMembers(convId: ConvId,
-                                             remoteId: RConvId,
-                                             convType: ConversationType,
-                                             creator: UserId,
-                                             members: Set[UserId],
-                                             name: Option[Name] = None,
-                                             hidden: Boolean = false,
-                                             access: Set[Access] = Set(Access.PRIVATE),
-                                             accessRole: AccessRole = AccessRole.PRIVATE,
-                                             receiptMode: Int = 0): Future[ConversationData] = {
+  override def createConversationWithMembers(convId:      ConvId,
+                                             remoteId:    RConvId,
+                                             convType:    ConversationType,
+                                             creator:     UserId,
+                                             members:     Map[UserId, String],
+                                             name:        Option[Name] = None,
+                                             hidden:      Boolean = false,
+                                             access:      Set[Access] = Set(Access.PRIVATE),
+                                             accessRole:  AccessRole = AccessRole.PRIVATE,
+                                             receiptMode: Int = 0
+                                            ): Future[ConversationData] = {
     for {
-      users <- usersStorage.listAll(members.toSeq)
-      conv <- storage.insert(
+      users <- usersStorage.listAll(members.keys)
+      conv  <- storage.insert(
         ConversationData(
           convId,
           remoteId,
@@ -201,7 +203,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           accessRole    = Some(accessRole),
           receiptMode   = Some(receiptMode)
         ))
-      _ <- membersStorage.add(convId, members + creator)
+      _    <- membersStorage.add(convId, Map(creator -> ConversationRole.AdminRole.label) ++ members)
     } yield conv
   }
 
@@ -273,7 +275,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           _ <- storage.updateLocalId(updates.head, origId)
           _ <- Future.sequence(updates.map(membersStorage.delete))
           _ <- updateConversation(origId, Some(ConversationType.OneToOne), hidden = Some(false))
-          _ <- membersStorage.add(origId, Seq(selfUserId, UserId(origId.str)))
+          _ <- membersStorage.add(origId, Map(selfUserId -> ConversationRole.AdminRole.label, UserId(origId.str) -> ConversationRole.AdminRole.label))
         } yield ()
       })
     } yield ()

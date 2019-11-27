@@ -118,9 +118,9 @@ case class OtrErrorEvent(convId: RConvId, time: RemoteInstant, from: UserId, err
 
 case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyping: Boolean) extends ConversationEvent
 
-case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], firstEvent: Boolean = false) extends MessageEvent with ConversationStateEvent with ConversationEvent
+case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, users: Map[UserId, String], firstEvent: Boolean = false) extends MessageEvent with ConversationStateEvent with ConversationEvent
 case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId]) extends MessageEvent with ConversationStateEvent
-case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState) extends ConversationStateEvent
+case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState, conversationRole: String) extends ConversationStateEvent
 
 case class ConversationReceiptModeEvent(convId: RConvId, time: RemoteInstant, from: UserId, receiptMode: Int) extends MessageEvent with ConversationStateEvent
 
@@ -252,9 +252,9 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
         case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
-        case "conversation.member-join"          => MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeString('id).startsWith("1."))
+        case "conversation.member-join"          => MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get).map(_ -> ConversationRole.AdminRole.label).toMap, decodeString('id).startsWith("1."))
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
-        case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
+        case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get), ConversationRole.AdminRole.label)
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
         case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
         case "conversation.otr-message-add"      => OtrMessageEvent('conversation, time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))

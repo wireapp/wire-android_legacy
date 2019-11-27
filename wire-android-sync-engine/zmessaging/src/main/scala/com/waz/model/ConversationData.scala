@@ -117,7 +117,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
  * Conversation user binding.
  */
 
-case class ConversationMemberData(userId: UserId, convId: ConvId, role: String = ConversationRole.AdminRole.label) extends Identifiable[(UserId, ConvId)] {
+case class ConversationMemberData(userId: UserId, convId: ConvId, role: String) extends Identifiable[(UserId, ConvId)] {
   override val id: (UserId, ConvId) = (userId, convId)
 }
 

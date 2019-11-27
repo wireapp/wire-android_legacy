@@ -58,7 +58,7 @@ class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
     currentRoles         <- rolesByConvId(convId)
     newRolesAreDifferent =  currentRoles != newRoles
     _                    <- if (newRolesAreDifferent && currentRoles.nonEmpty) removeAll(unapply(Some(convId), currentRoles)) else Future.successful(())
-    defaultRoles         <- if (newRolesAreDifferent) defaultRoles else Future.successful(Set.empty)
+    defaultRoles         <- if (newRolesAreDifferent) defaultRoles else Future.successful(newRoles)
     newRolesAreDifferent =  defaultRoles != newRoles
     _                    <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(Some(convId)))) else Future.successful(())
   } yield ()

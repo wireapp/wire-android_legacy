@@ -94,6 +94,7 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val usersStorage:      UsersStorage            = wire[UsersStorageImpl]
   lazy val otrClientsStorage: OtrClientsStorage       = wire[OtrClientsStorageImpl]
   lazy val membersStorage                             = wire[MembersStorageImpl]
+  lazy val rolesStorage: ConversationRolesStorage     = wire[ConversationRolesStorageImpl]
   lazy val oldAssetStorage:      AssetsStorage        = wire[AssetsStorageImpl]
   lazy val reactionsStorage                           = wire[ReactionsStorageImpl]
   lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
@@ -171,6 +172,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def usersStorage      = storage.usersStorage
   def otrClientsStorage = storage.otrClientsStorage
   def membersStorage    = storage.membersStorage
+  def rolesStorage = storage.rolesStorage
   def assetsStorage     = storage.assetsStorage
   def oldAssetStorage                    = storage.oldAssetStorage
   def rawAssetStorage               = storage.rawAssetStorage
