@@ -5,6 +5,6 @@ import com.waz.zclient.user.domain.model.User
 
 class UserEntityMapper {
     fun mapToDomain(userEntity: UserEntity): User =
-        User(userEntity.email, userEntity.phone, userEntity.handle, userEntity.locale, userEntity.managedBy,
-            userEntity.accentId, userEntity.name, userEntity.id, userEntity.deleted)
+        User(userEntity.email.toString(), userEntity.phone.toString(), userEntity.handle.toString(), userEntity.locale, userEntity.managedBy.toString(),
+            userEntity.accentId.toString(), userEntity.name, userEntity.id, userEntity.deleted)
 }

@@ -10,10 +10,7 @@ import io.reactivex.Single
 
 class GetUserProfileUseCase(subscribeScheduler: Scheduler,
                             postExecutionScheduler: Scheduler) : UseCase<User, Unit>(subscribeScheduler, postExecutionScheduler) {
-
     private val userRepository: UserRepository = UserRepositoryImpl()
-
     override fun buildUseCaseSingle(params: Unit?): Single<User> = userRepository.getProfile()
-
 }
 

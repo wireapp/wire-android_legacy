@@ -11,17 +11,17 @@ import retrofit2.http.PUT
 interface UserApi {
 
     @GET("/self")
-    fun getProfile(@Header("Authorization") token: String): Single<UserEntity>
+    fun getProfile(): Single<UserEntity>
 
     @PUT("/self/name")
-    fun updateName(@Header("Authorization") token: String, name: String): Completable
+    fun updateName(name: String): Completable
 
     @PUT("/self/handle")
-    fun updateHandle(@Header("Authorization") token: String, handle: String): Completable
+    fun updateHandle(handle: String): Completable
 
     @PUT("/self/email")
-    fun updateEmail(@Header("Authorization") token: String, email: String): Completable
+    fun updateEmail(email: String): Completable
 
     @PUT("/self/phone")
-    fun updatePhone(@Header("Authorization") token: String, phone: String): Completable
+    fun updatePhone(phone: String): Completable
 }
