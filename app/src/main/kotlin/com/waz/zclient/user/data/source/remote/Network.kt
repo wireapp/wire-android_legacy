@@ -24,6 +24,9 @@ class Network {
                         "Authorization", "Bearer $API_TOKEN").build()
                 chain.proceed(newRequest)
             }
+            .addInterceptor(HttpLoggingInterceptor().apply {
+                level = HttpLoggingInterceptor.Level.BODY
+            })
             .build()
 
 
