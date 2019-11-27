@@ -1,16 +1,16 @@
 package com.waz.zclient.devices.domain
 
-import androidx.lifecycle.LiveData
-import com.waz.zclient.core.data.source.remote.RequestResult
+import com.fernandocejas.sample.core.functional.Either
+import com.fernandocejas.sample.core.functional.Failure
 import com.waz.zclient.core.usecase.coroutines.UseCase
-import com.waz.zclient.devices.data.DevicesRepository
-import com.waz.zclient.devices.model.DeviceEntity
+import com.waz.zclient.devices.data.ClientsRepository
+import com.waz.zclient.devices.model.ClientEntity
 
-class GetCurrentDeviceUseCase(private val devicesRepository: DevicesRepository)
-    : UseCase<Params, DeviceEntity> {
-
-    override fun execute(params: Params): LiveData<RequestResult<DeviceEntity>> =
-        devicesRepository.getCurrentDeviceDetails(params.clientId)
+class GetCurrentDeviceUseCase(private val clientsRepository: ClientsRepository)
+    : UseCase<Params, ClientEntity>() {
+    override suspend fun run(params: ClientEntity): Either<Failure, Params> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
 
 data class Params(val clientId: String)

@@ -7,39 +7,53 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.core.data.source.remote.RequestResult
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
-import kotlinx.android.synthetic.main.fragment_settings_devices.*
+import com.waz.zclient.settings.presentation.ui.devices.list.DevicesRecyclerViewAdapter
 
 class DevicesFragment : Fragment() {
+
+    private lateinit var devicesViewModel: SettingsDevicesViewModel
+
+    private lateinit var devicesRecyclerView: RecyclerView
 
     private val viewModelFactory by lazy {
         SettingsViewModelFactory()
     }
 
-    private lateinit var devicesViewModel: SettingsDevicesViewModel
+    private val devicesAdapter by lazy {
+        DevicesRecyclerViewAdapter()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_settings_devices, container, false)
+        initRecyclerView(rootView)
         initViewModel()
         return rootView
     }
 
+    private fun initRecyclerView(rootView: View) {
+        devicesRecyclerView = rootView.findViewById(R.id.device_list_recycler_view)
+        val linearLayoutInflater = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+        devicesRecyclerView.layoutManager = linearLayoutInflater
+        devicesRecyclerView.adapter = devicesAdapter
+    }
+
     private fun initViewModel() {
-        devicesViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDevicesViewModel::class.java)
-        devicesViewModel.devicesData.observe(viewLifecycleOwner, Observer {
-            when (it.status) {
-                RequestResult.Status.SUCCESS -> {
-                    tv_current_device.text = it.data?.toString()
+        devicesViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDevicesViewModel::class.java).also { viewModel ->
+            viewModel.state.observe(viewLifecycleOwner, Observer {
+                when (val clientState = it!!) {
+                    is SettingsDevicesViewModel.ClientsState.Success -> devicesAdapter.updateList(clientState.clients)
                 }
-                RequestResult.Status.ERROR -> {
-                    tv_current_device.text = it.message
-                }
-                else ->
-                    tv_current_device.text = "Loading, please wait..."
-            }
-        })
+            })
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        devicesViewModel.loadData()
     }
 
     companion object {

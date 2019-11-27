@@ -5,7 +5,7 @@ data class RequestResult<out T>(val status: Status, val data: T?, val message: S
     enum class Status {
         SUCCESS,
         ERROR,
-        LOADING
+        LOADING,
     }
 
     companion object {

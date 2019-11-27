@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
+<!--
 
     Wire
     Copyright (C) 2019 Wire Swiss GmbH
@@ -22,35 +23,37 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginStart="16dp"
     android:background="@color/black"
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/label_current_device"
-        android:layout_width="match_parent"
+        android:id="@+id/item_device_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:background="@color/black"
+        android:layout_marginBottom="2dp"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Current Device" />
+        tools:text="Wire Windows" />
 
     <TextView
-        android:id="@+id/tv_current_device"
-        android:layout_width="match_parent"
+        android:id="@+id/item_device_id"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:background="@color/black"
         android:textColor="@color/white"
-        app:layout_constraintTop_toBottomOf="@+id/label_current_device"
-        tools:text="Current Device" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/item_device_title"
+        tools:text="ID: 94 SB 88 99 00" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id='@+id/device_list_recycler_view'
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/item_device_activated_time"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/item_device_id"
+        tools:text="Activated: Fri, Nov 8, 2019" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

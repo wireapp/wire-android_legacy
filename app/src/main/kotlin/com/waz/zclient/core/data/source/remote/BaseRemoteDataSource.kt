@@ -10,6 +10,7 @@ abstract class BaseRemoteDataSource {
             val response = call()
             if (response.isSuccessful) {
                 val body = response.body()
+                Timber.e(javaClass.simpleName, body)
                 if (body != null) return RequestResult.success(body)
             }
             return error(" ${response.code()} ${response.message()}")
