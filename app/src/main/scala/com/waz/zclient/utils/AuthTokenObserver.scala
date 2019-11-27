@@ -23,8 +23,11 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.user.data.source.remote.AuthHeaderInterceptor
 import com.waz.zclient.{Injectable, Injector}
+import io.reactivex.functions.Consumer
 
-class AuthTokenObserver(implicit injector: Injector, ec: EventContext) extends Injectable with DerivedLogTag {
+class AuthTokenObserver(implicit injector: Injector, ec: EventContext)
+    extends Injectable
+    with DerivedLogTag {
 
   private lazy val accountManager = inject[Signal[AccountManager]]
 
@@ -37,5 +40,12 @@ class AuthTokenObserver(implicit injector: Injector, ec: EventContext) extends I
       AuthHeaderInterceptor.setTokenType(x.tokenType)
     case None => AuthHeaderInterceptor.setToken(null)
   }
+
+  AuthHeaderInterceptor.waitForRetry.subscribe(new Consumer[java.lang.Boolean] {
+    override def accept(t: java.lang.Boolean): Unit = if (t) {
+      accountManager.head.flatMap(m => m.refreshToken())(Threading.Background)
+        .map(_ => AuthHeaderInterceptor.onRetryFinished())(Threading.Background)
+    }
+  })
 
 }

@@ -43,6 +43,8 @@ import scala.concurrent.duration._
 trait AccessTokenProvider {
   def currentToken(): ErrorOr[AccessToken]
 
+  def refreshToken(): ErrorOr[AccessToken]
+
   //If the user has recently provided a new password, supply it here so that we can attempt to get a new cookie and avoid them being logged out
   def onPasswordReset(emailCredentials: Option[EmailCredentials] = None): ErrorOr[Unit]
 }
@@ -104,21 +106,29 @@ class AuthenticationManager(id: UserId,
       case Some(token) if !isExpired(token) =>
         verbose(l"Non expired token: $token")
         Future.successful(Right(token))
-      case token => cookie.flatMap { cookie =>
-        debug(l"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
-        dispatchRequest(client.access(cookie, token)) {
-          case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
-            verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
-            tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
-            logout(reason = InvalidCookie).map(_ => Left(resp))
-        }
-      }
+      case token => refreshToken(token)
     }
   }.recover {
     case LoggedOutException =>
       warn(l"Request failed as we are logged out")
       Left(ErrorResponse.Unauthorized)
   })(_.failed.foreach(throw _))
+
+  override def refreshToken() = {
+    token.flatMap(refreshToken)
+  }
+
+  def refreshToken(token: Option[AccessToken]): ErrorOr[AccessToken] = {
+    cookie.flatMap { cookie =>
+      debug(l"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
+      dispatchRequest(client.access(cookie, token)) {
+        case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
+          verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}), will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
+          tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
+          logout(reason = InvalidCookie).map(_ => Left(resp))
+      }
+    }
+  }
 
   override def onPasswordReset(emailCredentials: Option[EmailCredentials]): ErrorOr[Unit] =
     Serialized.future("login-client") {
@@ -246,21 +256,25 @@ class AuthenticationManager2(id: UserId, accStorage: AccountStorage2, client: Lo
       case Some(token) if !isExpired(token) =>
         verbose(l"Non expired token: $token")
         Future.successful(Right(token))
-      case token => cookie.flatMap { cookie =>
-        debug(l"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
-        dispatchRequest(client.access(cookie, token)) {
-          case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
-            verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}, will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
-            tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
-            wipeCredentials().map(_ => Left(resp))
-        }
-      }
+      case token => refreshToken(token)
     }
   }.recover {
     case LoggedOutException =>
       warn(l"Request failed as we are logged out")
       Left(ErrorResponse.Unauthorized)
   })(_.failed.foreach(throw _))
+
+  override def refreshToken(): ErrorOr[AccessToken] = token.flatMap(refreshToken)
+
+  private def refreshToken(token: Option[AccessToken]) = cookie.flatMap { cookie =>
+    debug(l"Non existent or potentially expired token: $token, will attempt to refresh with cookie: $cookie")
+    dispatchRequest(client.access(cookie, token)) {
+      case Left(resp @ ErrorResponse(ResponseCode.Forbidden | ResponseCode.Unauthorized, message, label)) =>
+        verbose(l"access request failed (label: ${showString(label)}, message: ${showString(message)}, will try login request. currToken: $token, cookie: $cookie, access resp: $resp")
+        tracking.exception(new RuntimeException(s"Access request failed: msg: $message, label: $label, cookie expired at: ${cookie.expiry} (is valid: ${cookie.isValid}), currToken expired at: ${token.map(_.expiresAt)} (is valid: ${token.exists(_.isValid)})"), null)
+        wipeCredentials().map(_ => Left(resp))
+    }
+  }
 
   override def onPasswordReset(emailCredentials: Option[EmailCredentials]): ErrorOr[Unit] =
     Serialized.future("login-client") {
