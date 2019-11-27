@@ -95,7 +95,7 @@
             android:name=".settings.presentation.ui.home.SettingsActivity"
             android:label="@string/settings_title"
             android:hardwareAccelerated="true"
-            android:theme="@style/Theme.Dark.Preferences"
+            android:theme="@style/Theme.Dark.Preferences.New"
             android:launchMode="singleTask"/>
 
         <activity
