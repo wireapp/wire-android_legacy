@@ -2,6 +2,7 @@ package com.waz.zclient.settings.presentation.ui.options
 
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.waz.zclient.BuildConfig
@@ -35,6 +36,11 @@ class OptionsFragment : PreferenceFragmentCompat() {
         if (configHelper.isHideScreenContentForced()) {
             prefHideScreenContent?.remove()
         }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        activity?.title = getString(R.string.pref_options_screen_title)
     }
 
     companion object {

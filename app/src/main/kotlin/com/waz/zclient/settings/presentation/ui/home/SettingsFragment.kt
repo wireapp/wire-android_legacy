@@ -25,8 +25,10 @@ class SettingsFragment : Fragment(), OnItemClickListener {
         return inflater.inflate(R.layout.fragment_settings, container, false)
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        activity?.title = getString(R.string.settings_title)
         val resourceManager = ResourceManagerImpl(resources)
         settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(resourceManager), this)
 
@@ -35,11 +37,11 @@ class SettingsFragment : Fragment(), OnItemClickListener {
     override fun onItemClicked(position: Int) {
 
         when (position) {
-            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AccountFragment.newInstance(), true)
-            OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, OptionsFragment.newInstance(), true)
-            ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AdvancedFragment.newInstance(), true)
-            SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, SupportFragment.newInstance(), true)
-            ABOUT -> (activity as AppCompatActivity).replaceFragment(R.id.fragment_container, AboutFragment.newInstance(), true)
+            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, AccountFragment.newInstance(), true)
+            OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, OptionsFragment.newInstance(), true)
+            ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, AdvancedFragment.newInstance(), true)
+            SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, SupportFragment.newInstance(), true)
+            ABOUT -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, AboutFragment.newInstance(), true)
         }
     }
 

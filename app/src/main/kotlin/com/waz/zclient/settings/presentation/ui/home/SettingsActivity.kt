@@ -5,20 +5,24 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
-import com.waz.zclient.core.toolbar.WireToolbar
-import com.waz.zclient.core.toolbar.WireToolbarImpl
 import com.waz.zclient.utilities.extension.replaceFragment
+import kotlinx.android.synthetic.main.activity_settings_new.*
+
 
 class SettingsActivity : AppCompatActivity() {
 
-    private var toolbar: WireToolbar = WireToolbarImpl()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        toolbar.setContentView(this, R.layout.activity_settings_new)
-        toolbar.setTitle(getString(R.string.settings_title))
-        toolbar.showBackArrow()
-        replaceFragment(R.id.fragment_container, SettingsFragment.newInstance(), false)
+         setContentView( R.layout.activity_settings_new)
+         setSupportActionBar(toolbar)
+         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+         replaceFragment(R.id.layout_container, SettingsFragment.newInstance(), false)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 
     companion object {
