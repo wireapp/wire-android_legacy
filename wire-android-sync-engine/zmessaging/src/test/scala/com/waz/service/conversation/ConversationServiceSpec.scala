@@ -17,6 +17,7 @@
  */
 package com.waz.service.conversation
 
+import com.waz.api.Message
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{ConversationData, _}
@@ -24,11 +25,11 @@ import com.waz.service._
 import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
-import com.waz.service.tracking.TrackingService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient
+import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
-import com.waz.testutils.TestGlobalPreferences
+import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.{BgEventSource, EventStream, Signal, SourceSignal}
 import org.threeten.bp.Instant
@@ -37,79 +38,84 @@ import scala.concurrent.Future
 
 class ConversationServiceSpec extends AndroidFreeSpec {
 
-  lazy val convosUpdaterMock  = mock[ConversationsContentUpdater]
-  lazy val messagesMock       = mock[MessagesService]
-  lazy val msgStorageMock     = mock[MessagesStorage]
-  lazy val membersMock        = mock[MembersStorage]
-  lazy val usersMock          = mock[UserService]
-  lazy val syncMock           = mock[SyncServiceHandle]
-  lazy val pushMock           = mock[PushService]
-  lazy val usersStorageMock   = mock[UsersStorage]
-  lazy val convoStorageMock   = mock[ConversationStorage]
-  lazy val convoContentMock   = mock[ConversationsContentUpdater]
-  lazy val syncHandleMock     = mock[SyncServiceHandle]
-  lazy val errorMock          = mock[ErrorsService]
-  lazy val userPrefsMock      = mock[UserPreferences]
-  lazy val syncRequestMock    = mock[SyncRequestService]
-  lazy val eventSchedulerMock = mock[EventScheduler]
-  lazy val trackingMock       = mock[TrackingService]
-  lazy val convosClientMock   = mock[ConversationsClient]
-  lazy val selectedConvoMock  = mock[SelectedConversationService]
-  lazy val assetServiceMock   = mock[AssetService]
-  lazy val receiptStorageMock = mock[ReadReceiptsStorage]
-  lazy val notificationServiceMock = mock[NotificationService]
-  lazy val foldersServiceMock = mock[FoldersService]
-  lazy val networkMock        = mock[NetworkModeService]
-  lazy val propertiesMock     = mock[PropertiesService]
-  lazy val deletionsMock      = mock[MsgDeletionStorage]
+  private lazy val content        = mock[ConversationsContentUpdater]
+  private lazy val messages       = mock[MessagesService]
+  private lazy val msgStorage     = mock[MessagesStorage]
+  private lazy val membersStorage = mock[MembersStorage]
+  private lazy val users          = mock[UserService]
+  private lazy val sync           = mock[SyncServiceHandle]
+  private lazy val push           = mock[PushService]
+  private lazy val usersStorage   = mock[UsersStorage]
+  private lazy val convsStorage   = mock[ConversationStorage]
+  private lazy val errors         = mock[ErrorsService]
+  private lazy val requests       = mock[SyncRequestService]
+  private lazy val eventScheduler = mock[EventScheduler]
+  private lazy val convsClient    = mock[ConversationsClient]
+  private lazy val selectedConv   = mock[SelectedConversationService]
+  private lazy val assets         = mock[AssetService]
+  private lazy val receiptStorage = mock[ReadReceiptsStorage]
+  private lazy val notifications  = mock[NotificationService]
+  private lazy val folders        = mock[FoldersService]
+  private lazy val network        = mock[NetworkModeService]
+  private lazy val properties     = mock[PropertiesService]
+  private lazy val deletions      = mock[MsgDeletionStorage]
 
-  lazy val prefs = new TestGlobalPreferences()
-  lazy val messageUpdaterMock = new MessagesContentUpdater(msgStorageMock, convoStorageMock, deletionsMock, prefs)
+  private lazy val globalPrefs    = new TestGlobalPreferences()
+  private lazy val userPrefs      = new TestUserPreferences()
+  private lazy val msgUpdater     = new MessagesContentUpdater(msgStorage, convsStorage, deletions, globalPrefs)
 
-  val selfUserId = UserId("user1")
-  val convId = ConvId("conv_id1")
-  val rConvId = RConvId("r_conv_id1")
-  val convsInStorage = Signal[Map[ConvId, ConversationData]]()
+  private val selfUserId = UserId("user1")
+  private val convId = ConvId("conv_id1")
+  private val rConvId = RConvId("r_conv_id1")
+  private val convsInStorage = Signal[Map[ConvId, ConversationData]]()
 
-  lazy val service = new ConversationsServiceImpl(
+  private lazy val service = new ConversationsServiceImpl(
     None,
     selfUserId,
-    pushMock,
-    usersMock,
-    usersStorageMock,
-    membersMock,
-    convoStorageMock,
-    convoContentMock,
-    syncHandleMock,
-    errorMock,
-    messagesMock,
-    messageUpdaterMock,
-    userPrefsMock,
-    eventSchedulerMock,
-    trackingMock,
-    convosClientMock,
-    selectedConvoMock,
-    syncRequestMock,
-    assetServiceMock,
-    receiptStorageMock,
-    notificationServiceMock,
-    foldersServiceMock
+    push,
+    users,
+    usersStorage,
+    membersStorage,
+    convsStorage,
+    content,
+    sync,
+    errors,
+    messages,
+    msgUpdater,
+    userPrefs,
+    eventScheduler,
+    tracking,
+    convsClient,
+    selectedConv,
+    requests,
+    assets,
+    receiptStorage,
+    notifications,
+    folders
   )
 
+  private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
+    new ConversationsUiServiceImpl(
+      selfUserId, teamId, assets, usersStorage, messages, msgStorage,
+      msgUpdater, membersStorage, content, convsStorage, network,
+      service, sync, convsClient, accounts, tracking, errors, properties
+    )
+  }
+
   // mock mapping from remote to local conversation ID
-  (convoStorageMock.getByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(convId)))
+  (convsStorage.getByRemoteIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq(convId)))
 
   // EXPECTS
-  (usersStorageMock.onAdded _).expects().anyNumberOfTimes().returning(EventStream())
-  (usersStorageMock.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
-  (convoStorageMock.onAdded _).expects().anyNumberOfTimes().returning(EventStream())
-  (convoStorageMock.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
-  (membersMock.onAdded _).expects().anyNumberOfTimes().returning(EventStream())
-  (membersMock.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
-  (membersMock.onDeleted _).expects().anyNumberOfTimes().returning(EventStream())
-  (selectedConvoMock.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
-  (pushMock.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal[Instant] with BgEventSource)
-  (errorMock.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
+  (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream())
+  (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
+  (convsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream())
+  (convsStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
+  (membersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream())
+  (membersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream())
+  (membersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream())
+  (selectedConv.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
+  (push.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal[Instant] with BgEventSource)
+  (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
 
 
   feature("Archive conversation") {
@@ -132,15 +138,15 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(selfUserId))
       )
 
-      (convoContentMock.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
+      (content.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
         Future.successful(Some(convData))
       }
-      (membersMock.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
+      (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
-      (convoContentMock.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
 
       // EXPECT
-      (convoContentMock.updateConversationState _).expects(where { (id, state) =>
+      (content.updateConversationState _).expects(where { (id, state) =>
         id.equals(convId) && state.archived.getOrElse(false)
       }).once()
 
@@ -166,15 +172,15 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), UserId(), Seq(selfUserId))
       )
 
-      (convoContentMock.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
+      (content.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
         Future.successful(Some(convData))
       }
-      (membersMock.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
+      (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
-      (convoContentMock.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
 
       // EXPECT
-      (convoContentMock.updateConversationState _).expects(*, *).never()
+      (content.updateConversationState _).expects(*, *).never()
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -198,15 +204,15 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(UserId()))
       )
 
-      (convoContentMock.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
+      (content.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
         Future.successful(Some(convData))
       }
-      (membersMock.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
+      (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
-      (convoContentMock.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
 
       // EXPECT
-      (convoContentMock.updateConversationState _).expects(*, *).never()
+      (content.updateConversationState _).expects(*, *).never()
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -218,9 +224,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     scenario("Delete conversation event shows notification") {
       //GIVEN
       val conversationData = ConversationData(convId, rConvId)
-      (convoContentMock.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+      (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
-      (messagesMock.findMessageIds _).expects(convId).once().returning(Future.successful(Set.empty))
+      (messages.findMessageIds _).expects(convId).once().returning(Future.successful(Set.empty))
 
       val dummyUserId = UserId()
       val events = Seq(
@@ -228,7 +234,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       )
 
       // EXPECT
-      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *, conversationData)
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, conversationData)
         .once().returning(Future.successful(()))
 
       // WHEN
@@ -238,22 +244,22 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     scenario("Delete conversation event deletes conversation from storage") {
       //GIVEN
       val conversationData = ConversationData(convId, rConvId)
-      (convoContentMock.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+      (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
 
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
-      (messagesMock.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
-      (messagesMock.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
-      (assetServiceMock.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
-      (msgStorageMock.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
+      (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
+      (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
+      (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
 
       //EXPECT
-      (convoStorageMock.remove _).expects(convId).once().returning(Future.successful(()))
-      (membersMock.delete _).expects(convId).once()
+      (convsStorage.remove _).expects(convId).once().returning(Future.successful(()))
+      (membersStorage.delete _).expects(convId).once()
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -262,19 +268,19 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     scenario("Delete conversation event deletes messages of the conversation from storage") {
       //GIVEN
       val conversationData = ConversationData(convId, rConvId)
-      (convoContentMock.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+      (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
 
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
-      (messagesMock.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
-      (messagesMock.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
-      (assetServiceMock.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
-      (convoStorageMock.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
-      (membersMock.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
+      (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
+      (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (membersStorage.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -283,23 +289,23 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     scenario("Delete conversation event deletes assets of the conversation from storage") {
       //GIVEN
       val conversationData = ConversationData(convId, rConvId)
-      (convoContentMock.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+      (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
 
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
 
       val assetId: GeneralAssetId = AssetId()
       val messageId = MessageId()
-      (messagesMock.findMessageIds _).expects(convId).anyNumberOfTimes()
+      (messages.findMessageIds _).expects(convId).anyNumberOfTimes()
         .returning(Future.successful(Set(messageId)))
 
       //EXPECT
-      (messagesMock.getAssetIds _).expects(Set(messageId)).once().returning(Future.successful(Set(assetId)))
-      (assetServiceMock.deleteAll _).expects(Set(assetId)).once()
+      (messages.getAssetIds _).expects(Set(messageId)).once().returning(Future.successful(Set(assetId)))
+      (assets.deleteAll _).expects(Set(assetId)).once()
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -309,27 +315,27 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       //GIVEN
       val readReceiptsOn = 1
       val conversationData = ConversationData(convId, rConvId, receiptMode = Some(readReceiptsOn))
-      (convoContentMock.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
+      (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
 
       val events = Seq(
         DeleteConversationEvent(rConvId, RemoteInstant.ofEpochMilli(Instant.now().toEpochMilli), UserId())
       )
-      (notificationServiceMock.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
+      (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
 
       val messageId = MessageId()
-      (messagesMock.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set(messageId)))
-      (messagesMock.getAssetIds _).expects(Set(messageId)).anyNumberOfTimes()
+      (messages.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set(messageId)))
+      (messages.getAssetIds _).expects(Set(messageId)).anyNumberOfTimes()
         .returning(Future.successful(Set[GeneralAssetId]()))
 
-      (assetServiceMock.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
-      (convoStorageMock.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
-      (membersMock.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
-      (msgStorageMock.deleteAll _).expects(convId).once().returning(Future.successful(()))
+      (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (membersStorage.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (msgStorage.deleteAll _).expects(convId).once().returning(Future.successful(()))
 
       //EXPECT
-      (receiptStorageMock.removeAllForMessages _).expects(Set(messageId)).once().returning(Future.successful(()))
+      (receiptStorage.removeAllForMessages _).expects(Set(messageId)).once().returning(Future.successful(()))
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -346,9 +352,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val conv = ConversationData(team = Some(teamId), name = Some(convName))
       val syncId = SyncId()
 
-      (convosUpdaterMock.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *).once().returning(Future.successful(conv))
-      (messagesMock.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
-      (syncMock.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *).once().returning(Future.successful(conv))
+      (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
+      (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
       val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = Set.empty))
@@ -366,9 +372,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val user2 = UserData("user2")
       val users = Set(self, user1, user2)
 
-      (convosUpdaterMock.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *).once().returning(Future.successful(conv))
-      (messagesMock.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
-      (syncMock.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *).once().returning(Future.successful(conv))
+      (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
+      (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
       val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id)))
@@ -377,11 +383,42 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     }
   }
 
-  def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
-    new ConversationsUiServiceImpl(
-      selfUserId, teamId, assetServiceMock, usersStorageMock, messagesMock, msgStorageMock,
-      messageUpdaterMock, membersMock, convosUpdaterMock, convoStorageMock, networkMock,
-      service, syncMock, convosClientMock, accounts, tracking, errorMock, propertiesMock
-    )
+  feature("Update conversation") {
+    scenario("updateConversationsWithDeviceStartMessage happy path") {
+
+      val rConvId = RConvId("conv")
+      val from = UserId("User1")
+      val convId = ConvId(rConvId.str)
+      val response = ConversationResponse(
+        rConvId, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed, RemoteInstant.Epoch, archived = false, RemoteInstant.Epoch, Set.empty, None, None, None, Set(account1Id, from), None
+      )
+
+      (convsStorage.apply[Seq[(ConvId, ConversationResponse)]] _).expects(*).onCall { x: (Map[ConvId, ConversationData] => Seq[(ConvId, ConversationResponse)]) =>
+        Future.successful(x(Map[ConvId, ConversationData]()))
+      }
+
+      (convsStorage.updateOrCreateAll _).expects(*).onCall { x: Map[ConvId, Option[ConversationData] => ConversationData ] =>
+        Future.successful(x.values.map(_(None)).toSet)
+      }
+
+      (content.convsByRemoteId _).expects(*).returning(Future.successful(Map()))
+
+      (membersStorage.setAll _).expects(*).returning(Future.successful(()))
+
+      (users.syncIfNeeded _).expects(*, *).returning(Future.successful(Option(SyncId())))
+
+      (messages.addDeviceStartMessages _).expects(*, *).onCall{ (convs: Seq[ConversationData], selfUserId: UserId) =>
+        convs.headOption.flatMap(_.name) should be (Some(Name("conv")))
+        convs.headOption.map(_.muted) should be (Some(MuteSet.AllAllowed))
+        convs.headOption.map(_.creator) should be (Some(from))
+        convs.headOption.map(_.remoteId) should be (Some(rConvId))
+        convs.headOption.map(_.id) should be (Some(convId))
+        Future.successful(Set(MessageData(MessageId(), convId, Message.Type.STARTED_USING_DEVICE, selfUserId, time = RemoteInstant.Epoch)))
+      }
+
+      result(service.updateConversationsWithDeviceStartMessage(Seq(response)))
+    }
   }
+
+
 }
