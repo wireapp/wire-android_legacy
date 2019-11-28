@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.markdown
 
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.waz.zclient.markdown.spans.commonmark.*
 import org.commonmark.node.*
 import org.junit.Assert.*
