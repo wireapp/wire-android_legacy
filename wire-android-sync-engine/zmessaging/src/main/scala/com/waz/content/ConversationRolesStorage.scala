@@ -44,6 +44,8 @@ class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
   ) with ConversationRolesStorage {
   import Threading.Implicits.Background
 
+  defaultRoles.foreach(roles => if (roles.isEmpty) setDefault(ConversationRole.defaultRoles))
+
   override def rolesByLabel(label: String, convId: Option[ConvId] = None): Future[ConversationRole] =
     find({ cra => cra.label == label && cra.convId == convId }, ConversationRoleActionDao.findForRoleAndConv(label, convId)(_), identity).map { res =>
       val actionNames = res.map(_.action).toSet

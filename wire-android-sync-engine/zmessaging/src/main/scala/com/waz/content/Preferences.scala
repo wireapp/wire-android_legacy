@@ -469,7 +469,7 @@ object UserPreferences {
   lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_1", customDefault = true)
   lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
   lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users_1", customDefault = true)
-  lazy val ShouldSyncTeam                   = PrefKey[Boolean]("should_sync_team", customDefault = true)
+  lazy val ShouldSyncTeam                   = PrefKey[Boolean]("should_sync_team_1", customDefault = true)
   lazy val ShouldSyncFolders                = PrefKey[Boolean]("should_sync_folders", customDefault = true)
 
   // fix for duplicated entries in the database, left there by a bug from an old version of the app

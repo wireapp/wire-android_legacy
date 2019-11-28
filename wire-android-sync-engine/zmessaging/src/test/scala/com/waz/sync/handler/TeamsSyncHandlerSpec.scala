@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.{AssetId, TeamData, TeamId, UserId}
+import com.waz.model.{AssetId, ConversationRole, TeamData, TeamId, UserId}
 import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -49,7 +49,8 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
       (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
       (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(members)))
-      (service.onTeamSynced _).expects(teamData, members).once().returning(Future.successful({}))
+      (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
+      (service.onTeamSynced _).expects(teamData, members, ConversationRole.defaultRoles).once().returning(Future.successful({}))
 
       result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
 
@@ -65,7 +66,7 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
       (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
       (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Left(timeoutError)))
 
-      (service.onTeamSynced _).expects(*, *).never().returning(Future.successful({}))
+      (service.onTeamSynced _).expects(*, *, *).never().returning(Future.successful({}))
 
       result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult(timeoutError)
     }
