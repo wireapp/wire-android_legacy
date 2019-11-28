@@ -3,6 +3,7 @@ package com.waz.zclient.settings.presentation.ui.account
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.preference.EditTextPreference
@@ -11,6 +12,8 @@ import androidx.preference.Preference.OnPreferenceChangeListener
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.waz.zclient.R
+import com.waz.zclient.settings.presentation.model.Resource
+import com.waz.zclient.settings.presentation.model.ResourceStatus
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
 import com.waz.zclient.utilities.extension.forceValue
@@ -48,11 +51,9 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
         settingsAccountViewModel = ViewModelProviders.of(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java)
         settingsAccountViewModel.getProfile()
 
-        settingsAccountViewModel.profileUserData.observe(viewLifecycleOwner, Observer<UserItem> {
-            namePreference.forceValue(it.name)
-            handlePreference.forceValue(it.handle)
-            emailPreference.forceValue(it.email)
-            phonePreference.forceValue(it.phone)
+        settingsAccountViewModel.profileUserData.observe(viewLifecycleOwner, Observer<Resource<UserItem>> {
+
+            updateUi(it)
         })
 
     }
@@ -75,6 +76,22 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
         handlePreference.onPreferenceChangeListener = null
         emailPreference.onPreferenceChangeListener = null
         phonePreference.onPreferenceChangeListener = null
+    }
+
+    fun updateUi(resource: Resource<UserItem>){
+        when (resource.status){
+            ResourceStatus.SUCCESS -> {
+                resource.data?.name?.let { name -> namePreference.forceValue(name) }
+                resource.data?.handle?.let { handle -> handlePreference.forceValue(handle) }
+                resource.data?.name?.let { email -> emailPreference.forceValue(email) }
+                resource.data?.name?.let { phone -> phonePreference.forceValue(phone) }
+            }
+            ResourceStatus.ERROR -> {
+              Toast.makeText(activity, resource.message, Toast.LENGTH_LONG).show()
+            }
+        }
+
+
     }
 
     companion object {

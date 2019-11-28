@@ -3,12 +3,15 @@ package com.waz.zclient.settings.presentation.ui.account
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.waz.zclient.settings.presentation.mapper.UserItemMapper
+import com.waz.zclient.settings.presentation.model.Resource
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.GetUserProfileSingleUseCase
 import com.waz.zclient.user.domain.usecase.UpdateHandleUseCase
 import com.waz.zclient.user.domain.usecase.UpdateNameUseCase
 import com.waz.zclient.user.domain.usecase.UpdatePhoneUseCase
+import com.waz.zclient.utilities.extension.setError
+import com.waz.zclient.utilities.extension.setSuccess
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.observers.DisposableCompletableObserver
 import io.reactivex.observers.DisposableSingleObserver
@@ -23,7 +26,7 @@ class SettingsAccountViewModel() : ViewModel() {
     private val updatePhoneUseCase = UpdatePhoneUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
 
     private val userItemMapper = UserItemMapper()
-    val profileUserData = MutableLiveData<UserItem>()
+    val profileUserData = MutableLiveData<Resource<UserItem>>()
 
 
 
@@ -42,11 +45,11 @@ class SettingsAccountViewModel() : ViewModel() {
 
     inner class GetUserProfileObserver : DisposableSingleObserver<User>() {
         override fun onSuccess(user: User) {
-            profileUserData.postValue(userItemMapper.mapFromDomain(user))
+            profileUserData.setSuccess(userItemMapper.mapFromDomain(user))
         }
 
-        override fun onError(e: Throwable) {
-            e.printStackTrace()
+        override fun onError(error: Throwable) {
+            profileUserData.setError(error)
         }
     }
 
