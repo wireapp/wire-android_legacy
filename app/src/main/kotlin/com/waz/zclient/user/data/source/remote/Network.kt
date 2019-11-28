@@ -32,7 +32,6 @@ class Network {
             .build()
 
 
-
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)

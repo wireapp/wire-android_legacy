@@ -2,15 +2,17 @@ package com.waz.zclient.user.data.repository
 
 
 import com.waz.zclient.user.data.mapper.UserEntityMapper
+import com.waz.zclient.user.data.source.remote.Network
 import com.waz.zclient.user.data.source.remote.UserRemoteDataSource
 import com.waz.zclient.user.data.source.remote.UserRemoteDataSourceImpl
 import com.waz.zclient.user.domain.model.User
 import io.reactivex.Completable
 import io.reactivex.Single
 
-class UserRepositoryImpl : UserRepository {
+class UserRepositoryImpl constructor(
+    private val remoteDataSource: UserRemoteDataSource
+) : UserRepository {
 
-    private val remoteDataSource: UserRemoteDataSource = UserRemoteDataSourceImpl()
     private val userEntityMapper = UserEntityMapper()
 
     override fun getProfile(): Single<User> = remoteDataSource.getProfile().map { userEntityMapper.mapToDomain(it) }

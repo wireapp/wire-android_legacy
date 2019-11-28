@@ -6,7 +6,7 @@ import com.waz.zclient.settings.presentation.mapper.UserItemMapper
 import com.waz.zclient.settings.presentation.model.Resource
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.GetUserProfileSingleUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.user.domain.usecase.UpdateHandleUseCase
 import com.waz.zclient.user.domain.usecase.UpdateNameUseCase
 import com.waz.zclient.user.domain.usecase.UpdatePhoneUseCase
@@ -20,7 +20,7 @@ import io.reactivex.schedulers.Schedulers
 class SettingsAccountViewModel() : ViewModel() {
 
 
-    private val getUserProfileUseCase = GetUserProfileSingleUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
+    private val getUserProfileUseCase = GetUserProfileUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
     private val updateNameUseCase = UpdateNameUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
     private val updateHandleUseCase = UpdateHandleUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
     private val updatePhoneUseCase = UpdatePhoneUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
