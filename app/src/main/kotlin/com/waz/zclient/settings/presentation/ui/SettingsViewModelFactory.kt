@@ -7,17 +7,9 @@ import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.settings.presentation.ui.account.SettingsAccountViewModel
 import com.waz.zclient.settings.presentation.ui.devices.list.SettingsDeviceListViewModel
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 
 @Suppress("UNCHECKED_CAST")
 class SettingsViewModelFactory : ViewModelProvider.Factory {
-
-    //May need too many dependencies fo there to be just one factory.
-    private val getUserProfileUseCase by lazy {
-        GetUserProfileUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
-    }
 
     private val getCurrentDeviceUseCase by lazy {
         GetCurrentDeviceUseCase(ClientsRepositoryImpl.getInstance())
@@ -43,5 +35,5 @@ class SettingsViewModelFactory : ViewModelProvider.Factory {
     private fun createSettingsDevicesViewModel() =
         SettingsDeviceListViewModel(getAllClientsUseCase, getCurrentDeviceUseCase)
 
-    private fun createSettingsAccountViewModel() = SettingsAccountViewModel(getUserProfileUseCase)
+    private fun createSettingsAccountViewModel() = SettingsAccountViewModel()
 }

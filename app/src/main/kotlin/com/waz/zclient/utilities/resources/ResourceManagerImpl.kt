@@ -4,7 +4,11 @@ import android.content.res.Resources
 
 class ResourceManagerImpl(val resources: Resources) : ResourceManager {
 
-    override fun getStringArray(array: Int): Array<String> {
-        return resources.getStringArray(array)
+    override fun getStringArray(id: Int): Array<String> {
+        return resources.getStringArray(id)
+    }
+
+    override fun getString(id: Int): String {
+        return resources.getString(id)
     }
 }

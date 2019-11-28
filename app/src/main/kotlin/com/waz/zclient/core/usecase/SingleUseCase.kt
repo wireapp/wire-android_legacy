@@ -6,8 +6,8 @@ import io.reactivex.SingleObserver
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
-abstract class UseCase<T, in Params>(private val subscribeScheduler: Scheduler,
-                                     private val postExecutionScheduler: Scheduler) {
+abstract class SingleUseCase<T, in Params>(private val subscribeScheduler: Scheduler,
+                                           private val postExecutionScheduler: Scheduler) {
 
     private val disposables: CompositeDisposable = CompositeDisposable()
 
