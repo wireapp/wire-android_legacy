@@ -10,7 +10,7 @@ import com.waz.zclient.R
 import com.waz.zclient.settings.presentation.ui.about.AboutFragment
 import com.waz.zclient.settings.presentation.ui.account.AccountFragment
 import com.waz.zclient.settings.presentation.ui.advanced.AdvancedFragment
-import com.waz.zclient.settings.presentation.ui.devices.DevicesFragment
+import com.waz.zclient.settings.presentation.ui.devices.list.SettingsDeviceListFragment
 import com.waz.zclient.settings.presentation.ui.home.list.OnItemClickListener
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListAdapter
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListFactory
@@ -34,10 +34,9 @@ class SettingsFragment : Fragment(), OnItemClickListener {
     }
 
     override fun onItemClicked(position: Int) {
-
         when (position) {
             ACCOUNT -> replaceLayoutContainer(AccountFragment.newInstance())
-            DEVICES -> replaceLayoutContainer(DevicesFragment.newInstance())
+            DEVICES -> replaceLayoutContainer(SettingsDeviceListFragment.newInstance())
             OPTIONS -> replaceLayoutContainer(OptionsFragment.newInstance())
             ADVANCED -> replaceLayoutContainer(AdvancedFragment.newInstance())
             SUPPORT -> replaceLayoutContainer(SupportFragment.newInstance())

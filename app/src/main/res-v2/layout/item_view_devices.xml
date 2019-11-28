@@ -17,42 +17,48 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
+
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
+    android:layout_height="@dimen/preference_button_height"
     android:background="@color/black"
-    android:orientation="vertical">
+    android:minHeight="@dimen/preference_button_height">
 
     <TextView
         android:id="@+id/item_device_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="2dp"
+        android:layout_marginStart="@dimen/preference_button_padding"
+        android:layout_marginEnd="@dimen/preference_button_padding"
         android:textColor="@color/white"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Wire Windows" />
 
+
     <TextView
         android:id="@+id/item_device_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
+        android:layout_marginStart="@dimen/preference_button_padding"
+        android:layout_marginEnd="@dimen/preference_button_padding"
+        android:textColor="@color/light_graphite"
+        android:textSize="@dimen/wire__text_size__small"
+        android:visibility="visible"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/item_device_title"
         tools:text="ID: 94 SB 88 99 00" />
 
-    <TextView
-        android:id="@+id/item_device_activated_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/item_device_id"
-        tools:text="Activated: Fri, Nov 8, 2019" />
-
+    <ImageView
+        android:id="@+id/item_device_verification_icon"
+        android:layout_width="@dimen/preference_button_image_size"
+        android:layout_height="@dimen/preference_button_image_size"
+        android:layout_marginEnd="@dimen/preference_button_padding"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

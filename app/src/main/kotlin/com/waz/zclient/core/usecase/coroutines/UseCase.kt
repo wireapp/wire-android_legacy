@@ -1,7 +1,7 @@
 package com.waz.zclient.core.usecase.coroutines
 
-import com.fernandocejas.sample.core.functional.Either
-import com.fernandocejas.sample.core.functional.Failure
+import com.waz.zclient.core.data.source.remote.Either
+import com.waz.zclient.core.data.source.remote.Failure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch

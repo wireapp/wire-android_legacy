@@ -3,15 +3,16 @@ package com.waz.zclient.core.data.source.remote
 import retrofit2.Response
 import timber.log.Timber
 
-abstract class BaseRemoteDataSource {
+abstract class SafeApiDataSource {
 
-    protected suspend fun <T> getResult(call: suspend () -> Response<T>): RequestResult<T> {
+    protected suspend fun <T> getRequestResult(responseCall: suspend () -> Response<T>): RequestResult<T> {
         try {
-            val response = call()
+            val response = responseCall()
             if (response.isSuccessful) {
                 val body = response.body()
-                Timber.e(javaClass.simpleName, body)
-                if (body != null) return RequestResult.success(body)
+                if (body != null) {
+                    return RequestResult.success(body)
+                }
             }
             return error(" ${response.code()} ${response.message()}")
         } catch (e: Exception) {

@@ -6,7 +6,7 @@ import com.waz.zclient.devices.data.ClientsRepositoryImpl
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.settings.presentation.ui.account.SettingsAccountViewModel
-import com.waz.zclient.settings.presentation.ui.devices.SettingsDevicesViewModel
+import com.waz.zclient.settings.presentation.ui.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -33,7 +33,7 @@ class SettingsViewModelFactory : ViewModelProvider.Factory {
                 isAssignableFrom(SettingsAccountViewModel::class.java) -> {
                     createSettingsAccountViewModel() as T
                 }
-                isAssignableFrom(SettingsDevicesViewModel::class.java) -> {
+                isAssignableFrom(SettingsDeviceListViewModel::class.java) -> {
                     createSettingsDevicesViewModel() as T
                 }
                 else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
@@ -41,7 +41,7 @@ class SettingsViewModelFactory : ViewModelProvider.Factory {
         }
 
     private fun createSettingsDevicesViewModel() =
-        SettingsDevicesViewModel(getUserProfileUseCase, getAllClientsUseCase, getCurrentDeviceUseCase)
+        SettingsDeviceListViewModel(getAllClientsUseCase, getCurrentDeviceUseCase)
 
     private fun createSettingsAccountViewModel() = SettingsAccountViewModel(getUserProfileUseCase)
 }

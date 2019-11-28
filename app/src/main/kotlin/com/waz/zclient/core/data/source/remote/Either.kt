@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fernandocejas.sample.core.functional
+package com.waz.zclient.core.data.source.remote
 
 /**
  * Represents a value of one of two possible types (a disjoint union).
@@ -34,8 +34,8 @@ sealed class Either<out L, out R> {
     val isRight get() = this is Right<R>
     val isLeft get() = this is Left<L>
 
-    fun <L> left(a: L) = Either.Left(a)
-    fun <R> right(b: R) = Either.Right(b)
+    fun <L> left(a: L) = Left(a)
+    fun <R> right(b: R) = Right(b)
 
     fun either(fnL: (L) -> Any, fnR: (R) -> Any): Any =
         when (this) {

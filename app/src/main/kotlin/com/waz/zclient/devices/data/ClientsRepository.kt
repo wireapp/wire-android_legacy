@@ -1,9 +1,11 @@
 package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.data.source.remote.RequestResult
-import com.waz.zclient.devices.model.ClientEntity
+import com.waz.zclient.devices.domain.model.Client
 
 interface ClientsRepository {
 
-    suspend fun getAllClients(): RequestResult<Array<ClientEntity>>
+    suspend fun getClientById(clientId: String): RequestResult<Client>
+
+    suspend fun getAllClients(): RequestResult<List<Client>>
 }

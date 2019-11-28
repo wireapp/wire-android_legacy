@@ -1,6 +1,6 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.devices.model.ClientEntity
+import com.waz.zclient.devices.data.model.ClientEntity
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path

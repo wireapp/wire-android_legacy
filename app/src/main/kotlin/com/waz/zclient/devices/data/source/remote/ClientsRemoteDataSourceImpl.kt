@@ -1,14 +1,17 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.core.data.source.remote.BaseRemoteDataSource
 import com.waz.zclient.core.data.source.remote.RequestResult
-import com.waz.zclient.devices.model.ClientEntity
+import com.waz.zclient.core.data.source.remote.SafeApiDataSource
+import com.waz.zclient.devices.data.model.ClientEntity
 
-class ClientsRemoteDataSourceImpl : ClientsRemoteDataSource, BaseRemoteDataSource() {
+class ClientsRemoteDataSourceImpl(private var deviceNetwork: ClientsNetwork = ClientsNetwork())
+    : ClientsRemoteDataSource, SafeApiDataSource() {
 
-    private val deviceNetwork = ClientsNetwork()
+    override suspend fun getClientById(clientId: String): RequestResult<ClientEntity> = getRequestResult {
+        deviceNetwork.getClientsApi().getClientByIdAsync(clientId)
+    }
 
-    override suspend fun getAllClients(): RequestResult<Array<ClientEntity>> = getResult {
+    override suspend fun getAllClients(): RequestResult<Array<ClientEntity>> = getRequestResult {
         deviceNetwork.getClientsApi().getAllClientsAsync()
     }
 }
