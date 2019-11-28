@@ -286,7 +286,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       if (currentReadReceipts != readReceiptsEnabled)
         service.setReceiptMode(id, if (readReceiptsEnabled) 1 else 0)
 
-  def addMembers(id: ConvId, users: Set[UserId]): Future[Unit] =
+  def addMembers(id: ConvId, users: Map[UserId, String]): Future[Unit] =
     convsUi.head.flatMap(_.addConversationMembers(id, users)).map(_ => {})
 
   def removeMember(user: UserId): Future[Unit] =
@@ -329,9 +329,9 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 
-  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set(), false, false)
+  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Map.empty, false, false)
 
-  def createGroupConversation(name: Option[Name], users: Set[UserId], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] = for {
+  def createGroupConversation(name: Option[Name], users: Map[UserId, String], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] = for {
     convsUi   <- convsUi.head
     _         <- inject[FolderStateController].update(Folder.GroupId, isExpanded = true)
     (conv, _) <- convsUi.createGroupConversation(name, users, teamOnly, if (readReceipts) 1 else 0)

@@ -110,7 +110,7 @@ class MessageEventProcessor(selfUserId:           UserId,
       case MessageTimerEvent(_, time, from, duration) =>
         EventModifications(MessageData(id, conv.id, MESSAGE_TIMER, from, time = time, duration = duration, localTime = event.localTime))
       case MemberJoinEvent(_, time, from, userIds, firstEvent) =>
-        EventModifications(MessageData(id, conv.id, MEMBER_JOIN, from, members = userIds.toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
+        EventModifications(MessageData(id, conv.id, MEMBER_JOIN, from, members = userIds, time = time, localTime = event.localTime, firstMessage = firstEvent))
       case ConversationReceiptModeEvent(_, time, from, 0) =>
         EventModifications(MessageData(id, conv.id, READ_RECEIPTS_OFF, from, time = time, localTime = event.localTime))
       case ConversationReceiptModeEvent(_, time, from, receiptMode) if receiptMode > 0 =>

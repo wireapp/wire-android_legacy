@@ -154,15 +154,16 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         case None =>
           ev match {
             case MemberJoinEvent(_, time, from, members, _) if from != selfUserId =>
+              val membersWithRoles = members.map(_ -> ConversationRole.AdminRole.label)
               // this happens when we are added to group conversation
               for {
                 conv <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
-                ms   <- membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole.label) ++ members)
+                ms   <- membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole.label) ++ membersWithRoles)
                 sId  <- sync.syncConversations(Set(conv.id))
                 _    <- syncReqService.await(sId)
                 Some(conv) <- convsStorage.get(conv.id)
                 _    <- if (conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
-                _    <- messages.addMemberJoinMessage(conv.id, from, members.keySet)
+                _    <- messages.addMemberJoinMessage(conv.id, from, members)
               } yield {}
             case _ =>
               warn(l"No conversation data found for event: $ev on try: $retryCount")
@@ -189,9 +190,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           sync.syncConversations(Set(conv.id)).map(Option(_))
         else
           Future.successful(None)
-        syncId <- users.syncIfNeeded(us.keySet)
+        syncId <- users.syncIfNeeded(us)
         _ <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
-        _ <- membersStorage.add(conv.id, us)
+        _ <- membersStorage.add(conv.id, us.map(_ -> ConversationRole.AdminRole.label).toMap)
         _ <- if (us.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
         _ <- convSync.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         Some(conv) <- convsStorage.get(conv.id)

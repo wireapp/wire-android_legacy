@@ -78,7 +78,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     }
 
   def syncConversations(start: Option[RConvId] = None): Future[SyncResult] =
-    conversationsClient.loadConversations(start).future flatMap {
+    conversationsClient.loadConversations(start).future.flatMap {
       case Right(ConversationsResult(convs, hasMore)) =>
         debug(l"syncConversations received ${convs.size}")
         val future = convService.updateConversationsWithDeviceStartMessage(convs)

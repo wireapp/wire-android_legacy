@@ -388,6 +388,7 @@ object ParticipantsAdapter {
     private var readReceipts = Option.empty[Boolean]
 
     view.findViewById[ImageView](R.id.participants_read_receipts_icon).setImageDrawable(ViewWithColor(getStyledColor(R.attr.wirePrimaryTextColor)))
+    view.setId(R.id.read_receipts_button)
 
     switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
       override def onCheckedChanged(buttonView: CompoundButton, readReceiptsEnabled: Boolean): Unit =
@@ -467,10 +468,13 @@ object ParticipantsAdapter {
 
   case class ShowAllParticipantsViewHolder(view: View) extends ViewHolder(view) {
     private implicit val ctx: Context = view.getContext
+
     view.findViewById[ImageView](R.id.next_indicator).setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40))
     view.setClickable(true)
     view.setFocusable(true)
     view.setMarginTop(0)
+    view.setId(R.id.show_all_button)
+
     private lazy val nameView = view.findViewById[TypefaceTextView](R.id.name_text)
 
     def bind(numOfParticipants: Int): Unit = {

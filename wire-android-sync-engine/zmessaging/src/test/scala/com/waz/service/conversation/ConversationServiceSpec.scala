@@ -20,7 +20,7 @@ package com.waz.service.conversation
 import com.waz.api.Message
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConversationData, _}
+import com.waz.model.{ConversationData, ConversationRole, _}
 import com.waz.service._
 import com.waz.service.assets2.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
@@ -59,6 +59,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   private lazy val network        = mock[NetworkModeService]
   private lazy val properties     = mock[PropertiesService]
   private lazy val deletions      = mock[MsgDeletionStorage]
+  private lazy val rolesStorage   = mock[ConversationRolesStorage]
 
   private lazy val globalPrefs    = new TestGlobalPreferences()
   private lazy val userPrefs      = new TestUserPreferences()
@@ -91,7 +92,8 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     assets,
     receiptStorage,
     notifications,
-    folders
+    folders,
+    rolesStorage
   )
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
@@ -116,7 +118,6 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   (selectedConv.selectedConversationId _).expects().anyNumberOfTimes().returning(Signal.const(None))
   (push.onHistoryLost _).expects().anyNumberOfTimes().returning(new SourceSignal[Instant] with BgEventSource)
   (errors.onErrorDismissed _).expects(*).anyNumberOfTimes().returning(CancellableFuture.successful(()))
-
 
   feature("Archive conversation") {
 
@@ -210,6 +211,8 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (membersStorage.remove(_: ConvId, _: Iterable[UserId])).expects(*, *)
         .anyNumberOfTimes().returning(Future.successful(Set[ConversationMemberData]()))
       (content.setConvActive _).expects(*, *).anyNumberOfTimes().returning(Future.successful(()))
+      (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set.empty))
+      (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 
       // EXPECT
       (content.updateConversationState _).expects(*, *).never()
@@ -227,6 +230,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (content.convByRemoteId _).expects(rConvId).anyNumberOfTimes()
         .returning(Future.successful(Some(conversationData)))
       (messages.findMessageIds _).expects(convId).once().returning(Future.successful(Set.empty))
+      (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
 
       val dummyUserId = UserId()
       val events = Seq(
@@ -253,7 +257,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
       (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
-      (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
+      (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
 
@@ -281,6 +285,8 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (membersStorage.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
+      (receiptStorage.removeAllForMessages _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -333,6 +339,8 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (convsStorage.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (membersStorage.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (msgStorage.deleteAll _).expects(convId).once().returning(Future.successful(()))
+      (folders.removeConversationFromAll _).expects(convId, false).once().returning(Future.successful(()))
+      (rolesStorage.removeByConvId _).expects(convId).once().returning(Future.successful(()))
 
       //EXPECT
       (receiptStorage.removeAllForMessages _).expects(Set(messageId)).once().returning(Future.successful(()))
@@ -352,12 +360,12 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val conv = ConversationData(team = Some(teamId), name = Some(convName))
       val syncId = SyncId()
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Map.empty[UserId, String], *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
+      (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = Set.empty))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName)))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -371,13 +379,14 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val user1 = UserData("user1")
       val user2 = UserData("user2")
       val users = Set(self, user1, user2)
+      val uMap = Map(self.id -> ConversationRole.AdminRole.label, user1.id -> ConversationRole.MemberRole.label, user2.id -> ConversationRole.MemberRole.label)
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, uMap, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
-      (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *).once().returning(Future.successful(syncId))
+      (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id)))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = uMap))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -390,7 +399,21 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val from = UserId("User1")
       val convId = ConvId(rConvId.str)
       val response = ConversationResponse(
-        rConvId, Some(Name("conv")), from, ConversationType.Group, None, MuteSet.AllAllowed, RemoteInstant.Epoch, archived = false, RemoteInstant.Epoch, Set.empty, None, None, None, Set(account1Id, from), None
+        rConvId,
+        Some(Name("conv")),
+        from,
+        ConversationType.Group,
+        None,
+        MuteSet.AllAllowed,
+        RemoteInstant.Epoch,
+        archived = false,
+        RemoteInstant.Epoch,
+        Set.empty,
+        None,
+        None,
+        None,
+        Map(account1Id -> ConversationRole.AdminRole.label, from -> ConversationRole.AdminRole.label),
+        None
       )
 
       (convsStorage.apply[Seq[(ConvId, ConversationResponse)]] _).expects(*).onCall { x: (Map[ConvId, ConversationData] => Seq[(ConvId, ConversationResponse)]) =>

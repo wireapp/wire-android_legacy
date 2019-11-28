@@ -364,7 +364,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (convsStorage.findGroupConversations _).stubs(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
 
       (membersStorage.getByUsers _).stubs(*).onCall { ids: Set[UserId] =>
-        Future.successful(ids.intersect(conversationMembers).map(ConversationMemberData(_, convId)).toIndexedSeq)
+        Future.successful(ids.intersect(conversationMembers).map(ConversationMemberData(_, convId, ConversationRole.AdminRole.label)).toIndexedSeq)
       }
 
       (sync.syncSearchQuery _).stubs(*).onCall { _: SearchQuery =>

@@ -165,7 +165,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
           case _ => fail("Unexpected user being updated")
         }.toSet)
       }
-      (members.addAll _).expects(Map(convId -> Set(otherUser.id, selfUserId))).returning(Future.successful({}))
+      (members.addAll _).expects(Map(convId -> Map(otherUser.id -> ConversationRole.AdminRole.label, selfUserId -> ConversationRole.AdminRole.label))).returning(Future.successful({}))
       (convsStorage.updateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ConversationData => ConversationData) =>
         if (!keys.toSet.contains(convId)) fail ("didn't try to update other conversation")
         val prev = previousConv
@@ -224,7 +224,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
     }
     (usersStorage.get _).expects(*).anyNumberOfTimes().onCall{uId: UserId => Future.successful(Some(UserData(uId, "")))}
 
-    (members.addAll (_:Map[ConvId, Set[UserId]])).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+    (members.addAll (_:Map[ConvId, Map[UserId, String]])).expects(*).anyNumberOfTimes().returning(Future.successful(()))
 
     (messagesStorage.getLastMessage _).expects(*).anyNumberOfTimes().returns(Future.successful(None))
 

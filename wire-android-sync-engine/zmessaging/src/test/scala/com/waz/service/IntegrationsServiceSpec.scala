@@ -86,7 +86,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     val serviceUserId = UserId("service-user")
 
     (users.findUsersForService _).expects(serviceId).returning(Future.successful(Set.empty))
-    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false, 0).returning(Future.successful(createdConv, createConvSyncId))
+    (convsUi.createGroupConversation _).expects(Option.empty[Name], Map.empty[UserId, String], false, 0).returning(Future.successful(createdConv, createConvSyncId))
     (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
@@ -106,9 +106,9 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     val groupConvId = ConvId("group-conv")
 
     val membersInGroupConv = Set(
-      ConversationMemberData(account1Id, groupConvId),
-      ConversationMemberData(serviceUserInGroupId, groupConvId),
-      ConversationMemberData(UserId("some other user"), groupConvId)
+      ConversationMemberData(account1Id, groupConvId, ConversationRole.AdminRole.label),
+      ConversationMemberData(serviceUserInGroupId, groupConvId, ConversationRole.MemberRole.label),
+      ConversationMemberData(UserId("some other user"), groupConvId, ConversationRole.MemberRole.label)
     )
 
     val createConvSyncId = SyncId("create-conv")
@@ -125,7 +125,7 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
       Future.successful(Seq.empty)
     }
 
-    (convsUi.createGroupConversation _).expects(Option.empty[Name], Set.empty[UserId], false, 0).returning(Future.successful(createdConv, createConvSyncId))
+    (convsUi.createGroupConversation _).expects(Option.empty[Name], Map.empty[UserId, String], false, 0).returning(Future.successful(createdConv, createConvSyncId))
     (srs.await (_: SyncId)).expects(*).twice().returning(Future.successful(SyncResult.Success))
     (sync.postAddBot _).expects(createdConv.id, pId, serviceId).returning(Future.successful(addedBotSyncId))
     (members.getActiveUsers _).expects(createdConv.id).returning(Future.successful(Seq(account1Id, serviceUserId)))
@@ -147,8 +147,8 @@ class IntegrationsServiceSpec extends AndroidFreeSpec {
     val existingConv = ConversationData(existingConvId, team = Some(teamId), name = None)
 
     val membersInGroupConv = Set(
-      ConversationMemberData(account1Id, existingConvId),
-      ConversationMemberData(serviceUserId, existingConvId)
+      ConversationMemberData(account1Id, existingConvId, ConversationRole.AdminRole.label),
+      ConversationMemberData(serviceUserId, existingConvId, ConversationRole.MemberRole.label)
     )
 
     (users.findUsersForService _).expects(serviceId).returning(Future.successful(Set(serviceUser)))

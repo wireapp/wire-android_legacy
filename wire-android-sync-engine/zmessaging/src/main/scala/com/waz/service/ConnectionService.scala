@@ -111,7 +111,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     for {
       otoConvs   <- getOrCreateOneToOneConversations(oneToOneConvData.toSeq)
       convToUser = userIds.flatMap(e => otoConvs.get(e).map(c => c.id -> e)).toMap
-      _          <- members.addAll(convToUser.mapValues(u => Set(u, selfUserId)))
+      _          <- members.addAll(convToUser.map { case (convId, userId) => convId -> Map(userId -> ConversationRole.AdminRole.label, selfUserId -> ConversationRole.AdminRole.label) })
       updatedConvs <- convsStorage.updateAll2(convToUser.keys, { conv =>
 
         val userId = convToUser(conv.id)

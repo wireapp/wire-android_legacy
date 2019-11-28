@@ -102,7 +102,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       )
 
       clock.advance(5.seconds)
-      val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq)
+      val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded)
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
       (storage.lastLocalMessage _).expects(conv.id, MEMBER_JOIN).returning(Future.successful(None))
@@ -142,7 +142,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
         result(processor.processEvents(conv, isGroup = false, Seq(event))) shouldEqual Set.empty
 
       clock.advance(1.second) //conv will have time EPOCH, needs to be later than that
-      testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
+      testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded))
       clock.advance(1.second)
       testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
       clock.advance(1.second)
