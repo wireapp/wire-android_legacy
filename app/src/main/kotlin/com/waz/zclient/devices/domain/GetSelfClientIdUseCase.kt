@@ -1,7 +1,6 @@
 package com.waz.zclient.devices.domain
 
-import com.waz.zclient.core.data.source.remote.Either
-import com.waz.zclient.core.data.source.remote.Failure
+import com.waz.zclient.core.usecase.coroutines.Either
 import com.waz.zclient.core.usecase.coroutines.UseCase
 
 class GetSelfClientIdUseCase() : UseCase<String, Unit>() {

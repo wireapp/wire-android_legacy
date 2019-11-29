@@ -1,19 +1,18 @@
 package com.waz.zclient.core.usecase.coroutines
 
-import com.waz.zclient.core.data.source.remote.Either
-import com.waz.zclient.core.data.source.remote.Failure
+import com.waz.zclient.core.data.source.remote.RequestResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 abstract class UseCase<out Type, in Params> where Type : Any {
 
-    abstract suspend fun run(params: Params): Either<Failure, Type>
+    abstract suspend fun run(params: Params): RequestResult<Type>
 
     open operator fun invoke(
         scope: CoroutineScope,
         params: Params,
-        onResult: (Either<Failure, Type>) -> Unit = {}
+        onResult: (RequestResult<Type>) -> Unit = {}
     ) {
         val backgroundJob = scope.async { run(params) }
         scope.launch { onResult(backgroundJob.await()) }
