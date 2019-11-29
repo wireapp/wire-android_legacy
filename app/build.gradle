@@ -275,11 +275,11 @@ android {
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
             java.srcDirs += ['src/androidTest/kotlin']
-            java.srcDirs += ['src/test/kotlin']
         }
 
         test {
             scala.srcDirs += ['src/test/scala']
+            java.srcDirs += ['src/test/kotlin']
         }
     }
 
