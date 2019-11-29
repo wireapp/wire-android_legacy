@@ -25,6 +25,16 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 case class ConversationRole(label: String, actions: Set[ConversationAction]) {
   def toRoleActions(convId: Option[ConvId]): List[ConversationRoleAction] =
     actions.map(action => ConversationRoleAction(label, action.name, convId)).toList
+
+  import ConversationAction._
+
+  lazy val canAddGroupMember: Boolean = actions.contains(AddMember)
+  lazy val canRemoveGroupMember: Boolean = actions.contains(RemoveMember)
+  lazy val canDeleteGroup: Boolean = actions.contains(RemoveMember)
+  lazy val canModifyGroupName: Boolean = actions.contains(ModifyName)
+  lazy val canModifyMessageTimer: Boolean = actions.contains(ModifyMessageTimer)
+  lazy val canModifyReceiptMode: Boolean = actions.contains(ModifyReceiptMode)
+  lazy val canModifyAccess: Boolean = actions.contains(ModifyAccess)
 }
 
 object ConversationRole {

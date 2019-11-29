@@ -108,14 +108,13 @@ class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, 
   participantsController.isGroupOrBot.flatMap {
     case false => userAccountsController.hasCreateConvPermission.map {
       case true => R.string.glyph__more
-      case _    => R.string.empty_string
+      case _ => R.string.empty_string
     }
-    case _ => for {
-      convId  <- participantsController.conv.map(_.id)
-      remPerm <- userAccountsController.hasRemoveConversationMemberPermission(convId)
-    } yield if (remPerm) R.string.glyph__minus else R.string.empty_string
-  }.map(getString)
-   .onUi(footerMenu.setRightActionText)
+    case _ =>
+      participantsController.selfRole.map(role =>
+        if (role.canRemoveGroupMember) R.string.glyph__minus else R.string.empty_string
+      )
+  }.map(getString).onUi(footerMenu.setRightActionText)
 
   leftActionStrings.onUi { case (icon, text) =>
     footerMenu.setLeftActionText(getString(icon))

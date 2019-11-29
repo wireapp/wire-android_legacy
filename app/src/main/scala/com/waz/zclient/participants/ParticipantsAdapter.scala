@@ -45,15 +45,15 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
-import com.waz.content.UsersStorage
+import com.waz.content.{ConversationRolesStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{SearchQuery, TeamSizeThreshold}
 import com.waz.threading.Threading
 import com.waz.zclient.log.LogUI._
 
-import scala.util.Random
+//import scala.util.Random
 
-class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
+class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]],
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
                           showArrow:       Boolean = true,
@@ -64,6 +64,7 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
   import Threading.Implicits.Ui
 
   private lazy val usersStorage           = inject[Signal[UsersStorage]]
+  private lazy val rolesStorage           = inject[Signal[ConversationRolesStorage]]
   private lazy val team                   = inject[Signal[Option[TeamId]]]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convController         = inject[ConversationController]
@@ -91,16 +92,22 @@ class ParticipantsAdapter(userIds:         Signal[Seq[UserId]],
   val filter = Signal("")
 
   private lazy val users = for {
+    selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
-    userIds      <- userIds
-    selfId       <- selfId
-    users        <- usersStorage.listSignal(selfId :: userIds.toList)
+    convId       <- convController.currentConvId
+    participants <- participants
+    users        <- usersStorage.listSignal(participants.keys.toList)
     f            <- filter
   } yield
     users
       .filter(_.matchesQuery(SearchQuery(f)))
-      .map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot, isAdmin = Random.nextBoolean(), isSelf = u.id == selfId))
+      .map(user => ParticipantData(
+        user,
+        user.isGuest(tId) && !user.isWireBot,
+        isAdmin = participants.get(user.id).contains(ConversationRole.AdminRole),
+        isSelf = user.id == selfId
+      ))
       .sortBy(_.userData.getDisplayName.str)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)

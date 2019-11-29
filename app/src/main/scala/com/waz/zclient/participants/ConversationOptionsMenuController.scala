@@ -25,7 +25,6 @@ import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events._
 import com.waz.zclient.calling.controllers.CallStartController
-import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -100,7 +99,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     connectStatus       <- otherUser.map(_.map(_.connection))
     teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot               <- otherUser.map(_.exists(_.isWireBot))
-    removePerm          <- inject[UserAccountsController].hasRemoveConversationMemberPermission(convId)
+    removePerm          <- convController.selfRoleInConv(convId).map(_.canRemoveGroupMember)
     isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant

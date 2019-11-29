@@ -24,7 +24,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
-import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content.{ConversationRolesStorage, ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -57,18 +57,20 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationController")
 
-  private lazy val selectedConv       = inject[Signal[SelectedConversationService]]
-  private lazy val convsUi            = inject[Signal[ConversationsUiService]]
-  private lazy val conversations      = inject[Signal[ConversationsService]]
-  private lazy val convsStorage       = inject[Signal[ConversationStorage]]
-  private lazy val membersStorage     = inject[Signal[MembersStorage]]
-  private lazy val usersStorage       = inject[Signal[UsersStorage]]
-  private lazy val otrClientsStorage  = inject[Signal[OtrClientsStorage]]
-  private lazy val account            = inject[Signal[Option[AccountManager]]]
-  private lazy val callStart          = inject[CallStartController]
-  private lazy val convListController = inject[ConversationListController]
-  private lazy val uriHelper          = inject[UriHelper]
+  private lazy val selectedConv          = inject[Signal[SelectedConversationService]]
+  private lazy val convsUi               = inject[Signal[ConversationsUiService]]
+  private lazy val conversations         = inject[Signal[ConversationsService]]
+  private lazy val convsStorage          = inject[Signal[ConversationStorage]]
+  private lazy val membersStorage        = inject[Signal[MembersStorage]]
+  private lazy val rolesStorage          = inject[Signal[ConversationRolesStorage]]
+  private lazy val usersStorage          = inject[Signal[UsersStorage]]
+  private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
+  private lazy val account               = inject[Signal[Option[AccountManager]]]
+  private lazy val callStart             = inject[CallStartController]
+  private lazy val convListController    = inject[ConversationListController]
+  private lazy val uriHelper             = inject[UriHelper]
   private lazy val accentColorController = inject[AccentColorController]
+  private lazy val selfId                =  inject[Signal[UserId]]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -106,26 +108,38 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   val currentConvIsTeamOnly: Signal[Boolean] = currentConv.map(_.isTeamOnly)
 
-  lazy val currentConvMembers = for {
+  lazy val currentConvOtherMembers: Signal[Map[UserId, ConversationRole]] =
+    selfId.flatMap(selfId => currentConvMembers.map(_.filter(_._1 != selfId)))
+
+  lazy val currentConvMembers: Signal[Map[UserId, ConversationRole]] = currentConvId.flatMap(convMembers)
+
+  def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]] = for {
     membersStorage <- membersStorage
-    selfUserId     <- inject[Signal[UserId]]
-    conv           <- currentConvId
-    members        <- membersStorage.activeMembers(conv)
-  } yield members.filter(_ != selfUserId)
+    rolesStorage   <- rolesStorage
+    roles          <- rolesStorage.rolesByConvId(Some(convId))
+    members        <- membersStorage.activeMembersData(convId)
+  } yield members.map(m => m.userId -> roles.find(_.label == m.role).getOrElse(ConversationRole.MemberRole)).toMap
+
+  lazy val selfRole: Signal[ConversationRole] =
+    selfId.flatMap(selfId => currentConvMembers.map(_.getOrElse(selfId, ConversationRole.MemberRole)))
+
+  def selfRoleInConv(convId: ConvId): Signal[ConversationRole] = for {
+    selfId  <- selfId
+    members <- convMembers(convId)
+  } yield members.getOrElse(selfId, ConversationRole.MemberRole)
 
   currentConvIdOpt {
-    case Some(convId) => {
+    case Some(convId) =>
       conversations.head.foreach(_.forceNameUpdate(convId, getString(R.string.default_deleted_username)))
       if (!lastConvId.contains(convId)) { // to only catch changes coming from SE (we assume it's an account switch)
         verbose(l"a conversation change bypassed selectConv: last = $lastConvId, current = $convId")
         convChanged ! ConversationChange(from = lastConvId, to = Option(convId), requester = ConversationChangeRequester.ACCOUNT_CHANGE)
         lastConvId = Option(convId)
       }
-    }
-    case None => {
+    case None =>
       convChanged ! ConversationChange(from = lastConvId, to = None, requester = ConversationChangeRequester.DELETE_CONVERSATION)
       lastConvId = None
-    }
+
   }
 
   // this should be the only UI entry point to change conv in SE

@@ -190,7 +190,7 @@ class SingleParticipantFragment extends FragmentHelper {
       conv           <- participantsController.conv
       isGroup        <- participantsController.isGroup
       createPerm     <- userAccountsController.hasCreateConvPermission
-      remPerm        <- userAccountsController.hasRemoveConversationMemberPermission(conv.id)
+      remPerm        <- participantsController.selfRole.map(_.canRemoveGroupMember)
       selfIsGuest    <- participantsController.isCurrentUserGuest
       selfIsExternal <- userAccountsController.isExternal
       selfIsProUser  <- userAccountsController.isTeam

@@ -30,7 +30,6 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
-import com.waz.zclient.utils.{ConversationSignal, UiStorage}
 import com.waz.zclient.{BuildConfig, Injectable, Injector}
 import com.waz.zclient.log.LogUI._
 
@@ -43,7 +42,6 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   observeLogoutEvents()
 
-  private implicit val uiStorage   = inject[UiStorage]
   private lazy val zms             = inject[Signal[ZMessaging]]
   private lazy val accountsService = inject[AccountsService]
   private lazy val prefs           = inject[Signal[UserPreferences]]
@@ -83,9 +81,6 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
         decodeBitmask(bitmask)
       }
 
-  lazy val isAdmin: Signal[Boolean] =
-    selfPermissions.map(AdminPermissions.subsetOf)
-
   lazy val isExternal: Signal[Boolean] =
     selfPermissions
       .map(ps => ExternalPermissions.subsetOf(ps) && ExternalPermissions.size == ps.size)
@@ -99,21 +94,6 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   lazy val hasChangeGroupSettingsPermission: Signal[Boolean] = isExternal.map(!_)
 
   lazy val readReceiptsEnabled: Signal[Boolean] = zms.flatMap(_.propertiesService.readReceiptsEnabled)
-
-  def hasAddConversationMemberPermission(convId: ConvId): Signal[Boolean] =
-    hasConvPermission(convId, AddConversationMember)
-
-  def hasRemoveConversationMemberPermission(convId: ConvId): Signal[Boolean] =
-    hasConvPermission(convId, RemoveConversationMember)
-
-  private def hasConvPermission(convId: ConvId, toCheck: Permission): Signal[Boolean] = {
-    for {
-      z    <- zms
-      conv <- z.convsStorage.signal(convId)
-      ps   <- selfPermissions
-    } yield
-      conv.team.isEmpty || (conv.team == z.teamId && ps(toCheck))
-  }
 
   def isTeamMember(userId: UserId) =
     for {
@@ -141,21 +121,6 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
 
   def getOrCreateAndOpenConvFor(user: UserId) =
     getConversationId(user).flatMap(convCtrl.selectConv(_, ConversationChangeRequester.START_CONVERSATION))
-
-  def hasPermissionToRemoveService(cId: ConvId): Future[Boolean] = {
-    for {
-      tId <- teamId.head
-      ps  <- selfPermissions.head
-      conv <- ConversationSignal(cId).head
-    } yield tId == conv.team && ps.contains(RemoveConversationMember)
-  }
-
-  def hasPermissionToAddService: Future[Boolean] = {
-    for {
-      tId <- teamId.head
-      ps  <- selfPermissions.head
-    } yield tId.isDefined && ps.contains(AddConversationMember)
-  }
 
   private def observeLogoutEvents(): Unit = {
     accounts.map(_.size).onUi { numberOfAccounts =>

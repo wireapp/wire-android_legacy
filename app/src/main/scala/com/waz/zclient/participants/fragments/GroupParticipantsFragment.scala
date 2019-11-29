@@ -55,7 +55,7 @@ class GroupParticipantsFragment extends FragmentHelper {
   lazy val showAddParticipants = for {
     conv         <- participantsController.conv
     isGroupOrBot <- participantsController.isGroupOrBot
-    hasPerm      <- userAccountsController.hasAddConversationMemberPermission(conv.id)
+    hasPerm      <- participantsController.selfRole.map(_.canAddGroupMember)
   } yield conv.isActive && isGroupOrBot && hasPerm
 
   lazy val shouldEnableAddParticipants = participantsController.otherParticipants.map(_.size + 1 < ConversationController.MaxParticipants)
@@ -76,7 +76,7 @@ class GroupParticipantsFragment extends FragmentHelper {
     shouldEnableAddParticipants.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
   }
 
-  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.otherParticipants.map(_.toSeq), Some(7))) { adapter =>
+  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, Some(7))) { adapter =>
     new FutureEventStream[UserId, Option[UserData]](adapter.onClick, participantsController.getUser).onUi {
       case Some(user) => (user.providerId, user.integrationId) match {
         case (Some(pId), Some(iId)) =>

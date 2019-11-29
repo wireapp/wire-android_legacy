@@ -26,7 +26,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.{MessagesStorage, ReactionsStorage, ReadReceiptsStorage}
-import com.waz.model.{MessageData, RemoteInstant, UserData, UserId}
+import com.waz.model.{ConversationRole, MessageData, RemoteInstant, UserData, UserId}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -61,10 +61,20 @@ class LikesAndReadsFragment extends FragmentHelper {
       .collect { case (storage, Some(msgId)) => (storage, msgId) }
       .flatMap { case (storage, MessageDetailsParams(msgId, _)) => storage.likes(msgId).map(_.likers.keys.toSeq) }
 
+  private lazy val likesWithRoles = for {
+    likes   <- likes
+    members <- convController.currentConvMembers
+  } yield likes.map(id => id -> members.getOrElse(id, ConversationRole.MemberRole)).toMap
+
   private lazy val reads: Signal[Seq[UserId]] =
     Signal(readReceiptsStorage, screenController.showMessageDetails)
       .collect { case (storage, Some(MessageDetailsParams(msgId, _))) => (storage, msgId) }
       .flatMap { case (storage, msgId) => storage.receipts(msgId).map(_.map(_.user)) }
+
+  private lazy val readsWithRoles = for {
+    reads   <- reads
+    members <- convController.currentConvMembers
+  } yield reads.map(id => id -> members.getOrElse(id, ConversationRole.MemberRole)).toMap
 
   private lazy val message = for {
     messagesStorage <- messagesStorage
@@ -89,10 +99,6 @@ class LikesAndReadsFragment extends FragmentHelper {
     selfUserId  <- inject[Signal[UserId]]
     msg         <- message
   } yield selfUserId == msg.userId
-
-  private lazy val isEphemeral = message.map(_.isEphemeral)
-
-  private lazy val isLikeable = message.map(LikesController.isLikeable)
 
   private lazy val detailsCombination = Signal(message, isOwnMessage, convController.currentConv.map(_.team.isDefined)).map {
     case (msg, isOwn, isTeam) => LikesAndReadsFragment.detailsCombination(msg, isOwn, isTeam)
@@ -208,12 +214,12 @@ class LikesAndReadsFragment extends FragmentHelper {
 
    readsView.foreach { rv =>
       rv.setLayoutManager(new LinearLayoutManager(getContext))
-      rv.setAdapter(new ParticipantsAdapter(reads, createSubtitle = Some(createSubtitle), showPeopleOnly = true, showArrow = false))
+      rv.setAdapter(new ParticipantsAdapter(readsWithRoles, createSubtitle = Some(createSubtitle), showPeopleOnly = true, showArrow = false))
     }
 
     likesView.foreach { rv =>
       rv.setLayoutManager(new LinearLayoutManager(getContext))
-      rv.setAdapter(new ParticipantsAdapter(likes, showPeopleOnly = true, showArrow = false))
+      rv.setAdapter(new ParticipantsAdapter(likesWithRoles, showPeopleOnly = true, showArrow = false))
     }
 
     detailsCombination.head.foreach {

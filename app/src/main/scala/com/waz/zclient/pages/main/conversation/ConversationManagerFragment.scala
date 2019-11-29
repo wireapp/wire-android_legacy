@@ -145,8 +145,8 @@ class ConversationManagerFragment extends FragmentHelper
       case true =>
         keyboard.hideKeyboardIfVisible()
         navigationController.setRightPage(Page.PICK_USER_ADD_TO_CONVERSATION, ConversationManagerFragment.Tag)
-        convController.currentConvMembers.head.map { members =>
-          createConvController.setCreateConversation(members, GroupConversationEvent.ConversationDetails)
+        convController.currentConvOtherMembers.head.map { members =>
+          createConvController.setCreateConversation(members.keySet, GroupConversationEvent.ConversationDetails)
           import CreateConversationManagerFragment._
           showFragment(newInstance, Tag)
         }
