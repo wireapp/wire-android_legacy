@@ -31,7 +31,6 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
         get() = mutableOtherDevices
 
     private val mutableOtherDevices = MutableLiveData<List<ClientItem>>()
-
     val currentDevice: LiveData<ClientItem>
         get() = mutableCurrentDevice
 
@@ -51,14 +50,14 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
         }
     }
 
-    private fun handleFailure(message: String?) {
-        mutableState.value = ClientPresentationState.Error(message!!)
-    }
-
     private fun handleAllClientsSuccess(result: List<Client>) {
         when {
             result.isNullOrEmpty() -> mutableState.value = ClientPresentationState.Empty
-            result.isNotEmpty() -> mutableOtherDevices.value = result.toPresentationList()
+            result.isNotEmpty() -> mutableOtherDevices.postValue(result.toPresentationList())
         }
+    }
+
+    private fun handleFailure(message: String?) {
+        mutableState.value = ClientPresentationState.Error(message!!)
     }
 }

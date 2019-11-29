@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
@@ -80,13 +81,15 @@ class SettingsDeviceListFragment : Fragment() {
         }
     }
 
-    private fun bindCurrentDevice(currentDevice: ClientItem) {
-        singleDeviceViewHolder.bind(currentDevice, itemClickListener)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        deviceListViewModel.loadData()
+        lifecycleScope.launchWhenResumed {
+            deviceListViewModel.loadData()
+        }
+    }
+
+    private fun bindCurrentDevice(currentDevice: ClientItem) {
+        singleDeviceViewHolder.bind(currentDevice, itemClickListener)
     }
 
     companion object {
