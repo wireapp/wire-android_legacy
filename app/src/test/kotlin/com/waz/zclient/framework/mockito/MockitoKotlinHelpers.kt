@@ -1,4 +1,4 @@
-package com.bradley.wilson.wiretest.framework
+package com.waz.zclient.framework.mockito
 
 /*
  * Copyright (C) 2017 The Android Open Source Project
