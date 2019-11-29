@@ -2,13 +2,11 @@ package com.waz.client.user.data.repository
 
 import com.waz.client.user
 import com.waz.client.userEntity
-import com.waz.zclient.user.data.mapper.UserEntityMapper
 import com.waz.zclient.user.data.repository.UserRepository
 import com.waz.zclient.user.data.repository.UserRepositoryImpl
 import com.waz.zclient.user.data.source.remote.UserRemoteDataSource
 import io.reactivex.Single
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -18,13 +16,13 @@ import org.mockito.MockitoAnnotations
 class UserRepositoryImplTest {
 
 
-    private lateinit var userRepository : UserRepository
+    private lateinit var userRepository: UserRepository
 
     @Mock
-    private lateinit var userRemoteDataSource : UserRemoteDataSource
-    
+    private lateinit var userRemoteDataSource: UserRemoteDataSource
+
     @Mock
-    private lateinit var throwable : Throwable
+    private lateinit var throwable: Throwable
 
     @Before
     fun setUp() {

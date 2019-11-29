@@ -15,14 +15,14 @@ class UserEntityMapperTest {
     fun test_MapToDomain() {
 
         val user = userMapper.mapToDomain(userEntity)
-        assertEquals(userEntity.id,user.id )
-        assertEquals(userEntity.email , user.email)
-        assertEquals(userEntity.phone , user.phone)
-        assertEquals(userEntity.handle , user.handle)
-        assertEquals(userEntity.locale , user.locale)
-        assertEquals(userEntity.managedBy , user.managedBy)
-        assertEquals(userEntity.accentId , user.accentId)
-        assertEquals(userEntity.name , user.name)
-        assertEquals(userEntity.deleted , user.deleted)
+        assertEquals(userEntity.id, user.id)
+        assertEquals(userEntity.email, user.email)
+        assertEquals(userEntity.phone, user.phone)
+        assertEquals(userEntity.handle, user.handle)
+        assertEquals(userEntity.locale, user.locale)
+        assertEquals(userEntity.managedBy, user.managedBy)
+        assertEquals(userEntity.accentId, user.accentId)
+        assertEquals(userEntity.name, user.name)
+        assertEquals(userEntity.deleted, user.deleted)
     }
 }

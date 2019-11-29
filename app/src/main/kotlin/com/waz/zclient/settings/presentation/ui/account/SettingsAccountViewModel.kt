@@ -17,7 +17,7 @@ import io.reactivex.observers.DisposableCompletableObserver
 import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
 
-class SettingsAccountViewModel() : ViewModel() {
+class SettingsAccountViewModel : ViewModel() {
 
 
     private val getUserProfileUseCase = GetUserProfileUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
@@ -29,11 +29,10 @@ class SettingsAccountViewModel() : ViewModel() {
     val profileUserData = MutableLiveData<Resource<UserItem>>()
 
 
-
     fun getProfile() = getUserProfileUseCase.execute(GetUserProfileObserver())
-    fun updateName(name:String) = updateNameUseCase.execute(UpdateNameObserver(),name)
-    fun updateHandle(handle:String) = updateHandleUseCase.execute(UpdateHandleObserver(),handle)
-    fun updatePhone(phone:String) = updatePhoneUseCase.execute(UpdatePhoneObserver(),phone)
+    fun updateName(name: String) = updateNameUseCase.execute(UpdateNameObserver(), name)
+    fun updateHandle(handle: String) = updateHandleUseCase.execute(UpdateHandleObserver(), handle)
+    fun updatePhone(phone: String) = updatePhoneUseCase.execute(UpdatePhoneObserver(), phone)
 
     override fun onCleared() {
         getUserProfileUseCase.dispose()
@@ -57,6 +56,7 @@ class SettingsAccountViewModel() : ViewModel() {
         override fun onComplete() {
 
         }
+
         override fun onError(e: Throwable) {
             e.printStackTrace()
         }
@@ -66,6 +66,7 @@ class SettingsAccountViewModel() : ViewModel() {
         override fun onComplete() {
 
         }
+
         override fun onError(e: Throwable) {
             e.printStackTrace()
         }
@@ -75,6 +76,7 @@ class SettingsAccountViewModel() : ViewModel() {
         override fun onComplete() {
 
         }
+
         override fun onError(e: Throwable) {
             e.printStackTrace()
         }

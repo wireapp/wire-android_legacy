@@ -14,10 +14,10 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-         setContentView( R.layout.activity_settings_new)
-         setSupportActionBar(toolbar)
-         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-         replaceFragment(R.id.layout_container, SettingsFragment.newInstance(), false)
+        setContentView(R.layout.activity_settings_new)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        replaceFragment(R.id.layout_container, SettingsFragment.newInstance(), false)
     }
 
     override fun onSupportNavigateUp(): Boolean {
