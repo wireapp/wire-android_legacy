@@ -1,5 +1,6 @@
 package com.waz.zclient.core.data.source.remote
 
+import com.waz.zclient.BuildConfig
 import com.waz.zclient.user.data.source.remote.UserApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -27,7 +28,11 @@ open class Network {
                 chain.proceed(newRequest)
             }
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                val level = if (BuildConfig.DEBUG) {
+                    HttpLoggingInterceptor.Level.BODY
+                } else {
+                    HttpLoggingInterceptor.Level.NONE
+                }
             })
             .build()
 
@@ -46,7 +51,7 @@ open class Network {
     companion object {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
-        private const val API_TOKEN = "MRDhAns9skru1yBSpxwnPK6WOKyKv5SZFnmMvAVSafgVQG3-azp0jbNWyyCTVZWh1-YzAzRRjriQZoC2VUwcBA==.v=1.k=1.d=1574873920.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=3712706875411023067"
+        private const val API_TOKEN = "JfmNdZ3AtGOqfsEVIBbZoYYQQF-23ZgXX67sJBGAfHrOpIeuEjyaCT4mK01qjw7cu8tZTZrrkI3k-wGlceaiDA==.v=1.k=1.d=1574948767.t=a.l=.u=4555f7b2-f97b-409f-8c3a-333a473ac1b9.c=6774290809779886528"
     }
 }
 
