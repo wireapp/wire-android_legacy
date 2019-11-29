@@ -197,7 +197,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         if (currentUserIsAdmin && !noServices) addManageServicesButton()
         addIntegrations()
       } else {
-        if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get) {
+        if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isExternal.currentValue.get) {
           addGroupCreationButton()
           addGuestRoomCreationButton()
         }
@@ -206,7 +206,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         addConnections()
       }
     } else {
-      if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isPartner.currentValue.get)
+      if (searchController.filter.currentValue.forall(_.isEmpty) && !userAccountsController.isExternal.currentValue.get)
         addGroupCreationButton()
       addTopPeople()
       addContacts()
