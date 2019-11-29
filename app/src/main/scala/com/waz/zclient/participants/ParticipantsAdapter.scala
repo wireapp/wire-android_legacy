@@ -46,6 +46,9 @@ import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
 import com.waz.content.UsersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.{SearchQuery, TeamSizeThreshold}
+import com.waz.threading.Threading
 
 //TODO Maybe it will be better to split this adapter in two? One for participants and another for options?
 class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
@@ -54,8 +57,9 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
                           showArrow: Boolean = true,
                           createSubtitle: Option[(UserData) => String] = None
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
-  extends RecyclerView.Adapter[ViewHolder] with Injectable {
+  extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
+  import Threading.Implicits.Ui
 
   private lazy val usersStorage = inject[Signal[UsersStorage]]
   private lazy val team         = inject[Signal[Option[TeamId]]]
@@ -89,7 +93,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     userIds       <- userIds
     users         <- usersStorage.listSignal(userIds)
     f             <- filter
-    filteredUsers = users.filter(_.matchesFilter(f))
+    filteredUsers =  users.filter(_.matchesQuery(SearchQuery(f)))
   } yield filteredUsers.map(u => ParticipantData(u, u.isGuest(tId) && !u.isWireBot)).sortBy(_.userData.getDisplayName.str)
 
   private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
@@ -145,6 +149,12 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
   }
 
   private val conv = convController.currentConv
+  private var hideUserStatus = false
+
+  TeamSizeThreshold.shouldHideStatus(team, usersStorage).foreach { hide =>
+    hideUserStatus = hide
+    notifyDataSetChanged()
+  }
 
   (for {
     name  <- conv.map(_.displayName)
@@ -210,7 +220,7 @@ class ParticipantsAdapter(userIds: Signal[Seq[UserId]],
     case (Right(AllParticipants), h: ShowAllParticipantsViewHolder) =>
       h.bind(peopleCount)
     case (Left(userData), h: ParticipantRowViewHolder) =>
-      h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle)
+      h.bind(userData, teamId, maxParticipants.forall(peopleCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle, hideUserStatus)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
       h.bind(readReceiptsEnabled)
     case (Right(ConversationName), h: ConversationNameViewHolder) =>
@@ -307,11 +317,11 @@ object ParticipantsAdapter {
 
     view.onClick(userId.foreach(onClick ! _))
 
-    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[(UserData) => String]): Unit = {
+    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[(UserData) => String], hideStatus: Boolean): Unit = {
       userId = Some(participant.userData.id)
       createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, teamId, f)
-        case None    => view.setUserData(participant.userData, teamId)
+        case Some(f) => view.setUserData(participant.userData, teamId, hideStatus, f)
+        case None    => view.setUserData(participant.userData, teamId, hideStatus)
       }
       view.setSeparatorVisible(!lastRow)
     }

@@ -39,7 +39,6 @@ import com.waz.model.MsgDeletion.MsgDeletionDao
 import com.waz.model.NotificationData.NotificationDataDao
 import com.waz.model.PushNotificationEvents.PushNotificationEventsDao
 import com.waz.model.ReadReceipt.ReadReceiptDao
-import com.waz.model.SearchQueryCache.SearchQueryCacheDao
 import com.waz.model.TeamData.TeamDataDao
 import com.waz.model.UserData.UserDataDao
 import com.waz.model._
@@ -65,10 +64,10 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 123
+  val DbVersion = 124
 
   lazy val daos = Seq (
-    UserDataDao, SearchQueryCacheDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
+    UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
     MessageDataDao, KeyValueDataDao, SyncJobDao, ErrorDataDao, NotificationDataDao,
     ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao, ContactsDao, EmailAddressesDao,
     PhoneNumbersDao, MsgDeletionDao, EditHistoryDao, MessageContentIndexDao,
@@ -363,7 +362,7 @@ object ZMessagingDB {
       // Add asset_id to the message data, referencing the new assets
       db.execSQL(s"ALTER TABLE ${MessageDataDao.table.name} ADD COLUMN ${MessageDataDao.AssetId.name} TEXT DEFAULT null")
 
-      val messages = MessageDataDao.findByTypes(Set(Message.Type.ANY_ASSET, Message.Type.VIDEO_ASSET, Message.Type.AUDIO_ASSET, Message.Type.ASSET))(db)
+      val messages = MessageDataDao.findByTypes(Set(Message.Type.ANY_ASSET, Message.Type.VIDEO_ASSET, Message.Type.AUDIO_ASSET, Message.Type.IMAGE_ASSET))(db)
 
       messages.foreach { m =>
         m.protos.lastOption match {
@@ -382,6 +381,9 @@ object ZMessagingDB {
     Migration(122, 123) { db =>
       db.execSQL(FolderDataDao.table.createSql)
       db.execSQL(ConversationFolderDataDao.table.createSql)
+    },
+    Migration(123,124) { db =>
+      db.execSQL("DROP TABLE IF EXISTS SearchQueries")
     }
   )
 }

@@ -19,8 +19,8 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{Handle, SearchQuery}
-import com.waz.service.UserSearchService
+import com.waz.model.Handle
+import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UserSearchClient
 import com.waz.threading.Threading
@@ -50,7 +50,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
       debug(l"exactMatchHandle, got: $userId for the handle $handle")
       for {
         _ <- usersSyncHandler.syncUsers(userId)
-        _ <- userSearch.updateExactMatch(handle, userId)
+        _ <- userSearch.updateExactMatch(userId)
       } yield SyncResult.Success
     case Right(None)         => successful(SyncResult.Success)
     case Left(error)         => successful(SyncResult(error))

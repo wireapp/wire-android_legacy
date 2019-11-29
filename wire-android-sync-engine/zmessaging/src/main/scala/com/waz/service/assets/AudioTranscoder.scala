@@ -72,7 +72,7 @@ class AudioTranscoder(tempFiles: TempFileService, context: Context) {
       })
 
       new CancellableFuture(promisedFile)
-    } (Threading.BlockingIO)
+    } (Threading.IO)
 
   import AudioLevels.MediaCodecCleanedUp
 

@@ -70,7 +70,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
         set(messageData.location.map(_.getName).getOrElse(getString(R.string.reply_message_type_location)), bold = true, Some(WireStyleKit.drawLocation), None)
       case Type.VIDEO_ASSET =>
         set(getString(R.string.reply_message_type_video), bold = true, Some(WireStyleKit.drawVideocall), messageData.assetId)
-      case Type.ASSET =>
+      case Type.IMAGE_ASSET =>
         set(getString(R.string.reply_message_type_image), bold = true, Some(WireStyleKit.drawImage), messageData.assetId)
       case Type.AUDIO_ASSET =>
         set(getString(R.string.reply_message_type_audio), bold = true, Some(WireStyleKit.drawVoiceMemo), None)

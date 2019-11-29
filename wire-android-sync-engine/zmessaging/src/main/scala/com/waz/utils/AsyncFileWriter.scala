@@ -21,7 +21,7 @@ import java.io.{File, FileOutputStream}
 import java.nio.ByteBuffer
 
 import com.waz.threading.SerialDispatchQueue
-import com.waz.threading.Threading.{Background, BlockingIO}
+import com.waz.threading.Threading.{Background,IO}
 
 import scala.concurrent.Future.successful
 import scala.concurrent.{Future, Promise}
@@ -54,7 +54,7 @@ class AsyncFileWriter(file: File) {
                 promisedCompletion.tryFailure(t)
                 throw t
             }
-          }(BlockingIO)
+          }(IO)
         }(Background)
       }
   }

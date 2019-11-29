@@ -416,7 +416,7 @@ class ContactsServiceImpl(userId:         UserId,
 
         sink.done
       } finally cursor.close()
-  }(Threading.BlockingIO)
+  }(Threading.IO)
 
   def onAddressBookUploaded(ab: AddressBook, result: Seq[(UserId, Set[ContactId])]): Future[Unit] = {
     val pymk = result.map(_._1)

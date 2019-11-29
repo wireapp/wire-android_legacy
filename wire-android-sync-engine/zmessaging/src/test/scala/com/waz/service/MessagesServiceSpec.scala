@@ -47,7 +47,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val members =       mock[MembersStorage]
   val users =         mock[UsersStorage]
   val replyHashing =  mock[ReplyHashing]
-  val prefs =         new TestGlobalPreferences()
+  lazy val prefs =         new TestGlobalPreferences()
 
   def getService = {
     val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)

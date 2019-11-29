@@ -45,7 +45,7 @@ object ContentURIs extends DerivedLogTag {
 
       MetaData(mime, nameFromProvider orElse nameFromUri, sizeFromProvider)
     } getOrElse MetaData(mime, nameFromUri, None)
-  }(Threading.BlockingIO)
+  }(Threading.IO)
 
   case class MetaData(mime: Mime, name: Option[String], size: Option[Long])
 }

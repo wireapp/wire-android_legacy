@@ -19,24 +19,24 @@
 package com.waz.zclient.usersearch
 
 import android.Manifest.permission.READ_CONTACTS
-import android.content.{DialogInterface, Intent}
+import android.content.{Context, DialogInterface, Intent}
 import android.os.Bundle
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
-import androidx.appcompat.app.AlertDialog
 import android.view._
 import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
-import android.widget.{CheckBox, CompoundButton, ImageView, RelativeLayout, TextView}
 import android.widget.TextView.OnEditorActionListener
+import android.widget._
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.waz.content.UserPreferences
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.ZMessaging
 import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, TrackingService}
+import com.waz.service.{SearchQuery, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
@@ -56,8 +56,11 @@ import com.waz.zclient.pages.main.conversation.controller.IConversationScreenCon
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.paintcode.ManageServicesIcon
+import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.usersearch.SearchUIFragment.{Container, PERFORM_SEARCH_DELAY, SHOW_KEYBOARD_THRESHOLD, TAG}
+import com.waz.zclient.usersearch.domain.RetrieveSearchResults
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, ResColor, RichView, StringUtils, UiStorage, UserSignal}
@@ -67,15 +70,15 @@ import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
+class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
   with SearchUIAdapter.Callback {
 
   import Threading.Implicits.Ui
 
-  private implicit lazy val uiStorage = inject[UiStorage]
+  private implicit lazy val uiStorage: UiStorage = inject[UiStorage]
 
-  private implicit def context = getContext
+  private implicit def context: Context = getContext
 
   private lazy val zms                    = inject[Signal[ZMessaging]]
   private lazy val self                   = zms.flatMap(z => UserSignal(z.selfUserId))
@@ -83,37 +86,61 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
   private lazy val conversationController = inject[ConversationController]
   private lazy val browser                = inject[BrowserController]
-  private lazy val convListController     = inject[ConversationListController]
+  private lazy val conversationListController     = inject[ConversationListController]
   private lazy val keyboard               = inject[KeyboardController]
   private lazy val tracking               = inject[TrackingService]
   private lazy val spinner                = inject[SpinnerController]
   private lazy val pickUserController     = inject[IPickUserController]
-  private lazy val convScreenController   = inject[IConversationScreenController]
+  private lazy val conversationScreenController   = inject[IConversationScreenController]
   private lazy val navigationController   = inject[INavigationController]
 
   private lazy val shareContactsPref      = zms.map(_.userPrefs.preference(UserPreferences.ShareContacts))
   private lazy val showShareContactsPref  = zms.map(_.userPrefs.preference(UserPreferences.ShowShareContacts))
 
-  private lazy val adapter = new SearchUIAdapter(this)
+  private lazy val adapter                = new SearchUIAdapter(this)
+  private lazy val searchController       = inject[SearchController]
+  private lazy val retrieveSearchResults  = new RetrieveSearchResults()
 
-  private lazy val searchResultRecyclerView = view[RecyclerView](R.id.rv__pickuser__header_list_view)
-  private lazy val startUiToolbar           = view[Toolbar](R.id.pickuser_toolbar)
+  private lazy val startUiToolbar         = view[Toolbar](R.id.pickuser_toolbar)
 
-  private val convCreationInProgress = Signal(false)
+  private var subs = Set.empty[Subscription]
+
+  private val conversationCreationInProgress = Signal(false)
 
   private lazy val inviteButton = returning(view[FlatWireButton](R.id.invite_button)) { vh =>
-    userAccountsController.isTeam.flatMap {
+    subs += userAccountsController.isTeam.flatMap {
       case true => Signal.const(false)
       case _    => keyboard.isKeyboardVisible.map(!_)
     }.onUi(vis => vh.foreach(_.setVisible(vis)))
   }
 
+  private var scheduledSearchQuery = Option.empty[CancellableFuture[Unit]]
+
   private lazy val searchBox = returning(view[SearchEditText](R.id.sbv__search_box)) { vh =>
-    accentColor.onUi(color => vh.foreach(_.setCursorColor(color)))
+    subs += accentColor.onUi(color => vh.foreach(_.setCursorColor(color)))
+
+    vh.foreach(_.setCallback(new SearchEditText.Callback {
+      override def onRemovedTokenSpan(element: PickableElement): Unit = {}
+
+      override def onFocusChange(hasFocus: Boolean): Unit = {}
+
+      override def onClearButton(): Unit = closeStartUI()
+
+      override def afterTextChanged(s: String): Unit = {
+        scheduledSearchQuery.foreach(_.cancel())
+        scheduledSearchQuery = Option(CancellableFuture.delay(PERFORM_SEARCH_DELAY).map { _ =>
+          vh.foreach { view =>
+            val filter = view.getSearchFilter
+            if (filter != "@") searchController.filter! filter
+          } // should be safe; if the fragment is destroyed, vh will be None
+          scheduledSearchQuery = None
+        })
+      }
+    }))
   }
 
   private lazy val toolbarTitle = returning(view[TypefaceTextView](R.id.pickuser_title)) { vh =>
-    userAccountsController.isTeam.flatMap {
+    subs += userAccountsController.isTeam.flatMap {
       case false => userAccountsController.currentUser.map(_.map(_.name))
       case _     => userAccountsController.teamData.map(_.map(_.name))
     }.map(_.getOrElse(Name.Empty))
@@ -121,16 +148,16 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   }
 
   private lazy val emptyServicesIcon = returning(view[ImageView](R.id.empty_services_icon)) { vh =>
-    adapter.searchResults.map {
+    subs += searchController.searchUserOrServices.map {
       case SearchUserListState.NoServices => View.VISIBLE
       case _ => View.GONE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
   }
 
   private lazy val emptyServicesButton = returning(view[TypefaceTextView](R.id.empty_services_button)) { vh =>
-    (for {
+    subs += (for {
       isAdmin  <- userAccountsController.isAdmin
-      res      <- adapter.searchResults
+      res      <- searchController.searchUserOrServices
     } yield res match {
       case SearchUserListState.NoServices if isAdmin => View.VISIBLE
       case _ => View.GONE
@@ -140,14 +167,14 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   }
 
   private lazy val errorMessageView = returning(view[TypefaceTextView](R.id.pickuser__error_text)) { vh =>
-    adapter.searchResults.map {
+    subs += searchController.searchUserOrServices.map {
       case SearchUserListState.Services(_) | SearchUserListState.Users(_) => View.GONE
       case _ => View.VISIBLE
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
-    (for {
+    subs += (for {
       isAdmin  <- userAccountsController.isAdmin
-      res      <- adapter.searchResults
+      res      <- searchController.searchUserOrServices
     } yield res match {
       case SearchUserListState.NoUsers               => R.string.new_conv_no_contacts
       case SearchUserListState.NoUsersFound          => R.string.new_conv_no_results
@@ -161,27 +188,14 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   }
 
   private lazy val emptyListButton = returning(view[RelativeLayout](R.id.empty_list_button)) { v =>
-    (for {
-      zms <- zms
+    subs += (for {
+      zms         <- zms
       permissions <- userAccountsController.selfPermissions.orElse(Signal.const(Set.empty[UserPermissions.Permission]))
-      members <- zms.teams.searchTeamMembers().orElse(Signal.const(Set.empty[UserData]))
-      searching <- adapter.filter.map(_.nonEmpty)
+      members <- zms.teams.searchTeamMembers(SearchQuery.Empty).orElse(Signal.const(Set.empty[UserData]))
+      searching <- searchController.filter.map(_.nonEmpty)
      } yield
        zms.teamId.nonEmpty && permissions(UserPermissions.Permission.AddTeamMember) && !members.exists(_.id != zms.selfUserId) && !searching
     ).onUi(visible => v.foreach(_.setVisible(visible)))
-  }
-
-  private val searchBoxViewCallback = new SearchEditText.Callback {
-    override def onRemovedTokenSpan(element: PickableElement): Unit = {}
-
-    override def onFocusChange(hasFocus: Boolean): Unit = {}
-
-    override def onClearButton(): Unit = closeStartUI()
-
-    override def afterTextChanged(s: String): Unit = searchBox.foreach { v =>
-      val filter = v.getSearchFilter
-      adapter.filter ! filter
-    }
   }
 
   override def onCreateAnimation(transit: Int, enter: Boolean, nextAnim: Int): Animation = {
@@ -212,12 +226,17 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   private var containerSub = Option.empty[Subscription] //TODO remove subscription...
 
   override def onViewCreated(rootView: View, savedInstanceState: Bundle): Unit = {
+    val searchResultRecyclerView = view[RecyclerView](R.id.rv__pickuser__header_list_view)
     searchResultRecyclerView.foreach { rv =>
       rv.setLayoutManager(new LinearLayoutManager(getActivity))
       rv.setAdapter(adapter)
     }
 
-    searchBox.foreach(_.setCallback(searchBoxViewCallback))
+    retrieveSearchResults.resultsData.onUi { results =>
+       adapter.updateResults(results)
+    }
+
+    searchBox
 
     inviteButton.foreach { btn =>
       btn.setText(R.string.pref_invite_title)
@@ -248,28 +267,27 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     }))
 
     val tabs = findById[TabLayout](rootView, R.id.pick_user_tabs)
-    adapter.tab.map(_ == Tab.People).map(if (_) 0 else 1).head.foreach(tabs.getTabAt(_).select())
+    searchController.tab.map(_ == Tab.People).map(if (_) 0 else 1).head.foreach(tabs.getTabAt(_).select())
 
     tabs.addOnTabSelectedListener(new OnTabSelectedListener {
       override def onTabSelected(tab: TabLayout.Tab): Unit = {
         tab.getPosition match {
-          case 0 => adapter.tab ! Tab.People
-          case 1 => adapter.tab ! Tab.Services
+          case 0 => searchController.tab ! Tab.People
+          case 1 => searchController.tab ! Tab.Services
         }
         searchBox.foreach(_.removeAllElements())
       }
 
       override def onTabUnselected(tab: TabLayout.Tab): Unit = {}
-
       override def onTabReselected(tab: TabLayout.Tab): Unit = {}
     })
 
-    (for {
-      isTeam <- userAccountsController.isTeam
+    subs += (for {
+      isTeam    <- userAccountsController.isTeam
       isPartner <- userAccountsController.isPartner
     } yield isTeam && !isPartner).onUi(tabs.setVisible)
 
-    adapter.filter ! ""
+    searchController.filter! ""
 
     containerSub = Some((for {
       kb <- keyboard.isKeyboardVisible
@@ -295,7 +313,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
     CancellableFuture.delay(getInt(R.integer.people_picker__keyboard__show_delay).millis).map { _ =>
 
-      convListController.establishedConversations.head.map(_.size > SearchUIFragment.SHOW_KEYBOARD_THRESHOLD).flatMap {
+      conversationListController.establishedConversations.head.map(_.size > SHOW_KEYBOARD_THRESHOLD).flatMap {
         case true => userAccountsController.isTeam.head.map {
           case true => searchBox.foreach { v =>
             v.setFocus()
@@ -313,9 +331,11 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
     super.onPause()
   }
 
-  override def onDestroyView(): Unit = {
+  override def onDestroy(): Unit = {
     containerSub.foreach(_.destroy())
     containerSub = None
+    subs.foreach(_.destroy())
+    subs = Set.empty
     super.onDestroyView()
   }
 
@@ -333,22 +353,22 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
         import ConnectionStatus._
         keyboard.hideKeyboardIfVisible()
         if (user.connection == Accepted || (user.connection == Unconnected && z.teamId.isDefined && z.teamId == user.teamId)) {
-          convCreationInProgress.head.foreach {
+          conversationCreationInProgress.head.foreach {
             case false =>
               spinner.showSpinner(true)
-              convCreationInProgress ! true
+              conversationCreationInProgress ! true
               userAccountsController
                 .getOrCreateAndOpenConvFor(userId)
                 .onComplete { _ =>
                   spinner.hideSpinner()
-                  convCreationInProgress ! false
+                  conversationCreationInProgress ! false
                 }
             case _ =>
           }
         } else {
           user.connection match {
             case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
-              convScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
+              conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
               pickUserController.showUserProfile(userId, false)
             case ConnectionStatus.PendingFromOther =>
               getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
@@ -368,7 +388,7 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   override def onManageServicesClicked(): Unit = browser.openManageServices()
 
-  override def onCreateConvClicked(): Unit = {
+  override def onCreateConversationClicked(): Unit = {
     keyboard.hideKeyboardIfVisible()
     inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
     getFragmentManager.beginTransaction
@@ -383,17 +403,17 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
   }
 
 
-  override def onCreateGuestRoomClicked(): Unit = convCreationInProgress.head.foreach {
+  override def onCreateGuestRoomClicked(): Unit = conversationCreationInProgress.head.foreach {
     case true =>
     case false =>
-      convCreationInProgress ! true
+      conversationCreationInProgress ! true
       spinner.showSpinner(true)
       tracking.track(TrackingEvent("guest_rooms.guest_room_creation"))
       keyboard.hideKeyboardIfVisible()
       conversationController.createGuestRoom().flatMap { conv =>
         spinner.hideSpinner()
         conversationController.selectConv(Some(conv.id), ConversationChangeRequester.START_CONVERSATION)
-      }.onComplete(_ => convCreationInProgress ! false)
+      }.onComplete(_ => conversationCreationInProgress ! false)
   }
 
   private def sendGenericInvite(fromSearch: Boolean): Unit =
@@ -406,8 +426,8 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
 
   private def closeStartUI(): Unit = {
     keyboard.hideKeyboardIfVisible()
-    adapter.filter ! ""
-    adapter.tab ! Tab.People
+    searchController.filter! ""
+    searchController.tab ! Tab.People
     pickUserController.hidePickUser()
   }
 
@@ -463,21 +483,25 @@ class SearchUIFragment extends BaseFragment[SearchUIFragment.Container]
       .addToBackStack(Tag)
       .commit()
 
-    navigationController.setLeftPage(Page.INTEGRATION_DETAILS, SearchUIFragment.TAG)
+    navigationController.setLeftPage(Page.INTEGRATION_DETAILS, TAG)
+  }
+
+  override def onContactsExpanded(): Unit = {
+    retrieveSearchResults.expandContacts()
+  }
+
+  override def onGroupsExpanded(): Unit = {
+    retrieveSearchResults.expandGroups()
   }
 }
 
 object SearchUIFragment {
   val TAG: String = classOf[SearchUIFragment].getName
+
   private val SHOW_KEYBOARD_THRESHOLD: Int = 10
+  private val PERFORM_SEARCH_DELAY = 500.millis
 
-  val internalVersion = BuildConfig.APPLICATION_ID match {
-    case "com.wire.internal" | "com.waz.zclient.dev" | "com.wire.x" | "com.wire.qa" => true
-    case _ => false
-  }
-
-  def newInstance(): SearchUIFragment =
-    new SearchUIFragment
+  def newInstance(): SearchUIFragment = new SearchUIFragment
 
   trait Container {
     def showIncomingPendingConnectRequest(conv: ConvId): Unit
