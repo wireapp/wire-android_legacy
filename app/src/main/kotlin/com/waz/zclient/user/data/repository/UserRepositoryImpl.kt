@@ -2,9 +2,7 @@ package com.waz.zclient.user.data.repository
 
 
 import com.waz.zclient.user.data.mapper.UserEntityMapper
-import com.waz.zclient.user.data.source.remote.Network
 import com.waz.zclient.user.data.source.remote.UserRemoteDataSource
-import com.waz.zclient.user.data.source.remote.UserRemoteDataSourceImpl
 import com.waz.zclient.user.domain.model.User
 import io.reactivex.Completable
 import io.reactivex.Single
