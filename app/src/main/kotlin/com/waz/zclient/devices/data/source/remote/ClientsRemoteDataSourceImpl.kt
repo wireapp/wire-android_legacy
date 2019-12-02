@@ -7,11 +7,11 @@ import com.waz.zclient.devices.data.model.ClientEntity
 class ClientsRemoteDataSourceImpl(private val clientsApi: ClientsApi)
     : ClientsRemoteDataSource, SafeApiDataSource() {
 
-    override suspend fun getClientById(clientId: String): Resource<ClientEntity> = getRequestResult {
+    override suspend fun getClientById(clientId: String): Resource<ClientEntity> = requestResult() {
         clientsApi.getClientByIdAsync(clientId)
     }
 
-    override suspend fun getAllClients(): Resource<Array<ClientEntity>> = getRequestResult {
+    override suspend fun getAllClients(): Resource<Array<ClientEntity>> = requestResult() {
         clientsApi.getAllClientsAsync()
     }
 }

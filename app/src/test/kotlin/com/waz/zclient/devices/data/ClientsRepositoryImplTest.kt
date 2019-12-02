@@ -78,7 +78,7 @@ class ClientsRepositoryImplTest {
 
     @After
     fun tearDown() {
-        ClientsRepositoryImpl.instance = null
+        ClientsRepositoryImpl.destroyInstance()
     }
 
     companion object {

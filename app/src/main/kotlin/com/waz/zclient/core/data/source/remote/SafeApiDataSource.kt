@@ -6,7 +6,7 @@ import timber.log.Timber
 
 abstract class SafeApiDataSource {
 
-    protected suspend fun <T> getRequestResult(responseCall: suspend () -> Response<T>): Resource<T> {
+    protected suspend fun <T> requestResult(responseCall: suspend () -> Response<T>): Resource<T> {
         try {
             val response = responseCall()
             if (response.isSuccessful) {
