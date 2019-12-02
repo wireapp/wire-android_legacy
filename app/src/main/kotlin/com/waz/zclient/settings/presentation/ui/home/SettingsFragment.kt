@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
+import com.waz.zclient.core.lists.OnItemClickListener
 import com.waz.zclient.settings.presentation.ui.about.AboutFragment
 import com.waz.zclient.settings.presentation.ui.account.AccountFragment
 import com.waz.zclient.settings.presentation.ui.advanced.AdvancedFragment
 import com.waz.zclient.settings.presentation.ui.devices.list.SettingsDeviceListFragment
-import com.waz.zclient.settings.presentation.ui.home.list.OnItemClickListener
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListAdapter
 import com.waz.zclient.settings.presentation.ui.home.list.SettingsListFactory
 import com.waz.zclient.settings.presentation.ui.options.OptionsFragment

@@ -4,7 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.data.source.remote.RequestResult
+import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -37,17 +38,17 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
         }
     }
 
-    private fun checkAllDevicesResult(result: RequestResult<List<Client>>) {
+    private fun checkAllDevicesResult(result: Resource<List<Client>>) {
         when {
-            result.status == RequestResult.Status.SUCCESS -> result.data?.let {
+            result.status == ResourceStatus.SUCCESS -> result.data?.let {
                 handleLoading(false)
                 handleAllClientsSuccess(it)
             }
-            result.status == RequestResult.Status.ERROR -> result.message?.let {
+            result.status == ResourceStatus.ERROR -> result.message?.let {
                 handleLoading(false)
                 handleFailure(it)
             }
-            result.status == RequestResult.Status.LOADING -> handleLoading(true)
+            result.status == ResourceStatus.LOADING -> handleLoading(true)
         }
     }
 

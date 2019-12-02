@@ -61,7 +61,6 @@ class SettingsDeviceListFragment : Fragment() {
 
     private fun initViewModel() {
         deviceListViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDeviceListViewModel::class.java).also { viewModel ->
-
             viewModel.loading.observe(viewLifecycleOwner, Observer { isLoading ->
                 updateLoadingVisibility(isLoading)
             })

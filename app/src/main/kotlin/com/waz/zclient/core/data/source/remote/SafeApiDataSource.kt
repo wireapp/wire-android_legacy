@@ -1,17 +1,18 @@
 package com.waz.zclient.core.data.source.remote
 
+import com.waz.zclient.core.resources.Resource
 import retrofit2.Response
 import timber.log.Timber
 
 abstract class SafeApiDataSource {
 
-    protected suspend fun <T> getRequestResult(responseCall: suspend () -> Response<T>): RequestResult<T> {
+    protected suspend fun <T> getRequestResult(responseCall: suspend () -> Response<T>): Resource<T> {
         try {
             val response = responseCall()
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    return RequestResult.success(body)
+                    return Resource.success(body)
                 }
             }
             return error(" ${response.code()} ${response.message()}")
@@ -20,9 +21,9 @@ abstract class SafeApiDataSource {
         }
     }
 
-    private fun <T> error(message: String): RequestResult<T> {
+    private fun <T> error(message: String): Resource<T> {
         Timber.e(message)
-        return RequestResult.error("Network call has failed: $message")
+        return Resource.error("Network call has failed: $message")
     }
 
 }

@@ -1,7 +1,7 @@
 package com.waz.zclient.settings.presentation.ui.devices.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.data.source.remote.RequestResult
+import com.waz.zclient.core.resources.Resource
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -41,7 +41,7 @@ class SettingsDeviceListViewModelTest {
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(RequestResult.success(listOf(client))) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(listOf(client))) }
 
         viewModel.loadData()
 
@@ -63,7 +63,7 @@ class SettingsDeviceListViewModelTest {
     @Test
     fun `load data, success response, list is empty, assert list state is empty`() {
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(RequestResult.success(listOf())) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(listOf())) }
 
         viewModel.loadData()
 
@@ -80,7 +80,7 @@ class SettingsDeviceListViewModelTest {
     @Test
     fun `load data, success response, list is null, assert list state is empty`() {
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(RequestResult.success(null)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(null)) }
 
         viewModel.loadData()
 
@@ -97,7 +97,7 @@ class SettingsDeviceListViewModelTest {
     @Test
     fun `load data, error response, list is null, assert list state is empty`() {
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(RequestResult.error(TEST_ERROR_MESSAGE)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.error(TEST_ERROR_MESSAGE)) }
 
         viewModel.loadData()
 
