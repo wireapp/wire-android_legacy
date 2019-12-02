@@ -146,6 +146,9 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     case _ =>
   }(Threading.Ui)
 
+  def setRole(userId: UserId, role: ConversationRole): Future[Unit] =
+    convController.setRoleInCurrentConv(userId, role)
+
 }
 
 object ParticipantsController {

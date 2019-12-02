@@ -91,6 +91,7 @@
             android:layout_marginTop="@dimen/wire__padding__8"
             android:visibility="gone"/>
 
+
         <com.waz.zclient.ui.text.TypefaceTextView
             android:id="@+id/read_receipts_info_title"
             android:layout_width="match_parent"

@@ -1247,6 +1247,9 @@
     <string name="create_conv_options_subtitle_on">ON</string>
     <string name="create_conv_options_subtitle_off">OFF</string>
 
+    <string name="participant_group_admin_toggle_text">Group admin</string>
+    <string name="participant_group_admin_toggle_info_text">When this is on, admin can add or remove people and services, update group settings, change participant’s role, or delete the group.</string>
+
     <string name="open_this_conversation_to_people_outside_your_team">Open this conversation to services and people outside your team.</string>
     <string name="allow_guests">Allow guests and services</string>
     <string name="guest_options_title">Guests and services</string>

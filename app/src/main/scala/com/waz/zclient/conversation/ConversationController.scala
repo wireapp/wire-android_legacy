@@ -128,6 +128,22 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     members <- convMembers(convId)
   } yield members.getOrElse(selfId, ConversationRole.MemberRole)
 
+  def setSelfRole(convId: ConvId, role: ConversationRole): Future[Unit] = for {
+    convs  <- conversations.head
+    selfId <- selfId.head
+  } yield convs.setRole(convId, selfId, role)
+
+  def setSelfRole(role: ConversationRole): Future[Unit] = for {
+    convs  <- conversations.head
+    selfId <- selfId.head
+    convId <- currentConvId.head
+  } yield convs.setRole(convId, selfId, role)
+
+  def setRoleInCurrentConv(userId: UserId, role: ConversationRole): Future[Unit] = for {
+    convs  <- conversations.head
+    convId <- currentConvId.head
+  } yield convs.setRole(convId, userId, role)
+
   currentConvIdOpt {
     case Some(convId) =>
       conversations.head.foreach(_.forceNameUpdate(convId, getString(R.string.default_deleted_username)))

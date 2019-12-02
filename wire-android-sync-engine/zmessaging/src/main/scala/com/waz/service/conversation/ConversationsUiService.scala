@@ -470,5 +470,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     } else {
       Future.successful(true)
     }
+
   }
 }

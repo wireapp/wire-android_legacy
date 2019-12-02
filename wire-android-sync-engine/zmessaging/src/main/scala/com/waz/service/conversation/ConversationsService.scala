@@ -69,6 +69,8 @@ trait ConversationsService {
     */
   def addUnexpectedMembersToConv(convId: ConvId, us: Set[UserId]): Future[Unit]
 
+  def setRole(id: ConvId, userId: UserId, role: ConversationRole): Future[Unit]
+
   def deleteConversation(rConvId: RConvId): Future[Unit]
 }
 
@@ -474,12 +476,15 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case unexpected if unexpected.nonEmpty =>
         for {
           _ <- users.syncIfNeeded(unexpected)
-          _ <- membersStorage.add(convId, unexpected.map(_ -> ConversationRole.AdminRole.label).toMap)
+          _ <- membersStorage.add(convId, unexpected.map(_ -> ConversationRole.MemberRole.label).toMap)
           _ <- Future.traverse(unexpected)(u => messages.addMemberJoinMessage(convId, u, Set(u), forceCreate = true)) //add a member join message for each user discovered
         } yield {}
       case _ => Future.successful({})
     }
   }
+
+  override def setRole(convId: ConvId, userId: UserId, role: ConversationRole): Future[Unit] =
+    membersStorage.update((userId, convId), _.copy(role = role.label)).map(_ => ())
 }
 
 object ConversationsService {

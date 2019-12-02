@@ -19,16 +19,16 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import androidx.annotation.Nullable
-import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import androidx.annotation.Nullable
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
 import com.waz.model.UserField
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
-import com.waz.utils.events.{ClockSignal, Signal}
+import com.waz.utils.events.{ClockSignal, Signal, Subscription}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -54,6 +54,8 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val navigationController   = inject[INavigationController]
+
+  private var subs = Set.empty[Subscription]
 
   private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
 
@@ -226,14 +228,15 @@ class SingleParticipantFragment extends FragmentHelper {
       (for {
         zms                <- inject[Signal[ZMessaging]].head
         user               <- participantsController.otherParticipant.head
+        isGroup            <- participantsController.isGroup.head
         isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
         isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
                               // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
         _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-      } yield (user.id, user.email, isGuest, isDarkTheme, isTeamTheSame)).foreach {
-        case (userId, emailAddress, isGuest, isDarkTheme, isTeamTheSame) =>
-          val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme)
+      } yield (user.id, user.email, isGuest, isDarkTheme, isGroup, isTeamTheSame)).foreach {
+        case (userId, emailAddress, isGuest, isDarkTheme, isGroup, isTeamTheSame) =>
+          val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme, isGroup)
           val emailUserField = emailAddress match {
             case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
             case None        => Seq.empty
@@ -243,13 +246,17 @@ class SingleParticipantFragment extends FragmentHelper {
             participantsController.otherParticipant.map(_.fields),
             availability,
             timerText,
-            readReceipts
+            readReceipts,
+            participantsController.participants.map(_(userId)),
+            participantsController.selfRole
           ).onUi {
-            case (fields, av, tt, rr) if isTeamTheSame =>
-              adapter.set(emailUserField ++ fields, av, tt, rr)
-            case (_, av, tt, rr) =>
-              adapter.set(emailUserField, av, tt, rr)
+            case (fields, av, tt, rr, pRole, sRole) if isTeamTheSame =>
+              adapter.set(emailUserField ++ fields, av, tt, rr, pRole, sRole)
+            case (_, av, tt, rr, pRole, sRole) =>
+              adapter.set(emailUserField, av, tt, rr, pRole, sRole)
           }
+
+          subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(userId, _))
           view.setAdapter(adapter)
       }
     }
@@ -291,6 +298,12 @@ class SingleParticipantFragment extends FragmentHelper {
       navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
     }
     super.onBackPressed()
+  }
+
+  override def onDestroy(): Unit = {
+    subs.foreach(_.destroy())
+    subs = Set.empty
+    super.onDestroy()
   }
 }
 

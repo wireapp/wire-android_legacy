@@ -51,8 +51,6 @@ import com.waz.service.{SearchQuery, TeamSizeThreshold}
 import com.waz.threading.Threading
 import com.waz.zclient.log.LogUI._
 
-//import scala.util.Random
-
 class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]],
                           maxParticipants: Option[Int] = None,
                           showPeopleOnly:  Boolean = false,
@@ -294,7 +292,7 @@ object ParticipantsAdapter {
   val ConversationNameReadOnly = 9
   val OptionsSeparator         = 10
   val AdminsSeparator          = 11
-  val NoResultsInfo = 12
+  val NoResultsInfo            = 12
 
   val separators = Set(AdminsSeparator, MembersSeparator, ServicesSeparator, OptionsSeparator)
 
