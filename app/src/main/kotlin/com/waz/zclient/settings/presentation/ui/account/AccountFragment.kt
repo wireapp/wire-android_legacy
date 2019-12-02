@@ -81,8 +81,8 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
             ResourceStatus.SUCCESS -> {
                 resource.data?.name?.let { name -> namePreference.forceValue(name) }
                 resource.data?.handle?.let { handle -> handlePreference.forceValue(handle) }
-                resource.data?.name?.let { email -> emailPreference.forceValue(email) }
-                resource.data?.name?.let { phone -> phonePreference.forceValue(phone) }
+                resource.data?.email?.let { email -> emailPreference.forceValue(email) }
+                resource.data?.phone?.let { phone -> phonePreference.forceValue(phone) }
             }
             ResourceStatus.ERROR -> {
                 Toast.makeText(activity, resource.message, Toast.LENGTH_LONG).show()
