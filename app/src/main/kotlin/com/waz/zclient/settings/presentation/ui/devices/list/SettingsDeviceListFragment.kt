@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -60,15 +61,13 @@ class SettingsDeviceListFragment : Fragment() {
 
     private fun initViewModel() {
         deviceListViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDeviceListViewModel::class.java).also { viewModel ->
-            viewModel.state.observe(viewLifecycleOwner, Observer { presentationState ->
-                when (presentationState) {
-                    //Potential states (not final)
-                    is ClientPresentationState.Empty -> print("Show warning for empty list here")
-                    is ClientPresentationState.Loading -> print("Show spinner of some form to notify the user we're making a request?")
-                    is ClientPresentationState.Error -> print("Generic error scenario for all requests here")
-                    else -> print("Oops this state doesn't exist.")
-                }
 
+            viewModel.loading.observe(viewLifecycleOwner, Observer { isLoading ->
+                updateLoadingVisibility(isLoading)
+            })
+
+            viewModel.error.observe(viewLifecycleOwner, Observer { errorMessage ->
+                showErrorMessage(errorMessage)
             })
 
             viewModel.currentDevice.observe(viewLifecycleOwner, Observer { currentDevice ->
@@ -79,6 +78,14 @@ class SettingsDeviceListFragment : Fragment() {
                 devicesAdapter.updateList(otherDevices)
             })
         }
+    }
+
+    private fun showErrorMessage(errorMessage: String) {
+        Toast.makeText(requireActivity(), errorMessage, Toast.LENGTH_LONG).show()
+    }
+
+    private fun updateLoadingVisibility(isLoading: Boolean?) {
+        //Show hide progress indicator
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

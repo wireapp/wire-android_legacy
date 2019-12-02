@@ -9,7 +9,7 @@ data class RequestResult<out T>(val status: Status, val data: T?, val message: S
     }
 
     companion object {
-        fun <T> success(data: T): RequestResult<T> {
+        fun <T> success(data: T?): RequestResult<T> {
             return RequestResult(Status.SUCCESS, data, null)
         }
 
