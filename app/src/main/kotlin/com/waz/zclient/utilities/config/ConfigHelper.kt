@@ -7,5 +7,5 @@ object ConfigHelper {
     fun isDeveloperSettingsEnabled(): Boolean = BuildConfig.DEVELOPER_FEATURES_ENABLED
     fun isAppLockForced(): Boolean = BuildConfig.FORCE_APP_LOCK
     fun isHideScreenContentForced(): Boolean = BuildConfig.FORCE_HIDE_SCREEN_CONTENT
-    fun getVersionName(): String = BuildConfig.VERSION_NAME
+    fun versionName(): String = BuildConfig.VERSION_NAME
 }

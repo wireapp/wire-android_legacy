@@ -44,14 +44,14 @@ open class Network {
             .build()
     }
 
-    fun getUserApi(): UserApi {
+    fun userApi(): UserApi {
         return retrofit.create(UserApi::class.java)
     }
 
     companion object {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
-        private const val API_TOKEN = "lGsOCISPyQyz58v2KhVRdIO_j_MIjAc-kF0m3WGQiE2iSGHMyGuS_1mMu-1HyW_WfVPwwACnLKU2GSk860tZAw==.v=1.k=1.d=1575282234.t=a.l=.u=4555f7b2-f97b-409f-8c3a-333a473ac1b9.c=2769494926731504225"
+        private const val API_TOKEN = "Qy9dueVlArQqzTx2GtBE3Rq96H4BWwn8KLWu5iQAQxkjztcSgHY_VpobMhKoRPO4-2nO7fHP0YA-8V7q-1vOAg==.v=1.k=1.d=1575309729.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=17553870542529851280"
     }
 }
 

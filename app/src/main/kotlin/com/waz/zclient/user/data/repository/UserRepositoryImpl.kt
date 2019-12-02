@@ -13,9 +13,9 @@ class UserRepositoryImpl constructor(
 
     private val userEntityMapper = UserEntityMapper()
 
-    override fun getProfile(): Single<User> = remoteDataSource.getProfile().map { userEntityMapper.mapToDomain(it) }
-    override fun updateName(name: String): Completable = remoteDataSource.updateName(name)
-    override fun updateHandle(handle: String): Completable = remoteDataSource.updateHandle(handle)
-    override fun updateEmail(email: String): Completable = remoteDataSource.updateEmail(email)
-    override fun updatePhone(phone: String): Completable = remoteDataSource.updatePhone(phone)
+    override fun profile(): Single<User> = remoteDataSource.profile().map { userEntityMapper.mapToDomain(it) }
+    override fun name(name: String): Completable = remoteDataSource.name(name)
+    override fun handle(handle: String): Completable = remoteDataSource.handle(handle)
+    override fun email(email: String): Completable = remoteDataSource.email(email)
+    override fun phone(phone: String): Completable = remoteDataSource.phone(phone)
 }

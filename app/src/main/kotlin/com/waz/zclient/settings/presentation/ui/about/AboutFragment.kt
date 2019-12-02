@@ -24,7 +24,7 @@ class AboutFragment : Fragment() {
         preferences_about_privacy.setOnClickListener {}
         preferences_about_license.setOnClickListener {}
         preferences_about_license.setOnClickListener { }
-        preferences_about_version.text = getString(R.string.pref_about_version_title, ConfigHelper.getVersionName())
+        preferences_about_version.text = getString(R.string.pref_about_version_title, ConfigHelper.versionName())
 
     }
 

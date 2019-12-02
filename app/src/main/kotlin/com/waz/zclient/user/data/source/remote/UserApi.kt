@@ -12,21 +12,21 @@ import retrofit2.http.PUT
 interface UserApi {
 
     @GET("/self")
-    fun getProfile(): Single<UserEntity>
+    fun profile(): Single<UserEntity>
 
     @FormUrlEncoded
     @PUT("/self/name")
-    fun updateName(@Field("name") name: String): Completable
+    fun name(@Field("name") name: String): Completable
 
     @FormUrlEncoded
     @PUT("/self/handle")
-    fun updateHandle(@Field("handle") handle: String): Completable
+    fun handle(@Field("handle") handle: String): Completable
 
     @FormUrlEncoded
     @PUT("/self/email")
-    fun updateEmail(@Field("email") email: String): Completable
+    fun email(@Field("email") email: String): Completable
 
     @FormUrlEncoded
     @PUT("/self/phone")
-    fun updatePhone(@Field("phone") phone: String): Completable
+    fun phone(@Field("phone") phone: String): Completable
 }
