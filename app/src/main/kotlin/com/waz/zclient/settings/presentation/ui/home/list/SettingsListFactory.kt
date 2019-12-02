@@ -8,8 +8,6 @@ import com.waz.zclient.utilities.resources.ResourceManager
 class SettingsListFactory {
 
     companion object {
-        private val configHelper: ConfigHelper = ConfigHelper()
-
         fun generateList(resourceManager: ResourceManager): List<SettingsItem> {
             val titles = resourceManager.getStringArray(R.array.settings_titles)
             val icons = resourceManager.getStringArray(R.array.settings_icons)
@@ -20,7 +18,7 @@ class SettingsListFactory {
             for (i in titles.indices) {
                 settingItems.add(SettingsItem(titles[i], icons[i]))
             }
-            if (configHelper.isDeveloperSettingsEnabled()) {
+            if (ConfigHelper.isDeveloperSettingsEnabled()) {
                 for (i in developerTitles.indices) {
                     settingItems.add(SettingsItem(developerTitles[i], developerIcons[i]))
                 }

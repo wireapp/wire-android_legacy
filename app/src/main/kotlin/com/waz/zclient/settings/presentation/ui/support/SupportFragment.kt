@@ -10,8 +10,6 @@ import com.waz.zclient.utilities.extension.openUrl
 import kotlinx.android.synthetic.main.fragment_support.*
 
 class SupportFragment : Fragment() {
-
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_support, container, false)
     }

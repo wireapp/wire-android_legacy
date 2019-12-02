@@ -2,8 +2,8 @@ package com.waz.zclient.settings.presentation.ui.account
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.waz.zclient.settings.presentation.mapper.UserItemMapper
 import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.settings.presentation.mapper.UserItemMapper
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase

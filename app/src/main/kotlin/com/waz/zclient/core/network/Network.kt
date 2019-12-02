@@ -1,4 +1,4 @@
-package com.waz.zclient.core.data.source.remote
+package com.waz.zclient.core.network
 
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.user.data.source.remote.UserApi

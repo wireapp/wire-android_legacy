@@ -1,7 +1,7 @@
 package com.waz.zclient.user.domain.usecase
 
 
-import com.waz.zclient.core.data.source.remote.Network
+import com.waz.zclient.core.network.Network
 import com.waz.zclient.core.usecase.SingleUseCase
 import com.waz.zclient.user.data.repository.UserRepository
 import com.waz.zclient.user.data.repository.UserRepositoryImpl
