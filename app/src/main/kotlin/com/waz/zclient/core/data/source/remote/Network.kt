@@ -28,7 +28,7 @@ open class Network {
                 chain.proceed(newRequest)
             }
             .addInterceptor(HttpLoggingInterceptor().apply {
-                val level = if (BuildConfig.DEBUG) {
+                level = if (BuildConfig.DEBUG) {
                     HttpLoggingInterceptor.Level.BODY
                 } else {
                     HttpLoggingInterceptor.Level.NONE
@@ -51,7 +51,7 @@ open class Network {
     companion object {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
-        private const val API_TOKEN = "NC0O15XK0Vut4o7FxYNgUoVEwDkjbtMlQltSPNZNkU4fuawrvUI1SpDQ7OTbMObCJxiV6psCQ9ih99VJYwf8Dw==.v=1.k=1.d=1575031533.t=a.l=.u=4555f7b2-f97b-409f-8c3a-333a473ac1b9.c=17565098750301651161"
+        private const val API_TOKEN = "lGsOCISPyQyz58v2KhVRdIO_j_MIjAc-kF0m3WGQiE2iSGHMyGuS_1mMu-1HyW_WfVPwwACnLKU2GSk860tZAw==.v=1.k=1.d=1575282234.t=a.l=.u=4555f7b2-f97b-409f-8c3a-333a473ac1b9.c=2769494926731504225"
     }
 }
 
