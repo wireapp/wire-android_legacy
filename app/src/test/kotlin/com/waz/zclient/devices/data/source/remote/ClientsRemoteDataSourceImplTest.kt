@@ -91,7 +91,7 @@ class ClientsRemoteDataSourceImplTest {
 
             verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
 
-            assert(remoteDataSource.getAllClients().status == ResourceStatus.SUCCESS)
+            assert(remoteDataSource.getClientById(TEST_ID).status == ResourceStatus.SUCCESS)
         }
     }
 
@@ -106,7 +106,7 @@ class ClientsRemoteDataSourceImplTest {
 
             verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
 
-            assert(remoteDataSource.getAllClients().status == ResourceStatus.ERROR)
+            assert(remoteDataSource.getClientById(TEST_ID).status == ResourceStatus.ERROR)
         }
 
     }
@@ -122,7 +122,7 @@ class ClientsRemoteDataSourceImplTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(remoteDataSource.getAllClients().status == ResourceStatus.ERROR)
+            assert(remoteDataSource.getClientById(TEST_ID).status == ResourceStatus.ERROR)
         }
     }
 
