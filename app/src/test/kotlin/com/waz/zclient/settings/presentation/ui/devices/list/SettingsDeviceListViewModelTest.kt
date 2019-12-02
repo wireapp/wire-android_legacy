@@ -36,7 +36,7 @@ class SettingsDeviceListViewModelTest {
     }
 
     @Test
-    fun `load data, success response, list is full, assert data mapped correctly`() {
+    fun `given data is loaded successfully, when list is full, then assert data is mapped correctly`() {
 
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
@@ -61,7 +61,7 @@ class SettingsDeviceListViewModelTest {
     }
 
     @Test
-    fun `load data, success response, list is empty, assert list state is empty`() {
+    fun `given data is loaded successfully, when list is full, then assert list state is empty`() {
 
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(listOf())) }
 
@@ -78,24 +78,7 @@ class SettingsDeviceListViewModelTest {
     }
 
     @Test
-    fun `load data, success response, list is null, assert list state is empty`() {
-
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(null)) }
-
-        viewModel.loadData()
-
-        viewModel.loading.observeOnce {
-            assert(it)
-        }
-
-        viewModel.otherDevices.observeOnce {
-            assert(viewModel.loading.value == false)
-            assert(it.isEmpty())
-        }
-    }
-
-    @Test
-    fun `load data, error response, list is null, assert list state is empty`() {
+    fun `given data isn't loaded successfully, then update error live data`() {
 
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.error(TEST_ERROR_MESSAGE)) }
 

@@ -22,7 +22,7 @@ fun ClientLocationEntity.toDomain() = ClientLocation(
     lat = lat
 )
 
-fun Resource<Array<ClientEntity>>.toDomainList() = Resource(
+fun Resource<Array<ClientEntity>>.toDomainList()= Resource(
     status = status,
     data = data?.map {
         it.toDomain()

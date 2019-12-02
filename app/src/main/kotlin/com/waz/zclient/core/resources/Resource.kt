@@ -6,7 +6,7 @@ data class Resource<out T>(
     val message: String?) {
 
     companion object {
-        fun <T> success(data: T?): Resource<T> {
+        fun <T> success(data: T): Resource<T> {
             return Resource(ResourceStatus.SUCCESS, data, null)
         }
 
