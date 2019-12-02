@@ -284,6 +284,7 @@ android {
         test {
             java.srcDirs += ['src/test/java', 'src/test/kotlin']
             scala.srcDirs += ['src/test/scala']
+            java.srcDirs += ['src/test/kotlin']
         }
     }
 
@@ -309,10 +310,12 @@ dexinfo {
 def versions = [
     playServices : "17.0.0", //TODO can be independent now.
     stetho: "1.5.0",
-    workManager : "1.0.0-alpha13",
+    workManager : "2.0.1",
     paging : "1.0.0",
     dexmaker : "1.4",
     retrofit : "2.6.2",
+    mockito : "3.1.0",
+    lifecycle : "2.0.0",
     okHttp : "3.12.0"
 ]
 
@@ -392,7 +395,7 @@ dependencies {
     }
 
     //WorkManager
-    implementation "androidx.work:work-runtime:2.0.1"
+    implementation "androidx.work:work-runtime:$versions.workManager"
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
@@ -425,8 +428,15 @@ dependencies {
     implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
     implementation "com.squareup.okhttp3:logging-interceptor:$versions.okHttp"
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
+
+    //Android Architecture Components
+    implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+
     // Unit Tests
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
+    testImplementation "org.mockito:mockito-core:$versions.mockito"
+    testImplementation "org.mockito:mockito-inline:$versions.mockito"
+    testImplementation "androidx.paging:paging-common:2.0.0"
     testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
     }
@@ -441,11 +451,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.1.1'
 
-    //The dexmaker stuff is needed for Mockito to work completely
-    androidTestImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
-    androidTestImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
-    androidTestImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
-    androidTestImplementation "androidx.work:work-testing:2.0.1"
+    androidTestImplementation "androidx.work:work-testing:$versions.workManager"
 
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true

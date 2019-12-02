@@ -1,6 +1,5 @@
 package com.waz.zclient.settings.presentation.ui.account
 
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -10,7 +9,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.Preference.OnPreferenceChangeListener
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import com.waz.zclient.R
 import com.waz.zclient.settings.presentation.model.Resource
 import com.waz.zclient.settings.presentation.model.ResourceStatus
@@ -61,8 +59,8 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
 
         val value = newValue.toString()
-        (preference  as EditTextPreference).forceValue(value)
-        when(preference){
+        (preference as EditTextPreference).forceValue(value)
+        when (preference) {
             namePreference -> settingsAccountViewModel.updateName(value)
             handlePreference -> settingsAccountViewModel.updateHandle(value)
             handlePreference -> settingsAccountViewModel.updatePhone(value)
@@ -78,16 +76,16 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
         phonePreference.onPreferenceChangeListener = null
     }
 
-    fun updateUi(resource: Resource<UserItem>){
-        when (resource.status){
+    fun updateUi(resource: Resource<UserItem>) {
+        when (resource.status) {
             ResourceStatus.SUCCESS -> {
                 resource.data?.name?.let { name -> namePreference.forceValue(name) }
                 resource.data?.handle?.let { handle -> handlePreference.forceValue(handle) }
-                resource.data?.name?.let { email -> emailPreference.forceValue(email) }
-                resource.data?.name?.let { phone -> phonePreference.forceValue(phone) }
+                resource.data?.email?.let { email -> emailPreference.forceValue(email) }
+                resource.data?.phone?.let { phone -> phonePreference.forceValue(phone) }
             }
             ResourceStatus.ERROR -> {
-              Toast.makeText(activity, resource.message, Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, resource.message, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -97,8 +95,6 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
     companion object {
         fun newInstance() = AccountFragment()
     }
-
-
 
 
 }

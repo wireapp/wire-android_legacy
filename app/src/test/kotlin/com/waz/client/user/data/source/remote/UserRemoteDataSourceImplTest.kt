@@ -15,13 +15,13 @@ import org.mockito.MockitoAnnotations
 class UserRemoteDataSourceImplTest {
 
 
-    private lateinit var userRemoteDataSource : UserRemoteDataSource
+    private lateinit var userRemoteDataSource: UserRemoteDataSource
 
     @Mock
     private lateinit var userApi: UserApi
 
     @Mock
-    private lateinit var throwable : Throwable
+    private lateinit var throwable: Throwable
 
     @Before
     fun setUp() {

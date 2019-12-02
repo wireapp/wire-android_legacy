@@ -9,7 +9,7 @@ fun Preference.remove() {
     parent?.removePreference(this)
 }
 
-fun EditTextPreference.forceValue(value:String) {
+fun EditTextPreference.forceValue(value: String) {
     title = value
     text = value
 }

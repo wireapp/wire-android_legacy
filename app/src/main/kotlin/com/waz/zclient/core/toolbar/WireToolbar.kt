@@ -1,22 +1,55 @@
 package com.waz.zclient.core.toolbar
 
-import androidx.annotation.LayoutRes
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.FrameLayout
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import com.waz.zclient.R
+import com.waz.zclient.utilities.extension.getLabel
 
-interface WireToolbar {
+class WireToolbar {
 
-    fun setContentView(activity: AppCompatActivity, @LayoutRes layoutRes: Int)
+    private lateinit var toolbar: Toolbar
 
-    fun setTitle(@StringRes title: Int)
+    fun setContentView(activity: AppCompatActivity, layoutRes: Int) {
 
-    fun setTitle(title: CharSequence)
+        val rootView = LayoutInflater.from(activity).inflate(R.layout.toolbar_container, null, false)
 
-    fun setSubtitle(@StringRes subtitle: Int)
+        toolbar = rootView.findViewById(R.id.toolbar)
+        toolbar.title = activity.getLabel()
+        activity.setSupportActionBar(toolbar)
 
-    fun setSubtitle(subtitle: CharSequence)
+        val layoutContainer = rootView.findViewById<FrameLayout>(R.id.layout_container)
+        LayoutInflater.from(activity).inflate(layoutRes, layoutContainer, true)
 
-    fun hideToolbar()
+        activity.setContentView(rootView)
+    }
 
-    fun showBackArrow()
+    fun setTitle(@StringRes title: Int) {
+        toolbar.setTitle(title)
+    }
+
+    fun setTitle(title: CharSequence) {
+        toolbar.title = title
+    }
+
+    fun setSubtitle(@StringRes subtitle: Int) {
+        toolbar.setTitle(subtitle)
+    }
+
+    fun setSubtitle(subtitle: CharSequence) {
+        toolbar.subtitle = subtitle
+    }
+
+    fun hideToolbar() {
+        toolbar.visibility = View.GONE
+    }
+
+    fun showBackArrow() {
+        toolbar.navigationIcon?.setVisible(true, false)
+    }
+
+
 }
