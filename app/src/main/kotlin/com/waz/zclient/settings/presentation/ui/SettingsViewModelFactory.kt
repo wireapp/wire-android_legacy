@@ -15,7 +15,5 @@ class SettingsViewModelFactory : ViewModelProvider.Factory {
             }
         }
 
-    private fun createSettingsViewModel() = SettingsAccountViewModel(
-
-    )
+    private fun createSettingsViewModel() = SettingsAccountViewModel()
 }

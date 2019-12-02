@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
+import com.waz.zclient.core.lists.OnItemClickListener
 import com.waz.zclient.settings.presentation.model.SettingsItem
 import kotlinx.android.synthetic.main.item_settings.view.*
 

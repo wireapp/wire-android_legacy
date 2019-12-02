@@ -10,8 +10,8 @@ import androidx.preference.Preference
 import androidx.preference.Preference.OnPreferenceChangeListener
 import androidx.preference.PreferenceFragmentCompat
 import com.waz.zclient.R
-import com.waz.zclient.settings.presentation.model.Resource
-import com.waz.zclient.settings.presentation.model.ResourceStatus
+import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
 import com.waz.zclient.utilities.extension.forceValue
