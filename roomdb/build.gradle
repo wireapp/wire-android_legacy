@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -33,6 +34,11 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core-ktx:1.0.2'
+
+    implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
+    kapt "androidx.room:room-compiler:$rootProject.ext.versions.room"
+    implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
+    implementation "androidx.room:room-rxjava2:$rootProject.ext.versions.room"
+
 }
