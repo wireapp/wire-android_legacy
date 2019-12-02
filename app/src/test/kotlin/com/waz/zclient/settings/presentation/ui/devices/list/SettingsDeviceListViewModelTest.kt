@@ -45,8 +45,8 @@ class SettingsDeviceListViewModelTest {
 
         viewModel.loadData()
 
-        viewModel.loading.observeOnce {
-            assert(it)
+        viewModel.loading.observeOnce { isLoading ->
+            assert(isLoading)
         }
 
         viewModel.otherDevices.observeOnce {
@@ -67,8 +67,8 @@ class SettingsDeviceListViewModelTest {
 
         viewModel.loadData()
 
-        viewModel.loading.observeOnce {
-            assert(it)
+        viewModel.loading.observeOnce { isLoading ->
+            assert(isLoading)
         }
 
         viewModel.otherDevices.observeOnce {
@@ -84,8 +84,8 @@ class SettingsDeviceListViewModelTest {
 
         viewModel.loadData()
 
-        viewModel.loading.observeOnce {
-            assert(it)
+        viewModel.loading.observeOnce { isLoading ->
+            assert(isLoading)
         }
 
         viewModel.error.observeOnce {
