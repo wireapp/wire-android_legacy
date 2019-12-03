@@ -1,6 +1,5 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.devices.data.model.ClientEntity
 import com.waz.zclient.framework.mockito.eq
 import kotlinx.coroutines.CancellationException
@@ -15,7 +14,7 @@ import retrofit2.Response
 
 class ClientsRemoteDataSourceImplTest {
 
-    private lateinit var remoteDataSource: ClientsDataSource
+    private lateinit var remoteDataSource: ClientsRemoteDataSource
 
     @Mock
     private lateinit var clientsApi: ClientsApi
@@ -38,13 +37,13 @@ class ClientsRemoteDataSourceImplTest {
             val clientEntity = mock(ClientEntity::class.java)
             `when`(allClientsResponse.body()).thenReturn(arrayOf(clientEntity))
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
-            `when`(clientsApi.getAllClientsAsync()).thenReturn(allClientsResponse)
+            `when`(clientsApi.allClientsAsync()).thenReturn(allClientsResponse)
 
             remoteDataSource.allClients()
 
-            verify(clientsApi).getAllClientsAsync()
+            verify(clientsApi).allClientsAsync()
 
-            assert(remoteDataSource.allClients().status == ResourceStatus.SUCCESS)
+            assert(remoteDataSource.allClients().isRight)
         }
     }
 
@@ -53,13 +52,13 @@ class ClientsRemoteDataSourceImplTest {
         runBlocking {
             `when`(allClientsResponse.body()).thenReturn(null)
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
-            `when`(clientsApi.getAllClientsAsync()).thenReturn(allClientsResponse)
+            `when`(clientsApi.allClientsAsync()).thenReturn(allClientsResponse)
 
             remoteDataSource.allClients()
 
-            verify(clientsApi).getAllClientsAsync()
+            verify(clientsApi).allClientsAsync()
 
-            assert(remoteDataSource.allClients().status == ResourceStatus.ERROR)
+            assert(remoteDataSource.allClients().isLeft)
         }
 
     }
@@ -67,15 +66,15 @@ class ClientsRemoteDataSourceImplTest {
     @Test(expected = CancellationException::class)
     fun `Given getAllClients() is called, when api response is an error, then return an error response`() {
         runBlocking {
-            `when`(clientsApi.getAllClientsAsync()).thenReturn(allClientsResponse)
+            `when`(clientsApi.allClientsAsync()).thenReturn(allClientsResponse)
 
             remoteDataSource.allClients()
 
-            verify(clientsApi).getAllClientsAsync()
+            verify(clientsApi).allClientsAsync()
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(remoteDataSource.allClients().status == ResourceStatus.ERROR)
+            assert(remoteDataSource.allClients().isLeft)
         }
     }
 
@@ -85,13 +84,13 @@ class ClientsRemoteDataSourceImplTest {
             val clientEntity = mock(ClientEntity::class.java)
             `when`(clientByIdResponse.body()).thenReturn(clientEntity)
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
-            `when`(clientsApi.getClientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
+            `when`(clientsApi.clientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
 
             remoteDataSource.clientById(TEST_ID)
 
-            verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
+            verify(clientsApi).clientByIdAsync(eq(TEST_ID))
 
-            assert(remoteDataSource.clientById(TEST_ID).status == ResourceStatus.SUCCESS)
+            assert(remoteDataSource.clientById(TEST_ID).isRight)
         }
     }
 
@@ -100,13 +99,13 @@ class ClientsRemoteDataSourceImplTest {
         runBlocking {
             `when`(clientByIdResponse.body()).thenReturn(null)
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
-            `when`(clientsApi.getClientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
+            `when`(clientsApi.clientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
 
             remoteDataSource.clientById(TEST_ID)
 
-            verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
+            verify(clientsApi).clientByIdAsync(eq(TEST_ID))
 
-            assert(remoteDataSource.clientById(TEST_ID).status == ResourceStatus.ERROR)
+            assert(remoteDataSource.clientById(TEST_ID).isLeft)
         }
 
     }
@@ -114,15 +113,15 @@ class ClientsRemoteDataSourceImplTest {
     @Test(expected = CancellationException::class)
     fun `Given getClientById() is called, when api response is an error, then return an error response`() {
         runBlocking {
-            `when`(clientsApi.getClientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
+            `when`(clientsApi.clientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
 
             remoteDataSource.clientById(TEST_ID)
 
-            verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
+            verify(clientsApi).clientByIdAsync(eq(TEST_ID))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(remoteDataSource.clientById(TEST_ID).status == ResourceStatus.ERROR)
+            assert(remoteDataSource.clientById(TEST_ID).isLeft)
         }
     }
 

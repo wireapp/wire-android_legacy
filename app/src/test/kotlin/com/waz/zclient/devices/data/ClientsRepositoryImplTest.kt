@@ -1,9 +1,10 @@
 package com.waz.zclient.devices.data
 
-import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.map
 import com.waz.zclient.devices.data.model.ClientEntity
 import com.waz.zclient.devices.data.model.ClientLocationEntity
-import com.waz.zclient.devices.data.source.remote.ClientsDataSource
+import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.framework.mockito.eq
 import kotlinx.coroutines.runBlocking
@@ -20,7 +21,7 @@ class ClientsRepositoryImplTest {
     private lateinit var repository: ClientsRepository
 
     @Mock
-    private lateinit var remoteDataSource: ClientsDataSource
+    private lateinit var remoteDataSource: ClientsRemoteDataSource
 
     @Before
     fun setup() {
@@ -31,31 +32,31 @@ class ClientsRepositoryImplTest {
     @Test
     fun `Given getAllClients() is called, when the remote data source is called, then map the data response to domain`() {
         runBlocking {
-            `when`(remoteDataSource.allClients()).thenReturn(Resource.success(arrayOf(generateMockEntity())))
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
 
             repository.allClients()
 
             verify(remoteDataSource).allClients()
 
-            val clients = repository.allClients().data
-            val domainClient = clients?.get(0)
-            assertMappingIsCorrect(domainClient)
-
+            repository.allClients().map {
+                val domainClient = it?.get(0)
+                assertMappingIsCorrect(domainClient)
+            }
         }
     }
 
     @Test
     fun `Given getClientById() is called, then map the data response to domain`() {
         runBlocking {
-            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Resource.success(generateMockEntity()))
+            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
 
             repository.clientById(TEST_ID)
 
             verify(remoteDataSource).clientById(eq(TEST_ID))
 
-            val domainClient = repository.clientById(TEST_ID).data
-            assertMappingIsCorrect(domainClient)
-
+            repository.clientById(TEST_ID).map {
+                assertMappingIsCorrect(it)
+            }
         }
     }
 

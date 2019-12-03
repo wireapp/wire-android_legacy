@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.domain
 
-import com.waz.zclient.core.resources.Resource
-import com.waz.zclient.core.resources.ResourceStatus
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.devices.data.ClientsRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
@@ -30,7 +30,7 @@ class GetAllClientsUseCaseTest {
     fun `given clients response is successful, then repository returns list of a clients`() {
         runBlocking {
 
-            `when`(repository.allClients()).thenReturn(Resource.success(listOf()))
+            `when`(repository.allClients()).thenReturn(Either.Right(listOf()))
 
             getAllClientsUseCase.run(Unit)
 
@@ -42,7 +42,7 @@ class GetAllClientsUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given clients response is an error, then repository throws an exception`() {
         runBlocking {
-            `when`(repository.allClients()).thenReturn(Resource.error(TEST_EXCEPTION_MESSAGE))
+            `when`(repository.allClients()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
 
             getAllClientsUseCase.run(Unit)
 
@@ -50,7 +50,7 @@ class GetAllClientsUseCaseTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(repository.allClients().status == ResourceStatus.ERROR)
+            assert(repository.allClients().isLeft)
         }
     }
 

@@ -1,7 +1,8 @@
 package com.waz.zclient.settings.presentation.ui.devices.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -41,7 +42,7 @@ class SettingsDeviceListViewModelTest {
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(listOf(client))) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
 
         viewModel.loadData()
 
@@ -50,7 +51,7 @@ class SettingsDeviceListViewModelTest {
         }
 
         viewModel.otherDevices.observeOnce {
-            val clientItem = it[0]
+            val clientItem = it[0].client
             assert(viewModel.loading.value == false)
             assert(clientItem.label == TEST_LABEL)
             assert(clientItem.time == TEST_TIME)
@@ -63,7 +64,7 @@ class SettingsDeviceListViewModelTest {
     @Test
     fun `given data is loaded successfully, when list is full, then assert list state is empty`() {
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.success(listOf())) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf())) }
 
         viewModel.loadData()
 
@@ -80,7 +81,7 @@ class SettingsDeviceListViewModelTest {
     @Test
     fun `given data isn't loaded successfully, then update error live data`() {
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Resource.error(TEST_ERROR_MESSAGE)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure(TEST_ERROR_MESSAGE))) }
 
         viewModel.loadData()
 

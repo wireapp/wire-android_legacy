@@ -9,10 +9,10 @@ class ClientsRemoteDataSourceImpl(private val clientsApi: ClientsApi)
     : ClientsRemoteDataSource {
 
     override suspend fun clientById(clientId: String): Either<Failure, ClientEntity> = requestResult {
-        clientsApi.getClientByIdAsync(clientId)
+        clientsApi.clientByIdAsync(clientId)
     }
 
     override suspend fun allClients(): Either<Failure, Array<ClientEntity>> = requestResult {
-        clientsApi.getAllClientsAsync()
+        clientsApi.allClientsAsync()
     }
 }
