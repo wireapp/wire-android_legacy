@@ -10,7 +10,6 @@ class AdvancedFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.pref_advanced, rootKey)
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.pref_advanced_screen_title)

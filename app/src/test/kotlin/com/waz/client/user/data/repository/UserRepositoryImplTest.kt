@@ -34,17 +34,17 @@ class UserRepositoryImplTest {
     @Test
     fun test_GetProfile_Success() {
 
-        `when`(userRemoteDataSource.getProfile()).thenReturn(Single.just(userEntity))
-        val test = userRepository.getProfile().test()
-        verify(userRemoteDataSource).getProfile()
+        `when`(userRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
+        val test = userRepository.profile().test()
+        verify(userRemoteDataSource).profile()
         test.assertValue(user)
     }
 
     @Test
     fun test_GetProfile_Failure() {
-        `when`(userRemoteDataSource.getProfile()).thenReturn(Single.error(throwable))
-        val test = userRepository.getProfile().test()
-        verify(userRemoteDataSource).getProfile()
+        `when`(userRemoteDataSource.profile()).thenReturn(Single.error(throwable))
+        val test = userRepository.profile().test()
+        verify(userRemoteDataSource).profile()
         test.assertError(throwable)
     }
 

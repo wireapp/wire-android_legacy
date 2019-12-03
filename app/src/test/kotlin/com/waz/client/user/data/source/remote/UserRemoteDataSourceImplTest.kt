@@ -32,19 +32,17 @@ class UserRemoteDataSourceImplTest {
 
     @Test
     fun test_GetProfile_Success() {
-        //`when`(Network().getUserApi()).thenReturn(userApi)
-        `when`(userApi.getProfile()).thenReturn(Single.just(userEntity))
-        val test = userRemoteDataSource.getProfile().test()
-        verify(userApi).getProfile()
+        `when`(userApi.profile()).thenReturn(Single.just(userEntity))
+        val test = userRemoteDataSource.profile().test()
+        verify(userApi).profile()
         test.assertValue(userEntity)
     }
 
     @Test
     fun test_GetProfile_Failure() {
-        //`when`(Network().getUserApi()).thenReturn(userApi)
-        `when`(userApi.getProfile()).thenReturn(Single.error(throwable))
-        val test = userRemoteDataSource.getProfile().test()
-        verify(userApi).getProfile()
+        `when`(userApi.profile()).thenReturn(Single.error(throwable))
+        val test = userRemoteDataSource.profile().test()
+        verify(userApi).profile()
         test.assertError(throwable)
     }
 

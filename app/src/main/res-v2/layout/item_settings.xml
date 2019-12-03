@@ -23,40 +23,25 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="@dimen/preference_button_height"
-    android:orientation="horizontal"
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true">
-
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/settings_item_icon"
         android:layout_width="@dimen/preference_button_image_size"
         android:layout_height="@dimen/preference_button_image_size"
-        android:layout_marginStart="@dimen/preference_button_padding"
-        android:textSize="@dimen/wire__padding__16"
-        android:textColor="@color/white"
-        android:fontFamily="@font/wire_glyphs"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/settings_item_title"
-        />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/settings_item_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/wire__text_size__regular"
-            android:ellipsize="end"
-            android:textColor="@color/white"
-            android:layout_marginStart="@dimen/preference_button_padding"
-            android:layout_marginEnd="@dimen/preference_button_padding"
-            android:fontFamily="sans-serif-light"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/settings_item_icon"
-            app:layout_constraintEnd_toEndOf="parent"
-            />
-
-
+        style="@style/settingsGlyphsTextView" />
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/settings_item_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/settings_item_icon"
+        app:layout_constraintEnd_toEndOf="parent"
+        style="@style/settingsTitleTextView" />
 </androidx.constraintlayout.widget.ConstraintLayout>
