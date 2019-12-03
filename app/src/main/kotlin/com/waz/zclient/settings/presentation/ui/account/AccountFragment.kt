@@ -14,7 +14,9 @@ import com.waz.zclient.core.resources.Resource
 import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
-import com.waz.zclient.utilities.extension.forceValue
+import com.waz.zclient.utilities.extension.registerListener
+import com.waz.zclient.utilities.extension.titleAndText
+import com.waz.zclient.utilities.extension.unRegisterListener
 
 
 class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
@@ -41,10 +43,10 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
         emailPreference = findPreference(getString(R.string.pref_key_email))!!
         phonePreference = findPreference(getString(R.string.pref_key_phone))!!
 
-        namePreference.onPreferenceChangeListener = this
-        handlePreference.onPreferenceChangeListener = this
-        emailPreference.onPreferenceChangeListener = this
-        phonePreference.onPreferenceChangeListener = this
+        namePreference.registerListener(this)
+        handlePreference.registerListener(this)
+        emailPreference.registerListener(this)
+        phonePreference.registerListener(this)
 
         settingsAccountViewModel = ViewModelProviders.of(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java)
         settingsAccountViewModel.getProfile()
@@ -59,7 +61,7 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
     override fun onPreferenceChange(preference: Preference?, newValue: Any?): Boolean {
 
         val value = newValue.toString()
-        (preference as EditTextPreference).forceValue(value)
+        (preference as EditTextPreference).titleAndText(value)
         when (preference) {
             namePreference -> settingsAccountViewModel.updateName(value)
             handlePreference -> settingsAccountViewModel.updateHandle(value)
@@ -70,19 +72,19 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        namePreference.onPreferenceChangeListener = null
-        handlePreference.onPreferenceChangeListener = null
-        emailPreference.onPreferenceChangeListener = null
-        phonePreference.onPreferenceChangeListener = null
+        namePreference.unRegisterListener()
+        handlePreference.unRegisterListener()
+        emailPreference.unRegisterListener()
+        phonePreference.unRegisterListener()
     }
 
-    fun updateUi(resource: Resource<UserItem>) {
+    private fun updateUi(resource: Resource<UserItem>) {
         when (resource.status) {
             ResourceStatus.SUCCESS -> {
-                resource.data?.name?.let { name -> namePreference.forceValue(name) }
-                resource.data?.handle?.let { handle -> handlePreference.forceValue(handle) }
-                resource.data?.email?.let { email -> emailPreference.forceValue(email) }
-                resource.data?.phone?.let { phone -> phonePreference.forceValue(phone) }
+                resource.data?.name?.let { name -> namePreference.titleAndText(name) }
+                resource.data?.handle?.let { handle -> handlePreference.titleAndText(handle) }
+                resource.data?.email?.let { email -> emailPreference.titleAndText(email) }
+                resource.data?.phone?.let { phone -> phonePreference.titleAndText(phone) }
             }
             ResourceStatus.ERROR -> {
                 Toast.makeText(activity, resource.message, Toast.LENGTH_LONG).show()

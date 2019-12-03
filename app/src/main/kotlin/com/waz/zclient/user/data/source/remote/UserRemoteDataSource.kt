@@ -6,9 +6,9 @@ import io.reactivex.Single
 
 interface UserRemoteDataSource {
 
-    fun getProfile(): Single<UserEntity>
-    fun updateName(name: String): Completable
-    fun updateHandle(handle: String): Completable
-    fun updateEmail(email: String): Completable
-    fun updatePhone(phone: String): Completable
+    fun profile(): Single<UserEntity>
+    fun name(name: String): Completable
+    fun handle(handle: String): Completable
+    fun email(email: String): Completable
+    fun phone(phone: String): Completable
 }

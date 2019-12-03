@@ -17,7 +17,6 @@ import com.waz.zclient.settings.presentation.ui.home.list.SettingsListFactory
 import com.waz.zclient.settings.presentation.ui.options.OptionsFragment
 import com.waz.zclient.settings.presentation.ui.support.SupportFragment
 import com.waz.zclient.utilities.extension.replaceFragment
-import com.waz.zclient.utilities.resources.ResourceManagerImpl
 import kotlinx.android.synthetic.main.fragment_settings.*
 
 class SettingsFragment : Fragment(), OnItemClickListener {
@@ -29,8 +28,8 @@ class SettingsFragment : Fragment(), OnItemClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.settings_title)
-        val resourceManager = ResourceManagerImpl(resources)
-        settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(resourceManager), this)
+        settings_recycler_view.adapter = SettingsListAdapter(SettingsListFactory.generateList(requireContext()), this)
+
     }
 
     override fun onItemClicked(position: Int) {

@@ -1,6 +1,5 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.core.data.source.remote.Network
 import com.waz.zclient.user.data.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
@@ -9,10 +8,10 @@ class UserRemoteDataSourceImpl constructor(
     private val userApi: UserApi
 ) : UserRemoteDataSource {
 
-    override fun getProfile(): Single<UserEntity> = userApi.getProfile()
-    override fun updateName(name: String): Completable = userApi.updateName(name)
-    override fun updateHandle(handle: String): Completable = userApi.updateHandle(handle)
-    override fun updateEmail(email: String): Completable = userApi.updateEmail(email)
-    override fun updatePhone(phone: String): Completable = userApi.updatePhone(phone)
+    override fun profile(): Single<UserEntity> = userApi.profile()
+    override fun name(name: String): Completable = userApi.name(name)
+    override fun handle(handle: String): Completable = userApi.handle(handle)
+    override fun email(email: String): Completable = userApi.email(email)
+    override fun phone(phone: String): Completable = userApi.phone(phone)
 
 }

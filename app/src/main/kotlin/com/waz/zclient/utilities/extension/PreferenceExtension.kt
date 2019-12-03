@@ -9,7 +9,15 @@ fun Preference.remove() {
     parent?.removePreference(this)
 }
 
-fun EditTextPreference.forceValue(value: String) {
+fun Preference.registerListener(onPreferenceChangeListener: Preference.OnPreferenceChangeListener) {
+    setOnPreferenceChangeListener(onPreferenceChangeListener)
+}
+
+fun Preference.unRegisterListener() {
+    onPreferenceChangeListener = null
+}
+
+fun EditTextPreference.titleAndText(value: String) {
     title = value
     text = value
 }

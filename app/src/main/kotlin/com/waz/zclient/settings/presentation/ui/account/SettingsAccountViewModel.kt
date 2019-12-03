@@ -2,16 +2,16 @@ package com.waz.zclient.settings.presentation.ui.account
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.waz.zclient.settings.presentation.mapper.UserItemMapper
 import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.settings.presentation.mapper.UserItemMapper
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.user.domain.usecase.UpdateHandleUseCase
 import com.waz.zclient.user.domain.usecase.UpdateNameUseCase
 import com.waz.zclient.user.domain.usecase.UpdatePhoneUseCase
-import com.waz.zclient.utilities.extension.setError
-import com.waz.zclient.utilities.extension.setSuccess
+import com.waz.zclient.utilities.extension.error
+import com.waz.zclient.utilities.extension.success
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.observers.DisposableCompletableObserver
 import io.reactivex.observers.DisposableSingleObserver
@@ -44,11 +44,11 @@ class SettingsAccountViewModel : ViewModel() {
 
     inner class GetUserProfileObserver : DisposableSingleObserver<User>() {
         override fun onSuccess(user: User) {
-            profileUserData.setSuccess(userItemMapper.mapFromDomain(user))
+            profileUserData.success(userItemMapper.mapFromDomain(user))
         }
 
         override fun onError(error: Throwable) {
-            profileUserData.setError(error)
+            profileUserData.error(error)
         }
     }
 

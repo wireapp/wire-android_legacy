@@ -1,6 +1,6 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.core.data.source.remote.Network
+import com.waz.zclient.core.network.Network
 
 class ClientsNetwork : Network() {
 
