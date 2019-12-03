@@ -5,7 +5,7 @@ import com.waz.zclient.devices.data.model.ClientLocationEntity
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
 
-fun ClientEntity.toDomain() = Client(
+fun ClientEntity.toClient() = Client(
     cookie = cookie,
     time = time,
     label = label,
@@ -13,14 +13,14 @@ fun ClientEntity.toDomain() = Client(
     type = type,
     id = id,
     model = model,
-    location = location.toDomain()
+    location = location.toClient()
 )
 
-fun ClientLocationEntity.toDomain() = ClientLocation(
+fun ClientLocationEntity.toClient() = ClientLocation(
     long = long,
     lat = lat
 )
 
-fun Array<ClientEntity>.toDomainList() = map {
-    it.toDomain()
+fun Array<ClientEntity>.toListOfClients() = map {
+    it.toClient()
 }

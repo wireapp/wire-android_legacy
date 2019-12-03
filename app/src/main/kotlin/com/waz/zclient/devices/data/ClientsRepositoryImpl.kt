@@ -8,22 +8,22 @@ import com.waz.zclient.devices.data.source.remote.ClientsNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSourceImpl
 import com.waz.zclient.devices.domain.model.Client
-import com.waz.zclient.devices.mapper.toDomain
-import com.waz.zclient.devices.mapper.toDomainList
+import com.waz.zclient.devices.mapper.toClient
+import com.waz.zclient.devices.mapper.toListOfClients
 
 class ClientsRepositoryImpl private constructor(private val remoteDataSource: ClientsRemoteDataSource) : ClientsRepository {
 
     override suspend fun clientById(clientId: String): Either<Failure, Client> =
         requestNetwork {
             remoteDataSource.clientById(clientId).flatMap {
-                Either.Right(it.toDomain())
+                Either.Right(it.toClient())
             }
         }
 
     override suspend fun allClients(): Either<Failure, List<Client>> =
         requestNetwork {
             remoteDataSource.allClients().flatMap {
-                Either.Right(it.toDomainList())
+                Either.Right(it.toListOfClients())
             }
         }
 
