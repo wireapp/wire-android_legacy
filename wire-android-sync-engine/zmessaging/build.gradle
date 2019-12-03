@@ -74,6 +74,8 @@ dependencies {
 
     api project(':wire-android-sync-engine:macrosupport')
 
+    implementation project(':roomdb')
+
     api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
     implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
