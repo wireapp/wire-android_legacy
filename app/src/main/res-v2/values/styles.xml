@@ -57,7 +57,7 @@
     <style name="settingsGlyphsTextView" parent="@android:style/TextAppearance.Widget.TextView">
         <item name="android:textSize">@dimen/wire__padding__16</item>
         <item name="android:textColor">@color/white</item>
-        <item name="android:paddingStart">@dimen/preference_button_padding</item>
+        <item name="android:layout_marginStart">@dimen/preference_button_padding</item>
         <item name="android:fontFamily">@font/wire_glyphs</item>
     </style>
 </resources>
