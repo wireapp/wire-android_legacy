@@ -293,6 +293,7 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'APK_LICENSE.txt'
         exclude 'LICENSE.txt'
+        exclude 'META-INF/proguard/coroutines.pro'
     }
 
 }
@@ -379,7 +380,10 @@ dependencies {
     }
 
     //WorkManager
-    implementation "androidx.work:work-runtime:$versions.workManager"
+    implementation("androidx.work:work-runtime:$versions.workManager") {
+        exclude group: 'androidx.room', module: 'room-runtime'
+    }
+    implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
