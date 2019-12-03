@@ -15,7 +15,7 @@ import retrofit2.Response
 
 class ClientsRemoteDataSourceImplTest {
 
-    private lateinit var remoteDataSource: ClientsRemoteDataSource
+    private lateinit var remoteDataSource: ClientsDataSource
 
     @Mock
     private lateinit var clientsApi: ClientsApi
@@ -40,11 +40,11 @@ class ClientsRemoteDataSourceImplTest {
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.getAllClientsAsync()).thenReturn(allClientsResponse)
 
-            remoteDataSource.getAllClients()
+            remoteDataSource.allClients()
 
             verify(clientsApi).getAllClientsAsync()
 
-            assert(remoteDataSource.getAllClients().status == ResourceStatus.SUCCESS)
+            assert(remoteDataSource.allClients().status == ResourceStatus.SUCCESS)
         }
     }
 
@@ -55,11 +55,11 @@ class ClientsRemoteDataSourceImplTest {
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.getAllClientsAsync()).thenReturn(allClientsResponse)
 
-            remoteDataSource.getAllClients()
+            remoteDataSource.allClients()
 
             verify(clientsApi).getAllClientsAsync()
 
-            assert(remoteDataSource.getAllClients().status == ResourceStatus.ERROR)
+            assert(remoteDataSource.allClients().status == ResourceStatus.ERROR)
         }
 
     }
@@ -69,13 +69,13 @@ class ClientsRemoteDataSourceImplTest {
         runBlocking {
             `when`(clientsApi.getAllClientsAsync()).thenReturn(allClientsResponse)
 
-            remoteDataSource.getAllClients()
+            remoteDataSource.allClients()
 
             verify(clientsApi).getAllClientsAsync()
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(remoteDataSource.getAllClients().status == ResourceStatus.ERROR)
+            assert(remoteDataSource.allClients().status == ResourceStatus.ERROR)
         }
     }
 
@@ -87,11 +87,11 @@ class ClientsRemoteDataSourceImplTest {
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.getClientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
 
-            remoteDataSource.getClientById(TEST_ID)
+            remoteDataSource.clientById(TEST_ID)
 
             verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
 
-            assert(remoteDataSource.getClientById(TEST_ID).status == ResourceStatus.SUCCESS)
+            assert(remoteDataSource.clientById(TEST_ID).status == ResourceStatus.SUCCESS)
         }
     }
 
@@ -102,11 +102,11 @@ class ClientsRemoteDataSourceImplTest {
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.getClientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
 
-            remoteDataSource.getClientById(TEST_ID)
+            remoteDataSource.clientById(TEST_ID)
 
             verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
 
-            assert(remoteDataSource.getClientById(TEST_ID).status == ResourceStatus.ERROR)
+            assert(remoteDataSource.clientById(TEST_ID).status == ResourceStatus.ERROR)
         }
 
     }
@@ -116,13 +116,13 @@ class ClientsRemoteDataSourceImplTest {
         runBlocking {
             `when`(clientsApi.getClientByIdAsync(TEST_ID)).thenReturn(clientByIdResponse)
 
-            remoteDataSource.getClientById(TEST_ID)
+            remoteDataSource.clientById(TEST_ID)
 
             verify(clientsApi).getClientByIdAsync(eq(TEST_ID))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(remoteDataSource.getClientById(TEST_ID).status == ResourceStatus.ERROR)
+            assert(remoteDataSource.clientById(TEST_ID).status == ResourceStatus.ERROR)
         }
     }
 

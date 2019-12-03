@@ -30,11 +30,11 @@ class GetAllClientsUseCaseTest {
     fun `given clients response is successful, then repository returns list of a clients`() {
         runBlocking {
 
-            `when`(repository.getAllClients()).thenReturn(Resource.success(listOf()))
+            `when`(repository.allClients()).thenReturn(Resource.success(listOf()))
 
             getAllClientsUseCase.run(Unit)
 
-            verify(repository).getAllClients()
+            verify(repository).allClients()
 
         }
     }
@@ -42,15 +42,15 @@ class GetAllClientsUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given clients response is an error, then repository throws an exception`() {
         runBlocking {
-            `when`(repository.getAllClients()).thenReturn(Resource.error(TEST_EXCEPTION_MESSAGE))
+            `when`(repository.allClients()).thenReturn(Resource.error(TEST_EXCEPTION_MESSAGE))
 
             getAllClientsUseCase.run(Unit)
 
-            verify(repository).getAllClients()
+            verify(repository).allClients()
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            assert(repository.getAllClients().status == ResourceStatus.ERROR)
+            assert(repository.allClients().status == ResourceStatus.ERROR)
         }
     }
 

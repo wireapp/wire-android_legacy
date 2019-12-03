@@ -1,18 +1,31 @@
 package com.waz.zclient.devices.data
 
-import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.requests.flatMap
+import com.waz.zclient.core.requests.requestNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSourceImpl
 import com.waz.zclient.devices.domain.model.Client
+import com.waz.zclient.devices.mapper.toDomain
 import com.waz.zclient.devices.mapper.toDomainList
-import com.waz.zclient.devices.mapper.toDomainObject
 
 class ClientsRepositoryImpl private constructor(private val remoteDataSource: ClientsRemoteDataSource) : ClientsRepository {
 
-    override suspend fun getClientById(clientId: String): Resource<Client> = remoteDataSource.getClientById(clientId).toDomainObject()
+    override suspend fun clientById(clientId: String): Either<Failure, Client> =
+        requestNetwork {
+            remoteDataSource.clientById(clientId).flatMap {
+                Either.Right(it.toDomain())
+            }
+        }
 
-    override suspend fun getAllClients(): Resource<List<Client>> = remoteDataSource.getAllClients().toDomainList()
+    override suspend fun allClients(): Either<Failure, List<Client>> =
+        requestNetwork {
+            remoteDataSource.allClients().flatMap {
+                Either.Right(it.toDomainList())
+            }
+        }
 
     companion object {
 

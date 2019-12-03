@@ -4,12 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.resources.Resource
-import com.waz.zclient.core.resources.ResourceStatus
+import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
 import com.waz.zclient.devices.domain.model.Client
-import com.waz.zclient.settings.presentation.mapper.toPresentationList
 import com.waz.zclient.settings.presentation.ui.devices.model.ClientItem
 
 class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClientsUseCase,
@@ -33,23 +31,20 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
         get() = mutableError
 
     fun loadData() {
-        getAllClientsUseCase.invoke(viewModelScope, Unit) {
-            checkAllDevicesResult(it)
+        handleLoading(true)
+        getAllClientsUseCase.invoke(viewModelScope, Unit) { response ->
+            response.either(::handleAllDevicesError, ::handleAllDevicesSuccess)
         }
     }
 
-    private fun checkAllDevicesResult(result: Resource<List<Client>>) {
-        when {
-            result.status == ResourceStatus.SUCCESS -> result.data?.let {
-                handleLoading(false)
-                handleAllClientsSuccess(it)
-            }
-            result.status == ResourceStatus.ERROR -> result.message?.let {
-                handleLoading(false)
-                handleFailure(it)
-            }
-            result.status == ResourceStatus.LOADING -> handleLoading(true)
-        }
+    private fun handleAllDevicesError(failure: Failure) {
+        handleLoading(false)
+        handleFailure(failure.message)
+    }
+
+    private fun handleAllDevicesSuccess(clients: List<Client>) {
+        handleLoading(false)
+        handleAllClientsSuccess(clients)
     }
 
     private fun handleLoading(isLoading: Boolean) {
@@ -59,7 +54,9 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
     private fun handleAllClientsSuccess(result: List<Client>) {
         when {
             result.isNullOrEmpty() -> mutableOtherDevices.value = listOf()
-            result.isNotEmpty() -> mutableOtherDevices.postValue(result.toPresentationList())
+            result.isNotEmpty() -> mutableOtherDevices.postValue(result.map {
+                ClientItem(it)
+            })
         }
     }
 

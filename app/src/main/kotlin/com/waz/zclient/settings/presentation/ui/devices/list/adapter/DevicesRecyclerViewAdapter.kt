@@ -54,11 +54,11 @@ class DevicesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         itemView.findViewById<ImageView>(R.id.item_device_verification_icon)
     }
 
-    fun bind(client: ClientItem, itemClickListener: RecyclerViewItemClickListener<ClientItem>?) {
-        deviceName.text = client.label
-        val formattedDate = DateAndTimeUtils.getTimeStamp(client.time)
-        deviceId.text = "ID: ${client.id}\nActivated: ${formattedDate}"
-        deviceVerifiedIcon.setImageResource(client.verificationIcon)
-        itemView.setOnClickListener { itemClickListener?.onItemClicked(client) }
+    fun bind(clientItem: ClientItem, itemClickListener: RecyclerViewItemClickListener<ClientItem>?) {
+        deviceName.text = clientItem.client.label
+        val formattedDate = DateAndTimeUtils.getTimeStamp(clientItem.client.time)
+        deviceId.text = "ID: ${clientItem.client.id}\nActivated: ${formattedDate}"
+        deviceVerifiedIcon.setImageResource(clientItem.verificationIcon())
+        itemView.setOnClickListener { itemClickListener?.onItemClicked(clientItem) }
     }
 }

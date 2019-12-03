@@ -1,17 +1,18 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.core.data.source.remote.SafeApiDataSource
-import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.data.source.remote.requestResult
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.devices.data.model.ClientEntity
 
 class ClientsRemoteDataSourceImpl(private val clientsApi: ClientsApi)
-    : ClientsRemoteDataSource, SafeApiDataSource() {
+    : ClientsRemoteDataSource {
 
-    override suspend fun getClientById(clientId: String): Resource<ClientEntity> = requestResult() {
+    override suspend fun clientById(clientId: String): Either<Failure, ClientEntity> = requestResult {
         clientsApi.getClientByIdAsync(clientId)
     }
 
-    override suspend fun getAllClients(): Resource<Array<ClientEntity>> = requestResult() {
+    override suspend fun allClients(): Either<Failure, Array<ClientEntity>> = requestResult {
         clientsApi.getAllClientsAsync()
     }
 }

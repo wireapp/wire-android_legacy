@@ -1,29 +1,26 @@
 package com.waz.zclient.core.data.source.remote
 
-import com.waz.zclient.core.resources.Resource
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
 import retrofit2.Response
 import timber.log.Timber
 
-abstract class SafeApiDataSource {
-
-    protected suspend fun <T> requestResult(responseCall: suspend () -> Response<T>): Resource<T> {
-        try {
-            val response = responseCall()
-            if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) {
-                    return Resource.success(body)
-                }
+suspend fun <T> requestResult(responseCall: suspend () -> Response<T>): Either<Failure, T> {
+    try {
+        val response = responseCall()
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) {
+                return Either.Right(body)
             }
-            return error(" ${response.code()} ${response.message()}")
-        } catch (e: Exception) {
-            return error(e.message ?: e.toString())
         }
+        return error(" ${response.code()} ${response.message()}")
+    } catch (e: Exception) {
+        return error(e.message ?: e.toString())
     }
+}
 
-    private fun <T> error(message: String): Resource<T> {
-        Timber.e(message)
-        return Resource.error("Network call has failed: $message")
-    }
-
+private fun <T> error(message: String): Either<Failure, T> {
+    Timber.e(message)
+    return Either.Left(Failure("Network call has failed: $message"))
 }

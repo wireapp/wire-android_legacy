@@ -1,6 +1,5 @@
 package com.waz.zclient.devices.mapper
 
-import com.waz.zclient.core.resources.Resource
 import com.waz.zclient.devices.data.model.ClientEntity
 import com.waz.zclient.devices.data.model.ClientLocationEntity
 import com.waz.zclient.devices.domain.model.Client
@@ -22,16 +21,6 @@ fun ClientLocationEntity.toDomain() = ClientLocation(
     lat = lat
 )
 
-fun Resource<Array<ClientEntity>>.toDomainList()= Resource(
-    status = status,
-    data = data?.map {
-        it.toDomain()
-    },
-    message = message
-)
-
-fun Resource<ClientEntity>.toDomainObject() = Resource(
-    status = status,
-    data = data?.toDomain(),
-    message = message
-)
+fun Array<ClientEntity>.toDomainList() = map {
+    it.toDomain()
+}
