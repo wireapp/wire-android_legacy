@@ -7,7 +7,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.R
-import com.waz.zclient.utilities.config.ConfigHelper
+import com.waz.zclient.utilities.config.Config
 import com.waz.zclient.utilities.extension.remove
 
 class OptionsFragment : PreferenceFragmentCompat() {
@@ -25,14 +25,14 @@ class OptionsFragment : PreferenceFragmentCompat() {
         }
 
         val prefAppLock: Preference? = findPreference(resources.getString(R.string.pref_key_app_lock))
-        if (ConfigHelper.isAppLockForced()) {
+        if (Config.isAppLockForced()) {
             prefAppLock?.remove()
         } else {
             prefAppLock?.summary = getString(R.string.pref_options_app_lock_summary, BuildConfig.APP_LOCK_TIMEOUT.toString())
         }
 
         val prefHideScreenContent: Preference? = findPreference(resources.getString(R.string.pref_key_hide_screen_content))
-        if (ConfigHelper.isHideScreenContentForced()) {
+        if (Config.isHideScreenContentForced()) {
             prefHideScreenContent?.remove()
         }
     }

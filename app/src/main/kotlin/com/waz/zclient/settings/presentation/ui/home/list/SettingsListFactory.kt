@@ -3,7 +3,7 @@ package com.waz.zclient.settings.presentation.ui.home.list
 import android.content.Context
 import com.waz.zclient.R
 import com.waz.zclient.settings.presentation.model.SettingsItem
-import com.waz.zclient.utilities.config.ConfigHelper
+import com.waz.zclient.utilities.config.Config
 import com.waz.zclient.utilities.extension.stringArrayFromResource
 
 class SettingsListFactory {
@@ -19,7 +19,7 @@ class SettingsListFactory {
             for (i in titles.indices) {
                 settingItems.add(SettingsItem(titles[i], icons[i]))
             }
-            if (ConfigHelper.isDeveloperSettingsEnabled()) {
+            if (Config.isDeveloperSettingsEnabled()) {
                 for (i in developerTitles.indices) {
                     settingItems.add(SettingsItem(developerTitles[i], developerIcons[i]))
                 }
