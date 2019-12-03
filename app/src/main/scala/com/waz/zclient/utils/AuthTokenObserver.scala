@@ -29,6 +29,8 @@ class AuthTokenObserver(implicit injector: Injector, ec: EventContext)
     extends Injectable
     with DerivedLogTag {
 
+  import Threading.Implicits.Background
+
   private lazy val accountManager = inject[Signal[AccountManager]]
 
   private val authToken = accountManager.flatMap(_.accessToken)
@@ -43,8 +45,8 @@ class AuthTokenObserver(implicit injector: Injector, ec: EventContext)
 
   AuthHeaderInterceptor.waitForRetry.subscribe(new Consumer[java.lang.Boolean] {
     override def accept(t: java.lang.Boolean): Unit = if (t) {
-      accountManager.head.flatMap(m => m.refreshToken())(Threading.Background)
-        .map(_ => AuthHeaderInterceptor.onRetryFinished())(Threading.Background)
+      accountManager.head.flatMap(m => m.refreshToken())
+        .map(_ => AuthHeaderInterceptor.onRetryFinished())
     }
   })
 

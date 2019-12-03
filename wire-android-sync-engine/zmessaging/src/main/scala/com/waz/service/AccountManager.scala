@@ -339,13 +339,8 @@ class AccountManager(val userId:   UserId,
 
   }
 
-  def refreshToken(): Future[Boolean] = for {
-    res <- auth.refreshToken()
-    success = res match {
-      case Left(_) => false
-      case Right(_) => true
-    }
-  } yield success
+  def refreshToken(): Future[Boolean] = auth.refreshToken().map(_.isRight)
+
 }
 
 object AccountManager {
