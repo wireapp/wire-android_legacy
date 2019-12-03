@@ -36,6 +36,7 @@ import com.waz.zclient.{Injectable, R}
 
 class SingleParticipantAdapter(userId: UserId,
                                isGuest: Boolean,
+                               isExternal: Boolean,
                                isDarkTheme: Boolean,
                                isGroup: Boolean,
                                private var fields:          Seq[UserField] = Seq.empty,
@@ -83,7 +84,7 @@ class SingleParticipantAdapter(userId: UserId,
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
     case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, isGuest, availability, timerText, isDarkTheme, fields.nonEmpty)
+      h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, availability, timerText, isDarkTheme, fields.nonEmpty)
     case h: GroupAdminViewHolder =>
       h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
     case h: ParticipantFooterRowViewHolder =>
@@ -117,17 +118,21 @@ object SingleParticipantAdapter {
   val Footer = 3
 
   case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
-    private lazy val imageView           = view.findViewById[ChatHeadView](R.id.chathead)
-    private lazy val guestIndication     = view.findViewById[LinearLayout](R.id.guest_indicator)
-    private lazy val userAvailability    = view.findViewById[ShowAvailabilityView](R.id.availability)
-    private lazy val guestIndicatorTimer = view.findViewById[TypefaceTextView](R.id.expiration_time)
-    private lazy val guestIndicatorIcon  = view.findViewById[ImageView](R.id.guest_indicator_icon)
-    private lazy val informationText     = view.findViewById[TypefaceTextView](R.id.information)
+    private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)
+    private lazy val guestIndication      = view.findViewById[LinearLayout](R.id.guest_indicator)
+    private lazy val externalIndication   = view.findViewById[LinearLayout](R.id.external_indicator)
+    private lazy val groupAdminIndication = view.findViewById[LinearLayout](R.id.group_admin_indicator)
+    private lazy val userAvailability     = view.findViewById[ShowAvailabilityView](R.id.availability)
+    private lazy val guestIndicatorTimer  = view.findViewById[TypefaceTextView](R.id.expiration_time)
+    private lazy val guestIndicatorIcon   = view.findViewById[ImageView](R.id.guest_indicator_icon)
+    private lazy val informationText      = view.findViewById[TypefaceTextView](R.id.information)
 
     private var userId = Option.empty[UserId]
 
     def bind(userId: UserId,
              isGuest: Boolean,
+             isExternal: Boolean,
+             isGroupAdmin: Boolean,
              availability: Option[Availability],
              timerText: Option[String],
              isDarkTheme: Boolean,
@@ -137,6 +142,8 @@ object SingleParticipantAdapter {
 
       imageView.loadUser(userId)
       guestIndication.setVisible(isGuest)
+      externalIndication.setVisible(isExternal)
+      groupAdminIndication.setVisible(isGroupAdmin)
 
       val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
       guestIndicatorIcon.setImageDrawable(GuestIcon(color))

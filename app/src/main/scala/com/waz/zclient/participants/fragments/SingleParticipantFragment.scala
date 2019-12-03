@@ -230,13 +230,14 @@ class SingleParticipantFragment extends FragmentHelper {
         user               <- participantsController.otherParticipant.head
         isGroup            <- participantsController.isGroup.head
         isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
+        isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
         isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
                               // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
         _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-      } yield (user.id, user.email, isGuest, isDarkTheme, isGroup, isTeamTheSame)).foreach {
-        case (userId, emailAddress, isGuest, isDarkTheme, isGroup, isTeamTheSame) =>
-          val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme, isGroup)
+      } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isTeamTheSame)).foreach {
+        case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isTeamTheSame) =>
+          val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup)
           val emailUserField = emailAddress match {
             case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
             case None        => Seq.empty

@@ -1097,6 +1097,8 @@
     <string name="conversation_list__group_without_quote">[[%1$s]]: %2$s</string>
     <string name="guest_indicator">GUEST</string>
     <string name="participant_tab_guest_indicator_label">Guest</string>
+    <string name="participant_tab_external_indicator_label">EXTERNAL</string>
+    <string name="participant_tab_group_admin_indicator_label">GROUP ADMIN</string>
 
     <string name="availability_none">None</string>
     <string name="availability_available">Available</string>
