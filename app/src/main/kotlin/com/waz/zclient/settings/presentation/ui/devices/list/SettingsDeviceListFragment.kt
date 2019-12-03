@@ -1,5 +1,6 @@
 package com.waz.zclient.settings.presentation.ui.devices.list
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +14,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
-import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
+import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceConstants
+import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceViewModelFactory
+import com.waz.zclient.settings.presentation.ui.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.settings.presentation.ui.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.settings.presentation.ui.devices.list.adapter.DevicesViewHolder
 import com.waz.zclient.settings.presentation.ui.devices.model.ClientItem
@@ -29,13 +32,13 @@ class SettingsDeviceListFragment : Fragment() {
     private val itemClickListener by lazy {
         object : RecyclerViewItemClickListener<ClientItem> {
             override fun onItemClicked(item: ClientItem) {
-
+                navigateToDeviceDetails(item)
             }
         }
     }
 
     private val viewModelFactory by lazy {
-        SettingsViewModelFactory()
+        SettingsDeviceViewModelFactory()
     }
 
     private val devicesAdapter by lazy {
@@ -47,6 +50,13 @@ class SettingsDeviceListFragment : Fragment() {
         initRecyclerView(rootView)
         initViewModel()
         return rootView
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        lifecycleScope.launchWhenResumed {
+            deviceListViewModel.loadData()
+        }
     }
 
     private fun initRecyclerView(rootView: View) {
@@ -79,19 +89,18 @@ class SettingsDeviceListFragment : Fragment() {
         }
     }
 
+    private fun navigateToDeviceDetails(item: ClientItem) {
+        val intent = Intent(requireActivity(), SettingsDeviceDetailActivity::class.java)
+        intent.putExtra(SettingsDeviceConstants.DEVICE_ID_BUNDLE_KEY, item.client.id)
+        startActivity(intent)
+    }
+
     private fun showErrorMessage(errorMessage: String) {
         Toast.makeText(requireActivity(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
     private fun updateLoadingVisibility(isLoading: Boolean?) {
         //Show hide progress indicator
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        lifecycleScope.launchWhenResumed {
-            deviceListViewModel.loadData()
-        }
     }
 
     private fun bindCurrentDevice(currentDevice: ClientItem) {

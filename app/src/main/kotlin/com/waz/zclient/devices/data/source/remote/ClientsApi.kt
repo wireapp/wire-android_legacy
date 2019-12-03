@@ -8,7 +8,7 @@ import retrofit2.http.Path
 interface ClientsApi {
 
     @GET("/clients/{clientId}")
-    suspend fun clientByIdAsync(@Path("clientId") clientId: String): Response<ClientEntity>
+    suspend fun clientByIdAsync(@Path("clientId") clientId: String?): Response<ClientEntity>
 
     @GET("/clients")
     suspend fun allClientsAsync(): Response<Array<ClientEntity>>

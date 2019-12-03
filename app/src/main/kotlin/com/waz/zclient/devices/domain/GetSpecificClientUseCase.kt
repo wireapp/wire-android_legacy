@@ -7,10 +7,12 @@ import com.waz.zclient.core.usecase.coroutines.UseCase
 import com.waz.zclient.devices.data.ClientsRepository
 import com.waz.zclient.devices.domain.model.Client
 
-class GetAllClientsUseCase(private val clientsRepository: ClientsRepository)
-    : UseCase<List<Client>, Unit>() {
-
-    override suspend fun run(params: Unit): Either<Failure, List<Client>> = requestNetwork {
-        clientsRepository.allClients()
-    }
+class GetSpecificClientUseCase(private val clientsRepository: ClientsRepository)
+    : UseCase<Client, Params>() {
+    override suspend fun run(params: Params): Either<Failure, Client> =
+        requestNetwork {
+            clientsRepository.clientById(params.clientId)
+        }
 }
+
+data class Params(val clientId: String?)

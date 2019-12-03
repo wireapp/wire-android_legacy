@@ -13,7 +13,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.resources.Resource
 import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.settings.presentation.model.UserItem
-import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
+import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.utilities.extension.registerListener
 import com.waz.zclient.utilities.extension.titleAndText
 import com.waz.zclient.utilities.extension.unRegisterListener
@@ -21,7 +21,7 @@ import com.waz.zclient.utilities.extension.unRegisterListener
 
 class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
 
-    private val settingsViewModelFactory: SettingsViewModelFactory by lazy { SettingsViewModelFactory() }
+    private val settingsDeviceViewModelFactory: SettingsDeviceViewModelFactory by lazy { SettingsDeviceViewModelFactory() }
     private lateinit var settingsAccountViewModel: SettingsAccountViewModel
 
     private lateinit var namePreference: EditTextPreference
@@ -48,7 +48,7 @@ class AccountFragment : PreferenceFragmentCompat(), OnPreferenceChangeListener {
         emailPreference.registerListener(this)
         phonePreference.registerListener(this)
 
-        settingsAccountViewModel = ViewModelProviders.of(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java)
+        settingsAccountViewModel = ViewModelProviders.of(this, settingsDeviceViewModelFactory).get(SettingsAccountViewModel::class.java)
         settingsAccountViewModel.getProfile()
 
         settingsAccountViewModel.profileUserData.observe(viewLifecycleOwner, Observer<Resource<UserItem>> {

@@ -6,12 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
-import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
+import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.settings.presentation.ui.devices.model.ClientItem
 
 class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClientsUseCase,
-                                  private val getCurrentDeviceUseCase: GetCurrentDeviceUseCase) : ViewModel() {
+                                  private val getSpecificClientUseCase: GetSpecificClientUseCase) : ViewModel() {
 
     private val mutableLoading = MutableLiveData<Boolean>()
     private val mutableError = MutableLiveData<String>()

@@ -4,7 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
-import com.waz.zclient.devices.domain.GetCurrentDeviceUseCase
+import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
 import com.waz.zclient.framework.livedata.observeOnce
@@ -25,7 +25,7 @@ class SettingsDeviceListViewModelTest {
     private lateinit var getAllClientsUseCase: GetAllClientsUseCase
 
     @Mock
-    private lateinit var getCurrentDeviceUseCase: GetCurrentDeviceUseCase
+    private lateinit var getSpecificClientUseCase: GetSpecificClientUseCase
 
     @get:Rule
     val rule = InstantTaskExecutorRule()
@@ -33,7 +33,7 @@ class SettingsDeviceListViewModelTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        viewModel = SettingsDeviceListViewModel(getAllClientsUseCase, getCurrentDeviceUseCase)
+        viewModel = SettingsDeviceListViewModel(getAllClientsUseCase, getSpecificClientUseCase)
     }
 
     @Test
