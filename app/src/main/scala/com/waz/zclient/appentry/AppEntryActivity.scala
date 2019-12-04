@@ -317,7 +317,7 @@ class AppEntryActivity extends BaseActivity {
       .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
       .add(new CountryDialogFragment, CountryDialogFragment.TAG)
       .addToBackStack(CountryDialogFragment.TAG)
-      .commit
+      .commitAllowingStateLoss
     KeyboardUtils.hideKeyboard(this)
   }
 
@@ -334,7 +334,7 @@ class AppEntryActivity extends BaseActivity {
     transaction
       .replace(R.id.fl_main_content, f, tag)
       .addToBackStack(tag)
-      .commit
+      .commitAllowingStateLoss
     enableProgress(false)
   }
 }
