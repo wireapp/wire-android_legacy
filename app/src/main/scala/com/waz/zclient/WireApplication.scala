@@ -91,7 +91,7 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.preferences.PreferencesController
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.security.{ActivityLifecycleCallback, SecurityPolicyChecker}
-import com.waz.zclient.tracking.{CrashController, GlobalTrackingController, UiTrackingController}
+import com.waz.zclient.tracking.{GlobalTrackingController, UiTrackingController}
 import com.waz.zclient.utils.{AndroidBase64Delegate, BackStackNavigator, BackendController, ExternalFileSharing, LocalThumbnailCache, UiStorage}
 import com.waz.zclient.views.DraftMap
 import javax.net.ssl.SSLContext
@@ -220,7 +220,6 @@ object WireApplication extends DerivedLogTag {
     // global controllers
     bind [BackendController]       to new BackendController()
     bind [WebSocketController]     to new WebSocketController
-    bind [CrashController]         to new CrashController
     bind [AccentColorController]   to new AccentColorController()
     bind [PasswordController]      to new PasswordController()
     bind [CallController]          to new CallController()
@@ -460,7 +459,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
 
 //    //TODO [AN-4942] - is this early enough for app launch events?
     inject[GlobalTrackingController]
-    inject[CrashController] //needs to register crash handler
     inject[ThemeController]
     inject[PreferencesController]
     Future(clearOldVideoFiles(getApplicationContext))(Threading.Background)
