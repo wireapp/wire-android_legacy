@@ -35,16 +35,16 @@ class AccountFragment : Fragment() {
         })
     }
 
-    private fun refreshUi(resource: Resource<UserItem>){
+    private fun refreshUi(resource: Resource<UserItem>) {
         when (resource.status) {
             ResourceStatus.SUCCESS -> {
                 preferences_account_name_title.text = resource.data?.name
                 preferences_account_email_title.text = resource.data?.email
                 preferences_account_handle_title.text = resource.data?.handle
-                preferences_account_handle_title.text = resource.data?.phone
+                preferences_account_phone_title.text = resource.data?.phone
             }
             ResourceStatus.ERROR -> {
-                Toast.makeText(requireContext(),resource.message,Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), resource.message, Toast.LENGTH_LONG).show()
             }
         }
 

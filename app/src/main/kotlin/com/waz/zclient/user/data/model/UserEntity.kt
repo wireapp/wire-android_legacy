@@ -98,7 +98,7 @@ data class UserEntity(
     @ColumnInfo(name = "created_by")
     val createdBy: String?
 ) {
-    fun toUser() = User(id = id, teamId = teamId, name = name,handle = handle, email = email, phone = phone,
+    fun toUser() = User(id = id, teamId = teamId, name = name, handle = handle, email = email, phone = phone,
         trackingId = trackingId, picture = picture, accentId = accentId, sKey = sKey,
         connection = connection, connectionTimestamp = connectionTimestamp,
         connectionMessage = connectionMessage, conversation = conversation, relation = relation,
