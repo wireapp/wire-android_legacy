@@ -33,7 +33,6 @@ import com.waz.zclient.common.controllers.{BrowserController, ThemeController, U
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
-import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
@@ -76,25 +75,6 @@ class SingleParticipantFragment extends FragmentHelper {
           override def onTabReselected(tab: TabLayout.Tab): Unit = {}
         })
       }
-    }
-  }
-
-  private lazy val availability = {
-    val usersController = inject[UsersController]
-
-    val availabilityVisible = Signal(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
-      case (true, _)         => false
-      case (_, isTeamMember) => isTeamMember
-    }
-
-    val availabilityStatus = for {
-      Some(uId) <- participantsController.otherParticipantId
-      av        <- usersController.availability(uId)
-    } yield av
-
-    Signal(availabilityVisible, availabilityStatus).map {
-      case (true, status) => Some(status)
-      case (false, _)     => None
     }
   }
 
@@ -245,16 +225,15 @@ class SingleParticipantFragment extends FragmentHelper {
 
           Signal(
             participantsController.otherParticipant.map(_.fields),
-            availability,
             timerText,
             readReceipts,
             participantsController.participants.map(_(userId)),
             participantsController.selfRole
           ).onUi {
-            case (fields, av, tt, rr, pRole, sRole) if isTeamTheSame =>
-              adapter.set(emailUserField ++ fields, av, tt, rr, pRole, sRole)
-            case (_, av, tt, rr, pRole, sRole) =>
-              adapter.set(emailUserField, av, tt, rr, pRole, sRole)
+            case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>
+              adapter.set(emailUserField ++ fields, tt, rr, pRole, sRole)
+            case (_, tt, rr, pRole, sRole) =>
+              adapter.set(emailUserField, tt, rr, pRole, sRole)
           }
 
           subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(userId, _))

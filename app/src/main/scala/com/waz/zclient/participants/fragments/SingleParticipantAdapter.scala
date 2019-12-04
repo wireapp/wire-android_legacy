@@ -25,13 +25,12 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{Availability, ConversationRole, UserField, UserId}
+import com.waz.model.{ConversationRole, UserField, UserId}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.zclient.common.views.ChatHeadView
 import com.waz.zclient.paintcode.GuestIcon
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
-import com.waz.zclient.views.ShowAvailabilityView
 import com.waz.zclient.{Injectable, R}
 
 class SingleParticipantAdapter(userId: UserId,
@@ -40,7 +39,6 @@ class SingleParticipantAdapter(userId: UserId,
                                isDarkTheme: Boolean,
                                isGroup: Boolean,
                                private var fields:          Seq[UserField] = Seq.empty,
-                               private var availability:    Option[Availability] = None,
                                private var timerText:       Option[String] = None,
                                private var readReceipts:    Option[String] = None,
                                private var participantRole: ConversationRole = ConversationRole.MemberRole,
@@ -50,14 +48,12 @@ class SingleParticipantAdapter(userId: UserId,
   import SingleParticipantAdapter._
 
   def set(fields:          Seq[UserField],
-          availability:    Option[Availability],
           timerText:       Option[String],
           readReceipts:    Option[String],
           participantRole: ConversationRole,
           selfRole:        ConversationRole
          ): Unit = {
     this.fields          = fields
-    this.availability    = availability
     this.timerText       = timerText
     this.readReceipts    = readReceipts
     this.participantRole = participantRole
@@ -84,7 +80,7 @@ class SingleParticipantAdapter(userId: UserId,
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
     case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, availability, timerText, isDarkTheme, fields.nonEmpty)
+      h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
     case h: GroupAdminViewHolder =>
       h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
     case h: ParticipantFooterRowViewHolder =>
@@ -122,7 +118,6 @@ object SingleParticipantAdapter {
     private lazy val guestIndication      = view.findViewById[LinearLayout](R.id.guest_indicator)
     private lazy val externalIndication   = view.findViewById[LinearLayout](R.id.external_indicator)
     private lazy val groupAdminIndication = view.findViewById[LinearLayout](R.id.group_admin_indicator)
-    private lazy val userAvailability     = view.findViewById[ShowAvailabilityView](R.id.availability)
     private lazy val guestIndicatorTimer  = view.findViewById[TypefaceTextView](R.id.expiration_time)
     private lazy val guestIndicatorIcon   = view.findViewById[ImageView](R.id.guest_indicator_icon)
     private lazy val informationText      = view.findViewById[TypefaceTextView](R.id.information)
@@ -133,7 +128,6 @@ object SingleParticipantAdapter {
              isGuest: Boolean,
              isExternal: Boolean,
              isGroupAdmin: Boolean,
-             availability: Option[Availability],
              timerText: Option[String],
              isDarkTheme: Boolean,
              hasInformation: Boolean
@@ -147,14 +141,6 @@ object SingleParticipantAdapter {
 
       val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
       guestIndicatorIcon.setImageDrawable(GuestIcon(color))
-
-      availability match {
-        case Some(av) =>
-          userAvailability.setVisible(true)
-          userAvailability.set(av)
-        case None =>
-          userAvailability.setVisible(false)
-      }
 
       timerText match {
         case Some(text) =>

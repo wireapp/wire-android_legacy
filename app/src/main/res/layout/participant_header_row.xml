@@ -148,14 +148,6 @@
             />
     </LinearLayout>
 
-    <com.waz.zclient.views.ShowAvailabilityView
-        android:id="@+id/availability"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="@dimen/wire__padding__8"
-        android:visibility="gone"/>
-
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/information"
         android:layout_width="match_parent"

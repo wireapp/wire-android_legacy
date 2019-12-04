@@ -147,7 +147,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   def setAvailability(availability: Availability): Unit =
-    AvailabilityView.displayLeftOfText(nameView, availability, nameView.getCurrentTextColor, pushDown = true)
+    AvailabilityView.displayStartOfText(nameView, availability, nameView.getCurrentTextColor, pushDown = true)
 
   def setSeparatorVisible(visible: Boolean): Unit = separator.setVisible(visible)
 

@@ -217,6 +217,18 @@ package object utils {
       textView.setCompoundDrawablesRelative(null, null, getCompoundDrawable(drawMethod, color), null)
     }
 
+    def displayStartOfText(drawable: Option[Drawable] = None, pushDown: Int = 0): Unit = {
+      drawable.foreach(d => d.setBounds(0, pushDown, d.getIntrinsicWidth, d.getIntrinsicHeight + pushDown))
+      val oldDrawables = textView.getCompoundDrawables
+      textView.setCompoundDrawablesRelative(drawable.orNull, oldDrawables(1), oldDrawables(2), oldDrawables(3))
+    }
+
+    def displayEndOfText(drawable: Option[Drawable] = None, pushDown: Int = 0): Unit = {
+      drawable.foreach(d => d.setBounds(0, pushDown, d.getIntrinsicWidth, d.getIntrinsicHeight + pushDown))
+      val oldDrawables = textView.getCompoundDrawables
+      textView.setCompoundDrawablesRelative(oldDrawables(0), oldDrawables(1), drawable.orNull, oldDrawables(3))
+    }
+
     /**
       * Add an ime option to the existing options
       * @param option
