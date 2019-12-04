@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.common.views
 
-import java.util.Locale
-
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
@@ -62,11 +60,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val separator      = findById[View](R.id.separator)
   private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
 
-  private lazy val youTextString = {
-    val str = getString(R.string.content__system__you)
-    val firstLetter = str.take(1).toUpperCase(Locale.getDefault)
-    firstLetter + str.drop(1)
-  }
+  private lazy val youTextString = getString(R.string.content__system__you).capitalize
   private lazy val youText        = returning(findById[TypefaceTextView](R.id.you_text))(_.setText(s"($youTextString)"))
 
   val onSelectionChanged: SourceStream[Boolean] = EventStream()

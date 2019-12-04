@@ -77,17 +77,7 @@ object ConversationRoleAction {
     override val table = Table("ConversationRoleAction", Label, Action, ConvId)
     override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
 
-    override def onCreate(db: DB): Unit = {
-      super.onCreate(db)
-
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${Label.name})")
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
-    }
-
     def findForConv(convId: Option[ConvId])(implicit db: DB) = iterating(find(ConvId, convId))
-    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs.map(Option(_))))
-    def findForRole(role: String)(implicit db: DB) = iterating(find(Label, role))
-    def findForRoles(roles: Set[String])(implicit db: DB) = iteratingMultiple(findInSet(Label, roles))
 
     def findForRoleAndConv(role: String, convId: Option[ConvId])(implicit db: DB) = iterating(
       db.query(table.name, null, s"${Label.name} = $role AND ${ConvId.name} = ${convId.getOrElse("")}", Array(), null, null, null)

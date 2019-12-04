@@ -57,7 +57,7 @@ trait ConversationsContentUpdater {
                                     remoteId: RConvId,
                                     convType: ConversationType,
                                     creator: UserId,
-                                    members: Map[UserId, String],
+                                    members: Map[UserId, ConversationRole],
                                     name: Option[Name] = None,
                                     hidden: Boolean = false,
                                     access: Set[Access] = Set(Access.PRIVATE),
@@ -180,7 +180,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                              remoteId:    RConvId,
                                              convType:    ConversationType,
                                              creator:     UserId,
-                                             members:     Map[UserId, String],
+                                             members:     Map[UserId, ConversationRole],
                                              name:        Option[Name] = None,
                                              hidden:      Boolean = false,
                                              access:      Set[Access] = Set(Access.PRIVATE),
@@ -203,7 +203,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           accessRole    = Some(accessRole),
           receiptMode   = Some(receiptMode)
         ))
-      _    <- membersStorage.add(convId, Map(creator -> ConversationRole.AdminRole.label) ++ members)
+      _    <- membersStorage.add(convId, Map(creator -> ConversationRole.AdminRole) ++ members)
     } yield conv
   }
 
@@ -275,7 +275,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           _ <- storage.updateLocalId(updates.head, origId)
           _ <- Future.sequence(updates.map(membersStorage.delete))
           _ <- updateConversation(origId, Some(ConversationType.OneToOne), hidden = Some(false))
-          _ <- membersStorage.add(origId, Map(selfUserId -> ConversationRole.AdminRole.label, UserId(origId.str) -> ConversationRole.AdminRole.label))
+          _ <- membersStorage.add(origId, Map(selfUserId -> ConversationRole.AdminRole, UserId(origId.str) -> ConversationRole.AdminRole))
         } yield ()
       })
     } yield ()

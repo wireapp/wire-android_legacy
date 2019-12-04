@@ -22,7 +22,7 @@ import com.waz.api.IConversation.AccessRole._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.{IConversation, Verification}
 import com.waz.db.Col._
-import com.waz.db.{Dao, Dao2, Dao3}
+import com.waz.db.{Dao, Dao2}
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model
 import com.waz.model.ConversationData.{ConversationType, Link, UnreadCount}
@@ -122,6 +122,8 @@ case class ConversationMemberData(userId: UserId, convId: ConvId, role: String) 
 }
 
 object ConversationMemberData {
+  def apply(userId: UserId, convId: ConvId, role: ConversationRole): ConversationMemberData =
+    ConversationMemberData(userId, convId, role.label)
 
   implicit object ConversationMemberDataDao extends Dao2[ConversationMemberData, UserId, ConvId] {
     val UserId = id[UserId]('user_id).apply(_.userId)

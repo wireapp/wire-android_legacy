@@ -269,7 +269,7 @@ object ConversationsClient {
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
                                   messageTimer: Option[FiniteDuration],
-                                  members:      Map[UserId, String],
+                                  members:      Map[UserId, ConversationRole],
                                   receiptMode:  Option[Int]
                                  )
 
@@ -298,7 +298,7 @@ object ConversationsClient {
           JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
             val member = arr.getJSONObject(i)
             val id = member.getString("id")
-            val role = member.optString("conversation_role", ConversationRole.AdminRole.label)
+            val role = ConversationRole.defaultRoles.find(_.label == member.optString("conversation_role")).getOrElse(ConversationRole.AdminRole)
             UserId(id) -> role
           }).toMap,
           decodeOptInt('receipt_mode)

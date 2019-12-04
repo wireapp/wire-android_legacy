@@ -156,11 +156,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         case None =>
           ev match {
             case MemberJoinEvent(_, time, from, members, _) if from != selfUserId =>
-              val membersWithRoles = members.map(_ -> ConversationRole.AdminRole.label)
+              val membersWithRoles = members.map(_ -> ConversationRole.AdminRole).toMap
               // this happens when we are added to group conversation
               for {
                 conv <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
-                ms   <- membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole.label) ++ membersWithRoles)
+                ms   <- membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
                 sId  <- sync.syncConversations(Set(conv.id))
                 _    <- syncReqService.await(sId)
                 Some(conv) <- convsStorage.get(conv.id)
@@ -194,7 +194,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           Future.successful(None)
         syncId <- users.syncIfNeeded(us)
         _ <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
-        _ <- membersStorage.add(conv.id, us.map(_ -> ConversationRole.AdminRole.label).toMap)
+        _ <- membersStorage.add(conv.id, us.map(_ -> ConversationRole.AdminRole).toMap)
         _ <- if (us.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
         _ <- convSync.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         Some(conv) <- convsStorage.get(conv.id)
@@ -218,7 +218,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
       debug(l"ConnectRequestEvent(from = $from, recipient = $recipient")
-      membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole.label, recipient -> ConversationRole.AdminRole.label)).flatMap { added =>
+      membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole, recipient -> ConversationRole.AdminRole)).flatMap { added =>
         users.syncIfNeeded(added.map(_.userId))
       }
 
@@ -313,7 +313,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     def updateMembers() =
       content.convsByRemoteId(responses.map(_.id).toSet).flatMap { convs =>
         val toUpdate = responses.map(c => (c.id, c.members)).flatMap {
-          case (remoteId, members) => convs.get(remoteId).map(_.id -> (members + (selfUserId -> ConversationRole.AdminRole.label)))
+          case (remoteId, members) => convs.get(remoteId).map(_.id -> (members + (selfUserId -> ConversationRole.AdminRole)))
         }.toMap
         membersStorage.setAll(toUpdate)
       }
@@ -476,7 +476,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       case unexpected if unexpected.nonEmpty =>
         for {
           _ <- users.syncIfNeeded(unexpected)
-          _ <- membersStorage.add(convId, unexpected.map(_ -> ConversationRole.MemberRole.label).toMap)
+          _ <- membersStorage.add(convId, unexpected.map(_ -> ConversationRole.MemberRole).toMap)
           _ <- Future.traverse(unexpected)(u => messages.addMemberJoinMessage(convId, u, Set(u), forceCreate = true)) //add a member join message for each user discovered
         } yield {}
       case _ => Future.successful({})

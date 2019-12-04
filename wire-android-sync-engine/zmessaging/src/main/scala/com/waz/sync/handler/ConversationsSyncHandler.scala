@@ -153,7 +153,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
                        access:      Set[Access],
                        accessRole:  AccessRole,
                        receiptMode: Option[Int],
-                       defaultRole: Option[String]
+                       defaultRole: Option[ConversationRole]
                       ): Future[SyncResult] = {
     debug(l"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
@@ -164,7 +164,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       access                = access,
       accessRole            = accessRole,
       receiptMode           = receiptMode,
-      usersConversationRole = defaultRole
+      usersConversationRole = defaultRole.map(_.label)
     )
     conversationsClient.postConversation(initState).future.flatMap {
       case Right(response) =>

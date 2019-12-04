@@ -31,8 +31,8 @@ import scala.concurrent.Future
 trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberData] {
   def getByConv(conv: ConvId): Future[IndexedSeq[ConversationMemberData]]
   def getByConvs(conv: Set[ConvId]): Future[IndexedSeq[ConversationMemberData]]
-  def add(conv: ConvId, users: Map[UserId, String]): Future[Set[ConversationMemberData]]
-  def add(conv: ConvId, user: UserId, roleLabel: String): Future[Option[ConversationMemberData]]
+  def add(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Set[ConversationMemberData]]
+  def add(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]]
   def isActiveMember(conv: ConvId, user: UserId): Future[Boolean]
   def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]]
   def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]]
@@ -42,9 +42,9 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def getActiveConvs(user: UserId): Future[Seq[ConvId]]
   def activeMembers(conv: ConvId): Signal[Set[UserId]]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
-  def set(conv: ConvId, users: Map[UserId, String]): Future[Unit]
-  def setAll(members: Map[ConvId, Map[UserId, String]]): Future[Unit]
-  def addAll(members: Map[ConvId, Map[UserId, String]]): Future[Unit]
+  def set(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Unit]
+  def setAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
+  def addAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
   def delete(conv: ConvId): Future[Unit]
 }
 
@@ -91,17 +91,17 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
       case (cId, members) => cId -> members.map(_.userId).toSet
     })
 
-  override def add(conv: ConvId, users: Map[UserId, String]): Future[Set[ConversationMemberData]] =
+  override def add(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Set[ConversationMemberData]] =
     updateOrCreateAll2(users.keys.map((_, conv)), { (k, v) =>
       v match {
-        case Some(m) if m.role != users(m.userId) => m.copy(role = users(m.userId))
+        case Some(m) if m.role != users(m.userId) => m.copy(role = users(m.userId).label)
         case Some(m)                              => m
         case None                                 => ConversationMemberData(k._1, conv, users(k._1))
       }
     })
 
-  override def add(conv: ConvId, user: UserId, roleLabel: String): Future[Option[ConversationMemberData]] =
-    add(conv, Map(user -> roleLabel)).map(_.headOption)
+  override def add(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]] =
+    add(conv, Map(user -> role)).map(_.headOption)
 
   override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] =
     getAll(users.map(_ -> conv)).flatMap(toBeRemoved => removeAll(users.map(_ -> conv)).map(_ => toBeRemoved.flatten.toSet))
@@ -110,14 +110,14 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   override def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]] =
     remove(conv, Set(user)).map(_.headOption)
 
-  override def set(conv: ConvId, users: Map[UserId, String]): Future[Unit] = getActiveUsers(conv).flatMap { active =>
+  override def set(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Unit] = getActiveUsers(conv).flatMap { active =>
     val toRemove = active.filterNot(users.keySet)
     val toAdd = users -- toRemove
 
     remove(conv, toRemove).zip(add(conv, toAdd)).map(_ => ())
   }
 
-  override def setAll(members: Map[ConvId, Map[UserId, String]]): Future[Unit] = getActiveUsers2(members.keySet).flatMap { active =>
+  override def setAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit] = getActiveUsers2(members.keySet).flatMap { active =>
     val toRemove = active.map {
       case (convId, users) => convId -> active.get(convId).map(_.filterNot(users)).getOrElse(Set())
     }
@@ -137,7 +137,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
     removeAll(removeList).zip(insertAll(addList)).map(_ => ())
   }
 
-  override def addAll(members: Map[ConvId, Map[UserId, String]]): Future[Unit] = {
+  override def addAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit] = {
     val addList =
       members.flatMap { case (convId, users) => users.map(u => ConversationMemberData(u._1, convId, u._2)) }
 

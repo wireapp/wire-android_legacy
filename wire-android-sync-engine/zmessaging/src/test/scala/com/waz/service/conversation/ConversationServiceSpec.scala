@@ -37,6 +37,7 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 
 class ConversationServiceSpec extends AndroidFreeSpec {
+  import ConversationRole._
 
   private lazy val content        = mock[ConversationsContentUpdater]
   private lazy val messages       = mock[MessagesService]
@@ -362,7 +363,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val conv = ConversationData(team = Some(teamId), name = Some(convName))
       val syncId = SyncId()
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Map.empty[UserId, String], *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Map.empty[UserId, ConversationRole], *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
@@ -381,7 +382,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val user1 = UserData("user1")
       val user2 = UserData("user2")
       val users = Set(self, user1, user2)
-      val uMap = Map(self.id -> ConversationRole.AdminRole.label, user1.id -> ConversationRole.MemberRole.label, user2.id -> ConversationRole.MemberRole.label)
+      val uMap = Map(self.id -> AdminRole, user1.id -> MemberRole, user2.id -> MemberRole)
 
       (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, uMap, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
@@ -414,7 +415,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         None,
         None,
         None,
-        Map(account1Id -> ConversationRole.AdminRole.label, from -> ConversationRole.AdminRole.label),
+        Map(account1Id -> AdminRole, from -> AdminRole),
         None
       )
 
