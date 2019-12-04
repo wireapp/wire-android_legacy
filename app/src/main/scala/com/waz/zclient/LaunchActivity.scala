@@ -63,20 +63,22 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
     val environments = Backend.byName
     val items: Array[CharSequence] = environments.keys.toArray
 
-    val builder = new AlertDialog.Builder(this)
-    builder.setTitle("Select Backend")
-
-    builder.setItems(items, new DialogInterface.OnClickListener {
-      override def onClick(dialog: DialogInterface, which: Int): Unit = {
-        val choice = items.apply(which).toString
-        val config = environments.apply(choice)
-        backendController.setStoredBackendConfig(config)
-        callback(config)
-      }
-    })
-
-    builder.setCancelable(false)
-    if (!isFinishing())  builder.create().show()
+    val dialog: AlertDialog = new AlertDialog.Builder(this)
+      .setTitle("Select Backend")
+      .setItems(items, new DialogInterface.OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = {
+          if (dialog != null) {
+              dialog.dismiss()
+          }
+          val choice = items.apply(which).toString
+          val config = environments.apply(choice)
+          backendController.setStoredBackendConfig(config)
+          callback(config)
+        }
+      })
+      .setCancelable(false)
+      .create()
+    if (!isFinishing) dialog.show()
 
     // QA needs to be able to switch backends via intents. Any changes to the backend
     // preference while the dialog is open will be treated as a user selection.
