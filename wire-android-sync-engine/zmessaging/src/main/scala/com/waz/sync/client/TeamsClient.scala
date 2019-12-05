@@ -86,7 +86,7 @@ class TeamsClientImpl(implicit
     Request.Get(relativePath = teamRolesPath(id))
       .withResultType[TeamRoles]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.roles)
+      .executeSafe(_.roles.map(_.toConversationRole).toSet)
 
   private def createPermissionsMasks(permissions: Permissions): PermissionsMasks =
     (permissions.self, permissions.copy)
@@ -112,8 +112,11 @@ object TeamsClient {
 
   case class TeamMember(user: UserId, permissions: Option[Permissions], created_by: Option[UserId])
 
-  case class TeamRoles(roles: Set[ConversationRole])
-
   case class Permissions(self: Long, copy: Long)
+
+  case class TeamConvRole(role: String, actions: Seq[String]) {
+    def toConversationRole: ConversationRole = ConversationRole(role, actions.flatMap(a => ConversationAction.allActions.find(_.name == a)).toSet)
+  }
+  case class TeamRoles(roles: Seq[TeamConvRole])
 
 }

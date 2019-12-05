@@ -111,11 +111,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.loadUser(userData.id)
     setTitle(userData.getDisplayName, userData.isSelf)
-    setAvailability(if (teamId.isDefined && !hideStatus) userData.availability else Availability.None)
-    setVerified(userData.isVerified)
+    setAvailability(/*if (teamId.isDefined && !hideStatus) userData.availability else Availability.None*/Availability.Busy)
+    setVerified(/*userData.isVerified*/true)
     setSubtitle(createSubtitle(userData))
-    setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
-    setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
+    setIsGuest(/*userData.isGuest(teamId) && !userData.isWireBot*/true)
+    setIsExternal(/*userData.isExternal(teamId) && !userData.isWireBot*/true)
   }
 
   def setIntegration(integration: IntegrationData): Unit = {

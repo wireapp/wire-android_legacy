@@ -233,6 +233,7 @@ class UserSearchService(selfUserId:           UserId,
       convs      <- conversations
       isExternal <- Signal.future(isExternal)
       dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
+      _ = verbose(l"dir results: $dir")
     } yield SearchResults(top, local, convs, dir)
   }
 
@@ -255,7 +256,7 @@ class UserSearchService(selfUserId:           UserId,
     verbose(l"updateExactMatch($userId)")
 
     usersStorage.get(userId).collect {
-      case Some(user) => exactMatchUser ! Some(user)
+      case Some(user) => verbose(l"exact match found: $user"); exactMatchUser ! Some(user)
     }.map(_ => ())
   }
 

@@ -226,7 +226,7 @@ trait HttpClient extends DerivedLogTag {
   )(implicit rd: ResponseDeserializer[T]): CancellableFuture[T] =
     CancellableFuture(rd.deserialize(response)).recoverWith {
       case err =>
-        error(l"Error while deserializing response.", err)
+        error(l"Error while deserializing response: $response", err)
         //we already have tried to deserialize response body, so it may be broken.
         CancellableFuture.failed(DecodingError(err, response.copy(body = EmptyBodyImpl)))
     }
