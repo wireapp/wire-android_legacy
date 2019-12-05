@@ -112,7 +112,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     .onUi(timestamp.setText)
 
   quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
-    name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
+    name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None)
   }
 
   container.onClick(onQuoteClick ! {()})
@@ -201,7 +201,7 @@ class LocationReplyPartView(context: Context, attrs: AttributeSet, style: Int) e
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   quotedMessage.map(_.location.map(_.getName).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawLocation), getStyledColor(R.attr.wirePrimaryTextColor))
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawLocation))
 }
 
 class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -213,7 +213,7 @@ class FileReplyPartView(context: Context, attrs: AttributeSet, style: Int) exten
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   quotedAsset.map(_.map(_.name).getOrElse("")).onUi(textView.setText)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile), getStyledColor(R.attr.wirePrimaryTextColor))
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawFile))
 }
 
 class VideoReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {
@@ -242,7 +242,7 @@ class AudioReplyPartView(context: Context, attrs: AttributeSet, style: Int) exte
   private lazy val textView = findById[TypefaceTextView](R.id.text)
 
   textView.setText(R.string.reply_message_type_audio)
-  textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo), getStyledColor(R.attr.wirePrimaryTextColor))
+  textView.setStartCompoundDrawable(Some(WireStyleKit.drawVoiceMemo))
 }
 
 class UnknownReplyPartView(context: Context, attrs: AttributeSet, style: Int) extends ReplyPartView(context: Context, attrs: AttributeSet, style: Int) {

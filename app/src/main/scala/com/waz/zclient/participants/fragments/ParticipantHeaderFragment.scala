@@ -163,7 +163,7 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
     pageTag.onUi {
       case Some(SingleParticipantFragment.Tag) =>
         vh.foreach(_.setVisible(true))
-        
+
         participantsController.otherParticipant.onUi { user =>
           vh.foreach { view =>
             view.setText(user.getDisplayName)

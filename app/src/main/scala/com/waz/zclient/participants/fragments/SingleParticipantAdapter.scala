@@ -116,10 +116,10 @@ object SingleParticipantAdapter {
   case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)
     private lazy val guestIndication      = view.findViewById[LinearLayout](R.id.guest_indicator)
+    private lazy val guestIndicatorIcon  = view.findViewById[ImageView](R.id.guest_indicator_icon)
     private lazy val externalIndication   = view.findViewById[LinearLayout](R.id.external_indicator)
     private lazy val groupAdminIndication = view.findViewById[LinearLayout](R.id.group_admin_indicator)
     private lazy val guestIndicatorTimer  = view.findViewById[TypefaceTextView](R.id.expiration_time)
-    private lazy val guestIndicatorIcon   = view.findViewById[ImageView](R.id.guest_indicator_icon)
     private lazy val informationText      = view.findViewById[TypefaceTextView](R.id.information)
 
     private var userId = Option.empty[UserId]
