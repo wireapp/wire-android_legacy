@@ -61,7 +61,9 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     }
   }
 
-  override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {
+  override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
+
+  override def onActivityResumed(activity: Activity): Unit = {
     if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
       addSecureFlags(activity)
     } else {
@@ -76,7 +78,6 @@ class ActivityLifecycleCallback(implicit injector: Injector)
     activity.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
   }
 
-  override def onActivityResumed(activity: Activity): Unit = {}
 
   override def onActivityPaused(activity: Activity): Unit = {}
 
