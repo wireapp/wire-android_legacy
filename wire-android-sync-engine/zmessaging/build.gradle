@@ -66,8 +66,7 @@ tasks.withType(ScalaCompile) {
 }
 
 def versions = [
-        okHttp : "3.10.0",
-        circe : "0.9.3",
+    circe: "0.9.3"
 ]
 
 dependencies {
@@ -75,7 +74,7 @@ dependencies {
     api project(':wire-android-sync-engine:macrosupport')
 
     api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
-    implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
+    implementation "com.squareup.okhttp3:okhttp:$rootProject.ext.versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
     implementation "$rootProject.deps.libphonenumber"
     implementation "com.wire:cryptobox-android:1.1.2"
@@ -109,8 +108,9 @@ dependencies {
         exclude(group: "org.scalatest", module: "scalatest")
     }
     testImplementation "$rootProject.deps.robolectric_android_all"
-    testImplementation "junit:junit:$rootProject.ext.versions.junit"             //to override version included in robolectric
-    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
+    testImplementation "junit:junit:$rootProject.ext.versions.junit"
+    //to override version included in robolectric
+    testImplementation "com.squareup.okhttp3:mockwebserver:$rootProject.ext.versions.okHttp"
     //should match okhttp version.
     testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
     testImplementation "com.typesafe.akka:akka-http_$rootProject.ext.scalaMajorVersion:10.1.8"
