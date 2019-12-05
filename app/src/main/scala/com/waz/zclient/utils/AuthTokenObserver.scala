@@ -21,7 +21,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountManager
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.zclient.user.data.source.remote.AuthHeaderInterceptor
+import com.waz.zclient.core.network.Network
 import com.waz.zclient.{Injectable, Injector}
 import io.reactivex.functions.Consumer
 
@@ -38,15 +38,15 @@ class AuthTokenObserver(implicit injector: Injector, ec: EventContext)
   //TODO: might observe accessToken and tokenType separately
   authToken.on(Threading.Background) {
     case Some(x) =>
-      AuthHeaderInterceptor.setToken(x.accessToken)
-      AuthHeaderInterceptor.setTokenType(x.tokenType)
-    case None => AuthHeaderInterceptor.setToken(null)
+      Network.getAuthHeaderInterceptor.setToken(x.accessToken)
+      Network.getAuthHeaderInterceptor.setTokenType(x.tokenType)
+    case None => Network.getAuthHeaderInterceptor.setToken(null)
   }
 
-  AuthHeaderInterceptor.waitForRetry.subscribe(new Consumer[java.lang.Boolean] {
+  Network.getAuthRetryDelegate.getRetryObservable.subscribe(new Consumer[java.lang.Boolean] {
     override def accept(t: java.lang.Boolean): Unit = if (t) {
       accountManager.head.flatMap(m => m.refreshToken())
-        .map(_ => AuthHeaderInterceptor.onRetryFinished())
+        .map(_ => Network.getAuthRetryDelegate.onRetryFinished())
     }
   })
 

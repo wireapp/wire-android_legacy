@@ -2,6 +2,8 @@ package com.waz.zclient.core.network
 
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.user.data.source.remote.AuthHeaderInterceptor
+import com.waz.zclient.user.data.source.remote.AuthRetryDelegate
+import com.waz.zclient.user.data.source.remote.AuthRetryDelegateImpl
 import com.waz.zclient.user.data.source.remote.UserApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -16,6 +18,12 @@ object Network {
 
     private val retrofit: Retrofit by lazy { createNetworkClient(BASE_URL) }
 
+    @JvmStatic
+    val authRetryDelegate: AuthRetryDelegate by lazy { AuthRetryDelegateImpl() }
+
+    @JvmStatic
+    val authHeaderInterceptor by lazy { AuthHeaderInterceptor(authRetryDelegate)}
+
     private fun createNetworkClient(baseUrl: String): Retrofit {
 
         val okHttpClient = OkHttpClient().newBuilder()
@@ -26,7 +34,7 @@ object Network {
                     .build()
                 chain.proceed(newRequest)
             }
-            .addInterceptor(AuthHeaderInterceptor)
+            .addInterceptor(authHeaderInterceptor)
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = if (BuildConfig.DEBUG) {
                     HttpLoggingInterceptor.Level.BODY
