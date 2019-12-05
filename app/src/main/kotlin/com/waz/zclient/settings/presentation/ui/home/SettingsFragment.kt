@@ -24,7 +24,6 @@ class SettingsFragment : Fragment(), OnItemClickListener {
         return inflater.inflate(R.layout.fragment_settings, container, false)
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.settings_title)
@@ -34,24 +33,28 @@ class SettingsFragment : Fragment(), OnItemClickListener {
 
     override fun onItemClicked(position: Int) {
         when (position) {
-            ACCOUNT -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, AccountFragment.newInstance(), true)
-            OPTIONS -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, OptionsFragment.newInstance(), true)
-            ADVANCED -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, AdvancedFragment.newInstance(), true)
-            SUPPORT -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, SupportFragment.newInstance(), true)
-            ABOUT -> (activity as AppCompatActivity).replaceFragment(R.id.layout_container, AboutFragment.newInstance(), true)
+            ACCOUNT -> replaceFragment(AccountFragment.newInstance())
+            OPTIONS -> replaceFragment(OptionsFragment.newInstance())
+            ADVANCED -> replaceFragment(AdvancedFragment.newInstance())
+            SUPPORT -> replaceFragment(SupportFragment.newInstance())
+            ABOUT -> replaceFragment(AboutFragment.newInstance())
         }
+    }
+
+    private fun replaceFragment(fragment: Fragment) {
+        (activity as AppCompatActivity).replaceFragment(R.id.layout_container, fragment, true)
     }
 
     companion object {
         fun newInstance() = SettingsFragment()
-        const val ACCOUNT = 0
-        const val DEVICES = 1
-        const val OPTIONS = 2
-        const val ADVANCED = 3
-        const val SUPPORT = 4
-        const val ABOUT = 5
-        const val DEVELOPER_SETTINGS = 6
-        const val AVS_SETTINGS = 7
+        private const val ACCOUNT = 0
+        private const val DEVICES = 1
+        private const val OPTIONS = 2
+        private const val ADVANCED = 3
+        private const val SUPPORT = 4
+        private const val ABOUT = 5
+        private const val DEVELOPER_SETTINGS = 6
+        private const val AVS_SETTINGS = 7
     }
 
 }
