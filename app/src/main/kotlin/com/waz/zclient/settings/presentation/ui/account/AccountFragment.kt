@@ -13,6 +13,8 @@ import com.waz.zclient.core.resources.Resource
 import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.settings.presentation.ui.SettingsViewModelFactory
+import com.waz.zclient.utilities.config.Config
+import com.waz.zclient.utilities.extension.openUrl
 import kotlinx.android.synthetic.main.fragment_account.*
 
 
@@ -27,7 +29,10 @@ class AccountFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         activity?.title = getString(R.string.pref_account_screen_title)
+        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
+
         settingsAccountViewModel = ViewModelProviders.of(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java)
         settingsAccountViewModel.getProfile()
         settingsAccountViewModel.profileUserData.observe(viewLifecycleOwner, Observer<Resource<UserItem>> {
@@ -47,11 +52,11 @@ class AccountFragment : Fragment() {
                 Toast.makeText(requireContext(), resource.message, Toast.LENGTH_LONG).show()
             }
         }
-
     }
 
     companion object {
         fun newInstance() = AccountFragment()
+        private const val Accounts = "|ACCOUNTS|"
     }
 
 
