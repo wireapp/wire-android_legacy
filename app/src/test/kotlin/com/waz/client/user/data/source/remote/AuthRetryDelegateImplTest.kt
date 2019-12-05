@@ -9,11 +9,11 @@ class AuthRetryDelegateImplTest {
 
     @Test
     fun `when new retry starts, emits true to retry observable`() {
-        val retryProxy = AuthRetryDelegateImpl()
-        val testObserver: TestObserver<Boolean> = retryProxy.getRetryObservable().test()
+        val retryDelegate = AuthRetryDelegateImpl()
+        val testObserver: TestObserver<Boolean> = retryDelegate.getRetryObservable().test()
 
         //when
-        retryProxy.startRetryProcess()
+        retryDelegate.startRetryProcess()
 
         //then
         testObserver.assertValues(true)
@@ -23,14 +23,14 @@ class AuthRetryDelegateImplTest {
 
     @Test
     fun `if retry is already started, does not emit new value to retry observable`() {
-        val retryProxy = AuthRetryDelegateImpl()
-        val testObserver: TestObserver<Boolean> = retryProxy.getRetryObservable().test()
+        val retryDelegate = AuthRetryDelegateImpl()
+        val testObserver: TestObserver<Boolean> = retryDelegate.getRetryObservable().test()
 
         //given
-        retryProxy.startRetryProcess()
+        retryDelegate.startRetryProcess()
 
         //when
-        retryProxy.startRetryProcess()
+        retryDelegate.startRetryProcess()
 
         //then
         testObserver.assertValues(true) //only once, not twice
@@ -40,14 +40,14 @@ class AuthRetryDelegateImplTest {
 
     @Test
     fun `when retry process is finished, emits false to retry observable`() {
-        val retryProxy = AuthRetryDelegateImpl()
-        val testObserver: TestObserver<Boolean> = retryProxy.getRetryObservable().test()
+        val retryDelegate = AuthRetryDelegateImpl()
+        val testObserver: TestObserver<Boolean> = retryDelegate.getRetryObservable().test()
 
         //given
-        retryProxy.startRetryProcess()
+        retryDelegate.startRetryProcess()
 
         //when
-        retryProxy.onRetryFinished()
+        retryDelegate.onRetryFinished()
 
         //then
         testObserver.assertValues(true, false)

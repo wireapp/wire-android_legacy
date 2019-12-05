@@ -110,8 +110,7 @@ dependencies {
         exclude(group: "org.scalatest", module: "scalatest")
     }
     testImplementation "$rootProject.deps.robolectric_android_all"
-    testImplementation "junit:junit:$rootProject.ext.versions.junit"
-    //to override version included in robolectric
+    testImplementation "junit:junit:$rootProject.ext.versions.junit"    //to override version included in robolectric
     testImplementation "com.squareup.okhttp3:mockwebserver:$rootProject.ext.versions.okHttp"
     //should match okhttp version.
     testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
