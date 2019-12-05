@@ -56,7 +56,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_indicator))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
   private lazy val videoIndicator = returning(findById[ImageView](R.id.video_indicator))(_.setImageDrawable(VideoIcon(R.color.light_graphite)))
   private lazy val nextIndicator  = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
-  private lazy val externalIcon   = findById[ImageView](R.id.external_icon)
+  private lazy val externalIcon   = returning(findById[ImageView](R.id.external_icon))(_.setColorFilter(R.color.light_graphite))
   private lazy val separator      = findById[View](R.id.separator)
   private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
 
@@ -111,11 +111,11 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.loadUser(userData.id)
     setTitle(userData.getDisplayName, userData.isSelf)
-    setAvailability(/*if (teamId.isDefined && !hideStatus) userData.availability else Availability.None*/Availability.Busy)
-    setVerified(/*userData.isVerified*/true)
+    setAvailability(if (teamId.isDefined && !hideStatus) userData.availability else Availability.None)
+    setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
-    setIsGuest(/*userData.isGuest(teamId) && !userData.isWireBot*/true)
-    setIsExternal(/*userData.isExternal(teamId) && !userData.isWireBot*/true)
+    setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)
+    setIsExternal(userData.isExternal(teamId) && !userData.isWireBot)
   }
 
   def setIntegration(integration: IntegrationData): Unit = {

@@ -50,7 +50,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _: OtrErrorEvent           => true
       case _: ConnectRequestEvent     => true
       case _: OtrMessageEvent         => true
-      case MemberJoinEvent(_, _, _, added, _) if added.contains(selfUserId)   => true
+      case MemberJoinEvent(_, _, _, added, _, _) if added.contains(selfUserId) => true
       case MemberLeaveEvent(_, _, _, leaving) if leaving.contains(selfUserId) => true
       case GenericMessageEvent(_, _, _, GenericMessage(_, content)) =>
         content match {

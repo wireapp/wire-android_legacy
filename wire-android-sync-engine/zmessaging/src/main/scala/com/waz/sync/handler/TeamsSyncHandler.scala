@@ -51,7 +51,7 @@ class TeamsSyncHandlerImpl(userId:    UserId,
       case Right(data) => client.getTeamMembers(id).future.flatMap {
         case Right(members) => client.getTeamRoles(id).future.flatMap {
           case Right(roles) => service.onTeamSynced(data, members, roles).map(_ => SyncResult.Success)
-          case Left(error) => service.onTeamSynced(data, members, ConversationRole.defaultRoles).map(_ => SyncResult.Success) //Future.successful(SyncResult(error))
+          case Left(error) => Future.successful(SyncResult(error))
         }
         case Left(error) => Future.successful(SyncResult(error))
       }

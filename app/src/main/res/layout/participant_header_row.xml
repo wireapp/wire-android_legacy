@@ -102,7 +102,7 @@
             android:layout_width="@dimen/guest_badge_size"
             android:layout_height="@dimen/guest_badge_size"
             android:layout_gravity="center_vertical"
-            android:src="@drawable/icon_external"
+            android:src="@drawable/ic_external"
             android:tint="?wirePrimaryTextColor"
             />
 
@@ -133,7 +133,8 @@
             android:layout_width="@dimen/guest_badge_size"
             android:layout_height="@dimen/guest_badge_size"
             android:layout_gravity="center_vertical"
-            android:src="@drawable/icon_group_host"
+            android:src="@drawable/ic_group_admin"
+            android:textColor="?wirePrimaryTextColor"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView

@@ -27,7 +27,7 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.PropertyKey
 import com.waz.service.conversation.FoldersService.FoldersProperty
-import com.waz.service.conversation.RemoteFolderData
+import com.waz.service.conversation.{ConversationsService, RemoteFolderData}
 import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.client.OtrClient
 import com.waz.utils.JsonDecoder._
@@ -118,7 +118,9 @@ case class OtrErrorEvent(convId: RConvId, time: RemoteInstant, from: UserId, err
 
 case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyping: Boolean) extends ConversationEvent
 
-case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, users: Set[UserId], firstEvent: Boolean = false) extends MessageEvent with ConversationStateEvent with ConversationEvent
+case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Seq[(UserId, String)], firstEvent: Boolean = false)
+  extends MessageEvent with ConversationStateEvent with ConversationEvent
+
 case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId]) extends MessageEvent with ConversationStateEvent
 case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState, conversationRole: String) extends ConversationStateEvent
 
@@ -237,6 +239,7 @@ object UserConnectionEvent {
 object ConversationEvent extends DerivedLogTag {
 
   import OtrErrorEvent._
+  import ConversationRole.decodeUserIdsWithRoles
 
   def unapply(e: ConversationEvent): Option[(RConvId, RemoteInstant, UserId)] =
     Some((e.convId, e.time, e.from))
@@ -252,9 +255,13 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
         case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
-        case "conversation.member-join"          => MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get).toSet, decodeString('id).startsWith("1."))
+        case "conversation.member-join"          =>
+          verbose(l"ROL MemberJoinEvent json: ${js.toString}")
+          MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeUserIdsWithRoles('users)(d.get), decodeString('id).startsWith("1."))
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
-        case "conversation.member-update"        => MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get), ConversationRole.AdminRole.label)
+        case "conversation.member-update"        =>
+          verbose(l"MemberUpdateEvent json: ${js.toString}")
+          MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get), ConversationRole.AdminRole.label)
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
         case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
         case "conversation.otr-message-add"      => OtrMessageEvent('conversation, time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))

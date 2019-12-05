@@ -70,6 +70,8 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
       result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult(timeoutError)
     }
+
+    scenario("")
   }
 
   def initHandler(teamId: Option[TeamId]) = new TeamsSyncHandlerImpl(account1Id, prefs, teamId, client, service)

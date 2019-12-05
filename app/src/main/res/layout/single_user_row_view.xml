@@ -70,7 +70,7 @@
             android:id="@+id/external_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/icon_external"
+            android:src="@drawable/ic_external_grey"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"

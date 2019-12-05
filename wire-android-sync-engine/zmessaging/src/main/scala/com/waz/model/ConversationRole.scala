@@ -19,8 +19,10 @@ package com.waz.model
 
 import com.waz.db.Col.{id, opt, text}
 import com.waz.db.Dao3
-import com.waz.utils.Identifiable
+import com.waz.utils.JsonDecoder.decodeSeq
+import com.waz.utils.{Identifiable, JsonDecoder}
 import com.waz.utils.wrappers.{DB, DBCursor}
+import org.json.JSONObject
 
 case class ConversationRole(label: String, actions: Set[ConversationAction]) {
   def toRoleActions(convId: Option[ConvId]): List[ConversationRoleAction] =
@@ -35,15 +37,31 @@ case class ConversationRole(label: String, actions: Set[ConversationAction]) {
   lazy val canModifyMessageTimer: Boolean = actions.contains(ModifyMessageTimer)
   lazy val canModifyReceiptMode: Boolean = actions.contains(ModifyReceiptMode)
   lazy val canModifyAccess: Boolean = actions.contains(ModifyAccess)
+  lazy val canModifyOtherMember: Boolean = actions.contains(ModifyOtherMember)
+  lazy val canLeaveConversation: Boolean = actions.contains(LeaveConversation)
 }
 
 object ConversationRole {
   import ConversationAction._
 
-  val MemberRole = ConversationRole("member_role", Set(AddMember, RemoveMember))
-  val AdminRole  = ConversationRole("admin_role", allActions)
+  val MemberRole = ConversationRole("wire_member", Set(LeaveConversation))
+  val AdminRole  = ConversationRole("wire_admin", allActions)
 
   val defaultRoles = Set(MemberRole, AdminRole)
+
+  def getRole(label: String, defaultRole: ConversationRole = ConversationRole.MemberRole): ConversationRole =
+    defaultRoles.find(_.label == label).getOrElse(defaultRole)
+
+  implicit val Decoder: JsonDecoder[(UserId, String)] = new JsonDecoder[(UserId, String)] {
+    import com.waz.utils.JsonDecoder._
+    override def apply(implicit js: JSONObject): (UserId, String) = (UserId('id), 'conversation_role)
+  }
+
+  def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Seq[(UserId, String)] = decodeSeq[(UserId, String)](s)
+
+  // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
+  def membersWithRoles(userIds: Seq[UserId], users: Seq[(UserId, String)]) =
+    users.map { case (id, label) => id -> ConversationRole.getRole(label) }.toMap ++ userIds.map(_ -> ConversationRole.MemberRole).toMap
 }
 
 case class ConversationAction(name: String) extends Identifiable[String] {
@@ -59,8 +77,10 @@ object ConversationAction {
   val ModifyMessageTimer = ConversationAction("modify_conversation_message_timer")
   val ModifyReceiptMode  = ConversationAction("modify_conversation_receipt_mode")
   val ModifyAccess       = ConversationAction("modify_conversation_access")
+  val ModifyOtherMember  = ConversationAction("modify_other_conversation_member")
+  val LeaveConversation  = ConversationAction("leave_conversation")
 
-  val allActions = Set(AddMember, RemoveMember, DeleteConversation, ModifyName, ModifyMessageTimer, ModifyReceiptMode, ModifyAccess)
+  val allActions = Set(AddMember, RemoveMember, DeleteConversation, ModifyName, ModifyMessageTimer, ModifyReceiptMode, ModifyAccess, ModifyOtherMember, LeaveConversation)
 }
 
 case class ConversationRoleAction(label: String, action: String, convId: Option[ConvId]) extends Identifiable[(String, String, Option[ConvId])] {

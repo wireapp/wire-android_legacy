@@ -22,7 +22,6 @@ import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
 import android.view._
 import android.widget.TextView
-import com.waz.model.Availability.Busy
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -105,8 +104,6 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
       case (true, status) => Some(status)
       case (false, _)     => None
     }
-
-    Signal.const(Option(Busy))
   }
 
   private lazy val confButton = returning(view[TextView](R.id.confirmation_button)) { vh =>
@@ -170,7 +167,7 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
         participantsController.otherParticipant.onUi { user =>
           vh.foreach { view =>
             view.setText(user.getDisplayName)
-            val shield = if (/*user.isVerified*/true) Option(getDrawable(R.drawable.shield_full)) else None
+            val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
             view.displayEndOfText(shield)
             if (shield.isDefined) view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))
             view.setContentDescription(if (user.isVerified) "verified" else "unverified")

@@ -80,7 +80,7 @@ class SingleParticipantAdapter(userId: UserId,
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
     case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, /*isGuest*/true, /*isExternal*/true, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
+      h.bind(userId,isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
     case h: GroupAdminViewHolder =>
       h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
     case h: ParticipantFooterRowViewHolder =>

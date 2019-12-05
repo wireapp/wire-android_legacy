@@ -49,7 +49,7 @@ trait ConversationsService {
   def convStateEventProcessingStage: EventScheduler.Stage
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def getSelfConversation: Future[Option[ConversationData]]
-  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]): Future[Unit]
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
   def setReceiptMode(id: ConvId, receiptMode: Int): Future[Option[ConversationData]]
@@ -69,7 +69,7 @@ trait ConversationsService {
     */
   def addUnexpectedMembersToConv(convId: ConvId, us: Set[UserId]): Future[Unit]
 
-  def setRole(id: ConvId, userId: UserId, role: ConversationRole): Future[Unit]
+  def setConversationRole(id: ConvId, userId: UserId, role: ConversationRole): Future[Unit]
 
   def deleteConversation(rConvId: RConvId): Future[Unit]
 }
@@ -155,17 +155,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           successful(())
         case None =>
           ev match {
-            case MemberJoinEvent(_, time, from, members, _) if from != selfUserId =>
-              val membersWithRoles = members.map(_ -> ConversationRole.AdminRole).toMap
+            case MemberJoinEvent(_, time, from, userIds, us, _) if from != selfUserId =>
+              val membersWithRoles = ConversationRole.membersWithRoles(userIds, us)
               // this happens when we are added to group conversation
               for {
-                conv <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
-                ms   <- membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
-                sId  <- sync.syncConversations(Set(conv.id))
-                _    <- syncReqService.await(sId)
+                conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
+                ms         <- membersStorage.add(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
+                sId        <- sync.syncConversations(Set(conv.id))
+                _          <- syncReqService.await(sId)
                 Some(conv) <- convsStorage.get(conv.id)
-                _    <- if (conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
-                _    <- messages.addMemberJoinMessage(conv.id, from, members)
+                _          <- if (conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
+                _          <- messages.addMemberJoinMessage(conv.id, from, membersWithRoles.keySet)
               } yield {}
             case _ =>
               warn(l"No conversation data found for event: $ev on try: $retryCount")
@@ -185,20 +185,18 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
-    case MemberJoinEvent(_, _, _, us, _) =>
-      val selfAdded = us.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
+    case MemberJoinEvent(_, _, _, ids, us, _) =>
+      val membersWithRoles = ConversationRole.membersWithRoles(ids, us)
+      val selfAdded = membersWithRoles.keySet.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
       for {
-        convSync <- if (selfAdded)
-          sync.syncConversations(Set(conv.id)).map(Option(_))
-        else
-          Future.successful(None)
-        syncId <- users.syncIfNeeded(us)
-        _ <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
-        _ <- membersStorage.add(conv.id, us.map(_ -> ConversationRole.AdminRole).toMap)
-        _ <- if (us.contains(selfUserId)) content.setConvActive(conv.id, active = true) else successful(None)
-        _ <- convSync.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
+        convSync   <- if (selfAdded) sync.syncConversations(Set(conv.id)).map(Option(_)) else Future.successful(None)
+        syncId     <- users.syncIfNeeded(membersWithRoles.keySet)
+        _          <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
+        _          <- membersStorage.add(conv.id, membersWithRoles)
+        _          <- if (selfAdded) content.setConvActive(conv.id, active = true) else successful(None)
+        _          <- convSync.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
         Some(conv) <- convsStorage.get(conv.id)
-        _ <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
+        _          <- if (selfAdded && conv.receiptMode.exists(_ > 0)) messages.addReceiptModeIsOnMessage(conv.id) else Future.successful(None)
       } yield ()
 
     case MemberLeaveEvent(_, time, from, userIds) =>
@@ -253,13 +251,17 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse]) =
+  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
     for {
-      (_, created) <- updateConversations(conversations)
+      (_, created) <- updateConversations(conversations, roles)
       _            <- messages.addDeviceStartMessages(created, selfUserId)
     } yield {}
 
-  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
+  // ask the backend for the roles and only then update the conversations
+  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] =
+    client.loadConversationRoles(responses.map(_.id).toSet).flatMap(roles => updateConversations(responses, roles))
+
+  private def updateConversations(responses: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
     def updateConversationData(): Future[(Set[ConversationData], Seq[ConversationData])] = {
       def findExistingId: Future[Seq[(ConvId, ConversationResponse)]] = convsStorage { convsById =>
@@ -320,8 +322,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     def syncUsers() = users.syncIfNeeded(responses.flatMap(_.members.keys).toSet)
 
+    def updateRoles(convIds: Map[ConvId, RConvId]): Future[Unit] =
+      Future.sequence(convIds.collect {
+        case (cId, rId) if roles.contains(rId) => rolesStorage.createOrUpdate(cId, roles(rId))
+      }).map(_ => ())
+
     for {
       (convs, created) <- updateConversationData()
+      _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap)
       _                <- updateMembers()
       _                <- syncUsers()
     } yield
@@ -483,8 +491,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
-  override def setRole(convId: ConvId, userId: UserId, role: ConversationRole): Future[Unit] =
-    membersStorage.update((userId, convId), _.copy(role = role.label)).map(_ => ())
+  override def setConversationRole(convId: ConvId, userId: UserId, role: ConversationRole): Future[Unit] =
+    for {
+      _ <- membersStorage.update(convId, userId, role)
+      _ <- sync.updateConversationRole(convId, userId, role)
+    } yield ()
 }
 
 object ConversationsService {

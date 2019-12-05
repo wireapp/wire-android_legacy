@@ -46,6 +46,7 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def setAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
   def addAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
   def delete(conv: ConvId): Future[Unit]
+  def update(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit]
 }
 
 class MembersStorageImpl(context: Context, storage: ZmsDatabase)
@@ -106,7 +107,6 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] =
     getAll(users.map(_ -> conv)).flatMap(toBeRemoved => removeAll(users.map(_ -> conv)).map(_ => toBeRemoved.flatten.toSet))
 
-
   override def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]] =
     remove(conv, Set(user)).map(_.headOption)
 
@@ -143,6 +143,9 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
 
     insertAll(addList).map(_ => ())
   }
+
+  override def update(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit] =
+    update((user, conv), _.copy(role = role.label)).map(_ => ())
 
   override def isActiveMember(conv: ConvId, user: UserId) = get(user -> conv).map(_.nonEmpty)
 

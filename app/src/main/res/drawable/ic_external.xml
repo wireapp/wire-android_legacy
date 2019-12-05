@@ -1,0 +1,26 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector android:autoMirrored="true" android:height="10dp"
+    android:viewportHeight="10" android:viewportWidth="10"
+    android:width="10dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#33373A" android:fillType="nonZero"
+        android:pathData="M3.1261,6.25C4.1123,6.25 4.9207,7.0114 4.9955,7.9785L5.0011,8.125L5.0011,8.25L5.0011,8.25L5.0015,8.2942C4.7811,8.5281 4.5284,8.7354 4.2455,8.9082C3.6517,9.2516 2.9877,9.4108 2.3253,9.3682C1.4961,9.3151 0.7273,8.9511 0.1442,8.3577L0.003,8.205L0.005,8.124L0.0011,8.125C0.0011,7.0895 0.8406,6.25 1.8761,6.25L3.1261,6.25ZM8.1261,3.75C9.1123,3.75 9.9207,4.5114 9.9955,5.4785L10.0011,5.625L10.0011,5.75L10.0011,5.75L10.0015,5.7942C9.7811,6.0281 9.5284,6.2354 9.2455,6.4082C8.6517,6.7516 7.9877,6.9108 7.3253,6.8682C6.4961,6.8151 5.7273,6.4511 5.1442,5.8577L5.003,5.705L5.005,5.624L5.0011,5.625C5.0011,4.5895 5.8406,3.75 6.8761,3.75L8.1261,3.75ZM2.5011,3.125C3.1915,3.125 3.7511,3.6846 3.7511,4.375C3.7511,5.0654 3.1915,5.625 2.5011,5.625C1.8108,5.625 1.2511,5.0654 1.2511,4.375C1.2511,3.6846 1.8108,3.125 2.5011,3.125ZM7.5011,0.625C8.1915,0.625 8.7511,1.1846 8.7511,1.875C8.7511,2.5654 8.1915,3.125 7.5011,3.125C6.8108,3.125 6.2511,2.5654 6.2511,1.875C6.2511,1.1846 6.8108,0.625 7.5011,0.625Z"
+        android:strokeColor="#00000000" android:strokeWidth="1"/>
+</vector>

@@ -116,9 +116,6 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   def getUser(userId: UserId): Future[Option[UserData]] = zms.head.flatMap(_.usersStorage.get(userId))
 
-  def addMembers(users: Map[UserId, ConversationRole]): Future[Unit] =
-    convController.currentConvId.head.flatMap { convId => convController.addMembers(convId, users) }
-
   def blockUser(userId: UserId): Future[Option[UserData]] = zms.head.flatMap(_.connection.blockConnection(userId))
 
   def unblockUser(userId: UserId): Future[ConversationData] = zms.head.flatMap(_.connection.unblockConnection(userId))

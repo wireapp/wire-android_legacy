@@ -131,18 +131,18 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def setSelfRole(convId: ConvId, role: ConversationRole): Future[Unit] = for {
     convs  <- conversations.head
     selfId <- selfId.head
-  } yield convs.setRole(convId, selfId, role)
+  } yield convs.setConversationRole(convId, selfId, role)
 
   def setSelfRole(role: ConversationRole): Future[Unit] = for {
     convs  <- conversations.head
     selfId <- selfId.head
     convId <- currentConvId.head
-  } yield convs.setRole(convId, selfId, role)
+  } yield convs.setConversationRole(convId, selfId, role)
 
   def setRoleInCurrentConv(userId: UserId, role: ConversationRole): Future[Unit] = for {
     convs  <- conversations.head
     convId <- currentConvId.head
-  } yield convs.setRole(convId, userId, role)
+  } yield convs.setConversationRole(convId, userId, role)
 
   currentConvIdOpt {
     case Some(convId) =>
@@ -316,8 +316,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       if (currentReadReceipts != readReceiptsEnabled)
         service.setReceiptMode(id, if (readReceiptsEnabled) 1 else 0)
 
-  def addMembers(id: ConvId, users: Map[UserId, ConversationRole]): Future[Unit] =
-    convsUi.head.flatMap(_.addConversationMembers(id, users)).map(_ => {})
+  def addMembers(id: ConvId, members: Set[UserId], defaultRole: ConversationRole = ConversationRole.MemberRole): Future[Unit] =
+    convsUi.head.flatMap(_.addConversationMembers(id, members, defaultRole)).map(_ => {})
 
   def removeMember(user: UserId): Future[Unit] =
     for {
@@ -359,12 +359,18 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     if (alsoLeave) leave(id).flatMap(_ => clear(id)) else clear(id)
   }
 
-  def createGuestRoom(): Future[ConversationData] = createGroupConversation(Some(context.getString(R.string.guest_room_name)), Map.empty, false, false)
+  def createGuestRoom(): Future[ConversationData] =
+    createGroupConversation(Some(context.getString(R.string.guest_room_name)), Set.empty, false, false)
 
-  def createGroupConversation(name: Option[Name], users: Map[UserId, ConversationRole], teamOnly: Boolean, readReceipts: Boolean): Future[ConversationData] = for {
+  def createGroupConversation(name:         Option[Name],
+                              userIds:      Set[UserId],
+                              teamOnly:     Boolean,
+                              readReceipts: Boolean,
+                              defaultRole:  ConversationRole = ConversationRole.MemberRole
+                             ): Future[ConversationData] = for {
     convsUi   <- convsUi.head
     _         <- inject[FolderStateController].update(Folder.GroupId, isExpanded = true)
-    (conv, _) <- convsUi.createGroupConversation(name, users, teamOnly, if (readReceipts) 1 else 0)
+    (conv, _) <- convsUi.createGroupConversation(name, userIds, teamOnly, if (readReceipts) 1 else 0)
   } yield conv
 
   def withCurrentConvName(callback: Callback[String]): Unit = currentConvName.head.foreach(callback.callback)(Threading.Ui)
