@@ -52,9 +52,9 @@ object Network {
             .build()
     }
 
-    fun userApi(): UserApi {
-        return retrofit.create(UserApi::class.java)
-    }
+    fun userApi(): UserApi = createApi(UserApi::class.java)
+
+    fun <T> createApi(apiClass: Class<T>): T = retrofit.create(apiClass)
 }
 
 
