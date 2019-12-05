@@ -3,7 +3,6 @@ package com.waz.zclient.settings.presentation.ui.account
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.waz.zclient.core.resources.Resource
-import com.waz.zclient.settings.presentation.mapper.UserItemMapper
 import com.waz.zclient.settings.presentation.model.UserItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
@@ -25,7 +24,6 @@ class SettingsAccountViewModel : ViewModel() {
     private val updateHandleUseCase = UpdateHandleUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
     private val updatePhoneUseCase = UpdatePhoneUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
 
-    private val userItemMapper = UserItemMapper()
     val profileUserData = MutableLiveData<Resource<UserItem>>()
 
 
@@ -44,7 +42,7 @@ class SettingsAccountViewModel : ViewModel() {
 
     inner class GetUserProfileObserver : DisposableSingleObserver<User>() {
         override fun onSuccess(user: User) {
-            profileUserData.success(userItemMapper.mapFromDomain(user))
+            profileUserData.success(UserItem(user))
         }
 
         override fun onError(error: Throwable) {
