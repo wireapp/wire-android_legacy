@@ -1,15 +1,14 @@
-package com.waz.zclient.roomdb
+package com.waz.zclient.storage.db
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.zclient.roomdb.dao.UserDao
-import com.waz.zclient.roomdb.dao.UserPreferencesDao
-import com.waz.zclient.roomdb.model.UserEntity
-import com.waz.zclient.roomdb.model.UserPreferenceEntity
+import com.waz.zclient.storage.db.dao.UserDao
+import com.waz.zclient.storage.db.dao.UserPreferencesDao
+import com.waz.zclient.storage.db.migration.UserDatabaseMigration
+import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.model.UserPreferenceEntity
 
 @Database(entities = [UserPreferenceEntity::class, UserEntity::class], version = 125, exportSchema = false)
 abstract class UserDatabase : RoomDatabase() {
@@ -18,6 +17,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
 
     companion object {
+
         @Volatile
         private var userDatabaseMap: MutableMap<String, UserDatabase> = mutableMapOf()
 
@@ -30,13 +30,8 @@ abstract class UserDatabase : RoomDatabase() {
             }
 
         private fun buildDatabase(context: Context, dbName: String): UserDatabase =
-            Room.databaseBuilder(context.applicationContext, UserDatabase::class.java, dbName).addMigrations(migration).build()
+            Room.databaseBuilder(context.applicationContext, UserDatabase::class.java, dbName).addMigrations(UserDatabaseMigration()).build()
 
-         val migration = object:  Migration(124,125){
-            override fun migrate(database: SupportSQLiteDatabase) {
-              
-            }
-        }
     }
 
 

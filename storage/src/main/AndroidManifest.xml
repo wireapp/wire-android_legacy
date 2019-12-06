@@ -18,4 +18,4 @@
 
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.waz.zclient.roomdb" />
+    package="com.waz.zclient.storage" />

@@ -417,7 +417,7 @@ dependencies {
     //Android Architecture Components
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
 
-    api(project(':roomdb'))
+    api(project(':storage'))
 
     // Unit Tests
     testImplementation "junit:junit:$rootProject.ext.versions.junit"

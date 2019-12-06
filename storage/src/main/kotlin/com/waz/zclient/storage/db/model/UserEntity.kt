@@ -1,13 +1,12 @@
-package com.waz.zclient.roomdb.model
+package com.waz.zclient.storage.db.model
 
-import androidx.annotation.NonNull
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
 
-@Entity(tableName = "Users")
+@Entity(tableName = "user")
 data class UserEntity(
 
     @SerializedName("id")
@@ -37,8 +36,8 @@ data class UserEntity(
     @ColumnInfo(name = "tracking_id")
     val trackingId: String?,
 
-    /* @ColumnInfo(name = "picture")
-     val picture: List<String>?,*/
+    @ColumnInfo(name = "picture")
+    val picture: String?,
 
     @ColumnInfo(name = "accent")
     @SerializedName("accent_id")
@@ -91,10 +90,10 @@ data class UserEntity(
     @SerializedName("managed_by")
     val managedBy: String?,
 
-    @ColumnInfo(name = "self_permission")
+    @ColumnInfo(name = "self_permissions")
     val selfPermission: Int?,
 
-    @ColumnInfo(name = "copy_permission")
+    @ColumnInfo(name = "copy_permissions")
     val copyPermission: Int?,
 
     @ColumnInfo(name = "created_by")

@@ -27,7 +27,7 @@ class UserRepositoryImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        userRepository = UserRepositoryImpl(userRemoteDataSource)
+        userRepository = UserRepositoryImpl()
     }
 
 

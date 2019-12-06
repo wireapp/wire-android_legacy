@@ -1,7 +1,7 @@
 package com.waz.zclient.user.data.source.remote
 
 import com.waz.zclient.core.network.Network
-import com.waz.zclient.roomdb.model.UserEntity
+import com.waz.zclient.storage.db.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
 

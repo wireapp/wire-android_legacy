@@ -15,7 +15,7 @@ class UserRepositoryImpl : UserRepository {
     private val remoteDataSource: UserRemoteDataSource = UserRemoteDataSourceImpl()
     private val localDataSource: UserLocalDataSource = UserLocalDataSourceImpl()
 
-    override fun profile(): Single<User> = localDataSource.profile().map{ it.toUser() }//.onErrorResumeNext(remoteDataSource.profile().doOnSuccess { localDataSource.addUser(it) }).map{ it.toUser() }
+    override fun profile(): Single<User> = localDataSource.profile().onErrorResumeNext(remoteDataSource.profile().doOnSuccess { localDataSource.addUser(it) }).map { it.toUser() }
     override fun name(name: String): Completable = remoteDataSource.name(name).doOnComplete { localDataSource.name(name) }
     override fun handle(handle: String): Completable = remoteDataSource.handle(handle).doOnComplete { localDataSource.handle(handle) }
     override fun email(email: String): Completable = remoteDataSource.email(email).doOnComplete { localDataSource.email(email) }

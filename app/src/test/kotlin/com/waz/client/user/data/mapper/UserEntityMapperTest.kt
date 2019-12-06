@@ -19,7 +19,7 @@ class UserEntityMapperTest {
         assertEquals(userEntity.email, user.email)
         assertEquals(userEntity.phone, user.phone)
         assertEquals(userEntity.trackingId, user.trackingId)
-       // assertEquals(userEntity.picture, user.picture)
+        assertEquals(userEntity.picture, user.picture)
         assertEquals(userEntity.accentId, user.accentId)
         assertEquals(userEntity.sKey, user.sKey)
         assertEquals(userEntity.accentId, user.accentId)

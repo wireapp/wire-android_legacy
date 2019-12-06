@@ -26,7 +26,7 @@ class UserRemoteDataSourceImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        userRemoteDataSource = UserRemoteDataSourceImpl(userApi)
+        userRemoteDataSource = UserRemoteDataSourceImpl()
     }
 
 

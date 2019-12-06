@@ -11,6 +11,5 @@ import org.junit.runners.Suite
     UserEntityMapperTest::class,
     UserRemoteDataSourceImplTest::class,
     UserRepositoryImplTest::class
-
 )
 class UnitTestSuite
