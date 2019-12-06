@@ -334,11 +334,6 @@ dependencies {
         }
     }
 
-    // For using local files in app/libs
-    //implementation (name:'avs', ext:'aar')
-    //implementation (name:'audio-notifications', ext:'aar')
-    //implementation (name:'zmessaging-android', ext:'aar')
-
     implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
     api(project(':wire-android-sync-engine:zmessaging')) {
         exclude group: 'com.wire', module: 'avs'
@@ -399,9 +394,13 @@ dependencies {
 
     // Test dependencies
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
+    testImplementation "com.willowtreeapps.assertk:assertk-jvm:0.20"
+    testImplementation "io.mockk:mockk:1.9.3"
     testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
     }
+
+    // TODO: Deprecate mockito when migrating to Kotlin
     testImplementation 'org.mockito:mockito-core:1.10.19'
     //The dexmaker stuff is needed for Mockito to work completely
     testImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
@@ -410,11 +409,13 @@ dependencies {
     testImplementation "androidx.paging:paging-common:2.0.0"
 
     androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
+    // TODO: Deprecate when migrating to Kotlin
     androidTestImplementation 'org.mockito:mockito-core:1.10.19'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.1.1'
 
     //The dexmaker stuff is needed for Mockito to work completely
+    // TODO: Deprecate when migrating to Kotlin
     androidTestImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
     androidTestImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
     androidTestImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
