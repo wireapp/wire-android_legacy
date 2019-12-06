@@ -21,8 +21,7 @@ import android.app.admin.DevicePolicyManager
 import android.app.{Activity, ActivityManager}
 import android.content.pm.PackageManager
 import android.content.{ComponentName, Context, Intent}
-import android.os.{Build, Bundle}
-import android.view.WindowManager.LayoutParams.FLAG_SECURE
+import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -46,10 +45,9 @@ import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{ContextUtils, ViewUtils}
 
 import scala.collection.JavaConverters._
-import scala.collection.breakOut
 import scala.collection.immutable.ListSet
+import scala.collection.{breakOut, mutable}
 import scala.concurrent.duration._
-import scala.collection.mutable
 
 class BaseActivity extends AppCompatActivity
   with ServiceContainer
@@ -59,9 +57,8 @@ class BaseActivity extends AppCompatActivity
 
   import BaseActivity._
 
-  protected lazy val themeController   = inject[ThemeController]
-  protected lazy val userPreferences   = inject[Signal[UserPreferences]]
-
+  protected lazy val themeController = inject[ThemeController]
+  protected lazy val userPreferences = inject[Signal[UserPreferences]]
   private lazy val permissions       = inject[PermissionsService]
   private lazy val activityLifecycle = inject[ActivityLifecycleCallback]
   private lazy val uiLifeCycle       = inject[UiLifeCycle]
@@ -72,11 +69,6 @@ class BaseActivity extends AppCompatActivity
 
   private val subs = mutable.HashSet[Subscription]()
 
-  private lazy val shouldHideScreenContent = for {
-    prefs             <- userPreferences
-    hideScreenContent <- prefs.preference(UserPreferences.HideScreenContent).signal
-  } yield hideScreenContent
-
   // there should be only one task but since we have access only to tasks
   // associated with our app we can safely exclude them all
   private def excludeFromRecents(exclude: Boolean): Unit =
@@ -86,18 +78,6 @@ class BaseActivity extends AppCompatActivity
     verbose(l"onCreate")
     super.onCreate(savedInstanceState)
     setTheme(getBaseTheme)
-
-    (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1, BuildConfig.FORCE_HIDE_SCREEN_CONTENT) match {
-      case (true, true)  => excludeFromRecents(true)
-      case (false, true) => getWindow.addFlags(FLAG_SECURE)
-      case (true, false) =>
-        shouldHideScreenContent.onUi(excludeFromRecents)
-      case (false, false) =>
-        shouldHideScreenContent.onUi {
-          case true  => getWindow.addFlags(FLAG_SECURE)
-          case false => getWindow.clearFlags(FLAG_SECURE)
-        }
-    }
 
     if (BuildConfig.BLOCK_ON_PASSWORD_POLICY)
       SecurityPolicyService.checkAdminEnabled(dpm, secPolicy, ContextUtils.getString(R.string.security_policy_description)(this))(this)
