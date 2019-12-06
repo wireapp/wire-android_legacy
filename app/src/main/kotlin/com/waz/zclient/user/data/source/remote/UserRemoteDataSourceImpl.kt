@@ -1,12 +1,13 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.user.data.model.UserEntity
+import com.waz.zclient.core.network.Network
+import com.waz.zclient.roomdb.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
 
-class UserRemoteDataSourceImpl constructor(
-    private val userApi: UserApi
-) : UserRemoteDataSource {
+class UserRemoteDataSourceImpl : UserRemoteDataSource {
+
+    private val userApi: UserApi = Network().userApi()
 
     override fun profile(): Single<UserEntity> = userApi.profile()
     override fun name(name: String): Completable = userApi.name(name)

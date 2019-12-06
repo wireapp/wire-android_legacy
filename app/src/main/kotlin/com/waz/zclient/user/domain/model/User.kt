@@ -9,7 +9,7 @@ data class User(
     val email: String?,
     val phone: String?,
     val trackingId: String?,
-    val picture: List<String>?,
+   // val picture: List<String>?,
     val accentId: Int?,
     val sKey: String?,
     val connection: String?,

@@ -307,7 +307,6 @@ def versions = [
     stetho: "1.5.0",
     workManager : "2.0.1",
     paging : "1.0.0",
-    retrofit : "2.6.2",
     mockito : "3.1.0",
     lifecycle : "2.0.0"
 ]
@@ -409,14 +408,16 @@ dependencies {
     implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
     //Retrofit
-    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
-    implementation "com.squareup.retrofit2:converter-protobuf:$versions.retrofit"
-    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
-    implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-protobuf:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
     implementation 'com.squareup.okhttp3:logging-interceptor:3.12.0'
 
     //Android Architecture Components
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+
+    api(project(':roomdb'))
 
     // Unit Tests
     testImplementation "junit:junit:$rootProject.ext.versions.junit"

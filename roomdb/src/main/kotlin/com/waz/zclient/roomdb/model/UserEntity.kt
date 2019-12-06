@@ -1,16 +1,18 @@
-package com.waz.zclient.user.data.model
+package com.waz.zclient.roomdb.model
 
+import androidx.annotation.NonNull
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
-import com.waz.zclient.user.domain.model.User
+
 
 @Entity(tableName = "Users")
 data class UserEntity(
 
-    @PrimaryKey @ColumnInfo(name = "_id")
     @SerializedName("id")
+    @ColumnInfo(name = "_id")
+    @PrimaryKey
     val id: String,
 
     @ColumnInfo(name = "teamId")
@@ -35,8 +37,8 @@ data class UserEntity(
     @ColumnInfo(name = "tracking_id")
     val trackingId: String?,
 
-    @ColumnInfo(name = "picture")
-    val picture: List<String>?,
+    /* @ColumnInfo(name = "picture")
+     val picture: List<String>?,*/
 
     @ColumnInfo(name = "accent")
     @SerializedName("accent_id")
@@ -97,15 +99,4 @@ data class UserEntity(
 
     @ColumnInfo(name = "created_by")
     val createdBy: String?
-) {
-    fun toUser() = User(id = id, teamId = teamId, name = name, handle = handle, email = email, phone = phone,
-        trackingId = trackingId, picture = picture, accentId = accentId, sKey = sKey,
-        connection = connection, connectionTimestamp = connectionTimestamp,
-        connectionMessage = connectionMessage, conversation = conversation, relation = relation,
-        timestamp = timestamp, displayName = displayName, verified = verified, deleted = deleted,
-        availability = availability, providerId = providerId,
-        integrationId = integrationId, expiresAt = expiresAt, managedBy = managedBy,
-        selfPermission = selfPermission, copyPermission = copyPermission,
-        createdBy = createdBy
-    )
-}
+)

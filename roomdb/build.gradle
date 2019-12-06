@@ -41,4 +41,7 @@ dependencies {
     implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
     implementation "androidx.room:room-rxjava2:$rootProject.ext.versions.room"
 
+    //Needed in order to use the same models for networking and caching
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+
 }
