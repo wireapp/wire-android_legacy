@@ -5,9 +5,7 @@ import com.waz.zclient.storage.db.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
 
-class UserRemoteDataSourceImpl : UserRemoteDataSource {
-
-    private val userApi: UserApi = Network().userApi()
+class UserRemoteDataSourceImpl(private val userApi: UserApi = Network().userApi()) : UserRemoteDataSource {
 
     override fun profile(): Single<UserEntity> = userApi.profile()
     override fun name(name: String): Completable = userApi.name(name)

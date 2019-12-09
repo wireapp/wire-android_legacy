@@ -10,10 +10,8 @@ import com.waz.zclient.user.domain.model.User
 import io.reactivex.Completable
 import io.reactivex.Single
 
-class UserRepositoryImpl : UserRepository {
-
-    private val remoteDataSource: UserRemoteDataSource = UserRemoteDataSourceImpl()
-    private val localDataSource: UserLocalDataSource = UserLocalDataSourceImpl()
+class UserRepositoryImpl(private val remoteDataSource: UserRemoteDataSource = UserRemoteDataSourceImpl(),
+                         private val localDataSource: UserLocalDataSource = UserLocalDataSourceImpl()) : UserRepository {
 
     override fun profile(): Single<User> = localDataSource.profile().onErrorResumeNext(remoteDataSource.profile().doOnSuccess { localDataSource.addUser(it) }).map { it.toUser() }
     override fun name(name: String): Completable = remoteDataSource.name(name).doOnComplete { localDataSource.name(name) }
