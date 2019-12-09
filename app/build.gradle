@@ -6,7 +6,6 @@ apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
-
 ext {
     majorVersion = "3.43."
 
@@ -18,7 +17,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.3.29@aar'
+    customAvsVersion = '5.4.7@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -99,7 +98,7 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
-        
+
         manifestPlaceholders = [customURLScheme: buildtimeConfiguration.configuration.custom_url_scheme]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
@@ -268,12 +267,16 @@ android {
 
 
     sourceSets {
+
+        main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
+
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
             java.srcDirs += ['src/androidTest/kotlin']
         }
 
         test {
+            java.srcDirs += ['src/test/java', 'src/test/kotlin']
             scala.srcDirs += ['src/test/scala']
         }
     }
@@ -299,18 +302,18 @@ dexinfo {
 def versions = [
     playServices : "17.0.0", //TODO can be independent now.
     stetho: "1.5.0",
-    work_manager : "1.0.0-alpha13",
+    workManager : "2.0.1",
     paging : "1.0.0",
-    dexmaker : "1.4"
+    mockito : "3.1.0",
+    kluent : "1.14",
+    lifecycle : "2.0.0"
 ]
 
 dependencies {
-    implementation project(':lintlib')
-
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.scala-lang:scala-library:$scalaVersion"
     implementation "org.scala-lang:scala-reflect:$scalaVersion"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation "com.chuusai:shapeless_$rootProject.ext.scalaMajorVersion:2.3.3"
 
@@ -345,12 +348,12 @@ dependencies {
     }
     implementation "$rootProject.deps.libphonenumber"
 
-    //support libraries
+    //Android X
     implementation 'androidx.multidex:multidex:2.0.0'
     implementation "com.google.android.material:material:1.0.0"
     implementation "androidx.appcompat:appcompat:1.0.0"
     implementation "androidx.recyclerview:recyclerview:1.0.0"
-    implementation "androidx.preference:preference:1.0.0"
+    implementation "androidx.preference:preference:1.1.0"
     implementation "androidx.cardview:cardview:1.0.0"
     implementation "androidx.gridlayout:gridlayout:1.0.0"
     annotationProcessor "androidx.annotation:annotation:1.0.0"
@@ -371,7 +374,10 @@ dependencies {
     }
 
     //WorkManager
-    implementation "androidx.work:work-runtime:2.0.1"
+    implementation("androidx.work:work-runtime:$versions.workManager") {
+        exclude group: 'androidx.room', module: 'room-runtime'
+    }
+    implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
@@ -397,28 +403,32 @@ dependencies {
     // biometric prompt
     implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
-    // Test dependencies
+    //Retrofit
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-protobuf:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.0'
+
+    //Android Architecture Components
+    implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+
+    // Unit Tests
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
+    testImplementation "org.mockito:mockito-core:$versions.mockito"
+    testImplementation "org.mockito:mockito-inline:$versions.mockito"
+    testImplementation "org.amshove.kluent:kluent:$versions.kluent"
+    testImplementation "androidx.paging:paging-common:2.0.0"
     testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
     }
-    testImplementation 'org.mockito:mockito-core:1.10.19'
-    //The dexmaker stuff is needed for Mockito to work completely
-    testImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
-    testImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
-    testImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
-    testImplementation "androidx.paging:paging-common:2.0.0"
-
+    // UI Tests
     androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
-    androidTestImplementation 'org.mockito:mockito-core:1.10.19'
+    androidTestImplementation "org.mockito:mockito-core:$versions.mockito"
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.1.1'
 
-    //The dexmaker stuff is needed for Mockito to work completely
-    androidTestImplementation "com.crittercism.dexmaker:dexmaker:$versions.dexmaker"
-    androidTestImplementation "com.crittercism.dexmaker:dexmaker-dx:$versions.dexmaker"
-    androidTestImplementation "com.crittercism.dexmaker:dexmaker-mockito:$versions.dexmaker"
-    androidTestImplementation "androidx.work:work-testing:2.0.1"
+    androidTestImplementation "androidx.work:work-testing:$versions.workManager"
 
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true
