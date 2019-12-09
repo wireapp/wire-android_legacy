@@ -1,7 +1,7 @@
 package com.waz.zclient.core.network
 
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.user.data.source.remote.UserApi
+import com.waz.zclient.user.data.source.remote.UsersApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -44,8 +44,8 @@ open class Network {
             .build()
     }
 
-    fun userApi(): UserApi {
-        return retrofit.create(UserApi::class.java)
+    fun userApi(): UsersApi {
+        return retrofit.create(UsersApi::class.java)
     }
 
     companion object {

@@ -14,7 +14,7 @@ interface UserDao {
     fun insert(user: UserEntity): Completable
 
     @Query("SELECT * from user WHERE _id = :userId")
-    fun userById(userId: String): Single<UserEntity>
+    fun selectById(userId: String): Single<UserEntity>
 
     @Query("UPDATE user SET name=:name WHERE _id = :userId")
     fun updateName(userId: String, name: String): Completable
@@ -28,3 +28,4 @@ interface UserDao {
     @Query("UPDATE user SET phone=:phone WHERE _id = :userId")
     fun updatePhone(userId: String, phone: String): Completable
 }
+
