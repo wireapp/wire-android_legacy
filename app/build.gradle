@@ -305,8 +305,6 @@ def versions = [
 ]
 
 dependencies {
-    implementation project(':lintlib')
-
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.scala-lang:scala-library:$scalaVersion"
     implementation "org.scala-lang:scala-reflect:$scalaVersion"
