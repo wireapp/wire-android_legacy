@@ -6,7 +6,6 @@ apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
-
 ext {
     majorVersion = "3.43."
 
@@ -306,6 +305,7 @@ def versions = [
     workManager : "2.0.1",
     paging : "1.0.0",
     mockito : "3.1.0",
+    kluent : "1.14",
     lifecycle : "2.0.0"
 ]
 
@@ -417,6 +417,7 @@ dependencies {
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
     testImplementation "org.mockito:mockito-core:$versions.mockito"
     testImplementation "org.mockito:mockito-inline:$versions.mockito"
+    testImplementation "org.amshove.kluent:kluent:$versions.kluent"
     testImplementation "androidx.paging:paging-common:2.0.0"
     testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
