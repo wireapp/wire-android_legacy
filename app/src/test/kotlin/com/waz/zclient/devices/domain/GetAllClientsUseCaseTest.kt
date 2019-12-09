@@ -2,7 +2,7 @@ package com.waz.zclient.devices.domain
 
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.Failure
-import com.waz.zclient.devices.data.ClientsRepository
+import com.waz.zclient.devices.data.ClientsDataSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -18,7 +18,7 @@ class GetAllClientsUseCaseTest {
     private lateinit var getAllClientsUseCase: GetAllClientsUseCase
 
     @Mock
-    private lateinit var repository: ClientsRepository
+    private lateinit var repository: ClientsDataSource
 
     @Before
     fun setup() {

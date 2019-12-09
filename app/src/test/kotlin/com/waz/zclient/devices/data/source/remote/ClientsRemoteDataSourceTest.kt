@@ -12,7 +12,7 @@ import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 import retrofit2.Response
 
-class ClientsRemoteDataSourceImplTest {
+class ClientsRemoteDataSourceTest {
 
     private lateinit var remoteDataSource: ClientsRemoteDataSource
 
@@ -28,7 +28,7 @@ class ClientsRemoteDataSourceImplTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        remoteDataSource = ClientsRemoteDataSourceImpl(clientsApi)
+        remoteDataSource = ClientsRemoteDataSource(clientsApi)
     }
 
     @Test

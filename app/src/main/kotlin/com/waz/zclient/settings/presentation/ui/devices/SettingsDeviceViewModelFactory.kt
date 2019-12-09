@@ -2,7 +2,7 @@ package com.waz.zclient.settings.presentation.ui.devices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.waz.zclient.devices.data.ClientsRepositoryImpl
+import com.waz.zclient.devices.data.ClientsRepository
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.settings.presentation.ui.devices.detail.SettingsDeviceDetailViewModel
@@ -12,11 +12,11 @@ import com.waz.zclient.settings.presentation.ui.devices.list.SettingsDeviceListV
 class SettingsDeviceViewModelFactory : ViewModelProvider.Factory {
 
     private val getCurrentDeviceUseCase by lazy {
-        GetSpecificClientUseCase(ClientsRepositoryImpl.getInstance())
+        GetSpecificClientUseCase(ClientsRepository.getInstance())
     }
 
     private val getAllClientsUseCase by lazy {
-        GetAllClientsUseCase(ClientsRepositoryImpl.getInstance())
+        GetAllClientsUseCase(ClientsRepository.getInstance())
     }
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T =

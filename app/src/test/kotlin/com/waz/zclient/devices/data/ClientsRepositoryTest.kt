@@ -16,9 +16,9 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
-class ClientsRepositoryImplTest {
+class ClientsRepositoryTest {
 
-    private lateinit var repository: ClientsRepository
+    private lateinit var repository: ClientsDataSource
 
     @Mock
     private lateinit var remoteDataSource: ClientsRemoteDataSource
@@ -26,7 +26,7 @@ class ClientsRepositoryImplTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        repository = ClientsRepositoryImpl.getInstance(remoteDataSource)
+        repository = ClientsRepository.getInstance(remoteDataSource)
     }
 
     @Test
@@ -79,7 +79,7 @@ class ClientsRepositoryImplTest {
 
     @After
     fun tearDown() {
-        ClientsRepositoryImpl.destroyInstance()
+        ClientsRepository.destroyInstance()
     }
 
     companion object {

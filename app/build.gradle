@@ -284,7 +284,6 @@ android {
         test {
             java.srcDirs += ['src/test/java', 'src/test/kotlin']
             scala.srcDirs += ['src/test/scala']
-            java.srcDirs += ['src/test/kotlin']
         }
     }
 
