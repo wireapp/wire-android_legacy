@@ -1,8 +1,8 @@
-package com.waz.client
+package com.waz.zclient
 
-import com.waz.client.user.data.mapper.UserEntityMapperTest
-import com.waz.client.user.data.repository.UserRepositoryImplTest
-import com.waz.client.user.data.source.remote.UserRemoteDataSourceImplTest
+import com.waz.zclient.user.data.mapper.UserEntityMapperTest
+import com.waz.zclient.user.data.repository.UserRepositoryImplTest
+import com.waz.zclient.user.data.source.remote.UserRemoteDataSourceImplTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
