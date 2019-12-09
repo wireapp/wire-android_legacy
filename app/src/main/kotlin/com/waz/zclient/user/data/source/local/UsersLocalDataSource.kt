@@ -10,13 +10,11 @@ import com.waz.zclient.storage.pref.GlobalPreferences
 import io.reactivex.Completable
 import io.reactivex.Single
 
-class UsersLocalDataSource constructor(context: Context = ContextProvider.getApplicationContext()) {
+class UsersLocalDataSource constructor(private val globalPreferences : GlobalPreferences = GlobalPreferences(ContextProvider.getApplicationContext()),
+ userDatabase: UserDatabase = UserDatabase.getInstance(ContextProvider.getApplicationContext(), globalPreferences.activeUserId)) {
 
-    private val globalPreferences = GlobalPreferences(context)
     private val userId = globalPreferences.activeUserId
-    private val userDatabase: UserDatabase = UserDatabase.getInstance(context, userId)
     private val userDao: UserDao = userDatabase.userDao()
-
 
     fun add(user: UserEntity): Completable = userDao.insert(user)
     fun profile(): Single<UserEntity> = userDao.selectById(userId)
