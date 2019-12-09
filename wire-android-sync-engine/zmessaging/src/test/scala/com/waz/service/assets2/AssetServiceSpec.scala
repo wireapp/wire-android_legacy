@@ -56,7 +56,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with AuthenticationConfig wi
 
   private val testAssetContent = returning(Array.ofDim[Byte](128))(Random.nextBytes)
 
-  private val testAsset = Asset(
+  lazy private val testAsset = Asset(
     id = AssetId(),
     token = None,
     sha = Sha256.calculate(testAssetContent),
@@ -69,8 +69,6 @@ class AssetServiceSpec extends ZIntegrationMockSpec with AuthenticationConfig wi
     details = BlobDetails,
     convId = None
   )
-
-  verbose(l"Test asset: $testAsset")
 
   private def service(rawAssetStorage: UploadAssetStorage = rawAssetStorage,
                       client: AssetClient2 = client): AssetService =
