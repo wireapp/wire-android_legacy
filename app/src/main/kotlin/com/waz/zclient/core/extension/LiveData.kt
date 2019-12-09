@@ -1,4 +1,4 @@
-package com.waz.zclient.utilities.extension
+package com.waz.zclient.core.extension
 
 import androidx.lifecycle.MutableLiveData
 import com.waz.zclient.core.resources.Resource

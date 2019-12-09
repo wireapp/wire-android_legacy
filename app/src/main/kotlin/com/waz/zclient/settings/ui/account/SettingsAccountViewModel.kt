@@ -8,8 +8,8 @@ import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeHandleUseCase
 import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
-import com.waz.zclient.utilities.extension.error
-import com.waz.zclient.utilities.extension.success
+import com.waz.zclient.core.extension.error
+import com.waz.zclient.core.extension.success
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.observers.DisposableCompletableObserver
 import io.reactivex.observers.DisposableSingleObserver

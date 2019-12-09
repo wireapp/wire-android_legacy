@@ -3,8 +3,8 @@ package com.waz.zclient.settings.ui.home.list
 import android.content.Context
 import com.waz.zclient.R
 import com.waz.zclient.settings.model.SettingsItem
-import com.waz.zclient.utilities.config.Config
-import com.waz.zclient.utilities.extension.stringArrayFromResource
+import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.stringArrayFromResource
 
 class SettingsListFactory {
 

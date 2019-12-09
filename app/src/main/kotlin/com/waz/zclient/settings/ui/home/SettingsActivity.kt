@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
-import com.waz.zclient.utilities.extension.replaceFragment
+import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.activity_settings_new.*
 
 

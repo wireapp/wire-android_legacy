@@ -13,8 +13,8 @@ import com.waz.zclient.core.resources.Resource
 import com.waz.zclient.core.resources.ResourceStatus
 import com.waz.zclient.settings.model.UserItem
 import com.waz.zclient.settings.ui.SettingsViewModelFactory
-import com.waz.zclient.utilities.config.Config
-import com.waz.zclient.utilities.extension.openUrl
+import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.openUrl
 import kotlinx.android.synthetic.main.fragment_account.*
 
 

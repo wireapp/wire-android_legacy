@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
-import com.waz.zclient.utilities.extension.openUrl
+import com.waz.zclient.core.extension.openUrl
 import kotlinx.android.synthetic.main.fragment_support.*
 
 class SupportFragment : Fragment() {

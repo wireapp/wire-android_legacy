@@ -1,4 +1,4 @@
-package com.waz.zclient.utilities.config
+package com.waz.zclient.core.config
 
 import com.waz.zclient.BuildConfig
 

@@ -7,8 +7,8 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.R
-import com.waz.zclient.utilities.config.Config
-import com.waz.zclient.utilities.extension.remove
+import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.remove
 
 class OptionsFragment : PreferenceFragmentCompat() {
 
