@@ -74,7 +74,7 @@ dependencies {
 
     api project(':wire-android-sync-engine:macrosupport')
 
-    implementation project(':roomdb')
+    implementation project(':storage')
 
     api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
     implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"

@@ -1,9 +1,6 @@
-package com.waz.client.user.data.source.remote
+package com.waz.zclient.user.data.source.remote
 
-import com.waz.client.userEntity
-import com.waz.zclient.user.data.source.remote.UserApi
-import com.waz.zclient.user.data.source.remote.UserRemoteDataSource
-import com.waz.zclient.user.data.source.remote.UserRemoteDataSourceImpl
+import com.waz.zclient.userEntity
 import io.reactivex.Single
 import org.junit.Before
 import org.junit.Test
@@ -26,7 +23,7 @@ class UserRemoteDataSourceImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        userRemoteDataSource = UserRemoteDataSourceImpl(userApi)
+        userRemoteDataSource = UserRemoteDataSourceImpl()
     }
 
 

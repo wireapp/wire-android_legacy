@@ -1,9 +1,7 @@
-package com.waz.client.user.data.repository
+package com.waz.zclient.user.data.repository
 
-import com.waz.client.user
-import com.waz.client.userEntity
-import com.waz.zclient.user.data.repository.UserRepository
-import com.waz.zclient.user.data.repository.UserRepositoryImpl
+import com.waz.zclient.user
+import com.waz.zclient.userEntity
 import com.waz.zclient.user.data.source.remote.UserRemoteDataSource
 import io.reactivex.Single
 import org.junit.Before
@@ -16,7 +14,7 @@ import org.mockito.MockitoAnnotations
 class UserRepositoryImplTest {
 
 
-    private lateinit var userRepository: UserRepository
+    private lateinit var userRepository: UserDataSource
 
     @Mock
     private lateinit var userRemoteDataSource: UserRemoteDataSource
@@ -27,7 +25,7 @@ class UserRepositoryImplTest {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        userRepository = UserRepositoryImpl(userRemoteDataSource)
+        userRepository = UserDataSourceImpl()
     }
 
 

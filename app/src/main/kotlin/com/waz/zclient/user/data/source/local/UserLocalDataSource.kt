@@ -1,11 +1,12 @@
-package com.waz.zclient.user.data.source.remote
+package com.waz.zclient.user.data.source.local
 
 import com.waz.zclient.storage.db.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
 
-interface UserRemoteDataSource {
+interface UserLocalDataSource {
 
+    fun addUser(user: UserEntity): Completable
     fun profile(): Single<UserEntity>
     fun name(name: String): Completable
     fun handle(handle: String): Completable

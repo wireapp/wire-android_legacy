@@ -1,11 +1,11 @@
-package com.waz.client.user.data.model
+package com.waz.zclient.user.data.mapper
 
-import com.waz.client.userEntity
+import com.waz.zclient.userEntity
 import junit.framework.TestCase.assertEquals
 
 import org.junit.Test
 
-class UserEntityTest {
+class UserEntityMapperTest {
 
 
     @Test

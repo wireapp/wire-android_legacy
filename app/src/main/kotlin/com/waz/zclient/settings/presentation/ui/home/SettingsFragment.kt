@@ -49,14 +49,14 @@ class SettingsFragment : Fragment(), OnItemClickListener {
 
     companion object {
         fun newInstance() = SettingsFragment()
-        const val ACCOUNT = 0
-        const val DEVICES = 1
-        const val OPTIONS = 2
-        const val ADVANCED = 3
-        const val SUPPORT = 4
-        const val ABOUT = 5
-        const val DEVELOPER_SETTINGS = 6
-        const val AVS_SETTINGS = 7
+        private const val ACCOUNT = 0
+        private const val DEVICES = 1
+        private const val OPTIONS = 2
+        private const val ADVANCED = 3
+        private const val SUPPORT = 4
+        private const val ABOUT = 5
+        private const val DEVELOPER_SETTINGS = 6
+        private const val AVS_SETTINGS = 7
     }
 
 }

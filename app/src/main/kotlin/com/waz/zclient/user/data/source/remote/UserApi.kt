@@ -1,6 +1,6 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.user.data.model.UserEntity
+import com.waz.zclient.storage.db.model.UserEntity
 import io.reactivex.Completable
 import io.reactivex.Single
 import retrofit2.http.Field
