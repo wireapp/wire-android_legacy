@@ -34,7 +34,7 @@ import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.SelfCalling
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.Signal
+import com.waz.utils.events.{Signal, SourceSignal}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -54,7 +54,6 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ConversationSignal, StringUtils, UiStorage, UserSetSignal, UserSignal, ViewUtils}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
-
 import scala.collection.Set
 
 trait ConversationListRow extends View
@@ -96,6 +95,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   var conversationData = Option.empty[ConversationData]
+  private val hideAvailability: SourceSignal[Boolean] = Signal(false)
+
   val conversation = for {
     Some(convId) <- conversationId
     conv <- ConversationSignal(convId)
@@ -103,7 +104,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   val members = conversationId.collect { case Some(convId) => convId } flatMap controller.members
 
-  val conversationName = conversation map { conv =>
+  conversation.map { conv =>
     if (conv.displayName.isEmpty) {
       // This hack was in the UiModule Conversation implementation
       // XXX: this is a hack for some random errors, sometimes conv has empty name which is never updated
@@ -112,6 +113,8 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       Name(defaultName)
     } else
       conv.displayName
+  }.onUi { name =>
+    title.setText(name)
   }
 
   val userTyping = for {
@@ -174,11 +177,17 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     }
   }
 
+  // User availability (for 1:1)
   (for {
-    name <- conversationName
-  } yield name).onUi { case (name) =>
-    title.setText(name)
+    Some(id)  <- conversationId
+    av            <- controller.availability(id)
+    hide          <- hideAvailability
+  } yield(av, hide)).onUi {
+      case (_, true)              => AvailabilityView.hideAvailabilityIcon(title)
+      case (Availability.None, _) => AvailabilityView.hideAvailabilityIcon(title)
+      case (av, _)                => AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
+
 
   subtitleText.onUi {
     case (convId, text) if conversationData.forall(_.id == convId) =>
@@ -229,23 +238,20 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var maxOffset: Float = .0f
   private var moveToAnimator: ObjectAnimator = _
 
-  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = if (this.conversationData.forall(_.id != conversationData.id)) {
-    this.conversationData = Some(conversationData)
-    title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
+  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = {
+    if (this.conversationData.forall(_.id != conversationData.id)) {
+      this.conversationData = Some(conversationData)
+      title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
 
-    badge.setStatus(ConversationBadge.Empty)
-    subtitle.setText("")
-    avatar.clearImages()
-    avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
-    conversationId.publish(Some(conversationData.id), Threading.Ui)
-    if (hideStatus) {
-      AvailabilityView.hideAvailabilityIcon(title)
-    } else {
-      controller.availability(conversationData.id).head.foreach { status =>
-        AvailabilityView.displayLeftOfText(title, status, title.getCurrentTextColor, pushDown = true)
-      }
+      badge.setStatus(ConversationBadge.Empty)
+      subtitle.setText("")
+      avatar.clearImages()
+      avatar.setAlpha(getResourceFloat(R.dimen.conversation_avatar_alpha_active))
+      conversationId.publish(Some(conversationData.id), Threading.Ui)
+      closeImmediate()
     }
-    closeImmediate()
+
+    hideAvailability ! hideStatus
   }
 
   menuIndicatorView.setClickable(false)

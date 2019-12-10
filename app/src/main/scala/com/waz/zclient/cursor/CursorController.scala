@@ -319,7 +319,7 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
     case Location =>
       showLocationIfAllowed()
     case Gif =>
-      enteredText.head.foreach { case (CursorText(text, _), _) => screenController.showGiphy ! Some(text) }
+      enteredText.head.foreach { _ => screenController.showGiphy ! Some(s"") }
     case Send =>
       enteredText.head.foreach { case (CursorText(text, mentions), _) => submit(text, mentions) }
     case _ =>

@@ -58,72 +58,141 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag with Eventually {
 
   feature("Basic Signals") {
     scenario("Receive initial value") {
+
+      // given
       val s = Signal(1)
+
+      // when
       s(capture)
+
+      // then
       eventually { received shouldEqual Seq(1) }
     }
 
     scenario("Basic subscriber lifecycle") {
+
+      // given
       val s = Signal(1)
       eventually { s.hasSubscribers shouldEqual false }
+
+      // when
       val sub = s { _ => () }
+
+      // then
       eventually { s.hasSubscribers shouldEqual true }
+
+      // and when
       sub.destroy()
+
+      // then
       eventually { s.hasSubscribers shouldEqual false }
     }
 
     scenario("Don't receive events after unregistering a single observer")  {
+
+      // given
       val s = Signal(1)
       val sub = s(capture)
+      eventually { s.hasSubscribers shouldEqual true }
+
+      // when
       s ! 2
+
+      // then
       eventually { received shouldEqual Seq(1, 2) }
 
+      // and given
       sub.destroy()
+      eventually { s.hasSubscribers shouldEqual false }
+
+      // when
       s ! 3
-      eventually { received shouldEqual Seq(1, 2) }
+
+      // then
+      Thread.sleep(200)
+      received shouldEqual Seq(1, 2)
     }
 
     scenario("Don't receive events after unregistering all observers")  {
+
+      // given
       val s = Signal(1)
       s(capture)
+      eventually { s.hasSubscribers shouldEqual true }
+
+      // when
       s ! 2
+
+      // then
       eventually { received shouldEqual Seq(1, 2) }
 
+      // and given
       s.unsubscribeAll()
+      eventually { s.hasSubscribers shouldEqual false }
+
+      // when
       s ! 3
-      eventually { received shouldEqual Seq(1, 2) }
+
+      // then
+      Thread.sleep(200)
+      received shouldEqual Seq(1, 2)
     }
 
     scenario("Signal mutation") {
+
+      // given
       val s = Signal(42)
       s(capture)
       eventually { received shouldEqual Seq(42) }
+
+      // when
       s.mutate(_ + 1)
+
+      // then
       eventually { received shouldEqual Seq(42, 43) }
+
+      // and when
       s.mutate(_ - 1)
+
+      // then
       eventually { received shouldEqual Seq(42, 43, 42) }
     }
   }
 
   feature("Caching") {
     scenario("Don't send the same value twice") {
+      // given
       val s = Signal(1)
       s(capture)
+      eventually { s.hasSubscribers shouldEqual true }
+
+      // when
       Seq(1, 2, 2, 1) foreach (s ! _)
+
+      // then
       eventually { received shouldEqual Seq(1, 2, 1) }
     }
 
     scenario("Idempotent signal mutation") {
+
+      // given
       val s = Signal(42)
       s(capture)
       eventually { received shouldEqual Seq(42) }
+
+      // when
       s.mutate(_ + 1 - 1)
-      eventually { received shouldEqual Seq(42) }
+
+      // then
+      Thread.sleep(200)
+      received shouldEqual Seq(42)
     }
   }
 
   feature("For comprehensions") {
     scenario("Simple for comprehension") {
+
+      // given
       val s = Signal(0)
       val s1 = Signal(1)
       val s2 = Signal(2)
@@ -133,7 +202,11 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag with Eventually {
       } yield y * 2
       r(capture)
       eventually { r.currentValue.get shouldEqual 2 }
+
+      // when
       s ! 1
+
+      // then
       eventually { r.currentValue.get shouldEqual 4 }
       eventually { received shouldEqual Seq(2, 4) }
     }
