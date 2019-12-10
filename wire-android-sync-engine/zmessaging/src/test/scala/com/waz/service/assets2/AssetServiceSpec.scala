@@ -21,11 +21,13 @@ import java.io._
 import java.net.URI
 
 import com.waz.api.impl.ErrorResponse
+import com.waz.content.AccountStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{debug, _}
 import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
-import com.waz.model.{AssetId, Mime, Sha256, UploadAssetId}
+import com.waz.model.{AccountData, AssetId, Mime, Sha256, UploadAssetId}
+import com.waz.service.AccountsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.AssetClient2.{FileWithSha, Retention}
 import com.waz.sync.client.{AssetClient2, AssetClient2Impl}
@@ -39,7 +41,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Random, Success}
 
 @RunWith(classOf[JUnitRunner])
-class AssetServiceSpec extends ZIntegrationMockSpec with AuthenticationConfig with DerivedLogTag {
+class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with AuthenticationConfig {
 
   private val assetStorage        = mock[AssetStorage]
   private val inProgressAssetStorage   = mock[DownloadAssetStorage]
@@ -53,6 +55,9 @@ class AssetServiceSpec extends ZIntegrationMockSpec with AuthenticationConfig wi
   private val client              = mock[AssetClient2]
   private val uriHelperMock       = mock[UriHelper]
   private val syncHandle          = mock[SyncServiceHandle]
+
+  override val accountsService: AccountsService = mock[AccountsService]
+  override val accountStorage: AccountStorage = mock[AccountStorage]
 
   private val testAssetContent = returning(Array.ofDim[Byte](128))(Random.nextBytes)
 
@@ -286,4 +291,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with AuthenticationConfig wi
 
   }
 
+  override def setUpAccountData(accountData: AccountData): Unit = {
+    (accountStorage.get _).expects(*).anyNumberOfTimes().returning(Future.successful(Some(accountData)))
+  }
 }
