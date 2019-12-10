@@ -530,8 +530,8 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   private def databaseFiles(ams: Set[AccountManager]): Set[File] = ams.flatMap(acc => databaseFiles(acc.userId))
 
   private def databaseFiles(userId: UserId): Set[File] = {
-    val database = context.getDatabasePath(userId.str)
-    DbFileExtensions.map(ext => new File(s"${database.getAbsolutePath}$ext")).toSet
+    val databaseDir = s"${context.getApplicationInfo.dataDir}/databases"
+    new File(databaseDir).listFiles().filter(_.isFile).toSet
   }
 
   private def otrFilesDir(userId: UserId): Directory =
