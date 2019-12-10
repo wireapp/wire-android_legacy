@@ -3,6 +3,7 @@ package com.waz.zclient.core.network
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.ServerError
+import com.waz.zclient.core.extension.failFastIfUIThread
 import com.waz.zclient.core.functional.Either
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -13,6 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 open class Network {
 
     fun <T, R> request(call: Call<T>, transform: (T) -> R, default: T): Either<Failure, R> {
+        Thread.currentThread().failFastIfUIThread()
         return try {
             val response = call.execute()
             when (response.isSuccessful) {
