@@ -5,7 +5,7 @@ package com.waz.zclient.core.exception
  * Every feature specific failure should extend [FeatureFailure] class.
  */
 sealed class Failure {
-    object NetworkConnection : Failure()
+    object NoNetworkConnection : Failure()
     object ServerError : Failure()
 
     /** * Extend this class for feature specific failures.*/

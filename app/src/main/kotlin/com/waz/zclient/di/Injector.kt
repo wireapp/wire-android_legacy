@@ -1,6 +1,9 @@
 package com.waz.zclient.di
 
+import android.content.Context
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.WireApplication
+import com.waz.zclient.core.network.NetworkHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -31,4 +34,8 @@ object Injector {
         }
         return okHttpClientBuilder.build()
     }
+
+    fun networkHandler() = NetworkHandler(context())
+
+    fun context(): Context = WireApplication.APP_INSTANCE().applicationContext
 }
