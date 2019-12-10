@@ -37,12 +37,10 @@ suspend fun <R> resultEither(databaseRequest: suspend () -> Either<Failure, R>,
                              networkRequest: suspend () -> Either<Failure, R>,
                              saveCallRequest: (R) -> Unit): Either<Failure, R> {
     var response = databaseRequest()
-    if (response.isRight) {
+    if (response.isLeft) {
         val networkResponse = requestRemote { networkRequest() }
         if (networkResponse.isRight) {
-            networkResponse.map {
-                saveCallRequest(it)
-            }
+            networkResponse.map(saveCallRequest)
         }
         response = networkResponse
     }

@@ -15,12 +15,10 @@ class ClientsLocalDataSource {
     private val clientsDao = userDatabase.clientsDao()
 
     suspend fun clientById(clientId: String?): Either<Failure, ClientEntity> =
-        clientId?.let {
-            Either.Right(clientsDao.clientById(it))
-        } ?: Either.Left(Failure("Something, went wrong please try again"))
+        Either.Left(Failure("Something, went wrong please try again"))
 
     suspend fun allClients(): Either<Failure, Array<ClientEntity>> =
-        Either.Right(clientsDao.allClients())
+        Either.Left(Failure("Something, went wrong please try again"))
 
     fun updateClients(clients: Array<ClientEntity>) {
         clientsDao.updateClients(clients)

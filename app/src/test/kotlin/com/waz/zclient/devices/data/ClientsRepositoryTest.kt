@@ -2,11 +2,11 @@ package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.map
-import com.waz.zclient.storage.clients.model.ClientEntity
-import com.waz.zclient.storage.clients.model.ClientLocationEntity
+import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.framework.mockito.eq
+import com.waz.zclient.storage.clients.model.ClientEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -23,10 +23,13 @@ class ClientsRepositoryTest {
     @Mock
     private lateinit var remoteDataSource: ClientsRemoteDataSource
 
+    @Mock
+    private lateinit var localDataSource: ClientsLocalDataSource
+
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        repository = ClientsRepository.getInstance(remoteDataSource)
+        repository = ClientsRepository.getInstance(remoteDataSource, localDataSource)
     }
 
     @Test
@@ -73,8 +76,7 @@ class ClientsRepositoryTest {
     }
 
     private fun generateMockEntity(): ClientEntity {
-        val location = ClientLocationEntity(TEST_LONGITUDE, TEST_LATITUDE)
-        return ClientEntity(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
+        return ClientEntity(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, TEST_LATITUDE, TEST_LONGITUDE, ENC_KEY, MAC_KEY)
     }
 
     @After
@@ -92,5 +94,7 @@ class ClientsRepositoryTest {
         private const val TEST_TYPE = "permanant"
         private const val TEST_ID = "4555f7b2"
         private const val TEST_MODEL = "Samsung"
+        private const val ENC_KEY = "encKey"
+        private const val MAC_KEY = "nackKey"
     }
 }

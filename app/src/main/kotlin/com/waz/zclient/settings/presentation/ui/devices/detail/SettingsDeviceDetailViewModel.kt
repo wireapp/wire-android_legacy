@@ -27,7 +27,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetSpecifi
 
     fun loadData(clientId: String?) {
         handleLoading(true)
-        getClientByIdUseCase.invoke(viewModelScope, Params(clientId)) { response ->
+        getClientByIdUseCase(viewModelScope, Params(clientId)) { response ->
             response.either(::handleGetDeviceError, ::handleGetDeviceSuccess)
         }
     }
