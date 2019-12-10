@@ -28,7 +28,7 @@ import com.waz.sync.client.{AuthenticationManager, LoginClient, LoginClientImpl}
 import com.waz.utils.TestUriHelper
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.{AuthRequestInterceptorOld, HttpClientOkHttpImpl}
+import com.waz.znet2.{AuthRequestInterceptorImpl, HttpClientOkHttpImpl}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -72,7 +72,7 @@ trait AuthenticationConfig {
     new AuthenticationManager(userInfo.id, accountsService, accountStorage, LoginClient, DisabledTrackingService)
   }
 
-  implicit lazy val authRequestInterceptor: AuthRequestInterceptorOld = new AuthRequestInterceptorOld(AuthenticationManager, HttpClient)
+  implicit lazy val authRequestInterceptor: AuthRequestInterceptorImpl = new AuthRequestInterceptorImpl(AuthenticationManager, HttpClient)
 
   lazy val uriHelper: UriHelper = new TestUriHelper
 
