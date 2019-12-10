@@ -17,10 +17,13 @@
  */
 package com.waz.sync.client
 
+import com.waz.ZIntegrationMockSpec
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.{AuthenticationConfig, ZIntegrationSpec}
 import com.waz.log.LogSE._
 import com.waz.utils.RichSeq
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, Request}
 import org.junit.runner.RunWith
 import org.scalatest.Ignore
 import org.scalatest.junit.JUnitRunner
@@ -29,7 +32,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 @Ignore
 @RunWith(classOf[JUnitRunner])
-class GiphyClientSpec extends ZIntegrationSpec with AuthenticationConfig with DerivedLogTag {
+class GiphyClientSpec extends ZIntegrationMockSpec with DerivedLogTag {
+
+  implicit lazy val urlCreator : Request.UrlCreator = mock[UrlCreator]
+  implicit lazy val httpClient = mock[HttpClient]
+  implicit lazy val authRequestInterceptor = mock[AuthRequestInterceptor]
 
   private lazy val giphyClient = new GiphyClientImpl()
 
