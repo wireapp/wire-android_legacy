@@ -16,21 +16,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package com.waz
+import java.util.concurrent.TimeUnit
+
 import com.waz.api.{Credentials, EmailCredentials}
-import com.waz.content.AccountStorage2
+import com.waz.content.AccountStorage
 import com.waz.model.AccountData.Password
-import com.waz.model.{AccountData, EmailAddress, UserId}
-import com.waz.service.MetaDataService
+import com.waz.model.{AccountData, EmailAddress}
+import com.waz.service.AccountsService
 import com.waz.service.assets2.UriHelper
-import com.waz.sync.client.{AuthenticationManager2, LoginClient, LoginClientImpl}
-import com.waz.utils.{TestUriHelper, UnlimitedInMemoryStorage}
+import com.waz.sync.client.{AuthenticationManager, LoginClient, LoginClientImpl}
+import com.waz.utils.TestUriHelper
 import com.waz.znet2.http.HttpClient
 import com.waz.znet2.http.Request.UrlCreator
-import com.waz.znet2.{AuthRequestInterceptorImpl, HttpClientOkHttpImpl, OkHttpUserAgentInterceptor}
+import com.waz.znet2.{AuthRequestInterceptorImpl, HttpClientOkHttpImpl}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
+import scala.concurrent.duration.FiniteDuration
 
 trait AuthenticationConfig {
 
@@ -44,13 +46,16 @@ trait AuthenticationConfig {
 
   private val LoginClient: LoginClient = new LoginClientImpl(DisabledTrackingService)
 
-  lazy val AuthenticationManager: AuthenticationManager2 = {
-    val loginResult = Await.result(LoginClient.login(testCredentials), 1.minute) match {
+  val accountsService: AccountsService
+  val accountStorage: AccountStorage
+
+  lazy val AuthenticationManager: AuthenticationManager = {
+    val loginResult = Await.result(LoginClient.login(testCredentials), new FiniteDuration(1, TimeUnit.MINUTES)) match {
       case Right(result) => result
       case Left(errResponse) => throw errResponse
     }
 
-    val userInfo = Await.result(LoginClient.getSelfUserInfo(loginResult.accessToken), 1.minute) match {
+    val userInfo = Await.result(LoginClient.getSelfUserInfo(loginResult.accessToken), new FiniteDuration(1, TimeUnit.MINUTES)) match {
       case Right(result) => result
       case Left(errResponse) => throw errResponse
     }
@@ -62,14 +67,15 @@ trait AuthenticationConfig {
       accessToken = Some(loginResult.accessToken)
     )
 
-    val accountStorage = new UnlimitedInMemoryStorage[UserId, AccountData] with AccountStorage2
-    Await.ready(accountStorage.save(testAccountData), 1.minute)
+    setUpAccountData(testAccountData)
 
-    new AuthenticationManager2(userInfo.id, accountStorage, LoginClient, DisabledTrackingService)
+    new AuthenticationManager(userInfo.id, accountsService, accountStorage, LoginClient, DisabledTrackingService)
   }
 
   implicit lazy val authRequestInterceptor: AuthRequestInterceptorImpl = new AuthRequestInterceptorImpl(AuthenticationManager, HttpClient)
 
   lazy val uriHelper: UriHelper = new TestUriHelper
+
+  def setUpAccountData(accountData: AccountData)
 
 }
