@@ -17,10 +17,10 @@
  */
 package com.waz.zclient.markdown
 
-import android.support.test.runner.AndroidJUnit4
 import android.text.SpannableString
 import android.text.style.LeadingMarginSpan
 import android.text.style.TabStopSpan
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.commonmark.*
 import com.waz.zclient.markdown.spans.custom.ListPrefixSpan
