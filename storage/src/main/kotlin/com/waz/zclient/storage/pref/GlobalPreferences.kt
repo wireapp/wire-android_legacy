@@ -9,15 +9,15 @@ class GlobalPreferences(context: Context) {
     private val sharedPreferences: SharedPreferences = context.getSharedPreferences("com.wire.preferences", Context.MODE_PRIVATE)
 
     var activeUserId: String
-        get() = getStringPrefs(ACTIVE_ACCOUNT_GLOBAL_PREF_KEY)
-        set(value) = setStringPrefs(ACTIVE_ACCOUNT_GLOBAL_PREF_KEY, value)
+        get() = stringPreference(ACTIVE_ACCOUNT_GLOBAL_PREF_KEY)
+        set(value) = stringPreference(ACTIVE_ACCOUNT_GLOBAL_PREF_KEY, value)
 
 
-    private fun setStringPrefs(key: String, value: String) {
+    private fun stringPreference(key: String, value: String) {
         sharedPreferences.edit().putString(key, value).apply()
     }
 
-    private fun getStringPrefs(key: String): String {
+    private fun stringPreference(key: String): String {
         return sharedPreferences.getString(key, "")
     }
 

@@ -23,7 +23,7 @@ import android.os.Bundle
 import com.waz.model.{ConvId, UserId}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.preferences.PreferencesActivity
-import com.waz.zclient.settings.presentation.ui.home.SettingsActivity
+import com.waz.zclient.settings.ui.home.SettingsActivity
 
 object Intents {
 

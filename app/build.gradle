@@ -6,7 +6,6 @@ apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
-
 ext {
     majorVersion = "3.43."
 
@@ -18,7 +17,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.3.29@aar'
+    customAvsVersion = '5.4.7@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -99,7 +98,7 @@ android {
         versionName majorVersion + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
-        
+
         manifestPlaceholders = [customURLScheme: buildtimeConfiguration.configuration.custom_url_scheme]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
@@ -273,7 +272,7 @@ android {
 
     sourceSets {
 
-        main.java.srcDirs += 'src/main/kotlin'
+        main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
         main.res.srcDirs += 'src/main/res-v2'
 
         androidTest {
@@ -315,12 +314,11 @@ def versions = [
     mockito : "3.1.0",
     lifecycle : "2.0.0",
     okHttp : "3.12.0",
-    retrofit : "2.6.2"
+    retrofit : "2.6.2",
+    kluent : "1.14"
 ]
 
 dependencies {
-    implementation project(':lintlib')
-
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.scala-lang:scala-library:$scalaVersion"
     implementation "org.scala-lang:scala-reflect:$scalaVersion"
@@ -440,6 +438,7 @@ dependencies {
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
     testImplementation "org.mockito:mockito-core:$versions.mockito"
     testImplementation "org.mockito:mockito-inline:$versions.mockito"
+    testImplementation "org.amshove.kluent:kluent:$versions.kluent"
     testImplementation "androidx.paging:paging-common:2.0.0"
     testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
@@ -451,7 +450,7 @@ dependencies {
 
     // UI Tests
     androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
-    androidTestImplementation 'org.mockito:mockito-core:3.1.0'
+    androidTestImplementation "org.mockito:mockito-core:$versions.mockito"
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.1.1'
 

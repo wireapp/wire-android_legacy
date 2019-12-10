@@ -27,7 +27,7 @@ import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.settings.presentation.ui.home.SettingsActivity
+import com.waz.zclient.settings.ui.home.SettingsActivity
 import com.waz.zclient.utils.BackendController
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {

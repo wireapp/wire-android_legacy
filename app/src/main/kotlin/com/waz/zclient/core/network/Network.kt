@@ -1,7 +1,7 @@
 package com.waz.zclient.core.network
 
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.user.data.source.remote.UserApi
+import com.waz.zclient.user.data.source.remote.UsersApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -44,14 +44,14 @@ open class Network {
             .build()
     }
 
-    fun userApi(): UserApi {
-        return retrofit.create(UserApi::class.java)
+    fun userApi(): UsersApi {
+        return retrofit.create(UsersApi::class.java)
     }
 
     companion object {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
-        private const val API_TOKEN = "Ry6IVyBBo-o3ecRo84BY2aDW_u7fn89wviCNAA-O6aqCaKFHK6Yfz-e3X08Ik2D7X6tpQmVClOqrLIQHwIDNCg==.v=1.k=1.d=1575993644.t=a.l=.u=4555f7b2-f97b-409f-8c3a-333a473ac1b9.c=9608784358813185153"
+        private const val API_TOKEN = "yIWOGv2C8c8pOkFnWT8madYCpUGycVkrzFBehI8byX5A1gik168H2ImAwCqaB1lGKPM58hhD9AuGBjDNdbM2AA==.v=1.k=1.d=1575995980.t=a.l=.u=4555f7b2-f97b-409f-8c3a-333a473ac1b9.c=18291266255440225721"
     }
 }
 

@@ -113,7 +113,7 @@ abstract class AndroidFreeSpec extends ZMockSpec { this: Suite =>
   def updateAccountState(id: UserId, state: AccountState) =
     accountStates.mutate(_ + (id -> state))
 
-  implicit val accountContext = new AccountContext(account1Id, accounts)
+  lazy implicit val accountContext = new AccountContext(account1Id, accounts)
 
   override protected def beforeEach() = {
     clock.reset()

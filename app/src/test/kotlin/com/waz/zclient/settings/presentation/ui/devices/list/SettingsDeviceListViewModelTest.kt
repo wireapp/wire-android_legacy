@@ -8,6 +8,7 @@ import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
 import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.settings.ui.devices.list.SettingsDeviceListViewModel
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
