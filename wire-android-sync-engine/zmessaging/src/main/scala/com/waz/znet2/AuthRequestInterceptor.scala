@@ -18,50 +18,15 @@
 package com.waz.znet2
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.sync.client.{AuthenticationManager, AuthenticationManager2}
+import com.waz.log.LogSE._
+import com.waz.sync.client.AuthenticationManager
 import com.waz.threading.CancellableFuture
 import com.waz.znet2.http.HttpClient.ProgressCallback
 import com.waz.znet2.http._
-import com.waz.log.LogSE._
 
 trait AuthRequestInterceptor extends RequestInterceptor
 
-@deprecated("Use [com.waz.znet2.AuthRequestInterceptorImpl] instead.", "?")
-class AuthRequestInterceptorOld(authManager: AuthenticationManager, httpClient: HttpClient, attеmptsIfAuthFailed: Int = 1)
-    extends AuthRequestInterceptor with DerivedLogTag {
-
-  import com.waz.threading.Threading.Implicits.Background
-
-  override def intercept(request: Request[Body]): CancellableFuture[Request[Body]] =
-    CancellableFuture.lift(authManager.currentToken()).map {
-      case Right(token) =>
-        request.copy(headers = Headers(request.headers.headers ++ token.headers))
-      case Left(err) =>
-        throw new IllegalArgumentException(err.toString)
-    }
-
-  override def intercept(
-      request: Request[Body],
-      uploadCallback: Option[ProgressCallback],
-      downloadCallback: Option[ProgressCallback],
-      response: Response[Body]
-  ): CancellableFuture[Response[Body]] =
-    if (response.code == ResponseCode.Unauthorized && attеmptsIfAuthFailed > 0) {
-      verbose(l"Got 'Unauthorized' error. Retrying... Attempts left: ${attеmptsIfAuthFailed - 1}")
-      CancellableFuture.lift(authManager.invalidateToken()).flatMap { _ =>
-        httpClient.execute(
-          request.copy(interceptor = new AuthRequestInterceptorOld(authManager, httpClient, attеmptsIfAuthFailed - 1)),
-          uploadCallback,
-          downloadCallback
-        )
-      }
-    } else CancellableFuture.successful(response)
-
-}
-
-class AuthRequestInterceptorImpl(authManager: AuthenticationManager2,
-                                 httpClient: HttpClient,
-                                 attеmptsIfAuthFailed: Int = 1)
+class AuthRequestInterceptorImpl(authManager: AuthenticationManager, httpClient: HttpClient, attеmptsIfAuthFailed: Int = 1)
     extends AuthRequestInterceptor with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background

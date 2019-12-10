@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.markdown
 
-
 import android.text.SpannableString
 import android.text.style.LeadingMarginSpan
 import android.text.style.TabStopSpan
