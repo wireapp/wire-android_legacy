@@ -1,9 +1,9 @@
 package com.waz.zclient.devices.mapper
 
-import com.waz.zclient.storage.clients.model.ClientEntity
-import com.waz.zclient.storage.clients.model.ClientLocationEntity
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
+import com.waz.zclient.storage.clients.model.ClientEntity
+import com.waz.zclient.storage.clients.model.ClientLocationEntity
 
 fun ClientEntity.toClient() = Client(
     cookie = cookie,
@@ -13,7 +13,7 @@ fun ClientEntity.toClient() = Client(
     type = type,
     id = id,
     model = model,
-    location = location.toClient()
+    location = ClientLocation(lon, lat)
 )
 
 fun ClientLocationEntity.toClient() = ClientLocation(
