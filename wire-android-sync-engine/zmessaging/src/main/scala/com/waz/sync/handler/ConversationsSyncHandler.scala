@@ -29,7 +29,7 @@ import com.waz.service.assets.AssetService
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
-import com.waz.sync.SyncResult.{Failure, Retry, Success}
+import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
 import com.waz.sync.client.ConversationsClient.ConversationInitState
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
@@ -105,14 +105,13 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postReceiptMode(conv.remoteId, receiptMode).map(SyncResult(_))
     }
 
-  def updateConversationRole(id: ConvId, userId: UserId, role: ConversationRole): Future[SyncResult] =
+  def postConversationRole(id: ConvId, userId: UserId, newRole: ConversationRole, origRole: Option[ConversationRole]): Future[SyncResult] =
     withConversation(id) { conv =>
-      conversationsClient.updateConversationRole(conv.remoteId, userId, role).future.flatMap {
-        case Right(_) => Future.successful(Success)
+      conversationsClient.postConversationRole(conv.remoteId, userId, newRole).future.flatMap {
+        case Right(_) =>
+          Future.successful(Success)
         case Left(error) =>
-          // TODO: pass the original role
-          membersStorage.update(id, userId, if (role == ConversationRole.AdminRole) ConversationRole.MemberRole else ConversationRole.AdminRole)
-          .map(_ => SyncResult(error))
+          convService.onUpdateRoleFailed(id, userId, newRole, origRole, error).map(_ => SyncResult(error))
       }
     }
 

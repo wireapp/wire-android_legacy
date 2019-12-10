@@ -56,7 +56,7 @@ trait ConversationsClient {
   def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
-  def updateConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
+  def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
 }
 
 class ConversationsClientImpl(implicit
@@ -237,7 +237,7 @@ class ConversationsClientImpl(implicit
       .executeSafe(_.conversations.head)
   }
 
-  override def updateConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
+  override def postConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
     debug(l"updateConversationRole($conv, $userId, $role)")
     Request.Put(
       relativePath = s"${membersPath(conv)}/$userId",

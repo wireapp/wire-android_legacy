@@ -37,7 +37,7 @@ public enum SyncCommand {
     PostConvReceiptMode("post-conv-receipt-mode"),
     PostConvName("post-conv-name"),
     PostConvState("post-conv-state"),
-    UpdateConvRole("update-conv_role"),
+    PostConvRole("update-conv_role"),
     PostLastRead("post-last-read"),
     PostCleared("post-cleared"),
     PostTypingState("post-typing-state"),

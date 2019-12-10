@@ -205,7 +205,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           accessRole    = Some(accessRole),
           receiptMode   = Some(receiptMode)
         ))
-      _    <- membersStorage.add(convId, Map(creator -> ConversationRole.AdminRole) ++ members.map(_ -> defaultRole))
+      _    <- membersStorage.updateOrCreateAll(convId, Map(creator -> ConversationRole.AdminRole) ++ members.map(_ -> defaultRole))
     } yield conv
   }
 
@@ -277,7 +277,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           _ <- storage.updateLocalId(updates.head, origId)
           _ <- Future.sequence(updates.map(membersStorage.delete))
           _ <- updateConversation(origId, Some(ConversationType.OneToOne), hidden = Some(false))
-          _ <- membersStorage.add(origId, Map(selfUserId -> ConversationRole.AdminRole, UserId(origId.str) -> ConversationRole.AdminRole))
+          _ <- membersStorage.updateOrCreateAll(origId, Map(selfUserId -> ConversationRole.AdminRole, UserId(origId.str) -> ConversationRole.AdminRole))
         } yield ()
       })
     } yield ()

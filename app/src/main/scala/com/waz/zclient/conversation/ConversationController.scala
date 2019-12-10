@@ -117,8 +117,12 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     membersStorage <- membersStorage
     rolesStorage   <- rolesStorage
     roles          <- rolesStorage.rolesByConvId(Some(convId))
+    _ = verbose(l"ROL roles in conv $convId: $roles")
     members        <- membersStorage.activeMembersData(convId)
-  } yield members.map(m => m.userId -> roles.find(_.label == m.role).getOrElse(ConversationRole.MemberRole)).toMap
+    _ = verbose(l"ROL members in conv $convId: $members")
+    membersWithRoles = members.map(m => m.userId -> roles.find(_.label == m.role).getOrElse(ConversationRole.MemberRole)).toMap
+    _ = verbose(l"ROL members with roles: $membersWithRoles")
+  } yield membersWithRoles
 
   lazy val selfRole: Signal[ConversationRole] =
     selfId.flatMap(selfId => currentConvMembers.map(_.getOrElse(selfId, ConversationRole.MemberRole)))

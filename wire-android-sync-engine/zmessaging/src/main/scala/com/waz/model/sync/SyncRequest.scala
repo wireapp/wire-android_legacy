@@ -167,10 +167,10 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
   }
 
-  case class UpdateConvRole(convId: ConvId, userId: UserId, role: ConversationRole)
-    extends RequestForConversation(Cmd.UpdateConvRole) with Serialized {
+  case class PostConvRole(convId: ConvId, userId: UserId, newRole: ConversationRole, origRole: Option[ConversationRole])
+    extends RequestForConversation(Cmd.PostConvRole) with Serialized {
     override val mergeKey: Any = (cmd, convId, userId)
-    override def merge(req: SyncRequest) = mergeHelper[UpdateConvRole](req)(Merged(_))
+    override def merge(req: SyncRequest) = mergeHelper[PostConvRole](req)(Merged(_))
   }
 
   case class PostLastRead(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostLastRead) {
@@ -360,7 +360,7 @@ object SyncRequest {
           case Cmd.PostConvName              => PostConvName(convId, 'name)
           case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
           case Cmd.PostConvState             => PostConvState(convId, JsonDecoder[ConversationState]('state))
-          case Cmd.UpdateConvRole            => UpdateConvRole(convId, userId, 'conversation_role)
+          case Cmd.PostConvRole              => PostConvRole(convId, userId, 'new_role, 'orig_role)
           case Cmd.PostLastRead              => PostLastRead(convId, 'time)
           case Cmd.PostCleared               => PostCleared(convId, 'time)
           case Cmd.PostTypingState           => PostTypingState(convId, 'typing)
@@ -500,9 +500,10 @@ object SyncRequest {
           o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))
           receiptMode.foreach(o.put("receipt_mode", _))
           o.put("default_role", defaultRole)
-        case UpdateConvRole(_, userId, role) =>
+        case PostConvRole(_, userId, newRole, origRole) =>
           o.put("user", userId)
-          o.put("conversation_role", role)
+          o.put("new_role", newRole)
+          origRole.foreach(r => o.put("orig_role", r))
         case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))

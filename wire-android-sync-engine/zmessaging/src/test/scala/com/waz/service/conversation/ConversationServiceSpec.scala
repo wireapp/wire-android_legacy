@@ -363,7 +363,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val conv = ConversationData(team = Some(teamId), name = Some(convName))
       val syncId = SyncId()
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Map.empty[UserId, ConversationRole], *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, Set.empty[UserId], *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, Set.empty[UserId], *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
@@ -384,12 +384,12 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val users = Set(self, user1, user2)
       val uMap = Map(self.id -> AdminRole, user1.id -> MemberRole, user2.id -> MemberRole)
 
-      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, uMap, *, *, *, *, *).once().returning(Future.successful(conv))
+      (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))
       (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = uMap))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id)))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -442,7 +442,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         Future.successful(Set(MessageData(MessageId(), convId, Message.Type.STARTED_USING_DEVICE, selfUserId, time = RemoteInstant.Epoch)))
       }
 
-      result(service.updateConversationsWithDeviceStartMessage(Seq(response)))
+      result(service.updateConversationsWithDeviceStartMessage(Seq(response), Map.empty))
     }
   }
 

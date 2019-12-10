@@ -28,11 +28,13 @@ case class ConversationRole(label: String, actions: Set[ConversationAction]) {
   def toRoleActions(convId: Option[ConvId]): List[ConversationRoleAction] =
     actions.map(action => ConversationRoleAction(label, action.name, convId)).toList
 
+  override def toString: String = label
+
   import ConversationAction._
 
   lazy val canAddGroupMember: Boolean = actions.contains(AddMember)
   lazy val canRemoveGroupMember: Boolean = actions.contains(RemoveMember)
-  lazy val canDeleteGroup: Boolean = actions.contains(RemoveMember)
+  lazy val canDeleteGroup: Boolean = actions.contains(DeleteConversation)
   lazy val canModifyGroupName: Boolean = actions.contains(ModifyName)
   lazy val canModifyMessageTimer: Boolean = actions.contains(ModifyMessageTimer)
   lazy val canModifyReceiptMode: Boolean = actions.contains(ModifyReceiptMode)
@@ -44,10 +46,11 @@ case class ConversationRole(label: String, actions: Set[ConversationAction]) {
 object ConversationRole {
   import ConversationAction._
 
-  val MemberRole = ConversationRole("wire_member", Set(LeaveConversation))
   val AdminRole  = ConversationRole("wire_admin", allActions)
+  val MemberRole = ConversationRole("wire_member", Set(LeaveConversation))
+  val BotRole    = ConversationRole("wire_bot", Set(LeaveConversation))
 
-  val defaultRoles = Set(MemberRole, AdminRole)
+  val defaultRoles = Set(AdminRole, MemberRole, BotRole)
 
   def getRole(label: String, defaultRole: ConversationRole = ConversationRole.MemberRole): ConversationRole =
     defaultRoles.find(_.label == label).getOrElse(defaultRole)
@@ -98,10 +101,6 @@ object ConversationRoleAction {
     override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
 
     def findForConv(convId: Option[ConvId])(implicit db: DB) = iterating(find(ConvId, convId))
-
-    def findForRoleAndConv(role: String, convId: Option[ConvId])(implicit db: DB) = iterating(
-      db.query(table.name, null, s"${Label.name} = $role AND ${ConvId.name} = ${convId.getOrElse("")}", Array(), null, null, null)
-    )
   }
 
 }

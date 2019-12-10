@@ -19,6 +19,7 @@ package com.waz.content
 
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
 import com.waz.model._
 import com.waz.threading.SerialDispatchQueue
@@ -27,12 +28,13 @@ import com.waz.utils.events.{AggregatingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 import scala.concurrent.Future
+import com.waz.log.LogSE._
 
 trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberData] {
   def getByConv(conv: ConvId): Future[IndexedSeq[ConversationMemberData]]
   def getByConvs(conv: Set[ConvId]): Future[IndexedSeq[ConversationMemberData]]
-  def add(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Set[ConversationMemberData]]
-  def add(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]]
+  def updateOrCreateAll(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Set[ConversationMemberData]]
+  def updateOrCreateAll(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]]
   def isActiveMember(conv: ConvId, user: UserId): Future[Boolean]
   def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]]
   def remove(conv: ConvId, user: UserId): Future[Option[ConversationMemberData]]
@@ -46,12 +48,12 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def setAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
   def addAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
   def delete(conv: ConvId): Future[Unit]
-  def update(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit]
+  def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit]
 }
 
 class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[(UserId, ConvId), ConversationMemberData](new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationMemberDataDao, LogTag("MembersStorage_Cached"))
-    with MembersStorage {
+    with MembersStorage with DerivedLogTag {
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "MembersStorage")
 
@@ -67,7 +69,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
     current -- inactive.map(_._1) ++ active.map(_._1)
   })
 
-  def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]] =
+  override def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]] =
     new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
       onConvMemberDataChanged(conv),
       getByConv(conv),
@@ -92,17 +94,17 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
       case (cId, members) => cId -> members.map(_.userId).toSet
     })
 
-  override def add(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Set[ConversationMemberData]] =
+  override def updateOrCreateAll(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Set[ConversationMemberData]] =
     updateOrCreateAll2(users.keys.map((_, conv)), { (k, v) =>
       v match {
-        case Some(m) if m.role != users(m.userId) => m.copy(role = users(m.userId).label)
-        case Some(m)                              => m
-        case None                                 => ConversationMemberData(k._1, conv, users(k._1))
+        case Some(m) if m.role != users(m.userId).label => m.copy(role = users(m.userId).label)
+        case Some(m)                                    => m
+        case None                                       => ConversationMemberData(k._1, conv, users(k._1))
       }
     })
 
-  override def add(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]] =
-    add(conv, Map(user -> role)).map(_.headOption)
+  override def updateOrCreateAll(conv: ConvId, user: UserId, role: ConversationRole): Future[Option[ConversationMemberData]] =
+    updateOrCreateAll(conv, Map(user -> role)).map(_.headOption)
 
   override def remove(conv: ConvId, users: Iterable[UserId]): Future[Set[ConversationMemberData]] =
     getAll(users.map(_ -> conv)).flatMap(toBeRemoved => removeAll(users.map(_ -> conv)).map(_ => toBeRemoved.flatten.toSet))
@@ -114,7 +116,7 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
     val toRemove = active.filterNot(users.keySet)
     val toAdd = users -- toRemove
 
-    remove(conv, toRemove).zip(add(conv, toAdd)).map(_ => ())
+    remove(conv, toRemove).zip(updateOrCreateAll(conv, toAdd)).map(_ => ())
   }
 
   override def setAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit] = getActiveUsers2(members.keySet).flatMap { active =>
@@ -144,8 +146,10 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
     insertAll(addList).map(_ => ())
   }
 
-  override def update(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit] =
-    update((user, conv), _.copy(role = role.label)).map(_ => ())
+  override def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit] = {
+    verbose(l"ROL updateOrCreate($conv, $user, $role)")
+    updateOrCreate((user, conv), _.copy(role = role.label), ConversationMemberData(user, conv, role)).map(_ => ())
+  }
 
   override def isActiveMember(conv: ConvId, user: UserId) = get(user -> conv).map(_.nonEmpty)
 

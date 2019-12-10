@@ -253,7 +253,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
   override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole = ConversationRole.MemberRole): Future[Option[SyncId]] =
     (for {
       true   <- canModifyMembers(conv)
-      added  <- members.add(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
+      added  <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
       _      <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
       syncId <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
     } yield Option(syncId))

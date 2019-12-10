@@ -25,14 +25,13 @@ import com.waz.model.{ConvId, ConversationAction, ConversationRole, Conversation
 import com.waz.threading.Threading
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.events.{RefreshingSignal, Signal}
-import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
+import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache, returning}
 import com.waz.threading.CancellableFuture
 import com.waz.log.LogSE._
 
 import scala.concurrent.Future
 
 trait ConversationRolesStorage extends CachedStorage[(String, String, Option[ConvId]), ConversationRoleAction] {
-  def getRoleByLabel(label: String, convId: Option[ConvId] = None): Future[ConversationRole]
   def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]]
 
   def defaultRoles: Signal[Set[ConversationRole]]
@@ -50,56 +49,65 @@ class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
   ) with ConversationRolesStorage with DerivedLogTag {
   import Threading.Implicits.Background
 
-  defaultRoles.head.foreach(roles => if (roles.isEmpty) setDefault(ConversationRole.defaultRoles))
-
-  override def getRoleByLabel(label: String, convId: Option[ConvId] = None): Future[ConversationRole] =
-    find({ cra => cra.label == label && cra.convId == convId }, ConversationRoleActionDao.findForRoleAndConv(label, convId)(_), identity).map { res =>
-      val actionNames = res.map(_.action).toSet
-      ConversationRole(label, ConversationAction.allActions.filter(ca => actionNames.contains(ca.name)))
-    }
-
   override def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]] = getRolesByConvId(Some(convId))
 
-  override def defaultRoles: Signal[Set[ConversationRole]] = rolesByConvId(None)
+  override val defaultRoles: Signal[Set[ConversationRole]] = rolesByConvId(None)
 
   override def rolesByConvId(convId: Option[ConvId]): Signal[Set[ConversationRole]] = new RefreshingSignal[Set[ConversationRole]](
     loader       = CancellableFuture.lift(getRolesByConvId(convId)),
     refreshEvent = this.onChanged.map(_.filter(_.convId == convId)).filter(_.nonEmpty)
   )
 
-  override def createOrUpdate(convId: ConvId, newRoles: Set[ConversationRole]): Future[Unit] = for {
-    currentRoles         <- getRolesByConvId(convId)
-    newRolesAreDifferent =  currentRoles != newRoles
-    _                    <- if (newRolesAreDifferent && currentRoles.nonEmpty) removeAll(unapply(Some(convId), currentRoles)) else Future.successful(())
-    defaultRoles         <- if (newRolesAreDifferent) defaultRoles.head else Future.successful(newRoles)
-    newRolesAreDifferent =  defaultRoles != newRoles
-    _                    <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(Some(convId)))) else Future.successful(())
-  } yield ()
+  override def createOrUpdate(convId: ConvId, newRoles: Set[ConversationRole]): Future[Unit] =
+    for {
+      currentRoles         <- getRolesByConvId(convId)
+      _ = verbose(l"ROL conv $convId, current roles $currentRoles, newRoles: $newRoles")
+      newRolesAreDifferent =  currentRoles != newRoles
+      _ = verbose(l"ROL new roles are different from current: $newRolesAreDifferent")
+      _                    <- if (newRolesAreDifferent && currentRoles.nonEmpty) removeAll(unapply(Some(convId), currentRoles)) else Future.successful(())
+      defaultRoles         <- if (newRolesAreDifferent) defaultRoles.head else Future.successful(newRoles)
+      _ = verbose(l"ROL default roles: $defaultRoles")
+      newRolesAreDifferent =  defaultRoles != newRoles
+      _ = verbose(l"ROL new roles are different from default: $newRolesAreDifferent")
+      _                    <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(Some(convId)))) else Future.successful(())
+    } yield ()
 
-  override def setDefault(newRoles: Set[ConversationRole]): Future[Unit] = for {
-    defaultRoles <- defaultRoles.head
-    _            <- removeAll(unapply(None, defaultRoles))
-    _            <- insertAll(newRoles.flatMap(_.toRoleActions(None)))
-  } yield ()
+  override def setDefault(newRoles: Set[ConversationRole]): Future[Unit] = synchronized {
+    for {
+      defaultRoles <- defaultRoles.head
+      _ = verbose(l"ROL default roles, current roles $defaultRoles, newRoles: $newRoles")
+      newRolesAreDifferent = defaultRoles != newRoles
+      _ <- if (newRolesAreDifferent) removeAll(unapply(None, defaultRoles)) else Future.successful(())
+      _ <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(None))) else Future.successful(())
+      _ = verbose(l"ROL new default roles set: $newRoles")
+    } yield ()
+  }
 
   override def removeByConvId(convId: ConvId): Future[Unit] = createOrUpdate(convId, Set.empty)
 
   private def getRolesByConvId(convId: Option[ConvId]): Future[Set[ConversationRole]] =
-    find({ _.convId == convId }, ConversationRoleActionDao.findForConv(convId)(_), identity).map {
-      _.groupBy(_.label).map { case (label, actions) =>
+    find({ _.convId == convId }, ConversationRoleActionDao.findForConv(convId)(_), identity).map { cras =>
+      verbose(l"ROL cras found for $convId (${cras.size}): $cras")
+      cras.groupBy(_.label).map { case (label, actions) =>
         val actionNames = actions.map(_.action).toSet
         ConversationRole(label, ConversationAction.allActions.filter(ca => actionNames.contains(ca.name)))
       }.toSet
     }.flatMap { roles =>
-      if (roles.nonEmpty) Future.successful(roles)
+      if (roles.nonEmpty) {
+        verbose(l"ROL getRolesByConvId($convId): $roles")
+        Future.successful(roles)
+      }
       else if (convId.isDefined) getRolesByConvId(None)
       else {
-        warn(l"No default conversation roles found")
+        warn(l"ROL No default conversation roles found")
+        setDefault(ConversationRole.defaultRoles)
         Future.successful(ConversationRole.defaultRoles)
       }
     }
 
   private def unapply(convId: Option[ConvId], roles: Set[ConversationRole]) =
-    roles.flatMap(role => role.actions.map(action => (role.label, action.name, convId)))
+    returning(roles.flatMap(role => role.actions.map(action => (role.label, action.name, convId)))) { rs =>
+      verbose(l"ROL unapply($convId, $roles): $rs")
+    }
 
 }

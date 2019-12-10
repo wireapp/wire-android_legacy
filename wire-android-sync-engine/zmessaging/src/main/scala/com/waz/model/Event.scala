@@ -260,8 +260,8 @@ object ConversationEvent extends DerivedLogTag {
           MemberJoinEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get), decodeUserIdsWithRoles('users)(d.get), decodeString('id).startsWith("1."))
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
         case "conversation.member-update"        =>
-          verbose(l"MemberUpdateEvent json: ${js.toString}")
-          MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get), ConversationRole.AdminRole.label)
+          verbose(l"ROL MemberUpdateEvent json: ${js.toString}")
+          MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get), 'conversation_role)
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
         case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
         case "conversation.otr-message-add"      => OtrMessageEvent('conversation, time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))
