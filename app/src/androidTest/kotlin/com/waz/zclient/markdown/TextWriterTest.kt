@@ -18,10 +18,10 @@
 package com.waz.zclient.markdown
 
 import android.graphics.Color
-import android.support.test.runner.AndroidJUnit4
 import android.text.Spanned
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.InlineSpan
 import com.waz.zclient.markdown.utils.TextWriter
