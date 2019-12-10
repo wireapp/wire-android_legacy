@@ -100,7 +100,10 @@ object ConversationRoleAction {
     override val table = Table("ConversationRoleAction", Label, Action, ConvId)
     override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
 
-    def findForConv(convId: Option[ConvId])(implicit db: DB) = iterating(find(ConvId, convId))
+    def findForConv(convId: Option[ConvId])(implicit db: DB) =
+      iterating(if (convId.isDefined) find(ConvId, convId) else findWhereNull(ConvId))
+
+      //iterating(convId.fold(findWhereNull(ConvId))(id => find(ConvId, id)))
   }
 
 }

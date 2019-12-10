@@ -43,7 +43,6 @@ trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberD
   def getActiveUsers2(conv: Set[ConvId]): Future[Map[ConvId, Set[UserId]]]
   def getActiveConvs(user: UserId): Future[Seq[ConvId]]
   def activeMembers(conv: ConvId): Signal[Set[UserId]]
-  def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def set(conv: ConvId, users: Map[UserId, ConversationRole]): Future[Unit]
   def setAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
   def addAll(members: Map[ConvId, Map[UserId, ConversationRole]]): Future[Unit]
@@ -61,28 +60,18 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
 
   def getByUser(user: UserId) = find(_.userId == user, ConversationMemberDataDao.findForUser(user)(_), identity)
 
-  def activeMembers(conv: ConvId): Signal[Set[UserId]] =
-    new AggregatingSignal[Seq[(UserId, Boolean)], Set[UserId]](onConvMemberChanged(conv),
-                                                                getActiveUsers(conv).map(_.toSet), { (current, changes) =>
-    val (active, inactive) = changes.partition(_._2)
+  override def activeMembers(conv: ConvId): Signal[Set[UserId]] = {
+    def onConvMemberChanged(conv: ConvId) =
+      onAdded.map(_.filter(_.convId == conv).map(_.userId -> true))
+        .union(onDeleted.map(_.filter(_._2 == conv).map(_._1 -> false)))
 
-    current -- inactive.map(_._1) ++ active.map(_._1)
-  })
-
-  override def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]] =
-    new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
-      onConvMemberDataChanged(conv),
-      getByConv(conv),
+    new AggregatingSignal[Seq[(UserId, Boolean)], Set[UserId]](
+      onConvMemberChanged(conv),
+      getActiveUsers(conv).map(_.toSet),
       { (current, changes) =>
-        val (active, inactive) = changes.partition(_._2._2)
-        val inactiveIds = inactive.keySet
-        current.filter(m => !inactiveIds.contains(m.userId)) ++ active.values.collect { case (Some(m), _) => m }
-      }
-    )
-
-  private def onConvMemberChanged(conv: ConvId) = onAdded.map(_.filter(_.convId == conv).map(_.userId -> true)).union(onDeleted.map(_.filter(_._2 == conv).map(_._1 -> false)))
-  private def onConvMemberDataChanged(conv: ConvId) = {
-    onChanged.map(_.filter(_.convId == conv).map(m => m.userId -> (Option(m), true))).union(onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
+        val (active, inactive) = changes.partition(_._2)
+        current -- inactive.map(_._1) ++ active.map(_._1)
+      })
   }
 
   override def getActiveUsers(conv: ConvId) = getByConv(conv) map { _.map(_.userId) }

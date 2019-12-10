@@ -68,17 +68,17 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     Future.sequence(ids.map(convs.convById)).flatMap { convs =>
       val remoteIds = convs.collect { case Some(conv) => conv.remoteId }
 
-      if (remoteIds.size != convs.size) error(l"syncConversations($ids) - some conversations were not found in local db, skipping")
+      if (remoteIds.size != convs.size) error(l"ROL syncConversations($ids) - some conversations were not found in local db, skipping")
 
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
           conversationsClient.loadConversationRoles(remoteIds).flatMap { roles =>
-            debug(l"syncConversations received ${resps.size}, ${roles.size}")
+            debug(l"ROL syncConversations received ${resps.size}, ${roles.size}")
             convService.updateConversationsWithDeviceStartMessage(resps, roles).map(_ => Success)
           }
 
         case Left(error) =>
-          warn(l"ConversationsClient.syncConversations($ids) failed with error: $error")
+          warn(l"ROL ConversationsClient.syncConversations($ids) failed with error: $error")
           Future.successful(SyncResult(error))
       }
     }
@@ -86,14 +86,14 @@ class ConversationsSyncHandler(selfUserId:          UserId,
   def syncConversations(start: Option[RConvId] = None): Future[SyncResult] =
     conversationsClient.loadConversations(start).future.flatMap {
       case Right(ConversationsResult(responses, hasMore)) =>
-        debug(l"syncConversations received ${responses.size}")
+        debug(l"ROL syncConversations received ${responses.size}")
         conversationsClient.loadConversationRoles(responses.map(_.id).toSet).flatMap { roles =>
           val future = convService.updateConversationsWithDeviceStartMessage(responses, roles)
           if (hasMore) future.flatMap(_ => syncConversations(responses.lastOption.map(_.id)))
           else future.map(_ => Success)
         }
       case Left(error) =>
-        warn(l"ConversationsClient.loadConversations($start) failed with error: $error")
+        warn(l"ROL ConversationsClient.loadConversations($start) failed with error: $error")
         Future.successful(SyncResult(error))
     }
 
@@ -173,7 +173,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
                        receiptMode: Option[Int],
                        defaultRole: ConversationRole
                       ): Future[SyncResult] = {
-    debug(l"postConversation($convId, $users, $name)")
+    debug(l"ROL postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
     val initState = ConversationInitState(
       users                 = toCreate,

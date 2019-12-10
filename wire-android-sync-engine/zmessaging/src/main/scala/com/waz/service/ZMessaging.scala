@@ -378,6 +378,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     propertiesService
 
+    rolesStorage.ensureDefaultRoles()
+
     reporting.addStateReporter { pw =>
       Future {
         userPrefs foreachCached {

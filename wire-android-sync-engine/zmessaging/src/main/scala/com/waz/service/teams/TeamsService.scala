@@ -170,7 +170,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
       _          <- userStorage.updateAll2(memberIds, _.copy(teamId = teamId, deleted = false))
       _          <- Future.sequence(members.map(onMemberSynced))
-      _          <- rolesStorage.setDefault(roles)
+      _          <- rolesStorage.setDefaultRoles(roles)
     } yield {}
   }
 

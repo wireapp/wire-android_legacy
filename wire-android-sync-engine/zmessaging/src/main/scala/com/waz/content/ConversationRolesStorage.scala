@@ -32,13 +32,15 @@ import com.waz.log.LogSE._
 import scala.concurrent.Future
 
 trait ConversationRolesStorage extends CachedStorage[(String, String, Option[ConvId]), ConversationRoleAction] {
+  def ensureDefaultRoles(): Future[Unit]
+
   def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]]
 
   def defaultRoles: Signal[Set[ConversationRole]]
   def rolesByConvId(convId: Option[ConvId]): Signal[Set[ConversationRole]]
 
   def createOrUpdate(convId: ConvId, roles: Set[ConversationRole]): Future[Unit]
-  def setDefault(roles: Set[ConversationRole]): Future[Unit]
+  def setDefaultRoles(roles: Set[ConversationRole]): Future[Unit]
 
   def removeByConvId(convId: ConvId): Future[Unit]
 }
@@ -72,16 +74,17 @@ class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
       _                    <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(Some(convId)))) else Future.successful(())
     } yield ()
 
-  override def setDefault(newRoles: Set[ConversationRole]): Future[Unit] = synchronized {
+  override def setDefaultRoles(newRoles: Set[ConversationRole]): Future[Unit] =
     for {
-      defaultRoles <- defaultRoles.head
-      _ = verbose(l"ROL default roles, current roles $defaultRoles, newRoles: $newRoles")
-      newRolesAreDifferent = defaultRoles != newRoles
-      _ <- if (newRolesAreDifferent) removeAll(unapply(None, defaultRoles)) else Future.successful(())
-      _ <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(None))) else Future.successful(())
-      _ = verbose(l"ROL new default roles set: $newRoles")
+      defaultRoles         <- getRolesByConvId(None)
+      _                    =  verbose(l"ROL default roles, current roles $defaultRoles, newRoles: $newRoles")
+      newRolesAreDifferent =  defaultRoles != newRoles
+      _                    <- if (newRolesAreDifferent) removeAll(unapply(None, defaultRoles)) else Future.successful(())
+      _                    <- if (newRolesAreDifferent) insertAll(newRoles.flatMap(_.toRoleActions(None))) else Future.successful(())
+      _                    =  verbose(l"ROL new default roles set: $newRoles")
     } yield ()
-  }
+
+  override def ensureDefaultRoles(): Future[Unit] = getRolesByConvId(None).map(_ => ())
 
   override def removeByConvId(convId: ConvId): Future[Unit] = createOrUpdate(convId, Set.empty)
 
@@ -100,7 +103,7 @@ class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
       else if (convId.isDefined) getRolesByConvId(None)
       else {
         warn(l"ROL No default conversation roles found")
-        setDefault(ConversationRole.defaultRoles)
+        insertAll(ConversationRole.defaultRoles.flatMap(_.toRoleActions(None)))
         Future.successful(ConversationRole.defaultRoles)
       }
     }

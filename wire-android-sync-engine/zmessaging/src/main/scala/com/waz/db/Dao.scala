@@ -141,6 +141,8 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
     }.toList
   }
 
+  def findWhereNull[A](col: Column[A])(implicit db: DB): DBCursor = db.query(table.name, null, s"${col.name} is NULL", null, null, null, null)
+
   def delete[A](col: Column[A], value: A)(implicit db: DB): Int = db.delete(table.name, s"${col.name} = ?", Array(col(value)))
 
   def insertOrIgnore(items: GenTraversableOnce[T])(implicit db: DB): Unit = insertWith(table.insertOrIgnoreSql)(items)

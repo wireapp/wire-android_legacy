@@ -33,7 +33,7 @@ import com.waz.service.AccountManager
 import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.assets2.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
@@ -114,15 +114,32 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   lazy val currentConvMembers: Signal[Map[UserId, ConversationRole]] = currentConvId.flatMap(convMembers)
 
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]] = for {
-    membersStorage <- membersStorage
     rolesStorage   <- rolesStorage
     roles          <- rolesStorage.rolesByConvId(Some(convId))
     _ = verbose(l"ROL roles in conv $convId: $roles")
-    members        <- membersStorage.activeMembersData(convId)
+    membersStorage <- membersStorage
+    members        <- activeMembersData(membersStorage, convId)
     _ = verbose(l"ROL members in conv $convId: $members")
     membersWithRoles = members.map(m => m.userId -> roles.find(_.label == m.role).getOrElse(ConversationRole.MemberRole)).toMap
     _ = verbose(l"ROL members with roles: $membersWithRoles")
   } yield membersWithRoles
+
+  private def activeMembersData(membersStorage: MembersStorage, conv: ConvId): Signal[Seq[ConversationMemberData]] = {
+    def onConvMemberDataChanged(conv: ConvId) =
+      membersStorage
+        .onChanged.map(_.filter(_.convId == conv).map(m => m.userId -> (Option(m), true)))
+        .union(membersStorage.onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
+
+    new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
+      onConvMemberDataChanged(conv),
+      membersStorage.getByConv(conv),
+      { (current, changes) =>
+        val (active, inactive) = changes.partition(_._2._2)
+        val inactiveIds = inactive.keySet
+        current.filter(m => !inactiveIds.contains(m.userId)) ++ active.values.collect { case (Some(m), _) => m }
+      }
+    )
+  }
 
   lazy val selfRole: Signal[ConversationRole] =
     selfId.flatMap(selfId => currentConvMembers.map(_.getOrElse(selfId, ConversationRole.MemberRole)))
