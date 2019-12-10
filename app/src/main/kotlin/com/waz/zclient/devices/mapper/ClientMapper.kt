@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.mapper
 
-import com.waz.zclient.devices.data.model.ClientEntity
-import com.waz.zclient.devices.data.model.ClientLocationEntity
+import com.waz.zclient.storage.clients.model.ClientEntity
+import com.waz.zclient.storage.clients.model.ClientLocationEntity
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
 
