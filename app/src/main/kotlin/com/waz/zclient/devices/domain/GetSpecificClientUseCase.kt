@@ -6,6 +6,7 @@ import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.core.usecase.coroutines.UseCase
 import com.waz.zclient.devices.data.ClientsDataSource
 import com.waz.zclient.devices.domain.model.Client
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 class GetSpecificClientUseCase(private val clientsRepository: ClientsDataSource)
     : UseCase<Client, Params>() {
@@ -15,4 +16,4 @@ class GetSpecificClientUseCase(private val clientsRepository: ClientsDataSource)
         }
 }
 
-data class Params(val clientId: String?)
+data class Params(val clientId: String)

@@ -63,7 +63,7 @@ class SettingsDeviceDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         lifecycleScope.launchWhenResumed {
             val id = arguments?.getString(SettingsDeviceConstants.DEVICE_ID_BUNDLE_KEY)
-            deviceDetailsViewModel.loadData(id)
+            id?.let { deviceDetailsViewModel.loadData(it) }
         }
     }
 
