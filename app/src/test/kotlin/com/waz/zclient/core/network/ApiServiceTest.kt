@@ -8,8 +8,7 @@ class ApiServiceTest : UnitTest() {
 
     private lateinit var apiService: ApiService
 
-    @Mock
-    private lateinit var networkHandler: NetworkHandler
+    @Mock private lateinit var networkHandler: NetworkHandler
 
     @Before
     fun setUp() {
