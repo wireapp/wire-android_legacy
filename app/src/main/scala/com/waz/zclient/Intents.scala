@@ -23,7 +23,7 @@ import android.os.Bundle
 import com.waz.model.{ConvId, UserId}
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.preferences.PreferencesActivity
-import com.waz.zclient.settings.ui.home.SettingsActivity
+import com.waz.zclient.settings.main.SettingsMainActivity
 
 object Intents {
 
@@ -62,7 +62,7 @@ object Intents {
 
   def EnterAppIntent(showSettings: Boolean = false)(implicit context: Context) = {
     //FIXME: Kotlin temp change
-    SettingsActivity.newIntent(context)
+    SettingsMainActivity.newIntent(context)
 //    returning(new Intent(context, classOf[MainActivity])) { i =>
 //      if (showSettings) i.putExtra(OpenPageExtra, Page.Settings)
 //    }
