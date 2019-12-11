@@ -3,7 +3,7 @@ package com.waz.zclient.di
 import android.content.Context
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.WireApplication
-import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.core.network.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -28,6 +28,8 @@ object Injector {
 
     private fun createClient(): OkHttpClient {
         val okHttpClientBuilder: OkHttpClient.Builder = OkHttpClient.Builder()
+        okHttpClientBuilder.addInterceptor(accessTokenInterceptor())
+        okHttpClientBuilder.authenticator(accessTokenAuthenticator())
         if (BuildConfig.DEBUG) {
             val loggingInterceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC)
             okHttpClientBuilder.addInterceptor(loggingInterceptor)
@@ -38,4 +40,10 @@ object Injector {
     fun networkHandler() = NetworkHandler(context())
 
     fun context(): Context = WireApplication.APP_INSTANCE().applicationContext
+
+    private fun accessTokenAuthenticator(): AccessTokenAuthenticator =
+        AccessTokenAuthenticator(AuthToken(AccessTokenRepository()))
+
+    private fun accessTokenInterceptor(): AccessTokenInterceptor =
+        AccessTokenInterceptor(AuthToken(AccessTokenRepository()))
 }
