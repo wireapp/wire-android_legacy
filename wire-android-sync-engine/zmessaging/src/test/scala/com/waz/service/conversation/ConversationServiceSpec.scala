@@ -31,7 +31,10 @@ import com.waz.sync.client.ConversationsClient.ConversationResponse
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.testutils.{TestGlobalPreferences, TestUserPreferences}
 import com.waz.threading.CancellableFuture
+import com.waz.utils.JsonDecoder
 import com.waz.utils.events.{BgEventSource, EventStream, Signal, SourceSignal}
+import org.json
+import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
@@ -396,6 +399,58 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   }
 
   feature("Update conversation") {
+    scenario("Parse conversation response") {
+      val creatorId = UserId("bea00721-4af0-4204-82a7-e152c9722ddc")
+      val selfId = UserId("0ec303f8-b6dc-4daf-8215-e43f6be22dd8")
+      val otherId = UserId("b937e85e-3611-4e29-9bda-6fe39dfd4bd0")
+      val jsonStr =
+        s"""
+          |{"access":["invite","code"],
+          | "creator":"${creatorId.str}",
+          | "access_role":"non_activated",
+          | "members":{
+          |   "self":{
+          |     "hidden_ref":null,
+          |     "status":0,
+          |     "service":null,
+          |     "otr_muted_ref":null,
+          |     "conversation_role":"wire_admin",
+          |     "status_time":"1970-01-01T00:00:00.000Z",
+          |     "hidden":false,
+          |     "status_ref":"0.0",
+          |     "id":"${selfId.str}",
+          |     "otr_archived":false,
+          |     "otr_muted_status":null,
+          |     "otr_muted":false,
+          |     "otr_archived_ref":null
+          |   },
+          |   "others":[
+          |     {"status":0, "conversation_role":"${ConversationRole.AdminRole.label}", "id":"${creatorId.str}"},
+          |     {"status":0, "conversation_role":"${ConversationRole.MemberRole.label}", "id":"${otherId.str}"}
+          |   ]
+          | },
+          | "name":"www",
+          | "team":"cda744e7-742c-46ee-bc0e-a0da23d77f00",
+          | "id":"23ffe1e8-721d-4dea-9b76-2cd215f9e874",
+          | "type":0,
+          | "receipt_mode":1,
+          | "last_event_time":
+          | "1970-01-01T00:00:00.000Z",
+          | "message_timer":null,
+          | "last_event":"0.0"
+          |}
+        """.stripMargin
+
+      val jsonObject = new JSONObject(jsonStr)
+      val response: ConversationResponse = ConversationResponse.Decoder(jsonObject)
+
+      response.creator shouldEqual creatorId
+      response.members.size shouldEqual 3
+      response.members.get(creatorId) shouldEqual Some(ConversationRole.AdminRole)
+      response.members.get(selfId) shouldEqual Some(ConversationRole.AdminRole)
+      response.members.get(otherId) shouldEqual Some(ConversationRole.MemberRole)
+    }
+
     scenario("updateConversationsWithDeviceStartMessage happy path") {
 
       val rConvId = RConvId("conv")

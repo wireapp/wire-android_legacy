@@ -405,7 +405,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                   receiptMode = receiptMode,
                   defaultRole = defaultRole
                 )
-      _      =  verbose(l"created: $conv")
+      _      =  verbose(l"ROL created: $conv, members: $members")
       _      <- messages.addConversationStartMessage(conv.id, selfUserId, members, name, conv.readReceiptsAllowed)
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
     } yield (conv, syncId)

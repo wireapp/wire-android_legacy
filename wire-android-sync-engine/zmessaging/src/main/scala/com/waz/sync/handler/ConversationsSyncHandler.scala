@@ -173,7 +173,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
                        receiptMode: Option[Int],
                        defaultRole: ConversationRole
                       ): Future[SyncResult] = {
-    debug(l"ROL postConversation($convId, $users, $name)")
+    debug(l"ROL postConversation($convId, $users, $name, $defaultRole)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
     val initState = ConversationInitState(
       users                 = toCreate,
@@ -195,7 +195,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           }
         }
       case Left(resp@ErrorResponse(403, msg, "not-connected")) =>
-        warn(l"got error: $resp")
+        warn(l"ROL got error: $resp")
         errorsService
           .addErrorWhenActive(ErrorData(ErrorType.CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER, resp, convId))
           .map(_ => SyncResult(resp))

@@ -148,15 +148,14 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     verbose(l"updateConversationState($conv, state: $state)")
 
     val (archived, archiveTime) = state match {
-      case ConversationState(Some(a), Some(t), _, _, _) if t >= conv.archiveTime => (a, t)
+      case ConversationState(Some(a), Some(t), _, _, _, _, _) if t >= conv.archiveTime => (a, t)
       case _ => (conv.archived, conv.archiveTime)
     }
 
     val (muteTime, muteSet) = state match {
-      case ConversationState(_, _, _, Some(t), _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state, teamId.isDefined))
+      case ConversationState(_, _, _, Some(t), _, _, _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state, teamId.isDefined))
       case _ => (conv.muteTime, conv.muted)
     }
-
     conv.copy(archived = archived, archiveTime = archiveTime, muteTime = muteTime, muted = muteSet)
   })
 

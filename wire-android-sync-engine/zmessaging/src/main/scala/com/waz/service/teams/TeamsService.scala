@@ -159,7 +159,7 @@ class TeamsServiceImpl(selfUser:           UserId,
   }
 
   override def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit] = {
-    verbose(l"onTeamSynced: team: $team \nmembers: $members\n roles: $roles")
+    verbose(l"ROL onTeamSynced: team: $team \nmembers: $members\n roles: $roles")
 
     val memberIds = members.map(_.user).toSet
 

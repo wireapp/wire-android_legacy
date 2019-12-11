@@ -23,6 +23,7 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
 import com.waz.model.ConversationEvent.ConversationEventDecoder
 import com.waz.model.Event.EventDecoder
+import com.waz.model.MemberUpdateEvent.MemberUpdateData
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.{Client, ClientId}
 import com.waz.service.PropertyKey
@@ -69,7 +70,14 @@ object RConvEvent extends (Event => RConvId) {
   }
 }
 case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
-case class UserConnectionEvent(convId: RConvId, from: UserId, to: UserId, message: Option[String], status: ConnectionStatus, lastUpdated: RemoteInstant, fromUserName: Option[Name] = None) extends UserEvent with RConvEvent
+case class UserConnectionEvent(convId:       RConvId,
+                               from:         UserId,
+                               to:           UserId,
+                               message:      Option[String],
+                               status:       ConnectionStatus,
+                               lastUpdated:  RemoteInstant,
+                               fromUserName: Option[Name] = None
+                              ) extends UserEvent with RConvEvent
 case class UserDeleteEvent(user: UserId) extends UserEvent
 case class OtrClientAddEvent(client: Client) extends OtrClientEvent
 case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
@@ -118,11 +126,16 @@ case class OtrErrorEvent(convId: RConvId, time: RemoteInstant, from: UserId, err
 
 case class TypingEvent(convId: RConvId, time: RemoteInstant, from: UserId, isTyping: Boolean) extends ConversationEvent
 
-case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Seq[(UserId, String)], firstEvent: Boolean = false)
+case class MemberJoinEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId], users: Map[UserId, ConversationRole], firstEvent: Boolean = false)
   extends MessageEvent with ConversationStateEvent with ConversationEvent
 
 case class MemberLeaveEvent(convId: RConvId, time: RemoteInstant, from: UserId, userIds: Seq[UserId]) extends MessageEvent with ConversationStateEvent
-case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState, conversationRole: String) extends ConversationStateEvent
+
+case class MemberUpdateEvent(convId: RConvId, time: RemoteInstant, from: UserId, state: ConversationState) extends ConversationStateEvent
+
+object MemberUpdateEvent {
+  case class MemberUpdateData(id: UserId, conversationRole: ConversationRole)
+}
 
 case class ConversationReceiptModeEvent(convId: RConvId, time: RemoteInstant, from: UserId, receiptMode: Int) extends MessageEvent with ConversationStateEvent
 
@@ -148,11 +161,14 @@ case class FoldersEvent(folders: Seq[RemoteFolderData]) extends PropertyEvent
 
 case class UnknownPropertyEvent(key: PropertyKey, value: String) extends PropertyEvent
 
-case class ConversationState(archived:    Option[Boolean] = None,
-                             archiveTime: Option[RemoteInstant] = None,
-                             muted:       Option[Boolean] = None,
-                             muteTime:    Option[RemoteInstant] = None,
-                             mutedStatus: Option[Int] = None) extends SafeToLog
+case class ConversationState(archived:         Option[Boolean] = None,
+                             archiveTime:      Option[RemoteInstant] = None,
+                             muted:            Option[Boolean] = None,
+                             muteTime:         Option[RemoteInstant] = None,
+                             mutedStatus:      Option[Int] = None,
+                             userId:           Option[UserId] = None,
+                             conversationRole: Option[ConversationRole] = None
+                            ) extends SafeToLog
 
 object ConversationState {
   private def encode(state: ConversationState, o: JSONObject) = {
@@ -166,6 +182,8 @@ object ConversationState {
       o.put("otr_muted_ref", JsonEncoder.encodeISOInstant(time.instant))
     }
     state.mutedStatus.foreach { status => o.put("otr_muted_status", status) }
+    state.userId.foreach { id => o.put("id", id) }
+    state.conversationRole.foreach { role => o.put("conversation_role", role) }
   }
 
   implicit lazy val Encoder: JsonEncoder[ConversationState] = new JsonEncoder[ConversationState] {
@@ -189,7 +207,10 @@ object ConversationState {
 
       val mutedStatus = decodeOptInt('otr_muted_status)
 
-      ConversationState(archived, archiveTime, muted, muteTime, mutedStatus)
+      val userId = decodeOptId[UserId]('id)
+      val conversationRole = decodeOptConversationRole('conversation_role)
+
+      ConversationState(archived, archiveTime, muted, muteTime, mutedStatus, userId, conversationRole)
     }
   }
 
@@ -252,7 +273,11 @@ object ConversationEvent extends DerivedLogTag {
       val time = RemoteInstant(decodeISOInstant('time))
 
       decodeString('type) match {
-        case "conversation.create"               => CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))
+        case "conversation.create"               =>
+          verbose(l"ROL CreateConversationEvent json: ${js.toString}")
+          returning(CreateConversationEvent('conversation, time, 'from, JsonDecoder[ConversationResponse]('data))) { event =>
+            verbose(l"ROL create conversation event after deserializing: $event")
+          }
         case "conversation.delete"               => DeleteConversationEvent('conversation, time, 'from)
         case "conversation.rename"               => RenameConversationEvent('conversation, time, 'from, decodeName('name)(d.get))
         case "conversation.member-join"          =>
@@ -261,7 +286,7 @@ object ConversationEvent extends DerivedLogTag {
         case "conversation.member-leave"         => MemberLeaveEvent('conversation, time, 'from, decodeUserIdSeq('user_ids)(d.get))
         case "conversation.member-update"        =>
           verbose(l"ROL MemberUpdateEvent json: ${js.toString}")
-          MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get), 'conversation_role)
+          MemberUpdateEvent('conversation, time, 'from, ConversationState.Decoder(d.get))
         case "conversation.connect-request"      => ConnectRequestEvent('conversation, time, 'from, decodeString('message)(d.get), decodeUserId('recipient)(d.get), decodeName('name)(d.get), decodeOptString('email)(d.get))
         case "conversation.typing"               => TypingEvent('conversation, time, 'from, isTyping = d.fold(false)(data => decodeString('status)(data) == "started"))
         case "conversation.otr-message-add"      => OtrMessageEvent('conversation, time, 'from, decodeClientId('sender)(d.get), decodeClientId('recipient)(d.get), decodeByteString('text)(d.get), decodeOptByteString('data)(d.get))

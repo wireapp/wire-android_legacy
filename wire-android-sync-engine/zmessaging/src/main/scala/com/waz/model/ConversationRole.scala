@@ -60,7 +60,8 @@ object ConversationRole {
     override def apply(implicit js: JSONObject): (UserId, String) = (UserId('id), 'conversation_role)
   }
 
-  def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Seq[(UserId, String)] = decodeSeq[(UserId, String)](s)
+  def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Map[UserId, ConversationRole] =
+    decodeSeq[(UserId, String)](s).map { case (id, label) => id -> getRole(label) }.toMap
 
   // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
   def membersWithRoles(userIds: Seq[UserId], users: Seq[(UserId, String)]) =

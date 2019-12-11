@@ -144,6 +144,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
+      verbose(l"ROL CreateConversationEvent, data: $data")
       updateConversations(Seq(data)).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(created.id, from, (data.members.keySet + selfUserId).filter(_ != from), created.name, readReceiptsAllowed = created.readReceiptsAllowed, time = Some(time))
       }}
@@ -156,9 +157,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
           successful(())
         case None =>
           ev match {
-            case MemberJoinEvent(_, time, from, userIds, us, _) if from != selfUserId =>
-              val membersWithRoles = ConversationRole.membersWithRoles(userIds, us)
-              verbose(l"ROL MemberJoinEvent from $from, userIds: $userIds, us: $us")
+            case MemberJoinEvent(_, time, from, ids, us, _) if from != selfUserId =>
+              // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
+              val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
+              verbose(l"ROL MemberJoinEvent from $from, userIds: $ids, us: $us")
               // this happens when we are added to group conversation
               for {
                 conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
@@ -189,7 +191,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     case MemberJoinEvent(_, _, _, ids, us, _) =>
       verbose(l"ROL MemberJoinEvent(ids = $ids, us = $us)")
-      val membersWithRoles = ConversationRole.membersWithRoles(ids, us)
+      // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
+      val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
       val selfAdded = membersWithRoles.keySet.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
       for {
         convSync   <- if (selfAdded) sync.syncConversations(Set(conv.id)).map(Option(_)) else Future.successful(None)
@@ -215,10 +218,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         else successful(())
       }
 
-    case MemberUpdateEvent(_, _, userId, state, roleLabel) =>
-      verbose(l"ROL MemberUpdateEvent(from = $userId, state = $state, role = $roleLabel")
-      content.updateConversationState(conv.id, state)
-             .map(_ => membersStorage.updateOrCreate(conv.id, userId, ConversationRole.getRole(roleLabel)))
+    case MemberUpdateEvent(_, _, userId, state) =>
+      verbose(l"ROL MemberUpdateEvent(from = $userId, state = $state")
+      content.updateConversationState(conv.id, state).map { _ =>
+        (state.userId, state.conversationRole) match {
+          case (Some(id), Some(role)) => membersStorage.updateOrCreate(conv.id, id, role)
+          case _ =>
+        }
+      }
 
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
       verbose(l"ROL ConnectRequestEvent(from = $from, recipient = $recipient")
@@ -264,8 +271,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield {}
 
   // ask the backend for the roles and only then update the conversations
-  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] =
+  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
+    verbose(l"ROL updateConversations(responses: $responses)")
     client.loadConversationRoles(responses.map(_.id).toSet).flatMap(roles => updateConversations(responses, roles))
+  }
 
   private def updateConversations(responses: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
@@ -333,6 +342,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
         case (cId, rId) if roles.contains(rId) => rolesStorage.createOrUpdate(cId, roles(rId))
       }).map(_ => ())
 
+    verbose(
+      l"""ROL updateConversations(
+         responses: $responses,
+         roles: $roles
+         )""")
     for {
       (convs, created) <- updateConversationData()
       _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap)

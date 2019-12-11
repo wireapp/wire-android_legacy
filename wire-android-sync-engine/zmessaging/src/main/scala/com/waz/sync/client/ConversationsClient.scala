@@ -116,7 +116,7 @@ class ConversationsClientImpl(implicit
   override def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]] =
     Future.sequence(
       remoteIds.map(rConvId => loadConversationRoles(rConvId).future.collect { case Right(roles) => rConvId -> roles })
-    ).map(_.toMap)
+    ).map { roles => verbose(l"ROL loadConversationRoles: $roles"); roles.toMap }
 
   private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =
     RawBodyDeserializer[JSONObject].map(json => EventsResponse.unapplySeq(JsonObjectResponse(json)).get)
@@ -314,6 +314,10 @@ object ConversationsClient {
         verbose(l"ROL ConversationResponse: ${js.toString}")(LogTag("ConversationResponse"))
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
+        val selfRole = (state.userId, state.conversationRole) match {
+          case (Some(id), Some(role)) => Map(id -> role)
+          case _ => Map.empty
+        }
 
         ConversationResponse(
           'id,
@@ -329,7 +333,7 @@ object ConversationsClient {
           'access_role,
           'link,
           decodeOptLong('message_timer).map(EphemeralDuration(_)),
-          decodeUserIdsWithRoles('others).map { case (id, label) => id -> getRole(label) }.toMap,
+          decodeUserIdsWithRoles('others)(members) ++ selfRole,
           decodeOptInt('receipt_mode)
         )
       }
