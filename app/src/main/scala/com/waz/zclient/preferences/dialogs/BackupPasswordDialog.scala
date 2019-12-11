@@ -39,6 +39,7 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.backup_password_dialog, null)
 
+  val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
   private lazy val strongPasswordValidator =
     PasswordValidator.createStrongPasswordValidator(BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH, BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH)
 
@@ -75,7 +76,7 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
           } else if(BuildConfig.FORCE_APP_LOCK && isValidPassword(pass)) {
             providePassword(Some(Password(pass)))
           } else {
-            textInputLayout.setError(getString(R.string.backup_password_dialog_invalid_pass))
+            textInputLayout.setError(getString(R.string.password_policy_hint, minPasswordLength))
           }
         }
       })
