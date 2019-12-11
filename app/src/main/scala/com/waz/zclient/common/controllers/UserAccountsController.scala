@@ -91,8 +91,6 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
     case  _ => Signal.const(true)
   }
 
-  lazy val hasChangeGroupSettingsPermission: Signal[Boolean] = isExternal.map(!_)
-
   lazy val readReceiptsEnabled: Signal[Boolean] = zms.flatMap(_.propertiesService.readReceiptsEnabled)
 
   def isTeamMember(userId: UserId) =

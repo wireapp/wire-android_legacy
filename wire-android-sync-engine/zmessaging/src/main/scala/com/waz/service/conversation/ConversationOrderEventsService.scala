@@ -94,7 +94,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
   }
 
   def handlePostConversationEvent(event: ConversationEvent): Future[Unit] = {
-    debug(l"handlePostConversationEvent($event)")
+    debug(l"ROL handlePostConversationEvent($event)")
     Future.sequence(Seq(
       event match {
         case ev: MessageEvent => pipeline(Seq(ev.withCurrentLocalTime())) // local time is required for the hot knock mechanism

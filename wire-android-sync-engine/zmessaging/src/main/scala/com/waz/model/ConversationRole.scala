@@ -32,15 +32,15 @@ case class ConversationRole(label: String, actions: Set[ConversationAction]) {
 
   import ConversationAction._
 
-  lazy val canAddGroupMember: Boolean = actions.contains(AddMember)
-  lazy val canRemoveGroupMember: Boolean = actions.contains(RemoveMember)
-  lazy val canDeleteGroup: Boolean = actions.contains(DeleteConversation)
-  lazy val canModifyGroupName: Boolean = actions.contains(ModifyName)
+  lazy val canAddGroupMember: Boolean     = actions.contains(AddMember)
+  lazy val canRemoveGroupMember: Boolean  = actions.contains(RemoveMember)
+  lazy val canDeleteGroup: Boolean        = actions.contains(DeleteConversation)
+  lazy val canModifyGroupName: Boolean    = actions.contains(ModifyName)
   lazy val canModifyMessageTimer: Boolean = actions.contains(ModifyMessageTimer)
-  lazy val canModifyReceiptMode: Boolean = actions.contains(ModifyReceiptMode)
-  lazy val canModifyAccess: Boolean = actions.contains(ModifyAccess)
-  lazy val canModifyOtherMember: Boolean = actions.contains(ModifyOtherMember)
-  lazy val canLeaveConversation: Boolean = actions.contains(LeaveConversation)
+  lazy val canModifyReceiptMode: Boolean  = actions.contains(ModifyReceiptMode)
+  lazy val canModifyAccess: Boolean       = actions.contains(ModifyAccess)
+  lazy val canModifyOtherMember: Boolean  = actions.contains(ModifyOtherMember)
+  lazy val canLeaveConversation: Boolean  = actions.contains(LeaveConversation)
 }
 
 object ConversationRole {
@@ -103,8 +103,6 @@ object ConversationRoleAction {
 
     def findForConv(convId: Option[ConvId])(implicit db: DB) =
       iterating(if (convId.isDefined) find(ConvId, convId) else findWhereNull(ConvId))
-
-      //iterating(convId.fold(findWhereNull(ConvId))(id => find(ConvId, id)))
   }
 
 }

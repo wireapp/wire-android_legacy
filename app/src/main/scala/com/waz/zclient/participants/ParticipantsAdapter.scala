@@ -45,7 +45,7 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
-import com.waz.content.{ConversationRolesStorage, UsersStorage}
+import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{SearchQuery, TeamSizeThreshold}
 import com.waz.threading.Threading
@@ -62,7 +62,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
   import Threading.Implicits.Ui
 
   private lazy val usersStorage           = inject[Signal[UsersStorage]]
-  private lazy val rolesStorage           = inject[Signal[ConversationRolesStorage]]
   private lazy val team                   = inject[Signal[Option[TeamId]]]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convController         = inject[ConversationController]
@@ -108,16 +107,11 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       ))
       .sortBy(_.userData.getDisplayName.str)
 
-  private val shouldShowGuestButton = inject[ConversationController].currentConv.map(_.accessRole.isDefined)
-
   private lazy val positions = for {
     tId               <- team
     users             <- users
-    isTeam            <- participantsController.currentUserBelongsToConversationTeam
     convActive        <- convController.currentConv.map(_.isActive)
-    guestButton       <- shouldShowGuestButton
-    areWeAGuest       <- participantsController.isCurrentUserGuest
-    canChangeSettings <- accountsController.hasChangeGroupSettingsPermission
+    selfRole          <- participantsController.selfRole
   } yield {
     val (bots, people)    = users.toList.partition(_.userData.isWireBot)
     val (admins, members) = people.partition(_.isAdmin)
@@ -130,16 +124,18 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     val filteredMembers = maxParticipants.fold(members)(n => if (n >= people.size) members else members.take(n - adminsCount - 2))
     verbose(l"filter: ${filter.currentValue}, max: $maxParticipants, admins: $adminsCount, filtered admins: ${filteredAdmins.size}, members: $membersCount, filtered members: ${filteredMembers.size}")
 
-    (if (!showPeopleOnly) List(Right(if (canChangeSettings) ConversationName else ConversationNameReadOnly)) else Nil) :::
+    val optionsAvailable = convActive && !showPeopleOnly && (tId.isDefined || selfRole.canModifyMessageTimer || selfRole.canModifyAccess || selfRole.canModifyReceiptMode)
+
+    (if (!showPeopleOnly) List(Right(if (selfRole.canModifyGroupName) ConversationName else ConversationNameReadOnly)) else Nil) :::
     (if (showPeopleOnly && people.isEmpty) List(Right(NoResultsInfo)) else Nil) :::
     (if (!showPeopleOnly || filteredAdmins.nonEmpty) List(Right(AdminsSeparator)) ::: filteredAdmins.map(data => Left(data)) else Nil) :::
     (if (filteredMembers.nonEmpty) List(Right(MembersSeparator)) ::: filteredMembers.map(data => Left(data)) else Nil) :::
     (if (maxParticipants.exists(_ < people.size)) List(Right(AllParticipants)) else Nil) :::
-    (if (!showPeopleOnly) List(Right(OptionsSeparator)) else Nil) :::
-    (if (convActive && tId.isDefined && !showPeopleOnly) List(Right(Notifications)) else Nil) :::
-    (if (convActive && !areWeAGuest && !showPeopleOnly && canChangeSettings) List(Right(EphemeralOptions)) else Nil) :::
-    (if (convActive && isTeam && guestButton && !showPeopleOnly && canChangeSettings) List(Right(GuestOptions)) else Nil) :::
-    (if (convActive && isTeam && !showPeopleOnly && canChangeSettings) List(Right(ReadReceipts)) else Nil) :::
+    (if (optionsAvailable) List(Right(OptionsSeparator)) else Nil) :::
+    (if (convActive && !showPeopleOnly && tId.isDefined) List(Right(Notifications)) else Nil) :::
+    (if (convActive && !showPeopleOnly && selfRole.canModifyMessageTimer) List(Right(EphemeralOptions)) else Nil) :::
+    (if (convActive && !showPeopleOnly && selfRole.canModifyAccess) List(Right(GuestOptions)) else Nil) :::
+    (if (convActive && !showPeopleOnly && selfRole.canModifyReceiptMode) List(Right(ReadReceipts)) else Nil) :::
     (if (bots.nonEmpty && !showPeopleOnly) List(Right(ServicesSeparator)) else Nil) :::
     (if (showPeopleOnly) Nil else bots.map(data => Left(data)))
   }

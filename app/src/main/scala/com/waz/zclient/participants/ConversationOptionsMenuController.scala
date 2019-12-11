@@ -99,14 +99,13 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     connectStatus       <- otherUser.map(_.map(_.connection))
     teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot               <- otherUser.map(_.exists(_.isWireBot))
-    removePerm          <- convController.selfRoleInConv(convId).map(_.canRemoveGroupMember)
+    selfRole            <- convController.selfRoleInConv(convId)
     isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
     currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
     selectedParticipant <- participantsController.selectedParticipant
     favoriteConvIds     <- convListController.favoriteConversations.map(convs => convs.map(_.id))
     customFolderId      <- Signal.future(convListController.getCustomFolderId(convId))
     customFolderData    <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
-    selfUserId          <- users.selfUserId
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -114,17 +113,18 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
 
     mode match {
       case Mode.Leaving(_) =>
-        builder ++= Set(LeaveOnly, LeaveAndClear)
+        if (selfRole.canLeaveConversation) builder ++= Set(LeaveOnly, LeaveAndClear)
 
       case Mode.Deleting(_) =>
-        builder ++= Set(ClearOnly, ClearAndLeave)
+        builder += ClearOnly
+        if (selfRole.canLeaveConversation) builder += ClearAndLeave
 
       case Mode.Normal(false) if fromDeepLink =>
         if (connectStatus.contains(ACCEPTED) || connectStatus.contains(PENDING_FROM_USER)) builder += Block
         else if (connectStatus.contains(BLOCKED)) builder += Unblock
 
       case Mode.Normal(false) if isGroup && selectedParticipant.isDefined =>
-        if (removePerm && !isGuest) builder += RemoveMember
+        if (selfRole.canRemoveGroupMember) builder += RemoveMember
 
       case Mode.Normal(inConversationList) =>
 
@@ -147,7 +147,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
-          if (!inConversationList && conv.team.nonEmpty && conv.creator == selfUserId) builder += DeleteGroupConv
+          if (!inConversationList && conv.team.nonEmpty && selfRole.canDeleteGroup) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)

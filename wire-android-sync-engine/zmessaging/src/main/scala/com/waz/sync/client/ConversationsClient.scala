@@ -230,7 +230,7 @@ class ConversationsClientImpl(implicit
   }
 
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
-    debug(l"postConversation(${state.users}, ${state.name})")
+    verbose(l"ROL postConversation($state)")
     Request.Post(relativePath = ConversationsPath, body = state)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
@@ -238,7 +238,7 @@ class ConversationsClientImpl(implicit
   }
 
   override def postConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
-    debug(l"updateConversationRole($conv, $userId, $role)")
+    verbose(l"ROL updateConversationRole($conv, $userId, $role)")
     Request.Put(
       relativePath = s"${membersPath(conv)}/$userId",
       body = Json("conversation_role" -> role.label)
@@ -284,6 +284,8 @@ object ConversationsClient {
         o.put("access_role", encodeAccessRole(state.accessRole))
         state.receiptMode.foreach(o.put("receipt_mode", _))
         o.put("conversation_role", state.conversationRole.label)
+
+        verbose(l"ROL ConversationInitState json: ${o.toString}")(LogTag("ConversationInitState"))
       }
     }
   }
@@ -367,10 +369,7 @@ object ConversationsClient {
   object ConvRole extends DerivedLogTag {
     import com.waz.utils.JsonDecoder._
     implicit lazy val Decoder: JsonDecoder[ConvRole] = new JsonDecoder[ConvRole] {
-      override def apply(implicit js: JSONObject): ConvRole = {
-        verbose(l"ROL ConvRole: ${js.toString}")
-        ConvRole('conversation_role, decodeStringSeq('actions))
-      }
+      override def apply(implicit js: JSONObject): ConvRole = ConvRole('conversation_role, decodeStringSeq('actions))
     }
   }
 
@@ -382,10 +381,7 @@ object ConversationsClient {
     import com.waz.utils.JsonDecoder._
 
     implicit lazy val Decoder: JsonDecoder[ConvRoles] = new JsonDecoder[ConvRoles] {
-      override def apply(implicit js: JSONObject): ConvRoles = {
-        verbose(l"ROL ConvRoles: ${js.toString}")
-        ConvRoles(decodeSeq[ConvRole]('conversation_roles))
-      }
+      override def apply(implicit js: JSONObject): ConvRoles = ConvRoles(decodeSeq[ConvRole]('conversation_roles))
     }
   }
 

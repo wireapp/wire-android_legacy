@@ -127,6 +127,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           .onMemberAddFailed(id, users, errTpe, resp)
           .map(_ => SyncResult(resp))
       case resp =>
+        verbose(l"ROL postConversationMemberJoin($id, $members, $defaultRole): $resp")
         postConvRespHandler(resp)
     }
 

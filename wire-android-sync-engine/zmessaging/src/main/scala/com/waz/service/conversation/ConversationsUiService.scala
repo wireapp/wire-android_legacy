@@ -382,14 +382,14 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                        receiptMode: Int = 0,
                                        defaultRole: ConversationRole = ConversationRole.MemberRole
                                       ): Future[(ConversationData, SyncId)] =
-    createAndPostConversation(ConvId(), name, members, teamOnly, receiptMode)
+    createAndPostConversation(ConvId(), name, members, teamOnly, receiptMode, defaultRole)
 
   private def createAndPostConversation(id:          ConvId,
                                         name:        Option[Name],
                                         members:     Set[UserId] = Set.empty,
                                         teamOnly:    Boolean = false,
                                         receiptMode: Int = 0,
-                                        defaultRole: ConversationRole = ConversationRole.MemberRole
+                                        defaultRole: ConversationRole
                                        ): Future[(ConversationData, SyncId)] = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {

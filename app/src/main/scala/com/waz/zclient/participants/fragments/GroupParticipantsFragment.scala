@@ -29,7 +29,6 @@ import com.waz.service.{IntegrationsService, NetworkModeService}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events._
-import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -46,7 +45,6 @@ class GroupParticipantsFragment extends FragmentHelper {
 
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
-  private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val integrationsService    = inject[Signal[IntegrationsService]]
   private lazy val spinnerController      = inject[SpinnerController]
 

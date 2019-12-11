@@ -423,13 +423,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _ <- error.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
       _ <- membersStorage.remove(conv, users)
       _ <- messages.removeLocalMemberJoinMessage(conv, users)
+      _ = verbose(l"ROL onMembersFailed($conv, $users, $resp)")
     } yield ()
 
   def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: Option[ConversationRole], resp: ErrorResponse): Future[Unit] =
     for {
       _ <- errors.addErrorWhenActive(ErrorData(ErrorType.CANNOT_CHANGE_CONVERSATION_ROLE, resp, conv, Set(user)))
       _ <- membersStorage.updateOrCreate(conv, user, origRole.getOrElse(ConversationRole.MemberRole))
-      _ =  error(l"Failed to change the conversation role from ${origRole.map(_.label)} to ${newRole.label} in the conversation $conv for the user $user")
+      _ =  error(l"ROL Failed to change the conversation role from ${origRole.map(_.label)} to ${newRole.label} in the conversation $conv for the user $user")
     } yield ()
 
   def groupConversation(convId: ConvId) =

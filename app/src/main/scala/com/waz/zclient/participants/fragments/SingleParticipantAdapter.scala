@@ -90,11 +90,11 @@ class SingleParticipantAdapter(userId: UserId,
   }
 
   override def getItemCount: Int =
-    if (isGroup && selfRole == ConversationRole.AdminRole) fields.size + 3 else fields.size + 2
+    if (isGroup && selfRole.canModifyOtherMember) fields.size + 3 else fields.size + 2
 
   override def getItemId(position: Int): Long =
     if (position == 0) 0L
-    else if (position == 1 && isGroup && selfRole == ConversationRole.AdminRole) 1L
+    else if (position == 1 && isGroup && selfRole.canModifyOtherMember) 1L
     else if (position == getItemCount - 1) 2L
     else fields(position - 1).key.hashCode.toLong
 
@@ -102,7 +102,7 @@ class SingleParticipantAdapter(userId: UserId,
 
   override def getItemViewType(position: Int): Int =
     if (position == 0) Header
-    else if (position == 1 && isGroup && selfRole == ConversationRole.AdminRole) GroupAdmin
+    else if (position == 1 && isGroup && selfRole.canModifyOtherMember) GroupAdmin
     else if (position == getItemCount - 1) Footer
     else CustomField
 }
