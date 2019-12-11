@@ -1,6 +1,6 @@
 package com.waz.zclient.devices.data
 
-import com.waz.zclient.core.network.requestRemote
+import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.core.requests.map
@@ -16,14 +16,14 @@ class ClientsRepository private constructor(
     private val localDataSource: ClientsLocalDataSource) : ClientsDataSource {
 
     override suspend fun clientById(clientId: String?): Either<Failure, Client> =
-        requestRemote {
+        requestData {
             remoteDataSource.clientById(clientId).map {
                 it.toClient()
             }
         }
 
     override suspend fun allClients(): Either<Failure, List<Client>> =
-        requestRemote {
+        requestData {
             remoteDataSource.allClients().map {
                 it.toListOfClients()
             }

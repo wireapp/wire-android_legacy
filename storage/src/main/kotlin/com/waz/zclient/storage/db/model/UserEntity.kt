@@ -2,6 +2,7 @@ package com.waz.zclient.storage.db.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
@@ -12,90 +13,100 @@ data class UserEntity(
     @SerializedName("id")
     @ColumnInfo(name = "_id")
     @PrimaryKey
-    val id: String,
+    var id: String,
 
     @ColumnInfo(name = "teamId")
-    val teamId: String?,
+    var teamId: String?,
 
     @ColumnInfo(name = "name")
     @SerializedName("name")
-    val name: String?,
+    var name: String?,
 
     @ColumnInfo(name = "handle")
     @SerializedName("handle")
-    val handle: String?,
+    var handle: String?,
 
     @ColumnInfo(name = "email")
     @SerializedName("email")
-    val email: String?,
+    var email: String?,
 
     @ColumnInfo(name = "phone")
     @SerializedName("phone")
-    val phone: String?,
+    var phone: String?,
 
     @ColumnInfo(name = "tracking_id")
-    val trackingId: String?,
+    var trackingId: String?,
 
     @ColumnInfo(name = "picture")
-    val picture: String?,
+    var pictures: String?,
+
+    @Ignore
+    @SerializedName("picture")
+    var picture: List<String>?,
 
     @ColumnInfo(name = "accent")
     @SerializedName("accent_id")
-    val accentId: Int?,
+    var accentId: Int?,
 
     @ColumnInfo(name = "skey")
-    val sKey: String?,
+    var sKey: String?,
 
     @ColumnInfo(name = "connection")
-    val connection: String?,
+    var connection: String?,
 
     @ColumnInfo(name = "conn_timestamp")
-    val connectionTimestamp: Long?,
+    var connectionTimestamp: Long?,
 
     @ColumnInfo(name = "conn_msg")
-    val connectionMessage: String?,
+    var connectionMessage: String?,
 
     @ColumnInfo(name = "conversation")
-    val conversation: String?,
+    var conversation: String?,
 
     @ColumnInfo(name = "relation")
-    val relation: String?,
+    var relation: String?,
 
     @ColumnInfo(name = "timestamp")
-    val timestamp: Long?,
+    var timestamp: Long?,
 
     @ColumnInfo(name = "display_name")
-    val displayName: String?,
+    var displayName: String?,
 
     @ColumnInfo(name = "verified")
-    val verified: String?,
+    var verified: String?,
 
     @ColumnInfo(name = "deleted")
     @SerializedName("deleted")
-    val deleted: Int,
+    var deleted: Int,
 
     @ColumnInfo(name = "availability")
-    val availability: Int?,
+    var availability: Int?,
 
     @ColumnInfo(name = "provider_id")
-    val providerId: String?,
+    var providerId: String?,
 
     @ColumnInfo(name = "integration_id")
-    val integrationId: String?,
+    var integrationId: String?,
 
     @ColumnInfo(name = "expires_at")
-    val expiresAt: Int?,
+    var expiresAt: Int?,
 
     @ColumnInfo(name = "managed_by")
     @SerializedName("managed_by")
-    val managedBy: String?,
+    var managedBy: String?,
 
     @ColumnInfo(name = "self_permissions")
-    val selfPermission: Int?,
+    var selfPermission: Int?,
 
     @ColumnInfo(name = "copy_permissions")
-    val copyPermission: Int?,
+    var copyPermission: Int?,
 
     @ColumnInfo(name = "created_by")
-    val createdBy: String?
-)
+    var createdBy: String?
+) {
+    constructor() : this("", "", "", "", "", "", "",
+        "", listOf(), 0, "", "", 0,
+        "", "", "", 0, "", "",
+        0, 0, "", "", 0, "", 0,
+        0, "")
+}

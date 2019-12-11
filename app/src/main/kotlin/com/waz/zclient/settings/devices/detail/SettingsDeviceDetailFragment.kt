@@ -10,9 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceConstants
 import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.settings.devices.model.ClientItem
+import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceConstants
 import kotlinx.android.synthetic.main.fragment_device_detail.*
 
 class SettingsDeviceDetailFragment : Fragment() {

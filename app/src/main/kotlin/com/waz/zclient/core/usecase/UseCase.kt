@@ -1,4 +1,4 @@
-package com.waz.zclient.core.usecase.coroutines
+package com.waz.zclient.core.usecase
 
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.Failure

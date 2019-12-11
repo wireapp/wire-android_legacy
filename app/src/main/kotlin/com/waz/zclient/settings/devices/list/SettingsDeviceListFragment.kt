@@ -14,12 +14,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
-import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceConstants
 import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.settings.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.settings.devices.list.adapter.DevicesViewHolder
 import com.waz.zclient.settings.devices.model.ClientItem
+import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceConstants
 
 class SettingsDeviceListFragment : Fragment() {
 

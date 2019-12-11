@@ -1,29 +1,24 @@
-package com.waz.zclient.settings.presentation.ui.devices.list
+package com.waz.zclient.settings.devices.detail
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.Failure
-import com.waz.zclient.devices.domain.GetAllClientsUseCase
+import com.waz.zclient.devices.domain.GetSpecificClientParams
 import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
 import com.waz.zclient.framework.livedata.observeOnce
-import com.waz.zclient.settings.devices.list.SettingsDeviceListViewModel
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 
-class SettingsDeviceListViewModelTest {
+class SettingsDeviceDetailViewModelTest {
 
-    private lateinit var viewModel: SettingsDeviceListViewModel
-
-    @Mock
-    private lateinit var getAllClientsUseCase: GetAllClientsUseCase
+    private lateinit var viewModel: SettingsDeviceDetailViewModel
 
     @Mock
     private lateinit var getSpecificClientUseCase: GetSpecificClientUseCase
@@ -34,57 +29,40 @@ class SettingsDeviceListViewModelTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        viewModel = SettingsDeviceListViewModel(getAllClientsUseCase, getSpecificClientUseCase)
+        viewModel = SettingsDeviceDetailViewModel(getSpecificClientUseCase)
     }
 
     @Test
-    fun `given data is loaded successfully, when list is full, then assert data is mapped correctly`() {
-
-        val location = mock<ClientLocation>(ClientLocation::class.java)
+    fun `given data is loaded successfully, then assert data is mapped correctly`() {
+        val params = GetSpecificClientParams(TEST_ID)
+        val location = Mockito.mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
+        runBlocking { Mockito.`when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Right(client)) }
 
-        viewModel.loadData()
+        viewModel.loadData(TEST_ID)
 
         viewModel.loading.observeOnce { isLoading ->
             assert(isLoading)
         }
 
-        viewModel.otherDevices.observeOnce {
-            val clientItem = it[0].client
+        viewModel.currentDevice.observeOnce {
+            val clientItem = it.client
             assert(viewModel.loading.value == false)
             assert(clientItem.label == TEST_LABEL)
             assert(clientItem.time == TEST_TIME)
             assert(clientItem.id == TEST_ID)
-            assert(it.size == 1)
         }
 
     }
 
-    @Test
-    fun `given data is loaded successfully, when list is full, then assert list state is empty`() {
-
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf())) }
-
-        viewModel.loadData()
-
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
-        }
-
-        viewModel.otherDevices.observeOnce {
-            assert(viewModel.loading.value == false)
-            assert(it.isEmpty())
-        }
-    }
 
     @Test
     fun `given data isn't loaded successfully, then update error live data`() {
+        val params = GetSpecificClientParams(TEST_ID)
+        runBlocking { Mockito.`when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Left(Failure(TEST_ERROR_MESSAGE))) }
 
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure(TEST_ERROR_MESSAGE))) }
-
-        viewModel.loadData()
+        viewModel.loadData(TEST_ID)
 
         viewModel.loading.observeOnce { isLoading ->
             assert(isLoading)

@@ -1,79 +1,56 @@
 package com.waz.zclient.settings.account
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.waz.zclient.core.resources.Resource
+import androidx.lifecycle.viewModelScope
+import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.settings.account.model.UserProfileItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeHandleUseCase
 import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
-import com.waz.zclient.core.extension.error
-import com.waz.zclient.core.extension.success
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.observers.DisposableCompletableObserver
-import io.reactivex.observers.DisposableSingleObserver
-import io.reactivex.schedulers.Schedulers
 
-class SettingsAccountViewModel : ViewModel() {
+class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
+                                           private val changeHandleUseCase: ChangeHandleUseCase,
+                                           private val changePhoneUseCase: ChangePhoneUseCase) : ViewModel() {
 
+    private val mutableLoading = MutableLiveData<Boolean>()
+    private val mutableError = MutableLiveData<String>()
+    private val mutableProfile = MutableLiveData<UserProfileItem>()
 
-    private val getUserProfileUseCase = GetUserProfileUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
-    private val changeHandleUseCase = ChangeHandleUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
-    private val changePhoneUseCase = ChangePhoneUseCase(Schedulers.io(), AndroidSchedulers.mainThread())
+    val loading: LiveData<Boolean>
+        get() = mutableLoading
 
-    val profileUserData = MutableLiveData<Resource<UserProfileItem>>()
+    val error: LiveData<String>
+        get() = mutableError
 
+    val profile: LiveData<UserProfileItem>
+        get() = mutableProfile
 
-    fun profile() = getUserProfileUseCase.execute(GetUserProfileObserver())
-    fun changeHandle(value: String) = changeHandleUseCase.execute(UpdateHandleObserver(), value)
-    fun changePhone(value: String) = changePhoneUseCase.execute(UpdatePhoneObserver(), value)
-
-    override fun onCleared() {
-        getUserProfileUseCase.dispose()
-        changeHandleUseCase.dispose()
-        changePhoneUseCase.dispose()
-        super.onCleared()
-    }
-
-    inner class GetUserProfileObserver : DisposableSingleObserver<User>() {
-        override fun onSuccess(user: User) {
-            profileUserData.success(UserProfileItem(user))
-        }
-
-        override fun onError(error: Throwable) {
-            profileUserData.error(error)
+    fun loadData() {
+        handleLoading(true)
+        getUserProfileUseCase.invoke(viewModelScope, Unit) { response ->
+            response.either(::handleProfileError, ::handleProfileSuccess)
         }
     }
 
-    inner class UpdateNameObserver : DisposableCompletableObserver() {
-        override fun onComplete() {
-
-        }
-
-        override fun onError(e: Throwable) {
-            e.printStackTrace()
-        }
+    private fun handleProfileError(failure: Failure) {
+        handleLoading(false)
+        handleFailure(failure.message)
     }
 
-    inner class UpdateHandleObserver : DisposableCompletableObserver() {
-        override fun onComplete() {
-
-        }
-
-        override fun onError(e: Throwable) {
-            e.printStackTrace()
-        }
+    private fun handleProfileSuccess(user: User) {
+        handleLoading(false)
+        mutableProfile.postValue(UserProfileItem(user))
     }
 
-    inner class UpdatePhoneObserver : DisposableCompletableObserver() {
-        override fun onComplete() {
+    private fun handleLoading(isLoading: Boolean) {
+        mutableLoading.postValue(isLoading)
+    }
 
-        }
-
-        override fun onError(e: Throwable) {
-            e.printStackTrace()
-        }
+    private fun handleFailure(message: String) {
+        mutableError.value = message
     }
 }
 

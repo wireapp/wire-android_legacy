@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
 import com.waz.zclient.settings.devices.model.ClientItem
-import com.waz.zclient.utilities.utils.DateAndTimeUtils
+import com.waz.zclient.utilities.DateAndTimeUtils
 
 class DevicesRecyclerViewAdapter : RecyclerView.Adapter<DevicesViewHolder>() {
 

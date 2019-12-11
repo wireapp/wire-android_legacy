@@ -26,9 +26,9 @@ private fun <T> error(message: String): Either<Failure, T> {
     return Either.Left(Failure("Network call has failed: $message"))
 }
 
-suspend fun <R> requestRemote(networkRequest: suspend () -> Either<Failure, R>): Either<Failure, R> =
+suspend fun <R> requestData(request: suspend () -> Either<Failure, R>): Either<Failure, R> =
     try {
-        networkRequest()
+        request()
     } catch (e: Exception) {
         Either.Left(Failure(e.localizedMessage))
     }
@@ -38,7 +38,7 @@ suspend fun <R> resultEither(databaseRequest: suspend () -> Either<Failure, R>,
                              saveCallRequest: (R) -> Unit): Either<Failure, R> {
     var response = databaseRequest()
     if (response.isLeft) {
-        val networkResponse = requestRemote { networkRequest() }
+        val networkResponse = requestData { networkRequest() }
         if (networkResponse.isRight) {
             networkResponse.map(saveCallRequest)
         }

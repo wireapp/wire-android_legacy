@@ -1,16 +1,17 @@
 package com.waz.zclient.user.domain.usecase
 
 
-import com.waz.zclient.core.usecase.SingleUseCase
+import com.waz.zclient.core.network.requestData
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.user.data.UsersRepository
-import com.waz.zclient.user.data.source.UsersDataSource
 import com.waz.zclient.user.domain.model.User
-import io.reactivex.Scheduler
-import io.reactivex.Single
 
-class GetUserProfileUseCase(subscribeScheduler: Scheduler,
-                            postExecutionScheduler: Scheduler) : SingleUseCase<User, Unit>(subscribeScheduler, postExecutionScheduler) {
-    private val userRepository: UsersDataSource = UsersRepository()
-    override fun buildUseCaseSingle(params: Unit?): Single<User> = userRepository.profile()
+class GetUserProfileUseCase(private val usersRepository: UsersRepository)
+    : UseCase<User, Unit>() {
+
+    override suspend fun run(params: Unit): Either<Failure, User> = requestData {
+        usersRepository.profile()
+    }
 }
-

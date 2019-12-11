@@ -17,7 +17,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.4.8@aar'
+    customAvsVersion = '5.3.29@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -425,7 +425,6 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-protobuf:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
     implementation "com.squareup.okhttp3:logging-interceptor:$versions.okHttp"
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
 

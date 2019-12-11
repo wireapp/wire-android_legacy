@@ -2,9 +2,9 @@ package com.waz.zclient.settings.main.list
 
 import android.content.Context
 import com.waz.zclient.R
-import com.waz.zclient.settings.main.model.SettingsMainItem
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.stringArrayFromResource
+import com.waz.zclient.settings.main.model.SettingsMainItem
 
 class SettingsMainListFactory {
 
