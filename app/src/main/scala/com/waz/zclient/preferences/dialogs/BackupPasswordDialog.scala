@@ -22,39 +22,35 @@ import android.content.DialogInterface.BUTTON_POSITIVE
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
 import androidx.appcompat.app.AlertDialog
-import android.view.inputmethod.EditorInfo
-import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
-import android.widget.{EditText, TextView}
+import android.view.{LayoutInflater, View, WindowManager}
+import android.widget.EditText
 import com.google.android.material.textfield.TextInputLayout
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
-import com.waz.utils.returning
-import com.waz.zclient.{FragmentHelper, R}
+import com.waz.utils.PasswordValidator
+import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 
 import scala.util.Try
 
-class BackupPasswordDialog extends DialogFragment with FragmentHelper {
+class BackupPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
 
   val onPasswordEntered = EventStream[Option[Password]]()
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.backup_password_dialog, null)
+
+  private lazy val strongPasswordValidator =
+    PasswordValidator.createStrongPasswordValidator(BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH, BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH)
 
   private def providePassword(password: Option[Password]): Unit = {
     onPasswordEntered ! password
     dismiss()
   }
 
-  private lazy val passwordEditText = returning(findById[EditText](root, R.id.backup_password_field)) { v =>
-    v.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-      def onEditorAction(v: TextView, actionId: Int, event: KeyEvent) =
-        actionId match {
-          case EditorInfo.IME_ACTION_DONE =>
-            providePassword(Some(Password(v.getText.toString)))
-            true
-          case _ => false
-        }
-    })
-  }
+  private def isValidPassword(password: String): Boolean =
+    strongPasswordValidator.isValidPassword(password)
+
+  private lazy val passwordEditText = findById[EditText](root, R.id.backup_password_field)
 
   private lazy val textInputLayout = findById[TextInputLayout](root, R.id.backup_password_title)
 
@@ -74,7 +70,13 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper {
       d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = {
           val pass = passwordEditText.getText.toString
-          providePassword(if (pass.isEmpty) None else Some(Password(pass)))
+          if (!BuildConfig.FORCE_APP_LOCK) {
+            providePassword(if(pass.isEmpty) None else Some(Password(pass)))
+          } else if(BuildConfig.FORCE_APP_LOCK && isValidPassword(pass)) {
+            providePassword(Some(Password(pass)))
+          } else {
+            textInputLayout.setError(getString(R.string.backup_password_dialog_invalid_pass))
+          }
         }
       })
     }
