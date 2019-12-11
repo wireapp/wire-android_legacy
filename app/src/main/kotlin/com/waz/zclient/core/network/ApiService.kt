@@ -1,8 +1,7 @@
 package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.Failure.NoNetworkConnection
-import com.waz.zclient.core.exception.Failure.ServerError
+import com.waz.zclient.core.exception.Failure.*
 import com.waz.zclient.core.extension.failFastIfUIThread
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Either.Left
@@ -10,7 +9,7 @@ import com.waz.zclient.core.functional.Either.Right
 import retrofit2.Call
 import retrofit2.Response
 
-open class ApiService(private val networkHandler: NetworkHandler) {
+internal class ApiService(private val networkHandler: NetworkHandler) {
 
     fun <T> request(call: Call<T>, default: T): Either<Failure, T> {
         Thread.currentThread().failFastIfUIThread()
@@ -34,9 +33,13 @@ open class ApiService(private val networkHandler: NetworkHandler) {
     }
 
     private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
-        return when (response.errorBody() != null) {
-            true -> Left(ServerError) //TODO: Treat different error types coming from the server.
-            false -> Left(ServerError)
+        return when (response.code()) {
+            400 -> Left(BadRequest)
+            401 -> Left(Unauthorized)
+            403 -> Left(Forbidden)
+            404 -> Left(NotFound)
+            500 -> Left(InternalServerError)
+            else -> Left(ServerError)
         }
     }
 }

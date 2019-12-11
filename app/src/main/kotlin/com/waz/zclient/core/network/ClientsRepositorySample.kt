@@ -5,29 +5,33 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.network.api.client.ClientsService
+import com.waz.zclient.features.clients.ClientEntity
 
 /**
  * This demonstrates the usage of the Network API.
  * TODO: Remove this when used and implemented somewhere else.
  */
-interface ClientsRepository {
-    fun allClients(): Either<Failure, List<ClientDomain>>
-    fun clientById(clientId: String?): Either<Failure, ClientDomain>
+abstract class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
+
+    //Data mapping/transformation should happen at this level and repositories should
+    //always deal with Entities and return Domain types
+    fun allClients(): Either<Failure, List<ClientDomain>> =
+        remoteDataSource.allClients().map { clientEntities -> clientEntities.map { ClientDomain.empty() } }
+
+    //Data mapping/transformation should happen at this level and repositories should
+    //always deal with Entities and return Domain types
+    fun clientById(clientId: String?): Either<Failure, ClientDomain> =
+        remoteDataSource.clientById(clientId).map { ClientDomain.empty() }
 }
 
 /**
  * Example Remote Data Source that perform network requests.
  * TODO: Remove this when used and implemented somewhere else.
  */
-class ClientsRemoteDataSource(private val clientsService: ClientsService) : ClientsRepository {
+class ClientsRemoteDataSource(private val clientsService: ClientsService) {
 
-    //Data mapping/transformation should happen at this level
-    override fun allClients(): Either<Failure, List<ClientDomain>> =
-        clientsService.allClients().map { clientEntities -> clientEntities.map { ClientDomain.empty() } }
-
-    //Data mapping/transformation should happen at this level
-    override fun clientById(clientId: String?): Either<Failure, ClientDomain> =
-        clientsService.clientById(clientId).map { ClientDomain.empty() }
+    fun allClients(): Either<Failure, List<ClientEntity>> = clientsService.allClients()
+    fun clientById(clientId: String?): Either<Failure, ClientEntity> = clientsService.clientById(clientId)
 }
 
 /**
