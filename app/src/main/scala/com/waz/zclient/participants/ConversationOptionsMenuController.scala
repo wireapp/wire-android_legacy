@@ -93,19 +93,18 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
   val teamId: Signal[Option[TeamId]] = zMessaging.map(_.teamId)
 
   val optionItems: Signal[Seq[MenuItem]] = for {
-    teamId              <- teamId
-    Some(conv)          <- conv
-    isGroup             <- isGroup
-    connectStatus       <- otherUser.map(_.map(_.connection))
-    teamMember          <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
-    isBot               <- otherUser.map(_.exists(_.isWireBot))
-    selfRole            <- convController.selfRoleInConv(convId)
-    isGuest             <- if(!mode.inConversationList) participantsController.isCurrentUserGuest else Signal.const(false)
-    currentConv         <- if(!mode.inConversationList) participantsController.selectedParticipant else Signal.const(None)
-    selectedParticipant <- participantsController.selectedParticipant
-    favoriteConvIds     <- convListController.favoriteConversations.map(convs => convs.map(_.id))
-    customFolderId      <- Signal.future(convListController.getCustomFolderId(convId))
-    customFolderData    <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
+    teamId               <- teamId
+    Some(conv)           <- conv
+    isGroup              <- isGroup
+    connectStatus        <- otherUser.map(_.map(_.connection))
+    teamMember           <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
+    isBot                <- otherUser.map(_.exists(_.isWireBot))
+    selfRole             <- convController.selfRoleInConv(convId)
+    isCurrentUserCreator <- participantsController.isCurrentUserCreator
+    selectedParticipant  <- participantsController.selectedParticipant
+    favoriteConvIds      <- convListController.favoriteConversations.map(convs => convs.map(_.id))
+    customFolderId       <- Signal.future(convListController.getCustomFolderId(convId))
+    customFolderData     <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {
     import com.waz.api.User.ConnectionStatus._
 
@@ -147,7 +146,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
-          if (!inConversationList && conv.team.nonEmpty && selfRole.canDeleteGroup) builder += DeleteGroupConv
+          if (!inConversationList && isCurrentUserCreator && selfRole.canDeleteGroup) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)
