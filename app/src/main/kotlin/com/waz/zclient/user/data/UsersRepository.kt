@@ -2,9 +2,9 @@ package com.waz.zclient.user.data
 
 
 import com.waz.zclient.core.network.requestData
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
-import com.waz.zclient.core.requests.map
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.user.data.mapper.toUser
 import com.waz.zclient.user.data.source.UsersDataSource
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource

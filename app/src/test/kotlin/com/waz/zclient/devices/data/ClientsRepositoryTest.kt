@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.data
 
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.map
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
