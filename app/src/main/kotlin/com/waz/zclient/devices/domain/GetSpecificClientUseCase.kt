@@ -15,4 +15,4 @@ class GetSpecificClientUseCase(private val clientsRepository: ClientsDataSource)
         }
 }
 
-data class GetSpecificClientParams(val clientId: String?)
+data class GetSpecificClientParams(val clientId: String)

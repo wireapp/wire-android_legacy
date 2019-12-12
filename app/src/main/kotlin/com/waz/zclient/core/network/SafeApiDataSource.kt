@@ -5,6 +5,7 @@ import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.core.requests.map
 import retrofit2.Response
 import timber.log.Timber
+import java.util.concurrent.CancellationException
 
 suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Failure, T> {
     try {
@@ -26,10 +27,17 @@ private fun <T> error(message: String): Either<Failure, T> {
     return Either.Left(Failure("Network call has failed: $message"))
 }
 
-suspend fun <R> requestData(request: suspend () -> Either<Failure, R>): Either<Failure, R> =
+suspend fun <R> requestData(networkRequest: suspend () -> Either<Failure, R>): Either<Failure, R> =
     try {
-        request()
-    } catch (e: Exception) {
+        networkRequest()
+    } catch (e: CancellationException) {
+        Either.Left(Failure(e.localizedMessage))
+    }
+
+suspend fun <R> requestLocal(localRequest: suspend () -> R): Either<Failure, R> =
+    try {
+        Either.Right(localRequest())
+    } catch (e: CancellationException) {
         Either.Left(Failure(e.localizedMessage))
     }
 

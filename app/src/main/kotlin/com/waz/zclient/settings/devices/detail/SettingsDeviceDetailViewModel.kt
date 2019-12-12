@@ -25,7 +25,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetSpecifi
     val error: LiveData<String>
         get() = mutableError
 
-    fun loadData(clientId: String?) {
+    fun loadData(clientId: String) {
         handleLoading(true)
         getClientByIdUseCase(viewModelScope, GetSpecificClientParams(clientId)) { response ->
             response.either(::handleGetDeviceError, ::handleGetDeviceSuccess)

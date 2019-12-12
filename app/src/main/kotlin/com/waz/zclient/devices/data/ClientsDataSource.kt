@@ -6,7 +6,7 @@ import com.waz.zclient.devices.domain.model.Client
 
 interface ClientsDataSource {
 
-    suspend fun clientById(clientId: String?): Either<Failure, Client>
+    suspend fun clientById(clientId: String): Either<Failure, Client>
 
     suspend fun allClients(): Either<Failure, List<Client>>
 }
