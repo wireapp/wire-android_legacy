@@ -7,8 +7,10 @@ import com.google.gson.annotations.SerializedName
 
 @Entity(tableName = "client")
 data class ClientEntity(
-    @SerializedName("cookie")
-    val cookie: String?,
+    @ColumnInfo(name = "id")
+    @PrimaryKey
+    @SerializedName("id")
+    val id: String,
 
     @ColumnInfo(name = "time")
     @SerializedName("time")
@@ -18,18 +20,17 @@ data class ClientEntity(
     @SerializedName("label")
     val label: String,
 
-    @ColumnInfo(name = "class")
-    @SerializedName("class")
-    val _class: String,
+    @ColumnInfo(name = "cookie")
+    @SerializedName("cookie")
+    val cookie: String?,
 
     @ColumnInfo(name = "type")
     @SerializedName("type")
     val type: String,
 
-    @ColumnInfo(name = "id")
-    @PrimaryKey
-    @SerializedName("id")
-    val id: String,
+    @ColumnInfo(name = "class")
+    @SerializedName("class")
+    val _class: String,
 
     @ColumnInfo(name = "model")
     @SerializedName("model")
@@ -48,7 +49,10 @@ data class ClientEntity(
     val macKey: String,
 
     @ColumnInfo(name = "locationName")
-    val locationName: String)
+    val locationName: String,
+
+    @ColumnInfo(name = "verification")
+    val verification: String)
 
 data class ClientLocationEntity(
     @ColumnInfo(name = "lon")
