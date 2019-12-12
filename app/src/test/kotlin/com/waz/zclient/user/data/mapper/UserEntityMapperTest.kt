@@ -11,34 +11,35 @@ class UserEntityMapperTest {
     @Test
     fun  `Mapping UserEntity to User should be correct`() {
         val user = userEntity.toUser()
-        user.id shouldEqualTo userEntity.id
-        user.teamId shouldEqualTo userEntity.teamId
-        user.name shouldEqualTo userEntity.name
-        user.handle shouldEqualTo userEntity.handle
-        user.email shouldEqualTo userEntity.email
-        user.phone shouldEqualTo userEntity.phone
-        user.trackingId shouldEqualTo userEntity.trackingId
-        user.picture shouldEqualTo userEntity.picture
-        user.pictures shouldEqualTo userEntity.pictures
-        user.accentId shouldEqualTo userEntity.accentId
-        user.sKey shouldEqualTo userEntity.sKey
-        user.accentId shouldEqualTo userEntity.accentId
-        user.connection shouldEqualTo userEntity.connection
-        user.connectionTimestamp shouldEqualTo userEntity.connectionTimestamp
-        user.connectionMessage shouldEqualTo userEntity.connectionMessage
-        user.conversation shouldEqualTo userEntity.conversation
-        user.relation shouldEqualTo userEntity.relation
-        user.timestamp shouldEqualTo userEntity.timestamp
-        user.displayName shouldEqualTo userEntity.displayName
-        user.verified shouldEqualTo userEntity.verified
-        user.deleted shouldEqualTo userEntity.deleted
-        user.availability shouldEqualTo userEntity.availability
-        user.providerId shouldEqualTo userEntity.providerId
-        user.integrationId shouldEqualTo userEntity.integrationId
-        user.expiresAt shouldEqualTo userEntity.expiresAt
-        user.managedBy shouldEqualTo userEntity.managedBy
-        user.selfPermission shouldEqualTo userEntity.selfPermission
-        user.copyPermission shouldEqualTo userEntity.copyPermission
-        user.createdBy shouldEqualTo userEntity.createdBy
+        assertEquals(userEntity.id, user.id)
+        assertEquals(userEntity.teamId, user.teamId)
+        assertEquals(userEntity.name, user.name)
+        assertEquals(userEntity.handle, user.handle)
+        assertEquals(userEntity.email, user.email)
+        assertEquals(userEntity.phone, user.phone)
+        assertEquals(userEntity.trackingId, user.trackingId)
+        assertEquals(userEntity.picture, user.picture)
+        assertEquals(userEntity.pictures, user.pictures)
+        assertEquals(userEntity.accentId, user.accentId)
+        assertEquals(userEntity.sKey, user.sKey)
+        assertEquals(userEntity.accentId, user.accentId)
+        assertEquals(userEntity.connection, user.connection)
+        assertEquals(userEntity.connectionTimestamp, user.connectionTimestamp)
+        assertEquals(userEntity.connectionMessage, user.connectionMessage)
+        assertEquals(userEntity.connectionTimestamp, user.connectionTimestamp)
+        assertEquals(userEntity.conversation, user.conversation)
+        assertEquals(userEntity.relation, user.relation)
+        assertEquals(userEntity.timestamp, user.timestamp)
+        assertEquals(userEntity.displayName, user.displayName)
+        assertEquals(userEntity.verified, user.verified)
+        assertEquals(userEntity.deleted, user.deleted)
+        assertEquals(userEntity.availability, user.availability)
+        assertEquals(userEntity.providerId, user.providerId)
+        assertEquals(userEntity.integrationId, user.integrationId)
+        assertEquals(userEntity.expiresAt, user.expiresAt)
+        assertEquals(userEntity.managedBy, user.managedBy)
+        assertEquals(userEntity.selfPermission, user.selfPermission)
+        assertEquals(userEntity.copyPermission, user.copyPermission)
+        assertEquals(userEntity.createdBy, user.createdBy)
     }
 }

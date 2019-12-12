@@ -1,46 +1,91 @@
 package com.waz.zclient.user.data.source.remote
 
+import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSourceTest
+import com.waz.zclient.storage.clients.model.ClientEntity
+import com.waz.zclient.storage.db.model.UserEntity
 import com.waz.zclient.userEntity
 import io.reactivex.Single
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
+import retrofit2.Response
 
 class UserRemoteDataSourceTest {
 
 
-    private lateinit var userRemoteDataSource: UsersRemoteDataSource
+    private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
     @Mock
-    private lateinit var userApi: UsersApi
+    private lateinit var usersApi: UsersApi
 
     @Mock
-    private lateinit var throwable: Throwable
+    private lateinit var profileResponse: Response<UserEntity>
+
+    @Mock
+    private lateinit var userEntity: UserEntity
 
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        userRemoteDataSource = UsersRemoteDataSource(userApi)
-    }
-
-
-    @Test
-    fun test_Profile_Success() {
-        `when`(userApi.profile()).thenReturn(Single.just(userEntity))
-        val test = userRemoteDataSource.profile().test()
-        verify(userApi).profile()
-        test.assertValue(userEntity)
+        usersRemoteDataSource = UsersRemoteDataSource(usersApi)
     }
 
     @Test
-    fun test_Profile_Failure() {
-        `when`(userApi.profile()).thenReturn(Single.error(throwable))
-        val test = userRemoteDataSource.profile().test()
-        verify(userApi).profile()
-        test.assertError(throwable)
+    fun `Given profile() is called, when api response success and response body is not null, then return a successful response`() {
+        runBlocking {
+
+            `when`(profileResponse.body()).thenReturn(userEntity)
+            `when`(profileResponse.isSuccessful).thenReturn(true)
+            `when`(usersApi.profile()).thenReturn(profileResponse)
+
+            usersRemoteDataSource.profile()
+
+            verify(usersApi).profile()
+
+            assert(usersRemoteDataSource.profile().isRight)
+        }
+    }
+
+    @Test
+    fun `Given profile() is called, when api response success and response body is null, then return an error response`() {
+        runBlocking {
+            `when`(profileResponse.body()).thenReturn(null)
+            `when`(profileResponse.isSuccessful).thenReturn(true)
+            `when`(usersApi.profile()).thenReturn(profileResponse)
+
+            usersRemoteDataSource.profile()
+
+            verify(usersApi).profile()
+
+            assert(usersRemoteDataSource.profile().isLeft)
+        }
+
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given profile() is called, when api response is an error, then return an error response`() {
+        runBlocking {
+            `when`(usersApi.profile()).thenReturn(profileResponse)
+
+            usersRemoteDataSource.profile()
+
+            verify(usersApi).profile()
+
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+
+            assert(usersRemoteDataSource.profile().isLeft)
+        }
+    }
+
+    companion object {
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
     }
 
 }

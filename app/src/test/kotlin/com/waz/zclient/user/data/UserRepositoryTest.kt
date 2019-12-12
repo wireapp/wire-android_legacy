@@ -35,31 +35,30 @@ class UserRepositoryTest {
     }
 
 
-    @Test
-    fun test_Profile_From_LocalDataSource_Success() {
-        `when`(usersLocalDataSource.profile()).thenReturn(Single.just(userEntity))
-        `when`(usersRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
-        val test = usersRepository.profile().test()
-        verify(usersLocalDataSource).profile()
-        test.assertValue(user)
-    }
+    /* @Test
+     fun test_Profile_From_LocalDataSource_Success() {
+         `when`(usersLocalDataSource.profile()).thenReturn(Single.just(userEntity))
+         `when`(usersRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
+         val test = usersRepository.profile().test()
+         verify(usersLocalDataSource).profile()
+         test.assertValue(user)
+     }
 
-    @Test
-    fun test_Profile_From_LocalDataSource_Error_Profile_From_RemoteDataSource_Success() {
-        `when`(usersLocalDataSource.profile()).thenReturn(Single.error(throwable))
-        `when`(usersRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
-        val test = usersRepository.profile().test()
-        verify(usersLocalDataSource).profile()
-        test.assertValue(user)
-    }
+     @Test
+     fun test_Profile_From_LocalDataSource_Error_Profile_From_RemoteDataSource_Success() {
+         `when`(usersLocalDataSource.profile()).thenReturn(Single.error(throwable))
+         `when`(usersRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
+         val test = usersRepository.profile().test()
+         verify(usersLocalDataSource).profile()
+         test.assertValue(user)
+     }
 
-    @Test
-    fun test_Profile_From_LocalDataSource_Error_Profile_From_RemoteDataSource_Error() {
-        `when`(usersLocalDataSource.profile()).thenReturn(Single.error(throwable))
-        `when`(usersRemoteDataSource.profile()).thenReturn(Single.error(throwable))
-        val test = usersRepository.profile().test()
-        verify(usersRemoteDataSource).profile()
-        test.assertError(throwable)
-    }
-
+     @Test
+     fun test_Profile_From_LocalDataSource_Error_Profile_From_RemoteDataSource_Error() {
+         `when`(usersLocalDataSource.profile()).thenReturn(Single.error(throwable))
+         `when`(usersRemoteDataSource.profile()).thenReturn(Single.error(throwable))
+         val test = usersRepository.profile().test()
+         verify(usersRemoteDataSource).profile()
+         test.assertError(throwable)
+     }*/
 }
