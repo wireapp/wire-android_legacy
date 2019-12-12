@@ -27,9 +27,9 @@ private fun <T> error(message: String): Either<Failure, T> {
     return Either.Left(Failure("Network call has failed: $message"))
 }
 
-suspend fun <R> requestData(networkRequest: suspend () -> Either<Failure, R>): Either<Failure, R> =
+suspend fun <R> requestData(request: suspend () -> Either<Failure, R>): Either<Failure, R> =
     try {
-        networkRequest()
+        request()
     } catch (e: CancellationException) {
         Either.Left(Failure(e.localizedMessage))
     }

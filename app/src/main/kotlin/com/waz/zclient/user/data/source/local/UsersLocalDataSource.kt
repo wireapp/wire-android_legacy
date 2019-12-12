@@ -2,6 +2,10 @@ package com.waz.zclient.user.data.source.local
 
 
 import com.waz.zclient.ContextProvider
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.network.requestLocal
+
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.dao.UserDao
 import com.waz.zclient.storage.db.model.UserEntity
@@ -15,16 +19,17 @@ class UsersLocalDataSource constructor(
 
     private val userDao: UserDao = userDatabase.userDao()
 
-    suspend fun add(user: UserEntity): Any = userDao.insert(user)
+    fun add(user: UserEntity): Any = userDao.insert(user)
 
-    suspend fun profile(): UserEntity = userDao.selectById(userId)
+    suspend fun profile(): Either<Failure, UserEntity> = requestLocal { userDao.selectById(userId) }
 
-    suspend fun changeName(value: String): Any = userDao.updateName(userId, value)
+    suspend fun changeName(value: String): Any = requestLocal { userDao.updateName(userId, value) }
 
-    suspend fun changeHandle(value: String): Any = userDao.updateHandle(userId, value)
+    suspend fun changeHandle(value: String): Any = requestLocal { userDao.updateHandle(userId, value) }
 
-    suspend fun changeEmail(value: String): Any = userDao.updateEmail(userId, value)
+    suspend fun changeEmail(value: String): Any = requestLocal { userDao.updateEmail(userId, value) }
 
-    suspend fun changePhone(value: String): Any = userDao.updatePhone(userId, value)
+    suspend fun changePhone(value: String): Any = requestLocal { userDao.updatePhone(userId, value) }
+
 
 }
