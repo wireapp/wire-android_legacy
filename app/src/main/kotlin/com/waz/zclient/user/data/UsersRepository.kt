@@ -1,7 +1,6 @@
 package com.waz.zclient.user.data
 
 
-
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.core.functional.map

@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.storage.clients.model.ClientEntity
 import com.waz.zclient.framework.mockito.eq
+import com.waz.zclient.storage.clients.model.ClientEntity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking

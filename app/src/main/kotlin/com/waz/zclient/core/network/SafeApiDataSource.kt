@@ -3,9 +3,9 @@ package com.waz.zclient.core.network
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.core.functional.map
+import kotlinx.coroutines.CancellationException
 import retrofit2.Response
 import timber.log.Timber
-import java.util.concurrent.CancellationException
 
 suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Failure, T> {
     try {

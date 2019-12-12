@@ -10,7 +10,7 @@ import io.reactivex.Completable
 interface UserDao {
 
     @Insert
-    fun insert(user: UserEntity): Completable
+    fun insert(user: UserEntity): Any
 
     @Query("SELECT * from user WHERE _id = :userId")
     fun selectById(userId: String): UserEntity

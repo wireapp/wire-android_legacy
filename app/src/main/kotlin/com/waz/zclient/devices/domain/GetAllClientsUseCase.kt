@@ -1,8 +1,8 @@
 package com.waz.zclient.devices.domain
 
-import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.devices.data.ClientsDataSource
 import com.waz.zclient.devices.domain.model.Client

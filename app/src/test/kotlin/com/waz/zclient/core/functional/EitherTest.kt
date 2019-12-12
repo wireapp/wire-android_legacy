@@ -25,7 +25,8 @@ import org.junit.Test
 
 class EitherTest : UnitTest() {
 
-    @Test fun `Either Right should return correct type`() {
+    @Test
+    fun `Either Right should return correct type`() {
         val result = Right("ironman")
 
         result shouldBeInstanceOf Either::class.java
@@ -38,7 +39,8 @@ class EitherTest : UnitTest() {
             })
     }
 
-    @Test fun `Either Left should return correct type`() {
+    @Test
+    fun `Either Left should return correct type`() {
         val result = Left("ironman")
 
         result shouldBeInstanceOf Either::class.java
@@ -51,13 +53,15 @@ class EitherTest : UnitTest() {
             }, {})
     }
 
-    @Test fun `Either fold should ignore passed argument if it is Right type`() {
+    @Test
+    fun `Either fold should ignore passed argument if it is Right type`() {
         val result = Right("Right").getOrElse("Other")
 
         result shouldEqualTo "Right"
     }
 
-    @Test fun `Either fold should return argument if it is Left type`() {
+    @Test
+    fun `Either fold should return argument if it is Left type`() {
         val result = Left("Left").getOrElse("Other")
 
         result shouldEqualTo "Other"
