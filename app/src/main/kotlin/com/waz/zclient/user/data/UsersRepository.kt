@@ -2,6 +2,7 @@ package com.waz.zclient.user.data
 
 
 import com.waz.zclient.core.network.requestData
+import com.waz.zclient.core.network.resultEither
 import com.waz.zclient.core.requests.Either
 import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.core.requests.map
@@ -15,10 +16,11 @@ import com.waz.zclient.user.domain.model.User
 class UsersRepository constructor(private val usersRemoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(),
                                   private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource()) : UsersDataSource {
 
-    override suspend fun profile(): Either<Failure, User> = requestData {
-        usersRemoteDataSource.profile().map {
-            it.toUser()
-        }
+    override suspend fun profile(): Either<Failure, User> = resultEither(
+        databaseRequest = { usersLocalDataSource.profile() },
+        networkRequest = { usersLocalDataSource.profile() },
+        saveCallRequest = { usersLocalDataSource.add(it) }).map {
+        it.toUser()
     }
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> = requestData {
