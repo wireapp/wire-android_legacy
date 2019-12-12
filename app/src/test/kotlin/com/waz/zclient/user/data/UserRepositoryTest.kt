@@ -1,12 +1,16 @@
 package com.waz.zclient.user.data
 
-import com.waz.zclient.user
-import com.waz.zclient.user.data.UsersRepository
-import com.waz.zclient.user.data.source.UsersDataSource
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.functional.map
+import com.waz.zclient.user.data.mapper.toUser
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import com.waz.zclient.userEntity
-import io.reactivex.Single
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -25,8 +29,6 @@ class UserRepositoryTest {
     @Mock
     private lateinit var usersLocalDataSource: UsersLocalDataSource
 
-    @Mock
-    private lateinit var throwable: Throwable
 
     @Before
     fun setup() {
@@ -35,30 +37,62 @@ class UserRepositoryTest {
     }
 
 
-    /* @Test
-     fun test_Profile_From_LocalDataSource_Success() {
-         `when`(usersLocalDataSource.profile()).thenReturn(Single.just(userEntity))
-         `when`(usersRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
-         val test = usersRepository.profile().test()
-         verify(usersLocalDataSource).profile()
-         test.assertValue(user)
-     }
+    @Test
+    fun `Given profile() is called, when the local data source succeeded, then map the data response to domain`() {
+        runBlocking {
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Right(userEntity))
 
-     @Test
-     fun test_Profile_From_LocalDataSource_Error_Profile_From_RemoteDataSource_Success() {
-         `when`(usersLocalDataSource.profile()).thenReturn(Single.error(throwable))
-         `when`(usersRemoteDataSource.profile()).thenReturn(Single.just(userEntity))
-         val test = usersRepository.profile().test()
-         verify(usersLocalDataSource).profile()
-         test.assertValue(user)
-     }
+            usersRepository.profile()
 
-     @Test
-     fun test_Profile_From_LocalDataSource_Error_Profile_From_RemoteDataSource_Error() {
-         `when`(usersLocalDataSource.profile()).thenReturn(Single.error(throwable))
-         `when`(usersRemoteDataSource.profile()).thenReturn(Single.error(throwable))
-         val test = usersRepository.profile().test()
-         verify(usersRemoteDataSource).profile()
-         test.assertError(throwable)
-     }*/
+            verify(usersLocalDataSource).profile()
+
+            usersRepository.profile().map {
+
+                assertEquals(it, userEntity.toUser())
+            }
+        }
+    }
+
+
+    @Test
+    fun `Given profile() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
+        runBlocking {
+
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Right(userEntity))
+
+            usersRepository.profile()
+
+            verify(usersLocalDataSource).profile()
+            verify(usersRemoteDataSource).profile()
+
+            usersRepository.profile().map {
+
+                assertEquals(it, userEntity.toUser())
+            }
+        }
+    }
+
+
+    @Test(expected = CancellationException::class)
+    fun `Given profile() is called, when the local data source failed and the remote data source failed, then return an error`() {
+        runBlocking {
+
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+
+            usersRepository.profile()
+
+            verify(usersLocalDataSource).profile()
+            verify(usersRemoteDataSource).profile()
+
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+
+            assert(usersRepository.profile().isLeft)
+        }
+    }
+
+    companion object {
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+    }
 }

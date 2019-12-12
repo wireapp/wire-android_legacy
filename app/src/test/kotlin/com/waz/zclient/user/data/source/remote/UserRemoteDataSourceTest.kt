@@ -1,17 +1,12 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSourceTest
-import com.waz.zclient.storage.clients.model.ClientEntity
 import com.waz.zclient.storage.db.model.UserEntity
-import com.waz.zclient.userEntity
-import io.reactivex.Single
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations

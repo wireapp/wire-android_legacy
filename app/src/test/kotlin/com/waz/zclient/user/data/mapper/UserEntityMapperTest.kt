@@ -2,14 +2,12 @@ package com.waz.zclient.user.data.mapper
 
 import com.waz.zclient.userEntity
 import junit.framework.TestCase.assertEquals
-import org.amshove.kluent.shouldEqualTo
-
 import org.junit.Test
 
 class UserEntityMapperTest {
 
     @Test
-    fun  `Mapping UserEntity to User should be correct`() {
+    fun `Mapping UserEntity to User should be correct`() {
         val user = userEntity.toUser()
         assertEquals(userEntity.id, user.id)
         assertEquals(userEntity.teamId, user.teamId)
