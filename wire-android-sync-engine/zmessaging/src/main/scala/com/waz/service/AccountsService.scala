@@ -511,6 +511,8 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     def delete(file: File) =
       if (file.exists) Try(file.delete()).isSuccess else true
 
+    //wrap everything in Try blocks as otherwise exceptions might cause us to skip future wiping
+    //operations and the logout call
     val deleteCryptoDir = Try(delete(cryptoBoxDir(userId)))
     if(deleteCryptoDir.isFailure) error(l"failed to wipe cryptobox dir", deleteCryptoDir.failed.get)
 
