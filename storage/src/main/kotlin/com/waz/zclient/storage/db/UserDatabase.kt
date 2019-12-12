@@ -35,7 +35,7 @@ abstract class UserDatabase : RoomDatabase() {
 
         private fun buildDatabase(context: Context, dbName: String): UserDatabase =
             Room.databaseBuilder(context.applicationContext, UserDatabase::class.java, dbName)
-                .addMigrations(UserDatabaseMigration(), ClientsTableMigration()).build()
+                .addMigrations(UserDatabaseMigration()).build()
     }
 
 

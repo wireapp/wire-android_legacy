@@ -6,6 +6,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 class UserDatabaseMigration : Migration(124, 125) {
     override fun migrate(database: SupportSQLiteDatabase) {
 
+        database.execSQL("CREATE TABLE '$NEW_CLIENT_TABLE_NAME' ('$CLIENT_ID_KEY' TEXT NOT NULL, '$NEW_CLIENT_TIME_KEY' LONG NOT NULL,  '$CLIENT_LABEL_KEY' TEXT NOT NULL, '$CLIENT_COOKIE_KEY' TEXT, '$NEW_CLIENT_TYPE_KEY' TEXT NOT NULL, '$CLIENT_CLASS_KEY' TEXT NOT NULL ,'$CLIENT_MODEL_KEY' TEXT NOT NULL,  '$CLIENT_LOCATION_LAT_KEY' LONG NOT NULL,  '$CLIENT_LOCATION_LONG_KEY' DOUBLE, '$NEW_CLIENT_LOCATION_NAME_KEY' TEXT NOT NULL,  '$CLIENT_VERIFICATION_KEY' TEXT NOT NULL,  '$CLIENT_ENC_KEY' TEXT NOT NULL,  '$CLIENT_MAC_KEY' TEXT NOT NULL,  PRIMARY KEY('$CLIENT_ID_KEY'))")
+
         // "KeyValues" to "user_preference" Migration
         database.execSQL("CREATE TABLE IF NOT EXISTS `$USER_PREFERENCE_TABLE_NAME` (`key` TEXT PRIMARY KEY NOT NULL ,`value` TEXT)")
         database.execSQL("INSERT INTO $USER_PREFERENCE_TABLE_NAME SELECT * FROM $KEY_VALUES_TABLE_NAME")
@@ -27,6 +29,24 @@ class UserDatabaseMigration : Migration(124, 125) {
 
         private const val USER_TABLE_NAME = "user"
         private const val USERS_TABLE_NAME = "Users"
+
+        //Shared keys
+        private const val CLIENT_ID_KEY = "id"
+        private const val CLIENT_LABEL_KEY = "label"
+        private const val CLIENT_LOCATION_LAT_KEY = "lat"
+        private const val CLIENT_LOCATION_LONG_KEY = "lon"
+        private const val CLIENT_ENC_KEY = "encKey"
+        private const val CLIENT_MAC_KEY = "macKey"
+        private const val CLIENT_VERIFICATION_KEY = "verification"
+        private const val CLIENT_MODEL_KEY = "model"
+        private const val CLIENT_COOKIE_KEY = "cookie"
+        private const val CLIENT_CLASS_KEY = "class"
+
+        //New table keys
+        private const val NEW_CLIENT_TABLE_NAME = "client"
+        private const val NEW_CLIENT_LOCATION_NAME_KEY = "locationName"
+        private const val NEW_CLIENT_TIME_KEY = "time"
+        private const val NEW_CLIENT_TYPE_KEY = "type"
 
     }
 }
