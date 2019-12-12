@@ -12,6 +12,6 @@ class ApiServiceTest : UnitTest() {
 
     @Before
     fun setUp() {
-        apiService = ApiService(networkHandler)
+//        apiService = ApiService(networkHandler)
     }
 }
