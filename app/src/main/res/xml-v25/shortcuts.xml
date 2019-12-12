@@ -20,6 +20,7 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:enabled="true"
+        android:icon="@drawable/ic_create_group"
         android:shortcutId="new group"
         android:shortcutLongLabel="@string/shortcut_create_chat_long_label"
         android:shortcutShortLabel="@string/shortcut_create_chat_short_label">
@@ -31,6 +32,7 @@
 
     <shortcut
         android:enabled="true"
+        android:icon="@drawable/ic_new_message"
         android:shortcutId="new message"
         android:shortcutLongLabel="@string/shortcut_compose_new_message_label"
         android:shortcutShortLabel="@string/shortcut_compose_new_message_label">

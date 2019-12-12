@@ -1,0 +1,26 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector android:alpha="0.6" android:height="12dp"
+    android:viewportHeight="16" android:viewportWidth="16"
+    android:width="12dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#000000" android:fillType="nonZero"
+        android:pathData="M8,12C9.1046,12 10,12.8954 10,14C10,15.1046 9.1046,16 8,16C6.8954,16 6,15.1046 6,14C6,12.8954 6.8954,12 8,12ZM2,9C3.1046,9 4,9.8954 4,11C4,12.1046 3.1046,13 2,13C0.8954,13 0,12.1046 0,11C0,9.8954 0.8954,9 2,9ZM14,9C15.1046,9 16,9.8954 16,11C16,12.1046 15.1046,13 14,13C12.8954,13 12,12.1046 12,11C12,9.8954 12.8954,9 14,9ZM2,3C3.1046,3 4,3.8954 4,5C4,6.1046 3.1046,7 2,7C0.8954,7 0,6.1046 0,5C0,3.8954 0.8954,3 2,3ZM14,3C15.1046,3 16,3.8954 16,5C16,6.1046 15.1046,7 14,7C12.8954,7 12,6.1046 12,5C12,3.8954 12.8954,3 14,3ZM8,0C9.1046,0 10,0.8954 10,2C10,3.1046 9.1046,4 8,4C6.8954,4 6,3.1046 6,2C6,0.8954 6.8954,0 8,0Z"
+        android:strokeColor="#00000000" android:strokeWidth="1"/>
+</vector>
