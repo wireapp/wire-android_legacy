@@ -61,12 +61,12 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
   import ParticipantsAdapter._
   import Threading.Implicits.Ui
 
-  private lazy val usersStorage           = inject[Signal[UsersStorage]]
-  private lazy val team                   = inject[Signal[Option[TeamId]]]
-  private lazy val participantsController = inject[ParticipantsController]
-  private lazy val convController         = inject[ConversationController]
-  private lazy val themeController        = inject[ThemeController]
-  private lazy val selfId                 = inject[Signal[UserId]]
+  protected lazy val usersStorage           = inject[Signal[UsersStorage]]
+  protected lazy val team                   = inject[Signal[Option[TeamId]]]
+  protected lazy val participantsController = inject[ParticipantsController]
+  protected lazy val convController         = inject[ConversationController]
+  protected lazy val themeController        = inject[ThemeController]
+  protected lazy val selfId                 = inject[Signal[UserId]]
 
   private var items               = List.empty[Either[ParticipantData, Int]]
   private var teamId              = Option.empty[TeamId]
@@ -87,7 +87,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   val filter = Signal("")
 
-  private lazy val users = for {
+  protected lazy val users = for {
     selfId       <- selfId
     usersStorage <- usersStorage
     tId          <- team
@@ -106,7 +106,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       ))
       .sortBy(_.userData.getDisplayName.str)
 
-  private lazy val positions = for {
+  protected lazy val positions = for {
     tId               <- team
     users             <- users
     convActive        <- convController.currentConv.map(_.isActive)
@@ -179,7 +179,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       GuestOptionsButtonViewHolder(view, convController)
     case UserRow =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.single_user_row, parent, false).asInstanceOf[SingleUserRowView]
-      view.showArrow(showArrow)
       view.setTheme(if (themeController.isDarkTheme) Theme.Dark else Theme.Light, background = true)
       ParticipantRowViewHolder(view, onClick)
     case ReadReceipts =>
@@ -221,9 +220,10 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       h.bind(membersCount + adminsCount)
     case (Left(userData), h: ParticipantRowViewHolder) if userData.isAdmin =>
       val lastRow = maxParticipants.forall(n => if (userData.isAdmin) adminsCount <= n else membersCount <= n) && items.lift(position + 1).forall(_.isRight)
-      h.bind(userData, teamId, lastRow, createSubtitle, hideUserStatus)
+      h.bind(userData, teamId, lastRow, createSubtitle, hideUserStatus, showArrow)
     case (Left(userData), h: ParticipantRowViewHolder) =>
-      h.bind(userData, teamId, maxParticipants.forall(membersCount <= _) && items.lift(position + 1).forall(_.isRight), createSubtitle, hideUserStatus)
+      val lastRow = maxParticipants.forall(membersCount <= _) && items.lift(position + 1).forall(_.isRight)
+      h.bind(userData, teamId, lastRow, createSubtitle, hideUserStatus, showArrow)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
       h.bind(readReceiptsEnabled)
     case (Right(ConversationName), h: ConversationNameViewHolder) =>
@@ -363,13 +363,18 @@ object ParticipantsAdapter {
 
     view.onClick(userId.foreach(onClick ! _))
     
-    def bind(participant: ParticipantData, teamId: Option[TeamId], lastRow: Boolean, createSubtitle: Option[UserData => String], hideStatus: Boolean): Unit = {
+    def bind(participant:    ParticipantData,
+             teamId:         Option[TeamId],
+             lastRow:        Boolean,
+             createSubtitle: Option[UserData => String],
+             hideStatus:     Boolean,
+             showArrow:      Boolean): Unit = {
       if (participant.isSelf) {
         view.showArrow(false)
         userId = None
       }
       else {
-        view.showArrow(true)
+        view.showArrow(showArrow)
         userId = Some(participant.userData.id)
       }
       createSubtitle match {
@@ -483,4 +488,29 @@ object ParticipantsAdapter {
     }
   }
 
+}
+
+class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option[UserData => String] = None)
+                          (implicit context: Context, injector: Injector, eventContext: EventContext)
+  extends ParticipantsAdapter(Signal.empty, None, true, false, createSubtitle) {
+  import ParticipantsAdapter._
+
+  override protected lazy val users = for {
+    selfId       <- selfId
+    usersStorage <- usersStorage
+    tId          <- team
+    userIds      <- userIds
+    users        <- usersStorage.listSignal(userIds.toList)
+  } yield
+    users.map(user => ParticipantData(
+      user,
+      isGuest = user.isGuest(tId) && !user.isWireBot,
+      isAdmin = false, // unused
+      isSelf  = user.id == selfId
+    )).sortBy(_.userData.getDisplayName.str)
+
+  override protected lazy val positions = users.map { us =>
+    val people = us.toList.filterNot(_.userData.isWireBot)
+    if (people.isEmpty) List(Right(NoResultsInfo)) else people.map(data => Left(data))
+  }
 }
