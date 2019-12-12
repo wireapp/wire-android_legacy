@@ -45,7 +45,10 @@ data class ClientEntity(
     val encKey: String,
 
     @ColumnInfo(name = "macKey")
-    val macKey: String)
+    val macKey: String,
+
+    @ColumnInfo(name = "locationName")
+    val locationName: String)
 
 data class ClientLocationEntity(
     @ColumnInfo(name = "lon")

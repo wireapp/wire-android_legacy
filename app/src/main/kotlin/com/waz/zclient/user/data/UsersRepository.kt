@@ -1,17 +1,18 @@
 package com.waz.zclient.user.data
 
 
+import com.waz.zclient.core.requests.Failure
+
 import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.network.resultEither
 import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.core.requests.map
 import com.waz.zclient.user.data.mapper.toUser
-import com.waz.zclient.user.data.source.UsersDataSource
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersNetwork
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import com.waz.zclient.user.domain.model.User
+
 
 class UsersRepository constructor(private val usersRemoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(),
                                   private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource()) : UsersDataSource {

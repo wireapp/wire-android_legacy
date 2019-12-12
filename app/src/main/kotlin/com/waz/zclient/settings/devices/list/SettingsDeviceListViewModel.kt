@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -33,7 +33,7 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
     fun loadData() {
         handleLoading(true)
         getAllClientsUseCase.invoke(viewModelScope, Unit) { response ->
-            response.either(::handleAllDevicesError, ::handleAllDevicesSuccess)
+            response.fold(::handleAllDevicesError, ::handleAllDevicesSuccess)
         }
     }
 
