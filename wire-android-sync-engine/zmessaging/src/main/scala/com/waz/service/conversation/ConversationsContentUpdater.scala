@@ -58,12 +58,12 @@ trait ConversationsContentUpdater {
                                     convType:    ConversationType,
                                     creator:     UserId,
                                     members:     Set[UserId],
+                                    defaultRole: ConversationRole,
                                     name:        Option[Name] = None,
                                     hidden:      Boolean = false,
                                     access:      Set[Access] = Set(Access.PRIVATE),
                                     accessRole:  AccessRole = AccessRole.PRIVATE,
-                                    receiptMode: Int = 0,
-                                    defaultRole: ConversationRole = ConversationRole.MemberRole
+                                    receiptMode: Int = 0
                                    ): Future[ConversationData]
 }
 
@@ -181,12 +181,12 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
                                              convType:    ConversationType,
                                              creator:     UserId,
                                              members:     Set[UserId],
+                                             defaultRole: ConversationRole,
                                              name:        Option[Name] = None,
                                              hidden:      Boolean = false,
                                              access:      Set[Access] = Set(Access.PRIVATE),
                                              accessRole:  AccessRole = AccessRole.PRIVATE,
-                                             receiptMode: Int = 0,
-                                             defaultRole: ConversationRole = ConversationRole.MemberRole
+                                             receiptMode: Int = 0
                                             ): Future[ConversationData] = {
     for {
       users <- usersStorage.listAll(members)

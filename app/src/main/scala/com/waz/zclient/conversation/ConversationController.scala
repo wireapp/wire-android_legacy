@@ -24,16 +24,16 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
-import com.waz.content.{ConversationRolesStorage, ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
-import com.waz.service.AccountManager
 import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
+import com.waz.service.{AccountManager, ConversationRolesService}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
-import com.waz.utils.events.{AggregatingSignal, EventContext, EventStream, Signal, SourceStream}
+import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
 import com.waz.zclient.assets2.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
@@ -43,8 +43,8 @@ import com.waz.zclient.conversationlist.adapters.ConversationFolderListAdapter.F
 import com.waz.zclient.conversationlist.{ConversationListController, FolderStateController}
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.utils.{Callback, currentRotation, rotate}
 import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.{Callback, currentRotation, rotate}
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
@@ -62,7 +62,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val conversations         = inject[Signal[ConversationsService]]
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val membersStorage        = inject[Signal[MembersStorage]]
-  private lazy val rolesStorage          = inject[Signal[ConversationRolesStorage]]
+  private lazy val rolesService          = inject[Signal[ConversationRolesService]]
   private lazy val usersStorage          = inject[Signal[UsersStorage]]
   private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
   private lazy val account               = inject[Signal[Option[AccountManager]]]
@@ -114,32 +114,11 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   lazy val currentConvMembers: Signal[Map[UserId, ConversationRole]] = currentConvId.flatMap(convMembers)
 
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]] = for {
-    rolesStorage   <- rolesStorage
-    roles          <- rolesStorage.rolesByConvId(Some(convId))
-    _ = verbose(l"ROL roles in conv $convId: $roles")
-    membersStorage <- membersStorage
-    members        <- activeMembersData(membersStorage, convId)
-    _ = verbose(l"ROL members in conv $convId: $members")
-    membersWithRoles = members.map(m => m.userId -> roles.find(_.label == m.role).getOrElse(ConversationRole.MemberRole)).toMap
-    _ = verbose(l"ROL members with roles: $membersWithRoles")
-  } yield membersWithRoles
-
-  private def activeMembersData(membersStorage: MembersStorage, conv: ConvId): Signal[Seq[ConversationMemberData]] = {
-    def onConvMemberDataChanged(conv: ConvId) =
-      membersStorage
-        .onChanged.map(_.filter(_.convId == conv).map(m => m.userId -> (Option(m), true)))
-        .union(membersStorage.onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
-
-    new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
-      onConvMemberDataChanged(conv),
-      membersStorage.getByConv(conv),
-      { (current, changes) =>
-        val (active, inactive) = changes.partition(_._2._2)
-        val inactiveIds = inactive.keySet
-        current.filter(m => !inactiveIds.contains(m.userId)) ++ active.values.collect { case (Some(m), _) => m }
-      }
-    )
-  }
+    convs          <- conversations
+    rolesStorage   <- rolesService
+    roles          <- rolesStorage.rolesByConvId(convId)
+    members        <- convs.getActiveMembersData(convId)
+  } yield members.map(m => m.userId -> ConversationRole.getRole(m.role)).toMap
 
   lazy val selfRole: Signal[ConversationRole] =
     selfId.flatMap(selfId => currentConvMembers.map(_.getOrElse(selfId, ConversationRole.MemberRole)))

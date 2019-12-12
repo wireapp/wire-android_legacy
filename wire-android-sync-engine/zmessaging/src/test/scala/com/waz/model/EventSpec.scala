@@ -218,7 +218,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
            |{
            |  "conversation": "${rConvId.str}",
            |  "time": "2019-12-11T12:40:38.426Z",
-           |  "data": { "conversation_role":"${ConversationRole.AdminRole.label}","id":"${userId.str}"},
+           |  "data": { "conversation_role":"${ConversationRole.AdminRole.label}","target":"${userId.str}"},
            |  "from": "${senderId.str}",
            |  "type":"conversation.member-update"
            |}
@@ -229,7 +229,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
         case ev: MemberUpdateEvent =>
           ev.convId shouldEqual rConvId
           ev.from shouldEqual senderId
-          ev.state.userId shouldEqual Some(userId)
+          ev.state.target shouldEqual Some(userId)
           ev.state.conversationRole shouldEqual Some(ConversationRole.AdminRole)
         case e => fail(s"unexpected event: $e")
       }

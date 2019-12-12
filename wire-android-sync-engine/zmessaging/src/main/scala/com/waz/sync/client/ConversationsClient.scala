@@ -116,7 +116,7 @@ class ConversationsClientImpl(implicit
   override def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]] =
     Future.sequence(
       remoteIds.map(rConvId => loadConversationRoles(rConvId).future.collect { case Right(roles) => rConvId -> roles })
-    ).map { roles => verbose(l"ROL loadConversationRoles: $roles"); roles.toMap }
+    ).map(_.toMap)
 
   private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =
     RawBodyDeserializer[JSONObject].map(json => EventsResponse.unapplySeq(JsonObjectResponse(json)).get)
@@ -230,7 +230,7 @@ class ConversationsClientImpl(implicit
   }
 
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
-    verbose(l"ROL postConversation($state)")
+    verbose(l"postConversation($state)")
     Request.Post(relativePath = ConversationsPath, body = state)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
@@ -238,7 +238,7 @@ class ConversationsClientImpl(implicit
   }
 
   override def postConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
-    verbose(l"ROL updateConversationRole($conv, $userId, $role)")
+    verbose(l"postConversationRole($conv, $userId, $role)")
     Request.Put(
       relativePath = s"${membersPath(conv)}/$userId",
       body = Json("conversation_role" -> role.label)
@@ -284,8 +284,6 @@ object ConversationsClient {
         o.put("access_role", encodeAccessRole(state.accessRole))
         state.receiptMode.foreach(o.put("receipt_mode", _))
         o.put("conversation_role", state.conversationRole.label)
-
-        verbose(l"ROL ConversationInitState json: ${o.toString}")(LogTag("ConversationInitState"))
       }
     }
   }
@@ -307,18 +305,18 @@ object ConversationsClient {
                                   receiptMode:  Option[Int]
                                  )
 
-  object ConversationResponse {
+  object ConversationResponse extends DerivedLogTag {
     import ConversationRole._
     import com.waz.utils.JsonDecoder._
 
     implicit lazy val Decoder: JsonDecoder[ConversationResponse] = new JsonDecoder[ConversationResponse] {
       override def apply(implicit js: JSONObject): ConversationResponse = {
-        verbose(l"ROL ConversationResponse: ${js.toString}")(LogTag("ConversationResponse"))
+        verbose(l"ConversationResponse: ${js.toString}")
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
-        val selfRole = (state.userId, state.conversationRole) match {
+        val selfRole = (state.target, state.conversationRole) match {
           case (Some(id), Some(role)) => Map(id -> role)
-          case _ => Map.empty
+          case _                      => Map.empty
         }
 
         ConversationResponse(

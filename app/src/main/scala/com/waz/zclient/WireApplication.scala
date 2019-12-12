@@ -185,7 +185,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[ConversationStorage]]           to inject[Signal[ZMessaging]].map(_.convsStorage)
     bind [Signal[UsersStorage]]                  to inject[Signal[ZMessaging]].map(_.usersStorage)
     bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
-    bind [Signal[ConversationRolesStorage]]      to inject[Signal[ZMessaging]].map(_.rolesStorage)
+    bind [Signal[ConversationRolesService]]      to inject[Signal[ZMessaging]].map(_.rolesService)
     bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
     bind [Signal[AssetStorage]]                  to inject[Signal[ZMessaging]].map(_.assetsStorage)
     bind [Signal[AssetService]]                  to inject[Signal[ZMessaging]].map(_.assetService)

@@ -17,7 +17,7 @@
  */
 package com.waz.model
 
-import com.waz.db.Col.{id, opt, text}
+import com.waz.db.Col.{id, text}
 import com.waz.db.Dao3
 import com.waz.utils.JsonDecoder.decodeSeq
 import com.waz.utils.{Identifiable, JsonDecoder}
@@ -25,7 +25,7 @@ import com.waz.utils.wrappers.{DB, DBCursor}
 import org.json.JSONObject
 
 case class ConversationRole(label: String, actions: Set[ConversationAction]) {
-  def toRoleActions(convId: Option[ConvId]): List[ConversationRoleAction] =
+  def toRoleActions(convId: ConvId): List[ConversationRoleAction] =
     actions.map(action => ConversationRoleAction(label, action.name, convId)).toList
 
   override def toString: String = label
@@ -62,10 +62,6 @@ object ConversationRole {
 
   def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Map[UserId, ConversationRole] =
     decodeSeq[(UserId, String)](s).map { case (id, label) => id -> getRole(label) }.toMap
-
-  // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
-  def membersWithRoles(userIds: Seq[UserId], users: Seq[(UserId, String)]) =
-    users.map { case (id, label) => id -> ConversationRole.getRole(label) }.toMap ++ userIds.map(_ -> ConversationRole.MemberRole).toMap
 }
 
 case class ConversationAction(name: String) extends Identifiable[String] {
@@ -87,22 +83,23 @@ object ConversationAction {
   val allActions = Set(AddMember, RemoveMember, DeleteConversation, ModifyName, ModifyMessageTimer, ModifyReceiptMode, ModifyAccess, ModifyOtherMember, LeaveConversation)
 }
 
-case class ConversationRoleAction(label: String, action: String, convId: Option[ConvId]) extends Identifiable[(String, String, Option[ConvId])] {
-  override def id: (String, String, Option[ConvId]) = (label, action, convId)
+case class ConversationRoleAction(label: String, action: String, convId: ConvId) extends Identifiable[(String, String, ConvId)] {
+  override def id: (String, String, ConvId) = (label, action, convId)
 }
 
 object ConversationRoleAction {
-  implicit object ConversationRoleActionDao extends Dao3[ConversationRoleAction, String, String, Option[ConvId]] {
+
+  implicit object ConversationRoleActionDao extends Dao3[ConversationRoleAction, String, String, ConvId] {
     val Label  = text('label).apply(_.label)
     val Action = text('action).apply(_.action)
-    val ConvId = opt(id[ConvId]('conv_id)).apply(_.convId)
+    val ConvId = id[ConvId]('conv_id).apply(_.convId)
 
     override val idCol = (Label, Action, ConvId)
     override val table = Table("ConversationRoleAction", Label, Action, ConvId)
     override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
 
-    def findForConv(convId: Option[ConvId])(implicit db: DB) =
-      iterating(if (convId.isDefined) find(ConvId, convId) else findWhereNull(ConvId))
+    def findForConv(convId: ConvId)(implicit db: DB) =
+      iterating(find(ConvId, convId))
   }
 
 }

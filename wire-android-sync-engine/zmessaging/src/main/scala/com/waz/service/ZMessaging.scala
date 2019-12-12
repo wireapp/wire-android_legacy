@@ -265,6 +265,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val libSodiumUtils                             = wire[LibSodiumUtilsImpl]
   lazy val backupManager                              = wire[BackupManagerImpl]
   lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
+  lazy val rolesService: ConversationRolesService     = wire[ConversationRolesServiceImpl]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -378,7 +379,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     propertiesService
 
-    rolesStorage.ensureDefaultRoles()
+    rolesService.ensureDefaultRoles()
 
     reporting.addStateReporter { pw =>
       Future {

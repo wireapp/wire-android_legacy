@@ -40,7 +40,6 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
     scenario("Basic single team with some members sync") {
 
       val teamId = TeamId()
-      val teams = Seq((teamId, true))
       val teamData = TeamData(teamId, "name", UserId(), AssetId())
       val members = Seq(
         TeamMember(UserId(), Option(Permissions(0L, 0L)), None),

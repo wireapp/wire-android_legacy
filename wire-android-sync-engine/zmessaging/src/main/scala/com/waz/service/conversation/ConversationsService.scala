@@ -37,7 +37,7 @@ import com.waz.sync.client.{ConversationsClient, ErrorOr}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.{AggregatingSignal, EventContext, Signal}
 
 import scala.collection.{breakOut, mutable}
 import scala.concurrent.Future
@@ -48,6 +48,7 @@ trait ConversationsService {
   def content: ConversationsContentUpdater
   def convStateEventProcessingStage: EventScheduler.Stage
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
+  def getActiveMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def getSelfConversation: Future[Option[ConversationData]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit]
@@ -55,7 +56,7 @@ trait ConversationsService {
   def setReceiptMode(id: ConvId, receiptMode: Int): Future[Option[ConversationData]]
   def forceNameUpdate(id: ConvId, defaultName: String): Future[Option[(ConversationData, ConversationData)]]
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse): Future[Unit]
-  def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: Option[ConversationRole], resp: ErrorResponse): Future[Unit]
+  def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: ConversationRole, resp: ErrorResponse): Future[Unit]
   def groupConversation(convId: ConvId): Signal[Boolean]
   def isGroupConversation(convId: ConvId): Future[Boolean]
   def isWithService(convId: ConvId): Future[Boolean]
@@ -97,7 +98,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                receiptsStorage: ReadReceiptsStorage,
                                notificationService: NotificationService,
                                foldersService:  FoldersService,
-                               rolesStorage:    ConversationRolesStorage
+                               rolesService:    ConversationRolesService
                               ) extends ConversationsService with DerivedLogTag {
 
   private implicit val ev = EventContext.Global
@@ -144,7 +145,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
-      verbose(l"ROL CreateConversationEvent, data: $data")
       updateConversations(Seq(data)).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(created.id, from, (data.members.keySet + selfUserId).filter(_ != from), created.name, readReceiptsAllowed = created.readReceiptsAllowed, time = Some(time))
       }}
@@ -160,7 +160,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
             case MemberJoinEvent(_, time, from, ids, us, _) if from != selfUserId =>
               // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
               val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
-              verbose(l"ROL MemberJoinEvent from $from, userIds: $ids, us: $us")
               // this happens when we are added to group conversation
               for {
                 conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
@@ -172,7 +171,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                 _          <- messages.addMemberJoinMessage(conv.id, from, membersWithRoles.keySet)
               } yield {}
             case _ =>
-              warn(l"ROL No conversation data found for event: $ev on try: $retryCount")
+              warn(l"No conversation data found for event: $ev on try: $retryCount")
               content.processConvWithRemoteId(rConvId, retryAsync = true) { processUpdateEvent(_, ev) }
           }
       }
@@ -190,7 +189,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case RenameConversationEvent(_, _, _, name) => content.updateConversationName(conv.id, name)
 
     case MemberJoinEvent(_, _, _, ids, us, _) =>
-      verbose(l"ROL MemberJoinEvent(ids = $ids, us = $us)")
       // usually ids should be exactly the same set as members, but if not, we add surplus ids as members with the Member role
       val membersWithRoles = us ++ ids.map(_ -> ConversationRole.MemberRole).toMap
       val selfAdded = membersWithRoles.keySet.contains(selfUserId)//we were re-added to a group and in the meantime might have missed events
@@ -219,16 +217,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       }
 
     case MemberUpdateEvent(_, _, userId, state) =>
-      verbose(l"ROL MemberUpdateEvent(from = $userId, state = $state")
       content.updateConversationState(conv.id, state).map { _ =>
-        (state.userId, state.conversationRole) match {
+        (state.target, state.conversationRole) match {
           case (Some(id), Some(role)) => membersStorage.updateOrCreate(conv.id, id, role)
           case _ =>
         }
       }
 
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
-      verbose(l"ROL ConnectRequestEvent(from = $from, recipient = $recipient")
       membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole, recipient -> ConversationRole.AdminRole)).flatMap { added =>
         users.syncIfNeeded(added.map(_.userId))
       }
@@ -251,6 +247,23 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case _ => successful(())
   }
 
+  override def getActiveMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]] = {
+    val onConvMemberDataChanged =
+      membersStorage
+        .onChanged.map(_.filter(_.convId == conv).map(m => m.userId -> (Option(m), true)))
+        .union(membersStorage.onDeleted.map(_.filter(_._2 == conv).map(_._1 -> (None, false)))).map(_.toMap)
+
+    new AggregatingSignal[Map[UserId, (Option[ConversationMemberData], Boolean)], Seq[ConversationMemberData]](
+      onConvMemberDataChanged,
+      membersStorage.getByConv(conv),
+      { (current, changes) =>
+        val (active, inactive) = changes.partition(_._2._2)
+        val inactiveIds = inactive.keySet
+        current.filter(m => !inactiveIds.contains(m.userId)) ++ active.values.collect { case (Some(m), _) => m }
+      }
+    )
+  }
+
   def getSelfConversation = {
     val selfConvId = ConvId(selfUserId.str)
     content.convById(selfConvId).flatMap {
@@ -271,10 +284,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } yield {}
 
   // ask the backend for the roles and only then update the conversations
-  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
-    verbose(l"ROL updateConversations(responses: $responses)")
+  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] =
     client.loadConversationRoles(responses.map(_.id).toSet).flatMap(roles => updateConversations(responses, roles))
-  }
 
   private def updateConversations(responses: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
 
@@ -330,7 +341,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     def updateMembers() =
       content.convsByRemoteId(responses.map(_.id).toSet).flatMap { convs =>
         val toUpdate = responses.map(c => (c.id, c.members)).flatMap {
-          case (remoteId, members) => convs.get(remoteId).map(_.id -> (members + (selfUserId -> ConversationRole.AdminRole)))
+          case (remoteId, members) => convs.get(remoteId).map(c => c.id -> (members + (c.creator -> ConversationRole.AdminRole)))
         }.toMap
         membersStorage.setAll(toUpdate)
       }
@@ -339,14 +350,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
     def updateRoles(convIds: Map[ConvId, RConvId]): Future[Unit] =
       Future.sequence(convIds.collect {
-        case (cId, rId) if roles.contains(rId) => rolesStorage.createOrUpdate(cId, roles(rId))
+        case (cId, rId) if roles.contains(rId) => rolesService.createOrUpdate(cId, roles(rId))
       }).map(_ => ())
 
-    verbose(
-      l"""ROL updateConversations(
-         responses: $responses,
-         roles: $roles
-         )""")
     for {
       (convs, created) <- updateConversationData()
       _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap)
@@ -377,7 +383,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     _ <- convsStorage.remove(convId)
     _ <- membersStorage.delete(convId)
     _ <- msgContent.deleteMessagesForConversation(convId)
-    _ <- rolesStorage.removeByConvId(convId)
+    _ <- rolesService.removeByConvId(convId)
   } yield ()
 
   override def deleteConversation(rConvId: RConvId): Future[Unit] = {
@@ -400,7 +406,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _              <- receiptsStorage.removeAllForMessages(convMessageIds)
       _              <- checkCurrentConversationDeleted(convId)
       _              <- foldersService.removeConversationFromAll(convId, uploadAllChanges = false)
-      _              <- rolesStorage.removeByConvId(convData.id)
+      _              <- rolesService.removeByConvId(convData.id)
     } yield ()).recoverWith {
       case ex: Exception =>
         error(l"error while deleting conversation", ex)
@@ -418,19 +424,19 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     nameUpdater.forceNameUpdate(id, defaultName)
   }
 
-  def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse) =
+  def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse) =
     for {
-      _ <- error.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
+      _ <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
       _ <- membersStorage.remove(conv, users)
       _ <- messages.removeLocalMemberJoinMessage(conv, users)
-      _ = verbose(l"ROL onMembersFailed($conv, $users, $resp)")
+      _ =  error(l"onMembersAddFailed($conv, $users, $err, $resp)")
     } yield ()
 
-  def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: Option[ConversationRole], resp: ErrorResponse): Future[Unit] =
+  def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: ConversationRole, resp: ErrorResponse): Future[Unit] =
     for {
       _ <- errors.addErrorWhenActive(ErrorData(ErrorType.CANNOT_CHANGE_CONVERSATION_ROLE, resp, conv, Set(user)))
-      _ <- membersStorage.updateOrCreate(conv, user, origRole.getOrElse(ConversationRole.MemberRole))
-      _ =  error(l"ROL Failed to change the conversation role from ${origRole.map(_.label)} to ${newRole.label} in the conversation $conv for the user $user")
+      _ <- membersStorage.updateOrCreate(conv, user, origRole)
+      _ =  error(l"Failed to change the conversation role from $origRole to $newRole in the conversation $conv for the user $user")
     } yield ()
 
   def groupConversation(convId: ConvId) =
@@ -523,9 +529,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   override def setConversationRole(convId: ConvId, userId: UserId, newRole: ConversationRole): Future[Unit] =
     for {
       member   <- membersStorage.get((userId, convId))
-      origRole =  member.flatMap(m => ConversationRole.defaultRoles.find(_.label == m.role))
+      origRole =  member.map(m => ConversationRole.getRole(m.role))
       _        <- membersStorage.updateOrCreate(convId, userId, newRole)
-      _        <- sync.postConversationRole(convId, userId, newRole, origRole)
+      _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
 }
 

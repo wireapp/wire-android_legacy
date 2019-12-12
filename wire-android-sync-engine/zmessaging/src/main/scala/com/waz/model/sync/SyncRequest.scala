@@ -167,7 +167,7 @@ object SyncRequest {
     override def merge(req: SyncRequest) = mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
   }
 
-  case class PostConvRole(convId: ConvId, userId: UserId, newRole: ConversationRole, origRole: Option[ConversationRole])
+  case class PostConvRole(convId: ConvId, userId: UserId, newRole: ConversationRole, origRole: ConversationRole)
     extends RequestForConversation(Cmd.PostConvRole) with Serialized {
     override val mergeKey: Any = (cmd, convId, userId)
     override def merge(req: SyncRequest) = mergeHelper[PostConvRole](req)(Merged(_))
@@ -503,7 +503,7 @@ object SyncRequest {
         case PostConvRole(_, userId, newRole, origRole) =>
           o.put("user", userId)
           o.put("new_role", newRole)
-          origRole.foreach(r => o.put("orig_role", r))
+          o.put("orig_role", origRole)
         case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))

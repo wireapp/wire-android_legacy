@@ -81,7 +81,7 @@ trait SyncServiceHandle {
                        receiptMode: Option[Int],
                        defaultRole: ConversationRole
                       ): Future[SyncId]
-  def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: Option[ConversationRole]): Future[SyncId]
+  def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncId]
   def postLastRead(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postCleared(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postAddressBook(ab: AddressBook): Future[SyncId]
@@ -178,7 +178,7 @@ class AndroidSyncServiceHandle(account:         UserId,
                        defaultRole: ConversationRole): Future[SyncId] =
     addRequest(PostConv(id, users, name, team, access, accessRole, receiptMode, defaultRole))
   def postReceiptMode(id: ConvId, receiptMode: Int): Future[SyncId] = addRequest(PostConvReceiptMode(id, receiptMode))
-  def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: Option[ConversationRole]): Future[SyncId] = addRequest(PostConvRole(id, member, newRole, origRole))
+  def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncId] = addRequest(PostConvRole(id, member, newRole, origRole))
   def postLiking(id: ConvId, liking: Liking): Future[SyncId] = addRequest(PostLiking(id, liking))
   def postLastRead(id: ConvId, time: RemoteInstant) = addRequest(PostLastRead(id, time), priority = Priority.Low, delay = timeouts.messages.lastReadPostDelay)
   def postCleared(id: ConvId, time: RemoteInstant) = addRequest(PostCleared(id, time))

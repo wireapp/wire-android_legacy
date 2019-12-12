@@ -135,10 +135,8 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
     insertAll(addList).map(_ => ())
   }
 
-  override def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit] = {
-    verbose(l"ROL updateOrCreate($conv, $user, $role)")
+  override def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit] =
     updateOrCreate((user, conv), _.copy(role = role.label), ConversationMemberData(user, conv, role)).map(_ => ())
-  }
 
   override def isActiveMember(conv: ConvId, user: UserId) = get(user -> conv).map(_.nonEmpty)
 

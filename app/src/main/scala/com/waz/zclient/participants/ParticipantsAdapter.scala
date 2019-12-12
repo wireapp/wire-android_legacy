@@ -32,7 +32,7 @@ import com.waz.api.Verification
 import com.waz.model._
 import com.waz.utils.events._
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 import com.waz.zclient.conversation.ConversationController
@@ -66,7 +66,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convController         = inject[ConversationController]
   private lazy val themeController        = inject[ThemeController]
-  private lazy val accountsController     = inject[UserAccountsController]
   private lazy val selfId                 = inject[Signal[UserId]]
 
   private var items               = List.empty[Either[ParticipantData, Int]]
@@ -145,7 +144,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     notifyDataSetChanged()
   }
 
-  private val conv = convController.currentConv
   private var hideUserStatus = false
 
   TeamSizeThreshold.shouldHideStatus(team, usersStorage).foreach { hide =>
@@ -154,9 +152,10 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
   }
 
   (for {
-    name  <- conv.map(_.displayName)
-    ver   <- conv.map(_.verified == Verification.VERIFIED)
-    read  <- conv.map(_.readReceiptsAllowed)
+    conv  <- convController.currentConv
+    name  =  conv.displayName
+    ver   =  conv.verified == Verification.VERIFIED
+    read  =  conv.readReceiptsAllowed
     clock <- ClockSignal(5.seconds)
   } yield (name, ver, read, clock)).onUi {
     case (name, ver, read, _) =>

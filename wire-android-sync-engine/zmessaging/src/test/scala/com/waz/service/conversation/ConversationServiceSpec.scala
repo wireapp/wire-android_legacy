@@ -63,7 +63,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   private lazy val network        = mock[NetworkModeService]
   private lazy val properties     = mock[PropertiesService]
   private lazy val deletions      = mock[MsgDeletionStorage]
-  private lazy val rolesStorage   = mock[ConversationRolesStorage]
+  private lazy val rolesService   = mock[ConversationRolesService]
 
   private lazy val globalPrefs    = new TestGlobalPreferences()
   private lazy val userPrefs      = new TestUserPreferences()
@@ -97,7 +97,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     receiptStorage,
     notifications,
     folders,
-    rolesStorage
+    rolesService
   )
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
@@ -346,7 +346,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (membersStorage.delete _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (msgStorage.deleteAll _).expects(convId).once().returning(Future.successful(()))
       (folders.removeConversationFromAll _).expects(convId, false).once().returning(Future.successful(()))
-      (rolesStorage.removeByConvId _).expects(convId).once().returning(Future.successful(()))
+      (rolesService.removeByConvId _).expects(convId).once().returning(Future.successful(()))
 
       //EXPECT
       (receiptStorage.removeAllForMessages _).expects(Set(messageId)).once().returning(Future.successful(()))
@@ -371,7 +371,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName)))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -392,7 +392,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id)))
+      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }

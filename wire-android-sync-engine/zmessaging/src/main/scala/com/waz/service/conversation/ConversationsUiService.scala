@@ -72,7 +72,7 @@ trait ConversationsUiService {
   def setConversationMuted(id: ConvId, muted: MuteSet): Future[Option[ConversationData]]
   def setConversationName(id: ConvId, name: Name): Future[Option[ConversationData]]
 
-  def addConversationMembers(conv: ConvId, members: Set[UserId], defaultRole: ConversationRole = ConversationRole.MemberRole): Future[Option[SyncId]]
+  def addConversationMembers(conv: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]]
   def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]]
 
   def leaveConversation(conv: ConvId): Future[Unit]
@@ -250,7 +250,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     }
   }
 
-  override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole = ConversationRole.MemberRole): Future[Option[SyncId]] =
+  override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {
       true   <- canModifyMembers(conv)
       added  <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
@@ -339,7 +339,14 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
           case _ =>
             for {
               _    <- sync.postConversation(ConvId(other.str), Set(other), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
-              conv <- convsContent.createConversationWithMembers(ConvId(other.str), RConvId(), ConversationType.OneToOne, selfUserId, Set(other))
+              conv <- convsContent.createConversationWithMembers(
+                        convId      = ConvId(other.str),
+                        remoteId    = RConvId(),
+                        convType    = ConversationType.OneToOne,
+                        creator     = selfUserId,
+                        members     = Set(other),
+                        defaultRole = ConversationRole.AdminRole
+                      )
               _    <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(other), firstMessage = true)
             } yield conv
         }
@@ -405,7 +412,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                   receiptMode = receiptMode,
                   defaultRole = defaultRole
                 )
-      _      =  verbose(l"ROL created: $conv, members: $members")
+      _      =  verbose(l"created: $conv, members: $members")
       _      <- messages.addConversationStartMessage(conv.id, selfUserId, members, name, conv.readReceiptsAllowed)
       syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
     } yield (conv, syncId)

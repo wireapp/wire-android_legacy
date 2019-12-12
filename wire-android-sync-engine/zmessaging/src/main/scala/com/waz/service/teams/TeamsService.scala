@@ -26,7 +26,7 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ErrorsService, EventScheduler, SearchKey, SearchQuery}
+import com.waz.service.{ConversationRolesService, ErrorsService, EventScheduler, SearchKey, SearchQuery}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -70,7 +70,7 @@ class TeamsServiceImpl(selfUser:           UserId,
                        syncRequestService: SyncRequestService,
                        userPrefs:          UserPreferences,
                        errorsService:      ErrorsService,
-                       rolesStorage:       ConversationRolesStorage
+                       rolesService:       ConversationRolesService
                       ) extends TeamsService with DerivedLogTag {
 
   private implicit val dispatcher = SerialDispatchQueue()
@@ -159,7 +159,7 @@ class TeamsServiceImpl(selfUser:           UserId,
   }
 
   override def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit] = {
-    verbose(l"ROL onTeamSynced: team: $team \nmembers: $members\n roles: $roles")
+    verbose(l"onTeamSynced: team: $team \nmembers: $members\n roles: $roles")
 
     val memberIds = members.map(_.user).toSet
 
@@ -170,7 +170,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
       _          <- userStorage.updateAll2(memberIds, _.copy(teamId = teamId, deleted = false))
       _          <- Future.sequence(members.map(onMemberSynced))
-      _          <- rolesStorage.setDefaultRoles(roles)
+      _          <- rolesService.setDefaultRoles(roles)
     } yield {}
   }
 
