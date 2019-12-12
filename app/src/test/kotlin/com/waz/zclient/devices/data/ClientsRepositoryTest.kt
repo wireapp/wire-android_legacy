@@ -1,6 +1,7 @@
 package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -33,25 +34,59 @@ class ClientsRepositoryTest {
     }
 
     @Test
-    fun `Given getAllClients() is called, when the remote data source is called, then map the data response to domain`() {
+    fun `Given getAllClients() is called, when the local data source succeeded, then map the data response to domain`() {
         runBlocking {
-            `when`(remoteDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
+            `when`(localDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
 
             repository.allClients()
 
             verify(remoteDataSource).allClients()
 
             repository.allClients().map {
-                val domainClient = it?.get(0)
+                val domainClient = it[0]
+                assertMappingIsCorrect(domainClient)
+            }
+        }
+    }
+
+
+    @Test
+    fun `Given getAllClients() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
+        runBlocking {
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
+            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+
+            repository.allClients()
+
+            verify(remoteDataSource).allClients()
+
+            repository.allClients().map {
+                val domainClient = it[0]
                 assertMappingIsCorrect(domainClient)
             }
         }
     }
 
     @Test
-    fun `Given getClientById() is called, then map the data response to domain`() {
+    fun `Given getClientById() is called, when the local data source succeeded, then map the data response to domain`() {
+        runBlocking {
+            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
+
+            repository.clientById(TEST_ID)
+
+            verify(remoteDataSource).clientById(eq(TEST_ID))
+
+            repository.clientById(TEST_ID).map {
+                assertMappingIsCorrect(it)
+            }
+        }
+    }
+
+    @Test
+    fun `Given getClientById() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
             `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
+            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
 
             repository.clientById(TEST_ID)
 
@@ -76,7 +111,9 @@ class ClientsRepositoryTest {
     }
 
     private fun generateMockEntity(): ClientEntity {
-        return ClientEntity(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, TEST_LATITUDE, TEST_LONGITUDE, ENC_KEY, MAC_KEY)
+        return ClientEntity(TEST_ID, TEST_TIME, TEST_LABEL, TEST_COOKIE, TEST_TYPE, TEST_CLASS,
+            TEST_MODEL, TEST_LATITUDE, TEST_LONGITUDE, TEST_ENC_KEY, TEST_MAC_KEY,
+            TEST_LOCATION_NAME, TEST_VERIFICATION)
     }
 
     @After
@@ -94,7 +131,10 @@ class ClientsRepositoryTest {
         private const val TEST_TYPE = "permanant"
         private const val TEST_ID = "4555f7b2"
         private const val TEST_MODEL = "Samsung"
-        private const val ENC_KEY = "encKey"
-        private const val MAC_KEY = "nackKey"
+        private const val TEST_ENC_KEY = "encKey"
+        private const val TEST_MAC_KEY = "nackKey"
+        private const val TEST_LOCATION_NAME = "locationName"
+        private const val TEST_VERIFICATION = "verification"
+        private const val TEST_MESSAGE = "testMessage"
     }
 }
