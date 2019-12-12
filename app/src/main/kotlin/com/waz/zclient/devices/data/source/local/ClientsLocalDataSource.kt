@@ -2,8 +2,8 @@ package com.waz.zclient.devices.data.source.local
 
 import com.waz.zclient.ContextProvider
 import com.waz.zclient.core.network.requestLocal
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.storage.clients.model.ClientEntity
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.pref.GlobalPreferences

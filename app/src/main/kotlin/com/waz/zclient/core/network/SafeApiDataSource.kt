@@ -1,8 +1,8 @@
 package com.waz.zclient.core.network
 
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
-import com.waz.zclient.core.requests.map
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.functional.map
 import retrofit2.Response
 import timber.log.Timber
 import java.util.concurrent.CancellationException

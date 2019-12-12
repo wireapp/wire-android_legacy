@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.data
 
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.devices.domain.model.Client
 
 interface ClientsDataSource {

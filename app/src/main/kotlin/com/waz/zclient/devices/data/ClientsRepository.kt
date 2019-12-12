@@ -1,9 +1,9 @@
 package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.network.resultEither
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
-import com.waz.zclient.core.requests.map
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource

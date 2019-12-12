@@ -1,8 +1,8 @@
 package com.waz.zclient.settings.devices.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client

@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.devices.domain.GetSpecificClientParams
 import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -28,7 +28,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetSpecifi
     fun loadData(clientId: String) {
         handleLoading(true)
         getClientByIdUseCase(viewModelScope, GetSpecificClientParams(clientId)) { response ->
-            response.either(::handleGetDeviceError, ::handleGetDeviceSuccess)
+            response.fold(::handleGetDeviceError, ::handleGetDeviceSuccess)
         }
     }
 
