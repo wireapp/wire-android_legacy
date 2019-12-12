@@ -1429,9 +1429,12 @@
     <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
     <string name="delete_group_conversation_error_message_with_group_name">An error occurred while trying to delete the group %1$s. Please try again.</string>
 
-    <string name="shortcut_create_chat_short_label">Create Group</string>
-    <string name="shortcut_create_chat_long_label">Create Group Conversation</string>
 
+    <!-- Shortcuts -->
+    <string name="shortcut_create_chat_short_label">Create Group</string>
+    <string name="shortcut_share_a_photo_label">Share Photo</string>
+    <string name="shortcut_create_chat_long_label">Create Group Conversation</string>
     <string name="shortcut_compose_new_message_label">New Message</string>
+
 
 </resources>

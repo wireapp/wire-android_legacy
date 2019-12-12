@@ -20,6 +20,31 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:enabled="true"
+        android:icon="@drawable/ic_create_conversation"
+        android:shortcutId="new message"
+        android:shortcutLongLabel="@string/shortcut_compose_new_message_label"
+        android:shortcutShortLabel="@string/shortcut_compose_new_message_label">
+        <intent
+            android:action="android.intent.action.SEND"
+            android:mimeType="text/plain"
+            android:targetClass="com.waz.zclient.ShareActivity"
+            android:targetPackage="com.wire.internal" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_share_photo"
+        android:shortcutId="share photo"
+        android:shortcutLongLabel="@string/shortcut_share_a_photo_label"
+        android:shortcutShortLabel="@string/shortcut_share_a_photo_label">
+        <intent
+            android:action="SHARE_PHOTO"
+            android:targetClass="com.waz.zclient.MainActivity"
+            android:targetPackage="com.wire.internal" />/>
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
         android:icon="@drawable/ic_create_group"
         android:shortcutId="new group"
         android:shortcutLongLabel="@string/shortcut_create_chat_long_label"
@@ -28,19 +53,6 @@
             android:action="GROUP_CONVERSATION"
             android:targetClass="com.waz.zclient.MainActivity"
             android:targetPackage="com.wire.internal" />/>
-    </shortcut>
-
-    <shortcut
-        android:enabled="true"
-        android:icon="@drawable/ic_new_message"
-        android:shortcutId="new message"
-        android:shortcutLongLabel="@string/shortcut_compose_new_message_label"
-        android:shortcutShortLabel="@string/shortcut_compose_new_message_label">
-        <intent
-            android:action="android.intent.action.SEND"
-            android:targetClass="com.waz.zclient.ShareActivity"
-            android:mimeType="text/plain"
-            android:targetPackage="com.wire.internal" />
     </shortcut>
 </shortcuts>
 
