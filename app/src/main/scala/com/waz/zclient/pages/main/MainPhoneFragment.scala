@@ -33,7 +33,7 @@ import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.fragments.CollectionFragment
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
-import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
@@ -52,10 +52,8 @@ import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
-import com.waz.zclient.preferences.pages.SettingsBackStackKey
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
-import com.waz.zclient.utils.BackStackNavigator
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 
@@ -210,18 +208,20 @@ class MainPhoneFragment extends FragmentHelper
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
     val action = getActivity.getIntent.getAction
-    if (action == "GROUP_CONVERSATION") {
-      inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
-      getFragmentManager.beginTransaction
-        .setCustomAnimations(
-          R.anim.fragment_animation_second_page_slide_in_from_right,
-          R.anim.fragment_animation_second_page_slide_in_from_left,
-          R.anim.fragment_animation_second_page_slide_in_from_right,
-          R.anim.fragment_animation_second_page_slide_in_from_left)
-        .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
-        .addToBackStack(CreateConversationManagerFragment.Tag)
-        .commit()
-      getActivity.getIntent.setAction("")
+    if (action != null ) {
+      if (action == "GROUP_CONVERSATION") {
+        inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
+        getFragmentManager.beginTransaction
+          .setCustomAnimations(
+            R.anim.fragment_animation_second_page_slide_in_from_right,
+            R.anim.fragment_animation_second_page_slide_in_from_left,
+            R.anim.fragment_animation_second_page_slide_in_from_right,
+            R.anim.fragment_animation_second_page_slide_in_from_left)
+          .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
+          .addToBackStack(CreateConversationManagerFragment.Tag)
+          .commit()
+        getActivity.getIntent.setAction("")
+      }
     }
     consentDialog
   }

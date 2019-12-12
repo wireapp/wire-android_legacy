@@ -20,13 +20,25 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:enabled="true"
-        android:shortcutId="create chat"
+        android:shortcutId="new group"
         android:shortcutLongLabel="@string/shortcut_create_chat_long_label"
         android:shortcutShortLabel="@string/shortcut_create_chat_short_label">
         <intent
             android:action="GROUP_CONVERSATION"
             android:targetClass="com.waz.zclient.MainActivity"
             android:targetPackage="com.wire.internal" />/>
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:shortcutId="new message"
+        android:shortcutLongLabel="@string/shortcut_compose_new_message_label"
+        android:shortcutShortLabel="@string/shortcut_compose_new_message_label">
+        <intent
+            android:action="android.intent.action.SEND"
+            android:targetClass="com.waz.zclient.ShareActivity"
+            android:mimeType="text/plain"
+            android:targetPackage="com.wire.internal" />
     </shortcut>
 </shortcuts>
 
