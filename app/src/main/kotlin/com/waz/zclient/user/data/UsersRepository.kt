@@ -1,13 +1,14 @@
 package com.waz.zclient.user.data
 
 
-import com.waz.zclient.core.requests.Failure
 
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.network.resultEither
-import com.waz.zclient.core.requests.Either
-import com.waz.zclient.core.requests.map
 import com.waz.zclient.user.data.mapper.toUser
+import com.waz.zclient.user.data.source.UsersDataSource
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersNetwork
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
@@ -20,9 +21,7 @@ class UsersRepository constructor(private val usersRemoteDataSource: UsersRemote
     override suspend fun profile(): Either<Failure, User> = resultEither(
         databaseRequest = { usersLocalDataSource.profile() },
         networkRequest = { usersLocalDataSource.profile() },
-        saveCallRequest = { usersLocalDataSource.add(it) }).map {
-        it.toUser()
-    }
+        saveCallRequest = { usersLocalDataSource.add(it) }).map { it.toUser() }
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> = requestData {
         usersRemoteDataSource.changeHandle(value)
