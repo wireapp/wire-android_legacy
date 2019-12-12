@@ -1,15 +1,20 @@
 package com.waz.zclient.user.domain.usecase
 
 
-import com.waz.zclient.core.usecase.CompletableUseCase
+import com.waz.zclient.core.network.requestData
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
+import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.user.data.UsersRepository
-import com.waz.zclient.user.data.source.UsersDataSource
-import io.reactivex.Completable
-import io.reactivex.Scheduler
 
-class ChangeHandleUseCase(subscribeScheduler: Scheduler,
-                          postExecutionScheduler: Scheduler) : CompletableUseCase<String>(subscribeScheduler, postExecutionScheduler) {
-    private val userRepository: UsersDataSource = UsersRepository()
-    override fun buildUseCaseCompletable(params: String?): Completable = userRepository.changeHandle(params!!)
+class ChangeHandleUseCase(private val usersRepository: UsersRepository)
+    : UseCase<Any, ChangeHandle>() {
+
+    override suspend fun run(params: ChangeHandle): Either<Failure, Any> = requestData {
+        usersRepository.changePhone(params.handle)
+    }
 }
+
+data class ChangeHandle(val handle: String)
+
 

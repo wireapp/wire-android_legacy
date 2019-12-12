@@ -1,4 +1,4 @@
-package com.waz.zclient.utilities.utils
+package com.waz.zclient.utilities
 
 import org.threeten.bp.Duration
 import org.threeten.bp.Instant

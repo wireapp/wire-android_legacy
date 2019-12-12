@@ -92,7 +92,7 @@
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 
         <activity
-            android:name="com.waz.zclient.settings.ui.home.SettingsActivity"
+            android:name="com.waz.zclient.settings.main.SettingsMainActivity"
             android:label="@string/settings_title"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Dark.Preferences"

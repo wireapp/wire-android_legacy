@@ -1,15 +1,17 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.core.network.Network
+import com.waz.zclient.core.network.requestApi
+import com.waz.zclient.core.requests.Either
+import com.waz.zclient.core.requests.Failure
 import com.waz.zclient.storage.db.model.UserEntity
-import io.reactivex.Completable
-import io.reactivex.Single
 
-class UsersRemoteDataSource constructor(private val userApi: UsersApi = Network().userApi()) {
+class UsersRemoteDataSource constructor(private val userApi: UsersApi = UsersNetwork().usersApi()) {
 
-    fun profile(): Single<UserEntity> = userApi.profile()
-    fun changeHandle(value: String): Completable = userApi.changeHandle(value)
-    fun changeEmail(value: String): Completable = userApi.changeEmail(value)
-    fun changePhone(value: String): Completable = userApi.changePhone(value)
+    suspend fun profile(): Either<Failure, UserEntity> = requestApi { userApi.profile() }
 
+    suspend fun changeHandle(value: String): Either<Failure, Any> = requestApi { userApi.changeHandle(value) }
+
+    suspend fun changeEmail(value: String): Either<Failure, Any> = requestApi { userApi.changeEmail(value) }
+
+    suspend fun changePhone(value: String): Either<Failure, Any> = requestApi { userApi.changePhone(value) }
 }
