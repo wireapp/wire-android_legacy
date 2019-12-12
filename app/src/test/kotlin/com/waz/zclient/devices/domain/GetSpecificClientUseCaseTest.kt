@@ -35,7 +35,7 @@ class GetSpecificClientUseCaseTest {
 
             Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Right(client))
 
-            val params = Params(TEST_ID)
+            val params = GetSpecificClientParams(TEST_ID)
             getSpecificClientUseCase.run(params)
 
             Mockito.verify(repository).clientById(TEST_ID)
@@ -48,7 +48,7 @@ class GetSpecificClientUseCaseTest {
         runBlocking {
             Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
 
-            val params = Params(TEST_ID)
+            val params = GetSpecificClientParams(TEST_ID)
             getSpecificClientUseCase.run(params)
 
             Mockito.verify(repository).clientById(TEST_ID)
