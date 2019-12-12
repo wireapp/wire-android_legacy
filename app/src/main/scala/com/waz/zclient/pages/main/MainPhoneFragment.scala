@@ -19,11 +19,12 @@ package com.waz.zclient.pages.main
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.FragmentManager
 import android.view.{LayoutInflater, View, ViewGroup}
+import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
+import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
@@ -32,11 +33,12 @@ import com.waz.zclient._
 import com.waz.zclient.collection.controllers.CollectionController
 import com.waz.zclient.collection.fragments.CollectionFragment
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
-import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
+import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.collections.CollectionsObserver
 import com.waz.zclient.controllers.confirmation.{ConfirmationObserver, ConfirmationRequest, IConfirmationController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.controllers.singleimage.{ISingleImageController, SingleImageObserver}
+import com.waz.zclient.conversation.creation.{CreateConversationController, CreateConversationManagerFragment}
 import com.waz.zclient.conversation.{ConversationController, ImageFragment}
 import com.waz.zclient.deeplinks.DeepLink.{logTag => _, _}
 import com.waz.zclient.deeplinks.DeepLinkService
@@ -50,8 +52,10 @@ import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
+import com.waz.zclient.preferences.pages.SettingsBackStackKey
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
+import com.waz.zclient.utils.BackStackNavigator
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 
@@ -205,7 +209,20 @@ class MainPhoneFragment extends FragmentHelper
     singleImageController.addSingleImageObserver(this)
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
-
+    val action = getActivity.getIntent.getAction
+    if (action == "GROUP_CONVERSATION") {
+      inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
+      getFragmentManager.beginTransaction
+        .setCustomAnimations(
+          R.anim.fragment_animation_second_page_slide_in_from_right,
+          R.anim.fragment_animation_second_page_slide_in_from_left,
+          R.anim.fragment_animation_second_page_slide_in_from_right,
+          R.anim.fragment_animation_second_page_slide_in_from_left)
+        .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
+        .addToBackStack(CreateConversationManagerFragment.Tag)
+        .commit()
+      getActivity.getIntent.setAction("")
+    }
     consentDialog
   }
 
