@@ -23,6 +23,7 @@ class AccessTokenAuthenticator(private val authToken: AuthToken) : Authenticator
 
         synchronized(this) {
             val newToken = authToken.accessToken() //TODO: get the new token and save it
+            authToken.updateAccessToken(newToken)
 
             // Check if the request made was previously made as an authenticated request.
             response.request().header(AuthToken.AUTH_HEADER)?.let {
@@ -43,6 +44,7 @@ class AccessTokenAuthenticator(private val authToken: AuthToken) : Authenticator
                 return response.request()
                     .newBuilder()
                     .removeHeader(AuthToken.AUTH_HEADER)
+                    //TODO: Extract this line since it is being repeated.
                     .addHeader(AuthToken.AUTH_HEADER, "${AuthToken.AUTH_HEADER_TOKEN_TYPE} $updatedToken")
                     .build()
             }

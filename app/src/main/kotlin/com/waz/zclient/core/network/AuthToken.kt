@@ -12,5 +12,7 @@ class AuthToken(private val tokenRepository: AccessTokenRepository) {
 
     fun refreshToken() = tokenRepository.refreshToken()
     fun updateRefreshToken(newRefreshToken: String) = tokenRepository.updateRefreshToken(newRefreshToken)
+
+    fun wipeOutTokens() = tokenRepository.wipeOutTokens()
 }
 

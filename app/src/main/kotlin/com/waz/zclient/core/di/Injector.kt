@@ -1,8 +1,9 @@
-package com.waz.zclient.di
+package com.waz.zclient.core.di
 
 import android.content.Context
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.WireApplication
+import com.waz.zclient.ContextProvider
+import com.waz.zclient.ZApplication
 import com.waz.zclient.core.network.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -39,7 +40,7 @@ object Injector {
 
     fun networkHandler() = NetworkHandler(context())
 
-    fun context(): Context = WireApplication.APP_INSTANCE().applicationContext
+    fun context(): Context = ContextProvider.getApplicationContext()
 
     private fun accessTokenAuthenticator(): AccessTokenAuthenticator =
         AccessTokenAuthenticator(AuthToken(AccessTokenRepository()))
