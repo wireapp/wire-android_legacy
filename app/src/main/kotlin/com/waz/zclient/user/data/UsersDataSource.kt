@@ -17,9 +17,9 @@ class UsersDataSource constructor(private val usersRemoteDataSource: UsersRemote
                                   private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource()) : UsersRepository {
 
     override suspend fun profile(): Either<Failure, User> = resultEither(
-        databaseRequest = { usersLocalDataSource.profile() },
-        networkRequest = { usersRemoteDataSource.profile() },
-        saveCallRequest = { usersLocalDataSource.add(it) }).map { it.toUser() }
+        mainRequest = { usersLocalDataSource.profile() },
+        fallbackRequest = { usersRemoteDataSource.profile() },
+        saveToDatabase = { usersLocalDataSource.add(it) }).map { it.toUser() }
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> = requestData {
         usersRemoteDataSource.changeHandle(value)
