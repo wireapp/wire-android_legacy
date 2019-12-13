@@ -1,4 +1,4 @@
-package com.waz.zclient.settings.presentation.ui.devices
+package com.waz.zclient.settings.devices
 
 class SettingsDeviceConstants private constructor() {
     companion object {

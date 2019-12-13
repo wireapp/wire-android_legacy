@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.settings.presentation.ui.devices.SettingsDeviceConstants
+import com.waz.zclient.settings.devices.SettingsDeviceConstants
 import kotlinx.android.synthetic.main.activity_device_detail.*
 
 class SettingsDeviceDetailActivity : AppCompatActivity() {
