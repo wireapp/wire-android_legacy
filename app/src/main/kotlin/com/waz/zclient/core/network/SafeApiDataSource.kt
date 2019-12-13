@@ -35,14 +35,14 @@ suspend fun <R> requestLocal(localRequest: suspend () -> R): Either<Failure, R> 
         Either.Left(Failure.CancellationError)
     }
 
-suspend fun <R> resultEither(databaseRequest: suspend () -> Either<Failure, R>,
-                             networkRequest: suspend () -> Either<Failure, R>,
-                             saveCallRequest: (R) -> Unit): Either<Failure, R> {
-    var response = databaseRequest()
+suspend fun <R> resultEither(mainRequest: suspend () -> Either<Failure, R>,
+                             fallbackRequest: suspend () -> Either<Failure, R>,
+                             saveToDatabase: (R) -> Unit): Either<Failure, R> {
+    var response = mainRequest()
     if (response.isLeft) {
-        val networkResponse = requestData { networkRequest() }
+        val networkResponse = requestData { fallbackRequest() }
         if (networkResponse.isRight) {
-            networkResponse.map(saveCallRequest)
+            networkResponse.map(saveToDatabase)
         }
         response = networkResponse
     }

@@ -16,17 +16,17 @@ class ClientsRepository private constructor(
 
     override suspend fun clientById(clientId: String): Either<Failure, Client> =
         resultEither(
-            databaseRequest = { localDataSource.clientById(clientId) },
-            networkRequest = { remoteDataSource.clientById(clientId) },
-            saveCallRequest = { localDataSource.updateClient(it) }).map {
+            mainRequest = { localDataSource.clientById(clientId) },
+            fallbackRequest = { remoteDataSource.clientById(clientId) },
+            saveToDatabase = { localDataSource.updateClient(it) }).map {
             it.toClient()
         }
 
     override suspend fun allClients(): Either<Failure, List<Client>> =
         resultEither(
-            databaseRequest = { localDataSource.allClients() },
-            networkRequest = { remoteDataSource.allClients() },
-            saveCallRequest = { localDataSource.updateClients(it) }).map {
+            mainRequest = { localDataSource.allClients() },
+            fallbackRequest = { remoteDataSource.allClients() },
+            saveToDatabase = { localDataSource.updateClients(it) }).map {
             it.toListOfClients()
         }
 
