@@ -33,7 +33,7 @@ class UserRepositoryTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        usersRepository = UsersRepository(usersRemoteDataSource, usersLocalDataSource)
+        usersRepository = UsersDataSource(usersRemoteDataSource, usersLocalDataSource)
     }
 
 

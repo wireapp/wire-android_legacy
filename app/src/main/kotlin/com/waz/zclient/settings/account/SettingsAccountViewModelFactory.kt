@@ -2,7 +2,7 @@ package com.waz.zclient.settings.account
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.waz.zclient.user.data.UsersRepository
+import com.waz.zclient.user.data.UsersDataSource
 import com.waz.zclient.user.domain.usecase.ChangeHandleUseCase
 import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
@@ -11,15 +11,15 @@ import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 class SettingsAccountViewModelFactory : ViewModelProvider.Factory {
 
     private val getUserProfileUseCase by lazy {
-        GetUserProfileUseCase(UsersRepository.getInstance())
+        GetUserProfileUseCase(UsersDataSource.getInstance())
     }
 
     private val changeHandleUseCase by lazy {
-        ChangeHandleUseCase(UsersRepository.getInstance())
+        ChangeHandleUseCase(UsersDataSource.getInstance())
     }
 
     private val changePhoneUseCase by lazy {
-        ChangePhoneUseCase(UsersRepository.getInstance())
+        ChangePhoneUseCase(UsersDataSource.getInstance())
     }
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T =
