@@ -538,8 +538,6 @@ class MainActivity extends BaseActivity
 }
 
 object MainActivity {
-  val ShortcutBundleKey: String = "shortcutBundleKey"
-
   val ClientRegStateArg: String = "ClientRegStateArg"
 
   private val slideAnimations = Set(

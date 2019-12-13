@@ -17,13 +17,17 @@
  */
 package com.waz.zclient.pages.main
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
+import android.widget.Toast
 import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
 import com.waz.model.{ErrorData, Uid}
+import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.service.{AccountManager, GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -47,6 +51,7 @@ import com.waz.zclient.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.log.LogUI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
+import com.waz.zclient.messages.compose.ComposeMessageActivity
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
@@ -57,6 +62,7 @@ import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 
+import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -202,27 +208,56 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
+  private def openGalleryPicker() = {
+    inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
+      case true =>
+        val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(galleryIntent, 420)
+        getActivity.getIntent.setAction("")
+      case _ =>
+        Toast.makeText(getActivity, "Error with permissions", Toast.LENGTH_LONG).show()
+    }(Threading.Ui)
+  }
+
+  private def initShortcutDestinations() = {
+    val action = getActivity.getIntent.getAction
+    if (action != null) {
+      if (action == "GROUP_CONVERSATION") {
+        newGroupConversation()
+      } else if (action == "SHARE_PHOTO") {
+        openGalleryPicker()
+      } else if (action == "NEW_MESSAGE") {
+        openComposeMessageActivity()
+      }
+    }
+  }
+
+  private def openComposeMessageActivity() = {
+     val intent = new Intent(getActivity, classOf[ComposeMessageActivity])
+     startActivity(intent)
+     getActivity.getIntent.setAction("")
+  }
+
+  private def newGroupConversation() = {
+    inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
+    getFragmentManager.beginTransaction
+      .setCustomAnimations(
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_in_from_left,
+        R.anim.fragment_animation_second_page_slide_in_from_right,
+        R.anim.fragment_animation_second_page_slide_in_from_left)
+      .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
+      .addToBackStack(CreateConversationManagerFragment.Tag)
+      .commit()
+    getActivity.getIntent.setAction("")
+  }
+
   override def onStart(): Unit = {
     super.onStart()
     singleImageController.addSingleImageObserver(this)
     confirmationController.addConfirmationObserver(this)
     collectionController.addObserver(this)
-    val action = getActivity.getIntent.getAction
-    if (action != null ) {
-      if (action == "GROUP_CONVERSATION") {
-        inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
-        getFragmentManager.beginTransaction
-          .setCustomAnimations(
-            R.anim.fragment_animation_second_page_slide_in_from_right,
-            R.anim.fragment_animation_second_page_slide_in_from_left,
-            R.anim.fragment_animation_second_page_slide_in_from_right,
-            R.anim.fragment_animation_second_page_slide_in_from_left)
-          .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
-          .addToBackStack(CreateConversationManagerFragment.Tag)
-          .commit()
-        getActivity.getIntent.setAction("")
-      }
-    }
+    initShortcutDestinations()
     consentDialog
   }
 
@@ -235,7 +270,17 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
-    withChildFragment(R.id.fl_fragment_main_content)(_.onActivityResult(requestCode, resultCode, data))
+    if (requestCode == 420) {
+      if (resultCode == Activity.RESULT_OK) {
+        val intent = new Intent(getActivity, classOf[ShareActivity])
+        intent.setAction(Intent.ACTION_SEND)
+        intent.putExtra(Intent.EXTRA_STREAM, data.getData)
+        intent.setType("image/jpeg")
+        startActivity(intent)
+      }
+    } else {
+      withChildFragment(R.id.fl_fragment_main_content)(_.onActivityResult(requestCode, resultCode, data))
+    }
   }
 
   override def onBackPressed(): Boolean = confirmationMenu flatMap { confirmationMenu =>

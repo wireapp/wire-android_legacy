@@ -21,20 +21,19 @@
     <shortcut
         android:enabled="true"
         android:icon="@drawable/ic_create_conversation"
-        android:shortcutId="new message"
+        android:shortcutId="new_message"
         android:shortcutLongLabel="@string/shortcut_compose_new_message_label"
         android:shortcutShortLabel="@string/shortcut_compose_new_message_label">
         <intent
-            android:action="android.intent.action.SEND"
-            android:mimeType="text/plain"
-            android:targetClass="com.waz.zclient.ShareActivity"
+            android:action="SEND_MESSAGE"
+            android:targetClass="com.waz.zclient.MainActivity"
             android:targetPackage="com.wire.internal" />
     </shortcut>
 
     <shortcut
         android:enabled="true"
         android:icon="@drawable/ic_share_photo"
-        android:shortcutId="share photo"
+        android:shortcutId="share_photo"
         android:shortcutLongLabel="@string/shortcut_share_a_photo_label"
         android:shortcutShortLabel="@string/shortcut_share_a_photo_label">
         <intent
@@ -46,13 +45,13 @@
     <shortcut
         android:enabled="true"
         android:icon="@drawable/ic_create_group"
-        android:shortcutId="new group"
+        android:shortcutId="new_group"
         android:shortcutLongLabel="@string/shortcut_create_chat_long_label"
         android:shortcutShortLabel="@string/shortcut_create_chat_short_label">
         <intent
             android:action="GROUP_CONVERSATION"
             android:targetClass="com.waz.zclient.MainActivity"
-            android:targetPackage="com.wire.internal" />/>
+            android:targetPackage="com.wire.internal" />
     </shortcut>
 </shortcuts>
 
