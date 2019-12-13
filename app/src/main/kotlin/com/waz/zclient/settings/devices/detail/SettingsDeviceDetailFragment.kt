@@ -12,7 +12,6 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.settings.devices.model.ClientItem
-import com.waz.zclient.settings.devices.SettingsDeviceConstants
 import kotlinx.android.synthetic.main.fragment_device_detail.*
 
 class SettingsDeviceDetailFragment : Fragment() {
@@ -62,15 +61,18 @@ class SettingsDeviceDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         lifecycleScope.launchWhenResumed {
-            val id = arguments?.getString(SettingsDeviceConstants.DEVICE_ID_BUNDLE_KEY)
+            val id = arguments?.getString(DEVICE_ID_BUNDLE_KEY)
             id?.let { deviceDetailsViewModel.loadData(it) }
         }
     }
 
     companion object {
+
+        private const val DEVICE_ID_BUNDLE_KEY = "deviceIdBundleKey"
+
         fun newInstance(deviceId: String) = SettingsDeviceDetailFragment()
             .withArgs {
-                putString(SettingsDeviceConstants.DEVICE_ID_BUNDLE_KEY, deviceId)
+                putString(DEVICE_ID_BUNDLE_KEY, deviceId)
             }
     }
 }
