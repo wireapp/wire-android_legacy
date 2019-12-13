@@ -15,7 +15,7 @@ suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Fail
                 return Either.Right(body)
             }
         }
-        return Either.Left(Failure.ServerError)
+        return Either.Left(Failure.ServerError(response.code(), response.message()))
     } catch (e: CancellationException) {
         return Either.Left(Failure.CancellationError)
     }

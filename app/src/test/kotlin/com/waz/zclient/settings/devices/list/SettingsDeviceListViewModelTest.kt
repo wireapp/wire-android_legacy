@@ -96,7 +96,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns ServerError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.ServerError)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
         viewModel.loadData()
 
@@ -127,6 +127,7 @@ class SettingsDeviceListViewModelTest {
     }
 
     companion object {
+        private const val TEST_CODE = 401
         private const val TEST_ERROR_MESSAGE = "Something went wrong, please try again."
         private const val TEST_COOKIE = "4555f7b2"
         private const val TEST_TIME = "2019-11-14T11:00:42.482Z"
