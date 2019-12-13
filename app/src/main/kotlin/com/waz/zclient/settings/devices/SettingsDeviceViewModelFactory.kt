@@ -3,7 +3,7 @@ package com.waz.zclient.settings.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.waz.zclient.ContextProvider
-import com.waz.zclient.devices.data.ClientsRepository
+import com.waz.zclient.devices.data.ClientsDataSource
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -22,7 +22,7 @@ class SettingsDeviceViewModelFactory : ViewModelProvider.Factory {
         val userId = globalPreferences.activeUserId
         val userDatabase: UserDatabase = UserDatabase.getInstance(ContextProvider.getApplicationContext(), userId)
         val clientApi = ClientsNetwork().getClientsApi()
-        ClientsRepository.getInstance(ClientsRemoteDataSource(clientApi),
+        ClientsDataSource.getInstance(ClientsRemoteDataSource(clientApi),
             ClientsLocalDataSource(userDatabase.clientsDao()))
     }
 
