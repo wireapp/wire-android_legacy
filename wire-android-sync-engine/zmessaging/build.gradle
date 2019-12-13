@@ -85,13 +85,13 @@ dependencies {
     implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
 
     //Provided dependencies
-    compileOnly "com.softwaremill.macwire:macros_$rootProject.ext.scalaMajorVersion:2.3.3"
-    compileOnly "com.softwaremill.macwire:macrosakka_$rootProject.ext.scalaMajorVersion:2.3.3"
-    compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:2.3.3"
-    compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:macros_$rootProject.ext.scalaMajorVersion:$versions.macwire"
+    compileOnly "com.softwaremill.macwire:macrosakka_$rootProject.ext.scalaMajorVersion:$versions.macwire"
+    compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:$versions.macwire"
+    compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:$versions.macwire"
     compileOnly "com.wire:avs:3.4.100"
     compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
-    compileOnly "org.threeten:threetenbp:$versions.threetenbp"
+    compileOnly deps.threetenbp
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
     compileOnly "$deps.robolectric_android_all"
 
@@ -114,7 +114,7 @@ dependencies {
     testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
     testImplementation "com.wire:avs:3.4.100"
     testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
-    testImplementation "org.threeten:threetenbp:$versions.threetenbp"
+    testImplementation deps.threetenbp
     testImplementation "net.java.dev.jna:jna:4.4.0@aar"
 
 }

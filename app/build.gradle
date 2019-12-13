@@ -37,16 +37,16 @@ task copyCustomResources(type: Copy) {
     def iconFolder = (buildtimeConfiguration.configuration.iconFolder ?: 'icons')
     def targetResFolder = "$rootDir/app/src/main/res"
     def iconSubfolders = [
-            'ldpi': 'drawable-ldpi',
-            'mdpi': 'drawable-mdpi',
-            'hdpi': 'drawable-hdpi',
-            'xhdpi': 'drawable-xhdpi',
-            'xxhdpi': 'drawable-xxhdpi',
-            'xxxhdpi': 'drawable-xxxhdpi'
+        'ldpi'   : 'drawable-ldpi',
+        'mdpi'   : 'drawable-mdpi',
+        'hdpi'   : 'drawable-hdpi',
+        'xhdpi'  : 'drawable-xhdpi',
+        'xxhdpi' : 'drawable-xxhdpi',
+        'xxxhdpi': 'drawable-xxxhdpi'
     ]
 
     def resources = [
-            "ic_launcher_wire.png" : (buildtimeConfiguration.configuration.launcherIcon ?: '')
+        "ic_launcher_wire.png" : (buildtimeConfiguration.configuration.launcherIcon ?: '')
     ]
     def customDir = buildtimeConfiguration.customResourcesPath
     resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
@@ -205,38 +205,38 @@ android {
         dev {
             applicationId "com.waz.zclient.dev"
             versionName majorVersion + android.defaultConfig.versionCode + "-dev"
-            manifestPlaceholders = [applicationLabel       : "Wire Dev",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_dev",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+            manifestPlaceholders = [applicationLabel : "Wire Dev",
+                                    applicationIcon  : "@drawable/ic_launcher_wire_dev",
+                                    sharedUserId     : "",
+                                    internal_features: "true"]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'false'
         }
 
         candidate {
             applicationId "com.wire.candidate"
             versionName majorVersion + android.defaultConfig.versionCode + "-candidate"
-            manifestPlaceholders = [applicationLabel       : "Wire Candidate",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_candidate",
-                                    sharedUserId           : "",
-                                    internal_features      : "false"]
+            manifestPlaceholders = [applicationLabel : "Wire Candidate",
+                                    applicationIcon  : "@drawable/ic_launcher_wire_candidate",
+                                    sharedUserId     : "",
+                                    internal_features: "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
         prod {
             applicationId buildtimeConfiguration.configuration.applicationId
-            manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
-                                    applicationIcon        : "@drawable/ic_launcher_wire",
-                                    sharedUserId           : buildtimeConfiguration.configuration.userId,
-                                    internal_features      : "false"]
+            manifestPlaceholders = [applicationLabel : buildtimeConfiguration.configuration.appName,
+                                    applicationIcon  : "@drawable/ic_launcher_wire",
+                                    sharedUserId     : buildtimeConfiguration.configuration.userId,
+                                    internal_features: "false"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', "$buildtimeConfiguration.configuration.loggingEnabled"
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
         internal {
@@ -247,22 +247,22 @@ android {
                                     sharedUserId     : "",
                                     internal_features: "true"]
 
-            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
 
         experimental {
             applicationId "com.wire.x"
             versionName majorVersion + android.defaultConfig.versionCode + "-exp"
-            manifestPlaceholders = [applicationLabel       : "Wire Exp",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_playground",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+            manifestPlaceholders = [applicationLabel : "Wire Exp",
+                                    applicationIcon  : "@drawable/ic_launcher_wire_playground",
+                                    sharedUserId     : "",
+                                    internal_features: "true"]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
-            buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
-            buildConfigField 'boolean', 'SAFE_LOGGING',     'true'
+            buildConfigField 'boolean', 'LOGGING_ENABLED', 'true'
+            buildConfigField 'boolean', 'SAFE_LOGGING', 'true'
         }
     }
 
@@ -359,7 +359,7 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$versions.playServices"
     implementation "com.google.android.gms:play-services-location:$versions.playServices"
     implementation "com.google.android.gms:play-services-gcm:$versions.playServices"
-    implementation ('com.google.firebase:firebase-messaging:19.0.0') {
+    implementation('com.google.firebase:firebase-messaging:19.0.0') {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
@@ -378,18 +378,18 @@ dependencies {
     implementation('com.jakewharton.threetenabp:threetenabp:1.1.0') {
         exclude group: 'org.threeten', module: 'threetenbp'
     }
-    implementation "org.threeten:threetenbp:$versions.threetenbp"
+    implementation deps.threetenbp
     implementation 'com.facebook.rebound:rebound:0.3.8'
     implementation 'com.atlassian.commonmark:commonmark:0.11.0'
     implementation 'net.java.dev.jna:jna:4.4.0@aar'
-    devImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    experimentalImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    internalImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    implementation("com.github.bumptech.glide:glide:4.10.0"){
+    devImplementation deps.stetho
+    experimentalImplementation deps.stetho
+    internalImplementation deps.stetho
+    implementation("com.github.bumptech.glide:glide:$versions.glide") {
         exclude group: 'com.android.support'
         transitive = true
     }
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
+    annotationProcessor "com.github.bumptech.glide:compiler:$versions.glide"
 
     // biometric prompt
     implementation 'androidx.biometric:biometric:1.0.0-rc02'
@@ -460,7 +460,7 @@ android.applicationVariants.all { variant ->
 
     variant.outputs.each { output ->
         def newApkName
-        if(buildtimeConfiguration.isCustomBuild()) {
+        if (buildtimeConfiguration.isCustomBuild()) {
             newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
         } else {
             newApkName = "${appName}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
