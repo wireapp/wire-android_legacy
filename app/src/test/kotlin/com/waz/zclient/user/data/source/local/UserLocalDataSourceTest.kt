@@ -6,6 +6,7 @@ import com.waz.zclient.storage.pref.GlobalPreferences
 import com.waz.zclient.userEntity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -62,6 +63,8 @@ class UserLocalDataSourceTest {
             verify(userDao).selectById(TEST_USER_ID)
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+
+            delay(200)
 
             assert(usersLocalDataSource.profile().isLeft)
         }
