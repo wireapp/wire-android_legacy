@@ -11,7 +11,7 @@ suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Fail
         val response = responseCall()
         if (response.isSuccessful) {
             val body = response.body()
-            if (body != null) {
+            body?.let {
                 return Either.Right(body)
             }
         }

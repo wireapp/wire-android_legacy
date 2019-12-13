@@ -6,9 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
@@ -39,17 +39,17 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initViewModel() {
         settingsAccountViewModel = ViewModelProvider(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java).also { viewModel ->
-            viewModel.loading.observe(viewLifecycleOwner, Observer { isLoading ->
+            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
                 updateLoadingVisibility(isLoading)
-            })
+            }
 
-            viewModel.error.observe(viewLifecycleOwner, Observer { errorMessage ->
+            viewModel.error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
-            })
+            }
 
-            viewModel.profile.observe(viewLifecycleOwner, Observer { profile ->
+            viewModel.profile.observe(viewLifecycleOwner) { profile ->
                 updateProfile(profile)
-            })
+            }
 
         }
     }
