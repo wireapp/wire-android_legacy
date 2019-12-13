@@ -19,7 +19,7 @@ class SettingsMainListFactory {
             for (i in titles.indices) {
                 settingItems.add(SettingsMainItem(titles[i], icons[i]))
             }
-            if (Config.isDeveloperSettingsEnabled()) {
+            if (Config.developerSettingsEnabled()) {
                 for (i in developerTitles.indices) {
                     settingItems.add(SettingsMainItem(developerTitles[i], developerIcons[i]))
                 }

@@ -10,5 +10,5 @@ val Context.networkInfo: NetworkInfo?
 
 fun Context.stringArrayFromResource(id: Int): Array<String> = resources.getStringArray(id)
 
-fun Context.stringFromResource(id: Int): String = resources.getString(id)
+fun Context.stringFromResource(id: Int) = resources.getString(id)
 
