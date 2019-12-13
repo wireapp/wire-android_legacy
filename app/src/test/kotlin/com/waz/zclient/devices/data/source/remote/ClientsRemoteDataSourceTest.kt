@@ -4,6 +4,7 @@ import com.waz.zclient.framework.mockito.eq
 import com.waz.zclient.storage.clients.model.ClientEntity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test

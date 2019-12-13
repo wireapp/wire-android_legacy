@@ -5,7 +5,6 @@ import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.network.resultEither
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
-import com.waz.zclient.devices.data.source.remote.ClientsNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.mapper.toClient
@@ -36,8 +35,8 @@ class ClientsRepository private constructor(
         @Volatile
         private var clientsRepository: ClientsRepository? = null
 
-        fun getInstance(remoteDataSource: ClientsRemoteDataSource = ClientsRemoteDataSource(ClientsNetwork().getClientsApi()),
-                        localDataSource: ClientsLocalDataSource = ClientsLocalDataSource()): ClientsDataSource =
+        fun getInstance(remoteDataSource: ClientsRemoteDataSource,
+                        localDataSource: ClientsLocalDataSource): ClientsDataSource =
             clientsRepository ?: synchronized(this) {
                 clientsRepository ?: ClientsRepository(remoteDataSource, localDataSource).also {
                     clientsRepository = it
