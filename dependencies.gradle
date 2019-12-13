@@ -26,7 +26,7 @@ ext {
         mockito     : "3.1.0",
         kluent      : "1.14",
         lifecycle   : "2.0.0",
-        okHttp      : "3.10.0",
+        okHttp      : "3.12.0",
         circe       : "0.9.3",
         retrofit    : "2.6.2",
         macwire     : "2.3.3",

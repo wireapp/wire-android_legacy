@@ -399,7 +399,7 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-protobuf:$versions.retrofit"
     implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
     implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.0'
+    implementation "com.squareup.okhttp3:logging-interceptor:$versions.okHttp"
 
     //Android Architecture Components
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
