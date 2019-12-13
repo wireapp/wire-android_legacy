@@ -226,6 +226,7 @@
         <activity
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
             android:screenOrientation="portrait" />
+        <activity android:name=".settings.devices.detail.SettingsDeviceDetailActivity" />
 
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"

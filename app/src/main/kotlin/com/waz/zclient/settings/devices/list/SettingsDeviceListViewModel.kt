@@ -59,12 +59,7 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
     }
 
     private fun handleAllClientsSuccess(result: List<Client>) {
-        when {
-            result.isNullOrEmpty() -> mutableOtherDevices.value = listOf()
-            result.isNotEmpty() -> mutableOtherDevices.postValue(result.map {
-                ClientItem(it)
-            })
-        }
+        mutableOtherDevices.postValue(result.map { ClientItem(it) })
     }
 
     private fun handleFailure(message: String) {

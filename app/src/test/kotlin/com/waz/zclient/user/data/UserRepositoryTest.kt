@@ -1,7 +1,7 @@
 package com.waz.zclient.user.data
 
-import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.user.data.mapper.toUser
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
@@ -78,7 +78,7 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed and the remote data source failed, then return an error`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.ServerError))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE)))
             `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure.CancellationError))
 
             usersRepository.profile()
@@ -93,6 +93,8 @@ class UserRepositoryTest {
     }
 
     companion object {
+        private const val TEST_CODE = 404
+        private const val TEST_ERROR_MESSAGE = "Network request failed"
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
     }
 }

@@ -37,7 +37,7 @@ class SettingsDeviceListViewModelTest {
     }
 
     @Test
-    fun `given data is loaded successfully, when list is full, then assert data is mapped correctly`() {
+    fun `given data is loaded successfully, when list is populated, then assert data is mapped correctly`() {
 
         val location = mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
@@ -62,23 +62,6 @@ class SettingsDeviceListViewModelTest {
     }
 
     @Test
-    fun `given data is loaded successfully, when list is full, then assert list state is empty`() {
-
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf())) }
-
-        viewModel.loadData()
-
-        viewModel.loading.observeOnce { isLoading ->
-            assert(isLoading)
-        }
-
-        viewModel.otherDevices.observeOnce {
-            assert(viewModel.loading.value == false)
-            assert(it.isEmpty())
-        }
-    }
-
-    @Test
     fun `given data source returns NetworkError, then update error live data`() {
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.NetworkConnection)) }
 
@@ -98,7 +81,6 @@ class SettingsDeviceListViewModelTest {
     fun `given data source returns ServerError, then update error live data`() {
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
-        viewModel.loadData()
 
         viewModel.loading.observeOnce { isLoading ->
             assert(isLoading)

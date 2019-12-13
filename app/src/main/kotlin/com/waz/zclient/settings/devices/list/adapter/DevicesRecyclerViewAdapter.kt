@@ -3,14 +3,13 @@ package com.waz.zclient.settings.devices.list.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.annotation.NonNull
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
 import com.waz.zclient.settings.devices.model.ClientItem
 import com.waz.zclient.utilities.DateAndTimeUtils
+import kotlinx.android.synthetic.main.item_view_devices.view.*
 
 class DevicesRecyclerViewAdapter : RecyclerView.Adapter<DevicesViewHolder>() {
 
@@ -35,30 +34,21 @@ class DevicesRecyclerViewAdapter : RecyclerView.Adapter<DevicesViewHolder>() {
         notifyDataSetChanged()
     }
 
-    fun setOnItemClickedListener(@NonNull itemClickListener: RecyclerViewItemClickListener<ClientItem>) {
+    fun setItemClickedListener(@NonNull itemClickListener: RecyclerViewItemClickListener<ClientItem>) {
         this.itemClickListener = itemClickListener
     }
 }
 
 class DevicesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-    private val deviceName: TextView by lazy {
-        itemView.findViewById<TextView>(R.id.item_device_title)
-    }
-
-    private val deviceId: TextView by lazy {
-        itemView.findViewById<TextView>(R.id.item_device_id)
-    }
-
-    private val deviceVerifiedIcon: ImageView by lazy {
-        itemView.findViewById<ImageView>(R.id.item_device_verification_icon)
-    }
-
     fun bind(clientItem: ClientItem, itemClickListener: RecyclerViewItemClickListener<ClientItem>?) {
-        deviceName.text = clientItem.client.label
-        val formattedDate = DateAndTimeUtils.getTimeStamp(clientItem.client.time)
-        deviceId.text = "ID: ${clientItem.client.id}\nActivated: ${formattedDate}"
-        deviceVerifiedIcon.setImageResource(clientItem.verificationIcon())
-        itemView.setOnClickListener { itemClickListener?.onItemClicked(clientItem) }
+        with(itemView) {
+            item_device_title.text = clientItem.client.label
+            val formattedDate = DateAndTimeUtils.getTimeStamp(clientItem.client.time)
+
+            item_device_id.text = "ID: ${clientItem.client.id}\nActivated: ${formattedDate}"
+            item_device_verification_icon.setImageResource(clientItem.verificationIcon())
+            
+            setOnClickListener { itemClickListener?.onItemClicked(clientItem) }
+        }
     }
 }

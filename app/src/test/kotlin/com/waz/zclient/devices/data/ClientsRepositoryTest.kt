@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.data
 
-import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -70,7 +70,7 @@ class ClientsRepositoryTest {
     @Test
     fun `Given allClients() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
-            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(Failure.ServerError))
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_MESSAGE)))
             `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure.CancellationError)
             )
             repository.allClients()
@@ -115,7 +115,7 @@ class ClientsRepositoryTest {
     @Test
     fun `Given getClientById() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
-            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.ServerError))
+            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_MESSAGE)))
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
 
             repository.clientById(TEST_ID)
@@ -150,6 +150,7 @@ class ClientsRepositoryTest {
     }
 
     companion object {
+        private const val TEST_CODE = 401
         private const val TEST_LONGITUDE = 0.00
         private const val TEST_LATITUDE = 0.00
         private const val TEST_COOKIE = "4555f7b2"

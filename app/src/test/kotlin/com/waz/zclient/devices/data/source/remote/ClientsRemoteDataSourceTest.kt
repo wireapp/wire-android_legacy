@@ -29,6 +29,11 @@ class ClientsRemoteDataSourceTest {
     fun setup() {
         MockitoAnnotations.initMocks(this)
         remoteDataSource = ClientsRemoteDataSource(clientsApi)
+        `when`(allClientsResponse.code()).thenReturn(TEST_NETWORK_ERROR_CODE)
+        `when`(clientByIdResponse.code()).thenReturn(TEST_NETWORK_ERROR_CODE)
+        `when`(clientByIdResponse.message()).thenReturn(TEST_NETWORK_ERROR_MESSAGE)
+        `when`(allClientsResponse.message()).thenReturn(TEST_NETWORK_ERROR_MESSAGE)
+
     }
 
     @Test
@@ -127,6 +132,8 @@ class ClientsRemoteDataSourceTest {
 
 
     companion object {
+        private const val TEST_NETWORK_ERROR_CODE = 404
+        private const val TEST_NETWORK_ERROR_MESSAGE = "Network request failed"
         private const val TEST_ID = "Test Id"
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
     }
