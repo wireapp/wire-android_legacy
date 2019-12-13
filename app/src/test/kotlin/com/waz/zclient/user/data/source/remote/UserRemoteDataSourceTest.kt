@@ -30,6 +30,8 @@ class UserRemoteDataSourceTest {
     fun setUp() {
         MockitoAnnotations.initMocks(this)
         usersRemoteDataSource = UsersRemoteDataSource(usersApi)
+        `when`(profileResponse.code()).thenReturn(404)
+        `when`(profileResponse.message()).thenReturn("Test error message")
     }
 
     @Test
