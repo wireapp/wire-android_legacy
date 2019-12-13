@@ -11,7 +11,7 @@ class ChangeHandleUseCase(private val usersRepository: UsersRepository)
     : UseCase<Any, ChangeHandle>() {
 
     override suspend fun run(params: ChangeHandle): Either<Failure, Any> = requestData {
-        usersRepository.changePhone(params.handle)
+        usersRepository.changeHandle(params.handle)
     }
 }
 
