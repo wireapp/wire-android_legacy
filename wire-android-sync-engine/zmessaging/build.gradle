@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'jp.leafytree.android-scala'
 apply from: 'deflake.gradle'
+apply from: "$rootProject.projectDir/dependencies.gradle"
 
 // Android
 android {
@@ -65,11 +66,6 @@ tasks.withType(ScalaCompile) {
                                                 "-deprecation", "-encoding", "UTF-8", "-Xmax-classfile-name", "128"]
 }
 
-def versions = [
-        okHttp : "3.10.0",
-        circe : "0.9.3",
-]
-
 dependencies {
 
     api project(':wire-android-sync-engine:macrosupport')
@@ -77,7 +73,7 @@ dependencies {
     api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
     implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
-    implementation "$rootProject.deps.libphonenumber"
+    implementation "$deps.libphonenumber"
     implementation "com.wire:cryptobox-android:1.1.2"
     api "com.wire:generic-message-proto:1.23.0"
     implementation "com.wire:backend-api-proto:1.1"
@@ -95,12 +91,12 @@ dependencies {
     compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
     compileOnly "com.wire:avs:3.4.100"
     compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
-    compileOnly "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    compileOnly "org.threeten:threetenbp:$versions.threetenbp"
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
-    compileOnly "$rootProject.deps.robolectric_android_all"
+    compileOnly "$deps.robolectric_android_all"
 
     //Test dependencies
-    testImplementation("$rootProject.deps.scalaTest") {
+    testImplementation("$deps.scalaTest") {
         exclude module: 'scala-library'
     }
     testImplementation "org.scalamock:scalamock_$rootProject.ext.scalaMajorVersion:4.1.0"
@@ -108,8 +104,8 @@ dependencies {
     testImplementation("com.wire:robotest_$rootProject.ext.scalaMajorVersion:0.7") {
         exclude(group: "org.scalatest", module: "scalatest")
     }
-    testImplementation "$rootProject.deps.robolectric_android_all"
-    testImplementation "junit:junit:$rootProject.ext.versions.junit"             //to override version included in robolectric
+    testImplementation "$deps.robolectric_android_all"
+    testImplementation "junit:junit:$versions.junit"             //to override version included in robolectric
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
     //should match okhttp version.
     testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
@@ -118,7 +114,7 @@ dependencies {
     testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
     testImplementation "com.wire:avs:3.4.100"
     testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
-    testImplementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    testImplementation "org.threeten:threetenbp:$versions.threetenbp"
     testImplementation "net.java.dev.jna:jna:4.4.0@aar"
 
 }

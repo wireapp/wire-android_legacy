@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'jp.leafytree.android-scala'
+apply from: "$rootProject.projectDir/dependencies.gradle"
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -8,5 +9,5 @@ android {
 
 dependencies {
     compileOnly "org.scala-lang:scala-reflect:$rootProject.ext.scalaVersion"
-    compileOnly "$rootProject.deps.robolectric_android_all"
+    compileOnly "$deps.robolectric_android_all"
 }

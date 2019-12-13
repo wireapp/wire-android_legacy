@@ -5,6 +5,7 @@ apply plugin: 'jp.leafytree.android-scala'
 apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
+apply from: "$rootProject.projectDir/dependencies.gradle"
 
 ext {
     majorVersion = "3.43."
@@ -299,16 +300,6 @@ dexinfo {
     maxDepth 2
 }
 
-def versions = [
-    playServices : "17.0.0", //TODO can be independent now.
-    stetho: "1.5.0",
-    workManager : "2.0.1",
-    paging : "1.0.0",
-    mockito : "3.1.0",
-    kluent : "1.14",
-    lifecycle : "2.0.0"
-]
-
 dependencies {
     //    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.scala-lang:scala-library:$scalaVersion"
@@ -346,7 +337,7 @@ dependencies {
     api(project(':wire-android-sync-engine:zmessaging')) {
         exclude group: 'com.wire', module: 'avs'
     }
-    implementation "$rootProject.deps.libphonenumber"
+    implementation "$deps.libphonenumber"
 
     //Android X
     implementation 'androidx.multidex:multidex:2.0.0'
@@ -377,7 +368,7 @@ dependencies {
     implementation("androidx.work:work-runtime:$versions.workManager") {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
-    implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
+    implementation "androidx.room:room-runtime:$versions.room"
 
     //third party libraries
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
@@ -387,7 +378,7 @@ dependencies {
     implementation('com.jakewharton.threetenabp:threetenabp:1.1.0') {
         exclude group: 'org.threeten', module: 'threetenbp'
     }
-    implementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    implementation "org.threeten:threetenbp:$versions.threetenbp"
     implementation 'com.facebook.rebound:rebound:0.3.8'
     implementation 'com.atlassian.commonmark:commonmark:0.11.0'
     implementation 'net.java.dev.jna:jna:4.4.0@aar'
@@ -404,26 +395,26 @@ dependencies {
     implementation 'androidx.biometric:biometric:1.0.0-rc02'
 
     //Retrofit
-    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-protobuf:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
+    implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-protobuf:$versions.retrofit"
+    implementation "com.squareup.retrofit2:converter-gson:$versions.retrofit"
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
     implementation 'com.squareup.okhttp3:logging-interceptor:3.12.0'
 
     //Android Architecture Components
     implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
 
     // Unit Tests
-    testImplementation "junit:junit:$rootProject.ext.versions.junit"
+    testImplementation "junit:junit:$versions.junit"
     testImplementation "org.mockito:mockito-core:$versions.mockito"
     testImplementation "org.mockito:mockito-inline:$versions.mockito"
     testImplementation "org.amshove.kluent:kluent:$versions.kluent"
     testImplementation "androidx.paging:paging-common:2.0.0"
-    testImplementation("$rootProject.deps.scalaTest") {
+    testImplementation("$deps.scalaTest") {
         exclude module: 'scala-library'
     }
     // UI Tests
-    androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
+    androidTestImplementation "junit:junit:$versions.junit"
     androidTestImplementation "org.mockito:mockito-core:$versions.mockito"
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test:rules:1.1.1'
