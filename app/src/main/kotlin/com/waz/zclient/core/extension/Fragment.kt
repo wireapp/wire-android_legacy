@@ -9,9 +9,8 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 
 inline fun FragmentManager.doTransaction(func: FragmentTransaction.() ->
-FragmentTransaction) {
+FragmentTransaction) =
     beginTransaction().func().commit()
-}
 
 inline fun <T : Fragment> T.withArgs(
     argsBuilder: Bundle.() -> Unit): T =
@@ -19,7 +18,5 @@ inline fun <T : Fragment> T.withArgs(
         arguments = Bundle().apply(argsBuilder)
     }
 
-fun Fragment.openUrl(url: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-    requireActivity().startActivity(intent)
-}
+fun Fragment.openUrl(url: String) =
+    requireActivity().startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))

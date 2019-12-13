@@ -5,11 +5,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 
 
-fun AppCompatActivity.addFragment(frameId: Int, fragment: Fragment) {
+fun AppCompatActivity.addFragment(frameId: Int, fragment: Fragment) =
     supportFragmentManager.doTransaction { add(frameId, fragment) }
-}
 
-fun AppCompatActivity.replaceFragment(frameId: Int, fragment: Fragment, addToBackStack: Boolean) {
+fun AppCompatActivity.replaceFragment(frameId: Int, fragment: Fragment, addToBackStack: Boolean) =
     supportFragmentManager.doTransaction {
         replace(frameId, fragment).apply {
             if (addToBackStack) {
@@ -17,8 +16,6 @@ fun AppCompatActivity.replaceFragment(frameId: Int, fragment: Fragment, addToBac
             }
         }
     }
-}
 
-fun AppCompatActivity.removeFragment(fragment: Fragment) {
+fun AppCompatActivity.removeFragment(fragment: Fragment) =
     supportFragmentManager.doTransaction { remove(fragment) }
-}
