@@ -7,6 +7,7 @@ package com.waz.zclient.core.exception
 sealed class Failure {
     object NetworkConnection : Failure()
     object ServerError : Failure()
+    object CancellationError : Failure()
 
     /** * Extend this class for feature specific failures.*/
     abstract class FeatureFailure : Failure()

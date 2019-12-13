@@ -1,10 +1,11 @@
 package com.waz.zclient.settings.account
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.settings.account.model.UserProfileItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeHandleUseCase
@@ -37,7 +38,13 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
 
     private fun handleProfileError(failure: Failure) {
         handleLoading(false)
-        handleFailure(failure.message)
+        when (failure) {
+            is Failure.CancellationError ->
+                // Show error for cancellation error
+                Log.e(javaClass.simpleName, "The request for data was cancelled")
+            else -> //Show error for soemthing else
+                Log.e(javaClass.simpleName, "Misc error scenario")
+        }
     }
 
     private fun handleProfileSuccess(user: User) {

@@ -1,7 +1,7 @@
 package com.waz.zclient.core.usecase
 
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

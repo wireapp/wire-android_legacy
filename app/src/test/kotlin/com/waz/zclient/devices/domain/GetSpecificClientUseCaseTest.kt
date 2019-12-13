@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.domain
 
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.devices.data.ClientsDataSource
 import com.waz.zclient.devices.domain.model.Client
 import kotlinx.coroutines.CancellationException
@@ -46,7 +46,7 @@ class GetSpecificClientUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given client response is an error, then repository throws an exception`() {
         runBlocking {
-            Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+            Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
 
             val params = GetSpecificClientParams(TEST_ID)
             getSpecificClientUseCase.run(params)

@@ -1,7 +1,7 @@
 package com.waz.zclient.user.data
 
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.user.data.mapper.toUser
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
@@ -58,7 +58,7 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.CancellationError))
             `when`(usersRemoteDataSource.profile()).thenReturn(Either.Right(userEntity))
 
             usersRepository.profile()
@@ -78,8 +78,8 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed and the remote data source failed, then return an error`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
-            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.ServerError))
+            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure.CancellationError))
 
             usersRepository.profile()
 

@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -54,7 +54,7 @@ class ClientsRepositoryTest {
     fun `Given getAllClients() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
             `when`(remoteDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
-            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure.CancellationError))
 
             repository.allClients()
 
@@ -70,9 +70,9 @@ class ClientsRepositoryTest {
     @Test
     fun `Given allClients() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
-            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
-            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
-
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(Failure.ServerError))
+            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure.CancellationError)
+            )
             repository.allClients()
 
             verify(remoteDataSource).allClients()
@@ -100,7 +100,7 @@ class ClientsRepositoryTest {
     fun `Given getClientById() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
             `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
-            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
 
             repository.clientById(TEST_ID)
 
@@ -115,8 +115,8 @@ class ClientsRepositoryTest {
     @Test
     fun `Given getClientById() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
-            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
-            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.ServerError))
+            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
 
             repository.clientById(TEST_ID)
 

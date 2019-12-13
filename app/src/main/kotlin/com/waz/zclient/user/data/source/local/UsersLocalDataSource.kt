@@ -3,7 +3,7 @@ package com.waz.zclient.user.data.source.local
 
 import com.waz.zclient.ContextProvider
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.network.requestLocal
 
 import com.waz.zclient.storage.db.UserDatabase
