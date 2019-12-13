@@ -1,10 +1,11 @@
 package com.waz.zclient.settings.devices.list
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.functional.Failure
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -39,7 +40,13 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
 
     private fun handleAllDevicesError(failure: Failure) {
         handleLoading(false)
-        handleFailure(failure.message)
+        when (failure) {
+            is Failure.CancellationError ->
+                // Show error for cancellation error
+                Log.e(javaClass.simpleName, "The request for data was cancelled")
+            else -> //Show error for soemthing else
+                Log.e(javaClass.simpleName, "Misc error scenario")
+        }
     }
 
     private fun handleAllDevicesSuccess(clients: List<Client>) {

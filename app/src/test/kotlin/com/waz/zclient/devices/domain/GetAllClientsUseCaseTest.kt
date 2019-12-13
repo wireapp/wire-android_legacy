@@ -3,6 +3,8 @@ package com.waz.zclient.devices.domain
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Failure
 import com.waz.zclient.devices.data.ClientsRepository
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.devices.data.ClientsDataSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -42,7 +44,7 @@ class GetAllClientsUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given clients response is an error, then repository throws an exception`() {
         runBlocking {
-            `when`(repository.allClients()).thenReturn(Either.Left(Failure(TEST_EXCEPTION_MESSAGE)))
+            `when`(repository.allClients()).thenReturn(Either.Left(Failure.CancellationError))
 
             getAllClientsUseCase.run(Unit)
 

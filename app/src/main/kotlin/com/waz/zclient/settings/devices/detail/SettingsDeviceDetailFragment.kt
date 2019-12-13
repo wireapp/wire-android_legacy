@@ -5,9 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
@@ -31,17 +31,17 @@ class SettingsDeviceDetailFragment : Fragment() {
 
     private fun initViewModel() {
         deviceDetailsViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDeviceDetailViewModel::class.java).also { viewModel ->
-            viewModel.currentDevice.observe(viewLifecycleOwner, Observer { clientItem ->
+            viewModel.currentDevice.observe(viewLifecycleOwner) { clientItem ->
                 bindDataToView(clientItem)
-            })
+            }
 
-            viewModel.loading.observe(viewLifecycleOwner, Observer { isLoading ->
+            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
                 bindLoading(isLoading)
-            })
+            }
 
-            viewModel.error.observe(viewLifecycleOwner, Observer { errorMessage ->
+            viewModel.error.observe(viewLifecycleOwner) { errorMessage ->
                 bindError(errorMessage)
-            })
+            }
         }
     }
 
