@@ -62,6 +62,15 @@ object ConversationRole {
 
   def decodeUserIdsWithRoles(s: Symbol)(implicit js: JSONObject): Map[UserId, ConversationRole] =
     decodeSeq[(UserId, String)](s).map { case (id, label) => id -> getRole(label) }.toMap
+
+  def fromRoleActions(roleActions: Iterable[ConversationRoleAction]): Map[ConvId, Set[ConversationRole]] =
+    roleActions.groupBy(_.convId).mapValues {
+      _.groupBy(_.label).map {
+          case (label, actions) =>
+            val actionNames = actions.map(_.action).toSet
+            ConversationRole(label, ConversationAction.allActions.filter(ca => actionNames.contains(ca.name)))
+        }.toSet
+    }
 }
 
 case class ConversationAction(name: String) extends Identifiable[String] {
@@ -98,9 +107,12 @@ object ConversationRoleAction {
     override val table = Table("ConversationRoleAction", Label, Action, ConvId)
     override def apply(implicit cursor: DBCursor): ConversationRoleAction = ConversationRoleAction(Label, Action, ConvId)
 
-    def findForConv(convId: ConvId)(implicit db: DB) =
-      iterating(find(ConvId, convId))
-  }
+    override def onCreate(db: DB): Unit = {
+      super.onCreate(db)
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationRoleAction_convid on ConversationRoleAction (${ConvId.name})")
+    }
 
+    def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
+  }
 }
 

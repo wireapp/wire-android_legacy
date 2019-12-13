@@ -19,16 +19,30 @@ package com.waz.content
 
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationRoleAction.ConversationRoleActionDao
-import com.waz.model.{ConvId, ConversationRoleAction}
+import com.waz.model.ConversationRoleAction.ConversationRoleActionDao.findForConv
+import com.waz.model.{ConvId, ConversationRole, ConversationRoleAction}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
-trait ConversationRolesStorage extends CachedStorage[(String, String, ConvId), ConversationRoleAction]
+import scala.concurrent.Future
+
+trait ConversationRolesStorage extends CachedStorage[(String, String, ConvId), ConversationRoleAction] {
+  def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]]
+}
 
 class ConversationRolesStorageImpl(context: Context, storage: ZmsDatabase)
   extends CachedStorageImpl[(String, String, ConvId), ConversationRoleAction](
     new TrimmingLruCache(context, Fixed(1024)), storage)(ConversationRoleActionDao, LogTag("ConversationRolesStorage_Cached")
-  ) with ConversationRolesStorage with DerivedLogTag
+  ) with ConversationRolesStorage {
+  import com.waz.threading.Threading.Implicits.Background
 
+  override def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]] =
+    find({ _.convId == convId }, findForConv(convId)(_), identity).map { roleActions =>
+      ConversationRole.fromRoleActions(roleActions).getOrElse(convId, Set.empty)
+    }
+}
+
+object ConversationRolesStorage {
+  val DefaultConvId = ConvId("default")
+}

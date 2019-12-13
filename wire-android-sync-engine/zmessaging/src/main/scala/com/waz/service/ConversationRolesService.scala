@@ -20,16 +20,14 @@ package com.waz.service
 import com.waz.content.ConversationRolesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.{ConvId, ConversationAction, ConversationRole}
-import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.events.{RefreshingSignal, Signal}
+import com.waz.model.{ConvId, ConversationRole}
+import com.waz.threading.Threading
+import com.waz.utils.events.Signal
 
 import scala.concurrent.Future
 
 trait ConversationRolesService {
   def ensureDefaultRoles(): Future[Unit]
-
-  def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]]
 
   def defaultRoles: Signal[Set[ConversationRole]]
   def rolesByConvId(convId: ConvId): Signal[Set[ConversationRole]]
@@ -41,33 +39,35 @@ trait ConversationRolesService {
 }
 
 class ConversationRolesServiceImpl(storage: ConversationRolesStorage) extends ConversationRolesService with DerivedLogTag {
+  import ConversationRolesStorage.DefaultConvId
   import Threading.Implicits.Background
-  import ConversationRolesService.DefaultConvId
-  import com.waz.model.ConversationRoleAction.ConversationRoleActionDao.findForConv
 
-  override val defaultRoles: Signal[Set[ConversationRole]] = rolesByConvId(DefaultConvId)
+  override lazy val defaultRoles: Signal[Set[ConversationRole]] = rolesByConvId(DefaultConvId)
 
-  override def rolesByConvId(convId: ConvId): Signal[Set[ConversationRole]] = new RefreshingSignal[Set[ConversationRole]](
-    loader       = CancellableFuture.lift(getRolesByConvId(convId)),
-    refreshEvent = storage.onChanged.map(_.filter(_.convId == convId)).filter(_.nonEmpty)
-  )
+  override def rolesByConvId(convId: ConvId): Signal[Set[ConversationRole]] =
+    for {
+      contents          <- storage.contents
+      convActions       =  contents.filterKeys(_._3 == convId).values
+      (roleActions, id) =  if (convActions.nonEmpty) (convActions, convId)
+                           else (contents.filterKeys(_._3 == DefaultConvId).values, DefaultConvId)
+    } yield ConversationRole.fromRoleActions(roleActions).getOrElse(id, Set.empty)
 
   override def createOrUpdate(convId: ConvId, newRoles: Set[ConversationRole]): Future[Unit] =
     for {
-      currentRoles         <- getRolesByConvId(convId)
+      currentRoles         <- storage.getRolesByConvId(convId)
       newRolesAreDifferent =  currentRoles != newRoles
       _                    <- if (newRolesAreDifferent && currentRoles.nonEmpty)
                                 storage.removeAll(currentRoles.flatMap(_.toRoleActions(convId).map(_.id)))
                               else Future.successful(())
       defaultRoles         <- if (newRolesAreDifferent) defaultRoles.head else Future.successful(newRoles)
       newRolesAreDifferent =  defaultRoles != newRoles
-      _                    <- if (newRolesAreDifferent)
+      _                    <- if (newRolesAreDifferent && newRoles.nonEmpty)
                                 storage.insertAll(newRoles.flatMap(_.toRoleActions(convId)))
                               else Future.successful(())
     } yield ()
 
   override def setDefaultRoles(newRoles: Set[ConversationRole]): Future[Unit] =
-    getRolesByConvId(DefaultConvId).map { defaultRoles =>
+    storage.getRolesByConvId(DefaultConvId).map { defaultRoles =>
       if (defaultRoles != newRoles) {
         storage.removeAll(defaultRoles.flatMap(_.toRoleActions(DefaultConvId).map(_.id)))
           .map(_ => storage.insertAll(newRoles.flatMap(_.toRoleActions(DefaultConvId))))
@@ -75,27 +75,9 @@ class ConversationRolesServiceImpl(storage: ConversationRolesStorage) extends Co
       }
     }
 
-  override def ensureDefaultRoles(): Future[Unit] = getRolesByConvId(DefaultConvId).map(_ => ())
+  override def ensureDefaultRoles(): Future[Unit] = storage.getRolesByConvId(DefaultConvId).map { roles =>
+    if (roles.isEmpty) storage.insertAll(ConversationRole.defaultRoles.flatMap(_.toRoleActions(DefaultConvId)))
+  }
 
   override def removeByConvId(convId: ConvId): Future[Unit] = createOrUpdate(convId, Set.empty)
-
-  override def getRolesByConvId(convId: ConvId): Future[Set[ConversationRole]] =
-    storage.find({ _.convId == convId }, findForConv(convId)(_), identity).map {
-      _.groupBy(_.label).map { case (label, actions) =>
-        val actionNames = actions.map(_.action).toSet
-        ConversationRole(label, ConversationAction.allActions.filter(ca => actionNames.contains(ca.name)))
-      }.toSet
-    }.flatMap { roles =>
-      if (roles.nonEmpty) Future.successful(roles)
-      else if (convId != DefaultConvId) getRolesByConvId(DefaultConvId)
-      else {
-        warn(l"No default conversation roles found")
-        storage.insertAll(ConversationRole.defaultRoles.flatMap(_.toRoleActions(DefaultConvId)))
-        Future.successful(ConversationRole.defaultRoles)
-      }
-    }
-}
-
-object ConversationRolesService {
-  val DefaultConvId = ConvId("default")
 }

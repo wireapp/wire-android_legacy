@@ -388,7 +388,7 @@ object ZMessagingDB {
       db.execSQL("DROP TABLE IF EXISTS SearchQueries")
     },
     Migration(124,125) { db =>
-      db.execSQL(s"ALTER TABLE ${ConversationMemberDataDao.table.name} ADD COLUMN ${ConversationMemberDataDao.Role.name} TEXT DEFAULT 'wire_admin'")
+      db.execSQL(s"ALTER TABLE ${ConversationMemberDataDao.table.name} ADD COLUMN ${ConversationMemberDataDao.Role.name} TEXT DEFAULT '${ConversationRole.AdminRole.label}'")
       db.execSQL(ConversationRoleActionDao.table.createSql)
     }
   )

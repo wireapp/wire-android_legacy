@@ -237,7 +237,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
         if (showPeopleOnly) getString(R.string.participants_divider_people_no_number)
         else getString(R.string.participants_divider_people, membersCount.toString)
       )
-      if (showPeopleOnly) h.setContentDescription(s"Member") else h.setContentDescription(s"Members: $membersCount")
+      if (showPeopleOnly) h.setContentDescription(s"Members") else h.setContentDescription(s"Members: $membersCount")
     case (Right(OptionsSeparator), h: SeparatorViewHolder) =>
       h.setId(R.id.options_section)
       h.setTitle(getString(R.string.participants_divider_options))

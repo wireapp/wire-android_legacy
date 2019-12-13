@@ -19,7 +19,6 @@ package com.waz.sync.client
 
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
@@ -43,7 +42,6 @@ trait ConversationsClient {
   def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
   def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
-  def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]]
   def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
@@ -106,7 +104,7 @@ class ConversationsClientImpl(implicit
       .map(_.map(_.conversations))
   }
 
-  override def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]] = {
+  private def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]] = {
     Request.Get(relativePath = rolesPath(id))
       .withResultType[ConvRoles]
       .withErrorType[ErrorResponse]

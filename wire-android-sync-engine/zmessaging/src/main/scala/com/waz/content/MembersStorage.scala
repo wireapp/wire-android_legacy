@@ -28,7 +28,6 @@ import com.waz.utils.events.{AggregatingSignal, Signal}
 import com.waz.utils.{CachedStorage, CachedStorageImpl, TrimmingLruCache}
 
 import scala.concurrent.Future
-import com.waz.log.LogSE._
 
 trait MembersStorage extends CachedStorage[(UserId, ConvId), ConversationMemberData] {
   def getByConv(conv: ConvId): Future[IndexedSeq[ConversationMemberData]]

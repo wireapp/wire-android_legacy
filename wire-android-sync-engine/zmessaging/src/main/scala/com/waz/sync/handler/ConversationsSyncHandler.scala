@@ -31,7 +31,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
-import com.waz.sync.client.ConversationsClient.ConversationInitState
+import com.waz.sync.client.ConversationsClient.{ConversationInitState, ConversationResponse}
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
@@ -45,6 +45,7 @@ object ConversationsSyncHandler {
 }
 
 class ConversationsSyncHandler(selfUserId:          UserId,
+                               teamId:              Option[TeamId],
                                userService:         UserService,
                                messagesStorage:     MessagesStorage,
                                messagesService:     MessagesService,
@@ -64,6 +65,14 @@ class ConversationsSyncHandler(selfUserId:          UserId,
   import com.waz.sync.handler.ConversationsSyncHandler._
   private implicit val ec = EventContext.Global
 
+  // optimization: same team conversations use default roles so we don't have to ask the backend
+  private def loadConversationRoles(resps: Seq[ConversationResponse]) = {
+    val (teamResps, nonTeamResps) = resps.partition(r => r.team.isDefined && r.team == teamId)
+    rolesService.defaultRoles.head.flatMap { defRoles =>
+      conversationsClient.loadConversationRoles(nonTeamResps.map(_.id).toSet).map(_ ++ teamResps.map(r => r.id -> defRoles).toMap)
+    }
+  }
+
   def syncConversations(ids: Set[ConvId]): Future[SyncResult] =
     Future.sequence(ids.map(convs.convById)).flatMap { convs =>
       val remoteIds = convs.collect { case Some(conv) => conv.remoteId }
@@ -72,7 +81,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
 
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
-          conversationsClient.loadConversationRoles(remoteIds).flatMap { roles =>
+          loadConversationRoles(resps).flatMap { roles =>
             debug(l"syncConversations received ${resps.size}, ${roles.size}")
             convService.updateConversationsWithDeviceStartMessage(resps, roles).map(_ => Success)
           }
@@ -87,7 +96,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     conversationsClient.loadConversations(start).future.flatMap {
       case Right(ConversationsResult(responses, hasMore)) =>
         debug(l"syncConversations received ${responses.size}")
-        conversationsClient.loadConversationRoles(responses.map(_.id).toSet).flatMap { roles =>
+        loadConversationRoles(responses).flatMap { roles =>
           val future = convService.updateConversationsWithDeviceStartMessage(responses, roles)
           if (hasMore) future.flatMap(_ => syncConversations(responses.lastOption.map(_.id)))
           else future.map(_ => Success)
@@ -188,7 +197,7 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     conversationsClient.postConversation(initState).future.flatMap {
       case Right(response) =>
         convService.updateRemoteId(convId, response.id).flatMap { _ =>
-          conversationsClient.loadConversationRoles(Set(response.id)).flatMap { roles =>
+          loadConversationRoles(Seq(response)).flatMap { roles =>
             convService.updateConversationsWithDeviceStartMessage(Seq(response), roles).flatMap { _ =>
               if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd, defaultRole)
               else Future.successful(Success)
