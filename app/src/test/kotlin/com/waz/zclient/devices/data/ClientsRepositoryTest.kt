@@ -40,7 +40,7 @@ class ClientsRepositoryTest {
 
             repository.allClients()
 
-            verify(remoteDataSource).allClients()
+            verify(localDataSource).allClients()
 
             repository.allClients().map {
                 val domainClient = it[0]
@@ -68,13 +68,27 @@ class ClientsRepositoryTest {
     }
 
     @Test
+    fun `Given allClients() is called, when the local data source failed, remote data source is called and failed, then return error`() {
+        runBlocking {
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+
+            repository.allClients()
+
+            verify(remoteDataSource).allClients()
+
+            assert(repository.allClients().isLeft)
+        }
+    }
+
+    @Test
     fun `Given getClientById() is called, when the local data source succeeded, then map the data response to domain`() {
         runBlocking {
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
 
             repository.clientById(TEST_ID)
 
-            verify(remoteDataSource).clientById(eq(TEST_ID))
+            verify(localDataSource).clientById(eq(TEST_ID))
 
             repository.clientById(TEST_ID).map {
                 assertMappingIsCorrect(it)
@@ -95,6 +109,20 @@ class ClientsRepositoryTest {
             repository.clientById(TEST_ID).map {
                 assertMappingIsCorrect(it)
             }
+        }
+    }
+
+    @Test
+    fun `Given getClientById() is called, when the local data source failed, remote data source is called and failed, then return error`() {
+        runBlocking {
+            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure(TEST_MESSAGE)))
+
+            repository.clientById(TEST_ID)
+
+            verify(remoteDataSource).clientById(eq(TEST_ID))
+
+            assert(repository.clientById(TEST_ID).isLeft)
         }
     }
 
