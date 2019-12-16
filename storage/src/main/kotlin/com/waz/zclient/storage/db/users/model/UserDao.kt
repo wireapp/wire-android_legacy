@@ -15,7 +15,7 @@ data class UserDao(
     var teamId: String?,
 
     @ColumnInfo(name = "name")
-    var name: String?,
+    var name: String,
 
     @ColumnInfo(name = "handle")
     var handle: String?,
@@ -30,7 +30,7 @@ data class UserDao(
     var trackingId: String?,
 
     @ColumnInfo(name = "picture")
-    var pictures: String?,
+    var picture: String?,
 
     @ColumnInfo(name = "accent")
     var accentId: Int?,

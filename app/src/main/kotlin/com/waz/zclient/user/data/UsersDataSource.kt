@@ -6,22 +6,21 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.network.resultEither
-import com.waz.zclient.user.data.mapper.toUser
+import com.waz.zclient.devices.domain.model.Client
+import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersNetwork
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import com.waz.zclient.user.domain.model.User
 
 
-class UsersDataSource constructor(private val usersRemoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(),
-                                  private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource()) : UsersRepository {
+class UsersDataSource constructor(
+    private val usersRemoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(),
+    private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource(),
+    private val userMapper: UserMapper) : UsersRepository {
 
-    override suspend fun profile(): Either<Failure, User> = resultEither(
-        mainRequest = { usersLocalDataSource.profile().map {
-            it.toUser()
-        } },
-        fallbackRequest = { usersRemoteDataSource.profile() },
-        saveToDatabase = { usersLocalDataSource.add(it) }).map { it.toUser() }
+    override suspend fun profile(): Either<Failure, User> = resultEither(profileLocal(),
+        profileRemote(), saveUser())
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> = requestData {
         usersRemoteDataSource.changeHandle(value)
@@ -35,17 +34,29 @@ class UsersDataSource constructor(private val usersRemoteDataSource: UsersRemote
         usersRemoteDataSource.changePhone(value)
     }
 
+    private fun profileRemote(): suspend () -> Either<Failure, User> = {
+        usersRemoteDataSource.profile().map { userMapper.toUser(it) } }
+
+    private fun profileLocal(): suspend () -> Either<Failure, User> =
+        { usersLocalDataSource.profile().map { userMapper.toUser(it) } }
+
+
+    private fun saveUser(): (User) -> Unit = { usersLocalDataSource.add(userMapper.toUserDao(it)) }
+
+
+
     companion object {
 
         @Volatile
         private var usersRepository: UsersRepository? = null
 
         fun getInstance(remoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(UsersNetwork().usersApi()),
-                        localDataSource: UsersLocalDataSource = UsersLocalDataSource()): UsersRepository =
+                        localDataSource: UsersLocalDataSource = UsersLocalDataSource(),
+                        userMapper: UserMapper = UserMapper()): UsersRepository =
             usersRepository
                 ?: synchronized(this) {
                     usersRepository
-                        ?: UsersDataSource(remoteDataSource, localDataSource).also {
+                        ?: UsersDataSource(remoteDataSource, localDataSource,userMapper).also {
                             usersRepository = it
                         }
                 }

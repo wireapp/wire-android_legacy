@@ -8,7 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.PUT
 
 
-interface UsersApi {
+interface UsersNetworkService {
 
     @GET("/self")
     suspend fun profile(): Response<UserApi>
