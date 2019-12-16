@@ -73,7 +73,7 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
           val pass = passwordEditText.getText.toString
           if (!BuildConfig.FORCE_APP_LOCK) {
             providePassword(if(pass.isEmpty) None else Some(Password(pass)))
-          } else if(BuildConfig.FORCE_APP_LOCK && isValidPassword(pass)) {
+          } else if(isValidPassword(pass)) {
             providePassword(Some(Password(pass)))
           } else {
             textInputLayout.setError(getString(R.string.password_policy_hint, minPasswordLength))
