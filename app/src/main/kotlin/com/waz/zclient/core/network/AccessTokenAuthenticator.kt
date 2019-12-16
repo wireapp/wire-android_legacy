@@ -1,5 +1,6 @@
 package com.waz.zclient.core.network
 
+import com.waz.zclient.core.functional.Either
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
@@ -18,37 +19,34 @@ class AccessTokenAuthenticator(private val authToken: AuthToken) : Authenticator
      * This authenticate() method is called when server returns 401 Unauthorized.
      */
     override fun authenticate(route: Route?, response: Response): Request? {
-        // We need to have a token in order to refresh it.
-        val token= authToken.refreshToken()
+        val refreshToken = authToken.refreshToken()
 
         synchronized(this) {
-            val newToken = authToken.accessToken() //TODO: get the new token and save it
-            authToken.updateAccessToken(newToken)
+            val tokenResult = authToken.renewAccessToken(refreshToken)
 
-            // Check if the request made was previously made as an authenticated request.
-            response.request().header(AuthToken.AUTH_HEADER)?.let {
-
-                // If the token has changed since the request was made, use the new token.
-                if (newToken != token) {
-                    return response.request()
-                        .newBuilder()
-                        .removeHeader(AuthToken.AUTH_HEADER)
-                        //TODO: Extract this line since it is being repeated.
-                        .addHeader(AuthToken.AUTH_HEADER, "${AuthToken.AUTH_HEADER_TOKEN_TYPE} $token")
-                        .build()
+            when (tokenResult) {
+                is Either.Left -> retryRenewToken(refreshToken)
+                is Either.Right -> {
+                    authToken.updateAccessToken(tokenResult.b)
+                    return proceedWithNewAccessToken(response, tokenResult.b)
                 }
-
-                val updatedToken = authToken.refreshToken()
-
-                // Retry the request with the new token.
-                return response.request()
-                    .newBuilder()
-                    .removeHeader(AuthToken.AUTH_HEADER)
-                    //TODO: Extract this line since it is being repeated.
-                    .addHeader(AuthToken.AUTH_HEADER, "${AuthToken.AUTH_HEADER_TOKEN_TYPE} $updatedToken")
-                    .build()
             }
+
         }
         return null
     }
+
+    private fun retryRenewToken(refreshToken: String) {
+        //TODO apply retry logic
+    }
+
+    private fun proceedWithNewAccessToken(response: Response, newAccessToken: String): Request? =
+        response.request().header(AuthToken.AUTH_HEADER)?.let {
+            response.request()
+                .newBuilder()
+                .removeHeader(AuthToken.AUTH_HEADER)
+                .addHeader(AuthToken.AUTH_HEADER, "${AuthToken.AUTH_HEADER_TOKEN_TYPE} $newAccessToken")
+                .build()
+        }
+
 }

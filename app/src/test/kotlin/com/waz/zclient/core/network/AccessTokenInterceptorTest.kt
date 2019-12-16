@@ -14,7 +14,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
-import org.mockito.MockitoAnnotations
 
 class AccessTokenInterceptorTest : UnitTest() {
 
@@ -25,7 +24,6 @@ class AccessTokenInterceptorTest : UnitTest() {
 
     @Before
     fun setUp() {
-        MockitoAnnotations.initMocks(this)
         accessTokenInterceptor = AccessTokenInterceptor(authToken)
     }
 

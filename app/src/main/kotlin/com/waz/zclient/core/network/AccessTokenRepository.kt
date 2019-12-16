@@ -1,5 +1,8 @@
 package com.waz.zclient.core.network
 
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+
 //TODO: Add Preferences Manager as a collaborator
 //TODO: Keep in mind that there should be one preference file per user.
 class AccessTokenRepository {
@@ -22,8 +25,9 @@ class AccessTokenRepository {
         //TODO: Save the refresh token somewhere: User Preferences?
     }
 
-    fun renewAccessToken() {
+    fun renewAccessToken(refreshToken: String) : Either<Failure, String> {
         //TODO: send a network request w/ the refreshToken to get a new accessToken
+        return Either.Right("newToken")
     }
 
     fun wipeOutTokens() {
