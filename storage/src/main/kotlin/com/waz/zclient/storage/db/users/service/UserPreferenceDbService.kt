@@ -1,11 +1,11 @@
-package com.waz.zclient.storage.db.dao
+package com.waz.zclient.storage.db.users.service
 
 import androidx.room.Dao
 import androidx.room.Insert
-import com.waz.zclient.storage.db.model.UserPreferenceEntity
+import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
 
 @Dao
-interface UserPreferencesDao {
+interface UserPreferenceDbService {
 
     @Insert
     fun insert(userPreferenceEntity: UserPreferenceEntity)

@@ -6,8 +6,8 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestLocal
 import com.waz.zclient.storage.db.UserDatabase
-import com.waz.zclient.storage.db.dao.UserDao
-import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.users.service.UserDbService
+import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.pref.GlobalPreferences
 
 class UsersLocalDataSource constructor(
@@ -16,7 +16,7 @@ class UsersLocalDataSource constructor(
 
     private val userId = globalPreferences.activeUserId
 
-    private val userDao: UserDao = userDatabase.userDao()
+    private val userDao: UserDbService = userDatabase.userDao()
 
     fun add(user: UserEntity): Any = userDao.insert(user)
 

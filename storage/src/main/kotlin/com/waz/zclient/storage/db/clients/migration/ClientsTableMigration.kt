@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.clients.migration
+package com.waz.zclient.storage.db.clients.migration
 
 import android.content.ContentValues
 import androidx.room.OnConflictStrategy

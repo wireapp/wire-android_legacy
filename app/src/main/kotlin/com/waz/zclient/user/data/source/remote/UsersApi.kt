@@ -1,6 +1,6 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UserEntity
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded

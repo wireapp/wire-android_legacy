@@ -1,6 +1,6 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UserEntity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking

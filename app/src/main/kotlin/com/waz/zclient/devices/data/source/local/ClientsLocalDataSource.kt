@@ -3,10 +3,10 @@ package com.waz.zclient.devices.data.source.local
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestLocal
-import com.waz.zclient.storage.clients.dao.ClientDao
-import com.waz.zclient.storage.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.service.ClientDbService
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 
-class ClientsLocalDataSource(private val clientsDao: ClientDao) {
+class ClientsLocalDataSource(private val clientsDao: ClientDbService) {
 
     suspend fun clientById(clientId: String): Either<Failure, ClientEntity> = requestLocal {
         clientsDao.clientById(clientId)

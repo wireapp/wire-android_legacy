@@ -1,10 +1,10 @@
-package com.waz.zclient.storage.clients.dao
+package com.waz.zclient.storage.db.clients.service
 
 import androidx.room.*
-import com.waz.zclient.storage.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 
 @Dao
-interface ClientDao {
+interface ClientDbService {
 
     @Query("SELECT * from client WHERE id = :clientId")
     suspend fun clientById(clientId: String): ClientEntity

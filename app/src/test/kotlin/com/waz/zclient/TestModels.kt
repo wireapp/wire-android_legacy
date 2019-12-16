@@ -1,6 +1,6 @@
 package com.waz.zclient
 
-import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.user.domain.model.User
 
 val userEntity = UserEntity(

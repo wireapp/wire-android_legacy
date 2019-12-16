@@ -7,7 +7,7 @@ import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.framework.mockito.eq
-import com.waz.zclient.storage.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before

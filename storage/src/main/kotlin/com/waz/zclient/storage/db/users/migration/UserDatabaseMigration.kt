@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.migration
+package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase

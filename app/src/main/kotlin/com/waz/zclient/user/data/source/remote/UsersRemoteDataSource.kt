@@ -3,7 +3,7 @@ package com.waz.zclient.user.data.source.remote
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestApi
-import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UserEntity
 
 class UsersRemoteDataSource constructor(private val userApi: UsersApi = UsersNetwork().usersApi()) {
 

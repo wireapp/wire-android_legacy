@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.model
+package com.waz.zclient.storage.db.users.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

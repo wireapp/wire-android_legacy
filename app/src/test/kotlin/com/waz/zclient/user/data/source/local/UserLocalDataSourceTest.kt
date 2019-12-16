@@ -1,7 +1,7 @@
 package com.waz.zclient.user.data.source.local
 
 import com.waz.zclient.storage.db.UserDatabase
-import com.waz.zclient.storage.db.dao.UserDao
+import com.waz.zclient.storage.db.users.service.UserDbService
 import com.waz.zclient.storage.pref.GlobalPreferences
 import com.waz.zclient.userEntity
 import kotlinx.coroutines.CancellationException
@@ -28,7 +28,7 @@ class UserLocalDataSourceTest {
     private lateinit var globalPreferences: GlobalPreferences
 
     @Mock
-    private lateinit var userDao: UserDao
+    private lateinit var userDao: UserDbService
 
     @Before
     fun setup() {

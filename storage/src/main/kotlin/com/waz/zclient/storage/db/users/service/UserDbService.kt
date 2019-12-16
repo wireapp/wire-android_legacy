@@ -1,12 +1,12 @@
-package com.waz.zclient.storage.db.dao
+package com.waz.zclient.storage.db.users.service
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.waz.zclient.storage.db.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UserEntity
 
 @Dao
-interface UserDao {
+interface UserDbService {
 
     @Insert
     fun insert(user: UserEntity): Any
