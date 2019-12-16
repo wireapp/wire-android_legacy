@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestApi
 import com.waz.zclient.user.data.source.remote.model.UserApi
 
-class UsersRemoteDataSource constructor(private val userApi: UsersApi = UsersNetwork().usersApi()) {
+class UsersRemoteDataSource constructor(private val userApi: UsersNetworkService = UsersNetwork().usersApi()) {
 
     suspend fun profile(): Either<Failure, UserApi> = requestApi { userApi.profile() }
 

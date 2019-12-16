@@ -4,7 +4,7 @@ import com.waz.zclient.core.network.Network
 
 class UsersNetwork : Network() {
 
-    fun usersApi(): UsersApi {
-        return retrofit.create(UsersApi::class.java)
+    fun usersApi(): UsersNetworkService {
+        return retrofit.create(UsersNetworkService::class.java)
     }
 }

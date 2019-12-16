@@ -18,18 +18,18 @@ class UserRemoteDataSourceTest {
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
     @Mock
-    private lateinit var usersApi: UsersApi
+    private lateinit var usersNetworkService: UsersNetworkService
 
     @Mock
     private lateinit var profileResponse: Response<UserApi>
 
     @Mock
-    private lateinit var userEntity: UserApi
+    private lateinit var userApi: UserApi
 
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        usersRemoteDataSource = UsersRemoteDataSource(usersApi)
+        usersRemoteDataSource = UsersRemoteDataSource(usersNetworkService)
         `when`(profileResponse.code()).thenReturn(404)
         `when`(profileResponse.message()).thenReturn("Test error message")
     }
@@ -38,13 +38,13 @@ class UserRemoteDataSourceTest {
     fun `Given profile() is called, when api response success and response body is not null, then return a successful response`() {
         runBlocking {
 
-            `when`(profileResponse.body()).thenReturn(userEntity)
+            `when`(profileResponse.body()).thenReturn(userApi)
             `when`(profileResponse.isSuccessful).thenReturn(true)
-            `when`(usersApi.profile()).thenReturn(profileResponse)
+            `when`(usersNetworkService.profile()).thenReturn(profileResponse)
 
             usersRemoteDataSource.profile()
 
-            verify(usersApi).profile()
+            verify(usersNetworkService).profile()
 
             assert(usersRemoteDataSource.profile().isRight)
         }
@@ -55,11 +55,11 @@ class UserRemoteDataSourceTest {
         runBlocking {
             `when`(profileResponse.body()).thenReturn(null)
             `when`(profileResponse.isSuccessful).thenReturn(true)
-            `when`(usersApi.profile()).thenReturn(profileResponse)
+            `when`(usersNetworkService.profile()).thenReturn(profileResponse)
 
             usersRemoteDataSource.profile()
 
-            verify(usersApi).profile()
+            verify(usersNetworkService).profile()
 
             assert(usersRemoteDataSource.profile().isLeft)
         }
@@ -69,11 +69,11 @@ class UserRemoteDataSourceTest {
     @Test(expected = CancellationException::class)
     fun `Given profile() is called, when api response is an error, then return an error response`() {
         runBlocking {
-            `when`(usersApi.profile()).thenReturn(profileResponse)
+            `when`(usersNetworkService.profile()).thenReturn(profileResponse)
 
             usersRemoteDataSource.profile()
 
-            verify(usersApi).profile()
+            verify(usersNetworkService).profile()
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 

@@ -3,7 +3,7 @@ package com.waz.zclient.user.data.source.local
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.service.UserDbService
 import com.waz.zclient.storage.pref.GlobalPreferences
-import com.waz.zclient.userEntity
+import com.waz.zclient.userDao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -28,12 +28,12 @@ class UserLocalDataSourceTest {
     private lateinit var globalPreferences: GlobalPreferences
 
     @Mock
-    private lateinit var userDao: UserDbService
+    private lateinit var userDbService : UserDbService
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        `when`(userDatabase.userDbService()).thenReturn(userDao)
+        `when`(userDatabase.userDbService()).thenReturn(userDbService)
         `when`(globalPreferences.activeUserId).thenReturn(TEST_USER_ID)
         usersLocalDataSource = UsersLocalDataSource(globalPreferences, userDatabase)
     }
@@ -42,11 +42,11 @@ class UserLocalDataSourceTest {
     fun `Given profile() is called, when dao result is successful, then return the data`() {
         runBlocking {
 
-            `when`(userDao.selectById(TEST_USER_ID)).thenReturn(userEntity)
+            `when`(userDbService.selectById(TEST_USER_ID)).thenReturn(userDao)
 
             usersLocalDataSource.profile()
 
-            verify(userDao).selectById(TEST_USER_ID)
+            verify(userDbService).selectById(TEST_USER_ID)
 
             assert(usersLocalDataSource.profile().isRight)
         }
@@ -56,11 +56,11 @@ class UserLocalDataSourceTest {
     fun `Given profile() is called, when dao result is an error, then return the error`() {
         runBlocking {
 
-            `when`(userDao.selectById(TEST_USER_ID)).thenReturn(userEntity)
+            `when`(userDbService.selectById(TEST_USER_ID)).thenReturn(userDao)
 
             usersLocalDataSource.profile()
 
-            verify(userDao).selectById(TEST_USER_ID)
+            verify(userDbService).selectById(TEST_USER_ID)
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 

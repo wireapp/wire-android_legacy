@@ -19,7 +19,7 @@ data class UserApi(
     var phone: String?,
 
     @SerializedName("picture")
-    var picture: List<String>?,
+    var pictures: List<String>?,
 
     @SerializedName("accent_id")
     var accentId: Int?,
