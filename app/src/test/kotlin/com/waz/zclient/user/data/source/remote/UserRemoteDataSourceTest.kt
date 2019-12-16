@@ -1,6 +1,6 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -21,10 +21,10 @@ class UserRemoteDataSourceTest {
     private lateinit var usersApi: UsersApi
 
     @Mock
-    private lateinit var profileResponse: Response<UserEntity>
+    private lateinit var profileResponse: Response<UserApi>
 
     @Mock
-    private lateinit var userEntity: UserEntity
+    private lateinit var userEntity: UserApi
 
     @Before
     fun setUp() {

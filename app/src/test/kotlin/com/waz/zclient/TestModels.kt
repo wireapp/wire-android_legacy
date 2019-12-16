@@ -1,9 +1,9 @@
 package com.waz.zclient
 
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.user.data.source.remote.model.UserApi
 import com.waz.zclient.user.domain.model.User
 
-val userEntity = UserEntity(
+val userEntity = UserApi(
     "aa4e0112-bc8c-493e-8677-9fde2edf3567",
     null,
     "test",

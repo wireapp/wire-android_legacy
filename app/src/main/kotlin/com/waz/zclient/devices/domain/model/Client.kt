@@ -1,13 +1,15 @@
 package com.waz.zclient.devices.domain.model
 
-data class Client(val cookie: String?,
+data class Client(val cookie: String? = null,
                   val time: String,
                   val label: String,
                   val _class: String,
                   val type: String,
                   val id: String,
                   val model: String,
+                  val verification: String = "Unverified",
                   val location: ClientLocation)
 
-data class ClientLocation(val long: Double,
-                          val lat: Double)
+data class ClientLocation(val lat: Double,
+                          val long: Double,
+                          val name: String? = null)

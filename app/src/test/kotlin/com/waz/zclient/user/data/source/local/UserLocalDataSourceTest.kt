@@ -33,7 +33,7 @@ class UserLocalDataSourceTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        `when`(userDatabase.userDao()).thenReturn(userDao)
+        `when`(userDatabase.userDbService()).thenReturn(userDao)
         `when`(globalPreferences.activeUserId).thenReturn(TEST_USER_ID)
         usersLocalDataSource = UsersLocalDataSource(globalPreferences, userDatabase)
     }

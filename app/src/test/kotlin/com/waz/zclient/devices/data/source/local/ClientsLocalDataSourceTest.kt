@@ -2,7 +2,7 @@ package com.waz.zclient.devices.data.source.local
 
 import com.waz.zclient.framework.mockito.eq
 import com.waz.zclient.storage.db.clients.service.ClientDbService
-import com.waz.zclient.storage.db.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.model.ClientDao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -18,7 +18,7 @@ class ClientsLocalDataSourceTest {
     private lateinit var localDataSource: ClientsLocalDataSource
 
     @Mock
-    private lateinit var clientEntity: ClientEntity
+    private lateinit var clientEntity: ClientDao
 
     @Mock
     private lateinit var clientDao: ClientDbService

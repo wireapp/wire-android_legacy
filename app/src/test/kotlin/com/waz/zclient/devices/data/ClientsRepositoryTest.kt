@@ -7,7 +7,7 @@ import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.framework.mockito.eq
-import com.waz.zclient.storage.db.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.model.ClientDao
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -138,8 +138,8 @@ class ClientsRepositoryTest {
         assert(domainClient?.location?.lat == TEST_LATITUDE)
     }
 
-    private fun generateMockEntity(): ClientEntity {
-        return ClientEntity(TEST_ID, TEST_TIME, TEST_LABEL, TEST_COOKIE, TEST_TYPE, TEST_CLASS,
+    private fun generateMockEntity(): ClientDao {
+        return ClientDao(TEST_ID, TEST_TIME, TEST_LABEL, TEST_COOKIE, TEST_TYPE, TEST_CLASS,
             TEST_MODEL, TEST_LATITUDE, TEST_LONGITUDE, TEST_ENC_KEY, TEST_MAC_KEY,
             TEST_LOCATION_NAME, TEST_VERIFICATION)
     }

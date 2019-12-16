@@ -1,7 +1,7 @@
 package com.waz.zclient.devices.data.source.remote
 
 import com.waz.zclient.framework.mockito.eq
-import com.waz.zclient.storage.db.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.model.ClientDao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -17,13 +17,13 @@ class ClientsRemoteDataSourceTest {
     private lateinit var remoteDataSource: ClientsRemoteDataSource
 
     @Mock
-    private lateinit var clientsApi: ClientsApi
+    private lateinit var clientsApi: ClientsNetworkService
 
     @Mock
-    private lateinit var allClientsResponse: Response<Array<ClientEntity>>
+    private lateinit var allClientsResponse: Response<Array<ClientDao>>
 
     @Mock
-    private lateinit var clientByIdResponse: Response<ClientEntity>
+    private lateinit var clientByIdResponse: Response<ClientDao>
 
     @Before
     fun setup() {
@@ -39,7 +39,7 @@ class ClientsRemoteDataSourceTest {
     @Test
     fun `Given getAllClients() is called, when api response success, then return a successful response`() {
         runBlocking {
-            val clientEntity = mock(ClientEntity::class.java)
+            val clientEntity = mock(ClientDao::class.java)
             `when`(allClientsResponse.body()).thenReturn(arrayOf(clientEntity))
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.allClients()).thenReturn(allClientsResponse)
@@ -86,7 +86,7 @@ class ClientsRemoteDataSourceTest {
     @Test
     fun `Given getClientById() is called, when api response success, then return a successful response`() {
         runBlocking {
-            val clientEntity = mock(ClientEntity::class.java)
+            val clientEntity = mock(ClientDao::class.java)
             `when`(clientByIdResponse.body()).thenReturn(clientEntity)
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.clientById(TEST_ID)).thenReturn(clientByIdResponse)

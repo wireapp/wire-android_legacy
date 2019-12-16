@@ -5,18 +5,18 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.waz.zclient.storage.db.clients.service.ClientDbService
-import com.waz.zclient.storage.db.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.model.ClientDao
 import com.waz.zclient.storage.db.users.service.UserDbService
 import com.waz.zclient.storage.db.users.service.UserPreferenceDbService
 import com.waz.zclient.storage.db.users.migration.UserDatabaseMigration
-import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
+import com.waz.zclient.storage.db.users.model.UserDao
+import com.waz.zclient.storage.db.users.model.UserPreferenceDao
 
-@Database(entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class], version = 125, exportSchema = false)
+@Database(entities = [UserPreferenceDao::class, UserDao::class, ClientDao::class], version = 125, exportSchema = false)
 abstract class UserDatabase : RoomDatabase() {
 
     abstract fun userPreferencesDao(): UserPreferenceDbService
-    abstract fun userDao(): UserDbService
+    abstract fun userDbService(): UserDbService
     abstract fun clientsDao(): ClientDbService
 
     companion object {

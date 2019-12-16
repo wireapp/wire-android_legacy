@@ -1,6 +1,6 @@
 package com.waz.zclient.user.data.source.remote
 
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.user.data.source.remote.model.UserApi
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
@@ -11,7 +11,7 @@ import retrofit2.http.PUT
 interface UsersApi {
 
     @GET("/self")
-    suspend fun profile(): Response<UserEntity>
+    suspend fun profile(): Response<UserApi>
 
     @FormUrlEncoded
     @PUT("/self/handle")

@@ -2,15 +2,11 @@ package com.waz.zclient.storage.db.users.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import com.google.gson.annotations.SerializedName
-
 
 @Entity(tableName = "user")
-data class UserEntity(
+data class UserDao(
 
-    @SerializedName("id")
     @ColumnInfo(name = "_id")
     @PrimaryKey
     var id: String,
@@ -19,19 +15,15 @@ data class UserEntity(
     var teamId: String?,
 
     @ColumnInfo(name = "name")
-    @SerializedName("name")
     var name: String?,
 
     @ColumnInfo(name = "handle")
-    @SerializedName("handle")
     var handle: String?,
 
     @ColumnInfo(name = "email")
-    @SerializedName("email")
     var email: String?,
 
     @ColumnInfo(name = "phone")
-    @SerializedName("phone")
     var phone: String?,
 
     @ColumnInfo(name = "tracking_id")
@@ -40,12 +32,7 @@ data class UserEntity(
     @ColumnInfo(name = "picture")
     var pictures: String?,
 
-    @Ignore
-    @SerializedName("picture")
-    var picture: List<String>?,
-
     @ColumnInfo(name = "accent")
-    @SerializedName("accent_id")
     var accentId: Int?,
 
     @ColumnInfo(name = "skey")
@@ -76,7 +63,6 @@ data class UserEntity(
     var verified: String?,
 
     @ColumnInfo(name = "deleted")
-    @SerializedName("deleted")
     var deleted: Int,
 
     @ColumnInfo(name = "availability")
@@ -92,7 +78,6 @@ data class UserEntity(
     var expiresAt: Int?,
 
     @ColumnInfo(name = "managed_by")
-    @SerializedName("managed_by")
     var managedBy: String?,
 
     @ColumnInfo(name = "self_permissions")
@@ -103,10 +88,4 @@ data class UserEntity(
 
     @ColumnInfo(name = "created_by")
     var createdBy: String?
-) {
-    constructor() : this("", "", "", "", "", "", "",
-        "", listOf(), 0, "", "", 0,
-        "", "", "", 0, "", "",
-        0, 0, "", "", 0, "", 0,
-        0, "")
-}
+)

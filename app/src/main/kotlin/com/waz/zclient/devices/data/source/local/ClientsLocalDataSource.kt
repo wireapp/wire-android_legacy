@@ -3,24 +3,24 @@ package com.waz.zclient.devices.data.source.local
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestLocal
+import com.waz.zclient.storage.db.clients.model.ClientDao
 import com.waz.zclient.storage.db.clients.service.ClientDbService
-import com.waz.zclient.storage.db.clients.model.ClientEntity
 
-class ClientsLocalDataSource(private val clientsDao: ClientDbService) {
+class ClientsLocalDataSource(private val clientDbService: ClientDbService) {
 
-    suspend fun clientById(clientId: String): Either<Failure, ClientEntity> = requestLocal {
-        clientsDao.clientById(clientId)
+    suspend fun clientById(clientId: String): Either<Failure, ClientDao> = requestLocal {
+        clientDbService.clientById(clientId)
     }
 
-    suspend fun allClients(): Either<Failure, Array<ClientEntity>> = requestLocal {
-        clientsDao.allClients()
+    suspend fun allClients(): Either<Failure, List<ClientDao>> = requestLocal {
+        clientDbService.allClients().toList()
     }
 
-    fun updateClients(clients: Array<ClientEntity>) {
-        clientsDao.updateClients(clients)
+    fun updateClients(clients: List<ClientDao>) {
+        clientDbService.updateClients(clients)
     }
 
-    fun updateClient(client: ClientEntity) {
-        clientsDao.updateClient(client)
+    fun updateClient(client: ClientDao) {
+        clientDbService.updateClient(client)
     }
 }

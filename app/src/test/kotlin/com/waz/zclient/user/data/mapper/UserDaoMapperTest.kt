@@ -4,7 +4,7 @@ import com.waz.zclient.userEntity
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
-class UserEntityMapperTest {
+class UserDaoMapperTest {
 
     @Test
     fun `Mapping UserEntity to User should be correct`() {

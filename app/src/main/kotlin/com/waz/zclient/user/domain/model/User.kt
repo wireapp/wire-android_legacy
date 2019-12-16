@@ -4,13 +4,13 @@ package com.waz.zclient.user.domain.model
 data class User(
     val id: String,
     val teamId: String?,
-    val name: String?,
+    val name: String,
     val handle: String?,
     val email: String?,
     val phone: String?,
     val trackingId: String?,
     var pictures: String?,
-    var picture: List<String>?,
+    var picture: List<String>? = listOf(),
     val accentId: Int?,
     val sKey: String?,
     val connection: String?,
@@ -30,3 +30,4 @@ data class User(
     val selfPermission: Int?,
     val copyPermission: Int?,
     val createdBy: String?)
+)

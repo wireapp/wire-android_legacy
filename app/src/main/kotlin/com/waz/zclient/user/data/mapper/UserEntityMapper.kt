@@ -1,11 +1,24 @@
 package com.waz.zclient.user.data.mapper
 
-import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.model.UserDao
+import com.waz.zclient.user.data.source.remote.model.UserApi
 
 import com.waz.zclient.user.domain.model.User
 
-fun UserEntity.toUser() = User(id = id, teamId = teamId, name = name, handle = handle, email = email, phone = phone,
-    trackingId = trackingId, picture = picture, pictures = pictures,
+fun UserApi.toUser() = User(
+    id = id,
+    name = name,
+    handle = handle,
+    email = email,
+    phone = phone,
+    picture = picture,
+    accentId = accentId,
+    deleted = deleted,
+    managedBy = managedBy
+)
+
+fun UserDao.toUser() = User(id = id, teamId = teamId, name = name, handle = handle, email = email, phone = phone,
+    trackingId = trackingId, pictures = pictures,
     accentId = accentId, sKey = sKey,
     connection = connection, connectionTimestamp = connectionTimestamp,
     connectionMessage = connectionMessage, conversation = conversation, relation = relation,
