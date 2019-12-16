@@ -35,13 +35,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.0.2'
-
     implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
-    kapt "androidx.room:room-compiler:$rootProject.ext.versions.room"
     implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
-    implementation "androidx.room:room-rxjava2:$rootProject.ext.versions.room"
-
-    //Needed in order to use the same models for networking and caching
-    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-
+    kapt "androidx.room:room-compiler:$rootProject.ext.versions.room"
 }
