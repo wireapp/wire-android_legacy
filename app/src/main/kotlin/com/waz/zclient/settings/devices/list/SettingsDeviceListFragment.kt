@@ -1,6 +1,5 @@
 package com.waz.zclient.settings.devices.list
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
-import com.waz.zclient.settings.devices.SettingsDeviceConstants
 import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.settings.devices.list.adapter.DevicesRecyclerViewAdapter
@@ -32,7 +30,7 @@ class SettingsDeviceListFragment : Fragment() {
     private val itemClickListener by lazy {
         object : RecyclerViewItemClickListener<ClientItem> {
             override fun onItemClicked(item: ClientItem) {
-                navigateToDeviceDetails(item)
+                navigateToDeviceDetails(item.client.id)
             }
         }
     }
@@ -89,9 +87,8 @@ class SettingsDeviceListFragment : Fragment() {
         }
     }
 
-    private fun navigateToDeviceDetails(item: ClientItem) {
-        val intent = Intent(requireActivity(), SettingsDeviceDetailActivity::class.java)
-        intent.putExtra(SettingsDeviceConstants.DEVICE_ID_BUNDLE_KEY, item.client.id)
+    private fun navigateToDeviceDetails(deviceId: String) {
+        val intent = SettingsDeviceDetailActivity.newIntent(requireActivity(), deviceId)
         startActivity(intent)
     }
 

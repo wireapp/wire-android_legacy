@@ -1,10 +1,11 @@
 package com.waz.zclient.settings.devices.detail
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.settings.devices.SettingsDeviceConstants
 import kotlinx.android.synthetic.main.activity_device_detail.*
 
 class SettingsDeviceDetailActivity : AppCompatActivity() {
@@ -17,7 +18,7 @@ class SettingsDeviceDetailActivity : AppCompatActivity() {
     }
 
     private fun startDeviceDetailsFragment() {
-        val deviceId = intent.getStringExtra(SettingsDeviceConstants.DEVICE_ID_BUNDLE_KEY)
+        val deviceId = intent.getStringExtra(DEVICE_ID_BUNDLE_KEY)
         replaceFragment(R.id.layout_container, SettingsDeviceDetailFragment.newInstance(deviceId), false)
     }
 
@@ -29,5 +30,15 @@ class SettingsDeviceDetailActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    companion object {
+
+        private const val DEVICE_ID_BUNDLE_KEY = "deviceIdBundleKey"
+
+        fun newIntent(context: Context, deviceId: String): Intent {
+            return Intent(context, SettingsDeviceDetailActivity::class.java)
+                .putExtra(DEVICE_ID_BUNDLE_KEY, deviceId)
+        }
     }
 }
