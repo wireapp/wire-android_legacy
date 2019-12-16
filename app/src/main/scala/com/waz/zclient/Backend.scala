@@ -42,8 +42,8 @@ object Backend {
   //These are only here so that we can compile tests, the UI sets the backendConfig
   val StagingBackend = BackendConfig(
     environment = "staging",
-    baseUrl = "https://kube-roles-nginz-https.zinfra.io",
-    websocketUrl = "https://kube-roles-nginz-ssl.zinfra.io/await",
+    baseUrl = "https://staging-nginz-https.zinfra.io",
+    websocketUrl = "https://staging-nginz-ssl.zinfra.io/await",
     blacklistHost = s"https://clientblacklist.wire.com/staging/android",
     teamsUrl = "https://wire-teams-staging.zinfra.io",
     accountsUrl = "https://wire-account-staging.zinfra.io",
