@@ -93,10 +93,10 @@
 
         <activity
             android:name="com.waz.zclient.settings.main.SettingsMainActivity"
-            android:label="@string/settings_title"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Dark.Preferences"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask"
+            android:label="@string/empty_string"/>
 
         <activity
             android:name=".LaunchActivity"

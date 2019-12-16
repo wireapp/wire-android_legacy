@@ -108,7 +108,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
     if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
-        context.startActivity(new Intent(context, classOf[SettingsMainActivity]))
+      getContext.startActivity(new Intent(getContext, classOf[SettingsMainActivity]))
     } else {
         navigator.goTo(SettingsBackStackKey())
     }

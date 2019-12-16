@@ -60,10 +60,11 @@ class ClientsDataSource private constructor(
         private var clientsRepository: ClientsRepository? = null
 
         fun getInstance(remoteDataSource: ClientsRemoteDataSource,
-                        localDataSource: ClientsLocalDataSource): ClientsRepository =
+                        localDataSource: ClientsLocalDataSource,
+                        clientMapper: ClientMapper = ClientMapper()): ClientsRepository =
             clientsRepository ?: synchronized(this) {
                 clientsRepository
-                    ?: ClientsDataSource(remoteDataSource, localDataSource, ClientMapper()).also {
+                    ?: ClientsDataSource(remoteDataSource, localDataSource, clientMapper).also {
                         clientsRepository = it
                     }
             }

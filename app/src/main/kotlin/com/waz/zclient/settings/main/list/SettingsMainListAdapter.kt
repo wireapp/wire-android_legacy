@@ -27,7 +27,7 @@ class SettingsMainListAdapter(private val settingsItems: List<SettingsMainItem>,
             with(itemView) {
                 settings_item_title.text = settingsItem.title
                 settings_item_icon.text = settingsItem.icon
-                setOnClickListener { listener.onItemClicked(position) }
+                setOnClickListener { listener.onItemClicked(adapterPosition) }
             }
         }
     }
