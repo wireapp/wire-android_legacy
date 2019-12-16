@@ -22,6 +22,10 @@ class AccessTokenRepository {
         //TODO: Save the refresh token somewhere: User Preferences?
     }
 
+    fun renewAccessToken() {
+        //TODO: send a network request w/ the refreshToken to get a new accessToken
+    }
+
     fun wipeOutTokens() {
         wipeOutAccessToken()
         wipeOutRefreshToken()
