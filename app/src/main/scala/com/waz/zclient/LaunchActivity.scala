@@ -27,7 +27,6 @@ import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.settings.main.SettingsMainActivity
 import com.waz.zclient.utils.BackendController
 
 class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedLogTag {
@@ -92,9 +91,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
 
   // Navigation //////////////////////////////////////////////////
   private def startMain() = {
-    //FIXME: Kotlin temp change
-    startActivity(SettingsMainActivity.newIntent(this))
-//    startActivity(new Intent(this, classOf[MainActivity]))
+    startActivity(new Intent(this, classOf[MainActivity]))
     finish()
   }
 
