@@ -8,7 +8,7 @@ import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsNetwork
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
-import com.waz.zclient.devices.domain.GetSpecificClientUseCase
+import com.waz.zclient.devices.domain.GetClientUseCase
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.settings.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.storage.db.UserDatabase
@@ -27,7 +27,7 @@ class SettingsDeviceViewModelFactory : ViewModelProvider.Factory {
     }
 
     private val getCurrentDeviceUseCase by lazy {
-        GetSpecificClientUseCase(clientsRepository)
+        GetClientUseCase(clientsRepository)
     }
 
     private val getAllClientsUseCase by lazy {

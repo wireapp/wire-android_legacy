@@ -4,7 +4,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.devices.domain.GetSpecificClientParams
-import com.waz.zclient.devices.domain.GetSpecificClientUseCase
+import com.waz.zclient.devices.domain.GetClientUseCase
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
 import com.waz.zclient.framework.livedata.observeOnce
@@ -22,7 +22,7 @@ class SettingsDeviceDetailViewModelTest {
     private lateinit var viewModel: SettingsDeviceDetailViewModel
 
     @Mock
-    private lateinit var getSpecificClientUseCase: GetSpecificClientUseCase
+    private lateinit var getClientUseCase: GetClientUseCase
 
     @get:Rule
     val rule = InstantTaskExecutorRule()
@@ -30,7 +30,7 @@ class SettingsDeviceDetailViewModelTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        viewModel = SettingsDeviceDetailViewModel(getSpecificClientUseCase)
+        viewModel = SettingsDeviceDetailViewModel(getClientUseCase)
     }
 
     @Test
@@ -39,7 +39,7 @@ class SettingsDeviceDetailViewModelTest {
         val location = Mockito.mock<ClientLocation>(ClientLocation::class.java)
         val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, TEST_VERIFICATION, location)
 
-        runBlocking { Mockito.`when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Right(client)) }
+        runBlocking { Mockito.`when`(getClientUseCase.run(params)).thenReturn(Either.Right(client)) }
 
         viewModel.loadData(TEST_ID)
 
@@ -60,7 +60,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns NetworkError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { Mockito.`when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Left(Failure.NetworkConnection)) }
+        runBlocking { Mockito.`when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.NetworkConnection)) }
 
         viewModel.loadData(TEST_ID)
 
@@ -77,7 +77,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns ServerError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
         viewModel.loadData(TEST_ID)
 
@@ -94,7 +94,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { Mockito.`when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Left(Failure.CancellationError)) }
+        runBlocking { Mockito.`when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.CancellationError)) }
 
         viewModel.loadData(TEST_ID)
 

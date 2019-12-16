@@ -13,9 +13,9 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 
-class GetSpecificClientUseCaseTest {
+class GetClientUseCaseTest {
 
-    private lateinit var getSpecificClientUseCase: GetSpecificClientUseCase
+    private lateinit var getClientUseCase: GetClientUseCase
 
     @Mock
     private lateinit var repository: ClientsRepository
@@ -26,7 +26,7 @@ class GetSpecificClientUseCaseTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        getSpecificClientUseCase = GetSpecificClientUseCase(repository)
+        getClientUseCase = GetClientUseCase(repository)
     }
 
     @Test
@@ -36,7 +36,7 @@ class GetSpecificClientUseCaseTest {
             Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Right(client))
 
             val params = GetSpecificClientParams(TEST_ID)
-            getSpecificClientUseCase.run(params)
+            getClientUseCase.run(params)
 
             Mockito.verify(repository).clientById(TEST_ID)
 
@@ -49,7 +49,7 @@ class GetSpecificClientUseCaseTest {
             Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
 
             val params = GetSpecificClientParams(TEST_ID)
-            getSpecificClientUseCase.run(params)
+            getClientUseCase.run(params)
 
             Mockito.verify(repository).clientById(TEST_ID)
 
