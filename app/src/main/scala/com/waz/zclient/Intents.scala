@@ -21,9 +21,9 @@ import android.app.PendingIntent
 import android.content.{Context, Intent}
 import android.os.Bundle
 import com.waz.model.{ConvId, UserId}
+import com.waz.utils.returning
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.preferences.PreferencesActivity
-import com.waz.zclient.settings.main.SettingsMainActivity
 
 object Intents {
 
@@ -61,11 +61,9 @@ object Intents {
     new Intent(context, classOf[MainActivity]).putExtra(FromSharingExtra, true)
 
   def EnterAppIntent(showSettings: Boolean = false)(implicit context: Context) = {
-    //FIXME: Kotlin temp change
-    SettingsMainActivity.newIntent(context)
-//    returning(new Intent(context, classOf[MainActivity])) { i =>
-//      if (showSettings) i.putExtra(OpenPageExtra, Page.Settings)
-//    }
+    returning(new Intent(context, classOf[MainActivity])) { i =>
+      if (showSettings) i.putExtra(OpenPageExtra, Page.Settings)
+    }
   }
 
   def ShowDevicesIntent(implicit context: Context) =

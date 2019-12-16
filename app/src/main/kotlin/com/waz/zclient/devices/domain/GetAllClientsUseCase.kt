@@ -10,7 +10,6 @@ import com.waz.zclient.devices.domain.model.Client
 class GetAllClientsUseCase(private val clientsRepository: ClientsRepository)
     : UseCase<List<Client>, Unit>() {
 
-    override suspend fun run(params: Unit): Either<Failure, List<Client>> = requestData {
-        clientsRepository.allClients()
-    }
+    override suspend fun run(params: Unit): Either<Failure, List<Client>> =
+        requestData { clientsRepository.allClients() }
 }

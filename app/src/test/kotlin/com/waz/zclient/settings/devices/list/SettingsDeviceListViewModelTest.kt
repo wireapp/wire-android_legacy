@@ -40,7 +40,7 @@ class SettingsDeviceListViewModelTest {
     fun `given data is loaded successfully, when list is populated, then assert data is mapped correctly`() {
 
         val location = mock<ClientLocation>(ClientLocation::class.java)
-        val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
+        val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, TEST_VERIFICATION, location)
 
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
 
@@ -118,5 +118,6 @@ class SettingsDeviceListViewModelTest {
         private const val TEST_TYPE = "permanant"
         private const val TEST_ID = "4555f7b2"
         private const val TEST_MODEL = "Samsung"
+        private const val TEST_VERIFICATION = "UNVERIFIED"
     }
 }

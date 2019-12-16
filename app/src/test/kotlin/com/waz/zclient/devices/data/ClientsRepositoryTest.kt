@@ -3,18 +3,19 @@ package com.waz.zclient.devices.data
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.devices.data.source.ClientMapper
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
+import com.waz.zclient.devices.data.source.remote.model.ClientApi
 import com.waz.zclient.devices.domain.model.Client
-import com.waz.zclient.framework.mockito.eq
+import com.waz.zclient.eq
 import com.waz.zclient.storage.db.clients.model.ClientDao
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
 
 class ClientsRepositoryTest {
@@ -27,24 +28,26 @@ class ClientsRepositoryTest {
     @Mock
     private lateinit var localDataSource: ClientsLocalDataSource
 
+    @Mock
+    private lateinit var clientMapper: ClientMapper
+
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        repository = ClientsDataSource.getInstance(remoteDataSource, localDataSource)
+        repository = ClientsDataSource.getInstance(remoteDataSource, localDataSource, clientMapper)
     }
 
     @Test
     fun `Given getAllClients() is called, when the local data source succeeded, then map the data response to domain`() {
         runBlocking {
-            `when`(localDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
+            `when`(localDataSource.allClients()).thenReturn(Either.Right(listOf(generateMockDao())))
 
             repository.allClients()
 
             verify(localDataSource).allClients()
 
-            repository.allClients().map {
-                val domainClient = it[0]
-                assertMappingIsCorrect(domainClient)
+            localDataSource.allClients().map {
+                verify(clientMapper).toListOfClients(it)
             }
         }
     }
@@ -53,16 +56,15 @@ class ClientsRepositoryTest {
     @Test
     fun `Given getAllClients() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
-            `when`(remoteDataSource.allClients()).thenReturn(Either.Right(arrayOf(generateMockEntity())))
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Right(listOf(generateMockApi())))
             `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure.CancellationError))
 
             repository.allClients()
 
             verify(remoteDataSource).allClients()
 
-            repository.allClients().map {
-                val domainClient = it[0]
-                assertMappingIsCorrect(domainClient)
+            remoteDataSource.allClients().map {
+                verify(clientMapper).toListOfClients(it)
             }
         }
     }
@@ -71,8 +73,8 @@ class ClientsRepositoryTest {
     fun `Given allClients() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
             `when`(remoteDataSource.allClients()).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_MESSAGE)))
-            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure.CancellationError)
-            )
+            `when`(localDataSource.allClients()).thenReturn(Either.Left(Failure.CancellationError))
+
             repository.allClients()
 
             verify(remoteDataSource).allClients()
@@ -84,14 +86,14 @@ class ClientsRepositoryTest {
     @Test
     fun `Given getClientById() is called, when the local data source succeeded, then map the data response to domain`() {
         runBlocking {
-            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
+            `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockDao()))
 
             repository.clientById(TEST_ID)
 
             verify(localDataSource).clientById(eq(TEST_ID))
 
-            repository.clientById(TEST_ID).map {
-                assertMappingIsCorrect(it)
+            localDataSource.clientById(TEST_ID).map {
+                verify(clientMapper).toClient(it)
             }
         }
     }
@@ -99,15 +101,15 @@ class ClientsRepositoryTest {
     @Test
     fun `Given getClientById() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
-            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockEntity()))
+            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockApi()))
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
 
             repository.clientById(TEST_ID)
 
             verify(remoteDataSource).clientById(eq(TEST_ID))
 
-            repository.clientById(TEST_ID).map {
-                assertMappingIsCorrect(it)
+            remoteDataSource.clientById(TEST_ID).map {
+                verify(clientMapper).toClient(it)
             }
         }
     }
@@ -126,23 +128,11 @@ class ClientsRepositoryTest {
         }
     }
 
-    private fun assertMappingIsCorrect(domainClient: Client?) {
-        assert(domainClient?.cookie == TEST_COOKIE)
-        assert(domainClient?.time == TEST_TIME)
-        assert(domainClient?.label == TEST_LABEL)
-        assert(domainClient?._class == TEST_CLASS)
-        assert(domainClient?.type == TEST_TYPE)
-        assert(domainClient?.id == TEST_ID)
-        assert(domainClient?.model == TEST_MODEL)
-        assert(domainClient?.location?.long == TEST_LONGITUDE)
-        assert(domainClient?.location?.lat == TEST_LATITUDE)
-    }
+    private fun generatemockClient() : Client = mock(Client::class.java)
 
-    private fun generateMockEntity(): ClientDao {
-        return ClientDao(TEST_ID, TEST_TIME, TEST_LABEL, TEST_COOKIE, TEST_TYPE, TEST_CLASS,
-            TEST_MODEL, TEST_LATITUDE, TEST_LONGITUDE, TEST_ENC_KEY, TEST_MAC_KEY,
-            TEST_LOCATION_NAME, TEST_VERIFICATION)
-    }
+    private fun generateMockApi(): ClientApi = mock(ClientApi::class.java)
+
+    private fun generateMockDao(): ClientDao = mock(ClientDao::class.java)
 
     @After
     fun tearDown() {
@@ -151,19 +141,7 @@ class ClientsRepositoryTest {
 
     companion object {
         private const val TEST_CODE = 401
-        private const val TEST_LONGITUDE = 0.00
-        private const val TEST_LATITUDE = 0.00
-        private const val TEST_COOKIE = "4555f7b2"
-        private const val TEST_TIME = "2019-11-14T11:00:42.482Z"
-        private const val TEST_LABEL = "Tester's phone"
-        private const val TEST_CLASS = "phone"
-        private const val TEST_TYPE = "permanant"
         private const val TEST_ID = "4555f7b2"
-        private const val TEST_MODEL = "Samsung"
-        private const val TEST_ENC_KEY = "encKey"
-        private const val TEST_MAC_KEY = "nackKey"
-        private const val TEST_LOCATION_NAME = "locationName"
-        private const val TEST_VERIFICATION = "verification"
         private const val TEST_MESSAGE = "testMessage"
     }
 }

@@ -1,4 +1,4 @@
-package com.waz.zclient.framework.mockito
+package com.waz.zclient
 
 /*
  * Copyright (C) 2017 The Android Open Source Project

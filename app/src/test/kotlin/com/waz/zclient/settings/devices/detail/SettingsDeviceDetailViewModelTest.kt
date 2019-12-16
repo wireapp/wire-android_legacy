@@ -37,7 +37,7 @@ class SettingsDeviceDetailViewModelTest {
     fun `given data is loaded successfully, then assert data is mapped correctly`() {
         val params = GetSpecificClientParams(TEST_ID)
         val location = Mockito.mock<ClientLocation>(ClientLocation::class.java)
-        val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, location)
+        val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, TEST_VERIFICATION, location)
 
         runBlocking { Mockito.`when`(getSpecificClientUseCase.run(params)).thenReturn(Either.Right(client)) }
 
@@ -118,5 +118,6 @@ class SettingsDeviceDetailViewModelTest {
         private const val TEST_TYPE = "permanant"
         private const val TEST_ID = "4555f7b2"
         private const val TEST_MODEL = "Samsung"
+        private const val TEST_VERIFICATION = "VERIFIED"
     }
 }
