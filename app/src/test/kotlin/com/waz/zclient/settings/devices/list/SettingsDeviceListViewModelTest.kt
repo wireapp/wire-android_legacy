@@ -40,7 +40,7 @@ class SettingsDeviceListViewModelTest {
     fun `given data is loaded successfully, when list is populated, then assert data is mapped correctly`() {
 
         val location = mock<ClientLocation>(ClientLocation::class.java)
-        val client = Client(TEST_COOKIE, TEST_TIME, TEST_LABEL, TEST_CLASS, TEST_TYPE, TEST_ID, TEST_MODEL, TEST_VERIFICATION, location)
+        val client = Client(time = TEST_TIME, label = TEST_LABEL, type = TEST_TYPE, id = TEST_ID, _class = TEST_CLASS, model = TEST_MODEL, location = location)
 
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
 
@@ -111,13 +111,11 @@ class SettingsDeviceListViewModelTest {
     companion object {
         private const val TEST_CODE = 401
         private const val TEST_ERROR_MESSAGE = "Something went wrong, please try again."
-        private const val TEST_COOKIE = "4555f7b2"
         private const val TEST_TIME = "2019-11-14T11:00:42.482Z"
         private const val TEST_LABEL = "Tester's phone"
         private const val TEST_CLASS = "phone"
         private const val TEST_TYPE = "permanant"
         private const val TEST_ID = "4555f7b2"
         private const val TEST_MODEL = "Samsung"
-        private const val TEST_VERIFICATION = "UNVERIFIED"
     }
 }

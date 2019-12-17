@@ -128,8 +128,6 @@ class ClientsRepositoryTest {
         }
     }
 
-    private fun generatemockClient() : Client = mock(Client::class.java)
-
     private fun generateMockApi(): ClientApi = mock(ClientApi::class.java)
 
     private fun generateMockDao(): ClientDao = mock(ClientDao::class.java)
