@@ -94,11 +94,13 @@ class SingleParticipantAdapter(userId: UserId,
   override def getItemCount: Int =
     if (isGroupAdminViewVisible) fields.size + 3 else fields.size + 2
 
-  override def getItemId(position: Int): Long =
-    if (position == 0) 0L
-    else if (position == 1 && isGroupAdminViewVisible) 1L
-    else if (position == getItemCount - 1) 2L
-    else fields(position - 1).key.hashCode.toLong
+  override def getItemId(position: Int): Long = getItemViewType(position) match {
+    case Header                        => 0L
+    case GroupAdmin                    => 1L
+    case Footer                        => 2L
+    case _  if isGroupAdminViewVisible => fields(position - 2).key.hashCode.toLong
+    case _                             => fields(position - 1).key.hashCode.toLong
+  }
 
   setHasStableIds(true)
 

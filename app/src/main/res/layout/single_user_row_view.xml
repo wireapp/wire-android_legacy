@@ -64,6 +64,7 @@
             android:layout_marginStart="@dimen/wire__padding__small"
             android:layout_marginEnd="@dimen/wire__padding__small"
             android:visibility="gone"
+            android:tint="?wirePrimaryTextColor"
             />
 
         <ImageView
