@@ -8,6 +8,7 @@ import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 
 @Suppress("UNCHECKED_CAST")
+@Deprecated("TODO Remove when dependency framework is implemented")
 class SettingsAccountViewModelFactory : ViewModelProvider.Factory {
 
     private val getUserProfileUseCase by lazy {

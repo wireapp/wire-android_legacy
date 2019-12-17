@@ -15,6 +15,7 @@ import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.pref.GlobalPreferences
 
 @Suppress("UNCHECKED_CAST")
+@Deprecated("TODO Remove when dependency framework is implemented")
 class SettingsDeviceViewModelFactory : ViewModelProvider.Factory {
 
     private val clientsRepository by lazy {

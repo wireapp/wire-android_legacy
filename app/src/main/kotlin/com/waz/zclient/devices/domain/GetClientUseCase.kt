@@ -9,10 +9,9 @@ import com.waz.zclient.devices.domain.model.Client
 
 class GetClientUseCase(private val clientsRepository: ClientsRepository)
     : UseCase<Client, GetSpecificClientParams>() {
+
     override suspend fun run(params: GetSpecificClientParams): Either<Failure, Client> =
-        requestData {
-            clientsRepository.clientById(params.clientId)
-        }
+        requestData { clientsRepository.clientById(params.clientId) }
 }
 
 data class GetSpecificClientParams(val clientId: String)

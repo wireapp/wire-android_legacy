@@ -31,7 +31,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
 
     fun loadData() {
         handleLoading(true)
-        getUserProfileUseCase.invoke(viewModelScope, Unit) { response ->
+        getUserProfileUseCase(viewModelScope, Unit) { response ->
             response.fold(::handleProfileError, ::handleProfileSuccess)
         }
     }
@@ -40,9 +40,8 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         handleLoading(false)
         when (failure) {
             is Failure.CancellationError ->
-                // Show error for cancellation error
                 Log.e(javaClass.simpleName, "The request for data was cancelled")
-            else -> //Show error for soemthing else
+            else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")
         }
     }
