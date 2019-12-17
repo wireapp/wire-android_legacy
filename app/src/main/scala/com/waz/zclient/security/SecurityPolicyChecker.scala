@@ -106,7 +106,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
     if (BuildConfig.BLOCK_ON_JAILBREAK_OR_ROOT) {
       verbose(l"check BLOCK_ON_JAILBREAK_OR_ROOT")
       val check = RootDetectionCheck(globalPreferences)
-      val actions: List[Action] = List(new WipeDataAction(None)) ++
+      val actions: List[Action] = List(new WipeDataAction()) ++
         (if (isForeground) List(BlockWithDialogAction(R.string.root_detected_dialog_title, R.string.root_detected_dialog_message)) else Nil)
 
       Future.successful(Some((check, actions)))
@@ -116,7 +116,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
     if (BuildConfig.WIPE_ON_COOKIE_INVALID) {
       verbose(l"check WIPE_ON_COOKIE_INVALID")
       val check = new CookieValidationCheck(accountManager.auth)
-      val actions = List(new WipeDataAction(Some(accountManager.userId)))
+      val actions = List(new WipeDataAction())
       Future.successful(Some(check, actions))
     } else EmptyCheck
 
@@ -127,7 +127,7 @@ object SecurityPolicyChecker extends DerivedLogTag {
     if (authNeeded) {
       verbose(l"check request password, force app lock: ${BuildConfig.FORCE_APP_LOCK}")
       val check = RequestPasswordCheck(passwordController, userPreferences)
-      val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction(Some(accountManager.userId))) else Nil
+      val actions = if (BuildConfig.FORCE_APP_LOCK) List(new WipeDataAction()) else Nil
       Future.successful(Some(check, actions))
     } else EmptyCheck
 

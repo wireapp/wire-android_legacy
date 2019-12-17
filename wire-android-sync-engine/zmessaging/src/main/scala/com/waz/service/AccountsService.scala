@@ -108,10 +108,7 @@ trait AccountsService {
 
   def loginClient: LoginClient
 
-  def wipeData(userId: UserId): Future[Unit]
   def wipeDataForAllAccounts(): Future[Unit]
-  def isWipedForAllAccounts: Future[Boolean]
-
 }
 
 object AccountsService {
@@ -508,21 +505,16 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     }
   }
 
-  override def wipeDataForAllAccounts(): Future[Unit] = accountManagers.head.map(_.foreach(am => wipeData(am.userId)))
-
-  override def wipeData(userId: UserId): Future[Unit] = {
+  override def wipeDataForAllAccounts(): Future[Unit] = {
     def delete(file: File) =
       if (file.exists) Try(file.delete()).isSuccess else true
 
     //wrap everything in Try blocks as otherwise exceptions might cause us to skip future wiping
     //operations and the logout call
-    val deleteCryptoDir = Try(delete(cryptoBoxDir(userId)))
-    if(deleteCryptoDir.isFailure) error(l"failed to wipe cryptobox dir", deleteCryptoDir.failed.get)
+    val deleteDbFiles = Try(databaseDir().foreach(delete))
+    if(deleteDbFiles.isFailure) error(l"failed to wipe db files", deleteDbFiles.failed.get)
 
-    val deleteDbFiles = Try(databaseDir(userId).foreach(delete))
-    if(deleteDbFiles.isFailure) error(l"failed to wipe db files", deleteCryptoDir.failed.get)
-
-    val deleteOtrFiles = Try(otrFilesDir(userId).deleteRecursively())
+    val deleteOtrFiles = Try(otrFilesDir().deleteRecursively())
     if(deleteOtrFiles.isFailure) {
       error(l"Got exception when attempting to delete otr files", deleteOtrFiles.failed.get)
     } else if(deleteOtrFiles.isSuccess && !deleteOtrFiles.get) {
@@ -538,27 +530,19 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     if(deleteLogs.isFailure) {
       warn(l"Failed to delete logs, skipping...")
     }
-    logout(userId, DataWiped)
 
+    for {
+      accIds <- zmsInstances.head.map(_.map(_.selfUserId))
+    } yield Future.sequence(accIds.map(id => logout(id, DataWiped)))
   }
 
-  override def isWipedForAllAccounts: Future[Boolean] = accountManagers.head.map { ams =>
-    cryptoBoxDirs(ams).forall(!_.exists) && databaseFiles(ams).forall(!_.exists)
-  }
-
-  private def cryptoBoxDirs(ams: Set[AccountManager]): Set[File] = ams.map(acc => cryptoBoxDir(acc.userId))
-
-  private def cryptoBoxDir(userId: UserId): File = new File(new File(context.getFilesDir, global.metadata.cryptoBoxDirName), userId.str)
-
-  private def databaseFiles(ams: Set[AccountManager]): Set[File] = ams.flatMap(acc => databaseDir(acc.userId))
-
-  private def databaseDir(userId: UserId): Set[File] = {
+  private def databaseDir(): Set[File] = {
     val databaseDir = s"${context.getApplicationInfo.dataDir}/databases"
     new File(databaseDir).listFiles().filter(_.isFile).toSet
   }
 
-  private def otrFilesDir(userId: UserId): Directory =
-    new Directory(new File(s"${context.getApplicationInfo.dataDir}/files/otr/$userId"))
+  private def otrFilesDir(): Directory =
+    new Directory(new File(s"${context.getApplicationInfo.dataDir}/files/otr/"))
 
   private def cacheDir(): Directory = new Directory(context.getCacheDir)
 

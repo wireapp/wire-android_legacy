@@ -173,7 +173,7 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
       }
 
       (
-        if (cookieIsInvalid && BuildConfig.WIPE_ON_COOKIE_INVALID) accountsService.wipeData(userId)
+        if (cookieIsInvalid && BuildConfig.WIPE_ON_COOKIE_INVALID) accountsService.wipeDataForAllAccounts()
         else Future.successful(())
         ).foreach{ _ =>
         mostRecentLoggedOutAccount ! Some(account)
