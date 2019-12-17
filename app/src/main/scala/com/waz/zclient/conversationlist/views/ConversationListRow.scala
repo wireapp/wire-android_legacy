@@ -146,7 +146,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
     otherUser <- userData(ms.headOption)
     isGroupConv <- z.conversations.groupConversation(conv.id)
     missedCallerId <- controller.lastMessage(conv.id).map(_.lastMissedCall.map(_.userId))
-    userName <- missedCallerId.fold2(Signal.const(Option.empty[Name]), u => z.usersStorage.signal(u).map(d => Some(d.getDisplayName)))
+    userName <- missedCallerId.fold2(Signal.const(Option.empty[Name]), u => z.usersStorage.signal(u).map(d => Some(d.displayName)))
   } yield (conv.id, subtitleStringForLastMessages(conv, otherUser, ms.toSet, lastMessage, lastUnreadMessage, lastUnreadMessageUser, lastUnreadMessageMembers, typingUser, z.selfUserId, isGroupConv, userName))
 
   private def userData(id: Option[UserId]) = id.fold2(Signal.const(Option.empty[UserData]), uid => UserSignal(uid).map(Option(_)))
@@ -401,8 +401,8 @@ object ConversationListRow {
                                   )
                                   (implicit context: Context): String = {
 
-    lazy val senderName = user.map(_.getDisplayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
-    lazy val memberName = members.headOption.map(_.getDisplayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
+    lazy val senderName = user.map(_.displayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
+    lazy val memberName = members.headOption.map(_.displayName).getOrElse(Name(getString(R.string.conversation_list__someone)))
 
     if (messageData.isEphemeral) {
       if (messageData.hasMentionOf(selfId)) {
@@ -530,7 +530,7 @@ object ConversationListRow {
           subtitleStringForLastMessage(msg, lastUnreadMessageUser, lastUnreadMessageMembers, isGroupConv, selfId, conv.unreadCount.quotes > 0)
         }
       } { usr =>
-        formatSubtitle(getString(R.string.conversation_list__typing), usr.getDisplayName, isGroupConv)
+        formatSubtitle(getString(R.string.conversation_list__typing), usr.displayName, isGroupConv)
       }
     }
   }

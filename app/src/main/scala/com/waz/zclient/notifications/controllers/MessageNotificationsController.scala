@@ -278,7 +278,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
 
   private def getUserName(account: UserId, n: NotificationData) =
     inject[AccountToUsersStorage].apply(account).flatMap {
-      case Some(storage) => storage.get(n.user).map(_.map(_.getDisplayName))
+      case Some(storage) => storage.get(n.user).map(_.map(_.displayName))
       case None          => Future.successful(Option.empty[Name])
     }
 

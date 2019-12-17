@@ -165,7 +165,7 @@ class VerificationStateUpdater(selfUserId:     UserId,
       users     <- convUsers
       usersMap  =  users.filter(_._2.nonEmpty).toMap
       updates   <- convs.updateAll2(usersMap.keys.toSeq, { conv => update(conv, usersMap(conv.id)) })
-      _ = verbose(l"updateConversations: ${users.flatMap(_._2).map(_.map(_.getDisplayName))}")
+      _ = verbose(l"updateConversations: ${users.flatMap(_._2).map(_.map(_.displayName))}")
       flattened = usersMap.map { case (conv, userList) => conv -> userList.flatten }
       _         <- updateProcessor(VerificationStateUpdate(updates, flattened, changes))
     } yield ()

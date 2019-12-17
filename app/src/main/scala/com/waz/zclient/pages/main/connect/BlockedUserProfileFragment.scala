@@ -107,7 +107,7 @@ class BlockedUserProfileFragment extends BaseFragment[BlockedUserProfileFragment
   private lazy val profileImageView = view[ImageView](R.id.blocked_user_picture)
 
   private lazy val userNameView = returning(view[TypefaceTextView](R.id.user_name)) { vh =>
-    user.map(_.getDisplayName).onUi(name => vh.foreach(_.setText(name)))
+    user.map(_.displayName).onUi(name => vh.foreach(_.setText(name)))
   }
 
   private lazy val userUsernameView = returning(view[TypefaceTextView](R.id.user_handle)) { vh =>

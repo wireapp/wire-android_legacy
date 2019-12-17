@@ -304,7 +304,7 @@ object NotificationManagerWrapper {
         msgSound <- Signal.future(getSound(UserPreferences.TextTone, R.raw.new_message_gcm))
         pingSound <- Signal.future(getSound(UserPreferences.PingTone, R.raw.ping_from_them))
         vibration <- Signal.future(am.userPrefs.preference(UserPreferences.VibrateEnabled).apply())
-        channel <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.getDisplayName, Set(
+        channel <- am.storage.usersStorage.signal(am.userId).map(user => ChannelGroup(user.id.str, user.displayName, Set(
             ChannelInfo(MessageNotificationsChannelId(am.userId), R.string.message_notifications_channel_name, R.string.message_notifications_channel_description, msgSound, vibration),
             ChannelInfo(PingNotificationsChannelId(am.userId), R.string.ping_notifications_channel_name, R.string.ping_notifications_channel_description, pingSound, vibration)
           )))

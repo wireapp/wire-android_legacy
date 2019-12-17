@@ -417,7 +417,7 @@ class SearchUIFragment extends BaseFragment[Container]
   private def sendGenericInvite(fromSearch: Boolean): Unit =
     self.head.map { self =>
       val sharingIntent = IntentUtils.getInviteIntent(
-        getString(R.string.people_picker__invite__share_text__header, self.getDisplayName),
+        getString(R.string.people_picker__invite__share_text__header, self.displayName),
         getString(R.string.people_picker__invite__share_text__body, StringUtils.formatHandle(self.handle.map(_.string).getOrElse(""))))
       startActivity(Intent.createChooser(sharingIntent, getString(R.string.people_picker__invite__share_details_dialog)))
     }

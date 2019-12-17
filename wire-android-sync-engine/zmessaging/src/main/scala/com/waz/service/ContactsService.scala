@@ -171,11 +171,11 @@ class ContactsServiceImpl(userId:         UserId,
         val onWireButUnconnected = onWire.aftersets.keysIterator.filterNot(uid => acceptedOrPending.contains(uid) || users.get(uid).forall(_.isConnected)).to[ArrayBuffer]
 
         val allIds = notOnWire.iterator.map(Right[UserId, ContactId](_)).++(acceptedOrPending.keysIterator.++(onWireButUnconnected.iterator).map(Left[UserId, ContactId](_))).to[ArrayBuffer]
-        def sortKey(id: Either[UserId, ContactId]): String = id.fold(u => users(u).getDisplayName, c => contacts(c).sortKey)
+        def sortKey(id: Either[UserId, ContactId]): String = id.fold(u => users(u).displayName, c => contacts(c).sortKey)
         val sortedIds = sortWithCurrentLocale(allIds, sortKey)
 
         val indexing = Locales.indexing()
-        def initial(idx: Int): String = indexing.labelFor(sortedIds(idx).fold(u => users(u).getDisplayName, c => contacts(c).sortKey))
+        def initial(idx: Int): String = indexing.labelFor(sortedIds(idx).fold(u => users(u).displayName, c => contacts(c).sortKey))
         val groupedByInitial: SeqMap[String, IndexedSeq[Int]] = {
           val grouped = sortedIds.indices.groupBy(initial)
           val other = grouped.get("#")

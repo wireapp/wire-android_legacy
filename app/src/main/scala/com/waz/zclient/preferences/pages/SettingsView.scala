@@ -114,7 +114,7 @@ class SettingsViewController(view: SettingsView)(implicit inj: Injector, ec: Eve
   val selfInfo = for {
     z <- zms
     self <- UserSignal(z.selfUserId)
-  } yield (self.getDisplayName, self.handle.fold("")(_.string))
+  } yield (self.displayName, self.handle.fold("")(_.string))
 
   val team = zms.flatMap(_.teams.selfTeam)
 

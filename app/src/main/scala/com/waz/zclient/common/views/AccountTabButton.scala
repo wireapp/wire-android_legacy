@@ -109,7 +109,7 @@ class AccountTabButton(val context: Context, val attrs: AttributeSet, val defSty
   } yield (tOu, s)).onUi {
     case (Right(user), s) =>
       drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserShape, s)
-      name.setText(user.getDisplayName)
+      name.setText(user.displayName)
       drawable.setPicture(user.picture)
     case (Left(team), s) =>
       drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamShape, s)

@@ -276,7 +276,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   self.on(Threading.Ui) { self =>
     view.setAccentColor(AccentColor(self.accent).color)
     self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
-    view.setUserName(self.getDisplayName)
+    view.setUserName(self.displayName)
   }
 
   for {

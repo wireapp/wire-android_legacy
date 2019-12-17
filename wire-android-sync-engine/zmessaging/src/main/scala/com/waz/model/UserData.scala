@@ -48,7 +48,7 @@ case class UserData(override val id:       UserId,
                     conversation:          Option[RConvId]        = None, // remote conversation id with this contact (one-to-one)
                     relation:              Relation               = Relation.Other, //unused - remove in future migration
                     syncTimestamp:         Option[LocalInstant]   = None,
-                    displayName:           Name                   = Name.Empty,
+                    private val dispName:  Name                   = Name.Empty,
                     verified:              Verification           = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
                     deleted:               Boolean                = false,
                     availability:          Availability           = Availability.None,
@@ -61,16 +61,16 @@ case class UserData(override val id:       UserId,
                     permissions:           PermissionsMasks       = (0,0),
                     createdBy:             Option[UserId]         = None) extends Identifiable[UserId] {
 
-  def isConnected = ConnectionStatus.isConnected(connection)
-  def hasEmailOrPhone = email.isDefined || phone.isDefined
-  def isSelf = connection == ConnectionStatus.Self
-  def isAcceptedOrPending = connection == ConnectionStatus.Accepted || connection == ConnectionStatus.PendingFromOther || connection == ConnectionStatus.PendingFromUser
-  def isVerified = verified == Verification.VERIFIED
-  def isAutoConnect = isConnected && ! isSelf && connectionMessage.isEmpty
-  def isReadOnlyProfile = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
-  lazy val isWireBot = integrationId.nonEmpty
+  lazy val isConnected: Boolean         = ConnectionStatus.isConnected(connection)
+  lazy val hasEmailOrPhone: Boolean     = email.isDefined || phone.isDefined
+  lazy val isSelf: Boolean              = connection == ConnectionStatus.Self
+  lazy val isAcceptedOrPending: Boolean = connection == ConnectionStatus.Accepted || connection == ConnectionStatus.PendingFromOther || connection == ConnectionStatus.PendingFromUser
+  lazy val isVerified: Boolean          = verified == Verification.VERIFIED
+  lazy val isAutoConnect: Boolean       = isConnected && ! isSelf && connectionMessage.isEmpty
+  lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
+  lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
-  def getDisplayName = if (displayName.isEmpty) name else displayName
+  lazy val displayName: Name            = if (dispName.isEmpty) name else dispName
 
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true)
   def updated(user: UserInfo, withSearchKey: Boolean): UserData = copy(
@@ -202,7 +202,7 @@ object UserData {
     val Conversation = opt(id[RConvId]('conversation))(_.conversation)
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
     val Timestamp = opt(localTimestamp('timestamp))(_.syncTimestamp)
-    val DisplayName = text[model.Name]('display_name, _.str, model.Name(_))(_.displayName)
+    val DisplayName = text[model.Name]('display_name, _.str, model.Name(_))(_.dispName)
     val Verified = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
     val Deleted = bool('deleted)(_.deleted)
     val AvailabilityStatus = int[Availability]('availability, _.id, Availability.apply)(_.availability)

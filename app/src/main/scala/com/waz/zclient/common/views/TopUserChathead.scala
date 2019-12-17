@@ -65,7 +65,7 @@ class TopUserChathead(val context: Context, val attrs: AttributeSet, val defStyl
 
   def setUser(user: UserData): Unit = {
     chathead.loadUser(user.id)
-    footer.setText(transformer.transform(user.getDisplayName))
+    footer.setText(transformer.transform(user.displayName))
     AvailabilityView.drawable(user.availability, footer.getCurrentTextColor).foreach(icon.setImageDrawable)
     icon.setVisibility(if (user.availability != Availability.None) View.VISIBLE else View.GONE)
   }

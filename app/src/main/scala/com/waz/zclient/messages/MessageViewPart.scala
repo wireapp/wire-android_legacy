@@ -219,7 +219,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   userId(chathead.loadUser)
 
-  user.map(u => if (u.isWireBot) u.name else if (u.deleted) Name(getString(R.string.default_deleted_username)) else u.getDisplayName).onUi(tvName.setTransformedText(_))
+  user.map(u => if (u.isWireBot) u.name else if (u.deleted) Name(getString(R.string.default_deleted_username)) else u.displayName).onUi(tvName.setTransformedText(_))
   user.map(_.isWireBot).on(Threading.Ui) { isBot.setVisible }
 
   user.map(_.accent).on(Threading.Ui) { a =>

@@ -61,7 +61,7 @@ class PendingConnectRequestFragment extends BaseFragment[PendingConnectRequestFr
   private lazy val isIgnoredConnection = userConnection.map(_ == ConnectionStatus.IGNORED)
 
   private lazy val userNameView = returning(view[TypefaceTextView](R.id.user_name)) { vh =>
-    user.map(_.getDisplayName).onUi(t => vh.foreach(_.setText(t)))
+    user.map(_.displayName).onUi(t => vh.foreach(_.setText(t)))
   }
   private lazy val userHandleView = returning(view[TypefaceTextView](R.id.user_handle)) { vh =>
     user.map(user => StringUtils.formatHandle(user.handle.map(_.string).getOrElse("")))

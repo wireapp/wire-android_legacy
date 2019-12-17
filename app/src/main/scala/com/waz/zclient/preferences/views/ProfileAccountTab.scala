@@ -120,7 +120,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
   setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
   teamAndUser.map {
-    case (userData, None) => userData.getDisplayName
+    case (userData, None) => userData.displayName
     case (userData, Some(team)) => team.name
   }.onUi { setContentDescription(_) }
 

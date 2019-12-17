@@ -47,7 +47,7 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
             likers           <- reactionsStorage.likes(msg.id).map(_.likers)
             usersStorage     <- inject[Signal[UsersStorage]]
             users            <- usersStorage.listSignal(likers.keys)
-          } yield users.sortBy(u => likers(u.id)).map(_.getDisplayName).mkString(", ")
+          } yield users.sortBy(u => likers(u.id)).map(_.displayName).mkString(", ")
     }.onUi(description.setText)
 }
 
