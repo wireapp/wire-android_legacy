@@ -16,6 +16,8 @@ class ClientMapper {
             id = id,
             model = model,
             verification = verification,
+            macKey = macKey,
+            encKey = encKey,
             location = ClientLocation(long = lon, lat = lat, name = locationName))
     }
 
@@ -42,6 +44,8 @@ class ClientMapper {
             lat = location.lat,
             lon = location.long,
             locationName = location.name,
+            encKey = encKey,
+            macKey = macKey,
             verification = verification
         )
     }

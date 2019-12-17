@@ -17,9 +17,6 @@ data class UserDao(
     @ColumnInfo(name = "name")
     var name: String,
 
-    @ColumnInfo(name = "handle")
-    var handle: String?,
-
     @ColumnInfo(name = "email")
     var email: String?,
 
@@ -67,6 +64,9 @@ data class UserDao(
 
     @ColumnInfo(name = "availability")
     var availability: Int?,
+
+    @ColumnInfo(name = "handle")
+    var handle: String?,
 
     @ColumnInfo(name = "provider_id")
     var providerId: String?,

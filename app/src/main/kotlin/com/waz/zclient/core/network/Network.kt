@@ -21,8 +21,8 @@ open class Network {
 
                 val newRequest = chain.request().newBuilder()
                     .addHeader("Content-Type", "application/json")
-                    .addHeader(
-                        "Authorization", "Bearer $API_TOKEN").build()
+                    .addHeader("Authorization", "Bearer $API_TOKEN")
+                    .build()
                 chain.proceed(newRequest)
             }
             .addInterceptor(HttpLoggingInterceptor().apply {

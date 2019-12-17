@@ -35,4 +35,10 @@ data class ClientDao(
     val locationName: String?,
 
     @ColumnInfo(name = "verification")
-    val verification: String)
+    val verification: String,
+
+    @ColumnInfo(name = "encKey")
+    val encKey: String,
+
+    @ColumnInfo(name = "macKey")
+    val macKey: String)

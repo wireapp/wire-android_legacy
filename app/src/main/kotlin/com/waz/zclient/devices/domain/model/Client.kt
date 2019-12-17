@@ -8,6 +8,8 @@ data class Client(val cookie: String? = null,
                   val id: String,
                   val model: String,
                   val verification: String = "Unverified",
+                  val encKey: String = "",
+                  val macKey: String = "",
                   val location: ClientLocation)
 
 data class ClientLocation(val lat: Double,
