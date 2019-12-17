@@ -17,10 +17,10 @@
  */
 package com.waz.sync.client
 
-import com.waz.log.LogSE._
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.ConversationData.{ConversationType, Link}
 import com.waz.model._
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
@@ -32,18 +32,21 @@ import com.waz.znet2.http._
 import org.json
 import org.json.JSONObject
 
+import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Right
 import scala.util.control.NonFatal
 
 trait ConversationsClient {
   import ConversationsClient._
   def loadConversationIds(start: Option[RConvId] = None): ErrorOrResponse[ConversationsResult]
   def loadConversations(start: Option[RConvId] = None, limit: Int = ConversationsPageSize): ErrorOrResponse[ConversationsResult]
-  def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
+  def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]]
+  def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]]
   def postName(convId: RConvId, name: Name): ErrorOrResponse[Option[RenameConversationEvent]]
   def postConversationState(convId: RConvId, state: ConversationState): ErrorOrResponse[Unit]
   def postMessageTimer(convId: RConvId, duration: Option[FiniteDuration]): ErrorOrResponse[Unit]
-  def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]]
+  def postMemberJoin(conv: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]]
   def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]]
   def createLink(conv: RConvId): ErrorOrResponse[Link]
   def removeLink(conv: RConvId): ErrorOrResponse[Unit]
@@ -51,6 +54,7 @@ trait ConversationsClient {
   def postAccessUpdate(conv: RConvId, access: Set[Access], accessRole: AccessRole): ErrorOrResponse[Unit]
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit]
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse]
+  def postConversationRole(id: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit]
 }
 
 class ConversationsClientImpl(implicit
@@ -91,7 +95,7 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  override def loadConversations(ids: Seq[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] = {
+  override def loadConversations(ids: Set[RConvId]): ErrorOrResponse[Seq[ConversationResponse]] = {
     Request
       .Get(relativePath = ConversationsPath, queryParameters = queryParameters("ids" -> ids.mkString(",")))
       .withResultType[ConversationsResult]
@@ -99,6 +103,18 @@ class ConversationsClientImpl(implicit
       .executeSafe
       .map(_.map(_.conversations))
   }
+
+  private def loadConversationRoles(id: RConvId): ErrorOrResponse[Set[ConversationRole]] = {
+    Request.Get(relativePath = rolesPath(id))
+      .withResultType[ConvRoles]
+      .withErrorType[ErrorResponse]
+      .executeSafe(_.toConversationRoles)
+  }
+
+  override def loadConversationRoles(remoteIds: Set[RConvId]): Future[Map[RConvId, Set[ConversationRole]]] =
+    Future.sequence(
+      remoteIds.map(rConvId => loadConversationRoles(rConvId).future.collect { case Right(roles) => rConvId -> roles })
+    ).map(_.toMap)
 
   private implicit val EventsResponseDeserializer: RawBodyDeserializer[List[ConversationEvent]] =
     RawBodyDeserializer[JSONObject].map(json => EventsResponse.unapplySeq(JsonObjectResponse(json)).get)
@@ -131,15 +147,18 @@ class ConversationsClientImpl(implicit
       .executeSafe
   }
 
-  override def postMemberJoin(conv: RConvId, members: Set[UserId]): ErrorOrResponse[Option[MemberJoinEvent]] = {
-    Request.Post(relativePath = s"$ConversationsPath/$conv/members", body = Json("users" -> Json(members)))
+  override def postMemberJoin(conv: RConvId, members: Set[UserId], defaultRole: ConversationRole): ErrorOrResponse[Option[MemberJoinEvent]] = {
+    Request.Post(
+      relativePath = membersPath(conv),
+      body = Json("users" -> Json(members), "conversation_role" -> defaultRole.label)
+    )
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberJoinEvent) :: Nil => event })
   }
 
   override def postMemberLeave(conv: RConvId, user: UserId): ErrorOrResponse[Option[MemberLeaveEvent]] = {
-    Request.Delete(relativePath = s"$ConversationsPath/$conv/members/$user")
+    Request.Delete(relativePath = s"${membersPath(conv)}/$user")
       .withResultType[Option[List[ConversationEvent]]]
       .withErrorType[ErrorResponse]
       .executeSafe(_.collect { case (event: MemberLeaveEvent) :: Nil => event })
@@ -199,24 +218,32 @@ class ConversationsClientImpl(implicit
   }
 
   def postReceiptMode(conv: RConvId, receiptMode: Int): ErrorOrResponse[Unit] = {
-    Request
-      .Put(
-        relativePath = receiptModePath(conv),
-        body = Json(
-          "receipt_mode" -> receiptMode
-        )
-      )
+    Request.Put(
+      relativePath = receiptModePath(conv),
+      body = Json("receipt_mode" -> receiptMode)
+    )
       .withResultType[Unit]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
 
   def postConversation(state: ConversationInitState): ErrorOrResponse[ConversationResponse] = {
-    debug(l"postConversation(${state.users}, ${state.name})")
+    verbose(l"postConversation($state)")
     Request.Post(relativePath = ConversationsPath, body = state)
       .withResultType[ConversationsResult]
       .withErrorType[ErrorResponse]
       .executeSafe(_.conversations.head)
+  }
+
+  override def postConversationRole(conv: RConvId, userId: UserId, role: ConversationRole): ErrorOrResponse[Unit] = {
+    verbose(l"postConversationRole($conv, $userId, $role)")
+    Request.Put(
+      relativePath = s"${membersPath(conv)}/$userId",
+      body = Json("conversation_role" -> role.label)
+    )
+      .withResultType[Unit]
+      .withErrorType[ErrorResponse]
+      .executeSafe
   }
 }
 
@@ -229,13 +256,18 @@ object ConversationsClient {
 
   def accessUpdatePath(id: RConvId) = s"$ConversationsPath/${id.str}/access"
   def receiptModePath(id: RConvId) = s"$ConversationsPath/${id.str}/receipt-mode"
+  def rolesPath(id: RConvId) = s"$ConversationsPath/${id.str}/roles"
+  def membersPath(id: RConvId) = s"$ConversationsPath/${id.str}/members"
 
-  case class ConversationInitState(users: Set[UserId],
-                                   name: Option[Name] = None,
-                                   team: Option[TeamId],
-                                   access: Set[Access],
-                                   accessRole: AccessRole,
-                                   receiptMode: Option[Int])
+
+  case class ConversationInitState(users:            Set[UserId],
+                                   name:             Option[Name] = None,
+                                   team:             Option[TeamId],
+                                   access:           Set[Access],
+                                   accessRole:       AccessRole,
+                                   receiptMode:      Option[Int],
+                                   conversationRole: ConversationRole
+                                  )
 
   object ConversationInitState {
     implicit lazy val Encoder: JsonEncoder[ConversationInitState] = new JsonEncoder[ConversationInitState] {
@@ -249,6 +281,7 @@ object ConversationsClient {
         o.put("access", encodeAccess(state.access))
         o.put("access_role", encodeAccessRole(state.accessRole))
         state.receiptMode.foreach(o.put("receipt_mode", _))
+        o.put("conversation_role", state.conversationRole.label)
       }
     }
   }
@@ -266,17 +299,23 @@ object ConversationsClient {
                                   accessRole:   Option[AccessRole],
                                   link:         Option[Link],
                                   messageTimer: Option[FiniteDuration],
-                                  members:      Set[UserId],
+                                  members:      Map[UserId, ConversationRole],
                                   receiptMode:  Option[Int]
                                  )
 
-  object ConversationResponse {
+  object ConversationResponse extends DerivedLogTag {
+    import ConversationRole._
     import com.waz.utils.JsonDecoder._
 
     implicit lazy val Decoder: JsonDecoder[ConversationResponse] = new JsonDecoder[ConversationResponse] {
       override def apply(implicit js: JSONObject): ConversationResponse = {
+        verbose(l"ConversationResponse: ${js.toString}")
         val members = js.getJSONObject("members")
         val state = ConversationState.Decoder(members.getJSONObject("self"))
+        val selfRole = (state.target, state.conversationRole) match {
+          case (Some(id), Some(role)) => Map(id -> role)
+          case _                      => Map.empty
+        }
 
         ConversationResponse(
           'id,
@@ -292,9 +331,7 @@ object ConversationsClient {
           'access_role,
           'link,
           decodeOptLong('message_timer).map(EphemeralDuration(_)),
-          JsonDecoder.arrayColl(members.getJSONArray("others"), { case (arr, i) =>
-            UserId(arr.getJSONObject(i).getString("id"))
-          }),
+          decodeUserIdsWithRoles('others)(members) ++ selfRole,
           decodeOptInt('receipt_mode)
         )
       }
@@ -318,6 +355,29 @@ object ConversationsClient {
           warn(l"json decoding failed", e)
           None
       }
+    }
+  }
+
+  case class ConvRole(conversation_role: String, actions: Seq[String]) {
+    def toConversationRole: ConversationRole = ConversationRole(conversation_role, actions.flatMap(a => ConversationAction.allActions.find(_.name == a)).toSet)
+  }
+
+  object ConvRole extends DerivedLogTag {
+    import com.waz.utils.JsonDecoder._
+    implicit lazy val Decoder: JsonDecoder[ConvRole] = new JsonDecoder[ConvRole] {
+      override def apply(implicit js: JSONObject): ConvRole = ConvRole('conversation_role, decodeStringSeq('actions))
+    }
+  }
+
+  case class ConvRoles(conversation_roles: Seq[ConvRole]) {
+    def toConversationRoles: Set[ConversationRole] = conversation_roles.map(_.toConversationRole).toSet
+  }
+
+  object ConvRoles extends DerivedLogTag {
+    import com.waz.utils.JsonDecoder._
+
+    implicit lazy val Decoder: JsonDecoder[ConvRoles] = new JsonDecoder[ConvRoles] {
+      override def apply(implicit js: JSONObject): ConvRoles = ConvRoles(decodeSeq[ConvRole]('conversation_roles))
     }
   }
 

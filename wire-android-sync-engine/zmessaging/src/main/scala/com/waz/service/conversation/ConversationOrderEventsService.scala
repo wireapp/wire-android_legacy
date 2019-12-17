@@ -50,7 +50,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
       case _: OtrErrorEvent           => true
       case _: ConnectRequestEvent     => true
       case _: OtrMessageEvent         => true
-      case MemberJoinEvent(_, _, _, added, _) if added.contains(selfUserId)   => true
+      case MemberJoinEvent(_, _, _, added, _, _) if added.contains(selfUserId) => true
       case MemberLeaveEvent(_, _, _, leaving) if leaving.contains(selfUserId) => true
       case GenericMessageEvent(_, _, _, GenericMessage(_, content)) =>
         content match {
@@ -93,8 +93,7 @@ class ConversationOrderEventsService(selfUserId: UserId,
     } yield {}
   }
 
-  def handlePostConversationEvent(event: ConversationEvent): Future[Unit] = {
-    debug(l"handlePostConversationEvent($event)")
+  def handlePostConversationEvent(event: ConversationEvent): Future[Unit] =
     Future.sequence(Seq(
       event match {
         case ev: MessageEvent => pipeline(Seq(ev.withCurrentLocalTime())) // local time is required for the hot knock mechanism
@@ -107,7 +106,6 @@ class ConversationOrderEventsService(selfUserId: UserId,
         case _ => Future.successful(())
       }
     )) map { _ => () }
-  }
 
   private def processConversationOrderEvents(convId: RConvId, es: Seq[ConversationEvent]) =
     if (es.isEmpty) Future.successful(())

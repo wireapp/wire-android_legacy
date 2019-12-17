@@ -21,7 +21,7 @@ import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.{ConversationData, GenericMessage, GenericMessageEvent, MemberJoinEvent, _}
+import com.waz.model.{ConversationData, GenericMessage, GenericMessageEvent, _}
 import com.waz.service.EventScheduler.{Interleaved, Parallel, Sequential, Stage}
 import com.waz.service.messages.MessagesService
 import com.waz.service.{EventPipeline, EventPipelineImpl, EventScheduler, UserService}

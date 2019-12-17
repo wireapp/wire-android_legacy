@@ -180,11 +180,12 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[SelectedConversationService]]   to inject[Signal[ZMessaging]].map(_.selectedConv)
     bind [Signal[ConversationsUiService]]        to inject[Signal[ZMessaging]].map(_.convsUi)
     bind [Signal[UserService]]                   to inject[Signal[ZMessaging]].map(_.users)
-    bind [Signal[TeamSizeThreshold]]                      to inject[Signal[ZMessaging]].map(_.teamSize)
+    bind [Signal[TeamSizeThreshold]]             to inject[Signal[ZMessaging]].map(_.teamSize)
     bind [Signal[UserSearchService]]             to inject[Signal[ZMessaging]].map(_.userSearch)
     bind [Signal[ConversationStorage]]           to inject[Signal[ZMessaging]].map(_.convsStorage)
     bind [Signal[UsersStorage]]                  to inject[Signal[ZMessaging]].map(_.usersStorage)
     bind [Signal[MembersStorage]]                to inject[Signal[ZMessaging]].map(_.membersStorage)
+    bind [Signal[ConversationRolesService]]      to inject[Signal[ZMessaging]].map(_.rolesService)
     bind [Signal[OtrClientsStorage]]             to inject[Signal[ZMessaging]].map(_.otrClientsStorage)
     bind [Signal[AssetStorage]]                  to inject[Signal[ZMessaging]].map(_.assetsStorage)
     bind [Signal[AssetService]]                  to inject[Signal[ZMessaging]].map(_.assetService)
@@ -201,6 +202,7 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[ConversationFoldersStorage]]    to inject[Signal[ZMessaging]].map(_.conversationFoldersStorage)
     bind [Signal[FoldersService]]                to inject[Signal[ZMessaging]].map(_.foldersService)
     bind [Signal[TeamsService]]                  to inject[Signal[ZMessaging]].map(_.teams)
+    bind [Signal[MessageIndexStorage]]           to inject[Signal[ZMessaging]].map(_.messagesIndexStorage)
 
     // old controllers
     // TODO: remove controller factory, reimplement those controllers

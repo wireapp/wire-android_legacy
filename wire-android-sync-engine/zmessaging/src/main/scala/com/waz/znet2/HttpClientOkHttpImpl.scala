@@ -270,7 +270,7 @@ object HttpClientOkHttpImpl {
       }
     }
 
-    parts
+    val partCreator: Seq[OkMultipartBody.Part] = parts
       .map { p =>
         val okHttpBody = new OkRequestBody {
           private val body                      = getRawBody(p)
@@ -287,9 +287,11 @@ object HttpClientOkHttpImpl {
 
         getOkPartCreator(p)(okHttpBody)
       }
-      .foldLeft(new OkMultipartBody.Builder())(_ addPart _)
-      .setType(convertMediaType(mediaType))
-      .build()
+
+    val builder = new OkMultipartBody.Builder()
+    partCreator.foreach { case p: OkMultipartBodyPart => builder.addPart(p) }
+
+    builder.setType(convertMediaType(mediaType)).build()
   }
 
 }
