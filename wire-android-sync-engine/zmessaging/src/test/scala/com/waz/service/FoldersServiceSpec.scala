@@ -26,7 +26,7 @@ import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestUserPreferences
 import com.waz.threading.Threading
-import com.waz.utils.events.{EventStream, Signal}
+import com.waz.utils.events.{AggregatingSignal, EventStream, Signal}
 
 import scala.collection.mutable
 import scala.concurrent.duration._

@@ -37,7 +37,6 @@ public enum SyncCommand {
     PostConvReceiptMode("post-conv-receipt-mode"),
     PostConvName("post-conv-name"),
     PostConvState("post-conv-state"),
-    PostConvRole("update-conv_role"),
     PostLastRead("post-last-read"),
     PostCleared("post-cleared"),
     PostTypingState("post-typing-state"),
@@ -76,7 +75,6 @@ public enum SyncCommand {
     PostFolders("post-folders-favorites"),
     SyncFolders("sync-folders"),
     DeleteGroupConv("delete-group-conv"),
-
     Unknown("unknown");
 
     public final String name;

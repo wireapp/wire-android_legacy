@@ -113,11 +113,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
     returning(findById[TypefaceTextView](R.id.integration_summary))(v => summary.foreach(v.setText(_)))
     returning(findById[TypefaceTextView](R.id.integration_description))(v => description.foreach(v.setText(_)))
 
-    fromConv.fold(
-      convController.selfRole.map(_.canAddGroupMember)
-    )(convId =>
-      convController.selfRoleInConv(convId).map(_.canRemoveGroupMember)
-    ).foreach {
+    fromConv.fold(userAccountsController.hasPermissionToAddService)(userAccountsController.hasPermissionToRemoveService).foreach {
       case true =>
         addRemoveButtonText.foreach { v =>
           v.setText(if (isRemovingFromConv) R.string.remove_service_button_text else R.string.open_service_conversation_button_text)

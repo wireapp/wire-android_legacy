@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2018 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+       xmlns:tools="http://schemas.android.com/tools"
+       xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+        tools:ignore="UselessParent">
+
+        <com.waz.zclient.common.views.ChatHeadView
+            android:id="@+id/chathead"
+            android:layout_width="@dimen/profile__image__width"
+            android:layout_height="@dimen/profile__image__height"
+            app:is_round="true"
+            app:show_waiting="false"
+            app:gray_on_unconnected="false"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/wire__padding__24"/>
+
+        <LinearLayout
+            android:id="@+id/guest_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/participant_guest_indicator_icon"
+                android:layout_width="@dimen/guest_badge_size"
+                android:layout_height="@dimen/guest_badge_size"
+                android:layout_gravity="center_vertical"
+                />
+
+            <com.waz.zclient.ui.text.TypefaceTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:paddingStart="@dimen/wire__padding__small"
+                android:paddingEnd="@dimen/wire__padding__small"
+                android:textColor="?wirePrimaryTextColor"
+                android:textSize="@dimen/wire__text_size__regular"
+                android:text="@string/participant_tab_guest_indicator_label"
+                app:w_font="@string/wire__typeface__light"/>
+
+        </LinearLayout>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/expiration_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:textSize="@dimen/wire__text_size__small"
+            app:w_font="@string/wire__typeface__medium"
+            android:layout_gravity="center_horizontal"
+            />
+
+        <com.waz.zclient.views.ShowAvailabilityView
+            android:id="@+id/participant_availability"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/wire__padding__8"
+            android:visibility="gone"/>
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_info_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            app:w_font="@string/wire__typeface__medium"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__huge"
+           />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_info_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:gravity="start"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginTop="@dimen/wire__padding__small"
+            android:layout_marginBottom="@dimen/wire__padding__small"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__50"
+            android:text="@string/read_receipts_info_1"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/read_receipts_info_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="?wireSecondaryTextColor"
+            android:layout_marginBottom="@dimen/wire__padding__small"
+            android:paddingStart="@dimen/wire__padding__regular"
+            android:paddingEnd="@dimen/wire__padding__huge"
+            android:text="@string/read_receipts_info_2"
+            />
+    </LinearLayout>
+
+    <!-- Footer with left & right actions -->
+    <com.waz.zclient.views.menus.FooterMenu
+        android:id="@+id/fm__footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/wire__padding__small"
+        />
+
+</merge>

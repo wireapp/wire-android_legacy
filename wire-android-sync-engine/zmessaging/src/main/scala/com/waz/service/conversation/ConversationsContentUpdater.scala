@@ -53,18 +53,16 @@ trait ConversationsContentUpdater {
   def updateConversationState(id: ConvId, state: ConversationState): Future[Option[(ConversationData, ConversationData)]]
   def updateAccessMode(id: ConvId, access: Set[Access], accessRole: Option[AccessRole], link: Option[ConversationData.Link] = None): Future[Option[(ConversationData, ConversationData)]]
 
-  def createConversationWithMembers(convId:      ConvId,
-                                    remoteId:    RConvId,
-                                    convType:    ConversationType,
-                                    creator:     UserId,
-                                    members:     Set[UserId],
-                                    defaultRole: ConversationRole,
-                                    name:        Option[Name] = None,
-                                    hidden:      Boolean = false,
-                                    access:      Set[Access] = Set(Access.PRIVATE),
-                                    accessRole:  AccessRole = AccessRole.PRIVATE,
-                                    receiptMode: Int = 0
-                                   ): Future[ConversationData]
+  def createConversationWithMembers(convId: ConvId,
+                                    remoteId: RConvId,
+                                    convType: ConversationType,
+                                    creator: UserId,
+                                    members: Set[UserId],
+                                    name: Option[Name] = None,
+                                    hidden: Boolean = false,
+                                    access: Set[Access] = Set(Access.PRIVATE),
+                                    accessRole: AccessRole = AccessRole.PRIVATE,
+                                    receiptMode: Int = 0): Future[ConversationData]
 }
 
 class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
@@ -148,14 +146,15 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
     verbose(l"updateConversationState($conv, state: $state)")
 
     val (archived, archiveTime) = state match {
-      case ConversationState(Some(a), Some(t), _, _, _, _, _) if t >= conv.archiveTime => (a, t)
+      case ConversationState(Some(a), Some(t), _, _, _) if t >= conv.archiveTime => (a, t)
       case _ => (conv.archived, conv.archiveTime)
     }
 
     val (muteTime, muteSet) = state match {
-      case ConversationState(_, _, _, Some(t), _, _, _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state, teamId.isDefined))
+      case ConversationState(_, _, _, Some(t), _) if t >= conv.muteTime => (t, MuteSet.resolveMuted(state, teamId.isDefined))
       case _ => (conv.muteTime, conv.muted)
     }
+
     conv.copy(archived = archived, archiveTime = archiveTime, muteTime = muteTime, muted = muteSet)
   })
 
@@ -176,21 +175,19 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
 
   override def setConversationHidden(id: ConvId, hidden: Boolean) = storage.update(id, _.copy(hidden = hidden))
 
-  override def createConversationWithMembers(convId:      ConvId,
-                                             remoteId:    RConvId,
-                                             convType:    ConversationType,
-                                             creator:     UserId,
-                                             members:     Set[UserId],
-                                             defaultRole: ConversationRole,
-                                             name:        Option[Name] = None,
-                                             hidden:      Boolean = false,
-                                             access:      Set[Access] = Set(Access.PRIVATE),
-                                             accessRole:  AccessRole = AccessRole.PRIVATE,
-                                             receiptMode: Int = 0
-                                            ): Future[ConversationData] = {
+  override def createConversationWithMembers(convId: ConvId,
+                                             remoteId: RConvId,
+                                             convType: ConversationType,
+                                             creator: UserId,
+                                             members: Set[UserId],
+                                             name: Option[Name] = None,
+                                             hidden: Boolean = false,
+                                             access: Set[Access] = Set(Access.PRIVATE),
+                                             accessRole: AccessRole = AccessRole.PRIVATE,
+                                             receiptMode: Int = 0): Future[ConversationData] = {
     for {
-      users <- usersStorage.listAll(members)
-      conv  <- storage.insert(
+      users <- usersStorage.listAll(members.toSeq)
+      conv <- storage.insert(
         ConversationData(
           convId,
           remoteId,
@@ -204,7 +201,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           accessRole    = Some(accessRole),
           receiptMode   = Some(receiptMode)
         ))
-      _    <- membersStorage.updateOrCreateAll(convId, Map(creator -> ConversationRole.AdminRole) ++ members.map(_ -> defaultRole))
+      _ <- membersStorage.add(convId, members + creator)
     } yield conv
   }
 
@@ -276,7 +273,7 @@ class ConversationsContentUpdaterImpl(val storage:     ConversationStorage,
           _ <- storage.updateLocalId(updates.head, origId)
           _ <- Future.sequence(updates.map(membersStorage.delete))
           _ <- updateConversation(origId, Some(ConversationType.OneToOne), hidden = Some(false))
-          _ <- membersStorage.updateOrCreateAll(origId, Map(selfUserId -> ConversationRole.AdminRole, UserId(origId.str) -> ConversationRole.AdminRole))
+          _ <- membersStorage.add(origId, Seq(selfUserId, UserId(origId.str)))
         } yield ()
       })
     } yield ()

@@ -32,7 +32,6 @@ trait TeamsClient {
   def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]]
   def getTeamMember(teamId: TeamId, userId: UserId): ErrorOrResponse[TeamMember]
   def deleteTeamConversation(teamId: TeamId, convId: RConvId): ErrorOrResponse[Unit]
-  def getTeamRoles(id: TeamId): ErrorOrResponse[Set[ConversationRole]]
 }
 
 class TeamsClientImpl(implicit
@@ -82,12 +81,6 @@ class TeamsClientImpl(implicit
       .executeSafe
   }
 
-  override def getTeamRoles(id: TeamId): ErrorOrResponse[Set[ConversationRole]] =
-    Request.Get(relativePath = teamRolesPath(id))
-      .withResultType[TeamRoles]
-      .withErrorType[ErrorResponse]
-      .executeSafe(_.toConversationRoles)
-
   private def createPermissionsMasks(permissions: Permissions): PermissionsMasks =
     (permissions.self, permissions.copy)
 
@@ -102,8 +95,6 @@ object TeamsClient {
 
   def teamPath(id: TeamId): String = s"$TeamsPath/${id.str}"
 
-  def teamRolesPath(id: TeamId): String = s"${teamPath(id)}/conversations/roles"
-
   def memberPath(teamId: TeamId, userId: UserId): String = s"${teamMembersPath(teamId)}/${userId.str}"
 
   def teamConversationPath(id: TeamId, cid: RConvId): String = s"$TeamsPath/${id.str}/conversations/${cid.str}"
@@ -113,13 +104,5 @@ object TeamsClient {
   case class TeamMember(user: UserId, permissions: Option[Permissions], created_by: Option[UserId])
 
   case class Permissions(self: Long, copy: Long)
-
-  case class TeamConvRole(conversation_role: String, actions: Seq[String]) {
-    def toConversationRole: ConversationRole = ConversationRole(conversation_role, actions.flatMap(a => ConversationAction.allActions.find(_.name == a)).toSet)
-  }
-
-  case class TeamRoles(conversation_roles: Seq[TeamConvRole]) {
-    def toConversationRoles: Set[ConversationRole] = conversation_roles.map(_.toConversationRole).toSet
-  }
 
 }

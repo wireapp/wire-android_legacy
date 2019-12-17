@@ -208,33 +208,6 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
         case e => fail(s"unexpected event: $e")
       }
     }
-
-    scenario("Parse MemberUpdateEvent") {
-      val rConvId = RConvId("bbe1053c-4999-4324-8a2a-851ce48c56c5")
-      val userId = UserId("b937e85e-3611-4e29-9bda-6fe39dfd4bd0")
-      val senderId = UserId("bea00721-4af0-4204-82a7-e152c9722ddc")
-      val jsonStr =
-        s"""
-           |{
-           |  "conversation": "${rConvId.str}",
-           |  "time": "2019-12-11T12:40:38.426Z",
-           |  "data": { "conversation_role":"${ConversationRole.AdminRole.label}","target":"${userId.str}"},
-           |  "from": "${senderId.str}",
-           |  "type":"conversation.member-update"
-           |}
-         """.stripMargin
-
-      val jsonObject = new JSONObject(jsonStr)
-      EventDecoder(jsonObject) match {
-        case ev: MemberUpdateEvent =>
-          ev.convId shouldEqual rConvId
-          ev.from shouldEqual senderId
-          ev.state.target shouldEqual Some(userId)
-          ev.state.conversationRole shouldEqual Some(ConversationRole.AdminRole)
-        case e => fail(s"unexpected event: $e")
-      }
-
-    }
   }
 }
 

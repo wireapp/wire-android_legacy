@@ -19,11 +19,11 @@ package com.waz.zclient.usersearch.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.ViewGroup
+import android.view.{View, ViewGroup}
 import android.widget.LinearLayout
 import com.waz.api.ContentSearchQuery
-import com.waz.content.MessageIndexStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
@@ -36,8 +36,8 @@ import com.waz.zclient.messages.{MessageViewPart, MsgPart, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, TextViewUtils}
 import com.waz.zclient.utils.Time.TimeStamp
-import com.waz.zclient.{R, ViewHelper}
 import com.waz.zclient.utils._
+import com.waz.zclient.{R, ViewHelper}
 
 trait SearchResultRowView extends MessageViewPart with ViewHelper {
   val searchedQuery = Signal[ContentSearchQuery]()
@@ -50,7 +50,6 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   import TextSearchResultRowView._
   import Threading.Implicits.Ui
-
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
   
@@ -60,50 +59,60 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
   setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getResources.getDimensionPixelSize(R.dimen.search__result__height)))
   setOrientation(LinearLayout.HORIZONTAL)
 
-  private lazy val messagesIndexStorage     = inject[Signal[MessageIndexStorage]]
-  private lazy val accentColorController    = inject[AccentColorController]
-  private lazy val usersController          = inject[UsersController]
+  val zms = inject[Signal[ZMessaging]]
+  val accentColorController = inject[AccentColorController]
+  val usersController = inject[UsersController]
+  val messageActionsController = inject[MessageActionsController]
+  val collectionController = inject[CollectionController]
 
-  private lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
-  private lazy val infoTextView    = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
-  private lazy val chatheadView    = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatHeadView]
-  private lazy val resultsCount    = ViewUtils.getView(this, R.id.search_result_count).asInstanceOf[TypefaceTextView]
+  lazy val contentTextView = ViewUtils.getView(this, R.id.message_content).asInstanceOf[TypefaceTextView]
+  lazy val infoTextView = ViewUtils.getView(this, R.id.message_info).asInstanceOf[TypefaceTextView]
+  lazy val chatheadView = ViewUtils.getView(this, R.id.chathead).asInstanceOf[ChatHeadView]
+  lazy val resultsCount = ViewUtils.getView(this, R.id.search_result_count).asInstanceOf[TypefaceTextView]
 
-  (for {
-    mis      <- messagesIndexStorage
-    color    <- accentColorController.accentColor
-    m        <- message
-    q        <- searchedQuery if q.toString().nonEmpty
-    nContent <- Signal.future(mis.getNormalizedContentForMessage(m.id))
-  } yield (m, q, color, nContent)).onUi {
+  val contentSignal = for{
+    m <- message
+    q <- searchedQuery if q.toString().nonEmpty
+    color <- accentColorController.accentColor
+    nContent <- zms.flatMap(z => Signal.future(z.messagesIndexStorage.getNormalizedContentForMessage(m.id)))
+  } yield (m, q, color, nContent)
+
+  contentSignal.on(Threading.Ui){
     case (msg, query, color, Some(normalizedContent)) =>
       val spannableString = CollectionUtils.getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.color), StartEllipsisThreshold)
       contentTextView.setText(spannableString._1)
-      resultsCount.setText(spannableString._2.toString)
-      resultsCount.setVisible(spannableString._2 > 1)
-    case (msg, _, _, None) =>
+      resultsCount.setText(s"${spannableString._2}")
+      if (spannableString._2 <= 1) {
+        resultsCount.setVisibility(View.INVISIBLE)
+      } else {
+        resultsCount.setVisibility(View.VISIBLE)
+      }
+    case (msg, query, color, None) =>
       contentTextView.setText(msg.contentString)
-      resultsCount.setVisible(false)
+      resultsCount.setVisibility(View.INVISIBLE)
     case _ =>
   }
 
-  (for {
+  val infoSignal = for{
     m <- message
     u <- usersController.user(m.userId)
-  } yield (m, u)).onUi {
+  } yield (m, u)
+
+  infoSignal.onUi {
     case (msg, user) =>
       infoTextView.setText(TextViewUtils.getBoldText(getContext, s"[[${user.name}]] ${TimeStamp(msg.time.instant, showWeekday = false).string}"))
       chatheadView.loadUser(msg.userId)
+    case _ =>
   }
 
-  this.onClick {
+  this.onClick{
     message.head.foreach { m =>
-      inject[CollectionController].focusedItem ! Some(m)
-      inject[MessageActionsController].onMessageAction ! (MessageAction.Reveal, m)
+      collectionController.focusedItem ! Some(m)
+      messageActionsController.onMessageAction ! (MessageAction.Reveal, m)
     }
   }
 }
 
-object TextSearchResultRowView {
+object TextSearchResultRowView{
   val StartEllipsisThreshold = 15
 }

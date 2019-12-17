@@ -127,7 +127,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     allVideoReceiveStates.map(_.groupBy(_._1.userId).mapValues(_.values.toSet))
   }
 
-  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] =
+  def participantInfos(take: Option[Int] = None): Signal[Vector[CallParticipantInfo]] = {
     for {
       cZms         <- callingZms
       participants <- orderedParticipants(take)
@@ -136,16 +136,16 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       videoStates  <- mergedVideoStates
     } yield users.map { user =>
       CallParticipantInfo(
-        userId         = user.id,
-        picture        = user.picture,
-        displayName    = user.getDisplayName,
-        isGuest        = user.isGuest(cZms.teamId),
-        isVerified     = user.isVerified,
-        isExternal     = user.isExternal(cZms.teamId),
+        user.id,
+        user.picture,
+        user.getDisplayName,
+        user.isGuest(cZms.teamId),
+        user.isVerified,
         isVideoEnabled = videoStates.get(user.id).exists(_.intersect(Set(Started, ScreenShare)).nonEmpty),
-        isSelf         = cZms.selfUserId == user.id
+        Some(cZms)
       )
     }
+  }
 
   private def orderedParticipants(take: Option[Int] = None): Signal[Seq[Participant]] = {
     otherParticipants.map { participants =>
@@ -524,12 +524,14 @@ private class GSMManager(callActive: Signal[Boolean])(implicit inject: Injector,
 }
 
 object CallController {
-  case class CallParticipantInfo(userId:         UserId,
-                                 picture:        Option[Picture],
-                                 displayName:    String,
-                                 isGuest:        Boolean,
-                                 isVerified:     Boolean,
-                                 isExternal:     Boolean,
+  case class CallParticipantInfo(userId: UserId,
+                                 picture: Option[Picture],
+                                 displayName: String,
+                                 isGuest: Boolean,
+                                 isVerified: Boolean,
                                  isVideoEnabled: Boolean,
-                                 isSelf:         Boolean)
+                                 zms: Option[ZMessaging]) {
+
+    def isSelf: Boolean = zms.exists(_.selfUserId == userId)
+  }
 }

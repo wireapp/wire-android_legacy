@@ -26,7 +26,7 @@ import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ConversationRolesService, ErrorsService, EventScheduler, SearchKey, SearchQuery}
+import com.waz.service.{ErrorsService, EventScheduler, SearchKey, SearchQuery}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
@@ -46,7 +46,7 @@ trait TeamsService {
 
   val selfTeam: Signal[Option[TeamData]]
 
-  def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit]
+  def onTeamSynced(team: TeamData, members: Seq[TeamMember]): Future[Unit]
 
   def onMemberSynced(member: TeamMember): Future[Unit]
 
@@ -69,9 +69,7 @@ class TeamsServiceImpl(selfUser:           UserId,
                        sync:               SyncServiceHandle,
                        syncRequestService: SyncRequestService,
                        userPrefs:          UserPreferences,
-                       errorsService:      ErrorsService,
-                       rolesService:       ConversationRolesService
-                      ) extends TeamsService with DerivedLogTag {
+                       errorsService:      ErrorsService) extends TeamsService with DerivedLogTag {
 
   private implicit val dispatcher = SerialDispatchQueue()
 
@@ -158,19 +156,18 @@ class TeamsServiceImpl(selfUser:           UserId,
     }
   }
 
-  override def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit] = {
-    verbose(l"onTeamSynced: team: $team \nmembers: $members\n roles: $roles")
+  override def onTeamSynced(team: TeamData, members: Seq[TeamMember]): Future[Unit] = {
+    verbose(l"onTeamSynced: team: $team \nmembers: $members")
 
     val memberIds = members.map(_.user).toSet
 
     for {
-      _          <- teamStorage.insert(team)
+      _ <- teamStorage.insert(team)
       oldMembers <- userStorage.getByTeam(Set(team.id))
-      _          <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
-      _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
-      _          <- userStorage.updateAll2(memberIds, _.copy(teamId = teamId, deleted = false))
-      _          <- Future.sequence(members.map(onMemberSynced))
-      _          <- rolesService.setDefaultRoles(roles)
+      _ <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
+      _ <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
+      _ <- userStorage.updateAll2(memberIds, _.copy(teamId = teamId, deleted = false))
+      _ <- Future.sequence(members.map(onMemberSynced))
     } yield {}
   }
 

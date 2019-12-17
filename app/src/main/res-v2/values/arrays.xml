@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<resources>
+    <array name="settings_titles">
+        <item>@string/pref_account_screen_title</item>
+        <item>@string/pref_devices_screen_title</item>
+        <item>@string/pref_options_screen_title</item>
+        <item>@string/pref_advanced_screen_title</item>
+        <item>@string/pref_support_screen_title</item>
+        <item>@string/pref_about_screen_title</item>
+    </array>
+
+    <array name="settings_developer_titles">
+        <item>@string/pref_developer_screen_title</item>
+        <item>@string/pref_dev_avs_screen_title</item>
+    </array>
+
+    <array name="settings_icons">
+        <item>@string/glyph__addressbook</item>
+        <item>@string/glyph__devices</item>
+        <item>@string/glyph__settings</item>
+        <item>@string/glyph__tools</item>
+        <item>@string/glyph__info</item>
+        <item>@string/glyph__wire</item>
+    </array>
+
+    <array name="settings_developer_icons">
+        <item>@string/glyph__filter_robot</item>
+        <item>@string/glyph__speaker_loud</item>
+    </array>
+
+</resources>
+

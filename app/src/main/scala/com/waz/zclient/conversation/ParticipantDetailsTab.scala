@@ -1,0 +1,142 @@
+/**
+ * Wire
+ * Copyright (C) 2018 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.waz.zclient.conversation
+
+import android.content.Context
+import android.widget.{ImageView, LinearLayout}
+import com.waz.service.ZMessaging
+import com.waz.utils.events.{ClockSignal, Signal}
+import com.waz.utils.returning
+import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
+import com.waz.zclient.common.views.ChatHeadView
+import com.waz.zclient.messages.UsersController
+import com.waz.zclient.paintcode. GuestIcon
+import com.waz.zclient.participants.ParticipantsController
+import com.waz.zclient.ui.text.TypefaceTextView
+import com.waz.zclient.utils.ContextUtils._
+import com.waz.zclient.utils.{GuestUtils, RichView}
+import com.waz.zclient.views.ShowAvailabilityView
+import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
+import com.waz.zclient.{R, ViewHelper}
+import org.threeten.bp.Instant
+
+import scala.concurrent.duration._
+
+class ParticipantDetailsTab(val context: Context, callback: FooterMenuCallback, navButtonCallback: () => Unit) extends LinearLayout(context, null, 0) with ViewHelper {
+
+  inflate(R.layout.single_participant_tab_details)
+  setOrientation(LinearLayout.VERTICAL)
+
+  private val zms                    = inject[Signal[ZMessaging]]
+  private val usersController        = inject[UsersController]
+  private val participantsController = inject[ParticipantsController]
+  private val userAccountsController = inject[UserAccountsController]
+  private val themeController        = inject[ThemeController]
+
+  private val imageView = findById[ChatHeadView](R.id.chathead)
+
+  private val footerMenu = returning(findById[FooterMenu](R.id.fm__footer)) {
+    _.setCallback(callback)
+  }
+
+  private lazy val guestIndication     = findById[LinearLayout](R.id.guest_indicator)
+  private lazy val userAvailability    = findById[ShowAvailabilityView](R.id.participant_availability)
+  private lazy val guestIndicatorTimer = findById[TypefaceTextView](R.id.expiration_time)
+
+  private val otherUserIsGuest = for {
+    teamId <- zms.map(_.teamId)
+    user   <- participantsController.otherParticipant
+  } yield !user.isWireBot && user.isGuest(teamId)
+
+  private val leftActionStrings = for {
+    isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
+    isGroupOrBot   <- participantsController.isGroupOrBot
+    canCreateConv  <- userAccountsController.hasCreateConvPermission
+    isPartner      <- userAccountsController.isPartner
+  } yield if (isWireless) {
+    (R.string.empty_string, R.string.empty_string)
+  } else if (!isPartner && !isGroupOrBot && canCreateConv) {
+    (R.string.glyph__add_people, R.string.conversation__action__create_group)
+  } else if (isPartner && !isGroupOrBot) {
+    (R.string.empty_string, R.string.empty_string)
+  } else {
+    (R.string.glyph__conversation, R.string.empty_string)
+  }
+
+  otherUserIsGuest.onUi(guestIndication.setVisible(_))
+
+  returning(findById[ImageView](R.id.participant_guest_indicator_icon)) { icon =>
+    val color = if (themeController.isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
+    icon.setImageDrawable(GuestIcon(color))
+  }
+
+  participantsController.otherParticipant.map(_.id){ imageView.loadUser }
+
+  (for {
+    expires <- participantsController.otherParticipant.map(_.expiresAt)
+    clock   <- if (expires.isDefined) ClockSignal(5.minutes) else Signal.const(Instant.EPOCH)
+  } yield expires match {
+    case Some(expiresAt) => GuestUtils.timeRemainingString(expiresAt.instant, clock)
+    case _ => ""
+  }).onUi(guestIndicatorTimer.setText)
+
+  Signal(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
+    case (true, _)         => false
+    case (_, isTeamMember) => isTeamMember
+  }.onUi { userAvailability.setVisible }
+
+  (for {
+    Some(uId) <- participantsController.otherParticipantId
+    av        <- usersController.availability(uId)
+  } yield av).onUi(userAvailability.set)
+
+  participantsController.isGroupOrBot.flatMap {
+    case false => userAccountsController.hasCreateConvPermission.map {
+      case true => R.string.glyph__more
+      case _    => R.string.empty_string
+    }
+    case _ => for {
+      convId  <- participantsController.conv.map(_.id)
+      remPerm <- userAccountsController.hasRemoveConversationMemberPermission(convId)
+    } yield if (remPerm) R.string.glyph__minus else R.string.empty_string
+  }.map(getString)
+   .onUi(footerMenu.setRightActionText)
+
+  leftActionStrings.onUi { case (icon, text) =>
+    footerMenu.setLeftActionText(getString(icon))
+    footerMenu.setLeftActionLabelText(getString(text))
+  }
+
+  private lazy val readReceiptsInfoTitle = findById[TypefaceTextView](R.id.read_receipts_info_title)
+  private lazy val readReceiptsInfo1 = findById[TypefaceTextView](R.id.read_receipts_info_1)
+  private lazy val readReceiptsInfo2 = findById[TypefaceTextView](R.id.read_receipts_info_2)
+
+  zms.flatMap(_.propertiesService.readReceiptsEnabled)
+    .map {
+      case true  => R.string.read_receipts_info_title_enabled
+      case false => R.string.read_receipts_info_title_disabled
+    }.onUi(strId => readReceiptsInfoTitle.setText(getString(strId)))
+
+  userAccountsController.isTeam.onUi { enabled =>
+    readReceiptsInfoTitle.setVisible(enabled)
+    readReceiptsInfo1.setVisible(enabled)
+    readReceiptsInfo2.setVisible(enabled)
+  }
+}
+
+

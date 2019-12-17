@@ -319,6 +319,4 @@ object Generators {
   def sideEffect[A](f: => A): Gen[A] = resultOf[Unit, A](_ => f)
 
   lazy val availableLocales: Vector[Locale] = Locale.getAvailableLocales.flatMap(l => bcp47.localeFor(bcp47.languageTagOf(l))).distinct.toVector
-
-  implicit lazy val arbConversationRole: Arbitrary[ConversationRole] = Arbitrary(oneOf(ConversationRole.AdminRole, ConversationRole.MemberRole))
 }

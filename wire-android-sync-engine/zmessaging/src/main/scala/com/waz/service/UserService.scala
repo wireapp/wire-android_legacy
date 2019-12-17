@@ -251,6 +251,8 @@ class UserServiceImpl(selfUserId:        UserId,
                    case Some(info) if info.ssoId.isDefined => accsStorage.update(info.id, _.copy(ssoId = info.ssoId))
                    case _ => Future.successful(Option.empty[(AccountData, AccountData)])
                  }
+      userPics = users.flatMap(_.picture).flatten
+      //_       <- Future.traverse(userPics)(aId => assets.loadContent(aId))
       updated <- usersStorage.updateOrCreateAll(users.map(info => info.id -> updateOrCreate(info))(breakOut))
     } yield updated
   }

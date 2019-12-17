@@ -219,8 +219,4 @@ object JsonDecoder {
   implicit def decodeConvType(s: Symbol)(implicit js: JSONObject): ConversationType = ConversationType(js.getInt(s.name))
 
   implicit def decodePropertyKey(s: Symbol)(implicit js: JSONObject): PropertyKey = PropertyKey(js.getString(s.name))
-
-  implicit def decodeConversationRole(s: Symbol)(implicit js: JSONObject): ConversationRole = ConversationRole.getRole(js.getString(s.name))
-  implicit def decodeOptConversationRole(s: Symbol)(implicit js: JSONObject): Option[ConversationRole] =
-    opt(s, js => ConversationRole.getRole(js.getString(s.name)))
 }

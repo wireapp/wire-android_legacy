@@ -301,7 +301,7 @@ object ConversationListController {
 
     private def entries(convMembers: Seq[ConversationMemberData]) =
       convMembers.groupBy(_.convId).map { case (convId, ms) =>
-        val otherUsers = ms.collect { case member if member.userId != zms.selfUserId => member.userId }
+        val otherUsers = ms.collect { case ConversationMemberData(user, _) if user != zms.selfUserId => user }
         convId -> otherUsers.sortBy(_.str).take(4)
       }
 

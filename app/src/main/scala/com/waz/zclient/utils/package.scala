@@ -197,12 +197,11 @@ package object utils {
       }){ textView.addTextChangedListener }
     }
 
-    def getCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Option[Int] = None): Drawable = {
-      val styledColor = color.getOrElse(getStyledColor(R.attr.wirePrimaryTextColor)(textView.getContext))
+    def getCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Drawable = {
       val size = textView.getTextSize.toInt
       drawMethod match {
         case Some(draw) =>
-          returning(new ContentCompoundDrawable(draw, styledColor)) {
+          returning(new ContentCompoundDrawable(draw, getStyledColor(R.attr.wirePrimaryTextColor)(textView.getContext))) {
             _.setBounds(0, 0, size, size)
           }
         case _ =>
@@ -210,24 +209,12 @@ package object utils {
       }
     }
 
-    def setStartCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Option[Int] = None): Unit = {
+    def setStartCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Unit = {
       textView.setCompoundDrawablesRelative(getCompoundDrawable(drawMethod, color), null, null, null)
     }
 
-    def setEndCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Option[Int] = None): Unit = {
+    def setEndCompoundDrawable(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], color: Int): Unit = {
       textView.setCompoundDrawablesRelative(null, null, getCompoundDrawable(drawMethod, color), null)
-    }
-
-    def displayStartOfText(drawable: Option[Drawable] = None, pushDown: Int = 0): Unit = {
-      drawable.foreach(d => d.setBounds(0, pushDown, d.getIntrinsicWidth, d.getIntrinsicHeight + pushDown))
-      val oldDrawables = textView.getCompoundDrawables
-      textView.setCompoundDrawablesRelative(drawable.orNull, oldDrawables(1), oldDrawables(2), oldDrawables(3))
-    }
-
-    def displayEndOfText(drawable: Option[Drawable] = None, pushDown: Int = 0): Unit = {
-      drawable.foreach(d => d.setBounds(0, pushDown, d.getIntrinsicWidth, d.getIntrinsicHeight + pushDown))
-      val oldDrawables = textView.getCompoundDrawables
-      textView.setCompoundDrawablesRelative(oldDrawables(0), oldDrawables(1), drawable.orNull, oldDrawables(3))
     }
 
     /**

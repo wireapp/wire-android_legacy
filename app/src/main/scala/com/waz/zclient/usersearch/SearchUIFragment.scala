@@ -156,10 +156,10 @@ class SearchUIFragment extends BaseFragment[Container]
 
   private lazy val emptyServicesButton = returning(view[TypefaceTextView](R.id.empty_services_button)) { vh =>
     subs += (for {
-      canAddServices  <- conversationController.selfRole.map(_.canAddGroupMember)
-      res             <- searchController.searchUserOrServices
+      isAdmin  <- userAccountsController.isAdmin
+      res      <- searchController.searchUserOrServices
     } yield res match {
-      case SearchUserListState.NoServices if canAddServices => View.VISIBLE
+      case SearchUserListState.NoServices if isAdmin => View.VISIBLE
       case _ => View.GONE
     }).onUi(vis => vh.foreach(_.setVisibility(vis)))
 
@@ -173,12 +173,12 @@ class SearchUIFragment extends BaseFragment[Container]
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
     subs += (for {
-      canAddServices  <- conversationController.selfRole.map(_.canAddGroupMember)
-      res             <- searchController.searchUserOrServices
+      isAdmin  <- userAccountsController.isAdmin
+      res      <- searchController.searchUserOrServices
     } yield res match {
       case SearchUserListState.NoUsers               => R.string.new_conv_no_contacts
       case SearchUserListState.NoUsersFound          => R.string.new_conv_no_results
-      case SearchUserListState.NoServices if canAddServices => R.string.empty_services_list_admin
+      case SearchUserListState.NoServices if isAdmin => R.string.empty_services_list_admin
       case SearchUserListState.NoServices            => R.string.empty_services_list
       case SearchUserListState.NoServicesFound       => R.string.no_matches_found
       case SearchUserListState.LoadingServices       => R.string.loading_services
@@ -283,9 +283,9 @@ class SearchUIFragment extends BaseFragment[Container]
     })
 
     subs += (for {
-      isTeam     <- userAccountsController.isTeam
-      isExternal <- userAccountsController.isExternal
-    } yield isTeam && !isExternal).onUi(tabs.setVisible)
+      isTeam    <- userAccountsController.isTeam
+      isPartner <- userAccountsController.isPartner
+    } yield isTeam && !isPartner).onUi(tabs.setVisible)
 
     searchController.filter! ""
 

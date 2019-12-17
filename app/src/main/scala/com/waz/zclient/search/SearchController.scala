@@ -18,15 +18,13 @@
 package com.waz.zclient.search
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{IntegrationData, UserData}
 import com.waz.service.{IntegrationsService, SearchQuery, SearchResults, UserSearchService}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.creation.CreateConversationController
 import com.waz.zclient.{Injectable, Injector}
-import com.waz.zclient.log.LogUI._
 
-class SearchController(implicit inj: Injector, eventContext: EventContext) extends Injectable with DerivedLogTag {
+class SearchController(implicit inj: Injector, eventContext: EventContext) extends Injectable {
 
   import SearchController._
 
@@ -82,7 +80,6 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
           for {
             search      <- searchService
             results     <- search.search(filter)
-            _ = verbose(l"results: $results")
           } yield
             if (results.isEmpty)
               if (filter.isEmpty) NoUsers else NoUsersFound

@@ -24,7 +24,7 @@ import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
-import com.waz.service.{ConversationRolesService, ErrorsService, SearchKey, SearchQuery}
+import com.waz.service.{ErrorsService, SearchKey, SearchQuery}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.TeamsClient
 import com.waz.sync.client.TeamsClient.TeamMember
@@ -41,20 +41,19 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   def id(s: Symbol) = UserId(s.toString)
   def ids(s: Symbol*) = s.map(id)(breakOut).toSet
 
-  val selfUser      = id('me)
-  val teamId        = Some(TeamId())
-  val teamStorage   = mock[TeamsStorage]
-  val accStorage    = mock[AccountsStorageOld]
-  val userStorage   = mock[UsersStorage]
-  val convsStorage  = mock[ConversationStorage]
-  val convMembers   = mock[MembersStorage]
-  val convsContent  = mock[ConversationsContentUpdater]
-  val convsService  = mock[ConversationsService]
-  val sync          = mock[SyncServiceHandle]
-  val syncRequests  = mock[SyncRequestService]
+  val selfUser =     id('me)
+  val teamId =       Some(TeamId())
+  val teamStorage =  mock[TeamsStorage]
+  val accStorage =   mock[AccountsStorageOld]
+  val userStorage =  mock[UsersStorage]
+  val convsStorage = mock[ConversationStorage]
+  val convMembers =  mock[MembersStorage]
+  val convsContent = mock[ConversationsContentUpdater]
+  val convsService = mock[ConversationsService]
+  val sync =         mock[SyncServiceHandle]
+  val syncRequests = mock[SyncRequestService]
   val errorsService = mock[ErrorsService]
-  val rolesService  = mock[ConversationRolesService]
-  val userPrefs     = new TestUserPreferences
+  val userPrefs =    new TestUserPreferences
 
   (sync.syncTeam _).stubs(*).returning(Future.successful(SyncId()))
 
@@ -62,6 +61,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     val userStorageOnAdded    = EventStream[Seq[UserData]]()
     val userStorageOnUpdated  = EventStream[Seq[(UserData, UserData)]]()
     val userStorageOnDeleted  = EventStream[Seq[UserId]]()
+
 
     (userStorage.onAdded _).expects().once().returning(userStorageOnAdded)
     (userStorage.onUpdated _).expects().once().returning(userStorageOnUpdated)
@@ -286,7 +286,7 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   def createService = {
     new TeamsServiceImpl(selfUser, teamId, teamStorage, userStorage, convsStorage, convMembers, convsContent, convsService,
-      sync, syncRequests, userPrefs, errorsService, rolesService)
+      sync, syncRequests, userPrefs, errorsService)
   }
 
 }
