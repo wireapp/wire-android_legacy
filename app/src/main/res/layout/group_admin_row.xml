@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginTop="@dimen/wire__padding__regular"
+    android:layout_marginBottom="@dimen/wire__padding__small"
+    >
+
+    <LinearLayout
+        android:id="@+id/participant_group_admin_row"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/menu_item_height"
+        android:paddingStart="@dimen/wire__padding__small"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        style="?wireBackground"
+        >
+
+        <ImageView
+            android:id="@+id/participant_group_admin_icon"
+            android:layout_width="@dimen/guest_options_icon_size"
+            android:layout_height="@dimen/guest_options_icon_size"
+            android:layout_marginStart="@dimen/wire__padding__regular"
+            android:layout_marginEnd="@dimen/wire__padding__regular"
+            android:src="@drawable/ic_group_admin"
+            android:tint="?wirePrimaryTextColor"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:id="@+id/participant_group_admin_title"
+            android:text="@string/participant_group_admin_toggle_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:w_font="@string/wire__typeface__light"
+            android:textSize="@dimen/wire__text_size__regular"
+            android:textColor="?wirePrimaryTextColor"/>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/participant_group_admin_toggle"
+            android:gravity="end"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/participant_group_admin_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/wire__padding__regular"
+        android:paddingEnd="@dimen/wire__padding__regular"
+        android:layout_marginTop="@dimen/wire__padding__regular"
+        android:layout_marginBottom="@dimen/wire__padding__regular"
+        android:text="@string/participant_group_admin_toggle_info_text"
+        app:w_font="@string/wire__typeface__light"
+        android:textSize="@dimen/wire__text_size__small"
+        android:textColor="?wireSecondaryTextColor" />
+
+</LinearLayout>

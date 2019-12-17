@@ -72,7 +72,7 @@ trait ConversationsUiService {
   def setConversationMuted(id: ConvId, muted: MuteSet): Future[Option[ConversationData]]
   def setConversationName(id: ConvId, name: Name): Future[Option[ConversationData]]
 
-  def addConversationMembers(conv: ConvId, users: Set[UserId]): Future[Option[SyncId]]
+  def addConversationMembers(conv: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]]
   def removeConversationMember(conv: ConvId, user: UserId): Future[Option[SyncId]]
 
   def leaveConversation(conv: ConvId): Future[Unit]
@@ -89,7 +89,12 @@ trait ConversationsUiService {
 
   //conversation creation methods
   def getOrCreateOneToOneConversation(other: UserId): Future[ConversationData]
-  def createGroupConversation(name: Option[Name] = None, members: Set[UserId] = Set.empty, teamOnly: Boolean = false, receiptMode: Int = 0): Future[(ConversationData, SyncId)]
+  def createGroupConversation(name:        Option[Name] = None,
+                              members:     Set[UserId] = Set.empty,
+                              teamOnly:    Boolean = false,
+                              receiptMode: Int = 0,
+                              defaultRole: ConversationRole = ConversationRole.MemberRole
+                             ): Future[(ConversationData, SyncId)]
 
   def assetUploadCancelled : EventStream[Mime]
   def assetUploadFailed    : EventStream[ErrorResponse]
@@ -245,19 +250,18 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     }
   }
 
-  override def addConversationMembers(conv: ConvId, users: Set[UserId]) = {
+  override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {
       true   <- canModifyMembers(conv)
-      added  <- members.add(conv, users) if added.nonEmpty
+      added  <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
       _      <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
-      syncId <- sync.postConversationMemberJoin(conv, added.map(_.userId).toSeq)
+      syncId <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
     } yield Option(syncId))
       .recover {
         case NonFatal(e) =>
           warn(l"Failed to add members: $users to conv: $conv", e)
           Option.empty[SyncId]
       }
-  }
 
   override def removeConversationMember(conv: ConvId, user: UserId) = {
     (for {
@@ -320,15 +324,30 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         case _ => usersStorage.get(other).flatMap {
           case Some(u) if u.connection == ConnectionStatus.Ignored =>
             for {
-              conv <- convsContent.createConversationWithMembers(ConvId(other.str), u.conversation.getOrElse(RConvId()), ConversationType.Incoming, other, Set(selfUserId), hidden = true)
-              _ <- messages.addMemberJoinMessage(conv.id, other, Set(selfUserId), firstMessage = true)
-              _ <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, other, selfUserId, _, u.name).map(_ => conv))
+              conv <- convsContent.createConversationWithMembers(
+                        convId      = ConvId(other.str),
+                        remoteId    = u.conversation.getOrElse(RConvId()),
+                        convType    = ConversationType.Incoming,
+                        creator     = other,
+                        members     = Set(selfUserId),
+                        hidden      = true,
+                        defaultRole = ConversationRole.AdminRole
+                      )
+              _    <- messages.addMemberJoinMessage(conv.id, other, Set(selfUserId), firstMessage = true)
+              _    <- u.connectionMessage.fold(Future.successful(conv))(messages.addConnectRequestMessage(conv.id, other, selfUserId, _, u.name).map(_ => conv))
             } yield conv
           case _ =>
             for {
-              _ <- sync.postConversation(ConvId(other.str), Set(other), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None)
-              conv <- convsContent.createConversationWithMembers(ConvId(other.str), RConvId(), ConversationType.OneToOne, selfUserId, Set(other))
-              _ <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(other), firstMessage = true)
+              _    <- sync.postConversation(ConvId(other.str), Set(other), None, None, Set(Access.PRIVATE), AccessRole.PRIVATE, None, ConversationRole.AdminRole)
+              conv <- convsContent.createConversationWithMembers(
+                        convId      = ConvId(other.str),
+                        remoteId    = RConvId(),
+                        convType    = ConversationType.OneToOne,
+                        creator     = selfUserId,
+                        members     = Set(other),
+                        defaultRole = ConversationRole.AdminRole
+                      )
+              _    <- messages.addMemberJoinMessage(conv.id, selfUserId, Set(other), firstMessage = true)
             } yield conv
         }
       }
@@ -338,7 +357,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       (for {
         allConvs   <- this.members.getByUsers(Set(other)).map(_.map(_.convId))
         allMembers <- this.members.getByConvs(allConvs.toSet).map(_.map(m => m.convId -> m.userId))
-        onlyUs     = allMembers.groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }.collect { case (c, us) if us == Set(other, selfUserId) => c }
+        onlyUs     =  allMembers.groupBy { case (c, _) => c }.map { case (cid, us) => cid -> us.map(_._2).toSet }.collect { case (c, us) if us == Set(other, selfUserId) => c }
         convs      <- convStorage.getAll(onlyUs).map(_.flatten)
       } yield {
         verbose(l"allConvs size: ${allConvs.size}")
@@ -350,7 +369,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
         convs.find(c => c.team.contains(tId) && c.name.isEmpty)
       }).flatMap {
         case Some(conv) => Future.successful(conv)
-        case _ => createAndPostConversation(ConvId(), None, Set(other)).map(_._1)
+        case _ => createAndPostConversation(ConvId(), None, Set(other), defaultRole = ConversationRole.AdminRole).map(_._1)
       }
     }
 
@@ -364,16 +383,38 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     }
   }
 
-  override def createGroupConversation(name: Option[Name] = None, members: Set[UserId] = Set.empty, teamOnly: Boolean = false, receiptMode: Int = 0) =
-    createAndPostConversation(ConvId(), name, members, teamOnly, receiptMode)
+  override def createGroupConversation(name:        Option[Name] = None,
+                                       members:     Set[UserId] = Set.empty,
+                                       teamOnly:    Boolean = false,
+                                       receiptMode: Int = 0,
+                                       defaultRole: ConversationRole = ConversationRole.MemberRole
+                                      ): Future[(ConversationData, SyncId)] =
+    createAndPostConversation(ConvId(), name, members, teamOnly, receiptMode, defaultRole)
 
-  private def createAndPostConversation(id: ConvId, name: Option[Name], members: Set[UserId], teamOnly: Boolean = false, receiptMode: Int = 0) = {
+  private def createAndPostConversation(id:          ConvId,
+                                        name:        Option[Name],
+                                        members:     Set[UserId] = Set.empty,
+                                        teamOnly:    Boolean = false,
+                                        receiptMode: Int = 0,
+                                        defaultRole: ConversationRole
+                                       ): Future[(ConversationData, SyncId)] = {
     val (ac, ar) = getAccessAndRoleForGroupConv(teamOnly, teamId)
     for {
-      conv <- convsContent.createConversationWithMembers(id, generateTempConversationId(members + selfUserId), ConversationType.Group, selfUserId, members, name, access = ac, accessRole = ar, receiptMode = receiptMode)
-      _    = verbose(l"created: $conv")
-      _    <- messages.addConversationStartMessage(conv.id, selfUserId, members, name, conv.readReceiptsAllowed)
-      syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode))
+      conv   <- convsContent.createConversationWithMembers(
+                  convId      = id,
+                  remoteId    = generateTempConversationId(members + selfUserId),
+                  convType    = ConversationType.Group,
+                  creator     = selfUserId,
+                  members     = members,
+                  name        = name,
+                  access      = ac,
+                  accessRole  = ar,
+                  receiptMode = receiptMode,
+                  defaultRole = defaultRole
+                )
+      _      =  verbose(l"created: $conv, members: $members")
+      _      <- messages.addConversationStartMessage(conv.id, selfUserId, members, name, conv.readReceiptsAllowed)
+      syncId <- sync.postConversation(id, members, conv.name, teamId, ac, ar, Some(receiptMode), defaultRole)
     } yield (conv, syncId)
   }
 
@@ -471,5 +512,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     } else {
       Future.successful(true)
     }
+
   }
 }

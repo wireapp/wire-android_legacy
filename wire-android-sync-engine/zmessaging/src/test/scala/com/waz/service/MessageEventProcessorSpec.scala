@@ -96,13 +96,13 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val sender = UserId("sender")
 
       val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
-      val membersAdded = Set(
+      val membersAdded = Seq(
         UserId("user1"),
         UserId("user2")
       )
 
       clock.advance(5.seconds)
-      val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq)
+      val event = MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap)
 
       (storage.hasSystemMessage _).expects(conv.id, event.time, MEMBER_JOIN, sender).returning(Future.successful(false))
       (storage.lastLocalMessage _).expects(conv.id, MEMBER_JOIN).returning(Future.successful(None))
@@ -120,7 +120,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
           m.time          shouldEqual event.time
           m.localTime     shouldEqual event.localTime
           m.state         shouldEqual Status.SENT
-          m.members       shouldEqual membersAdded
+          m.members       shouldEqual membersAdded.toSet
       }
     }
 
@@ -128,7 +128,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       val sender = UserId("sender")
 
       val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
-      val membersAdded = Set(
+      val membersAdded = Seq(
         UserId("user1"),
         UserId("user2")
       )
@@ -142,9 +142,9 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
         result(processor.processEvents(conv, isGroup = false, Seq(event))) shouldEqual Set.empty
 
       clock.advance(1.second) //conv will have time EPOCH, needs to be later than that
-      testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
+      testRound(MemberJoinEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded, membersAdded.map(_ -> ConversationRole.AdminRole).toMap))
       clock.advance(1.second)
-      testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded.toSeq))
+      testRound(MemberLeaveEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, membersAdded))
       clock.advance(1.second)
       testRound(RenameConversationEvent(conv.remoteId, RemoteInstant(clock.instant()), sender, Name("new name")))
     }

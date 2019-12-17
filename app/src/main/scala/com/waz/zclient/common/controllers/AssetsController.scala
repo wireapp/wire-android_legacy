@@ -247,15 +247,17 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   private def saveAssetContentToFile(asset: Asset, targetDir: File): Future[File] =
     for {
       permissions <- permissions.head
-      _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE))
+      _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
       assets      <- assets.head
       is          <- assets.loadContent(asset).future
       targetFile  =  getTargetFile(asset, targetDir)
       _           =  IoUtils.copy(is, new FileOutputStream(targetFile))
     } yield targetFile
 
-  def saveImageToGallery(asset: Asset): Unit =
-    saveAssetContentToFile(asset, createWireImageDirectory()).onComplete {
+  def saveImageToGallery(asset: Asset): Unit = (for {
+      d            <- createWireImageDirectory()
+      assetContent <- saveAssetContentToFile(asset, d)
+    } yield assetContent).onComplete {
       case Success(file) =>
         val uri = URIWrapper.fromFile(file)
         imageNotifications.showImageSavedNotification(asset.id, uri)
@@ -266,9 +268,12 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     }
 
   private def createWireImageDirectory() =
-    returning(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")) {
-      IoUtils.createDirectory
-    }
+    for {
+      permissions <- permissions.head
+      _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
+      wireImgDir  =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES + "/Wire Images/")
+    } yield returning(wireImgDir)(IoUtils.createDirectory)
+
 
   def saveToDownloads(asset: Asset): Unit =
     saveAssetContentToFile(asset, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)).onComplete {

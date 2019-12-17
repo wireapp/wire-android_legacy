@@ -17,11 +17,11 @@
  */
 package com.waz.sync.client
 
-import com.waz.model.{TeamData, UserId}
+import com.waz.model.{ConversationRole, TeamData, UserId}
 import com.waz.model.UserPermissions.Permission._
 import com.waz.model.UserPermissions._
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.client.TeamsClient.TeamMembers
+import com.waz.sync.client.TeamsClient.{TeamMembers, TeamRoles}
 import com.waz.utils.CirceJSONSupport
 
 //TODO Replace with integration test when AuthRequestInterceptor2 is introduced
@@ -114,5 +114,42 @@ class TeamsClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         "abc"
       ))
     }
+  }
+
+  feature("Conversation roles") {
+    val rolesJson =
+      """
+        |{
+        |"conversation_roles":[
+        |  {"actions":[
+        |    "add_conversation_member",
+        |    "remove_conversation_member",
+        |    "modify_conversation_name",
+        |    "modify_conversation_message_timer",
+        |    "modify_conversation_receipt_mode",
+        |    "modify_conversation_access",
+        |    "modify_other_conversation_member",
+        |    "leave_conversation",
+        |    "delete_conversation"
+        |  ],
+        |  "conversation_role":"wire_admin"
+        |  },
+        |  {"actions":[
+        |    "leave_conversation"
+        |  ],
+        |  "conversation_role":"wire_member"}
+        |]}
+      """.stripMargin
+
+    scenario("should deserialize team conversation roles") {
+      import io.circe.parser._
+
+
+      val result = decode[TeamRoles](rolesJson)
+      result.isRight shouldBe true
+      val roles = result.right.get.toConversationRoles
+      roles shouldEqual Set(ConversationRole.MemberRole, ConversationRole.AdminRole)
+    }
+
   }
 }

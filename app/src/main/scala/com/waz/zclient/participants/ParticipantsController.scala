@@ -53,12 +53,14 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   val onShowUser = EventStream[Option[UserId]]()
 
-  lazy val otherParticipants = convController.currentConvMembers
-  lazy val conv              = convController.currentConv
-  lazy val isGroup           = convController.currentConvIsGroup
+  lazy val otherParticipants: Signal[Map[UserId, ConversationRole]] = convController.currentConvOtherMembers
+  lazy val participants: Signal[Map[UserId, ConversationRole]] = convController.currentConvMembers
+  lazy val conv: Signal[ConversationData]                           = convController.currentConv
+  lazy val isGroup: Signal[Boolean]                                 = convController.currentConvIsGroup
+  lazy val selfRole: Signal[ConversationRole]                       = convController.selfRole
 
-  lazy val otherParticipantId = otherParticipants.flatMap {
-    case others if others.size == 1 => Signal.const(others.headOption)
+  lazy val otherParticipantId: Signal[Option[UserId]] = otherParticipants.flatMap {
+    case others if others.size == 1 => Signal.const(others.headOption.map(_._1))
     case others                     => selectedParticipant
   }
 
@@ -69,16 +71,16 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   } yield user
 
   lazy val otherParticipantExists = for {
-    z            <- zms
-    groupOrBot   <- isGroupOrBot
-    userId       <- if (groupOrBot) Signal.const(Option.empty[UserId]) else otherParticipantId
-    participant  <- userId.fold(Signal.const(Option.empty[UserData]))(id => z.usersStorage.optSignal(id))
+    z           <- zms
+    groupOrBot  <- isGroupOrBot
+    userId      <- if (groupOrBot) Signal.const(Option.empty[UserId]) else otherParticipantId
+    participant <- userId.fold(Signal.const(Option.empty[UserData]))(id => z.usersStorage.optSignal(id))
   } yield groupOrBot || participant.exists(!_.deleted)
 
   lazy val isWithBot = for {
     z       <- zms
     others  <- otherParticipants
-    withBot <- Signal.sequence(others.map(id => z.usersStorage.signal(id).map(_.isWireBot)).toSeq: _*)
+    withBot <- Signal.sequence(others.map(p => z.usersStorage.signal(p._1).map(_.isWireBot)).toSeq: _*)
   } yield withBot.contains(true)
 
   lazy val isGroupOrBot = for {
@@ -88,9 +90,9 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   lazy val guestBotGroup = for {
     z        <- zms
-    ids      <- otherParticipants
+    others   <- otherParticipants
     isGroup  <- isGroup
-    users    <- Signal.sequence(ids.map(z.usersStorage.signal).toSeq:_*)
+    users    <- Signal.sequence(others.map(p => z.usersStorage.signal(p._1)).toSeq:_*)
     hasGuest =  isGroup && users.exists(u => u.isGuest(z.teamId) && !u.isWireBot)
     hasBot   <- isWithBot
   } yield (hasGuest, hasBot, isGroup)
@@ -101,6 +103,13 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     currentUser <- UserSignal(z.selfUserId)
     currentConv <- conv
   } yield currentConv.team.isDefined && currentConv.team != currentUser.teamId
+
+  lazy val isCurrentUserCreator: Signal[Boolean] = for {
+    z           <- zms
+    currentUser <- UserSignal(z.selfUserId)
+    currentConv <- conv
+    isGroup     <- isGroup
+  } yield isGroup && currentConv.creator == currentUser.id
 
   lazy val currentUserBelongsToConversationTeam: Signal[Boolean] = for {
     z           <- zms
@@ -113,9 +122,6 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   def unselectParticipant(): Unit = selectedParticipant ! None
 
   def getUser(userId: UserId): Future[Option[UserData]] = zms.head.flatMap(_.usersStorage.get(userId))
-
-  def addMembers(userIds: Set[UserId]): Future[Unit] =
-    convController.currentConvId.head.flatMap { convId => convController.addMembers(convId, userIds) }
 
   def blockUser(userId: UserId): Future[Option[UserData]] = zms.head.flatMap(_.connection.blockConnection(userId))
 
@@ -143,6 +149,10 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
       inject[SoundController].playAlert()
     case _ =>
   }(Threading.Ui)
+
+  def setRole(userId: UserId, role: ConversationRole): Future[Unit] =
+    convController.setRoleInCurrentConv(userId, role)
+
 }
 
 object ParticipantsController {
