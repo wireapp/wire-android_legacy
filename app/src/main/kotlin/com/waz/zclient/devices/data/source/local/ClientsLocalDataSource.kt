@@ -8,19 +8,15 @@ import com.waz.zclient.storage.db.clients.service.ClientDbService
 
 class ClientsLocalDataSource(private val clientDbService: ClientDbService) {
 
-    suspend fun clientById(clientId: String): Either<Failure, ClientDao> = requestLocal {
-        clientDbService.clientById(clientId)
-    }
+    suspend fun clientById(clientId: String): Either<Failure, ClientDao> =
+        requestLocal { clientDbService.clientById(clientId) }
 
-    suspend fun allClients(): Either<Failure, List<ClientDao>> = requestLocal {
-        clientDbService.allClients().toList()
-    }
+    suspend fun allClients(): Either<Failure, List<ClientDao>> =
+        requestLocal { clientDbService.allClients().toList() }
 
-    fun updateClients(clients: List<ClientDao>) {
+    fun updateClients(clients: List<ClientDao>) =
         clientDbService.updateClients(clients)
-    }
 
-    fun updateClient(client: ClientDao) {
+    fun updateClient(client: ClientDao) =
         clientDbService.updateClient(client)
-    }
 }
