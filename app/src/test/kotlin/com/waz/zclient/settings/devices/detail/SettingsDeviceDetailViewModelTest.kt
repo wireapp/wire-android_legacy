@@ -77,7 +77,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns ServerError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
         viewModel.loadData(TEST_ID)
 
@@ -94,7 +94,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.CancellationError)) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.NetworkConnection)) }
 
         viewModel.loadData(TEST_ID)
 

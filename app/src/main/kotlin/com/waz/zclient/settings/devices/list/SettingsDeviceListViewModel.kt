@@ -41,10 +41,9 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
     private fun handleAllDevicesError(failure: Failure) {
         handleLoading(false)
         when (failure) {
-            is Failure.CancellationError ->
-                // Show error for cancellation error
-                Log.e(javaClass.simpleName, "The request for data was cancelled")
-            else -> //Show error for soemthing else
+            is Failure.HttpError ->
+                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
+            else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")
         }
     }

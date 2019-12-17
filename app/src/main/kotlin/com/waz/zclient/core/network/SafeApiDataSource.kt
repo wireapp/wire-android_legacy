@@ -3,7 +3,6 @@ package com.waz.zclient.core.network
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
-import kotlinx.coroutines.CancellationException
 import retrofit2.Response
 
 suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Failure, T> {
@@ -15,24 +14,24 @@ suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Fail
                 return Either.Right(body)
             }
         }
-        return Either.Left(Failure.ServerError(response.code(), response.message()))
-    } catch (e: CancellationException) {
-        return Either.Left(Failure.CancellationError)
+        return Either.Left(Failure.HttpError(response.code(), response.message()))
+    } catch (e: Exception) {
+        return Either.Left(Failure.NetworkServiceError)
     }
 }
 
 suspend fun <R> requestData(request: suspend () -> Either<Failure, R>): Either<Failure, R> =
     try {
         request()
-    } catch (e: CancellationException) {
-        Either.Left(Failure.CancellationError)
+    } catch (e: Exception) {
+        Either.Left(Failure.NetworkServiceError)
     }
 
 suspend fun <R> requestLocal(localRequest: suspend () -> R): Either<Failure, R> =
     try {
         Either.Right(localRequest())
-    } catch (e: CancellationException) {
-        Either.Left(Failure.CancellationError)
+    } catch (e: Exception) {
+        Either.Left(Failure.DatabaseError)
     }
 
 suspend fun <R> resultEither(mainRequest: suspend () -> Either<Failure, R>,
@@ -40,7 +39,7 @@ suspend fun <R> resultEither(mainRequest: suspend () -> Either<Failure, R>,
                              saveToDatabase: (R) -> Unit): Either<Failure, R> {
     var response = mainRequest()
     if (response.isLeft) {
-        val networkResponse = requestData { fallbackRequest() }
+        val networkResponse = fallbackRequest()
         if (networkResponse.isRight) {
             networkResponse.map(saveToDatabase)
         }

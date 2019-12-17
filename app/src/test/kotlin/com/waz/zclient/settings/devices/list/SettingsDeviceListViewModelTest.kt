@@ -79,7 +79,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns ServerError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
 
         viewModel.loading.observeOnce { isLoading ->
@@ -94,7 +94,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.CancellationError)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.NetworkConnection)) }
 
         viewModel.loadData()
 

@@ -46,7 +46,7 @@ class GetClientUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given client response is an error, then repository throws an exception`() {
         runBlocking {
-            Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure.CancellationError))
+            Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure.NetworkConnection))
 
             val params = GetSpecificClientParams(TEST_ID)
             getClientUseCase.run(params)

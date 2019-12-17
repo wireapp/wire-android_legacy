@@ -39,8 +39,8 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private fun handleProfileError(failure: Failure) {
         handleLoading(false)
         when (failure) {
-            is Failure.CancellationError ->
-                Log.e(javaClass.simpleName, "The request for data was cancelled")
+            is Failure.HttpError ->
+                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
             else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")
         }

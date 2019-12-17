@@ -11,9 +11,7 @@ import com.waz.zclient.userApi
 import com.waz.zclient.userDao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -39,7 +37,7 @@ class UserRepositoryTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        usersRepository = UsersDataSource(usersRemoteDataSource, usersLocalDataSource,userMapper)
+        usersRepository = UsersDataSource(usersRemoteDataSource, usersLocalDataSource, userMapper)
     }
 
 
@@ -54,7 +52,7 @@ class UserRepositoryTest {
 
             usersRepository.profile().map {
 
-                assertEquals(it,user)
+                assertEquals(it, user)
             }
         }
     }
@@ -64,7 +62,7 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.CancellationError))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.NetworkConnection))
             `when`(usersRemoteDataSource.profile()).thenReturn(Either.Right(userApi))
 
             usersRepository.profile()
@@ -74,7 +72,7 @@ class UserRepositoryTest {
 
             usersRepository.profile().map {
 
-                assertEquals(it,user)
+                assertEquals(it, user)
             }
         }
     }
@@ -84,8 +82,8 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed and the remote data source failed, then return an error`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.ServerError(TEST_CODE, TEST_ERROR_MESSAGE)))
-            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure.CancellationError))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.DatabaseError))
+            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure.HttpError(TEST_CODE, TEST_ERROR_MESSAGE)))
 
             usersRepository.profile()
 

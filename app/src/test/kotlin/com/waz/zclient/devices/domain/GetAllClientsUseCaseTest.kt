@@ -42,7 +42,7 @@ class GetAllClientsUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given clients response is an error, then repository throws an exception`() {
         runBlocking {
-            `when`(repository.allClients()).thenReturn(Either.Left(Failure.CancellationError))
+            `when`(repository.allClients()).thenReturn(Either.Left(Failure.NetworkConnection))
 
             getAllClientsUseCase.run(Unit)
 
