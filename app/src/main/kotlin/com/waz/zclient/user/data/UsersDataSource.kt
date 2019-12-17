@@ -14,7 +14,7 @@ import com.waz.zclient.user.domain.model.User
 class UsersDataSource constructor(
     private val usersRemoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(),
     private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource(),
-    private val userMapper: UserMapper) : UsersRepository {
+    private val userMapper : UserMapper =  UserMapper()) : UsersRepository {
 
     override suspend fun profile(): Either<Failure, User> =
         resultEither(profileLocal(), profileRemote(), saveUser())
