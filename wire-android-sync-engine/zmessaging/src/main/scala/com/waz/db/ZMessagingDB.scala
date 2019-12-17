@@ -29,6 +29,7 @@ import com.waz.model.Contact.{ContactsDao, ContactsOnWireDao, EmailAddressesDao,
 import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model.ConversationFolderData.ConversationFolderDataDao
 import com.waz.model.ConversationMemberData.ConversationMemberDataDao
+import com.waz.model.ConversationRoleAction.ConversationRoleActionDao
 import com.waz.model.EditHistory.EditHistoryDao
 import com.waz.model.ErrorData.ErrorDataDao
 import com.waz.model.FolderData.FolderDataDao
@@ -64,7 +65,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 124
+  val DbVersion = 125
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
@@ -72,7 +73,8 @@ object ZMessagingDB {
     ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao, ContactsDao, EmailAddressesDao,
     PhoneNumbersDao, MsgDeletionDao, EditHistoryDao, MessageContentIndexDao,
     PushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
-    AssetDao, FCMNotificationsDao, FCMNotificationStatsDao, FolderDataDao, ConversationFolderDataDao
+    AssetDao, FCMNotificationsDao, FCMNotificationStatsDao, FolderDataDao, ConversationFolderDataDao,
+    ConversationRoleActionDao
   )
 
   lazy val migrations = Seq(
@@ -384,6 +386,10 @@ object ZMessagingDB {
     },
     Migration(123,124) { db =>
       db.execSQL("DROP TABLE IF EXISTS SearchQueries")
+    },
+    Migration(124,125) { db =>
+      db.execSQL(s"ALTER TABLE ${ConversationMemberDataDao.table.name} ADD COLUMN ${ConversationMemberDataDao.Role.name} TEXT DEFAULT '${ConversationRole.AdminRole.label}'")
+      db.execSQL(ConversationRoleActionDao.table.createSql)
     }
   )
 }

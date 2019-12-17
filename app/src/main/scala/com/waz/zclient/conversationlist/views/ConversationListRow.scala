@@ -185,7 +185,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   } yield(av, hide)).onUi {
       case (_, true)              => AvailabilityView.hideAvailabilityIcon(title)
       case (Availability.None, _) => AvailabilityView.hideAvailabilityIcon(title)
-      case (av, _)                => AvailabilityView.displayLeftOfText(title, av, title.getCurrentTextColor, pushDown = true)
+      case (av, _)                => AvailabilityView.displayStartOfText(title, av, title.getCurrentTextColor, pushDown = true)
   }
 
 
