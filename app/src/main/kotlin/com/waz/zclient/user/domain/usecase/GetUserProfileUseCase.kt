@@ -11,7 +11,6 @@ import com.waz.zclient.user.domain.model.User
 class GetUserProfileUseCase(private val usersRepository: UsersRepository)
     : UseCase<User, Unit>() {
 
-    override suspend fun run(params: Unit): Either<Failure, User> = requestData {
-        usersRepository.profile()
-    }
+    override suspend fun run(params: Unit): Either<Failure, User> =
+        requestData { usersRepository.profile() }
 }
