@@ -6,7 +6,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import org.json.JSONObject
 
-class ClientsTableMigration : Migration(124, 125) {
+class ClientsTableMigration : Migration(125, 126) {
 
     override fun migrate(database: SupportSQLiteDatabase) {
 

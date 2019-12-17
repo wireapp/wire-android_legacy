@@ -3,7 +3,7 @@ package com.waz.zclient.storage.db.users.migration
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-class UserDatabaseMigration : Migration(124, 125) {
+class UserDatabaseMigration : Migration(125, 126) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("CREATE TABLE '$NEW_CLIENT_TABLE_NAME' ('$CLIENT_ID_KEY' TEXT NOT NULL, '$NEW_CLIENT_TIME_KEY' TEXT NOT NULL,  '$CLIENT_LABEL_KEY' TEXT NOT NULL, '$NEW_CLIENT_TYPE_KEY' TEXT NOT NULL, '$CLIENT_CLASS_KEY' TEXT NOT NULL ,'$CLIENT_MODEL_KEY' TEXT NOT NULL,  '$CLIENT_LOCATION_LAT_KEY' REAL NOT NULL,  '$CLIENT_LOCATION_LONG_KEY' REAL NOT NULL, '$NEW_CLIENT_LOCATION_NAME_KEY' TEXT,  '$CLIENT_VERIFICATION_KEY' TEXT NOT NULL,  '$CLIENT_ENC_KEY' TEXT NOT NULL,  '$CLIENT_MAC_KEY' TEXT NOT NULL,  PRIMARY KEY('$CLIENT_ID_KEY'))")
 
