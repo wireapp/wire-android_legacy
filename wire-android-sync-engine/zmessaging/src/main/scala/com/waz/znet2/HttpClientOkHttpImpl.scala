@@ -254,7 +254,7 @@ object HttpClientOkHttpImpl {
       part => OkMultipartBodyPart.createFormData(part.name, part.fileName.orNull, _)
     )
 
-  private def createOkHttpMultipartRequestBody[Part](callback: Option[ProgressCallback], mediaType: String, parts: Seq[Part])(
+  def createOkHttpMultipartRequestBody[Part](callback: Option[ProgressCallback], mediaType: String, parts: Seq[Part])(
       getRawBody: Part => RawBody,
       getOkPartCreator: Part => OkRequestBody => OkMultipartBodyPart
   ): OkRequestBody = {

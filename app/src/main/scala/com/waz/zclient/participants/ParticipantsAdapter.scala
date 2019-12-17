@@ -382,7 +382,7 @@ object ParticipantsAdapter {
         case None    => view.setUserData(participant.userData, teamId, hideStatus)
       }
       view.setSeparatorVisible(!lastRow)
-      view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.displayName}")
+      view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.getDisplayName}")
     }
   }
 

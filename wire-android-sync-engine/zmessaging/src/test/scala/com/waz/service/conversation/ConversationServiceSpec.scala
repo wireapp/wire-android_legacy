@@ -385,7 +385,6 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       val user1 = UserData("user1")
       val user2 = UserData("user2")
       val users = Set(self, user1, user2)
-      val uMap = Map(self.id -> AdminRole, user1.id -> MemberRole, user2.id -> MemberRole)
 
       (content.createConversationWithMembers _).expects(*, *, ConversationType.Group, selfUserId, users.map(_.id), *, *, *, *, *, *).once().returning(Future.successful(conv))
       (messages.addConversationStartMessage _).expects(*, selfUserId, users.map(_.id), *, *, *).once().returning(Future.successful(()))

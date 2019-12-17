@@ -61,6 +61,8 @@ class SingleParticipantAdapter(userId: UserId,
     notifyDataSetChanged()
   }
 
+  private def isGroupAdminViewVisible: Boolean = isGroup && selfRole.canModifyOtherMember
+
   val onParticipantRoleChange = EventStream[ConversationRole]
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
@@ -80,21 +82,21 @@ class SingleParticipantAdapter(userId: UserId,
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
     case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId,isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
+      h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
     case h: GroupAdminViewHolder =>
       h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
     case h: ParticipantFooterRowViewHolder =>
       h.bind(readReceipts)
     case h: CustomFieldRowViewHolder =>
-      h.bind(fields(position - 2))
+      h.bind(fields(position - (if(isGroupAdminViewVisible) 2 else 1)))
   }
 
   override def getItemCount: Int =
-    if (isGroup && selfRole.canModifyOtherMember) fields.size + 3 else fields.size + 2
+    if (isGroupAdminViewVisible) fields.size + 3 else fields.size + 2
 
   override def getItemId(position: Int): Long =
     if (position == 0) 0L
-    else if (position == 1 && isGroup && selfRole.canModifyOtherMember) 1L
+    else if (position == 1 && isGroupAdminViewVisible) 1L
     else if (position == getItemCount - 1) 2L
     else fields(position - 1).key.hashCode.toLong
 
@@ -102,7 +104,7 @@ class SingleParticipantAdapter(userId: UserId,
 
   override def getItemViewType(position: Int): Int =
     if (position == 0) Header
-    else if (position == 1 && isGroup && selfRole.canModifyOtherMember) GroupAdmin
+    else if (position == 1 && isGroupAdminViewVisible) GroupAdmin
     else if (position == getItemCount - 1) Footer
     else CustomField
 }
@@ -195,7 +197,8 @@ object SingleParticipantAdapter {
     })
 
     def bind(onParticipantRoleChanged: SourceStream[ConversationRole], groupAdminEnabled: Boolean): Unit = {
-      this.onParticipantRoleChanged = Some(onParticipantRoleChanged)
+      if (!this.onParticipantRoleChanged.contains(onParticipantRoleChanged))
+        this.onParticipantRoleChanged = Some(onParticipantRoleChanged)
       if (!groupAdmin.contains(groupAdminEnabled)) switch.setChecked(groupAdminEnabled)
     }
   }

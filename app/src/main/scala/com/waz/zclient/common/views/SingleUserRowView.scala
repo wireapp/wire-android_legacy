@@ -29,7 +29,6 @@ import com.waz.model.{Availability, IntegrationData, TeamId, UserData}
 import com.waz.utils.events.{EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
-import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{ThemeController, ThemedView}
 import com.waz.zclient.paintcode.{ForwardNavigationIcon, GuestIcon, VideoIcon}
 import com.waz.zclient.ui.text.TypefaceTextView
@@ -46,7 +45,6 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   def this(context: Context) = this(context, null, 0)
 
   inflate(R.layout.single_user_row_view)
-  setTheme(Theme.Light, background = true)
 
   private lazy val chathead       = findById[ChatHeadView](R.id.chathead)
   private lazy val nameView       = findById[TypefaceTextView](R.id.name_text)
@@ -56,7 +54,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val guestIndicator = returning(findById[ImageView](R.id.guest_indicator))(_.setImageDrawable(GuestIcon(R.color.light_graphite)))
   private lazy val videoIndicator = returning(findById[ImageView](R.id.video_indicator))(_.setImageDrawable(VideoIcon(R.color.light_graphite)))
   private lazy val nextIndicator  = returning(findById[ImageView](R.id.next_indicator))(_.setImageDrawable(ForwardNavigationIcon(R.color.light_graphite_40)))
-  private lazy val externalIcon   = returning(findById[ImageView](R.id.external_icon))(_.setColorFilter(R.color.light_graphite))
+  private lazy val externalIcon   = findById[ImageView](R.id.external_icon)
   private lazy val separator      = findById[View](R.id.separator)
   private lazy val auxContainer   = findById[ViewGroup](R.id.aux_container)
 

@@ -134,7 +134,7 @@
             android:layout_height="@dimen/guest_badge_size"
             android:layout_gravity="center_vertical"
             android:src="@drawable/ic_group_admin"
-            android:textColor="?wirePrimaryTextColor"
+            android:tint="?wirePrimaryTextColor"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView

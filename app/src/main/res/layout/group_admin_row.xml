@@ -46,7 +46,7 @@
             android:layout_marginStart="@dimen/wire__padding__regular"
             android:layout_marginEnd="@dimen/wire__padding__regular"
             android:src="@drawable/ic_group_admin"
-            android:textColor="?wirePrimaryTextColor"
+            android:tint="?wirePrimaryTextColor"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView

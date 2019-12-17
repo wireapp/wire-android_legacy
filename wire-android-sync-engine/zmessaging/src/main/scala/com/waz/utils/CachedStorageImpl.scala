@@ -44,7 +44,6 @@ trait StorageDao[K, V <: Identifiable[K]] {
   def list(implicit db: DB): Seq[V]
   def insertOrReplace(items: GenTraversableOnce[V])(implicit db: DB): Unit
   def deleteEvery(ids: GenTraversableOnce[K])(implicit db: DB): Unit
-  def deleteRaw(whereClause: String)(implicit db: DB): Unit
 }
 
 object StorageDao {
@@ -55,7 +54,6 @@ object StorageDao {
     override def list(implicit db: DB) = dao.list
     override def deleteEvery(ids: GenTraversableOnce[K])(implicit db: DB): Unit = dao.deleteEvery(ids)
     override def insertOrReplace(items: GenTraversableOnce[V])(implicit db: DB): Unit = dao.insertOrReplace(items)
-    override def deleteRaw(whereClause: String)(implicit db: DB): Unit = dao.deleteRaw(whereClause)
   }
 }
 
@@ -218,7 +216,6 @@ trait CachedStorage[K, V <: Identifiable[K]] {
   protected def load(keys: Set[K])(implicit db: DB): Seq[V]
   protected def save(values: Seq[V])(implicit db: DB): Unit
   protected def delete(keys: Iterable[K])(implicit db: DB): Unit
-  protected def deleteRaw(whereClause: String)(implicit db: DB): Unit
 
   protected def updateInternal(key: K, updater: V => V)(current: V): Future[Option[(V, V)]]
 
@@ -306,8 +303,6 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
   protected def save(values: Seq[V])(implicit db: DB): Unit = dao.insertOrReplace(values)
 
   protected def delete(keys: Iterable[K])(implicit db: DB): Unit = dao.deleteEvery(keys)
-
-  protected def deleteRaw(whereClause: String)(implicit db: DB): Unit = dao.deleteRaw(whereClause)
 
   private def cachedOrElse(key: K, default: => Future[Option[V]]): Future[Option[V]] =
     Option(cache.get(key)).fold(default)(Future.successful)
