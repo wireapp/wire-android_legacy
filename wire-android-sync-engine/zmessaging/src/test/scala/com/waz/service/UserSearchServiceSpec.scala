@@ -40,7 +40,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   val emptyTeamId       = Option.empty[TeamId]
   val teamId            = Option(TeamId("59bbc94c-2618-491a-8dba-cf6f94c65873"))
-  val partnerPermissions: Long = 1025
+  val externalPermissions: Long = 1025
   val memberPermissions: Long = 1587
   val adminPermissions: Long = 5951
 
@@ -80,20 +80,20 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     id('t) -> UserData(id('t), "test handle").copy(handle = Some(Handle("smoresare"))),
     id('u) -> UserData(id('u), "Wireless").copy(expiresAt = Some(RemoteInstant.ofEpochMilli(12345L))),
     id('v) -> UserData(id('v), "Wireful"),
-    id('pp1) -> UserData(id('pp1), "Partner 1").copy(
-      permissions = (partnerPermissions, partnerPermissions),
+    id('pp1) -> UserData(id('pp1), "External 1").copy(
+      permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
       handle = Some(Handle("pp1")),
       createdBy = Some(id('aa1))
     ),
-    id('pp2) -> UserData(id('pp2), "Partner 2").copy(
-      permissions = (partnerPermissions, partnerPermissions),
+    id('pp2) -> UserData(id('pp2), "External 2").copy(
+      permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
       handle = Some(Handle("pp2")),
       createdBy = Some(id('aa2))
     ),
-    id('pp3) -> UserData(id('pp3), "Partner 3").copy(
-      permissions = (partnerPermissions, partnerPermissions),
+    id('pp3) -> UserData(id('pp3), "External 3").copy(
+      permissions = (externalPermissions, externalPermissions),
       teamId = teamId,
       handle = Some(Handle("pp3"))
     ),
@@ -364,7 +364,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (convsStorage.findGroupConversations _).stubs(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
 
       (membersStorage.getByUsers _).stubs(*).onCall { ids: Set[UserId] =>
-        Future.successful(ids.intersect(conversationMembers).map(ConversationMemberData(_, convId)).toIndexedSeq)
+        Future.successful(ids.intersect(conversationMembers).map(ConversationMemberData(_, convId, ConversationRole.AdminRole.label)).toIndexedSeq)
       }
 
       (sync.syncSearchQuery _).stubs(*).onCall { _: SearchQuery =>
@@ -386,10 +386,10 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       PreparedSearch(true, selfId, query)
     }
 
-    scenario("as a member, search partners that are not in a conversation with me") {
+    scenario("as a member, search externals that are not in a conversation with me") {
       // GIVEN
       val preparedSearch = prepareTestSearch(
-        query = "Partner",
+        query = "external",
         selfId = id('mm1),
         conversationMembers = ids('a, 'mm1)
       )
@@ -401,11 +401,11 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids()
     }
 
-    scenario("as a member, search partners that are in a conversation with me") {
+    scenario("as a member, search externals that are in a conversation with me") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
-        query = "Partner",
+        query = "external",
         selfId = id('mm1),
         conversationMembers = ids('pp1, 'k, 'mm1)
       )
@@ -417,7 +417,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids('pp1)
     }
 
-    scenario("as a member, search partners that are not in a conversation with me by exact handle") {
+    scenario("as a member, search externals that are not in a conversation with me by exact handle") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -482,7 +482,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids()
     }
 
-    scenario("as a partner, search team members that are not in a conversation with me") {
+    scenario("as a external, search team members that are not in a conversation with me") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -498,7 +498,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids()
     }
 
-    scenario("as a partner, show no team members") {
+    scenario("as a external, show no team members") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -514,7 +514,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids()
     }
 
-    scenario("as a partner, search team members that are in a conversation with me") {
+    scenario("as a external, search team members that are in a conversation with me") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -530,11 +530,11 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids('mm1)
     }
 
-    scenario("as a partner, search partners that are in a conversation with me") {
+    scenario("as a external, search externals that are in a conversation with me") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
-        query = "Partner",
+        query = "external",
         selfId = id('pp2),
         conversationMembers = ids('pp1, 'pp2)
       )
@@ -546,11 +546,11 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids('pp1)
     }
 
-    scenario("as a partner, search partners that are not in a conversation with me") {
+    scenario("as a external, search externals that are not in a conversation with me") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
-        query = "Partner",
+        query = "external",
         selfId = id('pp1),
         conversationMembers = ids('mm1)
       )
@@ -562,7 +562,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids()
     }
 
-    scenario("as a partner, search connected guests whether they are in a conversation with me or not") {
+    scenario("as a external, search connected guests whether they are in a conversation with me or not") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -579,7 +579,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids('e)
     }
 
-    scenario("as a partner, search not connected guests") {
+    scenario("as a external, search not connected guests") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -595,11 +595,11 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       res shouldBe ids()
     }
 
-    scenario("as an admin, search the partners that I invited") {
+    scenario("as an admin, search the externals that I invited") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
-        query = "Partner",
+        query = "external",
         selfId = id('aa1)
       )
 
@@ -611,7 +611,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     }
 
-    scenario("as an admin, see the partners that I invited") {
+    scenario("as an admin, see the externals that I invited") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(
@@ -624,13 +624,13 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       // THEN
       res shouldBe ids(
-        'aa2, 'mm1, 'mm2, 'mm3, // all non-partner team members
-        'pp1 // partner that I invited
+        'aa2, 'mm1, 'mm2, 'mm3, // all non-External team members
+        'pp1 // External that I invited
       )
 
     }
 
-    scenario("as a partner, see the admin that invited me") {
+    scenario("as a external, see the admin that invited me") {
 
       // GIVEN
       val preparedSearch = prepareTestSearch(

@@ -88,7 +88,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
 
   private def setSender(name: String, edited: Boolean): Unit = {
     senderText.setText(name)
-    senderText.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None, getStyledColor(R.attr.wirePrimaryTextColor))
+    senderText.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None)
   }
 
   private def set(text: String, bold: Boolean, drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit], imageAsset: Option[GeneralAssetId]): Unit = {
@@ -118,9 +118,8 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
     }
   }
 
-  private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit = {
-    contentText.setStartCompoundDrawable(drawMethod, getStyledColor(R.attr.wirePrimaryTextColor))
-  }
+  private def setStartIcon(drawMethod: Option[(Canvas, RectF, ResizingBehavior, Int) => Unit]): Unit =
+    contentText.setStartCompoundDrawable(drawMethod)
 }
 
 object ReplyView {
