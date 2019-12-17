@@ -3,10 +3,13 @@ package com.waz.zclient.user.data
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.storage.db.clients.model.ClientDao
+import com.waz.zclient.storage.db.users.model.UserDao
 import com.waz.zclient.user
 import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
+import com.waz.zclient.user.data.source.remote.model.UserApi
 import com.waz.zclient.userApi
 import com.waz.zclient.userDao
 import kotlinx.coroutines.CancellationException
@@ -32,6 +35,12 @@ class UserRepositoryTest {
 
     @Mock
     private lateinit var userMapper: UserMapper
+
+    @Mock
+    private lateinit var userDao: UserDao
+
+    @Mock
+    private lateinit var userApi: UserApi
 
     @Before
     fun setup() {
