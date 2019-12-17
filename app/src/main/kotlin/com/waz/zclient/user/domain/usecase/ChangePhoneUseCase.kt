@@ -11,9 +11,8 @@ import com.waz.zclient.user.data.UsersRepository
 class ChangePhoneUseCase(private val usersRepository: UsersRepository)
     : UseCase<Any, ChangePhoneParams>() {
 
-    override suspend fun run(params: ChangePhoneParams): Either<Failure, Any> = requestData {
-        usersRepository.changePhone(params.phoneNumber)
-    }
+    override suspend fun run(params: ChangePhoneParams): Either<Failure, Any> =
+        requestData { usersRepository.changePhone(params.phoneNumber) }
 }
 
 data class ChangePhoneParams(val phoneNumber: String)

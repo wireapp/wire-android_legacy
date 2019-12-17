@@ -1,6 +1,5 @@
 package com.waz.zclient.user.domain.model
 
-
 data class User(
     val id: String,
     val teamId: String?=null,
