@@ -52,12 +52,15 @@ class UserRepositoryTest {
 
             verify(usersLocalDataSource).profile()
 
-            usersRepository.profile().map {
 
-                assertEquals(it,user)
+            usersLocalDataSource.profile().map {
+                verify(userMapper).toUser(it)
             }
         }
     }
+
+
+
 
 
     @Test
@@ -72,9 +75,8 @@ class UserRepositoryTest {
             verify(usersLocalDataSource).profile()
             verify(usersRemoteDataSource).profile()
 
-            usersRepository.profile().map {
-
-                assertEquals(it,user)
+            usersRemoteDataSource.profile().map {
+                verify(userMapper).toUser(it)
             }
         }
     }
