@@ -21,32 +21,16 @@ class ClientsDataSource private constructor(
         resultEither(allClientsLocal(), allClientsRemote(), saveAllClients())
 
     private fun clientByIdRemote(clientId: String): suspend () -> Either<Failure, Client> =
-        {
-            remoteDataSource.clientById(clientId).map {
-                clientMapper.toClient(it)
-            }
-        }
+        { remoteDataSource.clientById(clientId).map { clientMapper.toClient(it) } }
 
     private fun allClientsRemote(): suspend () -> Either<Failure, List<Client>> =
-        {
-            remoteDataSource.allClients().map {
-                clientMapper.toListOfClients(it)
-            }
-        }
+        { remoteDataSource.allClients().map { clientMapper.toListOfClients(it) } }
 
     private fun clientByIdLocal(clientId: String): suspend () -> Either<Failure, Client> =
-        {
-            localDataSource.clientById(clientId).map {
-                clientMapper.toClient(it)
-            }
-        }
+        { localDataSource.clientById(clientId).map { clientMapper.toClient(it) } }
 
     private fun allClientsLocal(): suspend () -> Either<Failure, List<Client>> =
-        {
-            localDataSource.allClients().map {
-                clientMapper.toListOfClients(it)
-            }
-        }
+        { localDataSource.allClients().map { clientMapper.toListOfClients(it) } }
 
     private fun saveClient(): (Client) -> Unit =
         { localDataSource.updateClient(clientMapper.toClientDao(it)) }
