@@ -94,7 +94,6 @@ class StorageModule(context: Context, val userId: UserId, globalPreferences: Glo
   lazy val usersStorage:      UsersStorage            = wire[UsersStorageImpl]
   lazy val otrClientsStorage: OtrClientsStorage       = wire[OtrClientsStorageImpl]
   lazy val membersStorage                             = wire[MembersStorageImpl]
-  lazy val rolesStorage: ConversationRolesStorage     = wire[ConversationRolesStorageImpl]
   lazy val oldAssetStorage:      AssetsStorage        = wire[AssetsStorageImpl]
   lazy val reactionsStorage                           = wire[ReactionsStorageImpl]
   lazy val notifStorage:      NotificationStorage     = wire[NotificationStorageImpl]
@@ -172,7 +171,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   def usersStorage      = storage.usersStorage
   def otrClientsStorage = storage.otrClientsStorage
   def membersStorage    = storage.membersStorage
-  def rolesStorage = storage.rolesStorage
   def assetsStorage     = storage.assetsStorage
   def oldAssetStorage                    = storage.oldAssetStorage
   def rawAssetStorage               = storage.rawAssetStorage
@@ -265,7 +263,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val libSodiumUtils                             = wire[LibSodiumUtilsImpl]
   lazy val backupManager                              = wire[BackupManagerImpl]
   lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
-  lazy val rolesService: ConversationRolesService     = wire[ConversationRolesServiceImpl]
 
   lazy val assetSync                                  = wire[AssetSyncHandler]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
@@ -378,8 +375,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     verificationUpdater
 
     propertiesService
-
-    rolesService.ensureDefaultRoles()
 
     reporting.addStateReporter { pw =>
       Future {

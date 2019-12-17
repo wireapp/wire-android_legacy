@@ -100,3 +100,4 @@ fun <L, R> Either<L, R>.getOrElse(value: R): R =
         is Either.Left -> value
         is Either.Right -> b
     }
+

@@ -22,6 +22,9 @@
          xsi:noNamespaceSchemaLocation="http://pmd.sf.net/ruleset_xml_schema.xsd"
          xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0 http://pmd.sf.net/ruleset_xml_schema.xsd">
 
+    <!-- exclude auto-generated classes -->
+    <exclude-pattern>.*/build/.*</exclude-pattern>
+
     <rule ref="rulesets/java/basic.xml" />
     <rule ref="rulesets/java/android.xml" />
     <rule ref="rulesets/java/braces.xml" />

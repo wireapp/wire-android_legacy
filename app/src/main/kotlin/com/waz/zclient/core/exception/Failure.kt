@@ -6,8 +6,10 @@ package com.waz.zclient.core.exception
  */
 sealed class Failure {
     object NetworkConnection : Failure()
-    object ServerError : Failure()
+    data class HttpError(val errorCode: Int, val errorMessage: String) : Failure()
+    object NetworkServiceError : Failure()
+    object DatabaseError : Failure()
 
     /** * Extend this class for feature specific failures.*/
-    abstract class FeatureFailure: Failure()
+    abstract class FeatureFailure : Failure()
 }

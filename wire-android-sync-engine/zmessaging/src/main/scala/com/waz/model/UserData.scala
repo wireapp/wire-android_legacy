@@ -123,8 +123,8 @@ case class UserData(override val id:       UserId,
 
   def isGuest(ourTeamId: Option[TeamId]): Boolean = ourTeamId.isDefined && teamId != ourTeamId
 
-  def isExternal(ourTeamId: Option[TeamId]): Boolean =
-    teamId.isDefined && teamId == ourTeamId && decodeBitmask(permissions._1) == ExternalPermissions
+  def isPartner(ourTeamId: Option[TeamId]): Boolean =
+    teamId.isDefined && teamId == ourTeamId && decodeBitmask(permissions._1) == PartnerPermissions
 
   def isInTeam(otherTeamId: Option[TeamId]): Boolean = teamId.isDefined && teamId == otherTeamId
 

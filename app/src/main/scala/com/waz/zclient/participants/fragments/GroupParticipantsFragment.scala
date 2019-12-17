@@ -29,6 +29,7 @@ import com.waz.service.{IntegrationsService, NetworkModeService}
 import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events._
+import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.{AddParticipantsFragment, CreateConversationController}
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
@@ -45,6 +46,7 @@ class GroupParticipantsFragment extends FragmentHelper {
 
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val convScreenController   = inject[IConversationScreenController]
+  private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val integrationsService    = inject[Signal[IntegrationsService]]
   private lazy val spinnerController      = inject[SpinnerController]
 
@@ -53,7 +55,7 @@ class GroupParticipantsFragment extends FragmentHelper {
   lazy val showAddParticipants = for {
     conv         <- participantsController.conv
     isGroupOrBot <- participantsController.isGroupOrBot
-    hasPerm      <- participantsController.selfRole.map(_.canAddGroupMember)
+    hasPerm      <- userAccountsController.hasAddConversationMemberPermission(conv.id)
   } yield conv.isActive && isGroupOrBot && hasPerm
 
   lazy val shouldEnableAddParticipants = participantsController.otherParticipants.map(_.size + 1 < ConversationController.MaxParticipants)
@@ -74,13 +76,13 @@ class GroupParticipantsFragment extends FragmentHelper {
     shouldEnableAddParticipants.onUi(e => fm.foreach(_.setLeftActionEnabled(e)))
   }
 
-  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, Some(7))) { adapter =>
+  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.otherParticipants.map(_.toSeq), Some(7))) { adapter =>
     new FutureEventStream[UserId, Option[UserData]](adapter.onClick, participantsController.getUser).onUi {
       case Some(user) => (user.providerId, user.integrationId) match {
         case (Some(pId), Some(iId)) =>
           for {
             conv <- participantsController.conv.head
-            _    =  spinnerController.showSpinner()
+            _ = spinnerController.showSpinner()
             resp <- integrationsService.head.flatMap(_.getIntegration(pId, iId))
           } {
             spinnerController.hideSpinner()

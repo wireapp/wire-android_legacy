@@ -43,7 +43,7 @@ object UserPermissions {
 
   import Permission._
   val AdminPermissions: Set[Permission] = Permission.values -- Set(GetBilling, SetBilling, DeleteTeam)
-  val ExternalPermissions: Set[Permission] = Set(CreateConversation, GetTeamConversations)
+  val PartnerPermissions: Set[Permission] = Set(CreateConversation, GetTeamConversations)
 
   def decodeBitmask(mask: Long): Set[Permission] = {
     val builder = new mutable.SetBuilder[Permission, Set[Permission]](Set.empty)

@@ -17,12 +17,12 @@
  */
 package com.waz.sync.handler
 
+import com.waz.log.LogSE._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.{ConversationStorage, MembersStorage, MessagesStorage}
+import com.waz.content.{ConversationStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service._
 import com.waz.service.assets.AssetService
@@ -31,7 +31,7 @@ import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConversationsClient
-import com.waz.sync.client.ConversationsClient.{ConversationInitState, ConversationResponse}
+import com.waz.sync.client.ConversationsClient.ConversationInitState
 import com.waz.sync.client.ConversationsClient.ConversationResponse.ConversationsResult
 import com.waz.threading.Threading
 import com.waz.utils.events.EventContext
@@ -45,7 +45,6 @@ object ConversationsSyncHandler {
 }
 
 class ConversationsSyncHandler(selfUserId:          UserId,
-                               teamId:              Option[TeamId],
                                userService:         UserService,
                                messagesStorage:     MessagesStorage,
                                messagesService:     MessagesService,
@@ -56,24 +55,13 @@ class ConversationsSyncHandler(selfUserId:          UserId,
                                errorsService:       ErrorsService,
                                assetService:        AssetService,
                                conversationsClient: ConversationsClient,
-                               genericMessages:     GenericMessageService,
-                               rolesService:        ConversationRolesService,
-                               membersStorage:      MembersStorage
-                              ) extends DerivedLogTag {
+                               genericMessages:     GenericMessageService) extends DerivedLogTag {
 
   import Threading.Implicits.Background
   import com.waz.sync.handler.ConversationsSyncHandler._
   private implicit val ec = EventContext.Global
 
-  // optimization: same team conversations use default roles so we don't have to ask the backend
-  private def loadConversationRoles(resps: Seq[ConversationResponse]) = {
-    val (teamResps, nonTeamResps) = resps.partition(r => r.team.isDefined && r.team == teamId)
-    rolesService.defaultRoles.head.flatMap { defRoles =>
-      conversationsClient.loadConversationRoles(nonTeamResps.map(_.id).toSet).map(_ ++ teamResps.map(r => r.id -> defRoles).toMap)
-    }
-  }
-
-  def syncConversations(ids: Set[ConvId]): Future[SyncResult] =
+  def syncConversations(ids: Seq[ConvId]): Future[SyncResult] =
     Future.sequence(ids.map(convs.convById)).flatMap { convs =>
       val remoteIds = convs.collect { case Some(conv) => conv.remoteId }
 
@@ -81,11 +69,8 @@ class ConversationsSyncHandler(selfUserId:          UserId,
 
       conversationsClient.loadConversations(remoteIds).future flatMap {
         case Right(resps) =>
-          loadConversationRoles(resps).flatMap { roles =>
-            debug(l"syncConversations received ${resps.size}, ${roles.size}")
-            convService.updateConversationsWithDeviceStartMessage(resps, roles).map(_ => Success)
-          }
-
+          debug(l"syncConversations received ${resps.size}")
+          convService.updateConversationsWithDeviceStartMessage(resps).map(_ => Success)
         case Left(error) =>
           warn(l"ConversationsClient.syncConversations($ids) failed with error: $error")
           Future.successful(SyncResult(error))
@@ -93,14 +78,12 @@ class ConversationsSyncHandler(selfUserId:          UserId,
     }
 
   def syncConversations(start: Option[RConvId] = None): Future[SyncResult] =
-    conversationsClient.loadConversations(start).future.flatMap {
-      case Right(ConversationsResult(responses, hasMore)) =>
-        debug(l"syncConversations received ${responses.size}")
-        loadConversationRoles(responses).flatMap { roles =>
-          val future = convService.updateConversationsWithDeviceStartMessage(responses, roles)
-          if (hasMore) future.flatMap(_ => syncConversations(responses.lastOption.map(_.id)))
-          else future.map(_ => Success)
-        }
+    conversationsClient.loadConversations(start).future flatMap {
+      case Right(ConversationsResult(convs, hasMore)) =>
+        debug(l"syncConversations received ${convs.size}")
+        val future = convService.updateConversationsWithDeviceStartMessage(convs)
+        if (hasMore) future.flatMap(_ => syncConversations(convs.lastOption.map(_.id)))
+        else future.map(_ => Success)
       case Left(error) =>
         warn(l"ConversationsClient.loadConversations($start) failed with error: $error")
         Future.successful(SyncResult(error))
@@ -114,18 +97,8 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postReceiptMode(conv.remoteId, receiptMode).map(SyncResult(_))
     }
 
-  def postConversationRole(id: ConvId, userId: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncResult] =
-    withConversation(id) { conv =>
-      conversationsClient.postConversationRole(conv.remoteId, userId, newRole).future.flatMap {
-        case Right(_) =>
-          Future.successful(Success)
-        case Left(error) =>
-          convService.onUpdateRoleFailed(id, userId, newRole, origRole, error).map(_ => SyncResult(error))
-      }
-    }
-
-  def postConversationMemberJoin(id: ConvId, members: Set[UserId], defaultRole: ConversationRole): Future[SyncResult] = withConversation(id) { conv =>
-    def post(users: Set[UserId]) = conversationsClient.postMemberJoin(conv.remoteId, users, defaultRole).future flatMap {
+  def postConversationMemberJoin(id: ConvId, members: Set[UserId]): Future[SyncResult] = withConversation(id) { conv =>
+    def post(users: Set[UserId]) = conversationsClient.postMemberJoin(conv.remoteId, users).future flatMap {
       case Left(resp @ ErrorResponse(403, _, label)) =>
         val errTpe = label match {
           case "not-connected"    => Some(ErrorType.CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION)
@@ -136,7 +109,6 @@ class ConversationsSyncHandler(selfUserId:          UserId,
           .onMemberAddFailed(id, users, errTpe, resp)
           .map(_ => SyncResult(resp))
       case resp =>
-        verbose(l"postConversationMemberJoin($id, $members, $defaultRole): $resp")
         postConvRespHandler(resp)
     }
 
@@ -174,34 +146,16 @@ class ConversationsSyncHandler(selfUserId:          UserId,
       conversationsClient.postConversationState(conv.remoteId, state).map(SyncResult(_))
     }
 
-  def postConversation(convId:      ConvId,
-                       users:       Set[UserId],
-                       name:        Option[Name],
-                       team:        Option[TeamId],
-                       access:      Set[Access],
-                       accessRole:  AccessRole,
-                       receiptMode: Option[Int],
-                       defaultRole: ConversationRole
-                      ): Future[SyncResult] = {
-    debug(l"postConversation($convId, $users, $name, $defaultRole)")
+  def postConversation(convId: ConvId, users: Set[UserId], name: Option[Name], team: Option[TeamId], access: Set[Access], accessRole: AccessRole, receiptMode: Option[Int]): Future[SyncResult] = {
+    debug(l"postConversation($convId, $users, $name)")
     val (toCreate, toAdd) = users.splitAt(PostMembersLimit)
-    val initState = ConversationInitState(
-      users                 = toCreate,
-      name                  = name,
-      team                  = team,
-      access                = access,
-      accessRole            = accessRole,
-      receiptMode           = receiptMode,
-      conversationRole      = defaultRole
-    )
+    val initState = ConversationInitState(users = toCreate, name = name, team = team, access = access, accessRole = accessRole, receiptMode = receiptMode)
     conversationsClient.postConversation(initState).future.flatMap {
       case Right(response) =>
         convService.updateRemoteId(convId, response.id).flatMap { _ =>
-          loadConversationRoles(Seq(response)).flatMap { roles =>
-            convService.updateConversationsWithDeviceStartMessage(Seq(response), roles).flatMap { _ =>
-              if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd, defaultRole)
-              else Future.successful(Success)
-            }
+          convService.updateConversationsWithDeviceStartMessage(Seq(response)).flatMap { _ =>
+            if (toAdd.nonEmpty) postConversationMemberJoin(convId, toAdd)
+            else Future.successful(Success)
           }
         }
       case Left(resp@ErrorResponse(403, msg, "not-connected")) =>

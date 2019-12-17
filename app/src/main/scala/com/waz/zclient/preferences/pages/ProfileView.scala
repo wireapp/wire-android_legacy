@@ -48,6 +48,7 @@ import com.waz.zclient.views.AvailabilityView
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.zclient.appentry.AppEntryActivity
+import com.waz.zclient.settings.main.SettingsMainActivity
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]
@@ -106,7 +107,13 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
-    navigator.goTo(SettingsBackStackKey())
+    if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+      getContext.startActivity(new Intent(getContext, classOf[SettingsMainActivity])
+        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+      )
+    } else {
+        navigator.goTo(SettingsBackStackKey())
+    }
   }
 
   userPicture.setOnClickListener(new OnClickListener {

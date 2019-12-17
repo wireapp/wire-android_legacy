@@ -75,9 +75,10 @@ class SendConnectRequestFragment
 
   private lazy val user = usersController.user(userToConnectId)
 
-  private lazy val removeConvMemberFeatureEnabled =
-    if (userRequester != UserRequester.PARTICIPANTS) Signal.const(false)
-    else conversationController.selfRole.map(_.canRemoveGroupMember)
+  private lazy val removeConvMemberFeatureEnabled = for {
+    convId <- conversationController.currentConvId
+    permission <- userAccountsController.hasRemoveConversationMemberPermission(convId)
+  } yield permission && userRequester == UserRequester.PARTICIPANTS
 
   private lazy val returnPage =
     if (userRequester == UserRequester.PARTICIPANTS || userRequester == UserRequester.DEEP_LINK)

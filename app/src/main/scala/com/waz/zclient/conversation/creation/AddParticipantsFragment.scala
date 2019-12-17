@@ -129,10 +129,10 @@ class AddParticipantsFragment extends FragmentHelper {
 
   private lazy val emptyServicesButton = returning(view[TypefaceTextView](R.id.empty_services_button)) { vh =>
     (for {
-      canAddServices <- newConvController.canAddServices
-      res            <- adapter.searchResults
+      isAdmin  <- userAccounts.isAdmin
+      res      <- adapter.searchResults
     } yield res match {
-      case AddUserListState.NoServices if canAddServices => View.VISIBLE
+      case AddUserListState.NoServices if isAdmin => View.VISIBLE
       case _ => View.GONE
     }).onUi(vis => vh.foreach(_.setVisibility(vis)))
 
@@ -146,12 +146,12 @@ class AddParticipantsFragment extends FragmentHelper {
     }.onUi(vis => vh.foreach(_.setVisibility(vis)))
 
     (for {
-      canAddServices <- newConvController.canAddServices
-      res            <- adapter.searchResults
+      isAdmin  <- userAccounts.isAdmin
+      res      <- adapter.searchResults
     } yield res match {
       case AddUserListState.NoUsers               => R.string.new_conv_no_contacts
       case AddUserListState.NoUsersFound          => R.string.new_conv_no_results
-      case AddUserListState.NoServices if canAddServices => R.string.empty_services_list_admin
+      case AddUserListState.NoServices if isAdmin => R.string.empty_services_list_admin
       case AddUserListState.NoServices            => R.string.empty_services_list
       case AddUserListState.NoServicesFound       => R.string.no_matches_found
       case AddUserListState.LoadingServices       => R.string.loading_services

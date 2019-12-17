@@ -29,6 +29,7 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.service.backup.BackupManager
+import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.sync.client.LoginClient.LoginResult
@@ -511,22 +512,11 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     def delete(file: File) =
       if (file.exists) Try(file.delete()).isSuccess else true
 
-    //wrap everything in Try blocks as otherwise exceptions might cause us to skip future wiping
-    //operations and the logout call
-    val deleteCryptoDir = Try(delete(cryptoBoxDir(userId)))
-    if(deleteCryptoDir.isFailure) error(l"failed to wipe cryptobox dir", deleteCryptoDir.failed.get)
-
-    val deleteDbFiles = Try(databaseFiles(userId).foreach(delete))
-    if(deleteDbFiles.isFailure) error(l"failed to wipe db files", deleteCryptoDir.failed.get)
-
-    val deleteOtrFiles = Try(otrFilesDir(userId).deleteRecursively())
-    if(deleteOtrFiles.isFailure) {
-      error(l"Got exception when attempting to delete otr files", deleteOtrFiles.failed.get)
-    } else if(deleteOtrFiles.isSuccess && !deleteOtrFiles.get) {
-      error(l"Failed to delete otr files")
-    }
-
+    delete(cryptoBoxDir(userId))
+    databaseFiles(userId).foreach(delete)
+    if(!otrFilesDir(userId).deleteRecursively()) warn(l"Failed to delete otr files, skipping")
     logout(userId, DataWiped)
+
   }
 
   override def isWipedForAllAccounts: Future[Boolean] = accountManagers.head.map { ams =>
