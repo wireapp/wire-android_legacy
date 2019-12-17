@@ -14,9 +14,9 @@ class ClientsLocalDataSource(private val clientDbService: ClientDbService) {
     suspend fun allClients(): Either<Failure, List<ClientDao>> =
         requestLocal { clientDbService.allClients().toList() }
 
-    fun updateClients(clients: List<ClientDao>) =
+    suspend fun updateClients(clients: List<ClientDao>) =
         clientDbService.updateClients(clients)
 
-    fun updateClient(client: ClientDao) =
+    suspend fun updateClient(client: ClientDao) =
         clientDbService.updateClient(client)
 }

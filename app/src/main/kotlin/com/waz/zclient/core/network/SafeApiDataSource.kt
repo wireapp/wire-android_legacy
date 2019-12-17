@@ -3,6 +3,7 @@ package com.waz.zclient.core.network
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 
 suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Failure, T> {
@@ -36,12 +37,12 @@ suspend fun <R> requestLocal(localRequest: suspend () -> R): Either<Failure, R> 
 
 suspend fun <R> resultEither(mainRequest: suspend () -> Either<Failure, R>,
                              fallbackRequest: suspend () -> Either<Failure, R>,
-                             saveToDatabase: (R) -> Unit): Either<Failure, R> {
+                             saveToDatabase: suspend (R) -> Unit): Either<Failure, R> {
     var response = mainRequest()
     if (response.isLeft) {
         val networkResponse = fallbackRequest()
         if (networkResponse.isRight) {
-            networkResponse.map(saveToDatabase)
+            networkResponse.map { runBlocking { saveToDatabase(it) } }
         }
         response = networkResponse
     }

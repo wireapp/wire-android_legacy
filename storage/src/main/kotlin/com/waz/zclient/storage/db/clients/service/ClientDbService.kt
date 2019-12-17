@@ -13,17 +13,17 @@ interface ClientDbService {
     suspend fun allClients(): List<ClientDao>
 
     @Transaction
-    fun updateClients(clients: List<ClientDao>) {
+    suspend fun updateClients(clients: List<ClientDao>) {
         deleteAllClients()
         insertAll(clients)
     }
 
     @Insert
-    fun insertAll(clients: List<ClientDao>)
+    suspend fun insertAll(clients: List<ClientDao>)
 
     @Query("DELETE FROM client")
-    fun deleteAllClients()
+    suspend fun deleteAllClients()
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    fun updateClient(client: ClientDao)
+    suspend fun updateClient(client: ClientDao)
 }

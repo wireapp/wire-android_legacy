@@ -9,21 +9,21 @@ import com.waz.zclient.storage.db.users.model.UserDao
 interface UserDbService {
 
     @Insert
-    fun insert(user: UserDao)
+    suspend fun insert(user: UserDao)
 
     @Query("SELECT * from user WHERE _id = :userId")
-    fun selectById(userId: String): UserDao
+    suspend fun selectById(userId: String): UserDao
 
-//    @Query("UPDATE user SET name=:name WHERE _id = :userId")
-//    fun updateName(userId: String, name: String): Int
+    @Query("UPDATE user SET name=:name WHERE _id = :userId")
+    suspend fun updateName(userId: String, name: String)
 
-//    @Query("UPDATE user SET handle=:handle WHERE _id = :userId")
-//    fun updateHandle(userId: String, handle: String): Int
-//
-//    @Query("UPDATE user SET email=:email WHERE _id = :userId")
-//    fun updateEmail(userId: String, email: String): Int
-//
-//    @Query("UPDATE user SET phone=:phone WHERE _id = :userId")
-//    fun updatePhone(userId: String, phone: String): Int
+    @Query("UPDATE user SET handle=:handle WHERE _id = :userId")
+    suspend fun updateHandle(userId: String, handle: String)
+
+    @Query("UPDATE user SET email=:email WHERE _id = :userId")
+    suspend fun updateEmail(userId: String, email: String)
+
+    @Query("UPDATE user SET phone=:phone WHERE _id = :userId")
+    suspend fun updatePhone(userId: String, phone: String)
 }
 

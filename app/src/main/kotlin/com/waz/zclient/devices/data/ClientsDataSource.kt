@@ -32,10 +32,10 @@ class ClientsDataSource private constructor(
     private fun allClientsLocal(): suspend () -> Either<Failure, List<Client>> =
         { localDataSource.allClients().map { clientMapper.toListOfClients(it) } }
 
-    private fun saveClient(): (Client) -> Unit =
+    private fun saveClient(): suspend (Client) -> Unit =
         { localDataSource.updateClient(clientMapper.toClientDao(it)) }
 
-    private fun saveAllClients(): (List<Client>) -> Unit =
+    private fun saveAllClients(): suspend (List<Client>) -> Unit =
         { localDataSource.updateClients(clientMapper.toListOfClientDao(it)) }
 
     companion object {

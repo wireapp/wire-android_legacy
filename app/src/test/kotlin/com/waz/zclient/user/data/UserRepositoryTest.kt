@@ -22,7 +22,6 @@ import org.mockito.MockitoAnnotations
 
 class UserRepositoryTest {
 
-
     private lateinit var usersRepository: UsersRepository
 
     @Mock
@@ -57,15 +56,11 @@ class UserRepositoryTest {
         }
     }
 
-
-
-
-
     @Test
     fun `Given profile() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.NetworkConnection))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.DatabaseError))
             `when`(usersRemoteDataSource.profile()).thenReturn(Either.Right(userApi))
 
             usersRepository.profile()

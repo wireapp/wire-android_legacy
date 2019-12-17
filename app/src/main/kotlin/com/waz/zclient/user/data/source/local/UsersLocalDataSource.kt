@@ -17,17 +17,17 @@ class UsersLocalDataSource constructor(
 
     private val userService: UserDbService = userDatabase.userDbService()
 
-    fun add(user: UserDao) = userService.insert(user)
+    suspend fun add(user: UserDao) = userService.insert(user)
 
     suspend fun profile(): Either<Failure, UserDao> = requestLocal { userService.selectById(userId) }
 
-//    suspend fun changeName(value: String): Any = requestLocal { userDao.updateName(userId, value) }
+    suspend fun changeName(value: String) = requestLocal { userService.updateName(userId, value) }
 
-//    suspend fun changeHandle(value: String): Any = requestLocal { userDao.updateHandle(userId, value) }
+    suspend fun changeHandle(value: String) = requestLocal { userService.updateHandle(userId, value) }
 
-//    suspend fun changeEmail(value: String): Any = requestLocal { userDao.updateEmail(userId, value) }
+    suspend fun changeEmail(value: String) = requestLocal { userService.updateEmail(userId, value) }
 
-//    suspend fun changePhone(value: String): Any = requestLocal { userDao.updatePhone(userId, value) }
+    suspend fun changePhone(value: String) = requestLocal { userService.updatePhone(userId, value) }
 
 
 }
