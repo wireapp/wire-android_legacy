@@ -20,16 +20,16 @@ package com.waz.zclient.sharing
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.text.format.Formatter
 import android.view.View.OnClickListener
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout.LayoutParams
-import android.widget.{CheckBox, CompoundButton, ImageView, LinearLayout, RelativeLayout, TextView}
 import android.widget.TextView.OnEditorActionListener
+import android.widget._
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.impl.ContentUriAssetForUpload
@@ -41,7 +41,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, TextContent}
+import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, TextContent, NewContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views._
@@ -120,6 +120,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
         layout.removeAllViews()
 
         val contentHeight = getDimenPx(content match {
+          case NewContent()  => 0
           case TextContent(_)  => R.dimen.collections__multi_share__text_preview__height
           case ImageContent(_) => R.dimen.collections__multi_share__image_preview__height
           case FileContent(_)  => R.dimen.collections__multi_share__file_preview__height
@@ -129,6 +130,8 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
         val inflater = getLayoutInflater
         content match {
+          case NewContent() =>
+            layout.setVisibility(View.GONE)
           case TextContent(text) =>
             inflater.inflate(R.layout.share_preview_text, layout).findViewById[TypefaceTextView](R.id.text_content).setText(text)
 

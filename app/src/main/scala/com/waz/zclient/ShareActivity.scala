@@ -1,20 +1,20 @@
 /**
- * Wire
- * Copyright (C) 2019 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2019 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 
 package com.waz.zclient
 
@@ -34,11 +34,11 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.utils.wrappers.AndroidURI
 import com.waz.utils.wrappers.AndroidURIUtil.fromFile
+import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
-import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.sharing.ShareToMultipleFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
@@ -48,15 +48,18 @@ import scala.util.control.NonFatal
 
 
 class ShareActivity extends BaseActivity with ActivityHelper {
+
   import ShareActivity._
 
-  lazy val sharing = inject[SharingController]
+  lazy val sharing  = inject[SharingController]
   lazy val accounts = inject[AccountsService]
 
   private lazy val confirmationMenu = returning(findById[ConfirmationMenu](R.id.cm__conversation_list__login_prompt)) { cm =>
     cm.setCallback(new TwoButtonConfirmationCallback() {
       override def positiveButtonClicked(checkboxIsSelected: Boolean) = finish()
+
       override def negativeButtonClicked() = {}
+
       override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean) = {}
     })
 
@@ -89,30 +92,32 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     handleIncomingIntent()
   }
 
-  private def handleIncomingIntent() =
-    inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
-      case true =>
-        verbose(l"${RichIntent(getIntent)}")
-        val ir = ShareCompat.IntentReader.from(this)
-        if (!ir.isShareIntent) finish()
-        else {
-          if (ir.getStreamCount == 0 && ir.getType == "text/plain") sharing.publishTextContent(ir.getText.toString)
-          else {
+  private def handleIncomingIntent() = {
+    val ir = ShareCompat.IntentReader.from(this)
+    if (!ir.isShareIntent) finish()
+    else {
+      if (ir.getStreamCount == 0 && ir.getType == "text/plain") sharing.publishTextContent(ir.getText.toString)
+      else if (ir.getStreamCount == 0 && ir.getType == "message/plain") {}
+      else {
+        inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
+          case true =>
+            verbose(l"${RichIntent(getIntent)}")
             val uris =
               (if (ir.isMultipleShare) (0 until ir.getStreamCount).flatMap(i => Option(ir.getStream(i))) else Option(ir.getStream).toSeq)
                 .flatMap(uri => getPath(getApplicationContext, uri))
             if (uris.nonEmpty)
               sharing.sharableContent ! Some(if (ir.getType.startsWith("image/") && uris.size == 1) ImageContent(uris) else FileContent(uris))
             else finish()
-          }
-        }
-      case _ => finish()
-    }(Threading.Ui)
+          case _    => finish()
+        }(Threading.Ui)
+      }
+    }
+  }
 
   override def onBackPressed() =
     withFragmentOpt(ShareToMultipleFragment.TAG) {
       case Some(f: ShareToMultipleFragment) if f.onBackPressed() => //
-      case _ => super.onBackPressed()
+      case _                                                     => super.onBackPressed()
     }
 
 }
@@ -158,19 +163,19 @@ object ShareActivity extends DerivedLogTag {
             case "image" => Some(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             case "video" => Some(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             case "audio" => Some(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-            case _ => None
+            case _       => None
           }
           contentUri.flatMap(uri => getDocumentPath(context, uri, "_id=?", Array[String](split(1))))
-        case _ if isDocumentUri(context, uri) =>
+        case _ if isDocumentUri(context, uri)        =>
           getDocumentPath(context, uri).orElse(default)
-        case _ =>
+        case _                                       =>
           warn(l"Unrecognised authority for uri: $uri")
           None
       }).orElse(default)
     } else
       (uri.getScheme.toLowerCase match {
         case "content" => getDocumentPath(context, uri).orElse(default)
-        case _ =>
+        case _         =>
           warn(l"Unreachable content: $uri")
           default
       }).flatMap { u =>
@@ -178,7 +183,7 @@ object ShareActivity extends DerivedLogTag {
         val path = u.getPath
 
         if (!u.getLastPathSegment.contains(".Android_wbu") && (path.contains(context.getPackageName) ||
-            path.startsWith("/proc"))) {
+          path.startsWith("/proc"))) {
           None
         } else {
           Some(u)
