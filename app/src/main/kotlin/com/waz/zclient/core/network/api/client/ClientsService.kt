@@ -6,13 +6,13 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.features.clients.ClientEntity
 
-class ClientsService : ApiService(Injector.networkHandler()) {
+class ClientsService(private val apiService: ApiService) {
 
     private val clientsApi by lazy { Injector.networkClient().create(ClientsApi::class.java) }
 
     fun allClients(): Either<Failure, List<ClientEntity>> =
-        request(clientsApi.allClients(), emptyList())
+        apiService.request(clientsApi.allClients(), emptyList())
 
     fun clientById(clientId: String?): Either<Failure, ClientEntity> =
-        request(clientsApi.clientById(clientId), ClientEntity.empty())
+        apiService.request(clientsApi.clientById(clientId), ClientEntity.empty())
 }
