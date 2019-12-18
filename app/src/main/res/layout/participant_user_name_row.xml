@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/background_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    style="?wireBackground"
+    android:layout_weight="1"
+    >
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/user_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/wire__text_size__big"
+        android:textColor="?wirePrimaryTextColor"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        app:w_font="@string/wire__typeface__regular"
+        />
+
+    <com.waz.zclient.ui.text.TypefaceTextView
+        android:id="@+id/user_handle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/user_name"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center_horizontal"
+        android:textColor="?wireSecondaryTextColor"
+        android:textSize="@dimen/wire__text_size__regular"
+        android:layout_marginTop="@dimen/wire__padding__small"
+        app:w_font="@string/wire__typeface__regular"
+        />
+</RelativeLayout>

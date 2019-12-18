@@ -94,6 +94,7 @@ class SendConnectRequestFragment
       })
     }
   }
+
   private lazy val footerMenu = returning(view[FooterMenu](R.id.fm__footer)) { vh =>
     user.map(_.expiresAt.isDefined).map {
       case true => ("", "")
@@ -109,7 +110,9 @@ class SendConnectRequestFragment
       case _ => ""
     }.onUi(text => vh.foreach(_.setRightActionText(text)))
   }
+
   private lazy val imageViewProfile = view[ImageView](R.id.send_connect)
+
   private lazy val userNameView = returning(view[TypefaceTextView](R.id.user_name)) { vh =>
     user.map(_.name).onUi(t => vh.foreach(_.setText(t)))
   }

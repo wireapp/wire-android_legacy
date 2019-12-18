@@ -49,19 +49,18 @@ class SingleParticipantFragment extends FragmentHelper {
 
   import SingleParticipantFragment._
 
-  private lazy val participantsController = inject[ParticipantsController]
-  private lazy val userAccountsController = inject[UserAccountsController]
-  private lazy val navigationController   = inject[INavigationController]
+  protected lazy val participantsController = inject[ParticipantsController]
+  protected lazy val userAccountsController = inject[UserAccountsController]
+  protected lazy val navigationController   = inject[INavigationController]
 
-  private var subs = Set.empty[Subscription]
+  protected var subs = Set.empty[Subscription]
 
   private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
 
-  private val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
+  protected val visibleTab = Signal[SingleParticipantFragment.Tab](DetailsTab)
 
-  private lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
+  protected lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
     _.foreach { layout =>
-
       if (fromDeepLink)
         layout.setVisibility(View.GONE)
       else {
@@ -77,7 +76,7 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
-  private lazy val timerText = for {
+  protected lazy val timerText = for {
     expires <- participantsController.otherParticipant.map(_.expiresAt)
     clock   <- if (expires.isDefined) ClockSignal(5.minutes) else Signal.const(Instant.EPOCH)
   } yield expires match {
@@ -85,31 +84,93 @@ class SingleParticipantFragment extends FragmentHelper {
     case _               => None
   }
 
-  private lazy val readReceipts = Signal(participantsController.isGroup, userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
-    case (false, true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
-    case (false, true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
-    case _                    => None
+  protected lazy val readReceipts: Signal[Option[String]] =
+    Signal(participantsController.isGroup, userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
+      case (false, true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
+      case (false, true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
+      case _                    => None
+    }
+
+  protected lazy val participantOtrDeviceAdapter = returning(new ParticipantOtrDeviceAdapter) { adapter =>
+    subs += adapter.onClientClick.onUi { client =>
+      participantsController.otherParticipantId.head.foreach {
+        case Some(userId) =>
+          Option(getParentFragment).foreach {
+            case f: ParticipantFragment => f.showOtrClient(userId, client.id)
+            case _ =>
+          }
+        case _ =>
+      }
+    }
+
+    subs += adapter.onHeaderClick { _ => inject[BrowserController].openOtrLearnWhy() }
   }
 
-  private lazy val devicesView = returning( view[RecyclerView](R.id.devices_recycler_view) ) { vh =>
+  protected lazy val devicesView = returning( view[RecyclerView](R.id.devices_recycler_view) ) { vh =>
     visibleTab.onUi {
       case DevicesTab => vh.foreach(_.setVisible(true))
       case _          => vh.foreach(_.setVisible(false))
     }
+
+    vh.foreach { view =>
+      view.setLayoutManager(new LinearLayoutManager(ctx))
+      view.setHasFixedSize(true)
+      view.setAdapter(participantOtrDeviceAdapter)
+      view.setPaddingBottomRes(R.dimen.participants__otr_device__padding_bottom)
+      view.setClipToPadding(false)
+    }
   }
 
-  private lazy val detailsView = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
-    visibleTab.onUi {
+  protected lazy val detailsView = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
+    subs += visibleTab.onUi {
       case DetailsTab => vh.foreach(_.setVisible(true))
       case _          => vh.foreach(_.setVisible(false))
     }
 
     if (fromDeepLink)
       vh.foreach(_.setMarginTop(ContextUtils.getDimenPx(R.dimen.wire__padding__50)))
+
+    vh.foreach(_.setLayoutManager(new LinearLayoutManager(ctx)))
+
+    (for {
+      zms                <- inject[Signal[ZMessaging]].head
+      user               <- participantsController.otherParticipant.head
+      isGroup            <- participantsController.isGroup.head
+      isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
+      isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
+      isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
+      // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
+      _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
+      isDarkTheme        <- inject[ThemeController].darkThemeSet.head
+      isWireless         =  user.expiresAt.isDefined
+    } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame)).foreach {
+      case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame) =>
+        val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless)
+        val emailUserField = emailAddress match {
+          case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
+          case None        => Seq.empty
+        }
+
+        subs += Signal(
+          participantsController.otherParticipant.map(_.fields),
+          timerText,
+          readReceipts,
+          participantsController.participants.map(_(userId)),
+          participantsController.selfRole
+        ).onUi {
+          case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>
+            adapter.set(emailUserField ++ fields, tt, rr, pRole, sRole)
+          case (_, tt, rr, pRole, sRole) =>
+            adapter.set(emailUserField, tt, rr, pRole, sRole)
+        }
+
+        subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(userId, _))
+        vh.foreach(_.setAdapter(adapter))
+    }
   }
 
-  private lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
-    participantsController.otherParticipant.map(_.handle.map(_.string)).onUi {
+  protected lazy val userHandle = returning(view[TextView](R.id.user_handle)) { vh =>
+    subs += participantsController.otherParticipant.map(_.handle.map(_.string)).onUi {
       case Some(h) =>
         vh.foreach { view =>
           view.setText(StringUtils.formatHandle(h))
@@ -148,7 +209,7 @@ class SingleParticipantFragment extends FragmentHelper {
       }
   }
 
-  private lazy val leftActionStrings = for {
+  protected lazy val leftActionStrings = for {
     isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
     isGroupOrBot   <- participantsController.isGroupOrBot
     canCreateConv  <- userAccountsController.hasCreateConvPermission
@@ -165,24 +226,26 @@ class SingleParticipantFragment extends FragmentHelper {
     (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
   }
 
-  private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
+  protected lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
     // TODO: merge this logic with ConversationOptionsMenuController
-    (for {
-      conv            <- participantsController.conv
-      remPerm         <- participantsController.selfRole.map(_.canRemoveGroupMember)
-      selfIsProUser   <- userAccountsController.isTeam
-      other           <- participantsController.otherParticipant
-      otherIsGuest    =  other.isGuest(conv.team)
-      showRightAction =  if (fromDeepLink) !selfIsProUser || otherIsGuest else remPerm
-      rightActionStr  =  getString(if (showRightAction) R.string.glyph__more else R.string.empty_string)
-    } yield rightActionStr).onUi(text => vh.foreach(_.setRightActionText(text)))
+    subs += (for {
+        conv            <- participantsController.conv
+        remPerm         <- participantsController.selfRole.map(_.canRemoveGroupMember)
+        selfIsProUser   <- userAccountsController.isTeam
+        other           <- participantsController.otherParticipant
+        otherIsGuest    =  other.isGuest(conv.team)
+        showRightAction =  if (fromDeepLink) !selfIsProUser || otherIsGuest else remPerm
+        rightActionStr  =  getString(if (showRightAction) R.string.glyph__more else R.string.empty_string)
+      } yield rightActionStr).onUi(text => vh.foreach(_.setRightActionText(text)))
 
-    leftActionStrings.onUi { case (icon, text) =>
+    subs += leftActionStrings.onUi { case (icon, text) =>
       vh.foreach { menu =>
         menu.setLeftActionText(getString(icon))
         menu.setLeftActionLabelText(getString(text))
       }
     }
+
+    vh.foreach(_.setCallback(footerCallback))
   }
 
   override def onCreateView(inflater: LayoutInflater, viewGroup: ViewGroup, savedInstanceState: Bundle): View =
@@ -191,71 +254,17 @@ class SingleParticipantFragment extends FragmentHelper {
   override def onViewCreated(v: View, @Nullable savedInstanceState: Bundle): Unit = {
     super.onViewCreated(v, savedInstanceState)
 
+    initViews(savedInstanceState)
+  }
+
+  protected def initViews(savedInstanceState: Bundle): Unit = {
     userHandle
 
-    detailsView.foreach { view =>
-      view.setLayoutManager(new LinearLayoutManager(ctx))
+    detailsView
 
-      (for {
-        zms                <- inject[Signal[ZMessaging]].head
-        user               <- participantsController.otherParticipant.head
-        isGroup            <- participantsController.isGroup.head
-        isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
-        isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
-        isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
-                              // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
-        _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
-        isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-        isWireless         =  user.expiresAt.isDefined
-      } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame)).foreach {
-        case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame) =>
-          val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless)
-          val emailUserField = emailAddress match {
-            case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
-            case None        => Seq.empty
-          }
+    devicesView
 
-          Signal(
-            participantsController.otherParticipant.map(_.fields),
-            timerText,
-            readReceipts,
-            participantsController.participants.map(_(userId)),
-            participantsController.selfRole
-          ).onUi {
-            case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>
-              adapter.set(emailUserField ++ fields, tt, rr, pRole, sRole)
-            case (_, tt, rr, pRole, sRole) =>
-              adapter.set(emailUserField, tt, rr, pRole, sRole)
-          }
-
-          subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(userId, _))
-          view.setAdapter(adapter)
-      }
-    }
-
-    devicesView.foreach { view =>
-      val participantOtrDeviceAdapter = returning(new ParticipantOtrDeviceAdapter) { adapter =>
-        adapter.onClientClick.onUi { client =>
-          participantsController.otherParticipantId.head.foreach {
-            case Some(userId) =>
-              Option(getParentFragment).foreach {
-                case f: ParticipantFragment => f.showOtrClient(userId, client.id)
-                case _ =>
-              }
-            case _ =>
-          }
-        }
-
-        adapter.onHeaderClick { _ => inject[BrowserController].openOtrLearnWhy() }
-      }
-      view.setLayoutManager(new LinearLayoutManager(ctx))
-      view.setHasFixedSize(true)
-      view.setAdapter(participantOtrDeviceAdapter)
-      view.setPaddingBottomRes(R.dimen.participants__otr_device__padding_bottom)
-      view.setClipToPadding(false)
-    }
-
-    footerMenu.foreach(_.setCallback(footerCallback))
+    footerMenu
 
     if (Option(savedInstanceState).isEmpty) {
       val tab = Tab(getStringArg(TabToOpen))
@@ -317,4 +326,65 @@ object SingleParticipantFragment {
       tabToOpen.foreach { t => args.putString(TabToOpen, t)}
       f.setArguments(args)
     }
+}
+
+class SendConnectRequestFragment2 extends SingleParticipantFragment {
+  import Threading.Implicits.Ui
+
+  override protected lazy val tabs = returning(view[TabLayout](R.id.details_and_devices_tabs)) {
+    _.foreach { _.setVisibility(View.GONE) }
+  }
+
+  override protected lazy val readReceipts = Signal.const(Option.empty[String])
+
+  override protected def initViews(savedInstanceState: Bundle): Unit = {
+    userHandle
+    detailsView
+    footerMenu
+  }
+
+  override protected lazy val detailsView = returning( view[RecyclerView](R.id.details_recycler_view) ) { vh =>
+    vh.foreach(_.setMarginTop(ContextUtils.getDimenPx(R.dimen.wire__padding__50)))
+    vh.foreach(_.setLayoutManager(new LinearLayoutManager(ctx)))
+
+    (for {
+      zms                <- inject[Signal[ZMessaging]].head
+      user               <- participantsController.otherParticipant.head
+      isGroup            <- participantsController.isGroup.head
+      isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
+      isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
+      isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
+      // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
+      _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
+      isDarkTheme        <- inject[ThemeController].darkThemeSet.head
+      isWireless         =  user.expiresAt.isDefined
+    } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame)).foreach {
+      case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame) =>
+        val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless)
+        val emailUserField = emailAddress match {
+          case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
+          case None        => Seq.empty
+        }
+
+        subs += Signal(
+          participantsController.otherParticipant.map(_.fields),
+          timerText,
+          readReceipts,
+          participantsController.participants.map(_(userId)),
+          participantsController.selfRole
+        ).onUi {
+          case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>
+            adapter.set(emailUserField ++ fields, tt, rr, pRole, sRole)
+          case (_, tt, rr, pRole, sRole) =>
+            adapter.set(emailUserField, tt, rr, pRole, sRole)
+        }
+
+        subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(userId, _))
+        vh.foreach(_.setAdapter(adapter))
+    }
+  }
+}
+
+object SendConnectRequestFragment2 {
+  def newInstance(): SendConnectRequestFragment2 = new SendConnectRequestFragment2
 }
