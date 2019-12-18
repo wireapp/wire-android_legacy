@@ -86,6 +86,20 @@ fun <T, L, R> Either<L, R>.flatMap(fn: (R) -> Either<L, T>): Either<L, T> =
         is Either.Right -> fn(b)
     }
 
+fun <L, R> Either<L, R>.onFailure(fn: (failure: L) -> Unit): Either<L, R> {
+    when (this) {
+        is Either.Left -> fn(a)
+    }
+    return this
+}
+
+fun <L, R> Either<L, R>.onSuccess(fn: (success: R) -> Unit): Either<L, R> {
+    when (this) {
+        is Either.Right -> fn(b)
+    }
+    return this
+}
+
 /**
  * Right-biased map() FP convention which means that Right is assumed to be the default case
  * to operate on. If it is Left, operations like map, flatMap, ... return the Left value unchanged.

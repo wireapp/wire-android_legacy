@@ -3,7 +3,7 @@ package com.waz.zclient.devices.data
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.core.network.resultEither
+import com.waz.zclient.core.network.accessData
 import com.waz.zclient.devices.data.source.ClientMapper
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -15,10 +15,10 @@ class ClientsDataSource private constructor(
     private val clientMapper: ClientMapper) : ClientsRepository {
 
     override suspend fun clientById(clientId: String): Either<Failure, Client> =
-        resultEither(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
+        accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
 
     override suspend fun allClients(): Either<Failure, List<Client>> =
-        resultEither(allClientsLocal(), allClientsRemote(), saveAllClients())
+        accessData(allClientsLocal(), allClientsRemote(), saveAllClients())
 
     private fun clientByIdRemote(clientId: String): suspend () -> Either<Failure, Client> =
         { remoteDataSource.clientById(clientId).map { clientMapper.toClient(it) } }

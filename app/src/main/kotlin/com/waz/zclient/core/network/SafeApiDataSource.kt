@@ -2,9 +2,11 @@ package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.map
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking
 import retrofit2.Response
+import timber.log.Timber
 
 suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Failure, T> {
     try {
@@ -21,30 +23,39 @@ suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Fail
     }
 }
 
-suspend fun <R> requestData(request: suspend () -> Either<Failure, R>): Either<Failure, R> =
-    try {
-        request()
-    } catch (e: Exception) {
-        Either.Left(Failure.NetworkServiceError)
-    }
-
-suspend fun <R> requestLocal(localRequest: suspend () -> R): Either<Failure, R> =
+suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<Failure, R> =
     try {
         Either.Right(localRequest())
     } catch (e: Exception) {
         Either.Left(Failure.DatabaseError)
     }
 
-suspend fun <R> resultEither(mainRequest: suspend () -> Either<Failure, R>,
-                             fallbackRequest: suspend () -> Either<Failure, R>,
-                             saveToDatabase: suspend (R) -> Unit): Either<Failure, R> {
-    var response = mainRequest()
-    if (response.isLeft) {
-        val networkResponse = fallbackRequest()
-        if (networkResponse.isRight) {
-            networkResponse.map { runBlocking { saveToDatabase(it) } }
+
+suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
+                           fallbackRequest: suspend () -> Either<Failure, R>,
+                           saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
+
+    with(mainRequest()) {
+        onFailure { mainFailure ->
+            when (mainFailure) {
+                is Failure.DatabaseError ->
+                    runBlocking {
+                        with(fallbackRequest()) {
+                            onSuccess { runBlocking { saveToDatabase(it) } }
+                            onFailure { fallbackFailure ->
+                                when (fallbackFailure) {
+                                    is Failure.NetworkServiceError ->
+                                        Timber.e("Network request failed with generic error ")
+                                    is Failure.HttpError ->
+                                        Timber.e("Network request failed with {${fallbackFailure.errorCode} ${fallbackFailure.errorMessage} ")
+                                    else ->
+                                        Timber.e("Network request failed with unknown error ")
+                                }
+                            }
+                        }
+                    }
+                else ->
+                    Timber.e("Database request failed with unknown error ")
+            }
         }
-        response = networkResponse
     }
-    return response
-}
