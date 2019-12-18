@@ -19,34 +19,27 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.CompoundButton.OnCheckedChangeListener
-import android.widget.{CompoundButton, ImageView, LinearLayout, TextView}
-import androidx.appcompat.widget.SwitchCompat
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConversationRole, UserField, UserId}
-import com.waz.utils.events.{EventStream, SourceStream}
-import com.waz.zclient.common.views.ChatHeadView
-import com.waz.zclient.paintcode.GuestIcon
+import com.waz.zclient.R
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
-import com.waz.zclient.{Injectable, R}
 
-class SingleParticipantAdapter(userId: UserId,
+final class SingleParticipantAdapter(userId: UserId,
                                isGuest: Boolean,
                                isExternal: Boolean,
                                isDarkTheme: Boolean,
                                isGroup: Boolean,
-                               isWireless: Boolean,
-                               private var fields:          Seq[UserField] = Seq.empty,
-                               private var timerText:       Option[String] = None,
-                               private var readReceipts:    Option[String] = None,
-                               private var participantRole: ConversationRole = ConversationRole.MemberRole,
-                               private var selfRole:        ConversationRole = ConversationRole.MemberRole
+                               isWireless: Boolean
                               )(implicit context: Context)
-  extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
-  import SingleParticipantAdapter._
+  extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
+  import BaseSingleParticipantAdapter._
+
+  private var fields:       Seq[UserField] = Seq.empty
+  private var readReceipts: Option[String] = None
+
+  override protected def hasInformation: Boolean = fields.nonEmpty
 
   def set(fields:          Seq[UserField],
           timerText:       Option[String],
@@ -62,34 +55,24 @@ class SingleParticipantAdapter(userId: UserId,
     notifyDataSetChanged()
   }
 
-  private def isGroupAdminViewVisible: Boolean = isGroup && !isWireless && selfRole.canModifyOtherMember
-
-  val onParticipantRoleChange = EventStream[ConversationRole]
-
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
-    case Header =>
-      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_header_row, parent, false)
-      ParticipantHeaderRowViewHolder(view)
-    case GroupAdmin =>
-      val view = LayoutInflater.from(parent.getContext).inflate(R.layout.group_admin_row, parent, false)
-      GroupAdminViewHolder(view)
-    case CustomField =>
+    case SingleParticipantAdapter.CustomField =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_custom_field_row, parent,false)
-      CustomFieldRowViewHolder(view)
-    case ReadReceipts =>
+      SingleParticipantAdapter.CustomFieldRowViewHolder(view)
+    case SingleParticipantAdapter.ReadReceipts =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_footer_row, parent, false)
-      ReadReceiptsRowViewHolder(view)
+      SingleParticipantAdapter.ReadReceiptsRowViewHolder(view)
+    case _ =>
+      super.onCreateViewHolder(parent, viewType)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
-    case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
-    case h: GroupAdminViewHolder =>
-      h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
-    case h: ReadReceiptsRowViewHolder =>
+    case h: SingleParticipantAdapter.ReadReceiptsRowViewHolder =>
       h.bind(readReceipts)
-    case h: CustomFieldRowViewHolder =>
+    case h: SingleParticipantAdapter.CustomFieldRowViewHolder =>
       h.bind(fields(position - (if(isGroupAdminViewVisible) 2 else 1)))
+    case _ =>
+      super.onBindViewHolder(holder, position)
   }
 
   override def getItemCount: Int =
@@ -98,66 +81,22 @@ class SingleParticipantAdapter(userId: UserId,
   override def getItemId(position: Int): Long = getItemViewType(position) match {
     case Header                        => 0L
     case GroupAdmin                    => 1L
-    case ReadReceipts                  => 2L
+    case SingleParticipantAdapter.ReadReceipts => 2L
     case _  if isGroupAdminViewVisible => fields(position - 2).key.hashCode.toLong
     case _                             => fields(position - 1).key.hashCode.toLong
   }
 
-  setHasStableIds(true)
-
   override def getItemViewType(position: Int): Int =
     if (position == 0) Header
     else if (position == 1 && isGroupAdminViewVisible) GroupAdmin
-    else if (position == getItemCount - 1) ReadReceipts
-    else CustomField
+    else if (position == getItemCount - 1) SingleParticipantAdapter.ReadReceipts
+    else SingleParticipantAdapter.CustomField
 }
+
 
 object SingleParticipantAdapter {
   val CustomField = 0
-  val Header = 1
-  val GroupAdmin = 2
   val ReadReceipts = 3
-
-  case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
-    private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)
-    private lazy val guestIndication      = view.findViewById[LinearLayout](R.id.guest_indicator)
-    private lazy val guestIndicatorIcon  = view.findViewById[ImageView](R.id.guest_indicator_icon)
-    private lazy val externalIndication   = view.findViewById[LinearLayout](R.id.external_indicator)
-    private lazy val groupAdminIndication = view.findViewById[LinearLayout](R.id.group_admin_indicator)
-    private lazy val guestIndicatorTimer  = view.findViewById[TypefaceTextView](R.id.expiration_time)
-    private lazy val informationText      = view.findViewById[TypefaceTextView](R.id.information)
-
-    private var userId = Option.empty[UserId]
-
-    def bind(userId: UserId,
-             isGuest: Boolean,
-             isExternal: Boolean,
-             isGroupAdmin: Boolean,
-             timerText: Option[String],
-             isDarkTheme: Boolean,
-             hasInformation: Boolean
-            )(implicit context: Context): Unit = {
-      this.userId = Some(userId)
-
-      imageView.loadUser(userId)
-      guestIndication.setVisible(isGuest)
-      externalIndication.setVisible(isExternal)
-      groupAdminIndication.setVisible(isGroupAdmin)
-
-      val color = if (isDarkTheme) R.color.wire__text_color_primary_dark_selector else R.color.wire__text_color_primary_light_selector
-      guestIndicatorIcon.setImageDrawable(GuestIcon(color))
-
-      timerText match {
-        case Some(text) =>
-          guestIndicatorTimer.setVisible(true)
-          guestIndicatorTimer.setText(text)
-        case None =>
-          guestIndicatorTimer.setVisible(false)
-      }
-
-      informationText.setVisible(hasInformation)
-    }
-  }
 
   case class CustomFieldRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val name  = view.findViewById[TextView](R.id.custom_field_name)
@@ -179,30 +118,6 @@ object SingleParticipantAdapter {
       readReceiptsInfo1.setVisible(title.isDefined)
       readReceiptsInfo2.setVisible(title.isDefined)
       title.foreach(readReceiptsInfoTitle.setText)
-    }
-  }
-
-  case class GroupAdminViewHolder(view: View) extends ViewHolder(view) with DerivedLogTag {
-    private implicit val ctx = view.getContext
-
-    private val switch = view.findViewById[SwitchCompat](R.id.participant_group_admin_toggle)
-    private var groupAdmin = Option.empty[Boolean]
-    private var onParticipantRoleChanged = Option.empty[SourceStream[ConversationRole]]
-
-    view.setId(R.id.participant_group_admin_toggle)
-
-    switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
-      override def onCheckedChanged(buttonView: CompoundButton, groupAdminEnabled: Boolean): Unit =
-        if (!groupAdmin.contains(groupAdminEnabled)) {
-          groupAdmin = Some(groupAdminEnabled)
-          onParticipantRoleChanged.foreach(_ ! (if (groupAdminEnabled) ConversationRole.AdminRole else ConversationRole.MemberRole))
-        }
-    })
-
-    def bind(onParticipantRoleChanged: SourceStream[ConversationRole], groupAdminEnabled: Boolean): Unit = {
-      if (!this.onParticipantRoleChanged.contains(onParticipantRoleChanged))
-        this.onParticipantRoleChanged = Some(onParticipantRoleChanged)
-      if (!groupAdmin.contains(groupAdminEnabled)) switch.setChecked(groupAdminEnabled)
     }
   }
 }
