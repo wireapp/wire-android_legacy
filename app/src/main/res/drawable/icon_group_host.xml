@@ -1,0 +1,28 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector android:autoMirrored="true" android:height="21dp"
+    android:viewportHeight="21" android:viewportWidth="21"
+    android:width="21dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#33373A" android:fillType="evenOdd"
+        android:pathData="M2.313,18.911l3.538,-2.849h11.337a1.5,1.5 0,0 0,1.5 -1.5L18.688,5.125a1.5,1.5 0,0 0,-1.5 -1.5L3.813,3.625A1.5,1.5 0,0 0,2.313 5.125v13.786z"
+        android:strokeColor="#33373A" android:strokeWidth="2"/>
+    <path android:fillColor="#FFF" android:fillType="nonZero" android:pathData="M8.253,5.303c0.11,-0.066 0.233,-0.09 0.374,0.044 0.43,0.408 0.898,0.622 1.43,0.656 0.387,0.025 0.816,-0.05 1.273,-0.221 0.051,-0.02 0.101,-0.044 0.153,-0.075a2.57,2.57 0,0 0,0.342 -0.259l0.03,-0.026a0.587,0.587 0,0 1,0.084 -0.06,0.292 0.292,0 0,1 0.315,0.016c0.177,0.116 0.363,0.235 0.527,0.34l0.064,0.04 0.325,0.21c0.13,0.085 0.174,0.198 0.14,0.355 -0.127,0.586 -0.042,1.155 0.27,1.793 0.306,0.626 0.743,1.04 1.335,1.265 0.122,0.047 0.18,0.141 0.18,0.29 -0.004,0.378 -0.009,0.784 -0.02,1.187a0.375,0.375 0,0 1,-0.027 0.14c-0.042,0.104 -0.13,0.137 -0.192,0.152 -0.141,0.032 -0.282,0.09 -0.42,0.171 -0.408,0.243 -0.786,0.689 -1.035,1.224 -0.254,0.546 -0.337,1.11 -0.228,1.55 0.031,0.126 0.04,0.289 -0.173,0.415l-0.443,0.259c-0.108,0.064 -0.27,0.16 -0.434,0.26a0.368,0.368 0,0 1,-0.213 0.064l-0.068,-0.014a0.37,0.37 0,0 1,-0.147 -0.11c-0.29,-0.332 -0.782,-0.557 -1.35,-0.616 -0.555,-0.06 -1.115,0.048 -1.52,0.288a1.543,1.543 0,0 0,-0.356 0.286,0.373 0.373,0 0,1 -0.082,0.069 0.216,0.216 0,0 1,-0.125 0.03,0.315 0.315,0 0,1 -0.144,-0.052c-0.302,-0.19 -0.6,-0.383 -0.952,-0.614 -0.12,-0.078 -0.163,-0.182 -0.134,-0.318 0.135,-0.654 0.039,-1.268 -0.296,-1.878 -0.34,-0.62 -0.746,-1 -1.277,-1.194 -0.145,-0.054 -0.211,-0.155 -0.208,-0.318 0.001,-0.146 0.004,-0.294 0.007,-0.442v-0.042c0.004,-0.204 0.008,-0.435 0.01,-0.659 0,-0.14 0.048,-0.23 0.154,-0.293a0.58,0.58 0,0 1,0.094 -0.044l0.034,-0.013c0.125,-0.047 0.266,-0.1 0.389,-0.172 0.052,-0.031 0.098,-0.063 0.14,-0.099 0.896,-0.765 1.253,-1.64 1.09,-2.679 -0.028,-0.172 0.017,-0.275 0.154,-0.356 0.318,-0.18 0.629,-0.364 0.93,-0.55z"/>
+    <path android:fillColor="#33373A" android:fillType="evenOdd" android:pathData="M10.172,10.172m-2.297,0a2.297,2.297 0,1 1,4.594 0a2.297,2.297 0,1 1,-4.594 0"/>
+</vector>
