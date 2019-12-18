@@ -1,6 +1,7 @@
 package com.waz.zclient.devices.domain
 
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.devices.data.ClientsRepository
 import com.waz.zclient.devices.domain.model.Client
@@ -46,7 +47,7 @@ class GetClientUseCaseTest {
     @Test(expected = CancellationException::class)
     fun `given client response is an error, then repository throws an exception`() {
         runBlocking {
-            Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(Failure.NetworkConnection))
+            Mockito.`when`(repository.clientById(TEST_ID)).thenReturn(Either.Left(NetworkConnection))
 
             val params = GetSpecificClientParams(TEST_ID)
             getClientUseCase.run(params)

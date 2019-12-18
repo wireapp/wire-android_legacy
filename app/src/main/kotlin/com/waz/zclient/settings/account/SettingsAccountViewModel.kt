@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.settings.account.model.UserProfileItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeHandleUseCase
@@ -39,7 +40,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private fun handleProfileError(failure: Failure) {
         handleLoading(false)
         when (failure) {
-            is Failure.HttpError ->
+            is HttpError ->
                 Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
             else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")

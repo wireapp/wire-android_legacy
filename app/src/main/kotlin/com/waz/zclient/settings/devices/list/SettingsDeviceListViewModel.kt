@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.GetClientUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -41,7 +42,7 @@ class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClient
     private fun handleAllDevicesError(failure: Failure) {
         handleLoading(false)
         when (failure) {
-            is Failure.HttpError ->
+            is HttpError ->
                 Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
             else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")

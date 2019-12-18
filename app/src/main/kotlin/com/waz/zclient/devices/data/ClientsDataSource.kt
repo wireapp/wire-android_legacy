@@ -14,11 +14,9 @@ class ClientsDataSource private constructor(
     private val localDataSource: ClientsLocalDataSource,
     private val clientMapper: ClientMapper) : ClientsRepository {
 
-    override suspend fun clientById(clientId: String): Either<Failure, Client> =
-        accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
+    override suspend fun clientById(clientId: String) = accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
 
-    override suspend fun allClients(): Either<Failure, List<Client>> =
-        accessData(allClientsLocal(), allClientsRemote(), saveAllClients())
+    override suspend fun allClients() = accessData(allClientsLocal(), allClientsRemote(), saveAllClients())
 
     private fun clientByIdRemote(clientId: String): suspend () -> Either<Failure, Client> =
         { remoteDataSource.clientById(clientId).map { clientMapper.toClient(it) } }

@@ -15,8 +15,7 @@ class UsersDataSource constructor(
     private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource(),
     private val userMapper: UserMapper = UserMapper()) : UsersRepository {
 
-    override suspend fun profile(): Either<Failure, User> =
-        accessData(profileLocal(), profileRemote(), saveUser())
+    override suspend fun profile() = accessData(profileLocal(), profileRemote(), saveUser())
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> =
         usersRemoteDataSource.changeHandle(value)

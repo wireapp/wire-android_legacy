@@ -86,19 +86,21 @@ fun <T, L, R> Either<L, R>.flatMap(fn: (R) -> Either<L, T>): Either<L, T> =
         is Either.Right -> fn(b)
     }
 
-fun <L, R> Either<L, R>.onFailure(fn: (failure: L) -> Unit): Either<L, R> {
-    when (this) {
-        is Either.Left -> fn(a)
-    }
-    return this
-}
+/**
+ * Left-biased onFailure() FP convention dictates that when this class is Left it will return a Left
+ * object to operate on. If it is Left, it'll perform the onFailure functionality passed as a parameter,
+ * but, overall will still return an either object so you chain calls.
+ */
+fun <L, R> Either<L, R>.onFailure(fn: (failure: L) -> Unit): Either<L, R> =
+    this.apply { if (this is Either.Left) fn(a) }
 
-fun <L, R> Either<L, R>.onSuccess(fn: (success: R) -> Unit): Either<L, R> {
-    when (this) {
-        is Either.Right -> fn(b)
-    }
-    return this
-}
+/**
+ * Right-biased onFailure() FP convention dictates that when this class is Right it will return a Right
+ * object to operate on. If it is Right, it'll perform the onSuccess functionality passed as a parameter,
+ * but, overall will still return an either object so you chain calls.
+ */
+fun <L, R> Either<L, R>.onSuccess(fn: (success: R) -> Unit): Either<L, R> =
+    this.apply { if (this is Either.Right) fn(b) }
 
 /**
  * Right-biased map() FP convention which means that Right is assumed to be the default case
