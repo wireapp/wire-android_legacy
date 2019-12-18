@@ -9,7 +9,7 @@ import com.waz.zclient.core.functional.Either.Right
 import retrofit2.Call
 import retrofit2.Response
 
-abstract class ApiService(private val networkHandler: NetworkHandler) {
+class ApiService(private val networkHandler: NetworkHandler) {
 
     fun <T> request(call: Call<T>, default: T): Either<Failure, T> {
         Thread.currentThread().failFastIfUIThread()

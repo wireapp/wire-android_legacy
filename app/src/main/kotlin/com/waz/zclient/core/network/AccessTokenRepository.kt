@@ -1,13 +1,13 @@
 package com.waz.zclient.core.network
 
+import com.waz.zclient.core.di.Injector
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.api.token.AccessTokenResponse
-import com.waz.zclient.core.network.api.token.TokenService
 
 //TODO: Add Preferences Manager as a collaborator
 //TODO: Keep in mind that there should be one preference file per user.
-class AccessTokenRepository(private val tokenService: TokenService) {
+class AccessTokenRepository {
 
     fun accessToken(): String {
         //TODO: retrieve token, maybe from User Preferences?
@@ -28,7 +28,7 @@ class AccessTokenRepository(private val tokenService: TokenService) {
     }
 
     fun renewAccessToken(refreshToken: String) : Either<Failure, AccessTokenResponse> =
-        tokenService.renewAccessToken(refreshToken)
+        Injector.tokenService().renewAccessToken(refreshToken) //TODO: inject service
 
     fun wipeOutTokens() {
         wipeOutAccessToken()

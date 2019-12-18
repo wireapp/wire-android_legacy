@@ -6,10 +6,12 @@ import com.waz.zclient.ContextProvider
 import com.waz.zclient.core.network.AccessTokenAuthenticator
 import com.waz.zclient.core.network.AccessTokenInterceptor
 import com.waz.zclient.core.network.AccessTokenRepository
+import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.AuthToken
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.RetrofitClient
+import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -52,9 +54,13 @@ object Injector {
 
     fun networkClient(): NetworkClient = RetrofitClient(retrofit)
 
-    private fun tokenService() = TokenService()
+    private fun tokenApi(): TokenApi = networkClient().create(TokenApi::class.java)
 
-    private fun accessTokenRepository() = AccessTokenRepository(tokenService())
+    fun apiService() = ApiService(networkHandler())
+
+    fun tokenService() = TokenService(tokenApi(), apiService())
+
+    private fun accessTokenRepository() = AccessTokenRepository()
 
     private fun accessTokenAuthenticator(): AccessTokenAuthenticator =
         AccessTokenAuthenticator(AuthToken(accessTokenRepository()))
