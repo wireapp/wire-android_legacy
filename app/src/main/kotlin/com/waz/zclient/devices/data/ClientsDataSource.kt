@@ -9,7 +9,7 @@ import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.domain.model.Client
 
-class ClientsDataSource private constructor(
+class ClientsDataSource constructor(
     private val remoteDataSource: ClientsRemoteDataSource,
     private val localDataSource: ClientsLocalDataSource,
     private val clientMapper: ClientMapper) : ClientsRepository {
@@ -38,24 +38,5 @@ class ClientsDataSource private constructor(
     private fun saveAllClients(): suspend (List<Client>) -> Unit =
         { localDataSource.updateClients(clientMapper.toListOfClientDao(it)) }
 
-    companion object {
-
-        @Volatile
-        private var clientsRepository: ClientsRepository? = null
-
-        fun getInstance(remoteDataSource: ClientsRemoteDataSource,
-                        localDataSource: ClientsLocalDataSource,
-                        clientMapper: ClientMapper = ClientMapper()): ClientsRepository =
-            clientsRepository ?: synchronized(this) {
-                clientsRepository
-                    ?: ClientsDataSource(remoteDataSource, localDataSource, clientMapper).also {
-                        clientsRepository = it
-                    }
-            }
-
-        fun destroyInstance() {
-            clientsRepository = null
-        }
-    }
 }
 
