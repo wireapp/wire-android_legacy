@@ -7,14 +7,13 @@ import com.waz.zclient.core.network.requestData
 import com.waz.zclient.core.network.resultEither
 import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
-import com.waz.zclient.user.data.source.remote.UsersNetwork
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import com.waz.zclient.user.domain.model.User
 
 class UsersDataSource constructor(
-    private val usersRemoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(),
-    private val usersLocalDataSource: UsersLocalDataSource = UsersLocalDataSource(),
-    private val userMapper: UserMapper = UserMapper()) : UsersRepository {
+    private val usersRemoteDataSource: UsersRemoteDataSource,
+    private val usersLocalDataSource: UsersLocalDataSource,
+    private val userMapper: UserMapper) : UsersRepository {
 
     override suspend fun profile(): Either<Failure, User> =
         resultEither(profileLocal(), profileRemote(), saveUser())
@@ -35,26 +34,5 @@ class UsersDataSource constructor(
         { usersLocalDataSource.profile().map { userMapper.toUser(it) } }
 
     private fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.add(userMapper.toUserDao(it)) }
-
-    companion object {
-
-        @Volatile
-        private var usersRepository: UsersRepository? = null
-
-        fun getInstance(remoteDataSource: UsersRemoteDataSource = UsersRemoteDataSource(UsersNetwork().usersApi()),
-                        localDataSource: UsersLocalDataSource = UsersLocalDataSource(),
-                        userMapper: UserMapper = UserMapper()): UsersRepository =
-            usersRepository
-                ?: synchronized(this) {
-                    usersRepository
-                        ?: UsersDataSource(remoteDataSource, localDataSource, userMapper).also {
-                            usersRepository = it
-                        }
-                }
-
-        fun destroyInstance() {
-            usersRepository = null
-        }
-    }
 
 }

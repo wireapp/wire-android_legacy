@@ -5,11 +5,11 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestApi
 import com.waz.zclient.devices.data.source.remote.model.ClientApi
 
-class ClientsRemoteDataSource(private val clientsApi: ClientsNetworkService) {
+class ClientsRemoteDataSource(private val clientsNetworkService: ClientsNetworkService) {
 
     suspend fun clientById(clientId: String?): Either<Failure, ClientApi> =
-        requestApi { clientsApi.clientById(clientId) }
+        requestApi { clientsNetworkService.clientById(clientId) }
 
     suspend fun allClients(): Either<Failure, List<ClientApi>> =
-        requestApi { clientsApi.allClients() }
+        requestApi { clientsNetworkService.allClients() }
 }

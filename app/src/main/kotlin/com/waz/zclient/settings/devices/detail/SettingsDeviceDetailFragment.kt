@@ -5,22 +5,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.settings.devices.model.ClientItem
 import kotlinx.android.synthetic.main.fragment_device_detail.*
+import org.koin.android.viewmodel.ext.android.viewModel
 
 class SettingsDeviceDetailFragment : Fragment() {
 
-    private lateinit var deviceDetailsViewModel: SettingsDeviceDetailViewModel
-
-    private val viewModelFactory by lazy {
-        SettingsDeviceViewModelFactory()
-    }
+    private val deviceDetailsViewModel: SettingsDeviceDetailViewModel by viewModel()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_device_detail, container, false)
@@ -29,16 +24,16 @@ class SettingsDeviceDetailFragment : Fragment() {
     }
 
     private fun initViewModel() {
-        deviceDetailsViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDeviceDetailViewModel::class.java).also { viewModel ->
-            viewModel.currentDevice.observe(viewLifecycleOwner) { clientItem ->
+        with(deviceDetailsViewModel) {
+            currentDevice.observe(viewLifecycleOwner) { clientItem ->
                 bindDataToView(clientItem)
             }
 
-            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+            loading.observe(viewLifecycleOwner) { isLoading ->
                 bindLoading(isLoading)
             }
 
-            viewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            error.observe(viewLifecycleOwner) { errorMessage ->
                 bindError(errorMessage)
             }
         }

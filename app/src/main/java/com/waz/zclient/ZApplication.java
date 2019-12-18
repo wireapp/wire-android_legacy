@@ -19,18 +19,22 @@ package com.waz.zclient;
 
 import android.app.Activity;
 import android.graphics.Typeface;
+
 import androidx.annotation.Nullable;
+
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.waz.model.AccentColor;
 import com.waz.zclient.controllers.IControllerFactory;
+import com.waz.zclient.di.KoinStarter;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
 import com.waz.zclient.utils.WireLoggerTree;
-import timber.log.Timber;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import timber.log.Timber;
 
 public class ZApplication extends WireApplication implements ServiceContainer {
 
@@ -92,6 +96,8 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        KoinStarter.INSTANCE.start(this);
 
         setLogLevels();
         AndroidThreeTen.init(this);

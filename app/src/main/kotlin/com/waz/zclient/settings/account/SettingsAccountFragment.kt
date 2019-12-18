@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
@@ -14,12 +13,12 @@ import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.settings.account.model.UserProfileItem
 import kotlinx.android.synthetic.main.fragment_account.*
+import org.koin.android.viewmodel.ext.android.viewModel
 
 
 class SettingsAccountFragment : Fragment() {
 
-    private val settingsViewModelFactory: SettingsAccountViewModelFactory by lazy { SettingsAccountViewModelFactory() }
-    private lateinit var settingsAccountViewModel: SettingsAccountViewModel
+    private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_account, container, false)
@@ -38,16 +37,14 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initViewModel() {
-        settingsAccountViewModel = ViewModelProvider(this, settingsViewModelFactory).get(SettingsAccountViewModel::class.java).also { viewModel ->
-            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+        with(settingsAccountViewModel) {
+            loading.observe(viewLifecycleOwner) { isLoading ->
                 updateLoadingVisibility(isLoading)
             }
-
-            viewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
             }
-
-            viewModel.profile.observe(viewLifecycleOwner) { profile ->
+            profile.observe(viewLifecycleOwner) { profile ->
                 updateProfile(profile)
             }
 
