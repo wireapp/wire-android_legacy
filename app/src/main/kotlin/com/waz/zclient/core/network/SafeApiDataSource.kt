@@ -39,23 +39,27 @@ suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
         onFailure { mainFailure ->
             when (mainFailure) {
                 is Failure.DatabaseError ->
-                    runBlocking {
-                        with(fallbackRequest()) {
-                            onSuccess { runBlocking { saveToDatabase(it) } }
-                            onFailure { fallbackFailure ->
-                                when (fallbackFailure) {
-                                    is Failure.NetworkServiceError ->
-                                        Timber.e("Network request failed with generic error ")
-                                    is Failure.HttpError ->
-                                        Timber.e("Network request failed with {${fallbackFailure.errorCode} ${fallbackFailure.errorMessage} ")
-                                    else ->
-                                        Timber.e("Network request failed with unknown error ")
-                                }
-                            }
-                        }
-                    }
+                    performFallback(fallbackRequest, saveToDatabase)
                 else ->
                     Timber.e("Database request failed with unknown error ")
+            }
+        }
+    }
+
+fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R>,
+                        saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
+    runBlocking {
+        with(fallbackRequest()) {
+            onSuccess { runBlocking { saveToDatabase(it) } }
+            onFailure { fallbackFailure ->
+                when (fallbackFailure) {
+                    is Failure.NetworkServiceError ->
+                        Timber.e("Network request failed with generic error ")
+                    is Failure.HttpError ->
+                        Timber.e("Network request failed with {${fallbackFailure.errorCode} ${fallbackFailure.errorMessage} ")
+                    else ->
+                        Timber.e("Network request failed with unknown error ")
+                }
             }
         }
     }
