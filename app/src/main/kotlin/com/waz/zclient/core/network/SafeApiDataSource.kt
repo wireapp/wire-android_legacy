@@ -36,8 +36,8 @@ suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
                            saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
 
     with(mainRequest()) {
-        onFailure { failure ->
-            when (failure) {
+        onFailure {
+            when (it) {
                 is DatabaseError -> performFallback(fallbackRequest, saveToDatabase)
                 else -> Timber.e("Database request failed with unknown error ")
             }
@@ -49,10 +49,10 @@ private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R
     runBlocking {
         with(fallbackRequest()) {
             onSuccess { runBlocking { saveToDatabase(it) } }
-            onFailure { failure ->
-                when (failure) {
+            onFailure {
+                when (it) {
                     is NetworkServiceError -> Timber.e("Network request failed with generic error ")
-                    is HttpError -> Timber.e("Network request failed with {${failure.errorCode} ${failure.errorMessage} ")
+                    is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
                     else -> Timber.e("Network request failed with unknown error ")
                 }
             }
