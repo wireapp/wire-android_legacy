@@ -51,7 +51,6 @@ import com.waz.zclient.giphy.GiphySharingPreviewFragment
 import com.waz.zclient.log.LogUI
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.UsersController
-import com.waz.zclient.messages.compose.ComposeMessageActivity
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController

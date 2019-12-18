@@ -210,13 +210,6 @@
             android:windowSoftInputMode="stateHidden|adjustResize"/>
 
         <activity
-            android:name=".messages.compose.ComposeMessageActivity"
-            android:label="@string/shortcut_compose_new_message_label"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.Dark"
-            android:windowSoftInputMode="stateHidden|adjustResize"/>
-
-        <activity
             android:name=".ForceUpdateActivity"
             android:noHistory="true"
             android:theme="@style/Theme.Light"
