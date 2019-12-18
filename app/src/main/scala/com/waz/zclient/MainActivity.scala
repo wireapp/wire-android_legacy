@@ -249,6 +249,14 @@ class MainActivity extends BaseActivity
   override protected def onResume(): Unit = {
     super.onResume()
     Option(ZMessaging.currentGlobal).foreach(_.googleApi.checkGooglePlayServicesAvailable(this))
+
+    //TODO: temporary call to test Kotlin network layer. Remove.
+//    Threading.Background.execute(new Runnable {
+//      override def run(): Unit = {
+//        new ClientsService().allClients()
+//      }
+//    })
+
   }
 
 

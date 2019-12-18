@@ -2,6 +2,7 @@ package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
 
 class AuthToken(private val tokenRepository: AccessTokenRepository) {
 
@@ -17,7 +18,10 @@ class AuthToken(private val tokenRepository: AccessTokenRepository) {
     fun updateRefreshToken(newRefreshToken: String) = tokenRepository.updateRefreshToken(newRefreshToken)
 
     fun renewAccessToken(refreshToken: String): Either<Failure, String> =
-        tokenRepository.renewAccessToken(refreshToken)
+        tokenRepository.renewAccessToken(refreshToken).map {
+            //TODO do we need mapping here?
+            it.token
+        }
 
     fun wipeOutTokens() = tokenRepository.wipeOutTokens()
 }

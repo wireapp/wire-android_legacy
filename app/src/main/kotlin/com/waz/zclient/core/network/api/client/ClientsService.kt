@@ -4,12 +4,11 @@ import com.waz.zclient.core.di.Injector
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
-import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.features.clients.ClientEntity
 
-class ClientsService(private val networkClient: NetworkClient) : ApiService(Injector.networkHandler()) {
+class ClientsService : ApiService(Injector.networkHandler()) {
 
-    private val clientsApi by lazy { networkClient.create(ClientsApi::class.java) }
+    private val clientsApi by lazy { Injector.networkClient().create(ClientsApi::class.java) }
 
     fun allClients(): Either<Failure, List<ClientEntity>> =
         request(clientsApi.allClients(), emptyList())
