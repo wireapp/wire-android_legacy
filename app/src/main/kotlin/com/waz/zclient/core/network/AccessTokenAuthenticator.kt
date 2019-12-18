@@ -24,20 +24,15 @@ class AccessTokenAuthenticator(private val authToken: AuthToken) : Authenticator
         synchronized(this) {
             val tokenResult = authToken.renewAccessToken(refreshToken)
 
-            when (tokenResult) {
-                is Either.Left -> retryRenewToken(refreshToken)
+            return when (tokenResult) {
+                is Either.Left -> null
                 is Either.Right -> {
                     authToken.updateAccessToken(tokenResult.b)
-                    return proceedWithNewAccessToken(response, tokenResult.b)
+                    proceedWithNewAccessToken(response, tokenResult.b)
                 }
             }
 
         }
-        return null
-    }
-
-    private fun retryRenewToken(refreshToken: String) {
-        //TODO apply retry logic
     }
 
     private fun proceedWithNewAccessToken(response: Response, newAccessToken: String): Request? =
