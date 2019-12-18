@@ -231,10 +231,13 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
-  private def openComposeMessageActivity() = {
-     val intent = new Intent(getActivity, classOf[ComposeMessageActivity])
-     startActivity(intent)
-     getActivity.getIntent.setAction("")
+  private def openComposeMessageActivity() : Unit = {
+      val intent = new Intent(getActivity, classOf[ShareActivity])
+      intent.setAction(Intent.ACTION_SEND)
+      intent.putExtra(Intent.EXTRA_TEXT, "")
+      intent.setType("message/plain")
+      startActivity(intent)
+      getActivity.getIntent.setAction("")
   }
 
   private def newGroupConversation() = {
