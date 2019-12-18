@@ -1447,7 +1447,8 @@
     <string name="shortcut_create_chat_short_label">Create Group</string>
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_create_chat_long_label">Create Group Conversation</string>
-    <string name="shortcut_compose_new_message_label">New Message</string>
+    <string name="shortcut_compose_new_message_label_long">Compose Text Message</string>
+    <string name="shortcut_compose_new_message_label">Text Message</string>
 
 
 </resources>

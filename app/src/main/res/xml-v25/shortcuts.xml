@@ -22,10 +22,10 @@
         android:enabled="true"
         android:icon="@drawable/ic_create_conversation"
         android:shortcutId="new_message"
-        android:shortcutLongLabel="@string/shortcut_compose_new_message_label"
+        android:shortcutLongLabel="@string/shortcut_compose_new_message_label_long"
         android:shortcutShortLabel="@string/shortcut_compose_new_message_label">
         <intent
-            android:action="SEND_MESSAGE"
+            android:action="NEW_MESSAGE"
             android:targetClass="com.waz.zclient.MainActivity"
             android:targetPackage="com.wire.internal" />
     </shortcut>
