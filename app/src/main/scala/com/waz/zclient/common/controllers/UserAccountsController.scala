@@ -81,6 +81,8 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
         decodeBitmask(bitmask)
       }
 
+  lazy val isAdmin: Signal[Boolean] = selfPermissions.map(AdminPermissions.subsetOf)
+
   lazy val isExternal: Signal[Boolean] =
     selfPermissions
       .map(ps => ExternalPermissions.subsetOf(ps) && ExternalPermissions.size == ps.size)
@@ -92,6 +94,13 @@ class UserAccountsController(implicit injector: Injector, context: Context, ec: 
   }
 
   lazy val readReceiptsEnabled: Signal[Boolean] = zms.flatMap(_.propertiesService.readReceiptsEnabled)
+
+  def hasPermissionToAddService: Future[Boolean] = {
+    for {
+      tId <- teamId.head
+      ps  <- selfPermissions.head
+    } yield tId.isDefined && ps.contains(AddConversationMember)
+  }
 
   def isTeamMember(userId: UserId) =
     for {

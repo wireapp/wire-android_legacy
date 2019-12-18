@@ -29,8 +29,8 @@ import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.returning
+import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.common.controllers.global.{AccentColorController, KeyboardController}
-import com.waz.zclient.common.controllers.{ThemeController, UserAccountsController}
 import com.waz.zclient.connect.PendingConnectRequestFragment.ArgUserRequester
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
@@ -64,14 +64,13 @@ class SendConnectRequestFragment
   private lazy val userToConnectId = UserId(getArguments.getString(ArgumentUserId))
   private lazy val userRequester = UserRequester.valueOf(getArguments.getString(ArgumentUserRequester))
 
-  private lazy val usersController = inject[UsersController]
-  private lazy val userAccountsController = inject[UserAccountsController]
+  private lazy val usersController        = inject[UsersController]
   private lazy val conversationController = inject[ConversationController]
-  private lazy val keyboardController = inject[KeyboardController]
-  private lazy val accentColorController = inject[AccentColorController]
-  private lazy val zms = inject[Signal[ZMessaging]]
-  private lazy val themeController = inject[ThemeController]
-  private lazy val navController = inject[INavigationController]
+  private lazy val keyboardController     = inject[KeyboardController]
+  private lazy val accentColorController  = inject[AccentColorController]
+  private lazy val zms                    = inject[Signal[ZMessaging]]
+  private lazy val themeController        = inject[ThemeController]
+  private lazy val navController          = inject[INavigationController]
 
   private lazy val user = usersController.user(userToConnectId)
 
