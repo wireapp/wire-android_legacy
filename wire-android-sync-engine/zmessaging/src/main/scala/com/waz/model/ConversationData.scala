@@ -116,8 +116,35 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 /**
  * Conversation user binding.
  */
-case class ConversationMemberData(userId: UserId, convId: ConvId) extends Identifiable[(UserId, ConvId)] {
+
+case class ConversationMemberData(userId: UserId, convId: ConvId, role: String) extends Identifiable[(UserId, ConvId)] {
   override val id: (UserId, ConvId) = (userId, convId)
+}
+
+object ConversationMemberData {
+  def apply(userId: UserId, convId: ConvId, role: ConversationRole): ConversationMemberData =
+    ConversationMemberData(userId, convId, role.label)
+
+  implicit object ConversationMemberDataDao extends Dao2[ConversationMemberData, UserId, ConvId] {
+    val UserId = id[UserId]('user_id).apply(_.userId)
+    val ConvId = id[ConvId]('conv_id).apply(_.convId)
+    val Role = text('role).apply(_.role)
+
+    override val idCol = (UserId, ConvId)
+    override val table = Table("ConversationMembers", UserId, ConvId, Role)
+    override def apply(implicit cursor: DBCursor): ConversationMemberData = ConversationMemberData(UserId, ConvId, Role)
+
+    override def onCreate(db: DB): Unit = {
+      super.onCreate(db)
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
+      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${UserId.name})")
+    }
+
+    def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
+    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs))
+    def findForUser(userId: UserId)(implicit db: DB) = iterating(find(UserId, userId))
+    def findForUsers(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(UserId, users))
+  }
 }
 
 object ConversationData {
@@ -328,25 +355,3 @@ object ConversationData {
   }
 }
 
-object ConversationMemberData {
-
-  implicit object ConversationMemberDataDao extends Dao2[ConversationMemberData, UserId, ConvId] {
-    val UserId = id[UserId]('user_id).apply(_.userId)
-    val ConvId = id[ConvId]('conv_id).apply(_.convId)
-
-    override val idCol = (UserId, ConvId)
-    override val table = Table("ConversationMembers", UserId, ConvId)
-    override def apply(implicit cursor: DBCursor): ConversationMemberData = ConversationMemberData(UserId, ConvId)
-
-    override def onCreate(db: DB): Unit = {
-      super.onCreate(db)
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_conv on ConversationMembers (${ConvId.name})")
-      db.execSQL(s"CREATE INDEX IF NOT EXISTS ConversationMembers_userid on ConversationMembers (${UserId.name})")
-    }
-
-    def findForConv(convId: ConvId)(implicit db: DB) = iterating(find(ConvId, convId))
-    def findForConvs(convs: Set[ConvId])(implicit db: DB) = iteratingMultiple(findInSet(ConvId, convs))
-    def findForUser(userId: UserId)(implicit db: DB) = iterating(find(UserId, userId))
-    def findForUsers(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(UserId, users))
-  }
-}

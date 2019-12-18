@@ -53,6 +53,8 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
   val readReceipts = Signal(true)
   val fromScreen = Signal[GroupConversationEvent.Method]()
 
+  val canAddServices: Signal[Boolean] = conversationController.selfRole.map(_.canAddGroupMember)
+
   teamOnly.onChanged {
     case true =>
       for {
@@ -96,7 +98,7 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
         } else Future.successful(userIds)
       teamOnly            <- teamOnly.head
       readReceipts        <- if(z.teamId.isEmpty) Future.successful(false) else readReceipts.head
-      _ = verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
+      _                   =  verbose(l"creating conv with  ${userIds.size} users, ${integrationIds.size} bots, shouldFullConv $shouldFullConv, teamOnly $teamOnly and readReceipts $readReceipts")
       conv                <- conversationController.createGroupConversation(Some(name.trim), userIds, teamOnly, readReceipts)
       _                   <- Future.sequence(integrationIds.map { case (pId, iId) => integrationsService.head.flatMap(_.addBotToConversation(conv.id, pId, iId)) })
       from                <- fromScreen.head

@@ -140,7 +140,8 @@ object SyncRequest {
                       team:         Option[TeamId],
                       access:       Set[Access],
                       accessRole:   AccessRole,
-                      receiptMode:  Option[Int]
+                      receiptMode:  Option[Int],
+                      defaultRole:  ConversationRole
                      ) extends RequestForConversation(Cmd.PostConv) with Serialized {
     override def merge(req: SyncRequest) = mergeHelper[PostConv](req)(Merged(_))
   }
@@ -164,6 +165,12 @@ object SyncRequest {
     }
 
     override def merge(req: SyncRequest) = mergeHelper[PostConvState](req)(other => Merged(copy(state = mergeConvState(state, other.state))))
+  }
+
+  case class PostConvRole(convId: ConvId, userId: UserId, newRole: ConversationRole, origRole: ConversationRole)
+    extends RequestForConversation(Cmd.PostConvRole) with Serialized {
+    override val mergeKey: Any = (cmd, convId, userId)
+    override def merge(req: SyncRequest) = mergeHelper[PostConvRole](req)(Merged(_))
   }
 
   case class PostLastRead(convId: ConvId, time: RemoteInstant) extends RequestForConversation(Cmd.PostLastRead) {
@@ -252,7 +259,6 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, convId, userId, client)
   }
 
-
   case class PostConnection(userId: UserId, name: Name, message: String) extends RequestForUser(Cmd.PostConnection)
 
   case class PostConnectionStatus(userId: UserId, status: Option[ConnectionStatus]) extends RequestForUser(Cmd.PostConnectionStatus) {
@@ -297,11 +303,12 @@ object SyncRequest {
     }
   }
 
-  case class PostConvJoin(convId: ConvId, users: Set[UserId]) extends RequestForConversation(Cmd.PostConvJoin) with Serialized {
-    override def merge(req: SyncRequest) = mergeHelper[PostConvJoin](req) { other => Merged(PostConvJoin(convId, users ++ other.users)) }
+  case class PostConvJoin(convId: ConvId, users: Set[UserId], conversationRole: ConversationRole) extends RequestForConversation(Cmd.PostConvJoin) with Serialized {
+    override def merge(req: SyncRequest) =
+      mergeHelper[PostConvJoin](req) { other => Merged(PostConvJoin(convId, users ++ other.users, conversationRole)) }
 
     override def isDuplicateOf(req: SyncRequest): Boolean = req match {
-      case PostConvJoin(`convId`, us) => users.subsetOf(us)
+      case PostConvJoin(`convId`, us, _) => users.subsetOf(us)
       case _ => false
     }
   }
@@ -349,10 +356,11 @@ object SyncRequest {
           case Cmd.SyncConvLink              => SyncConvLink('conv)
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
           case Cmd.ExactMatchHandle          => ExactMatchHandle(Handle(decodeString('handle)))
-          case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode)
+          case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
           case Cmd.PostConvReceiptMode       => PostConvReceiptMode(convId, 'receipt_mode)
           case Cmd.PostConvState             => PostConvState(convId, JsonDecoder[ConversationState]('state))
+          case Cmd.PostConvRole              => PostConvRole(convId, userId, 'new_role, 'orig_role)
           case Cmd.PostLastRead              => PostLastRead(convId, 'time)
           case Cmd.PostCleared               => PostCleared(convId, 'time)
           case Cmd.PostTypingState           => PostTypingState(convId, 'typing)
@@ -365,7 +373,7 @@ object SyncRequest {
           case Cmd.PostDeleted               => PostDeleted(convId, messageId)
           case Cmd.PostRecalled              => PostRecalled(convId, messageId, decodeId[MessageId]('recalled))
           case Cmd.PostAssetStatus           => PostAssetStatus(convId, messageId, decodeOptLong('ephemeral).map(_.millis), Codec[UploadAssetStatus, Int].deserialize(decodeInt('status)))
-          case Cmd.PostConvJoin              => PostConvJoin(convId, users)
+          case Cmd.PostConvJoin              => PostConvJoin(convId, users, 'conversation_role)
           case Cmd.PostConvLeave             => PostConvLeave(convId, userId)
           case Cmd.PostConnection            => PostConnection(userId, 'name, 'message)
           case Cmd.DeletePushToken           => DeletePushToken(decodeId[PushToken]('token))
@@ -451,7 +459,9 @@ object SyncRequest {
           putId("recalled", recalled)
 
         case PostConnectionStatus(_, status)  => status foreach { status => o.put("status", status.code) }
-        case PostConvJoin(_, users)           => o.put("users", arrString(users.toSeq map (_.str)))
+        case PostConvJoin(_, users, conversationRole)           =>
+          o.put("users", arrString(users.toSeq map (_.str)))
+          o.put("conversation_role", conversationRole.label)
         case PostConvLeave(_, user)           => putId("user", user)
         case PostOpenGraphMeta(_, messageId, time) =>
           putId("message", messageId)
@@ -482,13 +492,18 @@ object SyncRequest {
         case PostConvState(_, state) => o.put("state", JsonEncoder.encode(state))
         case PostConvName(_, name) => o.put("name", name)
         case PostConvReceiptMode(_, receiptMode) => o.put("receipt_mode", receiptMode)
-        case PostConv(_, users, name, team, access, accessRole, receiptMode) =>
+        case PostConv(_, users, name, team, access, accessRole, receiptMode, defaultRole) =>
           o.put("users", arrString(users.map(_.str).toSeq))
           name.foreach(o.put("name", _))
           team.foreach(o.put("team", _))
           o.put("access", JsonEncoder.encodeAccess(access))
           o.put("access_role", JsonEncoder.encodeAccessRole(accessRole))
           receiptMode.foreach(o.put("receipt_mode", _))
+          o.put("default_role", defaultRole)
+        case PostConvRole(_, userId, newRole, origRole) =>
+          o.put("user", userId)
+          o.put("new_role", newRole)
+          o.put("orig_role", origRole)
         case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))

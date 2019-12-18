@@ -31,7 +31,7 @@ class AllGroupParticipantsFragment extends FragmentHelper {
 
   private lazy val participantsController = inject[ParticipantsController]
 
-  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.otherParticipants.map(_.toSeq), showPeopleOnly = true)) {
+  private lazy val participantsAdapter = returning(new ParticipantsAdapter(participantsController.participants, showPeopleOnly = true)) {
     _.onClick(participantsController.onShowUser ! Some(_))
   }
 

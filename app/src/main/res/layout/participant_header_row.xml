@@ -46,7 +46,7 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="@dimen/wire__padding__24"/>
+        android:layout_height="@dimen/wire__padding__16"/>
 
     <LinearLayout
         android:id="@+id/guest_indicator"
@@ -71,9 +71,9 @@
             android:paddingStart="@dimen/wire__padding__small"
             android:paddingEnd="@dimen/wire__padding__small"
             android:textColor="?wirePrimaryTextColor"
-            android:textSize="@dimen/wire__text_size__regular"
-            android:text="@string/participant_tab_guest_indicator_label"
-            app:w_font="@string/wire__typeface__light"/>
+            android:textSize="@dimen/wire__text_size__smaller"
+            android:text="@string/guest_indicator"
+            app:w_font="@string/wire__typeface__medium"/>
 
     </LinearLayout>
 
@@ -83,18 +83,72 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/wire__padding__small"
         android:textColor="?wireSecondaryTextColor"
-        android:textSize="@dimen/wire__text_size__small"
+        android:textSize="@dimen/wire__text_size__smaller"
         app:w_font="@string/wire__typeface__medium"
         android:layout_gravity="center_horizontal"
         />
 
-    <com.waz.zclient.views.ShowAvailabilityView
-        android:id="@+id/availability"
+    <LinearLayout
+        android:id="@+id/external_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom|center_horizontal"
         android:layout_marginTop="@dimen/wire__padding__8"
-        android:visibility="gone"/>
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/participant_external_indicator_icon"
+            android:layout_width="@dimen/guest_badge_size"
+            android:layout_height="@dimen/guest_badge_size"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_external"
+            android:tint="?wirePrimaryTextColor"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingStart="@dimen/wire__padding__small"
+            android:paddingEnd="@dimen/wire__padding__small"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__smaller"
+            android:text="@string/participant_tab_external_indicator_label"
+            app:w_font="@string/wire__typeface__medium"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/group_admin_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginTop="@dimen/wire__padding__8"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/group_admin_indicator_icon"
+            android:layout_width="@dimen/guest_badge_size"
+            android:layout_height="@dimen/guest_badge_size"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_group_admin"
+            android:tint="?wirePrimaryTextColor"
+            />
+
+        <com.waz.zclient.ui.text.TypefaceTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingStart="@dimen/wire__padding__small"
+            android:paddingEnd="@dimen/wire__padding__small"
+            android:textColor="?wirePrimaryTextColor"
+            android:textSize="@dimen/wire__text_size__smaller"
+            android:text="@string/participant_tab_group_admin_indicator_label"
+            app:w_font="@string/wire__typeface__medium"
+            />
+    </LinearLayout>
 
     <com.waz.zclient.ui.text.TypefaceTextView
         android:id="@+id/information"
