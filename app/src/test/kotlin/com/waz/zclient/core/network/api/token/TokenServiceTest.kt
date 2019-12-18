@@ -4,6 +4,7 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.framework.mockito.any
 import com.waz.zclient.framework.mockito.capture
+import org.amshove.kluent.`should contain`
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
@@ -41,7 +42,6 @@ class TokenServiceTest : UnitTest() {
         tokenService.renewAccessToken(refreshToken)
 
         verify(tokenApi).access(capture(accessHeadersCaptor))
-        assert(accessHeadersCaptor.value.containsKey("Cookie"))
-        assert(accessHeadersCaptor.value["Cookie"]?.equals("zuid=$refreshToken") ?: false)
+        accessHeadersCaptor.value `should contain` ("Cookie" to "zuid=$refreshToken")
     }
 }
