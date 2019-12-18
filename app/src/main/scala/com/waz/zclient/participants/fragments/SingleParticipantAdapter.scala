@@ -38,6 +38,7 @@ class SingleParticipantAdapter(userId: UserId,
                                isExternal: Boolean,
                                isDarkTheme: Boolean,
                                isGroup: Boolean,
+                               isWireless: Boolean,
                                private var fields:          Seq[UserField] = Seq.empty,
                                private var timerText:       Option[String] = None,
                                private var readReceipts:    Option[String] = None,
@@ -61,7 +62,7 @@ class SingleParticipantAdapter(userId: UserId,
     notifyDataSetChanged()
   }
 
-  private def isGroupAdminViewVisible: Boolean = isGroup && selfRole.canModifyOtherMember
+  private def isGroupAdminViewVisible: Boolean = isGroup && !isWireless && selfRole.canModifyOtherMember
 
   val onParticipantRoleChange = EventStream[ConversationRole]
 
@@ -75,9 +76,9 @@ class SingleParticipantAdapter(userId: UserId,
     case CustomField =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_custom_field_row, parent,false)
       CustomFieldRowViewHolder(view)
-    case Footer =>
+    case ReadReceipts =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_footer_row, parent, false)
-      ParticipantFooterRowViewHolder(view)
+      ReadReceiptsRowViewHolder(view)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
@@ -85,7 +86,7 @@ class SingleParticipantAdapter(userId: UserId,
       h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, fields.nonEmpty)
     case h: GroupAdminViewHolder =>
       h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
-    case h: ParticipantFooterRowViewHolder =>
+    case h: ReadReceiptsRowViewHolder =>
       h.bind(readReceipts)
     case h: CustomFieldRowViewHolder =>
       h.bind(fields(position - (if(isGroupAdminViewVisible) 2 else 1)))
@@ -97,7 +98,7 @@ class SingleParticipantAdapter(userId: UserId,
   override def getItemId(position: Int): Long = getItemViewType(position) match {
     case Header                        => 0L
     case GroupAdmin                    => 1L
-    case Footer                        => 2L
+    case ReadReceipts                  => 2L
     case _  if isGroupAdminViewVisible => fields(position - 2).key.hashCode.toLong
     case _                             => fields(position - 1).key.hashCode.toLong
   }
@@ -107,7 +108,7 @@ class SingleParticipantAdapter(userId: UserId,
   override def getItemViewType(position: Int): Int =
     if (position == 0) Header
     else if (position == 1 && isGroupAdminViewVisible) GroupAdmin
-    else if (position == getItemCount - 1) Footer
+    else if (position == getItemCount - 1) ReadReceipts
     else CustomField
 }
 
@@ -115,7 +116,7 @@ object SingleParticipantAdapter {
   val CustomField = 0
   val Header = 1
   val GroupAdmin = 2
-  val Footer = 3
+  val ReadReceipts = 3
 
   case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)
@@ -168,7 +169,7 @@ object SingleParticipantAdapter {
     }
   }
 
-  case class ParticipantFooterRowViewHolder(view: View) extends ViewHolder(view) {
+  case class ReadReceiptsRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val readReceiptsInfoTitle = view.findViewById[TypefaceTextView](R.id.read_receipts_info_title)
     private lazy val readReceiptsInfo1     = view.findViewById[TypefaceTextView](R.id.read_receipts_info_1)
     private lazy val readReceiptsInfo2     = view.findViewById[TypefaceTextView](R.id.read_receipts_info_2)
