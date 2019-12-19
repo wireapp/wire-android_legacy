@@ -100,7 +100,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     teamMember           <- otherUser.map(_.exists(u => u.teamId.nonEmpty && u.teamId == teamId))
     isBot                <- otherUser.map(_.exists(_.isWireBot))
     selfRole             <- convController.selfRoleInConv(convId)
-    isCurrentUserCreator <- participantsController.isCurrentUserCreator
+    isCurrentUserCreator <- Signal.future(convController.isCurrentUserCreator(convId))
     selectedParticipant  <- participantsController.selectedParticipant
     favoriteConvIds      <- convListController.favoriteConversations.map(convs => convs.map(_.id))
     customFolderId       <- Signal.future(convListController.getCustomFolderId(convId))

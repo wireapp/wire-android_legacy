@@ -91,6 +91,13 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def getConversation(convId: ConvId): Future[Option[ConversationData]] =
     convsStorage.head.flatMap(_.get(convId))
 
+  def isCurrentUserCreator(convId: ConvId): Future[Boolean] = for {
+    convs   <- conversations.head
+    selfId  <- selfId.head
+    conv    <- getConversation(convId)
+    isGroup <- convs.groupConversation(convId).head
+  } yield isGroup && conv.exists(_.creator == selfId)
+
   val currentConvType: Signal[ConversationType] = currentConv.map(_.convType).disableAutowiring()
   val currentConvName: Signal[String] = currentConv.map(_.displayName).map {
     case Name.Empty => getString(R.string.default_deleted_username)
