@@ -25,7 +25,6 @@ import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.Intents._
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
 import scala.concurrent.Future
@@ -52,7 +51,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
     def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
       content match {
         case NewContent() =>
-          conversationController.selectConv(convs.head, ConversationChangeRequester.INTENT)
+          conversationController.switchConversation(convs.head)
         case TextContent(t) =>
           conversationController.sendTextMessage(convs, t, Nil, None, Some(expiration))
         case FileContent(uris)     =>

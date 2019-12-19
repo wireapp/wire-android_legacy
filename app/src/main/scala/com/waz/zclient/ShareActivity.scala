@@ -36,7 +36,7 @@ import com.waz.utils.wrappers.AndroidURI
 import com.waz.utils.wrappers.AndroidURIUtil.fromFile
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.common.controllers.SharingController
-import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent}
+import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.log.LogUI._
@@ -97,7 +97,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     if (!ir.isShareIntent) finish()
     else {
       if (ir.getStreamCount == 0 && ir.getType == "text/plain") sharing.publishTextContent(ir.getText.toString)
-      else if (ir.getStreamCount == 0 && ir.getType == "message/plain") {}
+      else if (ir.getStreamCount == 0 && ir.getType == "message/plain") sharing.sharableContent ! Some(NewContent())
       else {
         inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
