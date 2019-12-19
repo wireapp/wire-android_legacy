@@ -34,12 +34,12 @@ class UnconnectedParticipantAdapter(userId:      UserId,
                                     userHandle:  String)(implicit context: Context)
   extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
   import BaseSingleParticipantAdapter._
+  import UnconnectedParticipantAdapter._
 
 
   def set(timerText:       Option[String],
-          participantRole: ConversationRole,
-          selfRole:        ConversationRole
-         ): Unit = {
+          participantRole: Option[ConversationRole] = None,
+          selfRole:        Option[ConversationRole] = None): Unit = {
     this.timerText       = timerText
     this.participantRole = participantRole
     this.selfRole        = selfRole
@@ -47,18 +47,16 @@ class UnconnectedParticipantAdapter(userId:      UserId,
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
-    case UnconnectedParticipantAdapter.UserName =>
+    case UserName =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_user_name_row, parent,false)
-      UnconnectedParticipantAdapter.UserNameViewHolder(view)
+      UserNameViewHolder(view)
     case _ =>
       super.onCreateViewHolder(parent, viewType)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
-    case h: UnconnectedParticipantAdapter.UserNameViewHolder =>
-      h.bind(userName, userHandle)
-    case _ =>
-      super.onBindViewHolder(holder, position)
+    case h: UserNameViewHolder => h.bind(userName, userHandle)
+    case _ => super.onBindViewHolder(holder, position)
   }
 
   override def getItemCount: Int = super.getItemCount + 1
@@ -66,11 +64,11 @@ class UnconnectedParticipantAdapter(userId:      UserId,
   override def getItemId(position: Int): Long = getItemViewType(position) match {
     case Header     => 0L
     case GroupAdmin => 1L
-    case UnconnectedParticipantAdapter.UserName => 2L
+    case UserName => 2L
   }
 
   override def getItemViewType(position: Int): Int =
-    if (position == 0) UnconnectedParticipantAdapter.UserName
+    if (position == 0) UserName
     else if (position == 2 && isGroupAdminViewVisible) GroupAdmin
     else Header
 }
