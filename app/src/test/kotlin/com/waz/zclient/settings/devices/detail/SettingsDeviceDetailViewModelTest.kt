@@ -1,7 +1,8 @@
 package com.waz.zclient.settings.devices.detail
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.HttpError
+import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.devices.domain.GetClientUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientParams
@@ -60,7 +61,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns NetworkError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.NetworkConnection)) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection)) }
 
         viewModel.loadData(TEST_ID)
 
@@ -77,7 +78,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns ServerError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
         viewModel.loadData(TEST_ID)
 
@@ -94,7 +95,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(Failure.NetworkConnection)) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(NetworkConnection)) }
 
         viewModel.loadData(TEST_ID)
 
