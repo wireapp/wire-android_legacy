@@ -8,13 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 open class Network {
 
-    internal var retrofit: Retrofit
-
-    init {
-        retrofit = createNetworkClient(BASE_URL)
-    }
-
-    private fun createNetworkClient(baseUrl: String): Retrofit {
+    fun networkClient(): Retrofit {
 
         val okHttpClient = OkHttpClient().newBuilder()
             .addInterceptor { chain ->
@@ -35,7 +29,7 @@ open class Network {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

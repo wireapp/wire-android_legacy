@@ -11,7 +11,6 @@ import com.waz.zclient.devices.data.source.remote.model.ClientApi
 import com.waz.zclient.eq
 import com.waz.zclient.storage.db.clients.model.ClientDao
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -34,7 +33,7 @@ class ClientsRepositoryTest {
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        repository = ClientsDataSource.getInstance(remoteDataSource, localDataSource, clientMapper)
+        repository = ClientsDataSource(remoteDataSource, localDataSource, clientMapper)
     }
 
     @Test
@@ -132,10 +131,6 @@ class ClientsRepositoryTest {
 
     private fun generateMockDao(): ClientDao = mock(ClientDao::class.java)
 
-    @After
-    fun tearDown() {
-        ClientsDataSource.destroyInstance()
-    }
 
     companion object {
         private const val TEST_CODE = 401
