@@ -4,11 +4,10 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.network.NetworkClient
 import org.junit.Before
 import org.junit.Test
-import org.mockito.BDDMockito.given
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
-import retrofit2.Retrofit
 
 class ClientsServiceTest : UnitTest() {
 
@@ -19,7 +18,7 @@ class ClientsServiceTest : UnitTest() {
 
     @Before
     fun setUp() {
-        given { networkClient.create(ClientsApi::class.java) }.willReturn { clientsApi }
+        `when`(networkClient.create(ClientsApi::class.java)).thenReturn(clientsApi)
         clientsService = ClientsService(networkClient)
     }
 
