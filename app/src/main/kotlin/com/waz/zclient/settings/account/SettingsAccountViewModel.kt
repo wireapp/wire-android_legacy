@@ -9,13 +9,10 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.settings.account.model.UserProfileItem
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.ChangeHandleUseCase
-import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 
-class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-                                           private val changeHandleUseCase: ChangeHandleUseCase,
-                                           private val changePhoneUseCase: ChangePhoneUseCase) : ViewModel() {
+class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase)
+    : ViewModel() {
 
     private val mutableLoading = MutableLiveData<Boolean>()
     private val mutableError = MutableLiveData<String>()

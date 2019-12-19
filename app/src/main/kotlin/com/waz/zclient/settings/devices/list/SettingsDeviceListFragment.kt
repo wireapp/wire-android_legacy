@@ -6,22 +6,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
-import com.waz.zclient.settings.devices.SettingsDeviceViewModelFactory
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.settings.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.settings.devices.list.adapter.DevicesViewHolder
 import com.waz.zclient.settings.devices.model.ClientItem
+import org.koin.android.viewmodel.ext.android.viewModel
 
 class SettingsDeviceListFragment : Fragment() {
 
-    private lateinit var deviceListViewModel: SettingsDeviceListViewModel
+
+    private val deviceListViewModel: SettingsDeviceListViewModel by viewModel()
 
     private lateinit var devicesRecyclerView: RecyclerView
 
@@ -33,10 +33,6 @@ class SettingsDeviceListFragment : Fragment() {
                 navigateToDeviceDetails(item.client.id)
             }
         }
-    }
-
-    private val viewModelFactory by lazy {
-        SettingsDeviceViewModelFactory()
     }
 
     private val devicesAdapter by lazy {
@@ -68,20 +64,17 @@ class SettingsDeviceListFragment : Fragment() {
     }
 
     private fun initViewModel() {
-        deviceListViewModel = ViewModelProvider(this, viewModelFactory).get(SettingsDeviceListViewModel::class.java).also { viewModel ->
-            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+        with(deviceListViewModel) {
+            loading.observe(viewLifecycleOwner) { isLoading ->
                 updateLoadingVisibility(isLoading)
             }
-
-            viewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
             }
-
-            viewModel.currentDevice.observe(viewLifecycleOwner) { currentDevice ->
+            currentDevice.observe(viewLifecycleOwner) { currentDevice ->
                 bindCurrentDevice(currentDevice)
             }
-
-            viewModel.otherDevices.observe(viewLifecycleOwner) { otherDevices ->
+            otherDevices.observe(viewLifecycleOwner) { otherDevices ->
                 devicesAdapter.updateList(otherDevices)
             }
         }
