@@ -1,6 +1,8 @@
 package com.waz.zclient.user.data
 
+import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.storage.db.users.model.UserDao
@@ -64,7 +66,7 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.DatabaseError))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(DatabaseError))
             `when`(usersRemoteDataSource.profile()).thenReturn(Either.Right(userApi))
 
             usersRepository.profile()
@@ -83,8 +85,8 @@ class UserRepositoryTest {
     fun `Given profile() is called, when the local data source failed and the remote data source failed, then return an error`() {
         runBlocking {
 
-            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(Failure.DatabaseError))
-            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(Failure.HttpError(TEST_CODE, TEST_ERROR_MESSAGE)))
+            `when`(usersLocalDataSource.profile()).thenReturn(Either.Left(DatabaseError))
+            `when`(usersRemoteDataSource.profile()).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_ERROR_MESSAGE)))
 
             usersRepository.profile()
 

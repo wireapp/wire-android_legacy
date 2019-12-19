@@ -53,8 +53,6 @@ class CreateConversationController(implicit inj: Injector, ev: EventContext)
   val readReceipts = Signal(true)
   val fromScreen = Signal[GroupConversationEvent.Method]()
 
-  val canAddServices: Signal[Boolean] = conversationController.selfRole.map(_.canAddGroupMember)
-
   teamOnly.onChanged {
     case true =>
       for {

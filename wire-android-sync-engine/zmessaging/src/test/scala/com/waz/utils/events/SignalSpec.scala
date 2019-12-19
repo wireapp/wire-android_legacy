@@ -26,7 +26,6 @@ import com.waz.specs.AndroidFreeSpec.DefaultTimeout
 import com.waz.testutils.Implicits._
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import org.scalatest.concurrent.Eventually
-import org.scalatest.prop.PropertyChecks
 
 import scala.collection.JavaConverters._
 import scala.concurrent._
@@ -202,6 +201,7 @@ class SignalSpec extends AndroidFreeSpec with DerivedLogTag with Eventually {
       } yield y * 2
       r(capture)
       eventually { r.currentValue.get shouldEqual 2 }
+      eventually { received shouldEqual Seq(2) }
 
       // when
       s ! 1

@@ -293,6 +293,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
       (receiptStorage.removeAllForMessages _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (folders.removeConversationFromAll _).expects(convId, false).anyNumberOfTimes().returning(Future.successful(()))
+      (rolesService.rolesByConvId _).expects(convId).anyNumberOfTimes().returning(Signal.const(Set.empty))
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))

@@ -18,7 +18,6 @@
 package com.waz.zclient.security.actions
 
 import android.content.Context
-import com.waz.model.UserId
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading.Implicits.Background
 import com.waz.zclient.WireApplication
@@ -27,22 +26,14 @@ import com.waz.zclient.security.SecurityChecklist
 import scala.concurrent.Future
 
 /**
-  * Wipe the local data (DB, crypto material, caches) of an account. If an account is specified, it
-  * will wipe the DB and crypto material of that account, and ALL caches (not just for that one account)
-  * If no account is specified, the data for all accounts is deleted.
-  * @param affectedAccount the account to wipe, or None for all accounts
+  * Wipe the local data (all DBs, crypto material, caches) of all accounts.
   */
-class WipeDataAction(affectedAccount: Option[UserId])(implicit context: Context) extends SecurityChecklist.Action {
+class WipeDataAction()(implicit context: Context) extends SecurityChecklist.Action {
 
-  override def execute(): Future[Unit] = ZMessaging.currentAccounts.isWipedForAllAccounts.flatMap {
-    case true  => Future.successful(())
-    case false =>
-      (affectedAccount match {
-        case Some(id) => ZMessaging.currentAccounts.wipeData(id)
-        case _        => ZMessaging.currentAccounts.wipeDataForAllAccounts()
-      }).map { _ =>
+  override def execute(): Future[Unit] =
+    ZMessaging.currentAccounts.wipeDataForAllAccounts()
+      .map { _ =>
         WireApplication.clearOldVideoFiles(context)
         context.getCacheDir.delete()
       }
-  }
 }

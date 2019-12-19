@@ -1,7 +1,8 @@
 package com.waz.zclient.settings.devices.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.HttpError
+import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -59,7 +60,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns NetworkError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.NetworkConnection)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection)) }
 
         viewModel.loadData()
 
@@ -75,7 +76,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns ServerError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
 
 
         viewModel.loading.observeOnce { isLoading ->
@@ -90,7 +91,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns CancellationError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(Failure.NetworkConnection)) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(NetworkConnection)) }
 
         viewModel.loadData()
 

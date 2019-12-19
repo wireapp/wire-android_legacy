@@ -119,7 +119,6 @@ class AccountManager(val userId:   UserId,
       cId     <- clientId.collect { case Some(id) => id }.head
       Some(_) <- checkCryptoBox()
     } yield {
-      verbose(l"Creating new ZMessaging instance for $userId, $cId, $teamId")
       global.factory.zmessaging(teamId, cId, this, storage, cryptoBox)
     }
   }
