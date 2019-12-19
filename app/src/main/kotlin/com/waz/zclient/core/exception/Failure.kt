@@ -12,6 +12,12 @@ sealed class DatabaseFailure : Failure()
 
 object NetworkConnection : NetworkFailure()
 object NetworkServiceError : NetworkFailure()
+object ServerError : NetworkFailure()
+object BadRequest : NetworkFailure()
+object Unauthorized : NetworkFailure()
+object Forbidden : NetworkFailure()
+object NotFound : NetworkFailure()
+object InternalServerError : NetworkFailure()
 data class HttpError(val errorCode: Int, val errorMessage: String) : NetworkFailure()
 
 object DatabaseError : DatabaseFailure()
