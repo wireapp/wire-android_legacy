@@ -97,7 +97,7 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        Injector.INSTANCE.start(this);
+        Injector.start(this);
 
         setLogLevels();
         AndroidThreeTen.init(this);

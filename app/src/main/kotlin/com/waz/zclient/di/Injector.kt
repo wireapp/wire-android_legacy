@@ -12,6 +12,7 @@ import org.koin.core.context.startKoin
 
 object Injector {
 
+    @JvmStatic
     fun start(context: Context) {
         startKoin {
             androidContext(context)
