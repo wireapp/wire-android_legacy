@@ -48,7 +48,7 @@ trait ConversationsService {
   def content: ConversationsContentUpdater
   def convStateEventProcessingStage: EventScheduler.Stage
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
-  def getActiveMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
+  def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
   def getSelfConversation: Future[Option[ConversationData]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit]
@@ -247,7 +247,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case _ => successful(())
   }
 
-  override def getActiveMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]] = {
+  override def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]] = {
     val onConvMemberDataChanged =
       membersStorage
         .onChanged.map(_.filter(_.convId == conv).map(m => m.userId -> (Option(m), true)))

@@ -54,7 +54,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
   val onShowUser = EventStream[Option[UserId]]()
 
   lazy val otherParticipants: Signal[Map[UserId, ConversationRole]] = convController.currentConvOtherMembers
-  lazy val participants: Signal[Map[UserId, ConversationRole]] = convController.currentConvMembers
+  lazy val participants: Signal[Map[UserId, ConversationRole]]      = convController.currentConvMembers
   lazy val conv: Signal[ConversationData]                           = convController.currentConv
   lazy val isGroup: Signal[Boolean]                                 = convController.currentConvIsGroup
   lazy val selfRole: Signal[ConversationRole]                       = convController.selfRole
