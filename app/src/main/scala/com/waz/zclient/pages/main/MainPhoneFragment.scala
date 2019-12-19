@@ -22,7 +22,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.Toast
 import androidx.fragment.app.FragmentManager
 import com.waz.content.UserPreferences.CrashesAndAnalyticsRequestShown
 import com.waz.content.{GlobalPreferences, UserPreferences}
@@ -74,6 +73,7 @@ class MainPhoneFragment extends FragmentHelper
   with ConfirmationFragment.Container {
 
   import MainPhoneFragment._
+  import Shortcuts._
   import Threading.Implicits.Ui
 
   private lazy val zms = inject[Signal[ZMessaging]]
@@ -207,37 +207,14 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
-  private def openGalleryPicker() = {
-    inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
-      case true =>
-        val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(galleryIntent, 420)
-        getActivity.getIntent.setAction("")
-      case _ =>
-        Toast.makeText(getActivity, "Error with permissions", Toast.LENGTH_LONG).show()
-    }(Threading.Ui)
-  }
-
   private def initShortcutDestinations() = {
     val action = getActivity.getIntent.getAction
-    if (action != null) {
-      if (action == "GROUP_CONVERSATION") {
-        newGroupConversation()
-      } else if (action == "SHARE_PHOTO") {
-        openGalleryPicker()
-      } else if (action == "NEW_MESSAGE") {
-        openComposeMessageActivity()
-      }
+    action match {
+      case NewGroupConversation => newGroupConversation()
+      case SharePhoto           => openGalleryPicker()
+      case NewMessage           => goToConversation()
+      case _ =>
     }
-  }
-
-  private def openComposeMessageActivity() : Unit = {
-      val intent = new Intent(getActivity, classOf[ShareActivity])
-      intent.setAction(Intent.ACTION_SEND)
-      intent.putExtra(Intent.EXTRA_TEXT, "")
-      intent.setType("message/plain")
-      startActivity(intent)
-      getActivity.getIntent.setAction("")
   }
 
   private def newGroupConversation() = {
@@ -251,6 +228,37 @@ class MainPhoneFragment extends FragmentHelper
       .replace(R.id.fl_fragment_main_content, CreateConversationManagerFragment.newInstance, CreateConversationManagerFragment.Tag)
       .addToBackStack(CreateConversationManagerFragment.Tag)
       .commit()
+    resetAction()
+  }
+
+  private def goToConversation() : Unit = {
+      val intent = new Intent(getActivity, classOf[ShareActivity])
+      intent.setAction(Intent.ACTION_SEND)
+      intent.putExtra(Intent.EXTRA_TEXT, "")
+      intent.setType(ShareActivity.MessageIntentType)
+      startActivity(intent)
+      resetAction()
+  }
+
+  private def openGalleryPicker() = {
+    inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
+      case true =>
+        val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(galleryIntent, SharePhotoRequestCode)
+        resetAction()
+      case _ =>
+    }(Threading.Ui)
+  }
+
+  private def goToShareImage(data: Intent) = {
+    val intent = new Intent(getActivity, classOf[ShareActivity])
+    intent.setAction(Intent.ACTION_SEND)
+    intent.putExtra(Intent.EXTRA_STREAM, data.getData)
+    intent.setType("image/jpeg")
+    startActivity(intent)
+  }
+
+  private def resetAction() = {
     getActivity.getIntent.setAction("")
   }
 
@@ -272,13 +280,9 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode == 420) {
+    if (requestCode == SharePhotoRequestCode) {
       if (resultCode == Activity.RESULT_OK) {
-        val intent = new Intent(getActivity, classOf[ShareActivity])
-        intent.setAction(Intent.ACTION_SEND)
-        intent.putExtra(Intent.EXTRA_STREAM, data.getData)
-        intent.setType("image/jpeg")
-        startActivity(intent)
+        goToShareImage(data)
       }
     } else {
       withChildFragment(R.id.fl_fragment_main_content)(_.onActivityResult(requestCode, resultCode, data))
@@ -409,5 +413,13 @@ class MainPhoneFragment extends FragmentHelper
 
 object MainPhoneFragment {
   val Tag: String = classOf[MainPhoneFragment].getName
+}
+
+object Shortcuts {
+  val NewGroupConversation = "GROUP_CONVERSATION"
+  val NewMessage = "NEW_MESSAGE"
+  val SharePhoto = "SHARE_PHOTO"
+
+  val SharePhotoRequestCode = 40
 }
 

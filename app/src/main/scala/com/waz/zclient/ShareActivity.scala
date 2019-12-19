@@ -40,7 +40,7 @@ import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageC
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.confirmation.TwoButtonConfirmationCallback
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.sharing.ShareToMultipleFragment
+import com.waz.zclient.sharing.ConversationSelectorFragment
 import com.waz.zclient.views.menus.ConfirmationMenu
 
 import scala.collection.immutable.ListSet
@@ -71,12 +71,14 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main_share)
 
-    if (savedInstanceState == null)
+    if (savedInstanceState == null) {
+      val bundle = new Bundle()
+      bundle.putBoolean(ConversationSelectorFragment.MultiPickerArgumentKey, getIntent.getType != MessageIntentType)
       getSupportFragmentManager
         .beginTransaction
-        .add(R.id.fl_main_content, ShareToMultipleFragment.newInstance(), ShareToMultipleFragment.TAG)
+        .add(R.id.fl_main_content, ConversationSelectorFragment.newInstance(bundle), ConversationSelectorFragment.TAG)
         .commit
-
+    }
     confirmationMenu
   }
 
@@ -96,8 +98,8 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     val ir = ShareCompat.IntentReader.from(this)
     if (!ir.isShareIntent) finish()
     else {
-      if (ir.getStreamCount == 0 && ir.getType == "text/plain") sharing.publishTextContent(ir.getText.toString)
-      else if (ir.getStreamCount == 0 && ir.getType == "message/plain") sharing.sharableContent ! Some(NewContent())
+      if (ir.getStreamCount == 0 && ir.getType == TextIntentType) sharing.publishTextContent(ir.getText.toString)
+      else if (ir.getStreamCount == 0 && ir.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent())
       else {
         inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
@@ -106,7 +108,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
               (if (ir.isMultipleShare) (0 until ir.getStreamCount).flatMap(i => Option(ir.getStream(i))) else Option(ir.getStream).toSeq)
                 .flatMap(uri => getPath(getApplicationContext, uri))
             if (uris.nonEmpty)
-              sharing.sharableContent ! Some(if (ir.getType.startsWith("image/") && uris.size == 1) ImageContent(uris) else FileContent(uris))
+              sharing.sharableContent ! Some(if (ir.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris) else FileContent(uris))
             else finish()
           case _    => finish()
         }(Threading.Ui)
@@ -115,14 +117,18 @@ class ShareActivity extends BaseActivity with ActivityHelper {
   }
 
   override def onBackPressed() =
-    withFragmentOpt(ShareToMultipleFragment.TAG) {
-      case Some(f: ShareToMultipleFragment) if f.onBackPressed() => //
-      case _                                                     => super.onBackPressed()
+    withFragmentOpt(ConversationSelectorFragment.TAG) {
+      case Some(f: ConversationSelectorFragment) if f.onBackPressed() => //
+      case _                                                          => super.onBackPressed()
     }
 
 }
 
 object ShareActivity extends DerivedLogTag {
+
+  val MessageIntentType = "message/plain"
+  val TextIntentType = "text/plain"
+  val ImageIntentType = "image/"
 
   /*
    * This part (the methods getPath and getDataColumn) of the Wire software are based heavily off of code posted in this

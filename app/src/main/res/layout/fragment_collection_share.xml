@@ -24,7 +24,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.waz.zclient.sharing.ShareToMultipleFragment"
+    tools:context="com.waz.zclient.sharing.ConversationSelectorFragment"
     android:background="@null"
     android:clickable="true"
     >
@@ -42,7 +42,7 @@
     <RelativeLayout
         android:id="@+id/content_container"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/collections__multi_share__image_preview__height">
+        android:layout_height="wrap_content">
     </RelativeLayout>
 
     <com.waz.zclient.usersearch.views.SearchEditText

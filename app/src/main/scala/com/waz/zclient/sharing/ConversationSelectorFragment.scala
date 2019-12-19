@@ -41,7 +41,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._
-import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, TextContent, NewContent}
+import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent, TextContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views._
@@ -58,9 +58,11 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import scala.util.Success
 
 
-class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener {
+class ConversationSelectorFragment extends FragmentHelper with OnBackPressedListener {
 
   implicit def cxt = getContext
+
+  import ConversationSelectorFragment._
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val accounts = inject[AccountsService]
@@ -74,7 +76,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
   lazy val onClickEvent = EventStream[Unit]()
 
-  lazy val adapter = returning(new ShareToMultipleAdapter(getContext, filterText)) { a =>
+  lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, getBooleanArg(MultiPickerArgumentKey))) { a =>
     onClickEvent { _ =>
       a.selectedConversations.head.map { convs =>
         sharingController.onContentShared(getActivity, convs)
@@ -98,7 +100,9 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
 
   lazy val searchBox = returning(view[SearchEditText](R.id.multi_share_search_box)) { vh =>
     accentColor.onUi(c => vh.foreach(_.setCursorColor(c)))
-
+    if (!getBooleanArg(MultiPickerArgumentKey)) {
+      vh.foreach(_.findById[TypefaceTextView](R.id.hint).setText("SELECT CONVERSATION..."))
+    }
     ZMessaging.currentAccounts.activeAccount.onChanged.onUi(_ => vh.foreach(v => v.getElements.foreach(v.removeElement)))
 
     (for {
@@ -106,21 +110,27 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
       convs    <- z.convsStorage.contents
       selected <- Signal.wrap(adapter.conversationSelectEvent)
     } yield (convs.get(selected._1).map(PickableConversation), selected._2)).onUi {
-      case (Some(convData), true)  => vh.foreach(_.addElement(convData))
-      case (Some(convData), false) => vh.foreach(_.removeElement(convData))
+      case (Some(convData), true)  =>
+        if (getBooleanArg(MultiPickerArgumentKey)) {
+          vh.foreach(_.addElement(convData))
+        }
+      case (Some(convData), false) =>
+        if (getBooleanArg(MultiPickerArgumentKey)) {
+          vh.foreach(_.removeElement(convData))
+        }
       case _ =>
     }
   }
 
   lazy val contentLayout = returning(view[RelativeLayout](R.id.content_container)) { vh =>
-    //TODO: It's possible for an app to share multiple uris at once but we're only showing the preview for one
+    //It's possible for an app to share multiple uris at once but we're only showing the preview for one
 
     sharingController.sharableContent.onUi {
       case Some(content) => vh.foreach { layout =>
         layout.removeAllViews()
 
         val contentHeight = getDimenPx(content match {
-          case NewContent()  => 0
+          case NewContent()  => R.dimen.zero
           case TextContent(_)  => R.dimen.collections__multi_share__text_preview__height
           case ImageContent(_) => R.dimen.collections__multi_share__image_preview__height
           case FileContent(_)  => R.dimen.collections__multi_share__file_preview__height
@@ -131,7 +141,7 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
         val inflater = getLayoutInflater
         content match {
           case NewContent() =>
-            layout.setVisibility(View.GONE)
+
           case TextContent(text) =>
             inflater.inflate(R.layout.share_preview_text, layout).findViewById[TypefaceTextView](R.id.text_content).setText(text)
 
@@ -249,11 +259,14 @@ class ShareToMultipleFragment extends FragmentHelper with OnBackPressedListener 
   }
 }
 
-object ShareToMultipleFragment {
-  val TAG = ShareToMultipleFragment.getClass.getSimpleName
+object ConversationSelectorFragment {
+  val MultiPickerArgumentKey = "multiPickerArgumentKey"
+  val TAG = ConversationSelectorFragment.getClass.getSimpleName
 
-  def newInstance(): ShareToMultipleFragment = {
-    new ShareToMultipleFragment
+  def newInstance(args: Bundle): ConversationSelectorFragment = {
+    val fragment = new ConversationSelectorFragment
+    fragment.setArguments(args)
+    fragment
   }
 }
 
@@ -262,7 +275,7 @@ case class PickableConversation(conversationData: ConversationData) extends Pick
   override def name = conversationData.displayName
 }
 
-class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit injector: Injector, eventContext: EventContext)
+class ConversationSelectorAdapter(context: Context, filter: Signal[String], multiPicker: Boolean)(implicit injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[RecyclerView.ViewHolder]
     with Injectable
     with DerivedLogTag {
@@ -288,7 +301,12 @@ class ShareToMultipleAdapter(context: Context, filter: Signal[String])(implicit 
 
   conversationSelectEvent.onUi {
     case (conv, add) =>
-      selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv))
+      if (multiPicker)  { selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv)) } else {
+        selectedConversations.mutate(_ => Seq())
+        if (add) {
+           selectedConversations.mutate(convs =>  convs :+ conv )
+        }
+      }
       notifyDataSetChanged()
   }
 
