@@ -17,17 +17,23 @@
   */
 package com.waz.zclient.security
 
-import android.app.{Activity, Application}
-import android.os.Bundle
+import android.app.{Activity, ActivityManager, Application}
+import android.os.{Build, Bundle}
 import android.view.WindowManager
+import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.utils.events._
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{BuildConfig, Injectable, Injector, LaunchActivity}
 
+import scala.collection.convert.DecorateAsScala
+
 class ActivityLifecycleCallback(implicit injector: Injector)
-  extends Application.ActivityLifecycleCallbacks with Injectable with DerivedLogTag {
+  extends Application.ActivityLifecycleCallbacks
+    with Injectable
+    with DerivedLogTag
+    with DecorateAsScala {
 
   import com.waz.utils.events.EventContext.Implicits.global
 
@@ -64,17 +70,24 @@ class ActivityLifecycleCallback(implicit injector: Injector)
   override def onActivityCreated(activity: Activity, bundle: Bundle): Unit = {}
 
   override def onActivityResumed(activity: Activity): Unit = {
-    if (BuildConfig.FORCE_HIDE_SCREEN_CONTENT) {
-      addSecureFlags(activity)
-    } else {
-      shouldHideScreenContent.onUi {
-        case true  => addSecureFlags(activity)
-        case false => activity.getWindow.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-      }
+    (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP_MR1, BuildConfig.FORCE_HIDE_SCREEN_CONTENT) match {
+      case (true, true)   => excludeFromRecents(true)
+      case (false, true)  => activity.getWindow.addFlags(FLAG_SECURE)
+      case (true, false)  =>
+        shouldHideScreenContent.onUi(excludeFromRecents)
+      case (false, false) =>
+        shouldHideScreenContent.onUi {
+          case true  => activity.getWindow.addFlags(FLAG_SECURE)
+          case false => activity.getWindow.clearFlags(FLAG_SECURE)
+        }
     }
   }
 
-  private def addSecureFlags(activity: Activity) = {
+  private def excludeFromRecents(exclude: Boolean) = {
+    inject[ActivityManager].getAppTasks.asScala.toList.foreach(_.setExcludeFromRecents(exclude))
+  }
+
+  private def addSecureFlags(activity: Activity): Unit = {
     activity.getWindow.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
   }
 
