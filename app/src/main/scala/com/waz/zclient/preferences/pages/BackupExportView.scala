@@ -62,7 +62,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
 
   def requestPassword(): Future[Unit] = {
     val fragment = returning(new BackupPasswordDialog)(
-      _.onPasswordEntered { p => verbose(l"Got password: $p"); backupData(p) }
+      _.onPasswordEntered(backupData)
     )
     context.asInstanceOf[BaseActivity]
       .getSupportFragmentManager

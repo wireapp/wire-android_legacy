@@ -19,8 +19,8 @@ package com.waz.zclient.markdown
 
 import android.graphics.Color
 import android.graphics.Typeface
-import android.support.test.runner.AndroidJUnit4
 import android.text.style.*
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.waz.zclient.markdown.spans.GroupSpan
 import com.waz.zclient.markdown.spans.commonmark.*
 import com.waz.zclient.markdown.spans.commonmark.ImageSpan

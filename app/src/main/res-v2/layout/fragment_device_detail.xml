@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_detail_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/wire__padding__16"
+        android:paddingEnd="@dimen/wire__padding__16"
+        android:textColor="@color/white"
+        android:textSize="@dimen/wire__text_size__regular"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Wire Windows" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_detail_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/wire__padding__16"
+        android:paddingEnd="@dimen/wire__padding__16"
+        android:textColor="@color/white"
+        android:textSize="@dimen/wire__text_size__small"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device_detail_name"
+        tools:text="ID: 94 SB 88 99 00" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_detail_activated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:padding="@dimen/wire__padding__16"
+        android:textColor="@color/light_graphite"
+        android:textSize="@dimen/wire__text_size__small"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device_detail_id" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/fingerprint_category_title"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/preference_button_height"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/wire__padding__16"
+        android:paddingEnd="@dimen/wire__padding__16"
+        android:text="@string/pref_devices_device_fingerprint_category_title"
+        android:textColor="@color/accent_blue"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device_detail_activated" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_detail_fingerprint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/fingerprint_category_title" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_fingerprint_summary_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:padding="@dimen/wire__padding__16"
+        android:text="@string/pref_devices_device_fingerprint_summary"
+        android:textColor="@color/light_graphite"
+        android:textSize="@dimen/wire__text_size__small"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device_detail_fingerprint" />
+
+    <include
+        layout="@layout/settings_switch"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device_fingerprint_summary_title" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_detail_reset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__16"
+        android:layout_marginBottom="@dimen/wire__padding__16"
+        android:text="@string/pref_devices_device_reset_session_title"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/settings_switch_title" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/device_detail_remove"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/wire__padding__16"
+        android:layout_marginBottom="@dimen/wire__padding__16"
+        android:text="@string/pref_devices_device_remove_title"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/device_detail_reset" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

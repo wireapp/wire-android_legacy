@@ -58,12 +58,17 @@
 
     <item name="collection_image_view" type="id"/>
 
-    <item name="participants_section" type="id" />
+    <item name="admins_section" type="id" />
+    <item name="members_section" type="id" />
+    <item name="options_section" type="id" />
     <item name="services_section" type="id" />
     <item name="guest_options" type="id" />
     <item name="timed_messages_options" type="id" />
     <item name="notifications_options" type="id" />
     <item name="read_receipts_options" type="id" />
+    <item name="no_results_info" type="id" />
+    <item name="show_all_button" type="id" />
+    <item name="read_receipts_button" type="id" />
 
     <item name="create_group_button" type="id"/>
     <item name="create_guest_room_button" type="id"/>

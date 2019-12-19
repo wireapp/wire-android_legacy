@@ -19,21 +19,20 @@ package com.waz.zclient.participants.fragments
 
 import android.content.Context
 import android.os.Bundle
-import androidx.annotation.Nullable
-import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.TextView
+import androidx.annotation.Nullable
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
 import com.waz.model.UserField
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
-import com.waz.utils.events.{ClockSignal, Signal}
+import com.waz.utils.events.{ClockSignal, Signal, Subscription}
 import com.waz.zclient.common.controllers.{BrowserController, ThemeController, UserAccountsController}
 import com.waz.zclient.controllers.navigation.{INavigationController, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.creation.CreateConversationController
-import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.MainPhoneFragment
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
 import com.waz.zclient.participants.{ParticipantOtrDeviceAdapter, ParticipantsController}
@@ -54,6 +53,8 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val participantsController = inject[ParticipantsController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val navigationController   = inject[INavigationController]
+
+  private var subs = Set.empty[Subscription]
 
   private lazy val fromDeepLink: Boolean = getBooleanArg(FromDeepLink)
 
@@ -77,25 +78,6 @@ class SingleParticipantFragment extends FragmentHelper {
     }
   }
 
-  private lazy val availability = {
-    val usersController = inject[UsersController]
-
-    val availabilityVisible = Signal(participantsController.otherParticipant.map(_.expiresAt.isDefined), usersController.availabilityVisible).map {
-      case (true, _)         => false
-      case (_, isTeamMember) => isTeamMember
-    }
-
-    val availabilityStatus = for {
-      Some(uId) <- participantsController.otherParticipantId
-      av        <- usersController.availability(uId)
-    } yield av
-
-    Signal(availabilityVisible, availabilityStatus).map {
-      case (true, status) => Some(status)
-      case (false, _)     => None
-    }
-  }
-
   private lazy val timerText = for {
     expires <- participantsController.otherParticipant.map(_.expiresAt)
     clock   <- if (expires.isDefined) ClockSignal(5.minutes) else Signal.const(Instant.EPOCH)
@@ -104,10 +86,10 @@ class SingleParticipantFragment extends FragmentHelper {
     case _               => None
   }
 
-  private lazy val readReceipts = Signal(userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
-    case (true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
-    case (true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
-    case _             => None
+  private lazy val readReceipts = Signal(participantsController.isGroup, userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
+    case (false, true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
+    case (false, true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
+    case _                    => None
   }
 
   private lazy val devicesView = returning( view[RecyclerView](R.id.devices_recycler_view) ) { vh =>
@@ -171,14 +153,14 @@ class SingleParticipantFragment extends FragmentHelper {
     isWireless     <- participantsController.otherParticipant.map(_.expiresAt.isDefined)
     isGroupOrBot   <- participantsController.isGroupOrBot
     canCreateConv  <- userAccountsController.hasCreateConvPermission
-    isPartner      <- userAccountsController.isPartner
+    isExternal     <- userAccountsController.isExternal
   } yield if (isWireless) {
     (R.string.empty_string, R.string.empty_string)
   } else if (fromDeepLink) {
     (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
-  } else if (!isPartner && !isGroupOrBot && canCreateConv) {
+  } else if (!isExternal && !isGroupOrBot && canCreateConv) {
     (R.string.glyph__add_people, R.string.conversation__action__create_group)
-  } else if (isPartner && !isGroupOrBot) {
+  } else if (isExternal && !isGroupOrBot) {
     (R.string.empty_string, R.string.empty_string)
   } else {
     (R.string.glyph__conversation, R.string.conversation__action__open_conversation)
@@ -190,15 +172,15 @@ class SingleParticipantFragment extends FragmentHelper {
       conv           <- participantsController.conv
       isGroup        <- participantsController.isGroup
       createPerm     <- userAccountsController.hasCreateConvPermission
-      remPerm        <- userAccountsController.hasRemoveConversationMemberPermission(conv.id)
+      remPerm        <- participantsController.selfRole.map(_.canRemoveGroupMember)
       selfIsGuest    <- participantsController.isCurrentUserGuest
-      selfIsPartner  <- userAccountsController.isPartner
+      selfIsExternal <- userAccountsController.isExternal
       selfIsProUser  <- userAccountsController.isTeam
       other          <- participantsController.otherParticipant
       otherIsGuest    = other.isGuest(conv.team)
     } yield {
       if (fromDeepLink) !selfIsProUser || otherIsGuest
-      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsPartner)
+      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsExternal)
     }).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
@@ -226,14 +208,17 @@ class SingleParticipantFragment extends FragmentHelper {
       (for {
         zms                <- inject[Signal[ZMessaging]].head
         user               <- participantsController.otherParticipant.head
+        isGroup            <- participantsController.isGroup.head
         isGuest            =  !user.isWireBot && user.isGuest(zms.teamId)
+        isExternal         =  !user.isWireBot && user.isExternal(zms.teamId)
         isTeamTheSame      =  !user.isWireBot && user.teamId == zms.teamId && zms.teamId.isDefined
                               // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
         _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-      } yield (user.id, user.email, isGuest, isDarkTheme, isTeamTheSame)).foreach {
-        case (userId, emailAddress, isGuest, isDarkTheme, isTeamTheSame) =>
-          val adapter = new SingleParticipantAdapter(userId, isGuest, isDarkTheme)
+        isWireless         =  user.expiresAt.isDefined
+      } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame)).foreach {
+        case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame) =>
+          val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless)
           val emailUserField = emailAddress match {
             case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
             case None        => Seq.empty
@@ -241,15 +226,18 @@ class SingleParticipantFragment extends FragmentHelper {
 
           Signal(
             participantsController.otherParticipant.map(_.fields),
-            availability,
             timerText,
-            readReceipts
+            readReceipts,
+            participantsController.participants.map(_(userId)),
+            participantsController.selfRole
           ).onUi {
-            case (fields, av, tt, rr) if isTeamTheSame =>
-              adapter.set(emailUserField ++ fields, av, tt, rr)
-            case (_, av, tt, rr) =>
-              adapter.set(emailUserField, av, tt, rr)
+            case (fields, tt, rr, pRole, sRole) if isTeamTheSame =>
+              adapter.set(emailUserField ++ fields, tt, rr, pRole, sRole)
+            case (_, tt, rr, pRole, sRole) =>
+              adapter.set(emailUserField, tt, rr, pRole, sRole)
           }
+
+          subs += adapter.onParticipantRoleChange.on(Threading.Background)(participantsController.setRole(userId, _))
           view.setAdapter(adapter)
       }
     }
@@ -291,6 +279,12 @@ class SingleParticipantFragment extends FragmentHelper {
       navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
     }
     super.onBackPressed()
+  }
+
+  override def onDestroy(): Unit = {
+    subs.foreach(_.destroy())
+    subs = Set.empty
+    super.onDestroy()
   }
 }
 

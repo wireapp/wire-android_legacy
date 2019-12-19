@@ -39,6 +39,7 @@ import com.waz.utils.{Serialized, returning, _}
 
 import scala.async.Async.{async, await}
 import scala.concurrent.Future
+import scala.reflect.io.Directory
 import scala.util.control.NonFatal
 import scala.util.{Right, Try}
 
@@ -513,6 +514,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
 
     delete(cryptoBoxDir(userId))
     databaseFiles(userId).foreach(delete)
+    if(!otrFilesDir(userId).deleteRecursively()) warn(l"Failed to delete otr files, skipping")
     logout(userId, DataWiped)
 
   }
@@ -528,9 +530,12 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   private def databaseFiles(ams: Set[AccountManager]): Set[File] = ams.flatMap(acc => databaseFiles(acc.userId))
 
   private def databaseFiles(userId: UserId): Set[File] = {
-    val database = context.getDatabasePath(userId.str)
-    DbFileExtensions.map(ext => new File(s"${database.getAbsolutePath}$ext")).toSet
+    val databaseDir = s"${context.getApplicationInfo.dataDir}/databases"
+    new File(databaseDir).listFiles().filter(_.isFile).toSet
   }
+
+  private def otrFilesDir(userId: UserId): Directory =
+    new Directory(new File(s"${context.getApplicationInfo.dataDir}/files/otr/$userId"))
 
 }
 

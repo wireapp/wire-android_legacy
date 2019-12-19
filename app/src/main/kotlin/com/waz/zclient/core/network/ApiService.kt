@@ -1,7 +1,13 @@
 package com.waz.zclient.core.network
 
+import com.waz.zclient.core.exception.BadRequest
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.Failure.*
+import com.waz.zclient.core.exception.Forbidden
+import com.waz.zclient.core.exception.InternalServerError
+import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.exception.NotFound
+import com.waz.zclient.core.exception.ServerError
+import com.waz.zclient.core.exception.Unauthorized
 import com.waz.zclient.core.extension.failFastIfUIThread
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Either.Left
@@ -16,7 +22,7 @@ abstract class ApiService(private val networkHandler: NetworkHandler) {
 
         return when (networkHandler.isConnected) {
             true -> performRequest(call, default)
-            false, null -> Left(NoNetworkConnection)
+            false, null -> Left(NetworkConnection)
         }
     }
 

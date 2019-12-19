@@ -20,11 +20,11 @@ package com.waz.zclient.conversationlist
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view.View.{GONE, VISIBLE}
 import android.view.animation.Animation
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.{ImageView, LinearLayout}
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.content.UserPreferences
 import com.waz.model.ConversationData.ConversationType._
 import com.waz.model._

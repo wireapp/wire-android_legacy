@@ -19,6 +19,7 @@ package com.waz.sync.client
 
 import java.io.ByteArrayInputStream
 
+import com.waz.ZIntegrationMockSpec
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -27,7 +28,9 @@ import com.waz.service.assets2.{Asset, BlobDetails, NoEncryption}
 import com.waz.sync.client.AssetClient.FileWithSha
 import com.waz.sync.client.AssetClient2.{AssetContent, Metadata, Retention, UploadResponse2}
 import com.waz.utils.{IoUtils, returning}
-import com.waz.{AuthenticationConfig, ZIntegrationSpec}
+import com.waz.znet2.AuthRequestInterceptor
+import com.waz.znet2.http.Request.UrlCreator
+import com.waz.znet2.http.{HttpClient, Request}
 import org.junit.runner.RunWith
 import org.scalatest.Ignore
 import org.scalatest.junit.JUnitRunner
@@ -38,7 +41,11 @@ import scala.util.Random
 //TODO Think about tests resources cleanup
 @Ignore
 @RunWith(classOf[JUnitRunner])
-class AssetClient2Spec extends ZIntegrationSpec with AuthenticationConfig with DerivedLogTag {
+class AssetClient2Spec extends ZIntegrationMockSpec with DerivedLogTag {
+
+  implicit lazy val urlCreator : Request.UrlCreator = mock[UrlCreator]
+  implicit lazy val httpClient = mock[HttpClient]
+  implicit lazy val authRequestInterceptor = mock[AuthRequestInterceptor]
 
   private lazy val assetClient = new AssetClient2Impl()
 

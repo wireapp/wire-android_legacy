@@ -22,7 +22,6 @@ import android.content.Context;
 public class ContextProvider {
 
     public static Context getApplicationContext() {
-        //TODO: fix this hack
-        return null;
+        return WireApplication.APP_INSTANCE().getApplicationContext();
     }
 }

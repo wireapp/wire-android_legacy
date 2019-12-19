@@ -17,7 +17,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.4.7@aar'
+    customAvsVersion = '5.4.9@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -133,6 +133,7 @@ android {
         buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
         buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
         buildConfigField 'Integer', 'PASSWORD_MAX_ATTEMPTS',         "$buildtimeConfiguration.configuration.password_max_attempts"
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS_MIGRATION', "false"
     }
 
     packagingOptions {
@@ -166,6 +167,10 @@ android {
     compileOptions {
         compileSdkVersion rootProject.ext.compileSdkVersion
         buildToolsVersion rootProject.ext.buildToolsVersion
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 
     if (file("signing.gradle").exists()) {
@@ -269,6 +274,7 @@ android {
     sourceSets {
 
         main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
+        main.res.srcDirs += 'src/main/res-v2'
 
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
@@ -291,6 +297,7 @@ android {
         exclude 'META-INF/NOTICE'
         exclude 'APK_LICENSE.txt'
         exclude 'LICENSE.txt'
+        exclude 'META-INF/proguard/coroutines.pro'
     }
 
 }
@@ -305,8 +312,11 @@ def versions = [
     workManager : "2.0.1",
     paging : "1.0.0",
     mockito : "3.1.0",
+    lifecycle : "2.2.0-rc03",
+    okHttp : "3.12.0",
+    retrofit : "2.6.2",
     kluent : "1.14",
-    lifecycle : "2.0.0"
+    coroutines : "1.3.2",
 ]
 
 dependencies {
@@ -363,6 +373,15 @@ dependencies {
     implementation "androidx.exifinterface:exifinterface:1.0.0"
     implementation "androidx.media:media:1.0.0"
 
+    implementation "androidx.lifecycle:lifecycle-extensions:2.1.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$versions.lifecycle"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.lifecycle"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.lifecycle"
+    implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutines"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
+
+
     // Play services
     implementation "com.google.android.gms:play-services-base:$versions.playServices"
     implementation "com.google.android.gms:play-services-maps:$versions.playServices"
@@ -407,11 +426,11 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-protobuf:$retrofit_version"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit_version"
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.0'
+    implementation "com.squareup.okhttp3:logging-interceptor:$versions.okHttp"
+    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
 
-    //Android Architecture Components
-    implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycle"
+
+    api project(":storage")
 
     // Unit Tests
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
@@ -419,9 +438,14 @@ dependencies {
     testImplementation "org.mockito:mockito-inline:$versions.mockito"
     testImplementation "org.amshove.kluent:kluent:$versions.kluent"
     testImplementation "androidx.paging:paging-common:2.0.0"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
     testImplementation("$rootProject.deps.scalaTest") {
         exclude module: 'scala-library'
     }
+    testImplementation 'androidx.arch.core:core-testing:2.1.0'
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutines"
+    testImplementation "androidx.paging:paging-common:2.0.0"
+
     // UI Tests
     androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
     androidTestImplementation "org.mockito:mockito-core:$versions.mockito"

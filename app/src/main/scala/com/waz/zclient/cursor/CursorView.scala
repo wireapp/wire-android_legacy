@@ -297,11 +297,11 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   } yield (eph, av, name)).onUi {
     case (true, av, _) =>
       hintView.setText(getString(R.string.cursor__ephemeral_message))
-      AvailabilityView.displayLeftOfText(hintView, av, defaultHintTextColor)
+      AvailabilityView.displayStartOfText(hintView, av, defaultHintTextColor)
     case (false, av, name) if av != Availability.None =>
       val transformedName = transformer.transform(name.str.split(' ')(0)).toString
       hintView.setText(getString(AvailabilityView.viewData(av).textId, transformedName))
-      AvailabilityView.displayLeftOfText(hintView, av, defaultHintTextColor)
+      AvailabilityView.displayStartOfText(hintView, av, defaultHintTextColor)
     case _ =>
       hintView.setText(getString(R.string.cursor__type_a_message))
       AvailabilityView.hideAvailabilityIcon(hintView)
