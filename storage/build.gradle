@@ -40,4 +40,7 @@ dependencies {
     implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
     implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
     kapt "androidx.room:room-compiler:$rootProject.ext.versions.room"
+    implementation "org.koin:koin-android:$rootProject.ext.versions.koin"
+    implementation "org.koin:koin-android-scope:$rootProject.ext.versions.koin"
+    implementation "org.koin:koin-android-viewmodel:$rootProject.ext.versions.koin"
 }

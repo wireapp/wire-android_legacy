@@ -25,7 +25,7 @@ import androidx.annotation.Nullable;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.waz.model.AccentColor;
 import com.waz.zclient.controllers.IControllerFactory;
-import com.waz.zclient.di.KoinStarter;
+import com.waz.zclient.di.Injector;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
 import com.waz.zclient.utils.WireLoggerTree;
@@ -97,7 +97,7 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        KoinStarter.INSTANCE.start(this);
+        Injector.INSTANCE.start(this);
 
         setLogLevels();
         AndroidThreeTen.init(this);

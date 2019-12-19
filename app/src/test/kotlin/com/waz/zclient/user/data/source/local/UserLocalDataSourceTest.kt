@@ -28,14 +28,14 @@ class UserLocalDataSourceTest {
     private lateinit var globalPreferences: GlobalPreferences
 
     @Mock
-    private lateinit var userDbService : UserDbService
+    private lateinit var userDbService: UserDbService
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
         `when`(userDatabase.userDbService()).thenReturn(userDbService)
         `when`(globalPreferences.activeUserId).thenReturn(TEST_USER_ID)
-        usersLocalDataSource = UsersLocalDataSource(userDbService,globalPreferences)
+        usersLocalDataSource = UsersLocalDataSource(userDbService, globalPreferences)
     }
 
     @Test

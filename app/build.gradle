@@ -316,8 +316,7 @@ def versions = [
     okHttp : "3.12.0",
     retrofit : "2.6.2",
     kluent : "1.14",
-    coroutines : "1.3.2",
-    koin : "2.0.1",
+    coroutines : "1.3.2"
 ]
 
 dependencies {
@@ -431,9 +430,9 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
 
     //Koin
-    implementation "org.koin:koin-android:$versions.koin"
-    implementation "org.koin:koin-android-scope:$versions.koin"
-    implementation "org.koin:koin-android-viewmodel:$versions.koin"
+    implementation "org.koin:koin-android:$rootProject.ext.versions.koin"
+    implementation "org.koin:koin-android-scope:$rootProject.ext.versions.koin"
+    implementation "org.koin:koin-android-viewmodel:$rootProject.ext.versions.koin"
 
     api project(":storage")
 
