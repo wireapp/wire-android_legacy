@@ -62,16 +62,15 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   val resultsData = Signal(mergedResult)
 
   (for {
-    curUser        <- userAccountsController.currentUser
-    teamData       <- userAccountsController.teamData
-    canAddServices <- convController.selfRole.map(_.canAddGroupMember)
-    results        <- searchController.searchUserOrServices
-  } yield (curUser, teamData, canAddServices, results)).onUi {
-    case (curUser, teamData, canAddServices, results) =>
-
+    curUser  <- userAccountsController.currentUser
+    teamData <- userAccountsController.teamData
+    isAdmin  <- userAccountsController.isAdmin
+    results  <- searchController.searchUserOrServices
+  } yield (curUser, teamData, isAdmin, results)).onUi {
+    case (curUser, teamData, isAdmin, results) =>
       verbose(l"Search user list state: $results")
       team = teamData
-      currentUserCanAddServices = canAddServices
+      currentUserCanAddServices = isAdmin
       currentUser = curUser
 
       results match {

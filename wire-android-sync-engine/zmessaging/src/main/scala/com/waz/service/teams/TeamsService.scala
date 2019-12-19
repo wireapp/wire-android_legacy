@@ -135,8 +135,10 @@ class TeamsServiceImpl(selfUser:           UserId,
   }
 
   override lazy val selfTeam: Signal[Option[TeamData]] = teamId match {
-    case None => Signal.const[Option[TeamData]](None)
-    case Some(id) => new RefreshingSignal(CancellableFuture.lift(teamStorage.get(id)), teamStorage.onChanged.map(_.map(_.id)))
+    case None =>
+      Signal.const[Option[TeamData]](None)
+    case Some(id) =>
+      new RefreshingSignal(CancellableFuture.lift(teamStorage.get(id)), teamStorage.onChanged.map(_.map(_.id)))
   }
 
   override lazy val guests: Signal[Set[UserId]] = {
