@@ -252,7 +252,6 @@ class MainPhoneFragment extends FragmentHelper
     val intent = new Intent(getActivity, classOf[ShareActivity])
       .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
     intent.setAction(Intent.ACTION_SEND)
-    intent.putExtra(Intent.EXTRA_TEXT, "")
     intent.setType(ShareActivity.MessageIntentType)
     startActivity(intent)
     resetAction()

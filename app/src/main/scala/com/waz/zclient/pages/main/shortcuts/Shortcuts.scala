@@ -32,8 +32,8 @@ object Shortcuts {
 
   def newMessageShortcut(activity: Activity, intent: Intent): ShortcutInfo =
     new ShortcutInfo.Builder(activity, "new_message")
-      .setShortLabel(activity.getString(R.string.shortcut_compose_new_message_label))
-      .setLongLabel(activity.getString(R.string.shortcut_compose_new_message_label_long))
+      .setShortLabel(activity.getString(R.string.shortcut_new_message_label))
+      .setLongLabel(activity.getString(R.string.shortcut_new_message_label))
       .setIcon(Icon.createWithResource(activity, R.drawable.ic_create_conversation))
       .setIntent(intent.setAction(NewMessage))
       .build
