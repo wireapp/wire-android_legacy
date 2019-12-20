@@ -245,7 +245,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       h.setContentDescription("Options")
     case (Right(ServicesSeparator), h: SeparatorViewHolder) =>
       h.setId(R.id.services_section)
-      h.setTitle(getString(R.string.participants_divider_services))
+      h.setTitle(getQuantityString(R.plurals.participants_divider_services, botCount, botCount.toString))
       h.setEmptySection()
       h.setContentDescription(s"Services")
     case (Right(AdminsSeparator), h: SeparatorViewHolder) =>
