@@ -10,14 +10,17 @@ class AccessTokenInterceptor(private val authTokenHandler: AuthTokenHandler) : I
         val token = authTokenHandler.accessToken()
 
         return when (token != String.empty()) {
-            true -> {
-                val authenticatedRequest = chain.request()
-                .newBuilder()
-                .addHeader(AuthTokenHandler.AUTH_HEADER, "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $token")
-                .build()
-                chain.proceed(authenticatedRequest)
-            }
+            true -> addAuthHeader(chain, token)
             false -> chain.proceed(chain.request())
         }
+    }
+
+    private fun addAuthHeader(chain: Interceptor.Chain, token: String): Response {
+        val authenticatedRequest = chain.request()
+            .newBuilder()
+            .addHeader(AuthTokenHandler.AUTH_HEADER,
+                "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $token")
+            .build()
+        return chain.proceed(authenticatedRequest)
     }
 }
