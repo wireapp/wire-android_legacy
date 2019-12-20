@@ -3,8 +3,11 @@ package com.waz.zclient.core.di
 import android.content.Context
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.ContextProvider
-import com.waz.zclient.ZApplication
-import com.waz.zclient.core.network.*
+import com.waz.zclient.core.network.AccessTokenAuthenticator
+import com.waz.zclient.core.network.AccessTokenInterceptor
+import com.waz.zclient.core.network.AccessTokenRepository
+import com.waz.zclient.core.network.AuthToken
+import com.waz.zclient.core.network.NetworkHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
