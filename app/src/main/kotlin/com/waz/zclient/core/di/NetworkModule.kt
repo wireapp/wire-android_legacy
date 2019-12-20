@@ -4,7 +4,7 @@ import com.waz.zclient.BuildConfig
 import com.waz.zclient.core.network.AccessTokenAuthenticator
 import com.waz.zclient.core.network.AccessTokenInterceptor
 import com.waz.zclient.core.network.AccessTokenRepository
-import com.waz.zclient.core.network.AuthToken
+import com.waz.zclient.core.network.AuthTokenHandler
 import com.waz.zclient.core.network.NetworkHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -43,6 +43,6 @@ val networkModule: Module = module {
     single { NetworkDependencyProvider.createClient(get(), get()) }
     single { NetworkDependencyProvider.retrofit(get()) }
     single { AccessTokenRepository() }
-    single { AuthToken(get()) }
+    single { AuthTokenHandler(get()) }
     single { AccessTokenAuthenticator(get()) }
 }
