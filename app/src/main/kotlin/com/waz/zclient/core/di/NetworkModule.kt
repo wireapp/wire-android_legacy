@@ -8,6 +8,7 @@ import com.waz.zclient.core.network.AuthToken
 import com.waz.zclient.core.network.NetworkHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.logging.HttpLoggingInterceptor.Level
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -26,16 +27,15 @@ object NetworkDependencyProvider {
     }
 
     fun createClient(accessTokenInterceptor: AccessTokenInterceptor,
-                     accessTokenAuthenticator: AccessTokenAuthenticator): OkHttpClient {
-        val okHttpClientBuilder: OkHttpClient.Builder = OkHttpClient.Builder()
-        okHttpClientBuilder.addInterceptor(accessTokenInterceptor)
-        okHttpClientBuilder.authenticator(accessTokenAuthenticator)
-        if (BuildConfig.DEBUG) {
-            val loggingInterceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BASIC)
-            okHttpClientBuilder.addInterceptor(loggingInterceptor)
-        }
-        return okHttpClientBuilder.build()
-    }
+                     accessTokenAuthenticator: AccessTokenAuthenticator): OkHttpClient =
+        OkHttpClient.Builder().apply {
+            addInterceptor(accessTokenInterceptor)
+            authenticator(accessTokenAuthenticator)
+            if (BuildConfig.DEBUG) {
+                val loggingInterceptor = HttpLoggingInterceptor().setLevel(Level.BASIC)
+                addInterceptor(loggingInterceptor)
+            }
+        }.build()
 }
 
 val networkModule: Module = module {
