@@ -76,7 +76,9 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
 
   lazy val onClickEvent = EventStream[Unit]()
 
-  lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, getBooleanArg(MultiPickerArgumentKey))) { a =>
+  lazy val multiPicker = getBooleanArg(MultiPickerArgumentKey)
+
+  lazy val adapter = returning(new ConversationSelectorAdapter(getContext, filterText, multiPicker)) { a =>
     onClickEvent { _ =>
       a.selectedConversations.head.map { convs =>
         sharingController.onContentShared(getActivity, convs)
@@ -100,9 +102,9 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
 
   lazy val searchBox = returning(view[SearchEditText](R.id.multi_share_search_box)) { vh =>
     accentColor.onUi(c => vh.foreach(_.setCursorColor(c)))
-    if (!getBooleanArg(MultiPickerArgumentKey)) {
-      vh.foreach(_.findById[TypefaceTextView](R.id.hint).setText("SELECT CONVERSATION..."))
-    }
+
+    if (!multiPicker) vh.foreach(_.findById[TypefaceTextView](R.id.hint).setText(getString(R.string.single_selector_search_hint)))
+
     ZMessaging.currentAccounts.activeAccount.onChanged.onUi(_ => vh.foreach(v => v.getElements.foreach(v.removeElement)))
 
     (for {
@@ -111,13 +113,9 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
       selected <- Signal.wrap(adapter.conversationSelectEvent)
     } yield (convs.get(selected._1).map(PickableConversation), selected._2)).onUi {
       case (Some(convData), true)  =>
-        if (getBooleanArg(MultiPickerArgumentKey)) {
-          vh.foreach(_.addElement(convData))
-        }
+        if (multiPicker) vh.foreach(_.addElement(convData))
       case (Some(convData), false) =>
-        if (getBooleanArg(MultiPickerArgumentKey)) {
-          vh.foreach(_.removeElement(convData))
-        }
+        if (multiPicker) vh.foreach(_.removeElement(convData))
       case _ =>
     }
   }
@@ -303,9 +301,8 @@ class ConversationSelectorAdapter(context: Context, filter: Signal[String], mult
     case (conv, add) =>
       if (multiPicker)  { selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv)) } else {
         selectedConversations.mutate(_ => Seq())
-        if (add) {
-           selectedConversations.mutate(convs =>  convs :+ conv )
-        }
+        if (add) selectedConversations.mutate(convs => convs :+ conv)
+
       }
       notifyDataSetChanged()
   }

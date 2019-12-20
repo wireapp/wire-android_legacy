@@ -1037,6 +1037,7 @@
 
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
     <string name="multi_share_search_hint">SEND TO…</string>
+    <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
 
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
     <string name="search__no_results">No results.</string>

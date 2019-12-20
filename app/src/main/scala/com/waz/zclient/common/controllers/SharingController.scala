@@ -50,16 +50,12 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
     def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
       content match {
-        case NewContent() =>
+        case NewContent()   =>
           conversationController.switchConversation(convs.head)
         case TextContent(t) =>
           conversationController.sendTextMessage(convs, t, Nil, None, Some(expiration))
-        case FileContent(uris)     =>
-          Future.traverse(uris) { uriWrapper =>
-            conversationController.sendAssetMessage(URIWrapper.toJava(uriWrapper), activity, Some(expiration), convs)
-          }
-        case ImageContent(uris)    =>
-          Future.traverse(uris) { uriWrapper =>
+        case uriContent     =>
+          Future.traverse(uriContent.uris) { uriWrapper =>
             conversationController.sendAssetMessage(URIWrapper.toJava(uriWrapper), activity, Some(expiration), convs)
           }
       }
