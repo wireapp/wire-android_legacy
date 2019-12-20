@@ -61,7 +61,7 @@
         <item name="android:fontFamily">@font/wire_glyphs</item>
     </style>
 
-    <style name="Settings.Header.TextView" parent="@android:style/TextAppearance.Widget.TextView">
+    <style name="Settings.Header.TextView" parent="Header.TextView">
         <item name="android:paddingStart">@dimen/wire__padding__16</item>
         <item name="android:paddingEnd">@dimen/wire__padding__16</item>
     </style>
@@ -71,12 +71,12 @@
         <item name="android:paddingEnd">@dimen/preference_button_padding</item>
     </style>
 
-    <style name="Settings.Subtitle.TextView" parent="@android:style/TextAppearance.Widget.TextView">
+    <style name="Settings.Subtitle.TextView" parent="Subtitle.TextView">
         <item name="android:paddingStart">@dimen/preference_button_padding</item>
         <item name="android:paddingEnd">@dimen/preference_button_padding</item>
     </style>
 
-    <style name="Settings.Glyphs.TextView" parent="@android:style/TextAppearance.Widget.TextView">
+    <style name="Settings.Glyphs.TextView" parent="Glyphs.TextView">
         <item name="android:textSize">@dimen/wire__padding__16</item>
         <item name="android:textColor">@color/white</item>
         <item name="android:layout_marginStart">@dimen/preference_button_padding</item>
