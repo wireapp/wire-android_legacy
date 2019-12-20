@@ -48,18 +48,15 @@ import scala.util.control.NonFatal
 
 
 class ShareActivity extends BaseActivity with ActivityHelper {
-
   import ShareActivity._
 
-  lazy val sharing  = inject[SharingController]
+  lazy val sharing = inject[SharingController]
   lazy val accounts = inject[AccountsService]
 
   private lazy val confirmationMenu = returning(findById[ConfirmationMenu](R.id.cm__conversation_list__login_prompt)) { cm =>
     cm.setCallback(new TwoButtonConfirmationCallback() {
       override def positiveButtonClicked(checkboxIsSelected: Boolean) = finish()
-
       override def negativeButtonClicked() = {}
-
       override def onHideAnimationEnd(confirmed: Boolean, canceled: Boolean, checkboxIsSelected: Boolean) = {}
     })
 
@@ -119,7 +116,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
   override def onBackPressed() =
     withFragmentOpt(ConversationSelectorFragment.TAG) {
       case Some(f: ConversationSelectorFragment) if f.onBackPressed() => //
-      case _                                                          => super.onBackPressed()
+      case _ => super.onBackPressed()
     }
 
 }
@@ -169,19 +166,19 @@ object ShareActivity extends DerivedLogTag {
             case "image" => Some(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             case "video" => Some(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
             case "audio" => Some(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-            case _       => None
+            case _ => None
           }
           contentUri.flatMap(uri => getDocumentPath(context, uri, "_id=?", Array[String](split(1))))
-        case _ if isDocumentUri(context, uri)        =>
+        case _ if isDocumentUri(context, uri) =>
           getDocumentPath(context, uri).orElse(default)
-        case _                                       =>
+        case _ =>
           warn(l"Unrecognised authority for uri: $uri")
           None
       }).orElse(default)
     } else
       (uri.getScheme.toLowerCase match {
         case "content" => getDocumentPath(context, uri).orElse(default)
-        case _         =>
+        case _ =>
           warn(l"Unreachable content: $uri")
           default
       }).flatMap { u =>
@@ -189,7 +186,7 @@ object ShareActivity extends DerivedLogTag {
         val path = u.getPath
 
         if (!u.getLastPathSegment.contains(".Android_wbu") && (path.contains(context.getPackageName) ||
-          path.startsWith("/proc"))) {
+            path.startsWith("/proc"))) {
           None
         } else {
           Some(u)
