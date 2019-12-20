@@ -211,17 +211,19 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   private def initShortcutDestinations(): Unit = {
-    val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
+    if (BuildConfig.APPLICATION_ID.equalsIgnoreCase("com.wire.internal")) {
+      val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
 
-    val intent = new Intent(getActivity, classOf[MainActivity])
-    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+      val intent = new Intent(getActivity, classOf[MainActivity])
+      intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
-    val newMessageShortcutInfo = newMessageShortcut(getActivity, intent)
-    val sharePhotoShortcutInfo = sharePhotoShortcut(getActivity, intent)
-    val groupConversationShortcutInfo = groupConversationShortcut(getActivity, intent)
+      val newMessageShortcutInfo = newMessageShortcut(getActivity, intent)
+      val sharePhotoShortcutInfo = sharePhotoShortcut(getActivity, intent)
+      val groupConversationShortcutInfo = groupConversationShortcut(getActivity, intent)
 
-    shortcutManager.setDynamicShortcuts(
-      List(newMessageShortcutInfo, sharePhotoShortcutInfo, groupConversationShortcutInfo).asJava)
+      shortcutManager.setDynamicShortcuts(
+        List(newMessageShortcutInfo, sharePhotoShortcutInfo, groupConversationShortcutInfo).asJava)
+    }
   }
 
   private def checkShortcutActions(): Unit = {
