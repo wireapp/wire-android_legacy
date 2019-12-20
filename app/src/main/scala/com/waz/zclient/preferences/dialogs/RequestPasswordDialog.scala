@@ -157,6 +157,8 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
   override def onActivityCreated(savedInstanceState: Bundle) = {
     super.onActivityCreated(savedInstanceState)
     if (!useBiometric) getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+    //hide content of wire when it's locked
+    getDialog.getWindow.setDimAmount(1.0f)
   }
 }
 
