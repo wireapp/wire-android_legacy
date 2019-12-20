@@ -10,8 +10,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.load
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.unload
+import com.waz.zclient.settings.account.di.settingsAccountModule
 import com.waz.zclient.settings.account.model.UserProfileItem
+import com.waz.zclient.user.di.usersModule
 import kotlinx.android.synthetic.main.fragment_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
@@ -19,6 +23,18 @@ import org.koin.android.viewmodel.ext.android.viewModel
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        settingsAccountModule.load()
+        usersModule.load()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        settingsAccountModule.unload()
+        usersModule.unload()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_account, container, false)

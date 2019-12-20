@@ -11,8 +11,12 @@ import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.load
+import com.waz.zclient.core.extension.unload
 import com.waz.zclient.core.lists.RecyclerViewItemClickListener
+import com.waz.zclient.devices.di.clientsModule
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailActivity
+import com.waz.zclient.settings.devices.di.settingsDeviceModule
 import com.waz.zclient.settings.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.settings.devices.list.adapter.DevicesViewHolder
 import com.waz.zclient.settings.devices.model.ClientItem
@@ -37,6 +41,18 @@ class SettingsDeviceListFragment : Fragment() {
 
     private val devicesAdapter by lazy {
         DevicesRecyclerViewAdapter()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        settingsDeviceModule.load()
+        clientsModule.load()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        settingsDeviceModule.unload()
+        clientsModule.unload()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

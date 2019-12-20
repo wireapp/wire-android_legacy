@@ -19,5 +19,4 @@ val usersModule: Module = module {
     factory { UsersLocalDataSource(get(), get()) }
     factory { Network().networkClient().create(UsersNetworkService::class.java) }
     factory { get<UserDatabase>().userDbService() }
-    factory { get<UserDatabase>().userPreferencesDbService() }
 }
