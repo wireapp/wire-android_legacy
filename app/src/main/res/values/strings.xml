@@ -1224,7 +1224,13 @@
     <string name="new_conv_no_results">No results</string>
     <string name="new_conv_no_contacts">No contacts</string>
 
-    <string name="participants_divider_services">SERVICES (%1$s)</string>
+
+    <plurals name="participants_divider_services">
+        <item quantity="zero">SERVICES</item>
+        <item quantity="one">SERVICES (%1$s)</item>
+        <item quantity="other">SERVICES (%1$s)</item>
+    </plurals>
+
     <string name="participants_divider_people">GROUP MEMBERS (%1$s)</string>
     <string name="participants_divider_admins">GROUP ADMINS (%1$s)</string>
     <string name="participants_divider_people_no_number">GROUP MEMBERS</string>
