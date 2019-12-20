@@ -82,7 +82,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
     onClickEvent { _ =>
       a.selectedConversations.head.map { convs =>
         sharingController.onContentShared(getActivity, convs)
-        showToast(R.string.multi_share_toast_sending, long = false)
+        if (multiPicker) showToast(R.string.multi_share_toast_sending, long = false)
         getActivity.finish()
       } (Threading.Ui)
     }

@@ -39,7 +39,7 @@ object Shortcuts {
       .build
 
 
-  def groupConversationShortcut(activity: Activity, intent: Intent): ShortcutInfo =
+  def sharePhotoShortcut(activity: Activity, intent: Intent): ShortcutInfo =
     new ShortcutInfo.Builder(activity, "share_photo")
       .setShortLabel(activity.getString(R.string.shortcut_share_a_photo_label))
       .setLongLabel(activity.getString(R.string.shortcut_share_a_photo_label))
@@ -47,7 +47,7 @@ object Shortcuts {
       .setIntent(intent.setAction(SharePhoto))
       .build
 
-  def sharePhotoShortcut(activity: Activity, intent: Intent): ShortcutInfo =
+  def groupConversationShortcut(activity: Activity, intent: Intent): ShortcutInfo =
     new ShortcutInfo.Builder(activity, "new_group")
       .setShortLabel(activity.getString(R.string.shortcut_create_group_short_label))
       .setLongLabel(activity.getString(R.string.shortcut_create_group_long_label))

@@ -71,7 +71,6 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
-import com.waz.zclient.pages.main.shortcuts.Shortcuts
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.tracking.GlobalTrackingController
@@ -94,6 +93,7 @@ class MainPhoneFragment extends FragmentHelper
   import MainPhoneFragment._
   import Threading.Implicits.Ui
   import com.waz.zclient.pages.main.shortcuts.Shortcuts._
+
   import scala.collection.JavaConverters._
 
   private lazy val zms = inject[Signal[ZMessaging]]
