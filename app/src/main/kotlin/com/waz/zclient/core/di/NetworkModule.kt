@@ -36,7 +36,6 @@ object NetworkDependencyProvider {
         }
         return okHttpClientBuilder.build()
     }
-
 }
 
 val networkModule: Module = module {
