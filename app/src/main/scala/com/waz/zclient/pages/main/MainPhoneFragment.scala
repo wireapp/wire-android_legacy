@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2019 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+  * Wire
+  * Copyright (C) 2018 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.pages.main
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.{ShortcutInfo, ShortcutManager}
-import android.graphics.drawable.Icon
+import android.content.pm.ShortcutManager
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -55,6 +71,7 @@ import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversationlist.ConfirmationFragment
 import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
+import com.waz.zclient.pages.main.shortcuts.Shortcuts
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.tracking.GlobalTrackingController
@@ -75,8 +92,9 @@ class MainPhoneFragment extends FragmentHelper
   with ConfirmationFragment.Container {
 
   import MainPhoneFragment._
-  import Shortcuts._
   import Threading.Implicits.Ui
+  import com.waz.zclient.pages.main.shortcuts.Shortcuts._
+  import scala.collection.JavaConverters._
 
   private lazy val zms = inject[Signal[ZMessaging]]
   private lazy val am  = inject[Signal[AccountManager]]
@@ -101,43 +119,43 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   private lazy val consentDialog = for {
-    true                     <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
-    am                       <- am.head
-    showAnalyticsPopup       <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
-                                  previouslyShown => !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
-                                }
-    color                    <- accentColorController.accentColor.head
-                             // Show "Help make wire better" popup
-    _                        <- if (!showAnalyticsPopup) Future.successful({}) else
-                             showConfirmationDialog(
-                               getString(R.string.crashes_and_analytics_request_title),
-                               getString(R.string.crashes_and_analytics_request_body),
-                               R.string.crashes_and_analytics_request_agree,
-                               R.string.crashes_and_analytics_request_no,
-                               color
-                             ).flatMap { resp =>
-                               zms.head.flatMap { zms =>
-                                 for {
-                                   _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
-                                   _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
-                                   _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
-                                 } yield {}
-                               }
-                             }
+    true <- inject[GlobalModule].prefs(GlobalPreferences.ShowMarketingConsentDialog).apply()
+    am <- am.head
+    showAnalyticsPopup <- am.userPrefs(CrashesAndAnalyticsRequestShown).apply().map {
+      previouslyShown => !previouslyShown && BuildConfig.SUBMIT_CRASH_REPORTS
+    }
+    color <- accentColorController.accentColor.head
+    // Show "Help make wire better" popup
+    _ <- if (!showAnalyticsPopup) Future.successful({}) else
+      showConfirmationDialog(
+        getString(R.string.crashes_and_analytics_request_title),
+        getString(R.string.crashes_and_analytics_request_body),
+        R.string.crashes_and_analytics_request_agree,
+        R.string.crashes_and_analytics_request_no,
+        color
+      ).flatMap { resp =>
+        zms.head.flatMap { zms =>
+          for {
+            _ <- zms.userPrefs(CrashesAndAnalyticsRequestShown) := true
+            _ <- zms.prefs(analyticsPrefKey) := resp //we override whatever the global value is on asking the user again
+            _ <- if (resp) inject[GlobalTrackingController].optIn() else Future.successful(())
+          } yield {}
+        }
+      }
     askMarketingConsentAgain <- am.userPrefs(UserPreferences.AskMarketingConsentAgain).apply()
-                             // Show marketing consent popup
-    _                        <- if (!askMarketingConsentAgain) Future.successful({}) else
-                             showConfirmationDialog(
-                               getString(R.string.receive_news_and_offers_request_title),
-                               getString(R.string.receive_news_and_offers_request_body),
-                               R.string.app_entry_dialog_accept,
-                               R.string.app_entry_dialog_not_now,
-                               Some(R.string.app_entry_dialog_privacy_policy),
-                               color
-                             ).map { confirmed =>
-                               am.setMarketingConsent(confirmed)
-                               if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
-                             }
+    // Show marketing consent popup
+    _ <- if (!askMarketingConsentAgain) Future.successful({}) else
+      showConfirmationDialog(
+        getString(R.string.receive_news_and_offers_request_title),
+        getString(R.string.receive_news_and_offers_request_body),
+        R.string.app_entry_dialog_accept,
+        R.string.app_entry_dialog_not_now,
+        Some(R.string.app_entry_dialog_privacy_policy),
+        color
+      ).map { confirmed =>
+        am.setMarketingConsent(confirmed)
+        if (confirmed.isEmpty) inject[BrowserController].openPrivacyPolicy()
+      }
   } yield {}
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
@@ -209,36 +227,18 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
-  import scala.collection.JavaConverters._
-
   private def initShortcutDestinations(): Unit = {
-    if (BuildConfig.APPLICATION_ID.startsWith("com.wire")) {
-        val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
+    val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
 
-        val intent = new Intent (getActivity, classOf[MainActivity])
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        val newMessageShortcut = new ShortcutInfo.Builder(getActivity, "new_message")
-          .setShortLabel(getString(R.string.shortcut_compose_new_message_label))
-          .setLongLabel(getString(R.string.shortcut_compose_new_message_label_long))
-          .setIcon(Icon.createWithResource(getActivity, R.drawable.ic_create_conversation))
-          .setIntent(intent.setAction(NewMessage))
-          .build
+    val intent = new Intent(getActivity, classOf[MainActivity])
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
-        val sharePhotoShortcut = new ShortcutInfo.Builder(getActivity, "share_photo")
-          .setShortLabel(getString(R.string.shortcut_share_a_photo_label))
-          .setLongLabel(getString(R.string.shortcut_share_a_photo_label))
-          .setIcon(Icon.createWithResource(getActivity, R.drawable.ic_share_photo))
-          .setIntent(intent.setAction(SharePhoto))
-          .build
+    val newMessageShortcutInfo = newMessageShortcut(getActivity, intent)
+    val sharePhotoShortcutInfo = sharePhotoShortcut(getActivity, intent)
+    val groupConversationShortcutInfo = groupConversationShortcut(getActivity, intent)
 
-        val newGroupConversationShortcut = new ShortcutInfo.Builder(getActivity, "new_group")
-          .setShortLabel(getString(R.string.shortcut_create_group_short_label))
-          .setLongLabel(getString(R.string.shortcut_create_group_long_label))
-          .setIcon(Icon.createWithResource(getActivity, R.drawable.ic_create_group))
-          .setIntent(intent.setAction(NewGroupConversation))
-          .build
-      shortcutManager.setDynamicShortcuts(List(newMessageShortcut, sharePhotoShortcut, newGroupConversationShortcut).asJava)
-    }
+    shortcutManager.setDynamicShortcuts(
+      List(newMessageShortcutInfo, sharePhotoShortcutInfo, groupConversationShortcutInfo).asJava)
   }
 
   private def checkShortcutActions(): Unit = {
@@ -265,13 +265,14 @@ class MainPhoneFragment extends FragmentHelper
     resetAction()
   }
 
-  private def goToConversation() : Unit = {
-      val intent = new Intent(getActivity, classOf[ShareActivity])
-      intent.setAction(Intent.ACTION_SEND)
-      intent.putExtra(Intent.EXTRA_TEXT, "")
-      intent.setType(ShareActivity.MessageIntentType)
-      startActivity(intent)
-      resetAction()
+  private def goToConversation(): Unit = {
+    val intent = new Intent(getActivity, classOf[ShareActivity])
+      .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    intent.setAction(Intent.ACTION_SEND)
+    intent.putExtra(Intent.EXTRA_TEXT, "")
+    intent.setType(ShareActivity.MessageIntentType)
+    startActivity(intent)
+    resetAction()
   }
 
   private def openGalleryPicker() = {
@@ -280,12 +281,13 @@ class MainPhoneFragment extends FragmentHelper
         val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         startActivityForResult(galleryIntent, SharePhotoRequestCode)
         resetAction()
-      case _ =>
+      case _    =>
     }(Threading.Ui)
   }
 
   private def goToShareImage(data: Intent) = {
     val intent = new Intent(getActivity, classOf[ShareActivity])
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
     intent.setAction(Intent.ACTION_SEND)
     intent.putExtra(Intent.EXTRA_STREAM, data.getData)
     intent.setType("image/jpeg")
@@ -305,7 +307,7 @@ class MainPhoneFragment extends FragmentHelper
     consentDialog
   }
 
-  override def onResume() : Unit = {
+  override def onResume(): Unit = {
     super.onResume()
     checkShortcutActions()
   }
@@ -341,20 +343,20 @@ class MainPhoneFragment extends FragmentHelper
 
     if (backStackSize > 0) {
       Option(topFragment) collect {
-        case f : GiphySharingPreviewFragment =>
+        case f: GiphySharingPreviewFragment =>
           f.onBackPressed() || getChildFragmentManager.popBackStackImmediate(GiphySharingPreviewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        case f : ImageFragment =>
+        case f: ImageFragment               =>
           f.onBackPressed() || getChildFragmentManager.popBackStackImmediate(ImageFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        case f : CollectionFragment => f.onBackPressed()
-        case f : ConfirmationFragment => f.onBackPressed()
+        case f: CollectionFragment          => f.onBackPressed()
+        case f: ConfirmationFragment        => f.onBackPressed()
       }
     } else {
       // Back press is first delivered to the notification fragment, and if it's not consumed there,
       // it's then delivered to the main content.
       Option(mainContentFragment) collect {
-        case f : OnBackPressedListener if f.onBackPressed() => true
+        case f: OnBackPressedListener if f.onBackPressed() => true
       } orElse (Option(overlayContentFragment) collect {
-        case f : OnBackPressedListener if f.onBackPressed() => true
+        case f: OnBackPressedListener if f.onBackPressed() => true
       })
     }
 
@@ -388,7 +390,7 @@ class MainPhoneFragment extends FragmentHelper
 
     def getGroupErrorMessage: Future[String] = {
       error.errType match {
-        case CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION =>
+        case CANNOT_ADD_UNCONNECTED_USER_TO_CONVERSATION            =>
           if (error.users.size == 1)
             usersController.user(error.users.head).head
               .map(getString(R.string.in_app_notification__sync_error__add_user__body, _))
@@ -397,7 +399,7 @@ class MainPhoneFragment extends FragmentHelper
         case CANNOT_CREATE_GROUP_CONVERSATION_WITH_UNCONNECTED_USER =>
           conversationController.conversationData(error.convId.get).head
             .map(data => getString(R.string.in_app_notification__sync_error__create_group_convo__body, data.get.displayName))
-        case _ =>
+        case _                                                      =>
           Future.successful(getString(R.string.in_app_notification__sync_error__unknown__body))
       }
     }
@@ -426,14 +428,14 @@ class MainPhoneFragment extends FragmentHelper
       case CANNOT_ADD_USER_TO_FULL_CALL |
            CANNOT_CALL_CONVERSATION_WITH_TOO_MANY_MEMBERS |
            CANNOT_SEND_VIDEO |
-           PLAYBACK_FAILURE =>
-       LogUI.error(l"Unexpected error ${error.errType}")
+           PLAYBACK_FAILURE                                       =>
+        LogUI.error(l"Unexpected error ${error.errType}")
       case CANNOT_SEND_MESSAGE_TO_UNVERIFIED_CONVERSATION |
            RECORDING_FAILURE |
            CANNOT_SEND_ASSET_FILE_NOT_FOUND |
-           CANNOT_SEND_ASSET_TOO_LARGE => // Handled in ConversationFragment
-      case CANNOT_DELETE_GROUP_CONVERSATION => //Handled in ConversationListManagerFragment
-      case _ =>
+           CANNOT_SEND_ASSET_TOO_LARGE                            => // Handled in ConversationFragment
+      case CANNOT_DELETE_GROUP_CONVERSATION                       => //Handled in ConversationListManagerFragment
+      case _                                                      =>
         LogUI.error(l"Unexpected error ${error.errType}")
     }
   }
@@ -453,12 +455,3 @@ class MainPhoneFragment extends FragmentHelper
 object MainPhoneFragment {
   val Tag: String = classOf[MainPhoneFragment].getName
 }
-
-object Shortcuts {
-  val NewGroupConversation = "GROUP_CONVERSATION"
-  val NewMessage = "NEW_MESSAGE"
-  val SharePhoto = "SHARE_PHOTO"
-
-  val SharePhotoRequestCode = 40
-}
-
