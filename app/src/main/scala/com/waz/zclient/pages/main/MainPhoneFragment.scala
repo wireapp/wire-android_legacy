@@ -19,6 +19,8 @@ package com.waz.zclient.pages.main
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.{ShortcutInfo, ShortcutManager}
+import android.graphics.drawable.Icon
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -207,13 +209,45 @@ class MainPhoneFragment extends FragmentHelper
     }
   }
 
-  private def initShortcutDestinations() = {
+  import scala.collection.JavaConverters._
+
+  private def initShortcutDestinations(): Unit = {
+    if (BuildConfig.APPLICATION_ID.startsWith("com.wire")) {
+        val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
+
+        val intent = new Intent (getActivity, classOf[MainActivity])
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        val newMessageShortcut = new ShortcutInfo.Builder(getActivity, "new_message")
+          .setShortLabel(getString(R.string.shortcut_compose_new_message_label))
+          .setLongLabel(getString(R.string.shortcut_compose_new_message_label_long))
+          .setIcon(Icon.createWithResource(getActivity, R.drawable.ic_create_conversation))
+          .setIntent(intent.setAction(NewMessage))
+          .build
+
+        val sharePhotoShortcut = new ShortcutInfo.Builder(getActivity, "share_photo")
+          .setShortLabel(getString(R.string.shortcut_share_a_photo_label))
+          .setLongLabel(getString(R.string.shortcut_share_a_photo_label))
+          .setIcon(Icon.createWithResource(getActivity, R.drawable.ic_share_photo))
+          .setIntent(intent.setAction(SharePhoto))
+          .build
+
+        val newGroupConversationShortcut = new ShortcutInfo.Builder(getActivity, "new_group")
+          .setShortLabel(getString(R.string.shortcut_create_group_short_label))
+          .setLongLabel(getString(R.string.shortcut_create_group_long_label))
+          .setIcon(Icon.createWithResource(getActivity, R.drawable.ic_create_group))
+          .setIntent(intent.setAction(NewGroupConversation))
+          .build
+      shortcutManager.setDynamicShortcuts(List(newMessageShortcut, sharePhotoShortcut, newGroupConversationShortcut).asJava)
+    }
+  }
+
+  private def checkShortcutActions(): Unit = {
     val action = getActivity.getIntent.getAction
     action match {
       case NewGroupConversation => newGroupConversation()
       case SharePhoto           => openGalleryPicker()
       case NewMessage           => goToConversation()
-      case _ =>
+      case _                    =>
     }
   }
 
@@ -269,6 +303,11 @@ class MainPhoneFragment extends FragmentHelper
     collectionController.addObserver(this)
     initShortcutDestinations()
     consentDialog
+  }
+
+  override def onResume() : Unit = {
+    super.onResume()
+    checkShortcutActions()
   }
 
   override def onStop(): Unit = {
