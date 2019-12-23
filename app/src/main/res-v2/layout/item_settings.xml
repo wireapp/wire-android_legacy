@@ -44,5 +44,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/settings_item_icon"
         app:layout_constraintEnd_toEndOf="parent"
-        style="@style/Settings.Glyphs.TextView" />
+        style="@style/Settings.Title.TextView" />
 </androidx.constraintlayout.widget.ConstraintLayout>
