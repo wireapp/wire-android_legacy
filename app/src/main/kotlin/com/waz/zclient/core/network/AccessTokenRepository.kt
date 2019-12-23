@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.Either
 
 //TODO: Add Preferences Manager as a collaborator
 //TODO: Keep in mind that there should be one preference file per user.
-class AccessTokenRepository {
+class AccessTokenRepository(remoteDataSource: AccessTokenRemoteDataSource) {
 
     fun accessToken(): String {
         //TODO: retrieve token, maybe from User Preferences?
