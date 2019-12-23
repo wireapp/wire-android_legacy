@@ -4,8 +4,12 @@ import com.waz.zclient.BuildConfig
 import com.waz.zclient.core.network.AccessTokenAuthenticator
 import com.waz.zclient.core.network.AccessTokenInterceptor
 import com.waz.zclient.core.network.AccessTokenRepository
+import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.AuthTokenHandler
+import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.core.network.RetrofitClient
+import com.waz.zclient.core.threading.ThreadHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
@@ -45,4 +49,7 @@ val networkModule: Module = module {
     single { AccessTokenRepository() }
     single { AuthTokenHandler(get()) }
     single { AccessTokenAuthenticator(get()) }
+    single<NetworkClient> { RetrofitClient(get()) }
+    single { ThreadHandler() }
+    single { ApiService(get(), get(), get()) }
 }
