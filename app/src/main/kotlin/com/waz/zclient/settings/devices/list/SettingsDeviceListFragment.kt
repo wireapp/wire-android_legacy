@@ -20,7 +20,6 @@ import org.koin.android.viewmodel.ext.android.viewModel
 
 class SettingsDeviceListFragment : Fragment() {
 
-
     private val deviceListViewModel: SettingsDeviceListViewModel by viewModel()
 
     private lateinit var devicesRecyclerView: RecyclerView
