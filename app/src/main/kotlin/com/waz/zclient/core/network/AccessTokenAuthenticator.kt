@@ -18,37 +18,27 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
      * This authenticate() method is called when server returns 401 Unauthorized.
      */
     override fun authenticate(route: Route?, response: Response): Request? {
-        // We need to have a token in order to refresh it.
-        val token= authTokenHandler.refreshToken()
+        val refreshToken = authTokenHandler.refreshToken()
 
         synchronized(this) {
-            val newToken = authTokenHandler.accessToken() //TODO: get the new token and save it
-            authTokenHandler.updateAccessToken(newToken)
+            val tokenResult = authTokenHandler.renewAccessToken(refreshToken)
 
-            // Check if the request made was previously made as an authenticated request.
-            response.request().header(AuthTokenHandler.AUTH_HEADER)?.let {
-
-                // If the token has changed since the request was made, use the new token.
-                if (newToken != token) {
-                    return response.request()
-                        .newBuilder()
-                        .removeHeader(AuthTokenHandler.AUTH_HEADER)
-                        //TODO: Extract this line since it is being repeated.
-                        .addHeader(AuthTokenHandler.AUTH_HEADER, "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $token")
-                        .build()
-                }
-
-                val updatedToken = authTokenHandler.refreshToken()
-
-                // Retry the request with the new token.
-                return response.request()
-                    .newBuilder()
-                    .removeHeader(AuthTokenHandler.AUTH_HEADER)
-                    //TODO: Extract this line since it is being repeated.
-                    .addHeader(AuthTokenHandler.AUTH_HEADER, "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $updatedToken")
-                    .build()
+            return tokenResult.fold({ null }) {
+                authTokenHandler.updateAccessToken(it)
+                proceedWithNewAccessToken(response, it)
             }
+
         }
-        return null
     }
+
+    private fun proceedWithNewAccessToken(response: Response, newAccessToken: String): Request? =
+        response.request().header(AuthTokenHandler.AUTH_HEADER)?.let {
+            response.request()
+                .newBuilder()
+                .removeHeader(AuthTokenHandler.AUTH_HEADER)
+                .addHeader(AuthTokenHandler.AUTH_HEADER,
+                    "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $newAccessToken")
+                .build()
+        }
+
 }
