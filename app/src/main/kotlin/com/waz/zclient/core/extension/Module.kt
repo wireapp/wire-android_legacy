@@ -6,9 +6,7 @@ import org.koin.core.module.Module
 
 
 fun Module.load() {
-
-    val loadModule by lazy { loadKoinModules(this) }
-    loadModule
+    loadKoinModules(this)
 }
 
 fun Module.unload() {
