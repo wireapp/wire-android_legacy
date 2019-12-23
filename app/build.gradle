@@ -439,7 +439,7 @@ dependencies {
     // Unit Tests
     testImplementation "junit:junit:$rootProject.ext.versions.junit"
     testImplementation "org.mockito:mockito-core:$versions.mockito"
-    testImplementation "org.mockito:mockito-inline:$versions.mockito"
+    testImplementation "net.bytebuddy:byte-buddy:1.10.6"
     testImplementation "org.amshove.kluent:kluent:$versions.kluent"
     testImplementation "androidx.paging:paging-common:2.0.0"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
