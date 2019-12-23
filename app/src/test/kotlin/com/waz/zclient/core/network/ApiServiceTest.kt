@@ -8,9 +8,9 @@ import com.waz.zclient.core.threading.ThreadHandler
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import org.mockito.Mockito.*
 import retrofit2.Call
 import retrofit2.Response
 
@@ -37,6 +37,19 @@ class ApiServiceTest : UnitTest() {
         `when`(threadHandler.isUIThread()).thenReturn(true)
         val (call, _) = mockResponse<String>()
         apiService.request(call, String.empty())
+    }
+
+    @Test
+    fun `given a network call, when requesting a call, checks the current thread as first step`() {
+        `when`(threadHandler.isUIThread()).thenReturn(false)
+        `when`(networkHandler.isConnected).thenReturn(true)
+
+        val (call, _) = mockResponse<String>()
+        apiService.request(call, String.empty())
+
+        val inOrder = inOrder(threadHandler, networkHandler)
+        inOrder.verify(threadHandler).isUIThread()
+        inOrder.verify(networkHandler).isConnected
     }
 
     @Test
