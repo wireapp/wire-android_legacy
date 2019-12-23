@@ -6,7 +6,16 @@ import com.waz.zclient.core.di.NetworkDependencyProvider.NETWORK_CLIENT_FOR_TOKE
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClient
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.di.NetworkDependencyProvider.retrofit
-import com.waz.zclient.core.network.*
+import com.waz.zclient.core.network.AccessTokenAuthenticator
+import com.waz.zclient.core.network.AccessTokenInterceptor
+import com.waz.zclient.core.network.AccessTokenRemoteDataSource
+import com.waz.zclient.core.network.AccessTokenRepository
+import com.waz.zclient.core.network.ApiService
+import com.waz.zclient.core.network.AuthTokenHandler
+import com.waz.zclient.core.network.NetworkClient
+import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.core.network.RetrofitClient
+import com.waz.zclient.core.network.api.token.TokenService
 import com.waz.zclient.core.threading.ThreadHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

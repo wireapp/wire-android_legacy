@@ -2,10 +2,11 @@ package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.network.api.token.AccessTokenResponse
 
 //TODO: Add Preferences Manager as a collaborator
 //TODO: Keep in mind that there should be one preference file per user.
-class AccessTokenRepository(remoteDataSource: AccessTokenRemoteDataSource) {
+class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataSource) {
 
     fun accessToken(): String {
         //TODO: retrieve token, maybe from User Preferences?
@@ -25,7 +26,9 @@ class AccessTokenRepository(remoteDataSource: AccessTokenRemoteDataSource) {
         //TODO: Save the refresh token somewhere: User Preferences?
     }
 
-    fun renewAccessToken(refreshToken: String) : Either<Failure, String> = TODO("implement")
+    //TODO: do we need an intermediary Access Token repository model here?
+    fun renewAccessToken(refreshToken: String) : Either<Failure, AccessTokenResponse> =
+        remoteDataSource.renewAccessToken(refreshToken)
 
     fun wipeOutTokens() {
         wipeOutAccessToken()
