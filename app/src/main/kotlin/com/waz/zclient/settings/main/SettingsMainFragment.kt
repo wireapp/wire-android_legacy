@@ -17,12 +17,12 @@ import com.waz.zclient.settings.main.list.SettingsMainListAdapter
 import com.waz.zclient.settings.main.list.SettingsMainListFactory
 import com.waz.zclient.settings.options.SettingsOptionsFragment
 import com.waz.zclient.settings.support.SettingsSupportFragment
-import kotlinx.android.synthetic.main.fragment_settings.*
+import kotlinx.android.synthetic.main.fragment_settings_main.*
 
 class SettingsMainFragment : Fragment(), OnItemClickListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_settings, container, false)
+        return inflater.inflate(R.layout.fragment_settings_main, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
