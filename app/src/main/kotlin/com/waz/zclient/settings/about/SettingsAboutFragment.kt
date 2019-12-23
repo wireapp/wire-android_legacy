@@ -8,12 +8,12 @@ import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
-import kotlinx.android.synthetic.main.fragment_about.*
+import kotlinx.android.synthetic.main.fragment_settings_about.*
 
 class SettingsAboutFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_about, container, false)
+        return inflater.inflate(R.layout.fragment_settings_about, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

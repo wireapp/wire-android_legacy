@@ -12,7 +12,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.settings.account.model.UserProfileItem
-import kotlinx.android.synthetic.main.fragment_account.*
+import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 
@@ -21,7 +21,7 @@ class SettingsAccountFragment : Fragment() {
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_account, container, false)
+        return inflater.inflate(R.layout.fragment_settings_account, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

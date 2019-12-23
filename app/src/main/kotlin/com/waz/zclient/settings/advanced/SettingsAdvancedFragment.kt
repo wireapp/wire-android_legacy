@@ -10,7 +10,7 @@ import com.waz.zclient.R
 class SettingsAdvancedFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_advanced, container, false)
+        return inflater.inflate(R.layout.fragment_settings_advanced, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

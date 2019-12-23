@@ -28,282 +28,282 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_info_header"
+            style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_details_category_title"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/preferences_account_name"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsHeaderTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
             android:id="@+id/preferences_account_name"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_info_header"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_handle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_account_handle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_info_header">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_name_title"
+                style="@style/Settings.Title.TextView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/settingsTitleTextView" />
+                android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_name_subtitle"
+                style="@style/Settings.Subtitle.TextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/pref_account_name_title"
-                style="@style/settingsSubtitleTextView" />
+                android:text="@string/pref_account_name_title" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/preferences_account_handle"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_name"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_email"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_account_email"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_name">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_handle_title"
+                style="@style/Settings.Title.TextView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/settingsTitleTextView" />
+                android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_handle_subtitle"
+                style="@style/Settings.Subtitle.TextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/pref_account_username_title"
-                style="@style/settingsSubtitleTextView" />
+                android:text="@string/pref_account_username_title" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/preferences_account_email"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_handle"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_phone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_account_phone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_handle">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_email_title"
+                style="@style/Settings.Title.TextView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/settingsTitleTextView" />
+                android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_email_subtitle"
+                style="@style/Settings.Subtitle.TextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/pref_account_email_title"
-                style="@style/settingsSubtitleTextView" />
+                android:text="@string/pref_account_email_title" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/preferences_account_phone"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_email"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_appearance_header"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_appearance_header"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_email">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_phone_title"
+                style="@style/Settings.Title.TextView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/settingsTitleTextView" />
+                android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/preferences_account_phone_subtitle"
+                style="@style/Settings.Subtitle.TextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/pref_account_phone_title"
-                style="@style/settingsSubtitleTextView" />
+                android:text="@string/pref_account_phone_title" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_appearance_header"
+            style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_appearance_category_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_phone"
             app:layout_constraintBottom_toTopOf="@+id/preferences_about_website"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsHeaderTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_phone" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_about_website"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_picture_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_appearance_header"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_accent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             app:iconStart="@drawable/conversation_badge_red"
-            style="@style/settingsButton" />
+            app:layout_constraintBottom_toTopOf="@+id/preferences_account_accent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_appearance_header" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_account_accent"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_color_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_about_website"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_privacy_header"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
             app:iconStart="@drawable/conversation_badge_red"
-            style="@style/settingsButton" />
+            app:layout_constraintBottom_toTopOf="@+id/preferences_privacy_header"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_about_website" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_privacy_header"
+            style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref__account_privacy"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_accent"
             app:layout_constraintBottom_toTopOf="@+id/preferences_account_read_receipts_title"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsHeaderTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_accent" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_account_read_receipts_title"
+            style="@style/Settings.Title.TextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref__account_send_read_receipts_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_privacy_header"
             app:layout_constraintBottom_toTopOf="@+id/preferences_account_read_receipts_subtitle"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsTitleTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_privacy_header" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_account_read_receipts_subtitle"
+            style="@style/Settings.Subtitle.TextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref__account_send_read_receipts_summary"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_read_receipts_title"
             app:layout_constraintBottom_toTopOf="@+id/preferences_personal_info_header"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsSubtitleTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_read_receipts_title" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_personal_info_header"
+            style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_personal_information_category_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_read_receipts_subtitle"
             app:layout_constraintBottom_toTopOf="@+id/preferences_data_usage_permissions"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsHeaderTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_read_receipts_subtitle" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_data_usage_permissions"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_data_usage_permissions"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_personal_info_header"
             app:layout_constraintBottom_toTopOf="@+id/preferences_account_accent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsButton" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_personal_info_header" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_history_header"
+            style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_conversations_category_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_data_usage_permissions"
             app:layout_constraintBottom_toTopOf="@+id/preferences_backup"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsHeaderTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_data_usage_permissions" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_backup"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_backup_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_history_header"
             app:layout_constraintBottom_toTopOf="@+id/preferences_actions_header"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsButton" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_history_header" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/preferences_actions_header"
+            style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_actions_category_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_backup"
             app:layout_constraintBottom_toTopOf="@+id/preferences_backup"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsHeaderTextView" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_backup" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_account_reset_password"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_password_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_actions_header"
             app:layout_constraintBottom_toTopOf="@+id/preferences_account_logout"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsButton" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_actions_header" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_account_logout"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_sign_out_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_reset_password"
             app:layout_constraintBottom_toTopOf="@+id/preferences_account_delete"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsButton" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_reset_password" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/preferences_account_delete"
+            style="@style/Settings.Button"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_delete_title"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_logout"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            style="@style/settingsButton" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_account_logout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
