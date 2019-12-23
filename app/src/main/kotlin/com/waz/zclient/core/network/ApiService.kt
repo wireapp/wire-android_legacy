@@ -22,7 +22,7 @@ class ApiService(private val networkHandler: NetworkHandler,
     fun <T> createApi(clazz: Class<T>) = networkClient.create(clazz)
 
     fun <T> request(call: Call<T>, default: T): Either<Failure, T> {
-        threadHandler.failFastIfUIThread()
+        require(!threadHandler.isUIThread())
 
         return when (networkHandler.isConnected) {
             true -> performRequest(call, default)
