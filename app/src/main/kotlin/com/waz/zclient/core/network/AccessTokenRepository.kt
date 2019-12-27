@@ -1,33 +1,24 @@
 package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.api.token.AccessTokenResponse
 
-//TODO: Add Preferences Manager as a collaborator
-//TODO: Keep in mind that there should be one preference file per user.
-class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataSource) {
+class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataSource,
+                            private val localDataSource: AccessTokenLocalDataSource) {
 
-    fun accessToken(): String {
-        //TODO: retrieve token, maybe from User Preferences?
-        return "myAccessToken"
-    }
+    fun accessToken(): String = localDataSource.accessToken() ?: String.empty()
 
-    fun updateAccessToken(newToken: String) {
-        //TODO: Save the token somewhere: User Preferences?
-    }
+    fun updateAccessToken(newToken: String) = localDataSource.updateAccessToken(newToken)
 
-    fun refreshToken(): String {
-        //TODO: retrieve refresh token, maybe from User Preferences?
-        return "myRefreshToken"
-    }
+    fun refreshToken(): String = localDataSource.refreshToken() ?: String.empty()
 
-    fun updateRefreshToken(newRefreshToken: String) {
-        //TODO: Save the refresh token somewhere: User Preferences?
-    }
+    fun updateRefreshToken(newRefreshToken: String) =
+        localDataSource.updateRefreshToken(newRefreshToken)
 
     //TODO: do we need an intermediary Access Token repository model here?
-    fun renewAccessToken(refreshToken: String) : Either<Failure, AccessTokenResponse> =
+    fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
         remoteDataSource.renewAccessToken(refreshToken)
 
     fun wipeOutTokens() {
@@ -35,11 +26,7 @@ class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataS
         wipeOutRefreshToken()
     }
 
-    private fun wipeOutAccessToken() {
-        //TODO: clean up access token from the preferences or any storage
-    }
+    private fun wipeOutAccessToken() = localDataSource.wipeOutAccessToken()
 
-    private fun wipeOutRefreshToken() {
-        //TODO: clean up refresh token from the preferences or any storage
-    }
+    private fun wipeOutRefreshToken() = localDataSource.wipeOutRefreshToken()
 }
