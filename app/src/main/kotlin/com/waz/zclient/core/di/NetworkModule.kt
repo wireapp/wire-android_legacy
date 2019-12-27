@@ -13,6 +13,7 @@ import com.waz.zclient.core.threading.ThreadHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -22,13 +23,12 @@ object NetworkDependencyProvider {
 
     private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
 
-    fun retrofit(okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
+    fun retrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-    }
 
     fun createClient(accessTokenInterceptor: AccessTokenInterceptor,
                      accessTokenAuthenticator: AccessTokenAuthenticator): OkHttpClient =
@@ -43,7 +43,7 @@ object NetworkDependencyProvider {
 }
 
 val networkModule: Module = module {
-    single { NetworkHandler(get()) }
+    single { NetworkHandler(androidContext()) }
     single { NetworkDependencyProvider.createClient(get(), get()) }
     single { NetworkDependencyProvider.retrofit(get()) }
     single { AccessTokenRepository() }
