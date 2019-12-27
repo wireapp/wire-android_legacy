@@ -8,17 +8,21 @@ import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.NotFound
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.exception.Unauthorized
-import com.waz.zclient.core.extension.failFastIfUIThread
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Either.Left
 import com.waz.zclient.core.functional.Either.Right
+import com.waz.zclient.core.threading.ThreadHandler
 import retrofit2.Call
 import retrofit2.Response
 
-abstract class ApiService(private val networkHandler: NetworkHandler) {
+class ApiService(private val networkHandler: NetworkHandler,
+                 private val threadHandler: ThreadHandler,
+                 private val networkClient: NetworkClient) {
+
+    fun <T> createApi(clazz: Class<T>) = networkClient.create(clazz)
 
     fun <T> request(call: Call<T>, default: T): Either<Failure, T> {
-        Thread.currentThread().failFastIfUIThread()
+        require(!threadHandler.isUIThread())
 
         return when (networkHandler.isConnected) {
             true -> performRequest(call, default)
