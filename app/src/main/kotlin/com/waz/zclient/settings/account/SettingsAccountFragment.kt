@@ -38,9 +38,6 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initViewModel() {
         with(settingsAccountViewModel) {
-            loading.observe(viewLifecycleOwner) { isLoading ->
-                updateLoadingVisibility(isLoading)
-            }
             error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
             }
@@ -65,15 +62,17 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
-    private fun updateLoadingVisibility(isLoading: Boolean?) {
-        //Show hide progress indicator
-    }
-
     private fun updateProfile(userProfileItem: UserProfileItem) {
-        preferences_account_name_title.text = userProfileItem.name
-        preferences_account_email_title.text = userProfileItem.email
-        preferences_account_handle_title.text = userProfileItem.handle
-        preferences_account_phone_title.text = userProfileItem.phone
+        with(userProfileItem) {
+            preferences_account_name_title.text = name
+            preferences_account_handle_title.text = handle
+
+            if (!email.isNullOrEmpty()) preferences_account_email_title.text = email
+            else preferences_account_email_title.text = getString(R.string.pref_account_add_email_title)
+
+            if (!phone.isNullOrEmpty()) preferences_account_phone_title.text = phone
+            else preferences_account_phone_title.text = getString(R.string.pref_account_add_phone_title)
+        }
     }
 
     companion object {
