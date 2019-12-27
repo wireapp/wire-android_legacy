@@ -134,7 +134,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         var contactsSection = Seq[SearchViewItem]()
 
         contactsSection = contactsSection ++ localResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).displayName))
+          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).displayName, team))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -171,7 +171,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults))
+          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults, team = team))
         }
       }
     }
