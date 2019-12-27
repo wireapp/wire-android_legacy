@@ -42,4 +42,4 @@ case class ConnectionViewModel(indexVal:              Int,
                                shouldHideUserStatus:  Boolean,
                                results:               Seq[UserData],
                                name:                  Name = Name.Empty,
-                               team:                  Option[TeamData] = None)
+                               team:                  Option[TeamData])
