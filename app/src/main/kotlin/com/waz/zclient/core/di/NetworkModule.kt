@@ -8,6 +8,7 @@ import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClient
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.di.NetworkDependencyProvider.retrofit
 import com.waz.zclient.core.network.*
+import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
 import com.waz.zclient.core.threading.ThreadHandler
 import okhttp3.OkHttpClient
@@ -76,6 +77,7 @@ val networkModule: Module = module {
     //Token manipulation
     single<NetworkClient>(named(NETWORK_CLIENT_FOR_TOKEN)) { RetrofitClient(retrofit(createHttpClientForToken())) }
     single(named(API_SERVICE_FOR_TOKEN)) { ApiService(get(), get(), get(named(NETWORK_CLIENT_FOR_TOKEN))) }
-    single { TokenService(get(named(API_SERVICE_FOR_TOKEN))) }
+    factory { get<ApiService>(named(API_SERVICE_FOR_TOKEN)).createApi(TokenApi::class.java)}
+    single { TokenService(get(named(API_SERVICE_FOR_TOKEN)), get()) }
 }
 
