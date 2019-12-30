@@ -1,4 +1,4 @@
-package com.waz.zclient.core.lists
+package com.waz.zclient.core.ui.list
 
 interface OnItemClickListener {
     fun onItemClicked(position: Int)

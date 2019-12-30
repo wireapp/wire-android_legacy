@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.core.lists.OnItemClickListener
+import com.waz.zclient.core.ui.list.OnItemClickListener
 import com.waz.zclient.settings.about.SettingsAboutFragment
 import com.waz.zclient.settings.account.SettingsAccountFragment
 import com.waz.zclient.settings.advanced.SettingsAdvancedFragment
