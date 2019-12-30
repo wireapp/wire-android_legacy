@@ -11,9 +11,9 @@ class ChangeNameUseCase(private val usersRepository: UsersRepository)
     : UseCase<Any, ChangeNameParams>() {
 
     override suspend fun run(params: ChangeNameParams): Either<Failure, Any> =
-        usersRepository.changePhone(params.phoneNumber)
+        usersRepository.changeName(params.name)
 }
 
-data class ChangeNameParams(val phoneNumber: String)
+data class ChangeNameParams(val name: String)
 
 

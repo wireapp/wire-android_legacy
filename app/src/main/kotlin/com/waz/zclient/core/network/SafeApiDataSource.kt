@@ -44,8 +44,8 @@ suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
         }
     }
 
-fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R>,
-                        saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
+private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R>,
+                                saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
     runBlocking {
         with(fallbackRequest()) {
             onSuccess { runBlocking { saveToDatabase(it) } }
