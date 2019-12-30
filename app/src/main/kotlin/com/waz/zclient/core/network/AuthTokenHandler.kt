@@ -18,10 +18,7 @@ class AuthTokenHandler(private val tokenRepository: AccessTokenRepository) {
     fun updateRefreshToken(newRefreshToken: String) = tokenRepository.updateRefreshToken(newRefreshToken)
 
     fun renewAccessToken(refreshToken: String): Either<Failure, String> =
-        tokenRepository.renewAccessToken(refreshToken).map {
-            it.token
-        }
+        tokenRepository.renewAccessToken(refreshToken).map { it.token }
 
     fun wipeOutTokens() = tokenRepository.wipeOutTokens()
 }
-

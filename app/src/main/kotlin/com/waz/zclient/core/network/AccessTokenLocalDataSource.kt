@@ -7,6 +7,11 @@ import com.waz.zclient.storage.extension.string
 
 class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences) {
 
+    companion object {
+        private const val KEY_ACCESS_TOKEN = "accessToken"
+        private const val KEY_REFRESH_TOKEN = "refreshToken"
+    }
+
     fun accessToken(): String? = userPreferences.string(KEY_ACCESS_TOKEN)
 
     fun updateAccessToken(newToken: String) =
@@ -20,10 +25,4 @@ class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences)
     fun wipeOutAccessToken() = userPreferences.removeString(KEY_ACCESS_TOKEN)
 
     fun wipeOutRefreshToken() = userPreferences.removeString(KEY_REFRESH_TOKEN)
-
-    companion object {
-        private const val KEY_ACCESS_TOKEN = "accessToken"
-        private const val KEY_REFRESH_TOKEN = "refreshToken"
-    }
-
 }

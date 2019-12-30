@@ -38,5 +38,4 @@ class TokenServiceTest : UnitTest() {
         verify(tokenApi).access(capture(argumentCaptor))
         argumentCaptor.value `should contain` ("Cookie" to "zuid=$refreshToken")
     }
-
 }

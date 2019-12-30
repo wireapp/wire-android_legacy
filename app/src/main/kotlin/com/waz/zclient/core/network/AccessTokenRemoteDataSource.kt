@@ -9,5 +9,4 @@ class AccessTokenRemoteDataSource(private val tokenService: TokenService) {
 
     fun renewAccessToken(refreshToken: String) : Either<Failure, AccessTokenResponse> =
         tokenService.renewAccessToken(refreshToken)
-
 }

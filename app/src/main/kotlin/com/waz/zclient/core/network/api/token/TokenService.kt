@@ -9,10 +9,7 @@ class TokenService(private val apiService: ApiService,
 
     fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
         apiService.request(
-            tokenApi.access(mapOf(
-                "Cookie" to "zuid=$refreshToken"
-            )),
-            AccessTokenResponse.EMPTY
+            tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken")), AccessTokenResponse.EMPTY
         )
 
 }
