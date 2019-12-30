@@ -83,6 +83,7 @@
         android:theme="@style/Theme.Splash"
         android:vmSafeMode="${applicationVmSafeMode}"
         tools:replace="android:allowBackup"
+        android:networkSecurityConfig="@xml/network_security_config"
         >
 
         <!--    TODO: not required when using play-services-maps:16.1.0 and above
