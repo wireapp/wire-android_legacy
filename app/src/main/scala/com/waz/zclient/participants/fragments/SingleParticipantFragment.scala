@@ -170,17 +170,14 @@ class SingleParticipantFragment extends FragmentHelper {
     // TODO: merge this logic with ConversationOptionsMenuController
     (for {
       conv           <- participantsController.conv
-      isGroup        <- participantsController.isGroup
       createPerm     <- userAccountsController.hasCreateConvPermission
       remPerm        <- participantsController.selfRole.map(_.canRemoveGroupMember)
-      selfIsGuest    <- participantsController.isCurrentUserGuest
-      selfIsExternal <- userAccountsController.isExternal
       selfIsProUser  <- userAccountsController.isTeam
       other          <- participantsController.otherParticipant
       otherIsGuest    = other.isGuest(conv.team)
     } yield {
       if (fromDeepLink) !selfIsProUser || otherIsGuest
-      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsExternal)
+      else createPerm || remPerm
     }).map {
       case true => R.string.glyph__more
       case _    => R.string.empty_string
