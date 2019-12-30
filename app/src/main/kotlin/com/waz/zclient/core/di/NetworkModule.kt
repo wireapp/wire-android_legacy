@@ -53,7 +53,7 @@ object NetworkDependencyProvider {
         }.build()
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() {
-        val loggingInterceptor = HttpLoggingInterceptor().setLevel(Level.BASIC)
+        val loggingInterceptor = HttpLoggingInterceptor().setLevel(Level.BODY)
         addInterceptor(loggingInterceptor)
     }
 }
@@ -71,6 +71,7 @@ val networkModule: Module = module {
     single { AccessTokenRepository(get(), get()) }
     single { AuthTokenHandler(get()) }
     single { AccessTokenAuthenticator(get()) }
+    single { AccessTokenInterceptor(get()) }
     single<NetworkClient> { RetrofitClient(get()) }
     single { ApiService(get(), get(), get()) }
 

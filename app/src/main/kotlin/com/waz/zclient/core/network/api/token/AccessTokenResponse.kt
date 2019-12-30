@@ -4,14 +4,16 @@ import com.google.gson.annotations.SerializedName
 import com.waz.zclient.core.extension.empty
 
 data class AccessTokenResponse(
-    @SerializedName("token")
+    @SerializedName("access_token")
     val token: String,
-    @SerializedName("type")
+    @SerializedName("token_type")
     val type: String,
-    @SerializedName("expires")
-    val expires: String) {
+    @SerializedName("user")
+    val userId: String,
+    @SerializedName("expires_in")
+    val expiresIn: String) {
 
     companion object {
-        val EMPTY = AccessTokenResponse(String.empty(), String.empty(), String.empty())
+        val EMPTY = AccessTokenResponse(String.empty(), String.empty(), String.empty(), String.empty())
     }
 }
