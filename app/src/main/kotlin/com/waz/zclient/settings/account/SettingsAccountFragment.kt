@@ -11,12 +11,14 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
+import com.waz.zclient.core.ui.dialog.EditTextDialogFragmentListener
 import com.waz.zclient.settings.account.model.UserProfileItem
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 
-class SettingsAccountFragment : Fragment() {
+class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
 
@@ -30,6 +32,10 @@ class SettingsAccountFragment : Fragment() {
         initViewModel()
         setupListeners()
         loadData()
+    }
+
+    override fun onTextEdited(newValue: String) {
+        settingsAccountViewModel.updateName(newValue)
     }
 
     private fun initToolbar() {
@@ -49,12 +55,18 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        preferences_account_name.setOnClickListener {
+            val editNameDialogFragment: EditTextDialogFragment = EditTextDialogFragment.newInstance(
+                preferences_account_name_title.text.toString())
+            editNameDialogFragment.listener = this
+            editNameDialogFragment.show(requireActivity().supportFragmentManager, "")
+        }
         preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
     }
 
     private fun loadData() {
         lifecycleScope.launchWhenResumed {
-            settingsAccountViewModel.loadData()
+            settingsAccountViewModel.loadProfile()
         }
     }
 
@@ -79,8 +91,6 @@ class SettingsAccountFragment : Fragment() {
         fun newInstance() = SettingsAccountFragment()
         private const val Accounts = "|ACCOUNTS|"
     }
-
-
 }
 
 

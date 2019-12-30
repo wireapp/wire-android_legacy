@@ -10,7 +10,7 @@ import org.koin.dsl.module
 
 
 val settingsAccountModule: Module = module {
-    viewModel { SettingsAccountViewModel(get()) }
+    viewModel { SettingsAccountViewModel(get(), get()) }
     factory { GetUserProfileUseCase(get()) }
     factory { ChangePhoneUseCase(get()) }
     factory { ChangeHandleUseCase(get()) }

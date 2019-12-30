@@ -14,6 +14,10 @@ interface UsersNetworkService {
     suspend fun profile(): Response<UserApi>
 
     @FormUrlEncoded
+    @PUT("/self")
+    suspend fun changeName(@Field("name") value: String): Response<Any>
+
+    @FormUrlEncoded
     @PUT("/self/handle")
     suspend fun changeHandle(@Field("handle") value: String): Response<Any>
 

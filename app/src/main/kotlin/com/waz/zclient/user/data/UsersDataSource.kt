@@ -4,6 +4,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.network.accessData
+import com.waz.zclient.core.network.saveData
 import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
@@ -15,6 +16,9 @@ class UsersDataSource constructor(
     private val userMapper: UserMapper) : UsersRepository {
 
     override suspend fun profile() = accessData(profileLocal(), profileRemote(), saveUser())
+
+    override suspend fun changeName(value: String): Either<Failure, Any> =
+        saveData(changeNameRemote(value), changeNameLocal(value))
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> =
         usersRemoteDataSource.changeHandle(value)
@@ -32,5 +36,11 @@ class UsersDataSource constructor(
         { usersLocalDataSource.profile().map { userMapper.toUser(it) } }
 
     private fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.add(userMapper.toUserDao(it)) }
+
+    private fun changeNameRemote(value: String): suspend () -> Either<Failure, Any> =
+        { usersRemoteDataSource.changeName(value) }
+
+    private fun changeNameLocal(value: String): suspend () -> Either<Failure, Any> =
+        { usersLocalDataSource.changeName(value) }
 
 }

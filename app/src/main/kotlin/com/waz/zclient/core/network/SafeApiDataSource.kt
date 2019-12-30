@@ -44,8 +44,8 @@ suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
         }
     }
 
-private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R>,
-                                saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
+fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R>,
+                        saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
     runBlocking {
         with(fallbackRequest()) {
             onSuccess { runBlocking { saveToDatabase(it) } }
@@ -55,6 +55,19 @@ private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R
                     is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
                     else -> Timber.e("Network request failed with unknown error ")
                 }
+            }
+        }
+    }
+
+suspend fun <R> saveData(saveToNetwork: suspend () -> Either<Failure, R>,
+                         saveToDatabase: suspend () -> Either<Failure, R>): Either<Failure, R> =
+    with(saveToNetwork()) {
+        onSuccess { runBlocking { saveToDatabase() } }
+        onFailure {
+            when (it) {
+                is NetworkServiceError -> Timber.e("Network request failed with generic error ")
+                is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
+                else -> Timber.e("Network request failed with unknown error ")
             }
         }
     }

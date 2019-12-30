@@ -7,6 +7,7 @@ import com.waz.zclient.user.domain.model.User
 
 interface UsersRepository {
     suspend fun profile(): Either<Failure, User>
+    suspend fun changeName(value: String): Either<Failure, Any>
     suspend fun changeHandle(value: String): Either<Failure, Any>
     suspend fun changeEmail(value: String): Either<Failure, Any>
     suspend fun changePhone(value: String): Either<Failure, Any>

@@ -17,7 +17,7 @@ class EditTextDialogFragment : DialogFragment() {
         val initialValue = arguments?.getString(DEFAULT_TEXT_BUNDLE_KEY, "")
         val inflater = requireActivity().layoutInflater
         val builder = AlertDialog.Builder(requireContext())
-        val view = inflater.inflate(R.layout.dialog_fragment_edit_name, null)
+        val view = inflater.inflate(R.layout.dialog_fragment_edit_text, null)
         val editText: EditText = view.findViewById(R.id.edit_text) as EditText
 
         with(editText) {
@@ -32,7 +32,8 @@ class EditTextDialogFragment : DialogFragment() {
         builder.setPositiveButton(getString(android.R.string.ok)) { _, _ ->
             val newValue = editText.text.toString().trim()
             listener?.onTextEdited(newValue)
-            dismiss() }
+            dismiss()
+        }
         builder.setNegativeButton(getString(android.R.string.cancel)) { _, _ -> dismiss() }
 
 
