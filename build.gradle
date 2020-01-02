@@ -52,21 +52,23 @@ allprojects {
     }
 }
 
-task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
-    source = fileTree(dir: getRootDir()).include([
-        "**/*.java",
-        "**/*.scala",
-        "**/*.gradle",
-        "**/*.xml",
-    ]).exclude([
-        "**/*build*",
-        "**/*target*",
-        "**/*gen*",
-        "**/*generated*",
-        ".idea/**"
-    ])
-}
-licenseFormat.dependsOn licenseFormatAndroid
+// FIXME: License header is disabled because it breaks compilation
+//task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
+//    source = fileTree(dir: getRootDir()).include([
+//        "**/*.java",
+//        "**/*.scala",
+//        "**/*.gradle",
+//        "**/*.xml",
+//    ]).exclude([
+//        "**/*build*",
+//        "**/*target*",
+//        "**/*gen*",
+//        "**/*generated*",
+//        ".idea/**"
+//    ])
+//}
+//licenseFormat.dependsOn licenseFormatAndroid
+
 
 ext {
     compileSdkVersion = 28
