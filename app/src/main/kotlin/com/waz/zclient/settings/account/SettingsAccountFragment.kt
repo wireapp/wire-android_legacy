@@ -56,10 +56,12 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
 
     private fun setupListeners() {
         preferences_account_name.setOnClickListener {
-            val editNameDialogFragment: EditTextDialogFragment = EditTextDialogFragment.newInstance(
-                preferences_account_name_title.text.toString())
-            editNameDialogFragment.listener = this
-            editNameDialogFragment.show(requireActivity().supportFragmentManager, "")
+            
+            EditTextDialogFragment.newInstance(
+                preferences_account_name_title.text.toString()).also {
+                it.listener = this
+            }.show(requireActivity().supportFragmentManager, "")
+
         }
         preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
     }
@@ -78,12 +80,9 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
         with(userProfileItem) {
             preferences_account_name_title.text = name
             preferences_account_handle_title.text = handle
+            preferences_account_email_title.text = if (!email.isNullOrEmpty()) email else getString(R.string.pref_account_add_email_title)
+            preferences_account_phone_title.text = if (!phone.isNullOrEmpty()) phone else getString(R.string.pref_account_add_phone_title)
 
-            if (!email.isNullOrEmpty()) preferences_account_email_title.text = email
-            else preferences_account_email_title.text = getString(R.string.pref_account_add_email_title)
-
-            if (!phone.isNullOrEmpty()) preferences_account_phone_title.text = phone
-            else preferences_account_phone_title.text = getString(R.string.pref_account_add_phone_title)
         }
     }
 
