@@ -746,11 +746,11 @@
     <!-- Example: FRIDAY, MAR 9, 11:29 -->
     <string name="timestamp_pattern__date_and_time__no_year">EEE, MMM d, %1$s</string>
     <!-- Example: FRIDAY, MAR 9, 2015, 11:29 -->
-    <string name="timestamp_pattern__date_and_time__with_year">EEE, MMM d, YYYY, %1$s</string>
+    <string name="timestamp_pattern__date_and_time__with_year">EEE, MMM d, yyyy, %1$s</string>
     <!-- Example: MAR 9, 11:29 -->
     <string name="timestamp_pattern__date_and_time__no_year_no_weekday">MMM d, %1$s</string>
     <!-- Example: MAR 9, 2015, 11:29 -->
-    <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, YYYY, %1$s</string>
+    <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, yyyy, %1$s</string>
     <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
     <!-- MONDAY -->
      <!-- MARCH 2 -->
