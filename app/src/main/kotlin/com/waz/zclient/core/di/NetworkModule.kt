@@ -60,19 +60,21 @@ val networkModule: Module = module {
             androidContext().getSharedPreferences("DUMMY_USER_PREFS", Context.MODE_PRIVATE)
         )
     }
+    single { RawResponseRegistry() }
     single { AccessTokenRepository(get(), get()) }
-    single { AuthTokenHandler(get()) }
+    single { AuthTokenHandler(get()).apply {
+        get<RawResponseRegistry>().addRawResponseAction { updateRefreshTokenFromResponse(it) }
+    } }
     single { AccessTokenAuthenticator(get()) }
     single { AccessTokenInterceptor(get()) }
     single<NetworkClient> { RetrofitClient(get()) }
-    single { ApiService(get(), get(), get()) }
+    single { ApiService(get(), get(), get(), get()) }
 
     //Token manipulation
     val apiServiceForToken = "API_SERVICE_FOR_TOKEN"
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
     single<NetworkClient>(named(networkClientForToken)) { RetrofitClient(retrofit(createHttpClientForToken())) }
-    single(named(apiServiceForToken)) { ApiService(get(), get(), get(named(networkClientForToken))) }
+    single(named(apiServiceForToken)) { ApiService(get(), get(), get(named(networkClientForToken)), get()) }
     factory { get<ApiService>(named(apiServiceForToken)).createApi(TokenApi::class.java) }
     single { TokenService(get(named(apiServiceForToken)), get()) }
 }
-
