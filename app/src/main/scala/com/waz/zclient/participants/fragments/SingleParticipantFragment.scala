@@ -40,7 +40,6 @@ import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -169,19 +168,14 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
     // TODO: merge this logic with ConversationOptionsMenuController
     (for {
-      conv           <- participantsController.conv
-      createPerm     <- userAccountsController.hasCreateConvPermission
-      remPerm        <- participantsController.selfRole.map(_.canRemoveGroupMember)
-      selfIsProUser  <- userAccountsController.isTeam
-      other          <- participantsController.otherParticipant
-      otherIsGuest    = other.isGuest(conv.team)
-    } yield {
-      if (fromDeepLink) !selfIsProUser || otherIsGuest
-      else createPerm || remPerm
-    }).map {
-      case true => R.string.glyph__more
-      case _    => R.string.empty_string
-    }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
+      conv            <- participantsController.conv
+      remPerm         <- participantsController.selfRole.map(_.canRemoveGroupMember)
+      selfIsProUser   <- userAccountsController.isTeam
+      other           <- participantsController.otherParticipant
+      otherIsGuest    =  other.isGuest(conv.team)
+      showRightAction =  if (fromDeepLink) !selfIsProUser || otherIsGuest else remPerm
+      rightActionStr  =  getString(if (showRightAction) R.string.glyph__more else R.string.empty_string)
+    } yield rightActionStr).onUi(text => vh.foreach(_.setRightActionText(text)))
 
     leftActionStrings.onUi { case (icon, text) =>
       vh.foreach { menu =>
