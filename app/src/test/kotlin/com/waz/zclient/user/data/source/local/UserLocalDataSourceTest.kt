@@ -71,8 +71,40 @@ class UserLocalDataSourceTest {
 
     }
 
+    @Test
+    fun `Assert changeName() is successful`() {
+        runBlocking {
+
+
+            usersLocalDataSource.changeName(TEST_NAME)
+
+            verify(userDbService).updateName(TEST_USER_ID,TEST_NAME)
+
+            assert(usersLocalDataSource.changeName(TEST_NAME).isRight)
+        }
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Assert changeName() is failing`() {
+        runBlocking {
+
+
+            usersLocalDataSource.changeName(TEST_NAME)
+
+            verify(userDbService).updateName(TEST_USER_ID,TEST_NAME)
+
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+
+            delay(200)
+
+            assert(usersLocalDataSource.changeName(TEST_NAME).isLeft)
+        }
+
+    }
+
     companion object {
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
         private const val TEST_USER_ID = "userId"
+        private const val TEST_NAME = "name"
     }
 }
