@@ -1,6 +1,9 @@
 package com.waz.zclient.core.network
 
-class AuthToken(private val tokenRepository: AccessTokenRepository) {
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+
+class AuthTokenHandler(private val tokenRepository: AccessTokenRepository) {
 
     companion object {
         const val AUTH_HEADER = "Authorization"
@@ -12,6 +15,9 @@ class AuthToken(private val tokenRepository: AccessTokenRepository) {
 
     fun refreshToken() = tokenRepository.refreshToken()
     fun updateRefreshToken(newRefreshToken: String) = tokenRepository.updateRefreshToken(newRefreshToken)
+
+    fun renewAccessToken(refreshToken: String): Either<Failure, String> =
+        tokenRepository.renewAccessToken(refreshToken)
 
     fun wipeOutTokens() = tokenRepository.wipeOutTokens()
 }

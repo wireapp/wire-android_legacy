@@ -7,9 +7,9 @@ import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 
-class AuthTokenTest : UnitTest() {
+class AuthTokenHandlerTest : UnitTest() {
 
-    private lateinit var authToken: AuthToken
+    private lateinit var authTokenHandler: AuthTokenHandler
 
     private val myToken = "MyToken"
 
@@ -17,35 +17,35 @@ class AuthTokenTest : UnitTest() {
 
     @Before
     fun setUp() {
-        authToken = AuthToken(tokenRepository)
+        authTokenHandler = AuthTokenHandler(tokenRepository)
     }
 
     @Test fun `should get the access token from the token repository`() {
-        authToken.accessToken()
+        authTokenHandler.accessToken()
         verify(tokenRepository).accessToken()
         verifyNoMoreInteractions(tokenRepository)
     }
 
     @Test fun `should update the access token`() {
-        authToken.updateAccessToken(myToken)
+        authTokenHandler.updateAccessToken(myToken)
         verify(tokenRepository).updateAccessToken(myToken)
         verifyNoMoreInteractions(tokenRepository)
     }
 
     @Test fun `should get the refresh token from the token repository`() {
-        authToken.refreshToken()
+        authTokenHandler.refreshToken()
         verify(tokenRepository).refreshToken()
         verifyNoMoreInteractions(tokenRepository)
     }
 
     @Test fun `should update the refresh token`() {
-        authToken.updateRefreshToken(myToken)
+        authTokenHandler.updateRefreshToken(myToken)
         verify(tokenRepository).updateRefreshToken(myToken)
         verifyNoMoreInteractions(tokenRepository)
     }
 
     @Test fun `should wipe out tokens`() {
-        authToken.wipeOutTokens()
+        authTokenHandler.wipeOutTokens()
         verify(tokenRepository).wipeOutTokens()
         verifyNoMoreInteractions(tokenRepository)
     }
