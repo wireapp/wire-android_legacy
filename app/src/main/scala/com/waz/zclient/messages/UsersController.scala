@@ -22,7 +22,7 @@ import com.waz.content.{MembersStorage, UserPreferences}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.{ConnectionService, ZMessaging}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -32,7 +32,6 @@ import com.waz.zclient.messages.UsersController.DisplayName.{Me, Other}
 import com.waz.zclient.tracking.AvailabilityChanged
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{Injectable, Injector, R}
-
 import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
@@ -151,6 +150,14 @@ class UsersController(implicit injector: Injector, context: Context)
       message = getString(R.string.connect__message, uToConnect.name, uSelf.name)
       conv <- zms.connection.connectToUser(userId, message, uToConnect.displayName)
     } yield conv
+  }
+
+  def cancelConnectionRequest(userId: UserId): Future[Unit] = {
+    import Threading.Implicits.Background
+    for {
+      connection <- inject[Signal[ConnectionService]].head
+      _          <- connection.cancelConnection(userId)
+    } yield ()
   }
 }
 

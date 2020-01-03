@@ -244,7 +244,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val messages: MessagesServiceImpl              = wire[MessagesServiceImpl]
   lazy val verificationUpdater                        = wire[VerificationStateUpdater]
   lazy val msgEvents: MessageEventProcessor           = wire[MessageEventProcessor]
-  lazy val connection: ConnectionServiceImpl          = wire[ConnectionServiceImpl]
+  lazy val connection: ConnectionService              = wire[ConnectionServiceImpl]
   lazy val calling: CallingServiceImpl                = wire[CallingServiceImpl]
   lazy val callLogging: CallLoggingService            = wire[CallLoggingService]
   lazy val contacts: ContactsServiceImpl              = wire[ContactsServiceImpl]

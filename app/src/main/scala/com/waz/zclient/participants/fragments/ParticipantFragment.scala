@@ -245,7 +245,7 @@ class ParticipantFragment extends ManagerFragment
         openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
       case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
-        import com.waz.zclient.connect.PendingConnectRequestFragment._
+        import PendingConnectRequestFragment2._
         openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == BLOCKED =>
@@ -254,7 +254,7 @@ class ParticipantFragment extends ManagerFragment
 
       case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
         import SendConnectRequestFragment2._
-        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
       case _ =>
     }
   }

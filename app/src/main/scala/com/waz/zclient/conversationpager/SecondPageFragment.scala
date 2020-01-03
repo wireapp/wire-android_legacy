@@ -31,6 +31,7 @@ import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.conversation.ConversationManagerFragment
 import com.waz.zclient.participants.UserRequester
+import com.waz.zclient.participants.fragments.PendingConnectRequestFragment2
 import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{FragmentHelper, OnBackPressedListener, R}
 
@@ -60,11 +61,11 @@ class SecondPageFragment extends FragmentHelper
     inflater.inflate(R.layout.fragment_pager_second, container, false)
   }
 
-  private val connectionRequestTags = Set(ConnectRequestFragment.Tag, PendingConnectRequestManagerFragment.Tag)
+  private val connectionRequestTags = Set(ConnectRequestFragment.Tag, PendingConnectRequestFragment2.Tag)
 
   private lazy val pageDetails = conversationController.currentConv.map(c => (c.id, c.convType)).map {
     case (id, Type.INCOMING_CONNECTION) => (ConnectRequestFragment.Tag, Some(UserId(id.str)))
-    case (id, Type.WAIT_FOR_CONNECTION) => (PendingConnectRequestManagerFragment.Tag, Some(UserId(id.str)))
+    case (id, Type.WAIT_FOR_CONNECTION) => (PendingConnectRequestFragment2.Tag, Some(UserId(id.str)))
     case _                              => (ConversationManagerFragment.Tag, None)
   }
 
@@ -73,8 +74,8 @@ class SecondPageFragment extends FragmentHelper
     val (fragment, page) = (tag, other) match {
       case (ConnectRequestFragment.Tag, Some(userId)) =>
         (ConnectRequestFragment.newInstance(userId), Page.CONNECT_REQUEST_INBOX)
-      case (PendingConnectRequestManagerFragment.Tag, Some(userId)) =>
-        (PendingConnectRequestManagerFragment.newInstance(userId, UserRequester.CONVERSATION), Page.CONNECT_REQUEST_PENDING)
+      case (PendingConnectRequestFragment2.Tag, Some(userId)) =>
+        (PendingConnectRequestFragment2.newInstance(userId, UserRequester.CONVERSATION), Page.CONNECT_REQUEST_PENDING)
       case _ =>
         (ConversationManagerFragment.newInstance, Page.MESSAGE_STREAM)
     }
