@@ -34,8 +34,10 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
         loadData()
     }
 
+
     override fun onTextEdited(newValue: String) {
         settingsAccountViewModel.updateName(newValue)
+        loadData()
     }
 
     private fun initToolbar() {

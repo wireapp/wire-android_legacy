@@ -14,15 +14,15 @@ interface UsersNetworkService {
     suspend fun profile(): Response<UserApi>
 
     @PUT("/self")
-    suspend fun changeName(@Body userApi: UserApi): Response<Void>
+    suspend fun changeName(@Body userApi: UserApi): Response<UserApi>
 
 
     @PUT("/self/handle")
-    suspend fun changeHandle(@Field("handle") value: String): Response<Void>
+    suspend fun changeHandle(@Field("handle") value: String): Response<UserApi>
 
     @PUT("/self/email")
-    suspend fun changeEmail(@Field("email") value: String): Response<Void>
+    suspend fun changeEmail(@Field("email") value: String): Response<UserApi>
 
     @PUT("/self/phone")
-    suspend fun changePhone(@Field("phone") value: String): Response<Void>
+    suspend fun changePhone(@Field("phone") value: String): Response<UserApi>
 }

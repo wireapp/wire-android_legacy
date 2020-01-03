@@ -7,6 +7,7 @@ import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 import timber.log.Timber
+import java.io.EOFException
 
 suspend inline fun <reified T> requestApi(responseCall: suspend () -> Response<T>): Either<NetworkFailure, T> {
     try {
@@ -16,7 +17,11 @@ suspend inline fun <reified T> requestApi(responseCall: suspend () -> Response<T
             body?.let { return Either.Right(body) }
         }
         return Either.Left(HttpError(response.code(), response.message()))
-    } catch (e: Exception) {
+    }
+    catch (e: EOFException) {
+        return Either.Right(T::class.java.newInstance())
+    }
+    catch (e: Exception) {
         return Either.Left(NetworkServiceError)
     }
 }
