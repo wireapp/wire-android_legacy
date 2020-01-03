@@ -27,14 +27,11 @@ class EditTextDialogFragment : DialogFragment() {
             }
         }
 
-        builder.setTitle(getString(R.string.pref_account_edit_name_title))
-        builder.setView(view)
-        builder.setPositiveButton(getString(android.R.string.ok)) { _, _ ->
+        builder.setTitle(getString(R.string.pref_account_edit_name_title)).setView(view).setPositiveButton(getString(android.R.string.ok)) { _, _ ->
             val newValue = editText.text.toString().trim()
             listener?.onTextEdited(newValue)
             dismiss()
-        }
-        builder.setNegativeButton(getString(android.R.string.cancel)) { _, _ -> dismiss() }
+        }.setNegativeButton(getString(android.R.string.cancel)) { _, _ -> dismiss() }
 
 
         return builder.create()
