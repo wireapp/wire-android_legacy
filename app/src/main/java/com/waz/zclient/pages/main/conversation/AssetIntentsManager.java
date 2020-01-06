@@ -173,7 +173,12 @@ public class AssetIntentsManager {
             Timber.e(e);
             return null;
         } finally {
-            context.getContentResolver().delete(AndroidURIUtil.unwrap(uri), null, null);
+            try {
+                context.getContentResolver().delete(AndroidURIUtil.unwrap(uri), null, null);
+            } catch (SecurityException | IllegalArgumentException exception) {
+                Timber.e("Unable to delete the file! %s", uri.getPath());
+                Timber.e(exception);
+            }
         }
 
         return new AndroidURI(FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".fileprovider", targetFile));
