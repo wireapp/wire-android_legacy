@@ -17,7 +17,7 @@ object Versions {
     const val ANDROIDX_MULTIDEX = "2.0.0"
     const val ANDROIDX_APP_COMPAT = "1.0.0"
     const val ANDROIDX_RECYCLER_VIEW = "1.0.0"
-    const val ANDROIDX_PREFERENCE = "1.0.0"
+    const val ANDROIDX_PREFERENCE = "1.1.0"
     const val ANDROIDX_CARD_VIEW = "1.0.0"
     const val ANDROIDX_GRID_LAYOUT = "1.0.0"
     const val ANDROIDX_CONSTRAINT_LAYOUT = "1.1.3"
