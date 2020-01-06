@@ -7,7 +7,7 @@ apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 apply from: 'config/quality.gradle'
 
 ext {
-    majorVersion = "3.43."
+    majorVersion = "3.44."
 
     audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
 
