@@ -62,16 +62,15 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   val resultsData = Signal(mergedResult)
 
   (for {
-    curUser        <- userAccountsController.currentUser
-    teamData       <- userAccountsController.teamData
-    canAddServices <- convController.selfRole.map(_.canAddGroupMember)
-    results        <- searchController.searchUserOrServices
-  } yield (curUser, teamData, canAddServices, results)).onUi {
-    case (curUser, teamData, canAddServices, results) =>
-
+    curUser  <- userAccountsController.currentUser
+    teamData <- userAccountsController.teamData
+    isAdmin  <- userAccountsController.isAdmin
+    results  <- searchController.searchUserOrServices
+  } yield (curUser, teamData, isAdmin, results)).onUi {
+    case (curUser, teamData, isAdmin, results) =>
       verbose(l"Search user list state: $results")
       team = teamData
-      currentUserCanAddServices = canAddServices
+      currentUserCanAddServices = isAdmin
       currentUser = curUser
 
       results match {
@@ -135,7 +134,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         var contactsSection = Seq[SearchViewItem]()
 
         contactsSection = contactsSection ++ localResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).displayName))
+          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).displayName, team))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -172,7 +171,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults))
+          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults, team = team))
         }
       }
     }

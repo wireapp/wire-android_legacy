@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/preference_button_height"
+    android:background="@color/black"
+    android:minHeight="@dimen/preference_button_height">
+
+    <TextView
+        android:id="@+id/item_device_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/preference_button_padding"
+        android:layout_marginEnd="@dimen/preference_button_padding"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Wire Windows" />
+
+
+    <TextView
+        android:id="@+id/item_device_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/preference_button_padding"
+        android:layout_marginEnd="@dimen/preference_button_padding"
+        android:textColor="@color/light_graphite"
+        android:textSize="@dimen/wire__text_size__small"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/item_device_title"
+        tools:text="ID: 94 SB 88 99 00" />
+
+    <ImageView
+        android:id="@+id/item_device_verification_icon"
+        android:layout_width="@dimen/preference_button_image_size"
+        android:layout_height="@dimen/preference_button_image_size"
+        android:layout_marginEnd="@dimen/preference_button_padding"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

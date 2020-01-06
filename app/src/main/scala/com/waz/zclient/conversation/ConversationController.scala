@@ -31,7 +31,7 @@ import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.assets2.{Content, ContentForUpload, UriHelper}
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
-import com.waz.service.{AccountManager, ConversationRolesService}
+import com.waz.service.AccountManager
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
@@ -62,7 +62,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val conversations         = inject[Signal[ConversationsService]]
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
   private lazy val membersStorage        = inject[Signal[MembersStorage]]
-  private lazy val rolesService          = inject[Signal[ConversationRolesService]]
   private lazy val usersStorage          = inject[Signal[UsersStorage]]
   private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
   private lazy val account               = inject[Signal[Option[AccountManager]]]
@@ -70,7 +69,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val convListController    = inject[ConversationListController]
   private lazy val uriHelper             = inject[UriHelper]
   private lazy val accentColorController = inject[AccentColorController]
-  private lazy val selfId                =  inject[Signal[UserId]]
+  private lazy val selfId                = inject[Signal[UserId]]
 
   private var lastConvId = Option.empty[ConvId]
 
@@ -92,6 +91,13 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def getConversation(convId: ConvId): Future[Option[ConversationData]] =
     convsStorage.head.flatMap(_.get(convId))
 
+  def isCurrentUserCreator(convId: ConvId): Future[Boolean] = for {
+    convs   <- conversations.head
+    selfId  <- selfId.head
+    conv    <- getConversation(convId)
+    isGroup <- convs.groupConversation(convId).head
+  } yield isGroup && conv.exists(_.creator == selfId)
+
   val currentConvType: Signal[ConversationType] = currentConv.map(_.convType).disableAutowiring()
   val currentConvName: Signal[String] = currentConv.map(_.displayName).map {
     case Name.Empty => getString(R.string.default_deleted_username)
@@ -108,36 +114,35 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   val currentConvIsTeamOnly: Signal[Boolean] = currentConv.map(_.isTeamOnly)
 
-  lazy val currentConvOtherMembers: Signal[Map[UserId, ConversationRole]] =
-    selfId.flatMap(selfId => currentConvMembers.map(_.filter(_._1 != selfId)))
+  lazy val currentConvOtherMembers: Signal[Map[UserId, ConversationRole]] = for {
+    selfId  <- selfId
+    members <- currentConvMembers
+  } yield members.filter(_._1 != selfId)
 
-  lazy val currentConvMembers: Signal[Map[UserId, ConversationRole]] = currentConvId.flatMap(convMembers)
+  lazy val currentConvMembers: Signal[Map[UserId, ConversationRole]] =
+    for {
+      convId  <- currentConvIdOpt
+      _       =  if (convId.isEmpty) warn(l"Current conversation members queried in the context without the current conversation set")
+      members <- convId.fold(Signal.const(Map.empty[UserId, ConversationRole]))(convMembers)
+    } yield members
 
   def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]] = for {
     convs          <- conversations
-    rolesStorage   <- rolesService
-    roles          <- rolesStorage.rolesByConvId(convId)
-    members        <- convs.getActiveMembersData(convId)
+    members        <- convs.activeMembersData(convId)
   } yield members.map(m => m.userId -> ConversationRole.getRole(m.role)).toMap
 
   lazy val selfRole: Signal[ConversationRole] =
-    selfId.flatMap(selfId => currentConvMembers.map(_.getOrElse(selfId, ConversationRole.MemberRole)))
+    for {
+      selfId  <- selfId
+      members <- currentConvMembers
+      _       =  if (!members.contains(selfId)) warn(l"No role specified for the self user")
+    } yield members.getOrElse(selfId, ConversationRole.MemberRole)
 
   def selfRoleInConv(convId: ConvId): Signal[ConversationRole] = for {
     selfId  <- selfId
     members <- convMembers(convId)
+    _       =  if (!members.contains(selfId)) warn(l"No role specified for the self user")
   } yield members.getOrElse(selfId, ConversationRole.MemberRole)
-
-  def setSelfRole(convId: ConvId, role: ConversationRole): Future[Unit] = for {
-    convs  <- conversations.head
-    selfId <- selfId.head
-  } yield convs.setConversationRole(convId, selfId, role)
-
-  def setSelfRole(role: ConversationRole): Future[Unit] = for {
-    convs  <- conversations.head
-    selfId <- selfId.head
-    convId <- currentConvId.head
-  } yield convs.setConversationRole(convId, selfId, role)
 
   def setRoleInCurrentConv(userId: UserId, role: ConversationRole): Future[Unit] = for {
     convs  <- conversations.head
@@ -155,7 +160,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
     case None =>
       convChanged ! ConversationChange(from = lastConvId, to = None, requester = ConversationChangeRequester.DELETE_CONVERSATION)
       lastConvId = None
-
   }
 
   // this should be the only UI entry point to change conv in SE

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/preferences_about_website"
+            style="@style/Settings.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_about_website_title"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_about_terms"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/preferences_about_terms"
+            style="@style/Settings.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_about_tos_title"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_about_privacy"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_about_website" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/preferences_about_privacy"
+            style="@style/Settings.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_about_privacy_policy_title"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_about_license"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_about_terms" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/preferences_about_license"
+            style="@style/Settings.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_about_licenses_title"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_about_version"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_about_privacy" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/preferences_about_version"
+            style="@style/Settings.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_about_version_title"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_about_copyright"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_about_license" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/preferences_about_copyright"
+            style="@style/Settings.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/pref_about_copyright_title"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preferences_about_version" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

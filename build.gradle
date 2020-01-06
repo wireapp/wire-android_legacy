@@ -6,7 +6,7 @@ import groovy.json.JsonOutput
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.3.60'
     ext.retrofit_version = "2.6.2"
 
     repositories {
@@ -52,21 +52,23 @@ allprojects {
     }
 }
 
-task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
-    source = fileTree(dir: getRootDir()).include([
-        "**/*.java",
-        "**/*.scala",
-        "**/*.gradle",
-        "**/*.xml",
-    ]).exclude([
-        "**/*build*",
-        "**/*target*",
-        "**/*gen*",
-        "**/*generated*",
-        ".idea/**"
-    ])
-}
-licenseFormat.dependsOn licenseFormatAndroid
+// FIXME: License header is disabled because it breaks compilation
+//task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
+//    source = fileTree(dir: getRootDir()).include([
+//        "**/*.java",
+//        "**/*.scala",
+//        "**/*.gradle",
+//        "**/*.xml",
+//    ]).exclude([
+//        "**/*build*",
+//        "**/*target*",
+//        "**/*gen*",
+//        "**/*generated*",
+//        ".idea/**"
+//    ])
+//}
+//licenseFormat.dependsOn licenseFormatAndroid
+
 
 ext {
     compileSdkVersion = 28
@@ -85,7 +87,8 @@ ext {
     versions = [
         threetenbp: "1.3.8",
         junit     : "4.12",
-        room      : "2.2.2"
+        room      : "2.2.2",
+        koin      : "2.0.1"
     ]
 
     deps = [

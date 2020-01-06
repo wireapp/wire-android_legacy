@@ -40,7 +40,6 @@ import com.waz.zclient.utils.{ContextUtils, GuestUtils, RichView, StringUtils}
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.{FragmentHelper, R}
 import org.threeten.bp.Instant
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -86,10 +85,10 @@ class SingleParticipantFragment extends FragmentHelper {
     case _               => None
   }
 
-  private lazy val readReceipts = Signal(userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
-    case (true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
-    case (true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
-    case _             => None
+  private lazy val readReceipts = Signal(participantsController.isGroup, userAccountsController.isTeam, userAccountsController.readReceiptsEnabled).map {
+    case (false, true, true)  => Some(getString(R.string.read_receipts_info_title_enabled))
+    case (false, true, false) => Some(getString(R.string.read_receipts_info_title_disabled))
+    case _                    => None
   }
 
   private lazy val devicesView = returning( view[RecyclerView](R.id.devices_recycler_view) ) { vh =>
@@ -169,22 +168,14 @@ class SingleParticipantFragment extends FragmentHelper {
   private lazy val footerMenu = returning( view[FooterMenu](R.id.fm__footer) ) { vh =>
     // TODO: merge this logic with ConversationOptionsMenuController
     (for {
-      conv           <- participantsController.conv
-      isGroup        <- participantsController.isGroup
-      createPerm     <- userAccountsController.hasCreateConvPermission
-      remPerm        <- participantsController.selfRole.map(_.canRemoveGroupMember)
-      selfIsGuest    <- participantsController.isCurrentUserGuest
-      selfIsExternal <- userAccountsController.isExternal
-      selfIsProUser  <- userAccountsController.isTeam
-      other          <- participantsController.otherParticipant
-      otherIsGuest    = other.isGuest(conv.team)
-    } yield {
-      if (fromDeepLink) !selfIsProUser || otherIsGuest
-      else (createPerm || remPerm) && !selfIsGuest && (!isGroup || !selfIsExternal)
-    }).map {
-      case true => R.string.glyph__more
-      case _    => R.string.empty_string
-    }.map(getString).onUi(text => vh.foreach(_.setRightActionText(text)))
+      conv            <- participantsController.conv
+      remPerm         <- participantsController.selfRole.map(_.canRemoveGroupMember)
+      selfIsProUser   <- userAccountsController.isTeam
+      other           <- participantsController.otherParticipant
+      otherIsGuest    =  other.isGuest(conv.team)
+      showRightAction =  if (fromDeepLink) !selfIsProUser || otherIsGuest else remPerm
+      rightActionStr  =  getString(if (showRightAction) R.string.glyph__more else R.string.empty_string)
+    } yield rightActionStr).onUi(text => vh.foreach(_.setRightActionText(text)))
 
     leftActionStrings.onUi { case (icon, text) =>
       vh.foreach { menu =>
@@ -215,9 +206,10 @@ class SingleParticipantFragment extends FragmentHelper {
                               // if the user is from our team we ask the backend for the rich profile (but we don't wait for it)
         _                  =  if (isTeamTheSame) zms.users.syncRichInfoNowForUser(user.id) else Future.successful(())
         isDarkTheme        <- inject[ThemeController].darkThemeSet.head
-      } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isTeamTheSame)).foreach {
-        case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isTeamTheSame) =>
-          val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup)
+        isWireless         =  user.expiresAt.isDefined
+      } yield (user.id, user.email, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame)).foreach {
+        case (userId, emailAddress, isGuest, isExternal, isDarkTheme, isGroup, isWireless, isTeamTheSame) =>
+          val adapter = new SingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless)
           val emailUserField = emailAddress match {
             case Some(email) => Seq(UserField(getString(R.string.user_profile_email_field_name), email.toString()))
             case None        => Seq.empty

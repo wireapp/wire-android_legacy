@@ -61,7 +61,7 @@ sealed class Either<out L, out R> {
      * @see Left
      * @see Right
      */
-    fun fold(fnL: (L) -> Any, fnR: (R) -> Any): Any =
+    fun <T> fold(fnL: (L) -> T?, fnR: (R) -> T?): T? =
         when (this) {
             is Left -> fnL(a)
             is Right -> fnR(b)
@@ -87,12 +87,29 @@ fun <T, L, R> Either<L, R>.flatMap(fn: (R) -> Either<L, T>): Either<L, T> =
     }
 
 /**
+ * Left-biased onFailure() FP convention dictates that when this class is Left, it'll perform
+ * the onFailure functionality passed as a parameter, but, overall will still return an either
+ * object so you chain calls.
+ */
+fun <L, R> Either<L, R>.onFailure(fn: (failure: L) -> Unit): Either<L, R> =
+    this.apply { if (this is Either.Left) fn(a) }
+
+/**
+ * Right-biased onSuccess() FP convention dictates that when this class is Right, it'll perform
+ * the onSuccess functionality passed as a parameter, but, overall will still return an either
+ * object so you chain calls.
+ */
+fun <L, R> Either<L, R>.onSuccess(fn: (success: R) -> Unit): Either<L, R> =
+    this.apply { if (this is Either.Right) fn(b) }
+
+/**
  * Right-biased map() FP convention which means that Right is assumed to be the default case
  * to operate on. If it is Left, operations like map, flatMap, ... return the Left value unchanged.
  */
 fun <T, L, R> Either<L, R>.map(fn: (R) -> (T)): Either<L, T> = this.flatMap(fn.c(::right))
 
-/** Returns the value from this `Right` or the given argument if this is a `Left`.
+/**
+ * Returns the value from this `Right` or the given argument if this is a `Left`.
  *  Right(12).getOrElse(17) RETURNS 12 and Left(12).getOrElse(17) RETURNS 17
  */
 fun <L, R> Either<L, R>.getOrElse(value: R): R =
@@ -100,3 +117,4 @@ fun <L, R> Either<L, R>.getOrElse(value: R): R =
         is Either.Left -> value
         is Either.Right -> b
     }
+

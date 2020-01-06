@@ -24,11 +24,13 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.InternalLog
 import com.waz.log.LogSE._
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.service.backup.BackupManager
+import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.sync.client.LoginClient.LoginResult
@@ -106,10 +108,7 @@ trait AccountsService {
 
   def loginClient: LoginClient
 
-  def wipeData(userId: UserId): Future[Unit]
   def wipeDataForAllAccounts(): Future[Unit]
-  def isWipedForAllAccounts: Future[Boolean]
-
 }
 
 object AccountsService {
@@ -149,6 +148,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   lazy val phoneNumbers  = global.phoneNumbers
   lazy val regClient     = global.regClient
   lazy val loginClient   = global.loginClient
+  lazy val logsService   = global.logsService
 
   private val activeAccountPref      = prefs(ActiveAccountPref)
   private val firstTimeWithTeamsPref = prefs(FirstTimeWithTeams)
@@ -505,47 +505,53 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     }
   }
 
-  override def wipeDataForAllAccounts(): Future[Unit] = accountManagers.head.map(_.foreach(am => wipeData(am.userId)))
-
-  override def wipeData(userId: UserId): Future[Unit] = {
+  override def wipeDataForAllAccounts(): Future[Unit] = {
     def delete(file: File) =
       if (file.exists) Try(file.delete()).isSuccess else true
 
     //wrap everything in Try blocks as otherwise exceptions might cause us to skip future wiping
     //operations and the logout call
-    val deleteCryptoDir = Try(delete(cryptoBoxDir(userId)))
-    if(deleteCryptoDir.isFailure) error(l"failed to wipe cryptobox dir", deleteCryptoDir.failed.get)
+    val deleteDbFiles = Try(databaseDir().foreach(delete))
+    if(deleteDbFiles.isFailure) error(l"failed to wipe db files", deleteDbFiles.failed.get)
 
-    val deleteDbFiles = Try(databaseFiles(userId).foreach(delete))
-    if(deleteDbFiles.isFailure) error(l"failed to wipe db files", deleteCryptoDir.failed.get)
-
-    val deleteOtrFiles = Try(otrFilesDir(userId).deleteRecursively())
+    val deleteOtrFiles = Try(otrFilesDir().deleteRecursively())
     if(deleteOtrFiles.isFailure) {
       error(l"Got exception when attempting to delete otr files", deleteOtrFiles.failed.get)
     } else if(deleteOtrFiles.isSuccess && !deleteOtrFiles.get) {
       error(l"Failed to delete otr files")
     }
 
-    logout(userId, DataWiped)
+    val deleteCacheDir = Try(cacheDir().deleteRecursively())
+    if(deleteCacheDir.isFailure) {
+      warn(l"Failed to delete cache dir, skipping...")
+    }
+
+    val deleteLogs = Try(clearLogs())
+    if(deleteLogs.isFailure) {
+      warn(l"Failed to delete logs, skipping...")
+    }
+
+    for {
+      accIds <- zmsInstances.head.map(_.map(_.selfUserId))
+    } yield Future.sequence(accIds.map(id => logout(id, DataWiped)))
   }
 
-  override def isWipedForAllAccounts: Future[Boolean] = accountManagers.head.map { ams =>
-    cryptoBoxDirs(ams).forall(!_.exists) && databaseFiles(ams).forall(!_.exists)
-  }
-
-  private def cryptoBoxDirs(ams: Set[AccountManager]): Set[File] = ams.map(acc => cryptoBoxDir(acc.userId))
-
-  private def cryptoBoxDir(userId: UserId): File = new File(new File(context.getFilesDir, global.metadata.cryptoBoxDirName), userId.str)
-
-  private def databaseFiles(ams: Set[AccountManager]): Set[File] = ams.flatMap(acc => databaseFiles(acc.userId))
-
-  private def databaseFiles(userId: UserId): Set[File] = {
+  private def databaseDir(): Set[File] = {
     val databaseDir = s"${context.getApplicationInfo.dataDir}/databases"
     new File(databaseDir).listFiles().filter(_.isFile).toSet
   }
 
-  private def otrFilesDir(userId: UserId): Directory =
-    new Directory(new File(s"${context.getApplicationInfo.dataDir}/files/otr/$userId"))
+  private def otrFilesDir(): Directory =
+    new Directory(new File(s"${context.getApplicationInfo.dataDir}/files/otr/"))
+
+  private def cacheDir(): Directory = new Directory(context.getCacheDir)
+
+  private def clearLogs(): Future[Unit] = {
+    //disable logging so we don't write new logs after clearing, but before logging out
+    //this does mean we are clearing the logs twice, but if we don't call it explicitly, there is
+    //a potential race condition between us clearing the logs and logging out
+    returning(logsService.setLogsEnabled(false)) { _ => InternalLog.clearAll()}
+  }
 
 }
 
