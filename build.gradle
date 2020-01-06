@@ -9,6 +9,10 @@ buildscript {
     ext.kotlin_version = '1.3.60'
     ext.retrofit_version = "2.6.2"
 
+    //TODO: change declaration after centralized dependency file is merged
+    //TODO: update version when we support Gradle 5.x
+    ext.detekt_version = "1.2.2"
+
     repositories {
         maven {
             url "https://dl.bintray.com/wire-android/third-party"
@@ -26,11 +30,13 @@ buildscript {
         classpath 'com.google.gms:google-services:3.1.1'
         classpath 'org.ajoberstar.grgit:grgit-core:3.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:$detekt_version"
     }
 }
 
 plugins {
     id "com.github.hierynomus.license" version "0.13.1"
+    id "io.gitlab.arturbosch.detekt" version "1.2.2"
 }
 
 license {
@@ -51,6 +57,8 @@ allprojects {
         mavenCentral()
     }
 }
+
+apply from: "./detekt/setup.gradle"
 
 // FIXME: License header is disabled because it breaks compilation
 //task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
