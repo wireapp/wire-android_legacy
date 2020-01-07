@@ -28,7 +28,6 @@ import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.connect.PendingConnectRequestFragment
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -48,8 +47,7 @@ import scala.concurrent.Future
 
 class ParticipantFragment extends ManagerFragment
   with ConversationScreenControllerObserver
-  with BlockedUserProfileFragment.Container
-  with PendingConnectRequestFragment.Container {
+  with BlockedUserProfileFragment.Container {
 
   import ParticipantFragment._
 
@@ -245,7 +243,7 @@ class ParticipantFragment extends ManagerFragment
         openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
       case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
-        import com.waz.zclient.connect.PendingConnectRequestFragment._
+        import PendingConnectRequestFragment._
         openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == BLOCKED =>
@@ -254,7 +252,7 @@ class ParticipantFragment extends ManagerFragment
 
       case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
         import SendConnectRequestFragment._
-        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
       case _ =>
     }
   }
@@ -269,14 +267,6 @@ class ParticipantFragment extends ManagerFragment
   override def dismissUserProfile(): Unit = screenController.hideUser()
 
   override def dismissSingleUserProfile(): Unit = dismissUserProfile()
-
-  override def onAcceptedConnectRequest(userId: UserId): Unit = {
-    screenController.hideUser()
-    verbose(l"onAcceptedConnectRequest $userId")
-    userAccountsController.getConversationId(userId).flatMap { convId =>
-      convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
-    }
-  }
 
   override def onUnblockedUser(restoredConversationWithUser: ConvId): Unit = {
     screenController.hideUser()

@@ -22,7 +22,7 @@ import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Name, UserId}
-import com.waz.service.ConnectionServiceImpl
+import com.waz.service.ConnectionService
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.{Retry, Success}
 import com.waz.sync.client.ConnectionsClient
@@ -32,7 +32,7 @@ import com.waz.utils.events.EventContext
 import scala.concurrent.Future
 
 class ConnectionsSyncHandler(usersStorage:      UsersStorage,
-                             connectionService: ConnectionServiceImpl,
+                             connectionService: ConnectionService,
                              connectionsClient: ConnectionsClient) extends DerivedLogTag {
 
   import Threading.Implicits.Background

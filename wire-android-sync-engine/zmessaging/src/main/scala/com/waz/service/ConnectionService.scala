@@ -26,6 +26,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.ConnectionService._
+import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, NameUpdater}
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
@@ -38,8 +39,16 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 
 trait ConnectionService {
+  def connectionEventsStage: Stage.Atomic
+  def contactJoinEventsStage: Stage.Atomic
+
   def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]]
   def handleUserConnectionEvents(events: Seq[UserConnectionEvent]): Future[Unit]
+  def acceptConnection(userId: UserId): Future[ConversationData]
+  def ignoreConnection(userId: UserId): Future[Option[UserData]]
+  def blockConnection(userId: UserId): Future[Option[UserData]]
+  def unblockConnection(userId: UserId): Future[ConversationData]
+  def cancelConnection(userId: UserId): Future[Option[UserData]]
 }
 
 class ConnectionServiceImpl(selfUserId:      UserId,
@@ -57,9 +66,9 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
-  val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((c, e) => handleUserConnectionEvents(e))
+  override val connectionEventsStage = EventScheduler.Stage[UserConnectionEvent]((c, e) => handleUserConnectionEvents(e))
 
-  val contactJoinEventsStage = EventScheduler.Stage[ContactJoinEvent] { (c, es) =>
+  override val contactJoinEventsStage = EventScheduler.Stage[ContactJoinEvent] { (c, es) =>
     RichFuture.traverseSequential(es) { e =>
       users.getOrCreateUser(e.user) flatMap { _ =>
         // update user name if it was just created (has empty name)
@@ -68,7 +77,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     }
   }
 
-  def handleUserConnectionEvents(events: Seq[UserConnectionEvent]) = {
+  override def handleUserConnectionEvents(events: Seq[UserConnectionEvent]) = {
     def updateOrCreate(event: UserConnectionEvent)(user: Option[UserData]): UserData =
       user.fold {
         UserData(event.to, None, event.fromUserName.getOrElse(Name.Empty), None, None, connection = event.status, conversation = Some(event.convId), connectionMessage = event.message, searchKey = SearchKey.Empty, connectionLastUpdated = event.lastUpdated,
@@ -148,7 +157,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   /**
    * Connects to user and creates one-to-one conversation if needed. Returns existing conversation if user is already connected.
    */
-  def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]] = {
+  override def connectToUser(userId: UserId, message: String, name: Name): Future[Option[ConversationData]] = {
 
     def sanitizedName = if (name.isEmpty) Name("_") else if (name.length >= 256) name.substring(0, 256) else name
 
@@ -176,7 +185,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     }
   }
 
-  def acceptConnection(userId: UserId): Future[ConversationData] =
+  override def acceptConnection(userId: UserId): Future[ConversationData] =
     users.updateConnectionStatus(userId, ConnectionStatus.Accepted) map {
       case Some(_) =>
         sync.postConnectionStatus(userId, ConnectionStatus.Accepted) map { syncId =>
@@ -193,14 +202,14 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       }
     }
 
-  def ignoreConnection(userId: UserId): Future[Option[UserData]] =
+  override def ignoreConnection(userId: UserId): Future[Option[UserData]] =
     for {
       user <- users.updateConnectionStatus(userId, ConnectionStatus.Ignored)
       _    <- user.fold(Future.successful({}))(_ => sync.postConnectionStatus(userId, ConnectionStatus.Ignored).map(_ => {}))
       _    <- convsContent.hideIncomingConversation(userId)
     } yield user
 
-  def blockConnection(userId: UserId): Future[Option[UserData]] = {
+  override def blockConnection(userId: UserId): Future[Option[UserData]] = {
     for {
       _    <- convsContent.setConversationHidden(ConvId(userId.str), hidden = true)
       user <- users.updateConnectionStatus(userId, ConnectionStatus.Blocked)
@@ -208,7 +217,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     } yield user
   }
 
-  def unblockConnection(userId: UserId): Future[ConversationData] =
+  override def unblockConnection(userId: UserId): Future[ConversationData] =
     for {
       user <- users.updateConnectionStatus(userId, ConnectionStatus.Accepted)
       _    <- user.fold(Future.successful({})) { _ =>
@@ -222,7 +231,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     } yield updated
 
 
-  def cancelConnection(userId: UserId): Future[Option[UserData]] = {
+  override def cancelConnection(userId: UserId): Future[Option[UserData]] = {
     users.updateUserData(userId, { user =>
       if (user.connection == ConnectionStatus.PendingFromUser) user.copy(connection = ConnectionStatus.Cancelled)
       else {

@@ -44,7 +44,6 @@ import org.threeten.bp.Instant
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-
 class SingleParticipantFragment extends FragmentHelper {
   import Threading.Implicits.Ui
   implicit def ctx: Context = getActivity
