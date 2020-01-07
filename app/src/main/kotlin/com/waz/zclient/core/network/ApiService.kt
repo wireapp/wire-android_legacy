@@ -44,6 +44,7 @@ class ApiService(
         }
     }
 
+    @Suppress("MagicNumber")
     private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
         return when (response.code()) {
             400 -> Left(BadRequest)
