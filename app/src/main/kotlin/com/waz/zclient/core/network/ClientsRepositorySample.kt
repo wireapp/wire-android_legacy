@@ -11,7 +11,7 @@ import com.waz.zclient.features.clients.ClientEntity
  * This demonstrates the usage of the Network API.
  * TODO: Remove this when used and implemented somewhere else.
  */
-abstract class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
+class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
 
     //Data mapping/transformation should happen at this level and repositories should
     //always deal with Entities and return Domain types
