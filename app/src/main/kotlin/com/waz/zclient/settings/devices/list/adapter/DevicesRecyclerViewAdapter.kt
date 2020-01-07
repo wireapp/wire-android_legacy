@@ -45,7 +45,7 @@ class DevicesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
             item_device_title.text = clientItem.client.label
             val formattedDate = DateAndTimeUtils.getTimeStamp(clientItem.client.time)
 
-            item_device_id.text = "ID: ${clientItem.client.id}\nActivated: ${formattedDate}"
+            item_device_id.text = "ID: ${clientItem.client.id}\nActivated: $formattedDate"
             item_device_verification_icon.setImageResource(clientItem.verificationIcon())
             
             setOnClickListener { itemClickListener?.onItemClicked(clientItem) }
