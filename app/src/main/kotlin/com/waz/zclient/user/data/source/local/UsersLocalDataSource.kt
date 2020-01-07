@@ -5,8 +5,10 @@ import com.waz.zclient.storage.db.users.model.UserDao
 import com.waz.zclient.storage.db.users.service.UserDbService
 import com.waz.zclient.storage.pref.GlobalPreferences
 
-class UsersLocalDataSource constructor(private val userService: UserDbService,
-                                       private val globalPreferences: GlobalPreferences) {
+class UsersLocalDataSource constructor(
+    private val userService: UserDbService,
+    private val globalPreferences: GlobalPreferences
+) {
 
     private val userId = globalPreferences.activeUserId
 

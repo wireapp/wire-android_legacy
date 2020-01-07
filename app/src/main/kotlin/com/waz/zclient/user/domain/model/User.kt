@@ -28,4 +28,5 @@ data class User(
     val managedBy: String?,
     val selfPermission: Int? = null,
     val copyPermission: Int? = null,
-    val createdBy: String? = null)
+    val createdBy: String? = null
+)

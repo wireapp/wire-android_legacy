@@ -15,9 +15,11 @@ import com.waz.zclient.core.threading.ThreadHandler
 import retrofit2.Call
 import retrofit2.Response
 
-class ApiService(private val networkHandler: NetworkHandler,
-                 private val threadHandler: ThreadHandler,
-                 private val networkClient: NetworkClient) {
+class ApiService(
+    private val networkHandler: NetworkHandler,
+    private val threadHandler: ThreadHandler,
+    private val networkClient: NetworkClient
+) {
 
     fun <T> createApi(clazz: Class<T>) = networkClient.create(clazz)
 

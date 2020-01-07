@@ -30,8 +30,10 @@ object NetworkDependencyProvider {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-    fun createClient(accessTokenInterceptor: AccessTokenInterceptor,
-                     accessTokenAuthenticator: AccessTokenAuthenticator): OkHttpClient =
+    fun createClient(
+        accessTokenInterceptor: AccessTokenInterceptor,
+        accessTokenAuthenticator: AccessTokenAuthenticator
+    ): OkHttpClient =
         OkHttpClient.Builder().apply {
             addInterceptor(accessTokenInterceptor)
             authenticator(accessTokenAuthenticator)

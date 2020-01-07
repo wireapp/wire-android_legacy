@@ -12,7 +12,8 @@ import com.waz.zclient.devices.domain.model.Client
 class ClientsDataSource constructor(
     private val remoteDataSource: ClientsRemoteDataSource,
     private val localDataSource: ClientsLocalDataSource,
-    private val clientMapper: ClientMapper) : ClientsRepository {
+    private val clientMapper: ClientMapper
+) : ClientsRepository {
 
     override suspend fun clientById(clientId: String) =
         accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())

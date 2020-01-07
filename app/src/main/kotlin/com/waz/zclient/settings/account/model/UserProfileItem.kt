@@ -6,7 +6,8 @@ data class UserProfileItem(
     val name: String?,
     val handle: String?,
     val email: String?,
-    val phone: String?) {
+    val phone: String?
+) {
 
     constructor(user: User) : this(
         name = user.name,
