@@ -201,7 +201,7 @@ formatting:
     active: true
     autoCorrect: true
   CommentSpacing:
-    active: true
+    active: false
     autoCorrect: true
   Filename:
     active: true
