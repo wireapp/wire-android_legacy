@@ -7,7 +7,7 @@ data class ClientEntity(
     @SerializedName("cookie") val cookie: String?,
     @SerializedName("time") val time: String,
     @SerializedName("label") val label: String,
-    @SerializedName("class") val _class: String,
+    @SerializedName("class") val clazz: String,
     @SerializedName("type") val type: String,
     @SerializedName("id") val id: String,
     @SerializedName("model") val model: String,

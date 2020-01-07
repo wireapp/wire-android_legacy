@@ -19,7 +19,7 @@ data class ClientApi(
     val type: String,
 
     @SerializedName("class")
-    val _class: String,
+    val clazz: String,
 
     @SerializedName("model")
     val model: String,

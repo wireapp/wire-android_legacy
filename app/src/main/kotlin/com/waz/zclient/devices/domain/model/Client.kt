@@ -4,7 +4,7 @@ data class Client(
     val cookie: String? = null,
     val time: String,
     val label: String,
-    val _class: String,
+    val clazz: String,
     val type: String,
     val id: String,
     val model: String,
