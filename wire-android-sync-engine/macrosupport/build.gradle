@@ -7,6 +7,6 @@ android {
 }
 
 dependencies {
-    compileOnly "org.scala-lang:scala-reflect:$rootProject.ext.scalaVersion"
-    compileOnly "$rootProject.deps.robolectric_android_all"
+    compileOnly LegacyDependencies.scalaReflect
+    compileOnly TestDependencies.robolectric
 }
