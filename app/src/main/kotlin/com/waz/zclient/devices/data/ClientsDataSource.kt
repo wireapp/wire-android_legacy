@@ -35,6 +35,4 @@ class ClientsDataSource constructor(
 
     private fun saveAllClients(): suspend (List<Client>) -> Unit =
         { localDataSource.updateClients(clientMapper.toListOfClientDao(it)) }
-
 }
-

@@ -1,6 +1,5 @@
 package com.waz.zclient.user.data.source.local
 
-
 import com.waz.zclient.core.network.requestDatabase
 import com.waz.zclient.storage.db.users.model.UserDao
 import com.waz.zclient.storage.db.users.service.UserDbService
@@ -22,6 +21,4 @@ class UsersLocalDataSource constructor(private val userService: UserDbService,
     suspend fun changeEmail(value: String) = requestDatabase { userService.updateEmail(userId, value) }
 
     suspend fun changePhone(value: String) = requestDatabase { userService.updatePhone(userId, value) }
-
-
 }

@@ -7,7 +7,6 @@ import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.PUT
 
-
 interface UsersNetworkService {
 
     @GET("/self")

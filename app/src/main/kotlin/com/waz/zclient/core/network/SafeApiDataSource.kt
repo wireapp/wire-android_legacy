@@ -1,6 +1,11 @@
 package com.waz.zclient.core.network
 
-import com.waz.zclient.core.exception.*
+import com.waz.zclient.core.exception.DatabaseError
+import com.waz.zclient.core.exception.DatabaseFailure
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.HttpError
+import com.waz.zclient.core.exception.NetworkFailure
+import com.waz.zclient.core.exception.NetworkServiceError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
@@ -29,7 +34,6 @@ suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseF
     } catch (e: Exception) {
         Either.Left(DatabaseError)
     }
-
 
 suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
                            fallbackRequest: suspend () -> Either<Failure, R>,

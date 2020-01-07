@@ -10,7 +10,6 @@ import com.waz.zclient.user.di.usersModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
-
 object Injector {
 
     @JvmStatic

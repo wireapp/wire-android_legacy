@@ -15,7 +15,6 @@ import com.waz.zclient.settings.account.model.UserProfileItem
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
@@ -47,7 +46,6 @@ class SettingsAccountFragment : Fragment() {
             profile.observe(viewLifecycleOwner) { profile ->
                 updateProfile(profile)
             }
-
         }
     }
 
@@ -80,8 +78,4 @@ class SettingsAccountFragment : Fragment() {
         fun newInstance() = SettingsAccountFragment()
         private const val Accounts = "|ACCOUNTS|"
     }
-
-
 }
-
-

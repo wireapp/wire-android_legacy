@@ -8,7 +8,6 @@ import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-
 val settingsAccountModule: Module = module {
     viewModel { SettingsAccountViewModel(get()) }
     factory { GetUserProfileUseCase(get()) }

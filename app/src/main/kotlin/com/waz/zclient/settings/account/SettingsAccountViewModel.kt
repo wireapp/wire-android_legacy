@@ -57,5 +57,3 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         mutableError.value = message
     }
 }
-
-

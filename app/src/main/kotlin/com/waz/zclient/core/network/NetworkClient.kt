@@ -9,4 +9,3 @@ interface NetworkClient {
 class RetrofitClient(private val retrofit: Retrofit) : NetworkClient {
     override fun <T> create(clazz: Class<T>): T = retrofit.create(clazz)
 }
-

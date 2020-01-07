@@ -31,5 +31,3 @@ class SettingsAboutFragment : Fragment() {
         const val WEBSITE = "|WEBSITE|"
     }
 }
-
-

@@ -41,7 +41,3 @@ open class Network {
         private const val API_TOKEN = "LadIdRjgenj_5iVB-RzSSk-Ut24YWCK-JO3oS3l5JZ4WGZNYoMou1B1_oyauAocYmk8cMgB6RNRVimFxpMd0BQ==.v=1.k=1.d=1576085133.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=13416685046832935484"
     }
 }
-
-
-
-

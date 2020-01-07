@@ -32,5 +32,4 @@ class UsersDataSource constructor(
         { usersLocalDataSource.profile().map { userMapper.toUser(it) } }
 
     private fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.add(userMapper.toUserDao(it)) }
-
 }

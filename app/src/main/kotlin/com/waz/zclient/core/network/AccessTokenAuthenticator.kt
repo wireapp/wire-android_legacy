@@ -27,7 +27,6 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
                 authTokenHandler.updateAccessToken(it)
                 proceedWithNewAccessToken(response, it)
             }
-
         }
     }
 
@@ -40,5 +39,4 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
                     "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $newAccessToken")
                 .build()
         }
-
 }

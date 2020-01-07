@@ -49,7 +49,6 @@ sealed class Either<out L, out R> {
      */
     fun <L> left(a: L) = Either.Left(a)
 
-
     /**
      * Creates a Left type.
      * @see Right
@@ -117,4 +116,3 @@ fun <L, R> Either<L, R>.getOrElse(value: R): R =
         is Either.Left -> value
         is Either.Right -> b
     }
-

@@ -21,4 +21,3 @@ class AuthTokenHandler(private val tokenRepository: AccessTokenRepository) {
 
     fun wipeOutTokens() = tokenRepository.wipeOutTokens()
 }
-

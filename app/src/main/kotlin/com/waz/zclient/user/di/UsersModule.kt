@@ -11,7 +11,6 @@ import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-
 val usersModule: Module = module {
     single { UsersDataSource(get(), get(), get()) as UsersRepository }
     factory { UserMapper() }
