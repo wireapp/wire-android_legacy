@@ -38,7 +38,9 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         handleLoading(false)
         when (failure) {
             is HttpError ->
-                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
+                Log.e(javaClass.simpleName,
+                    "failed with errorCode: " +
+                    "${failure.errorCode} and errorMessage {${failure.errorMessage}")
             else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")
         }

@@ -14,7 +14,8 @@ class ClientsDataSource constructor(
     private val localDataSource: ClientsLocalDataSource,
     private val clientMapper: ClientMapper) : ClientsRepository {
 
-    override suspend fun clientById(clientId: String) = accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
+    override suspend fun clientById(clientId: String) =
+        accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
 
     override suspend fun allClients() = accessData(allClientsLocal(), allClientsRemote(), saveAllClients())
 

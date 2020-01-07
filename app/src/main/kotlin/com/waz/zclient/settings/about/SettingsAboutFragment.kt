@@ -21,8 +21,12 @@ class SettingsAboutFragment : Fragment() {
         activity?.title = getString(R.string.pref_about_screen_title)
         preferences_about_website.setOnClickListener { openUrl(Config.websiteUrl()) }
         preferences_about_terms.setOnClickListener {}
-        preferences_about_privacy.setOnClickListener { openUrl(getString(R.string.url_privacy_policy).replaceFirst(WEBSITE, Config.websiteUrl())) }
-        preferences_about_license.setOnClickListener { openUrl(getString(R.string.url_third_party_licences).replaceFirst(WEBSITE, Config.websiteUrl())) }
+        preferences_about_privacy.setOnClickListener {
+            openUrl(getString(R.string.url_privacy_policy).replaceFirst(WEBSITE, Config.websiteUrl()))
+        }
+        preferences_about_license.setOnClickListener {
+            openUrl(getString(R.string.url_third_party_licences).replaceFirst(WEBSITE, Config.websiteUrl()))
+        }
         preferences_about_version.text = getString(R.string.pref_about_version_title, Config.versionName())
     }
 

@@ -1,3 +1,5 @@
+@file:Suppress("MaximumLineLength")
+
 package com.waz.zclient.core.network
 
 import com.waz.zclient.BuildConfig
