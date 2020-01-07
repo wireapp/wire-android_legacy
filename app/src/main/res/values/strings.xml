@@ -682,7 +682,7 @@
 
     <!-- System notifications -->
     <string name="system_notification__silence_call">Decline</string>
-    <string name="system_notification__join_call">Accept</string>
+    <string name="system_notification__join_call">Open Call</string>
     <string name="system_notification__leave_call">End call</string>
     <string name="system_notification__calling_one">Calling…</string>
     <string name="system_notification__calling_group">%1$s is calling…</string>
