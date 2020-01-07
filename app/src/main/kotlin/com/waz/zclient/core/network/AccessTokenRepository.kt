@@ -25,7 +25,7 @@ class AccessTokenRepository {
         //TODO: Save the refresh token somewhere: User Preferences?
     }
 
-    fun renewAccessToken(refreshToken: String) : Either<Failure, String> = TODO("implement")
+    fun renewAccessToken(refreshToken: String): Either<Failure, String> = TODO("implement")
 
     fun wipeOutTokens() {
         wipeOutAccessToken()

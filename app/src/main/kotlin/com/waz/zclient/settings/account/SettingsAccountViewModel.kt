@@ -11,8 +11,7 @@ import com.waz.zclient.settings.account.model.UserProfileItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 
-class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase)
-    : ViewModel() {
+class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase) : ViewModel() {
 
     private val mutableLoading = MutableLiveData<Boolean>()
     private val mutableError = MutableLiveData<String>()
@@ -40,7 +39,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
             is HttpError ->
                 Log.e(javaClass.simpleName,
                     "failed with errorCode: " +
-                    "${failure.errorCode} and errorMessage {${failure.errorMessage}")
+                        "${failure.errorCode} and errorMessage {${failure.errorMessage}")
             else ->
                 Log.e(javaClass.simpleName, "Misc error scenario")
         }
