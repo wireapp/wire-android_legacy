@@ -27,6 +27,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +41,7 @@ import com.wire.testinggallery.precondition.PreconditionCheckers;
 import com.wire.testinggallery.precondition.PreconditionFixers;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,19 +70,18 @@ public class MainActivity extends AppCompatActivity {
         requestSilentlyRights(this);
         mapTableHandlers();
         checkPreconditions();
+        copyRawFileToSdCard(R.raw.textfile, "textfile.txt");
+        copyRawFileToSdCard(R.raw.audio, "audio.m4a");
+        copyRawFileToSdCard(R.raw.video, "video.mp4");
+        copyRawFileToSdCard(R.raw.backup, "backup.android_wbu");
+        copyRawFileToSdCard(R.raw.picture, "picture.png");
     }
 
     private void showInfoUi() {
         ViewGroup view = findViewById(android.R.id.content);
         View mainView = LayoutInflater.from(this).inflate(R.layout.main_view, view, true);
-        try {
-            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            String version = pInfo.versionName;
-            TextView versionValueTextView = mainView.findViewById(R.id.version_value);
-            versionValueTextView.setText(version);
-        } catch (NameNotFoundException e) {
-            e.printStackTrace();
-        }
+        TextView versionValueTextView = mainView.findViewById(R.id.version_value);
+        versionValueTextView.setText(BuildConfig.VERSION_NAME+"-"+(BuildConfig.BUILD_TYPE.toUpperCase()));
     }
 
     @Override
@@ -198,7 +200,6 @@ public class MainActivity extends AppCompatActivity {
             put(R.id.getDocumentResolverValue, checkers.getDocumentResolverChecker());
             put(R.id.lockScreenValue, checkers.lockScreenChecker());
             put(R.id.notificationAccessValue, checkers.notificationAccessChecker());
-            put(R.id.brightnessValue, checkers.brightnessCheck());
             put(R.id.stayAwakeValue, checkers.stayAwakeCheck());
             put(R.id.defaultVideoRecorderValue, checkers.videoRecorderCheck());
             put(R.id.defaultDocumentReceiverValue, checkers.defaultDocumentReceiverCheck());
@@ -211,10 +212,40 @@ public class MainActivity extends AppCompatActivity {
             put(R.id.getDocumentResolverFix, fixers.getDocumentResolverFix());
             put(R.id.lockScreenFix, fixers.lockScreenFix());
             put(R.id.notificationAccessFix, fixers.notificationAccessFix());
-            put(R.id.brightnessFix, fixers.brightnessFix());
             put(R.id.stayAwakeFix, fixers.stayAwakeFix());
             put(R.id.defaultVideoRecorderFix, fixers.videoRecorderFix());
             put(R.id.defaultDocumentReceiverFix, fixers.defaultDocumentReceiverFix());
         }};
+    }
+
+
+    private void copyRawFileToSdCard(int fileId, String name) {
+        File pathSDCard = Environment.getExternalStoragePublicDirectory("wire");
+        if(pathSDCard.isDirectory() == false) {
+            pathSDCard.mkdirs();
+        }
+
+        if(new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile() == false) {
+            try {
+                InputStream in = getResources().openRawResource(fileId);
+                FileOutputStream out = null;
+                out = new FileOutputStream(pathSDCard.getAbsolutePath() + File.separator + name);
+                byte[] buff = new byte[1024];
+                int read = 0;
+                try {
+                    while ((read = in.read(buff)) > 0) {
+                        out.write(buff, 0, read);
+                    }
+                } finally {
+
+                    in.close();
+                    out.close();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

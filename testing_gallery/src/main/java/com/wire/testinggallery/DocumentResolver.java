@@ -19,12 +19,16 @@ package com.wire.testinggallery;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,7 +45,7 @@ public class DocumentResolver {
         Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY);
 
     private final static List<String> FILE_EXTENSIONS = new ArrayList<String>() {{
-        add("*");
+        add("txt");
     }};
     private final static List<String> VIDEO_EXTENSIONS = new ArrayList<String>() {{
         add("mp4");

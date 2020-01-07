@@ -68,6 +68,7 @@
             >
             <intent-filter android:priority="999">
                 <action android:name="android.media.action.IMAGE_CAPTURE" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

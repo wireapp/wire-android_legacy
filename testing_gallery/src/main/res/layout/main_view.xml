@@ -129,23 +129,6 @@
         <TableRow style="@style/tableRow">
 
             <TextView
-                android:id="@+id/brightnessLabel"
-                style="@style/checkLabel"
-                android:text="@string/brightness_check" />
-
-            <TextView
-                android:id="@+id/brightnessValue"
-                style="@style/checkUnknown" />
-
-            <Button
-                android:id="@+id/brightnessFix"
-                style="@style/fixButton"
-                android:text="@string/fix_button" />
-        </TableRow>
-
-        <TableRow style="@style/tableRow">
-
-            <TextView
                 android:id="@+id/stayAwakeLabel"
                 style="@style/checkLabel"
                 android:text="@string/stay_awake_check" />

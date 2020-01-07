@@ -19,6 +19,7 @@ package com.wire.testinggallery;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -27,7 +28,12 @@ public class CaptureImageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setResult(Activity.RESULT_OK, new Intent().setData(new DocumentResolver(getContentResolver()).getImageUri()));
+        setResult(Activity.RESULT_OK, new Intent().setData(getResultUri()));
         finish();
+    }
+
+    private Uri getResultUri() {
+        DocumentResolver resolver = new DocumentResolver(getContentResolver());
+        return resolver.getImageUri();
     }
 }
