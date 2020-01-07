@@ -2,43 +2,57 @@ package com.waz.zclient.core.ui.dialog
 
 import android.app.Dialog
 import android.os.Bundle
-import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
+import kotlinx.android.synthetic.main.dialog_fragment_edit_text.view.*
+
 
 class EditTextDialogFragment : DialogFragment() {
 
-    var listener: EditTextDialogFragmentListener? = null
+    private var listener: EditTextDialogFragmentListener? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
         val initialValue = arguments?.getString(DEFAULT_TEXT_BUNDLE_KEY, "")
         val inflater = requireActivity().layoutInflater
-        val builder = AlertDialog.Builder(requireContext())
         val view = inflater.inflate(R.layout.dialog_fragment_edit_text, null)
-        val editText: EditText = view.findViewById(R.id.edit_text) as EditText
 
-        with(editText) {
+        with(view.edit_text) {
             initialValue?.let {
                 setText(it)
                 setSelection(it.length)
             }
         }
 
-        builder.setTitle(getString(R.string.pref_account_edit_name_title)).setView(view).setPositiveButton(getString(android.R.string.ok)) { _, _ ->
-            val newValue = editText.text.toString().trim()
-            listener?.onTextEdited(newValue)
-            dismiss()
-        }.setNegativeButton(getString(android.R.string.cancel)) { _, _ -> dismiss() }
+        return AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.pref_account_edit_name_title))
+            .setView(view).setPositiveButton(getString(android.R.string.ok)) { _, _ -> positiveButtonAction() }
+            .setNegativeButton(getString(android.R.string.cancel)) { _, _ -> negativeButtonAction() }
+            .create()
+    }
 
 
-        return builder.create()
+    private fun positiveButtonAction() {
+        val newValue = view?.edit_text?.text.toString().trim()
+        listener?.onTextEdited(newValue)
+        dismiss()
+    }
+
+    private fun negativeButtonAction() {
+        dismiss()
     }
 
     companion object {
-        fun newInstance(defaultValue: String) = EditTextDialogFragment().withArgs { putString(DEFAULT_TEXT_BUNDLE_KEY, defaultValue) }
+        fun newInstance(defaultValue: String, dialogListener: EditTextDialogFragmentListener): EditTextDialogFragment {
+            return EditTextDialogFragment().withArgs {
+                putString(
+                    DEFAULT_TEXT_BUNDLE_KEY,
+                    defaultValue
+                )
+            }.also { it.listener = dialogListener }
+        }
         private const val DEFAULT_TEXT_BUNDLE_KEY = "defaultTextBundleKey"
     }
 }

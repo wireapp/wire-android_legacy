@@ -58,11 +58,10 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
 
     private fun setupListeners() {
         preferences_account_name.setOnClickListener {
-            
+
             EditTextDialogFragment.newInstance(
-                preferences_account_name_title.text.toString()).also {
-                it.listener = this
-            }.show(requireActivity().supportFragmentManager, "")
+                preferences_account_name_title.text.toString(), this)
+                .show(requireActivity().supportFragmentManager, "")
 
         }
         preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }

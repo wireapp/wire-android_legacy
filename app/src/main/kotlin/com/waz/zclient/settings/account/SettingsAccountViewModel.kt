@@ -1,17 +1,15 @@
 package com.waz.zclient.settings.account
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.settings.account.model.UserProfileItem
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeNameParams
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import retrofit2.HttpException
 
 class SettingsAccountViewModel
 constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
@@ -28,43 +26,37 @@ constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
 
 
     fun loadProfile() {
-        getUserProfileUseCase(viewModelScope, Unit) { response ->
-            response.fold(::handleProfileError, ::handleProfileSuccess)
-        }
+        getUserProfileUseCase(scope = viewModelScope, params = Unit,
+            onSuccess = { user -> handleProfileSuccess(user)  },
+            onError = { handleError(it) }
+        )
     }
 
     fun updateName(value: String) {
-        changeNameUseCase(viewModelScope, ChangeNameParams(value)) { response ->
-            response.fold(::handleChangeNameError, ::handleChangeNameSuccess)
-        }
+        changeNameUseCase(scope = viewModelScope, params = ChangeNameParams(value),
+            onSuccess = { handleChangeNameSuccess(value)  },
+            onError = { handleError(it) }
+        )
     }
 
     private fun handleProfileSuccess(user: User) {
         mutableProfile.postValue(UserProfileItem(user))
     }
 
-    private fun handleProfileError(failure: Failure) {
-        when (failure) {
-            is HttpError -> {
-                mutableError.postValue("${failure.errorCode} : ${failure.errorMessage}")
+    private fun handleError(throwable: Throwable) {
+        when (throwable) {
+            is HttpException -> {
+                mutableError.postValue("${throwable.code()} : ${throwable.message()}")
             }
-            else ->
-                Log.e(javaClass.simpleName, "Misc error scenario")
+            else -> {
+                mutableError.postValue(throwable.localizedMessage)
+                throwable.printStackTrace()
+            }
         }
     }
 
     private fun handleChangeNameSuccess(any: Any) {
 
-    }
-
-    private fun handleChangeNameError(failure: Failure) {
-        when (failure) {
-            is HttpError -> {
-                mutableError.postValue("${failure.errorCode} : ${failure.errorMessage}")
-            }
-            else ->
-                Log.e(javaClass.simpleName, "Misc error scenario")
-        }
     }
 
 

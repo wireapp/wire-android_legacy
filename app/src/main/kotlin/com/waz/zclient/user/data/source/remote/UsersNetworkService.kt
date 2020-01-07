@@ -14,8 +14,7 @@ interface UsersNetworkService {
     suspend fun profile(): Response<UserApi>
 
     @PUT("/self")
-    suspend fun changeName(@Body userApi: UserApi): Response<UserApi>
-
+    suspend fun changeName(@Body userApi: UserApi): Response<Void>
 
     @PUT("/self/handle")
     suspend fun changeHandle(@Field("handle") value: String): Response<UserApi>
