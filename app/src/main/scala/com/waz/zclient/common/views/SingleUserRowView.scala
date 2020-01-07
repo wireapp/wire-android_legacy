@@ -108,7 +108,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
                   hideStatus: Boolean,
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
     chathead.loadUser(userData.id)
-    setTitle(userData.displayName, userData.isSelf)
+    setTitle(userData.name, userData.isSelf)
     setAvailability(if (teamId.isDefined && !hideStatus) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))

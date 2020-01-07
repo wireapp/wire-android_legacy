@@ -73,7 +73,7 @@ class UserSearchService(selfUserId:           UserId,
     lazy val knownUsers = membersStorage.getByUsers(searchResults.map(_.id).toSet).map(_.map(_.userId).toSet)
     isExternal.flatMap {
       case true if teamId.isDefined =>
-        verbose(l"filterForExternal1 Q: $query, RES: ${searchResults.map(_.displayName)}) with partner = true and teamId")
+        verbose(l"filterForExternal1 Q: $query, RES: ${searchResults.map(_.name)}) with partner = true and teamId")
         for {
           Some(self)    <- userService.getSelfUser
           filteredUsers <- knownUsers.map(knownUsersIds =>
@@ -81,7 +81,7 @@ class UserSearchService(selfUserId:           UserId,
                            )
         } yield filteredUsers
       case false if teamId.isDefined =>
-        verbose(l"filterForExternal2 Q: $query, RES: ${searchResults.map(_.displayName)}) with partner = false and teamId")
+        verbose(l"filterForExternal2 Q: $query, RES: ${searchResults.map(_.name)}) with partner = false and teamId")
         knownUsers.map { knownUsersIds =>
           searchResults.filter { u =>
             u.createdBy.contains(selfUserId) ||
@@ -130,15 +130,15 @@ class UserSearchService(selfUserId:           UserId,
       }
 
       val rules: Seq[UserData => Boolean] = Seq(
-        _.displayName.toLowerCase.startsWith(filter),
+        _.name.toLowerCase.startsWith(filter),
         _.searchKey.asciiRepresentation.split(" ").exists(_.startsWith(filter)),
         cmpHandle(_, _.startsWith(filter)),
-        _.displayName.toLowerCase.contains(filter),
+        _.name.toLowerCase.contains(filter),
         cmpHandle(_, _.contains(filter))
       )
 
       rules.foldLeft[(Set[UserId],IndexedSeq[UserData])]((Set.empty, IndexedSeq())){ case ((found, results), rule) =>
-        val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.displayName.toLowerCase)
+        val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.name.toLowerCase)
         (found ++ matches.map(_.id).toSet, results ++: matches)
       }._2
     }
@@ -172,7 +172,7 @@ class UserSearchService(selfUserId:           UserId,
       else if (query.handleOnly) {
         if (u.handle.exists(_.exactMatchQuery(query.str))) 0 else 1
       } else {
-        val userName = toLower(u.displayName)
+        val userName = toLower(u.name)
         if (userName == toLowerSymbolStripped) 0 else if (userName.startsWith(toLowerSymbolStripped)) 1 else 2
       }
 
@@ -180,7 +180,7 @@ class UserSearchService(selfUserId:           UserId,
         val b1 = bucket(u1)
         val b2 = bucket(u2)
         if (b1 == b2)
-          u1.displayName.compareTo(u2.displayName) < 0
+          u1.name.compareTo(u2.name) < 0
         else
           b1 < b2
     }

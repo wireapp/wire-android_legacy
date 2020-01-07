@@ -166,7 +166,7 @@ class ParticipantHeaderFragment(fromDeepLink: Boolean = false) extends FragmentH
 
         participantsController.otherParticipant.onUi { user =>
           vh.foreach { view =>
-            view.setText(user.displayName)
+            view.setText(user.name)
             val shield = if (user.isVerified) Option(getDrawable(R.drawable.shield_full)) else None
             view.displayEndOfText(shield)
             if (shield.isDefined) view.setCompoundDrawablePadding(getDimenPx(R.dimen.wire__padding__tiny))

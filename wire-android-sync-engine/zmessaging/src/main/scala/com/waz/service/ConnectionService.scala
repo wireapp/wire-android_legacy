@@ -63,7 +63,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     RichFuture.traverseSequential(es) { e =>
       users.getOrCreateUser(e.user) flatMap { _ =>
         // update user name if it was just created (has empty name)
-        users.updateUserData(e.user, u => if (u.displayName.isEmpty) u.copy(name = e.name) else u)
+        users.updateUserData(e.user, u => if (u.name.isEmpty) u.copy(name = e.name) else u)
       }
     }
   }
@@ -129,7 +129,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
           case None if conv.convType == ConversationType.Incoming =>
             val userId = convToUser(conv.id)
             val user = eventMap(userId).user
-            messages.addConnectRequestMessage(conv.id, user.id, selfUserId, user.connectionMessage.getOrElse(""), user.displayName, fromSync = eventMap(userId).fromSync)
+            messages.addConnectRequestMessage(conv.id, user.id, selfUserId, user.connectionMessage.getOrElse(""), user.name, fromSync = eventMap(userId).fromSync)
           case None if conv.convType == ConversationType.OneToOne =>
             messages.addDeviceStartMessages(Seq(conv), selfUserId)
           case _ =>

@@ -101,7 +101,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
 
   quoteComposer
     .map { _
-      .map(u => if (u.isWireBot) u.name else u.displayName)
+      .map(u => if (u.isWireBot) u.name else u.name)
       .getOrElse(Name.Empty)
     }
     .onUi(name.setText(_))

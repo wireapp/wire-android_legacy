@@ -60,7 +60,7 @@ class TypingIndicatorView(val context: Context, val attrs: AttributeSet, val def
       setVisibility(View.GONE)
       endAnimation()
     } else {
-      nameTextView.setText(users.map(_.displayName).mkString(", "))
+      nameTextView.setText(users.map(_.name).mkString(", "))
       setVisibility(View.VISIBLE)
       startAnimation()
     }

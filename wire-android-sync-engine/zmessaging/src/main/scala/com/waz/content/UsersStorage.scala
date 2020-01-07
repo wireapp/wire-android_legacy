@@ -117,27 +117,27 @@ class UsersStorageImpl(context: Context, storage: ZmsDatabase)
     cs.get(user.id) foreach { n =>
       if (n.first != name.first) {
         contactsByName.removeBinding(n.first, user.id)
-        displayNameUpdater ! n.first
+        nameUpdater ! n.first
       }
     }
 
     cs(user.id) = name
     contactsByName.addBinding(name.first, user.id)
-    displayNameUpdater ! name.first
+    nameUpdater ! name.first
     name
   }
 
-  val displayNameUpdater: SerialProcessingQueue[String] = new SerialProcessingQueue[String]({ firstNames =>
+  val nameUpdater: SerialProcessingQueue[String] = new SerialProcessingQueue[String]({ firstNames =>
     contactNameParts map { cs =>
       firstNames.toSet foreach { (first: String) =>
-        updateDisplayNamesWithSameFirst(contactsByName.getOrElse(first, Set()).toSeq, cs)
+        updateNamesWithSameFirst(contactsByName.getOrElse(first, Set()).toSeq, cs)
       }
     }
-  }, "UsersDisplayNameUpdater")
+  }, "UsersNameUpdater")
 
-  def updateDisplayNamesWithSameFirst(users: Seq[UserId], cs: mutable.HashMap[UserId, NameParts]): Unit = {
-    def setFullName(user: UserId) = update(user, { (u : UserData) => u.copy(dispName = u.name) })
-    def setDisplayName(user: UserId, name: String) = update(user, (_: UserData).copy(dispName = Name(name)))
+  def updateNamesWithSameFirst(users: Seq[UserId], cs: mutable.HashMap[UserId, NameParts]): Unit = {
+    def setFullName(user: UserId) = update(user, { (u : UserData) => u.copy(name = u.name) })
+    def setDisplayName(user: UserId, name: String) = update(user, (_: UserData).copy(name = Name(name)))
 
     if (users.isEmpty) CancellableFuture.successful(())
     else if (users.size == 1) {

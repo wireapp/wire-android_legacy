@@ -146,7 +146,7 @@ trait LogShowInstancesSE {
   implicit val UserDataLogShow: LogShow[UserData] =
     LogShow.createFrom { u =>
       import u._
-      l"UserData(id: $id | teamId: $teamId | name: $name | displayName: $displayName | email: $email | phone: $phone | handle: $handle | deleted: $deleted)"
+      l"UserData(id: $id | teamId: $teamId | name: $name | displayName: $name | email: $email | phone: $phone | handle: $handle | deleted: $deleted)"
     }
 
   implicit val UserInfoLogShow: LogShow[UserInfo] =

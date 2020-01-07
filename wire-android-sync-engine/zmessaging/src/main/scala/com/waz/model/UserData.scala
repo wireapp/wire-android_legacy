@@ -48,7 +48,6 @@ case class UserData(override val id:       UserId,
                     conversation:          Option[RConvId]        = None, // remote conversation id with this contact (one-to-one)
                     relation:              Relation               = Relation.Other, //unused - remove in future migration
                     syncTimestamp:         Option[LocalInstant]   = None,
-                    private val dispName:  Name                   = Name.Empty,
                     verified:              Verification           = Verification.UNKNOWN, // user is verified if he has any otr client, and all his clients are verified
                     deleted:               Boolean                = false,
                     availability:          Availability           = Availability.None,
@@ -69,8 +68,6 @@ case class UserData(override val id:       UserId,
   lazy val isAutoConnect: Boolean       = isConnected && ! isSelf && connectionMessage.isEmpty
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
-
-  lazy val displayName: Name            = if (dispName.isEmpty) name else dispName
 
   def updated(user: UserInfo): UserData = updated(user, withSearchKey = true)
   def updated(user: UserInfo, withSearchKey: Boolean): UserData = copy(
@@ -202,7 +199,6 @@ object UserData {
     val Conversation = opt(id[RConvId]('conversation))(_.conversation)
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
     val Timestamp = opt(localTimestamp('timestamp))(_.syncTimestamp)
-    val DisplayName = text[model.Name]('display_name, _.str, model.Name(_))(_.dispName)
     val Verified = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
     val Deleted = bool('deleted)(_.deleted)
     val AvailabilityStatus = int[Availability]('availability, _.id, Availability.apply)(_.availability)
@@ -219,13 +215,13 @@ object UserData {
     override val idCol = Id
     override val table = Table(
       "Users", Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, ConnTime, ConnMessage,
-      Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId,
+      Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId,
       ExpiresAt, Managed, SelfPermissions, CopyPermissions, CreatedBy // Fields are now lazy-loaded from BE every time the user opens a profile
     )
 
     override def apply(implicit cursor: DBCursor): UserData = new UserData(
       Id, TeamId, Name, Email, Phone, TrackingId, Picture, Accent, SKey, Conn, RemoteInstant.ofEpochMilli(ConnTime.getTime), ConnMessage,
-      Conversation, Rel, Timestamp, DisplayName, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
+      Conversation, Rel, Timestamp, Verified, Deleted, AvailabilityStatus, Handle, ProviderId, IntegrationId, ExpiresAt, Managed,
       Seq.empty, (SelfPermissions, CopyPermissions), CreatedBy
     )
 
