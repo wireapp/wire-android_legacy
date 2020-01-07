@@ -19,21 +19,27 @@ class ClientsDataSource constructor(
 
     override suspend fun allClients() = accessData(allClientsLocal(), allClientsRemote(), saveAllClients())
 
-    private fun clientByIdRemote(clientId: String): suspend () -> Either<Failure, Client> =
-        { remoteDataSource.clientById(clientId).map { clientMapper.toClient(it) } }
+    private fun clientByIdRemote(clientId: String): suspend () -> Either<Failure, Client> = {
+        remoteDataSource.clientById(clientId).map { clientMapper.toClient(it) }
+    }
 
-    private fun allClientsRemote(): suspend () -> Either<Failure, List<Client>> =
-        { remoteDataSource.allClients().map { clientMapper.toListOfClients(it) } }
+    private fun allClientsRemote(): suspend () -> Either<Failure, List<Client>> = {
+        remoteDataSource.allClients().map { clientMapper.toListOfClients(it) }
+    }
 
-    private fun clientByIdLocal(clientId: String): suspend () -> Either<Failure, Client> =
-        { localDataSource.clientById(clientId).map { clientMapper.toClient(it) } }
+    private fun clientByIdLocal(clientId: String): suspend () -> Either<Failure, Client> = {
+        localDataSource.clientById(clientId).map { clientMapper.toClient(it) }
+    }
 
-    private fun allClientsLocal(): suspend () -> Either<Failure, List<Client>> =
-        { localDataSource.allClients().map { clientMapper.toListOfClients(it) } }
+    private fun allClientsLocal(): suspend () -> Either<Failure, List<Client>> = {
+        localDataSource.allClients().map { clientMapper.toListOfClients(it) }
+    }
 
-    private fun saveClient(): suspend (Client) -> Unit =
-        { localDataSource.updateClient(clientMapper.toClientDao(it)) }
+    private fun saveClient(): suspend (Client) -> Unit = {
+        localDataSource.updateClient(clientMapper.toClientDao(it))
+    }
 
-    private fun saveAllClients(): suspend (List<Client>) -> Unit =
-        { localDataSource.updateClients(clientMapper.toListOfClientDao(it)) }
+    private fun saveAllClients(): suspend (List<Client>) -> Unit = {
+        localDataSource.updateClients(clientMapper.toListOfClientDao(it))
+    }
 }

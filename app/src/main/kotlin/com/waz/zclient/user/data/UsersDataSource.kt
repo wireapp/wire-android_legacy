@@ -25,11 +25,13 @@ class UsersDataSource constructor(
     override suspend fun changePhone(value: String): Either<Failure, Any> =
         usersRemoteDataSource.changePhone(value)
 
-    private fun profileRemote(): suspend () -> Either<Failure, User> =
-        { usersRemoteDataSource.profile().map { userMapper.toUser(it) } }
+    private fun profileRemote(): suspend () -> Either<Failure, User> = {
+        usersRemoteDataSource.profile().map { userMapper.toUser(it) }
+    }
 
-    private fun profileLocal(): suspend () -> Either<Failure, User> =
-        { usersLocalDataSource.profile().map { userMapper.toUser(it) } }
+    private fun profileLocal(): suspend () -> Either<Failure, User> = {
+        usersLocalDataSource.profile().map { userMapper.toUser(it) }
+    }
 
     private fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.add(userMapper.toUserDao(it)) }
 }

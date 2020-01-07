@@ -217,7 +217,7 @@ formatting:
     indentSize: 4
     continuationIndentSize: 4
   MaximumLineLength:
-    active: true
+    active: false
     maxLineLength: 120
   ModifierOrdering:
     active: true
