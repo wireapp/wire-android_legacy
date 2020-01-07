@@ -61,5 +61,4 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
     private fun handleLoading(isLoading: Boolean) {
         mutableLoading.postValue(isLoading)
     }
-
 }
