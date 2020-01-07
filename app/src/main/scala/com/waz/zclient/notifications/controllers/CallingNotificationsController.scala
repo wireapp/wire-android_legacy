@@ -259,7 +259,7 @@ object CallingNotificationsController {
           .addAction(
             R.drawable.ic_menu_join_call_w,
             getString(R.string.system_notification__join_call),
-            if (not.isMainCall) createJoinIntent(not.accountId, not.convId) else CallIntent(not.accountId, not.convId)
+            if (not.isMainCall) OpenCallingScreen() else CallIntent(not.accountId, not.convId)
           )
 
       case NotificationAction.Leave =>
@@ -273,9 +273,6 @@ object CallingNotificationsController {
     }
     builder
   }
-
-  private def createJoinIntent(account: UserId, convId: ConvId)(implicit cxt: content.Context) =
-    pendingIntent((account.str + convId.str).hashCode, joinIntent(Context.wrap(cxt), account, convId))
 
   private def createEndIntent(account: UserId, convId: ConvId)(implicit cxt: content.Context) =
     pendingIntent((account.str + convId.str).hashCode, endIntent(Context.wrap(cxt), account, convId))

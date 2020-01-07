@@ -17,14 +17,13 @@
  */
 package com.waz.zclient.calling.controllers
 
-import android.os.PowerManager
+import android.os.{Build, PowerManager}
 import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
-import com.waz.model.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model._
+import com.waz.model.{Picture, _}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
@@ -283,12 +282,13 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     active
   }
 
-  onCallStarted.on(Threading.Ui) { _ =>
+  onCallStarted.on(Threading.Ui) { activeUi =>
     (for {
       incoming <- isCallIncoming.head
       allowed  <- allowedByStatus.head
-    } yield !incoming || allowed).foreach {
-      case true  => CallingActivity.start(cxt)
+      shouldDisplayOverlay = activeUi || Build.VERSION.SDK_INT < 29
+    } yield (!incoming || allowed) && shouldDisplayOverlay).foreach {
+      case true => CallingActivity.start(cxt)
       case false =>
     }
   }(EventContext.Global)
