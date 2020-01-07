@@ -238,6 +238,7 @@ object CallingNotificationsController {
       .setContentText(message)
       .setContentIntent(OpenCallingScreen())
       .setStyle(style)
+      .setFullScreenIntent(OpenCallingScreen(), true)
       .setCategory(NotificationCompat.CATEGORY_CALL)
       .setPriority(priority)
       .setOnlyAlertOnce(true)
