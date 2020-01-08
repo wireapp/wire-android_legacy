@@ -18,37 +18,44 @@
 package com.wire.testinggallery;
 
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.common.base.Supplier;
 import com.wire.testinggallery.backup.ExportFile;
+import com.wire.testinggallery.models.Audio;
+import com.wire.testinggallery.models.Backup;
+import com.wire.testinggallery.models.FileType;
+import com.wire.testinggallery.models.Image;
+import com.wire.testinggallery.models.PlainText;
+import com.wire.testinggallery.models.Textfile;
+import com.wire.testinggallery.models.Video;
 import com.wire.testinggallery.precondition.PreconditionCheckers;
 import com.wire.testinggallery.precondition.PreconditionFixers;
+import com.wire.testinggallery.utils.FileUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static android.content.pm.PackageManager.NameNotFoundException;
 import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
 import static com.wire.testinggallery.precondition.PreconditionsManager.requestSilentlyRights;
 import static com.wire.testinggallery.utils.FileUtils.copyStreams;
@@ -61,6 +68,15 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog alertDialog = null;
     private Map<Integer, Supplier<Boolean>> checkMap;
     private Map<Integer, Supplier<Void>> fixMap;
+    public static final List<FileType> fileTypes = new ArrayList<FileType>()
+    {{
+        add(new Textfile());
+        add(new Video());
+        add(new Audio());
+        add(new Image());
+        add(new Backup());
+        add(new PlainText());
+    }};
 
     @Override
     protected void onCreate(Bundle bundle) {
@@ -70,17 +86,14 @@ public class MainActivity extends AppCompatActivity {
         requestSilentlyRights(this);
         mapTableHandlers();
         checkPreconditions();
-        copyRawFileToSdCard(R.raw.textfile, "textfile.txt");
-        copyRawFileToSdCard(R.raw.audio, "audio.m4a");
-        copyRawFileToSdCard(R.raw.video, "video.mp4");
-        copyRawFileToSdCard(R.raw.backup, "backup.android_wbu");
-        copyRawFileToSdCard(R.raw.picture, "picture.png");
+        FileUtils.prepareSdCard(getResources(), FileUtils.TEST_FILE_TYPES.ALL, getApplicationContext());
     }
 
+    @SuppressLint("SetTextI18n")
     private void showInfoUi() {
         ViewGroup view = findViewById(android.R.id.content);
         View mainView = LayoutInflater.from(this).inflate(R.layout.main_view, view, true);
-        TextView versionValueTextView = mainView.findViewById(R.id.version_value);
+        final TextView versionValueTextView = mainView.findViewById(R.id.version_value);
         versionValueTextView.setText(BuildConfig.VERSION_NAME+"-"+(BuildConfig.BUILD_TYPE.toUpperCase()));
     }
 
@@ -216,36 +229,5 @@ public class MainActivity extends AppCompatActivity {
             put(R.id.defaultVideoRecorderFix, fixers.videoRecorderFix());
             put(R.id.defaultDocumentReceiverFix, fixers.defaultDocumentReceiverFix());
         }};
-    }
-
-
-    private void copyRawFileToSdCard(int fileId, String name) {
-        File pathSDCard = Environment.getExternalStoragePublicDirectory("wire");
-        if(pathSDCard.isDirectory() == false) {
-            pathSDCard.mkdirs();
-        }
-
-        if(new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile() == false) {
-            try {
-                InputStream in = getResources().openRawResource(fileId);
-                FileOutputStream out = null;
-                out = new FileOutputStream(pathSDCard.getAbsolutePath() + File.separator + name);
-                byte[] buff = new byte[1024];
-                int read = 0;
-                try {
-                    while ((read = in.read(buff)) > 0) {
-                        out.write(buff, 0, read);
-                    }
-                } finally {
-
-                    in.close();
-                    out.close();
-                }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

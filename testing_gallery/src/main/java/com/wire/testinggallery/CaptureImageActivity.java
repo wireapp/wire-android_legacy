@@ -17,23 +17,18 @@
  */
 package com.wire.testinggallery;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.wire.testinggallery.models.Image;
+import com.wire.testinggallery.utils.FileUtils;
 
 public class CaptureImageActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setResult(Activity.RESULT_OK, new Intent().setData(getResultUri()));
-        finish();
-    }
-
-    private Uri getResultUri() {
-        DocumentResolver resolver = new DocumentResolver(getContentResolver());
-        return resolver.getImageUri();
+        FileUtils.prepareSdCard(getResources(), FileUtils.TEST_FILE_TYPES.PICTURE, getApplicationContext());
+        new Image().handle(this);
     }
 }

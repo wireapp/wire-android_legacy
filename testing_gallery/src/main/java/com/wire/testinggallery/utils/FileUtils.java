@@ -17,10 +17,18 @@
  */
 package com.wire.testinggallery.utils;
 
+import android.content.Context;
+import android.content.res.Resources;
+import android.os.Environment;
+
+import com.wire.testinggallery.R;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,6 +37,16 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class FileUtils {
+    public enum TEST_FILE_TYPES {
+        ALL,
+        VIDEO,
+        AUDIO,
+        BACKUP,
+        PICTURE,
+        TEXTFILE
+    }
+
+
     public static void copyStreams(InputStream from, OutputStream to) {
         try {
             byte[] buffer = new byte[4096];
@@ -73,5 +91,62 @@ public class FileUtils {
             }
         }
         return new String(byteArrayOutputStream.toByteArray(), Charset.defaultCharset());
+    }
+
+    public static void prepareSdCard(Resources resources, TEST_FILE_TYPES fileType, Context context){
+        switch(fileType){
+            case ALL:
+                copyRawFileToSdCard(resources, R.raw.textfile, context.getString(R.string.textfile_filename_with_filetype), context);
+                copyRawFileToSdCard(resources, R.raw.audio, context.getString(R.string.audio_filename_with_filetype), context);
+                copyRawFileToSdCard(resources, R.raw.video, context.getString(R.string.video_filename_with_filetype), context);
+                copyRawFileToSdCard(resources, R.raw.backup, context.getString(R.string.backup_filename_with_filetype), context);
+                copyRawFileToSdCard(resources, R.raw.image, context.getString(R.string.image_filename_with_filetype), context);
+                break;
+            case AUDIO:
+                copyRawFileToSdCard(resources, R.raw.audio, context.getString(R.string.audio_filename_with_filetype), context);
+                break;
+            case VIDEO:
+                copyRawFileToSdCard(resources, R.raw.video, context.getString(R.string.video_filename_with_filetype), context);
+                break;
+            case BACKUP:
+                copyRawFileToSdCard(resources, R.raw.backup, context.getString(R.string.backup_filename_with_filetype), context);
+                break;
+            case PICTURE:
+                copyRawFileToSdCard(resources, R.raw.image, context.getString(R.string.image_filename_with_filetype), context);
+                break;
+            case TEXTFILE:
+                copyRawFileToSdCard(resources, R.raw.textfile, context.getString(R.string.textfile_filename_with_filetype), context);
+                break;
+        }
+    }
+
+    private static void copyRawFileToSdCard(Resources resources, int fileId, String name, Context context) {
+        File pathSDCard = Environment.getExternalStoragePublicDirectory(context.getString(R.string.default_wire_testing_folder));
+        if(pathSDCard.isDirectory() == false) {
+            pathSDCard.mkdirs();
+        }
+
+        if(new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile() == false) {
+            try {
+                final InputStream in = resources.openRawResource(fileId);
+                FileOutputStream out = null;
+                out = new FileOutputStream(pathSDCard.getAbsolutePath() + File.separator + name);
+                byte[] buff = new byte[1024];
+                int read = 0;
+                try {
+                    while ((read = in.read(buff)) > 0) {
+                        out.write(buff, 0, read);
+                    }
+                } finally {
+
+                    in.close();
+                    out.close();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

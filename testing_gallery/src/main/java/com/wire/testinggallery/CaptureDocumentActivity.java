@@ -17,89 +17,71 @@
  */
 package com.wire.testinggallery;
 
-import android.app.Activity;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.wire.testinggallery.models.FileType;
+import com.wire.testinggallery.models.Textfile;
+import com.wire.testinggallery.utils.FileUtils;
+
 public class CaptureDocumentActivity extends AppCompatActivity {
-
-    public final String DEFAULT_PLAIN_TEXT = "QA AUTOMATION TEST";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.file_chooser_popup);
 
+
+        FileUtils.prepareSdCard(getResources(), FileUtils.TEST_FILE_TYPES.ALL, this.getApplicationContext());
         String mime = getIntent().getType();
 
         if(mime == null)
             return;
 
-        if (mime.startsWith("image")) {
-            setResult(Activity.RESULT_OK, new Intent().setData(getResultUri("png")));
+        FileType type = getFileTypeByMime(mime);
+        if(type != null)
+            if(type.getClass().equals(Textfile.class)) {
+                addAvailableFileTypesButtons();
+            } else
+                type.handle(this);
+        else
             finish();
-        } else if (mime.equals("text/plain")) {
-            //special case, we have to return plain text, not a file
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            shareIntent.addCategory(Intent.CATEGORY_DEFAULT);
-            setResult(Activity.RESULT_OK, shareIntent.setType("text/plain").putExtra(Intent.EXTRA_TEXT, DEFAULT_PLAIN_TEXT));
-            finish();
-        } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Select file to return");
-            builder.setItems(new CharSequence[]
-                    {"File (.txt)", "Video (.mp4)", "Image (.png)", "Audio (.m4a)", "Backup (.android_wbu)"},
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        // The 'which' argument contains the index position
-                        // of the selected item
-                        switch (which) {
-                            case 0:
-                                setResult(Activity.RESULT_OK, new Intent().setData(getResultUri("txt")));
-                                finish();
-                                break;
-                            case 1:
-                                setResult(Activity.RESULT_OK, new Intent().setData(getResultUri("mp4")));
-                                finish();
-                                break;
-                            case 2:
-                                setResult(Activity.RESULT_OK, new Intent().setData(getResultUri("png")));
-                                finish();
-                                break;
-                            case 3:
-                                setResult(Activity.RESULT_OK, new Intent().setData(getResultUri("m4a")));
-                                finish();
-                                break;
-                            case 4:
-                                setResult(Activity.RESULT_OK, new Intent().setData(getResultUri("android_wbu")));
-                                finish();
-                                break;
-                        }
-                    }
-                });
-            builder.create().show();
+    }
+
+    private void addAvailableFileTypesButtons(){
+        //the layout on which you are working
+        LinearLayout layout = this.findViewById(R.id.file_chooser_popup);
+        for(FileType type : MainActivity.fileTypes) {
+            //set the properties for button
+            Button btn = new Button(this);
+            btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            btn.setText(String.format(
+                String.format(getString(R.string.file_chooser_popup_selection_string_format),
+                    type.getName(), type.getExtension())));
+
+            btn.setOnClickListener(v -> type.handle(this));
+            btn.setId(type.getPosition());
+            //add button to the layout
+            layout.addView(btn);
         }
     }
 
-    private Uri getResultUri(String fileType) {
-        DocumentResolver resolver = new DocumentResolver(getContentResolver());
-        //String mime = getIntent().getType();
-        if (fileType.startsWith("png")) {
-            return resolver.getImageUri();
-        } else if (fileType.startsWith("mp4")) {
-            return resolver.getVideoUri();
-        } else if (fileType.equals("android_wbu")) {
-            return resolver.getBackupUri();
-        } else if (fileType.equals("txt")) {
-            return resolver.getDocumentUri();
-        } else if(fileType.equals("m4a")) {
-            return resolver.getAudioUri();
+    /**
+     * Getter for the correct FileType Class by its mime representive
+     * @param mime
+     * @return
+     */
+    private FileType getFileTypeByMime(String mime){
+        for(FileType type : MainActivity.fileTypes) {
+            if(type.getMimeType().startsWith(mime) || type.getMimeType().equals(mime)){
+                //we found our FileType
+                return type;
+            }
         }
         return null;
     }
 }
+

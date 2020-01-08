@@ -17,38 +17,19 @@
  */
 package com.wire.testinggallery;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import com.wire.testinggallery.models.Video;
+import com.wire.testinggallery.utils.FileUtils;
 
 public class CaptureVideoActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = new Intent();
-        Uri contentUri = getResultUri();
-        intent.setData(contentUri);
-        setResult(Activity.RESULT_OK, intent);
-        finish();
-    }
-
-    private Uri getResultUri() {
-        DocumentResolver resolver = new DocumentResolver(getContentResolver());
-        return resolver.getVideoUri();
+        FileUtils.prepareSdCard(getResources(), FileUtils.TEST_FILE_TYPES.VIDEO, getApplicationContext());
+        new Video().handle(this);
     }
 }

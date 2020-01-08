@@ -35,4 +35,23 @@
     <string name="default_video_recorder">Default Video recorder:</string>
     <string name="default_document_receiver">Default doc receiver:</string>
     <string name="file_provider_authority" translatable="false">com.wire.testinggallery.fileprovider</string>
+
+    <string name="image_file_type">png</string>
+    <string name="video_file_type">mp4</string>
+    <string name="backup_file_type">android_wbu</string>
+    <string name="textfile_file_type">txt</string>
+    <string name="audio_file_type">m4a</string>
+
+    <string name="image_filename_with_filetype">picture.png</string>
+    <string name="video_filename_with_filetype">video.mp4</string>
+    <string name="backup_filename_with_filetype">backup.android_wbu</string>
+    <string name="textfile_filename_with_filetype">textfile.txt</string>
+    <string name="audio_filename_with_filetype">audio.m4a</string>
+
+    <string name="image_mime_type">image</string>
+    <string name="textfile_mime_type">text/plain</string>
+    <string name="file_selection_popup_headline">"Select file to return"</string>
+    <string name="file_chooser_popup_selection_string_format">%s (.%s)</string>
+    <string name="default_qa_test_text">"QA AUTOMATION TEST"</string>
+    <string name="default_wire_testing_folder">wire</string>
 </resources>

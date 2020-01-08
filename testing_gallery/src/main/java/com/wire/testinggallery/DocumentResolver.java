@@ -19,16 +19,12 @@ package com.wire.testinggallery;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
-import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,7 +34,6 @@ import java.util.List;
 public class DocumentResolver {
 
     private static final String TAG = "TestingGallery";
-
     private static final String WIRE_DIRECTORY = "wire";
 
     public static final File WIRE_TESTING_FILES_DIRECTORY =
@@ -74,31 +69,31 @@ public class DocumentResolver {
 
     private final ContentResolver contentResolver;
 
-    DocumentResolver(ContentResolver contentResolver) {
+    public DocumentResolver(ContentResolver contentResolver) {
         this.contentResolver = contentResolver;
     }
 
-    Uri getDocumentUri() {
+    public Uri getDocumentUri() {
         Log.i(TAG, "Received request for File");
         return fileQuery(WIRE_TESTING_FILES_DIRECTORY, FILE_EXTENSIONS);
     }
 
-    Uri getBackupUri() {
+    public Uri getBackupUri() {
         Log.i(TAG, "Received request for Backup");
         return fileQuery(WIRE_TESTING_FILES_DIRECTORY, BACKUP_EXTENSIONS);
     }
 
-    Uri getVideoUri() {
+    public Uri getVideoUri() {
         Log.i(TAG, "Received request for Video file");
         return fileQuery(WIRE_TESTING_FILES_DIRECTORY, VIDEO_EXTENSIONS);
     }
 
-    Uri getAudioUri() {
+    public Uri getAudioUri() {
         Log.i(TAG, "Received request for Audio file");
         return fileQuery(WIRE_TESTING_FILES_DIRECTORY, AUDIO_EXTENSIONS);
     }
 
-    Uri getImageUri() {
+    public Uri getImageUri() {
         Log.i(TAG, "Received request for Image");
         return fileQuery(WIRE_TESTING_FILES_DIRECTORY, IMAGE_EXTENSIONS);
     }

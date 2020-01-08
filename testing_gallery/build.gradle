@@ -9,7 +9,7 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     def majorVersion = 7
-    def minorVersion = 0
+    def minorVersion = 2
     def patchVersion = 0
 
     signingConfigs {
@@ -46,7 +46,6 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "androidx.appcompat:appcompat:1.1.0"
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.google.guava:guava:24.1-jre'
