@@ -10,5 +10,5 @@ class GetUserProfileUseCase(private val usersRepository: UsersRepository)
     : FlowUseCase<User, Unit>() {
 
     override suspend fun run(params: Unit): Flow<User> =
-        usersRepository.profile()
+        usersRepository.profileDetails()
 }

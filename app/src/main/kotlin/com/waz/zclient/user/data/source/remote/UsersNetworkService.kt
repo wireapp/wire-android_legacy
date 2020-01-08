@@ -11,7 +11,7 @@ import retrofit2.http.PUT
 interface UsersNetworkService {
 
     @GET("/self")
-    suspend fun profile(): Response<UserApi>
+    suspend fun profileDetails(): Response<UserApi>
 
     @PUT("/self")
     suspend fun changeName(@Body userApi: UserApi): Response<Void>

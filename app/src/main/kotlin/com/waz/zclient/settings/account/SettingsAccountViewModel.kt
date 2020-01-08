@@ -11,9 +11,9 @@ import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import retrofit2.HttpException
 
-class SettingsAccountViewModel
-constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-            private val changeNameUseCase: ChangeNameUseCase) : ViewModel() {
+class SettingsAccountViewModel constructor(
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val changeNameUseCase: ChangeNameUseCase) : ViewModel() {
 
     private val mutableProfile = MutableLiveData<UserProfileItem>()
     private val mutableNameUpdated = MutableLiveData<Boolean>().apply { setValue(false) }

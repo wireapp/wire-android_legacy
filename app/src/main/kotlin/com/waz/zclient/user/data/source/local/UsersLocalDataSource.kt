@@ -12,7 +12,7 @@ class UsersLocalDataSource constructor(private val userService: UserDbService,
 
     suspend fun add(user: UserDao) = userService.insert(user)
 
-    suspend fun profile(): Flow<UserDao> = userService.byId(userId)
+    suspend fun profileDetails(): Flow<UserDao> = userService.byId(userId)
 
     suspend fun changeName(value: String) = userService.updateName(userId, value)
 

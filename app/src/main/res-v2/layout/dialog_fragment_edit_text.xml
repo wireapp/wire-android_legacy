@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2019 Wire Swiss GmbH
@@ -19,16 +18,15 @@
 
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:padding="@dimen/prefs__dialog__padding">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/prefs__dialog__padding">
 
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/edit_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:singleLine="true"
-        />
+        android:singleLine="true" />
 
 </LinearLayout>

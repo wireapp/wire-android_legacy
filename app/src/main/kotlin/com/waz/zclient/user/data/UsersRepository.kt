@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 
 interface UsersRepository {
-    suspend fun profile(): Flow<User>
+    suspend fun profileDetails(): Flow<User>
     suspend fun changeName(value: String): Flow<Void>
     suspend fun changeHandle(value: String): Either<Failure, Any>
     suspend fun changeEmail(value: String): Either<Failure, Any>

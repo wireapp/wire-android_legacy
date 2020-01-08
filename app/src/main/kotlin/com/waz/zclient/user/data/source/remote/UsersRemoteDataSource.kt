@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNetworkService) {
 
-    suspend fun profile(): Flow<UserApi> = usersNetworkService.profile().toFlow()
+    suspend fun profileDetails(): Flow<UserApi> = usersNetworkService.profileDetails().toFlow()
 
     suspend fun changeName(value: String): Flow<Void> =  usersNetworkService.changeName(UserApi(name=value)).toFlow()
 

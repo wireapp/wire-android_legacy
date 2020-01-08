@@ -13,13 +13,11 @@ abstract class FlowUseCase<out Type, in Params> where Type : Any {
         scope: CoroutineScope,
         params: Params,
         onSuccess: (Type) -> Unit = {},
-        onError: (Throwable) -> Unit = {}
-    ) {
+        onError: (Throwable) -> Unit = {}) {
         val backgroundJob = scope.async(Dispatchers.IO) { run(params) }
         scope.launch {
             try {
                 backgroundJob.await().collect { onSuccess(it) }
-
             } catch (e: Throwable) {
                 onError(e)
             }

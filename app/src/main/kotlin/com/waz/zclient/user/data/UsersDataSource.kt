@@ -17,16 +17,16 @@ class UsersDataSource constructor(
 
 
     @ExperimentalCoroutinesApi
-    override suspend fun profile(): Flow<User> = profileLocally().catch {
+    override suspend fun profileDetails(): Flow<User> = profileDetailsLocally().catch {
         emitAll(
-            profileRemotely().onCompletion {
-               runBlocking {  saveUser()}
+            profileDetailsRemotely().onCompletion {
+                runBlocking { saveUser() }
             })
     }
-
+    
     @ExperimentalCoroutinesApi
     override suspend fun changeName(value: String): Flow<Void> =
-        changeNameRemotely(value).onCompletion{ runBlocking { changeNameLocally(value)  } }
+        changeNameRemotely(value).onCompletion { runBlocking { changeNameLocally(value) } }
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> =
         usersRemoteDataSource.changeHandle(value)
@@ -37,11 +37,11 @@ class UsersDataSource constructor(
     override suspend fun changePhone(value: String): Either<Failure, Any> =
         usersRemoteDataSource.changePhone(value)
 
-    private suspend fun profileRemotely(): Flow<User> =
-        usersRemoteDataSource.profile().map { userMapper.toUser(it) }
+    private suspend fun profileDetailsRemotely(): Flow<User> =
+        usersRemoteDataSource.profileDetails().map { userMapper.toUser(it) }
 
-    private suspend fun profileLocally(): Flow<User> =
-        usersLocalDataSource.profile().map { userMapper.toUser(it) }
+    private suspend fun profileDetailsLocally(): Flow<User> =
+        usersLocalDataSource.profileDetails().map { userMapper.toUser(it) }
 
     private suspend fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.add(userMapper.toUserDao(it)) }
 

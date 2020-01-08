@@ -15,6 +15,7 @@ class EditTextDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
+        val title = arguments?.getString(TITLE_BUNDLE_KEY, "")
         val initialValue = arguments?.getString(DEFAULT_TEXT_BUNDLE_KEY, "")
         val inflater = requireActivity().layoutInflater
         val view = inflater.inflate(R.layout.dialog_fragment_edit_text, null)
@@ -27,14 +28,14 @@ class EditTextDialogFragment : DialogFragment() {
         }
 
         return AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.pref_account_edit_name_title))
+            .setTitle(title)
             .setView(view).setPositiveButton(getString(android.R.string.ok)) { _, _ -> positiveButtonAction(view.edit_text.text.toString().trim()) }
             .setNegativeButton(getString(android.R.string.cancel)) { _, _ -> negativeButtonAction() }
             .create()
     }
 
 
-    private fun positiveButtonAction(newValue : String) {
+    private fun positiveButtonAction(newValue: String) {
         listener?.onTextEdited(newValue)
         dismiss()
     }
@@ -44,14 +45,15 @@ class EditTextDialogFragment : DialogFragment() {
     }
 
     companion object {
-        fun newInstance(defaultValue: String, dialogListener: EditTextDialogFragmentListener):
+        fun newInstance(title: String, defaultValue: String, dialogListener: EditTextDialogFragmentListener):
             EditTextDialogFragment = EditTextDialogFragment().withArgs {
+            putString(TITLE_BUNDLE_KEY, title)
             putString(
-                DEFAULT_TEXT_BUNDLE_KEY,
-                defaultValue
+                DEFAULT_TEXT_BUNDLE_KEY, defaultValue
             )
         }.also { it.listener = dialogListener }
 
+        private const val TITLE_BUNDLE_KEY = "titleBundleKey"
         private const val DEFAULT_TEXT_BUNDLE_KEY = "defaultTextBundleKey"
     }
 }

@@ -84,7 +84,7 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
     }
 
     private fun showEditNameDialogFragment() {
-        EditTextDialogFragment.newInstance(
+        EditTextDialogFragment.newInstance(getString(R.string.pref_account_edit_name_title),
             preferences_account_name_title.text.toString(), this)
             .show(requireActivity().supportFragmentManager, "")
     }
