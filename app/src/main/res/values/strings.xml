@@ -682,7 +682,7 @@
 
     <!-- System notifications -->
     <string name="system_notification__silence_call">Decline</string>
-    <string name="system_notification__join_call">Accept</string>
+    <string name="system_notification__join_call">Open Call</string>
     <string name="system_notification__leave_call">End call</string>
     <string name="system_notification__calling_one">Calling…</string>
     <string name="system_notification__calling_group">%1$s is calling…</string>
@@ -746,11 +746,11 @@
     <!-- Example: FRIDAY, MAR 9, 11:29 -->
     <string name="timestamp_pattern__date_and_time__no_year">EEE, MMM d, %1$s</string>
     <!-- Example: FRIDAY, MAR 9, 2015, 11:29 -->
-    <string name="timestamp_pattern__date_and_time__with_year">EEE, MMM d, YYYY, %1$s</string>
+    <string name="timestamp_pattern__date_and_time__with_year">EEE, MMM d, yyyy, %1$s</string>
     <!-- Example: MAR 9, 11:29 -->
     <string name="timestamp_pattern__date_and_time__no_year_no_weekday">MMM d, %1$s</string>
     <!-- Example: MAR 9, 2015, 11:29 -->
-    <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, YYYY, %1$s</string>
+    <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, yyyy, %1$s</string>
     <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
     <!-- MONDAY -->
      <!-- MARCH 2 -->

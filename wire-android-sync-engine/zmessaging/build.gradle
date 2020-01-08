@@ -74,54 +74,53 @@ dependencies {
 
     api project(':wire-android-sync-engine:macrosupport')
 
-    implementation project(':storage')
+    implementation project(ModuleDependencies.storage)
 
-    api "org.scala-lang.modules:scala-async_$rootProject.ext.scalaMajorVersion:0.9.7"
+    api "org.scala-lang.modules:scala-async_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.9.7"
     implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
-    implementation "$rootProject.deps.libphonenumber"
+    implementation BuildDependencies.libPhoneNumber
     implementation "com.wire:cryptobox-android:1.1.2"
     api "com.wire:generic-message-proto:1.23.0"
     implementation "com.wire:backend-api-proto:1.1"
-    implementation "io.circe:circe-core_$rootProject.ext.scalaMajorVersion:$versions.circe"
-    implementation "io.circe:circe-generic_$rootProject.ext.scalaMajorVersion:$versions.circe"
-    implementation "io.circe:circe-parser_$rootProject.ext.scalaMajorVersion:$versions.circe"
+    implementation "io.circe:circe-core_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
+    implementation "io.circe:circe-generic_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
+    implementation "io.circe:circe-parser_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "com.wire:icu4j-shrunk:57.1"
     implementation "com.googlecode.mp4parser:isoparser:1.1.7"
     implementation "com.github.joshjdevl.libsodiumjni:libsodium-jni-aar:2.0.2"
 
     //Provided dependencies
-    compileOnly "com.softwaremill.macwire:macros_$rootProject.ext.scalaMajorVersion:2.3.3"
-    compileOnly "com.softwaremill.macwire:macrosakka_$rootProject.ext.scalaMajorVersion:2.3.3"
-    compileOnly "com.softwaremill.macwire:util_$rootProject.ext.scalaMajorVersion:2.3.3"
-    compileOnly "com.softwaremill.macwire:proxy_$rootProject.ext.scalaMajorVersion:2.3.3"
+    compileOnly "com.softwaremill.macwire:macros_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.softwaremill.macwire:macrosakka_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.softwaremill.macwire:util_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
+    compileOnly "com.softwaremill.macwire:proxy_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.3.3"
     compileOnly "com.wire:avs:3.4.100"
     compileOnly "androidx.legacy:legacy-support-v4:1.0.0"
-    compileOnly "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    compileOnly BuildDependencies.threetenbpJava
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
-    compileOnly "$rootProject.deps.robolectric_android_all"
+    compileOnly TestDependencies.robolectric
 
     //Test dependencies
-    testImplementation("$rootProject.deps.scalaTest") {
+    testImplementation(LegacyDependencies.scalaTest) {
         exclude module: 'scala-library'
     }
-    testImplementation "org.scalamock:scalamock_$rootProject.ext.scalaMajorVersion:4.1.0"
-    testImplementation "org.scalacheck:scalacheck_$rootProject.ext.scalaMajorVersion:1.14.0"
-    testImplementation("com.wire:robotest_$rootProject.ext.scalaMajorVersion:0.7") {
+    testImplementation "org.scalamock:scalamock_${LegacyDependencies.SCALA_MAJOR_VERSION}:4.1.0"
+    testImplementation "org.scalacheck:scalacheck_${LegacyDependencies.SCALA_MAJOR_VERSION}:1.14.0"
+    testImplementation("com.wire:robotest_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.7") {
         exclude(group: "org.scalatest", module: "scalatest")
     }
-    testImplementation "$rootProject.deps.robolectric_android_all"
-    testImplementation "junit:junit:$rootProject.ext.versions.junit"             //to override version included in robolectric
+    testImplementation TestDependencies.robolectric
+    testImplementation TestDependencies.jUnit   //to override version included in robolectric
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
     //should match okhttp version.
     testImplementation "org.apache.httpcomponents:httpclient:4.5.3"
-    testImplementation "com.typesafe.akka:akka-http_$rootProject.ext.scalaMajorVersion:10.1.8"
-    testImplementation "com.typesafe.akka:akka-actor_$rootProject.ext.scalaMajorVersion:2.5.22"
-    testImplementation "com.typesafe.akka:akka-stream_$rootProject.ext.scalaMajorVersion:2.5.22"
+    testImplementation "com.typesafe.akka:akka-http_${LegacyDependencies.SCALA_MAJOR_VERSION}:10.1.8"
+    testImplementation "com.typesafe.akka:akka-actor_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.5.22"
+    testImplementation "com.typesafe.akka:akka-stream_${LegacyDependencies.SCALA_MAJOR_VERSION}:2.5.22"
     testImplementation "com.wire:avs:3.4.100"
     testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
-    testImplementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
+    testImplementation BuildDependencies.threetenbpJava
     testImplementation "net.java.dev.jna:jna:4.4.0@aar"
-
 }
 

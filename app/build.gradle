@@ -2,31 +2,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'jp.leafytree.android-scala'
-apply plugin: 'hugo'
 apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
+
 apply from: 'config/quality.gradle'
-
-ext {
-    majorVersion = "3.43."
-
-    audioVersion = System.getenv("AUDIO_VERSION") ?: '1.209.0@aar'
-
-    avsVersion = '5.3.191@aar'
-    avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
-    avsName = 'avs'
-    avsGroup = 'com.wire'
-
-    // proprietary avs artifact configuration
-    customAvsVersion = '5.4.9@aar'
-    customAvsInternalVersion = customAvsVersion
-    customAvsName = 'avs'
-    customAvsGroup = 'com.wearezeta.avs'
-
-}
-
-if (project.file('user.gradle').exists()) {
-    apply from: "user.gradle"
-}
 
 task copyCustomResources(type: Copy) {
     if (buildtimeConfiguration.customResourcesPath == null) {
@@ -83,7 +61,6 @@ android {
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
         variant.javaCompiler.dependsOn(rootProject.licenseFormat)
-
     }
 
     preBuild.dependsOn(copyCustomResources)
@@ -95,7 +72,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
-        versionName majorVersion + android.defaultConfig.versionCode
+        versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
 
@@ -208,7 +185,7 @@ android {
     productFlavors {
         dev {
             applicationId "com.waz.zclient.dev"
-            versionName majorVersion + android.defaultConfig.versionCode + "-dev"
+            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
                                     applicationIcon        : "@drawable/ic_launcher_wire_dev",
                                     sharedUserId           : "",
@@ -220,7 +197,7 @@ android {
 
         candidate {
             applicationId "com.wire.candidate"
-            versionName majorVersion + android.defaultConfig.versionCode + "-candidate"
+            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
                                     applicationIcon        : "@drawable/ic_launcher_wire_candidate",
                                     sharedUserId           : "",
@@ -245,7 +222,7 @@ android {
 
         internal {
             applicationId "com.wire.internal"
-            versionName majorVersion + android.defaultConfig.versionCode + "-internal"
+            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
                                     applicationIcon  : "@drawable/ic_launcher_wire_internal",
                                     sharedUserId     : "",
@@ -258,7 +235,7 @@ android {
 
         experimental {
             applicationId "com.wire.x"
-            versionName majorVersion + android.defaultConfig.versionCode + "-exp"
+            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
                                     applicationIcon        : "@drawable/ic_launcher_wire_playground",
                                     sharedUserId           : "",
@@ -299,165 +276,132 @@ android {
         exclude 'LICENSE.txt'
         exclude 'META-INF/proguard/coroutines.pro'
     }
-
 }
 
 dexinfo {
     maxDepth 2
 }
 
-def versions = [
-    playServices : "17.0.0", //TODO can be independent now.
-    stetho: "1.5.0",
-    workManager : "2.0.1",
-    paging : "1.0.0",
-    mockito : "3.1.0",
-    lifecycle : "2.2.0-rc03",
-    okHttp : "3.12.0",
-    retrofit : "2.6.2",
-    kluent : "1.14",
-    coroutines : "1.3.2"
-]
-
 dependencies {
-    //    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.scala-lang:scala-library:$scalaVersion"
-    implementation "org.scala-lang:scala-reflect:$scalaVersion"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation LegacyDependencies.scalaLibrary
+    implementation LegacyDependencies.scalaReflect
+    implementation LegacyDependencies.scalaShapeless
 
-    implementation "com.chuusai:shapeless_$rootProject.ext.scalaMajorVersion:2.3.3"
+    implementation BuildDependencies.kotlin.standardLibrary
+    implementation BuildDependencies.kotlin.coroutinesCore
+    implementation BuildDependencies.kotlin.coroutinesAndroid
 
-    //wire libraries:
-    implementation "com.wire:audio-notifications:$audioVersion"
+    implementation BuildDependencies.wire.avs
+    implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
-        implementation 'com.wire:wiretranslations:1.+'
+        implementation BuildDependencies.wire.translations
     }
 
-    // TODO  Nasty hack to be able to build add only one wire-core flavor to the build
+    implementation BuildDependencies.libPhoneNumber
 
-    // TODO  (I know, it sucks, will think of a better way to do this, and we need this
-
-    // TODO   when there are different SE APIs in dev vs internal/prod)
-    boolean internal = true
-    for (String taskName : gradle.startParameter.taskNames) {
-        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
-            internal = false
-            break
-        }
-    }
-
-    // For using local files in app/libs
-    //implementation (name:'avs', ext:'aar')
-    //implementation (name:'audio-notifications', ext:'aar')
-    //implementation (name:'zmessaging-android', ext:'aar')
-
-    implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
-    api(project(':wire-android-sync-engine:zmessaging')) {
+    api project(ModuleDependencies.storage)
+    api(project(ModuleDependencies.syncEngine)) {
         exclude group: 'com.wire', module: 'avs'
     }
-    implementation "$rootProject.deps.libphonenumber"
 
-    //Android X
-    implementation 'androidx.multidex:multidex:2.0.0'
-    implementation "com.google.android.material:material:1.0.0"
-    implementation "androidx.appcompat:appcompat:1.0.0"
-    implementation "androidx.recyclerview:recyclerview:1.0.0"
-    implementation "androidx.preference:preference:1.1.0"
-    implementation "androidx.cardview:cardview:1.0.0"
-    implementation "androidx.gridlayout:gridlayout:1.0.0"
-    annotationProcessor "androidx.annotation:annotation:1.0.0"
-    implementation "androidx.cardview:cardview:1.0.0"
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation "androidx.paging:paging-runtime:2.0.0"
-    implementation "androidx.exifinterface:exifinterface:1.0.0"
-    implementation "androidx.media:media:1.0.0"
+    //Android
+    implementation BuildDependencies.androidX.material
+    implementation BuildDependencies.androidX.multidex
+    implementation BuildDependencies.androidX.appCompat
+    implementation BuildDependencies.androidX.recyclerView
+    implementation BuildDependencies.androidX.preference
+    implementation BuildDependencies.androidX.cardView
+    implementation BuildDependencies.androidX.gridLayout
+    implementation BuildDependencies.androidX.constraintLayout
+    implementation BuildDependencies.androidX.paging
+    implementation BuildDependencies.androidX.exifInterface
+    implementation BuildDependencies.androidX.media
+    implementation BuildDependencies.androidX.lifecycleRuntime
+    implementation BuildDependencies.androidX.lifecycleLiveData
+    implementation BuildDependencies.androidX.lifecycleViewModel
+    implementation BuildDependencies.androidX.lifecycleExtensions
+    implementation BuildDependencies.androidX.roomRuntime
+    implementation BuildDependencies.androidX.roomKtx
+    implementation BuildDependencies.androidX.biometric
+    implementation(BuildDependencies.androidX.workManager) {
+        exclude group: 'androidx.room', module: 'room-runtime'
+    }
 
-    implementation "androidx.lifecycle:lifecycle-extensions:2.1.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$versions.lifecycle"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.lifecycle"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.lifecycle"
-    implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutines"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
-
+    annotationProcessor BuildDependencies.androidX.annotation
 
     // Play services
-    implementation "com.google.android.gms:play-services-base:$versions.playServices"
-    implementation "com.google.android.gms:play-services-maps:$versions.playServices"
-    implementation "com.google.android.gms:play-services-location:$versions.playServices"
-    implementation "com.google.android.gms:play-services-gcm:$versions.playServices"
-    implementation ('com.google.firebase:firebase-messaging:19.0.0') {
+    implementation BuildDependencies.playServices.base
+    implementation BuildDependencies.playServices.maps
+    implementation BuildDependencies.playServices.location
+    implementation BuildDependencies.playServices.gcm
+
+    // Firebase
+    implementation (BuildDependencies.fireBaseMessaging) {
         exclude group: 'com.google.firebase', module: 'firebase-analytics'
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
 
-    //WorkManager
-    implementation("androidx.work:work-runtime:$versions.workManager") {
-        exclude group: 'androidx.room', module: 'room-runtime'
-    }
-    implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
-
-    //third party libraries
-    implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'com.evernote:android-job:1.2.6'
-    implementation 'com.jakewharton.timber:timber:4.7.0'
-    implementation('com.jakewharton.threetenabp:threetenabp:1.1.0') {
-        exclude group: 'org.threeten', module: 'threetenbp'
-    }
-    implementation "org.threeten:threetenbp:$rootProject.ext.versions.threetenbp"
-    implementation 'com.facebook.rebound:rebound:0.3.8'
-    implementation 'com.atlassian.commonmark:commonmark:0.11.0'
-    implementation 'net.java.dev.jna:jna:4.4.0@aar'
-    devImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    experimentalImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    internalImplementation "com.facebook.stetho:stetho:$versions.stetho"
-    implementation("com.github.bumptech.glide:glide:4.10.0"){
+    //Glide
+    implementation(BuildDependencies.glide.core){
         exclude group: 'com.android.support'
         transitive = true
     }
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.10.0'
-
-    // biometric prompt
-    implementation 'androidx.biometric:biometric:1.0.0-rc02'
+    annotationProcessor BuildDependencies.glide.compiler
 
     //Retrofit
-    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-protobuf:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-    implementation "com.squareup.okhttp3:logging-interceptor:$versions.okHttp"
-    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
+    implementation BuildDependencies.retrofit.core
+    implementation BuildDependencies.retrofit.protoBufConverter
+    implementation BuildDependencies.retrofit.gsonConverter
 
-    //Koin
-    implementation "org.koin:koin-android:$rootProject.ext.versions.koin"
-    implementation "org.koin:koin-android-scope:$rootProject.ext.versions.koin"
-    implementation "org.koin:koin-android-viewmodel:$rootProject.ext.versions.koin"
+    //OkHttp
+    implementation BuildDependencies.okHttpLoggingInterceptor
 
-    api project(":storage")
+    //DI - Koin
+    implementation BuildDependencies.koin.androidCore
+    implementation BuildDependencies.koin.androidScope
+    implementation BuildDependencies.koin.androidViewModel
+
+    // RxJava
+    implementation BuildDependencies.rxJava.rxKotlin
+    implementation BuildDependencies.rxJava.rxAndroid
+
+    //third party libraries
+    implementation BuildDependencies.androidJob
+    implementation BuildDependencies.timber
+    implementation(BuildDependencies.threetenbpAndroid) {
+        exclude group: 'org.threeten', module: 'threetenbp'
+    }
+    implementation BuildDependencies.threetenbpJava
+    implementation BuildDependencies.rebound
+    implementation BuildDependencies.commonMark
+    implementation BuildDependencies.jna
 
     // Unit Tests
-    testImplementation "junit:junit:$rootProject.ext.versions.junit"
-    testImplementation "org.mockito:mockito-core:$versions.mockito"
-    testImplementation "org.mockito:mockito-inline:$versions.mockito"
-    testImplementation "org.amshove.kluent:kluent:$versions.kluent"
-    testImplementation "androidx.paging:paging-common:2.0.0"
-    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$versions.coroutines"
-    testImplementation("$rootProject.deps.scalaTest") {
-        exclude module: 'scala-library'
-    }
-    testImplementation 'androidx.arch.core:core-testing:2.1.0'
-    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutines"
-    testImplementation "androidx.paging:paging-common:2.0.0"
+    testImplementation TestDependencies.jUnit
+    testImplementation TestDependencies.mockito.core
+    testImplementation TestDependencies.mockito.inline
+    testImplementation TestDependencies.kluent
+    testImplementation BuildDependencies.kotlin.coroutinesCore
+    testImplementation TestDependencies.kotlin.coroutinesTest
+    testImplementation TestDependencies.androidX.testCore
+    testImplementation TestDependencies.okHttpMockWebServer
+    testImplementation(LegacyDependencies.scalaTest) { exclude module: 'scala-library' }
 
-    // UI Tests
-    androidTestImplementation "junit:junit:$rootProject.ext.versions.junit"
-    androidTestImplementation "org.mockito:mockito-core:$versions.mockito"
-    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'androidx.test:rules:1.1.1'
+    // Functional Tests
+    androidTestImplementation TestDependencies.jUnit
+    androidTestImplementation TestDependencies.mockito.core
+    androidTestImplementation TestDependencies.kluent
+    androidTestImplementation TestDependencies.androidX.testJunit
+    androidTestImplementation TestDependencies.androidX.testRules
+    androidTestImplementation TestDependencies.androidX.testWorkManager
 
-    androidTestImplementation "androidx.work:work-testing:$versions.workManager"
+    // Development - Experimental
+    devImplementation DevDependencies.stetho
+    experimentalImplementation DevDependencies.stetho
+    internalImplementation DevDependencies.stetho
 
+    // Legacy Scala
     ScalaCompileOptions.metaClass.daemonServer = true
     ScalaCompileOptions.metaClass.fork = true
     ScalaCompileOptions.metaClass.useAnt = false
@@ -498,12 +442,10 @@ android.applicationVariants.all { variant ->
     variant.outputs.each { output ->
         def newApkName
         if(buildtimeConfiguration.isCustomBuild()) {
-            newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
+            newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${Versions.ANDROID_CLIENT_MAJOR_VERSION}${android.defaultConfig.versionCode}.apk"
         } else {
-            newApkName = "${appName}-${output.baseName}-${majorVersion}${android.defaultConfig.versionCode}.apk"
+            newApkName = "${appName}-${output.baseName}-${Versions.ANDROID_CLIENT_MAJOR_VERSION}${android.defaultConfig.versionCode}.apk"
         }
-
-
         output.outputFileName = new File("../..", newApkName)
     }
 }
