@@ -10,21 +10,21 @@ import kotlinx.coroutines.flow.Flow
 interface UserDbService {
 
     @Insert
-    fun insert(user: UserDao)
+    suspend fun insert(user: UserDao)
 
     @Query("SELECT * from user WHERE _id = :userId")
     fun byId(userId: String): Flow<UserDao>
 
     @Query("UPDATE user SET name=:name WHERE _id = :userId")
-    fun updateName(userId: String, name: String)
+    suspend fun updateName(userId: String, name: String)
 
     @Query("UPDATE user SET handle=:handle WHERE _id = :userId")
-    fun updateHandle(userId: String, handle: String)
+    suspend fun updateHandle(userId: String, handle: String)
 
     @Query("UPDATE user SET email=:email WHERE _id = :userId")
-    fun updateEmail(userId: String, email: String)
+    suspend fun updateEmail(userId: String, email: String)
 
     @Query("UPDATE user SET phone=:phone WHERE _id = :userId")
-    fun updatePhone(userId: String, phone: String)
+    suspend fun updatePhone(userId: String, phone: String)
 }
 

@@ -26,7 +26,7 @@ class UsersDataSource constructor(
 
     @ExperimentalCoroutinesApi
     override suspend fun changeName(value: String): Flow<Void> =
-        changeNameRemotely(value).onCompletion { runBlocking { changeNameLocally(value) } }
+        changeNameRemotely(value).onCompletion{ runBlocking { changeNameLocally(value)  } }
 
     override suspend fun changeHandle(value: String): Either<Failure, Any> =
         usersRemoteDataSource.changeHandle(value)

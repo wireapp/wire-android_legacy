@@ -17,10 +17,10 @@ interface UsersNetworkService {
     suspend fun changeName(@Body userApi: UserApi): Response<Void>
 
     @PUT("/self/handle")
-    suspend fun changeHandle(@Field("handle") value: String): Response<UserApi>
+    suspend fun changeHandle(@Field("handle") value: String): Response<Void>
 
     @PUT("/self/email")
-    suspend fun changeEmail(@Field("email") value: String): Response<UserApi>
+    suspend fun changeEmail(@Field("email") value: String): Response<Void>
 
     @PUT("/self/phone")
     suspend fun changePhone(@Field("phone") value: String): Response<UserApi>

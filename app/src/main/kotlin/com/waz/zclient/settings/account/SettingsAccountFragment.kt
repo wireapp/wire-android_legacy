@@ -37,7 +37,6 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
 
     override fun onTextEdited(newValue: String) {
         settingsAccountViewModel.updateName(newValue)
-        loadData()
     }
 
     private fun initToolbar() {
@@ -52,18 +51,15 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
             profile.observe(viewLifecycleOwner) { profile ->
                 updateProfile(profile)
             }
+            nameUpdated.observe(viewLifecycleOwner) {
+                loadData()
+            }
 
         }
     }
 
     private fun setupListeners() {
-        preferences_account_name.setOnClickListener {
-
-            EditTextDialogFragment.newInstance(
-                preferences_account_name_title.text.toString(), this)
-                .show(requireActivity().supportFragmentManager, "")
-
-        }
+        preferences_account_name.setOnClickListener { showEditNameDialogFragment() }
         preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
     }
 
@@ -85,6 +81,12 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
             preferences_account_phone_title.text = if (!phone.isNullOrEmpty()) phone else getString(R.string.pref_account_add_phone_title)
 
         }
+    }
+
+    private fun showEditNameDialogFragment() {
+        EditTextDialogFragment.newInstance(
+            preferences_account_name_title.text.toString(), this)
+            .show(requireActivity().supportFragmentManager, "")
     }
 
     companion object {

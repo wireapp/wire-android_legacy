@@ -16,10 +16,14 @@ constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
             private val changeNameUseCase: ChangeNameUseCase) : ViewModel() {
 
     private val mutableProfile = MutableLiveData<UserProfileItem>()
+    private val mutableNameUpdated = MutableLiveData<Boolean>().apply { setValue(false) }
     private val mutableError = MutableLiveData<String>()
 
     val profile: LiveData<UserProfileItem>
         get() = mutableProfile
+
+    val nameUpdated: LiveData<Boolean>
+        get() = mutableNameUpdated
 
     val error: LiveData<String>
         get() = mutableError
@@ -27,14 +31,14 @@ constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
 
     fun loadProfile() {
         getUserProfileUseCase(scope = viewModelScope, params = Unit,
-            onSuccess = { user -> handleProfileSuccess(user)  },
+            onSuccess = { user -> handleProfileSuccess(user) },
             onError = { handleError(it) }
         )
     }
 
     fun updateName(value: String) {
         changeNameUseCase(scope = viewModelScope, params = ChangeNameParams(value),
-            onSuccess = { handleChangeNameSuccess(value)  },
+            onSuccess = { handleChangeNameSuccess() },
             onError = { handleError(it) }
         )
     }
@@ -49,14 +53,13 @@ constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
                 mutableError.postValue("${throwable.code()} : ${throwable.message()}")
             }
             else -> {
-                mutableError.postValue(throwable.localizedMessage)
-                throwable.printStackTrace()
+                mutableError.postValue("${throwable.message} : ${throwable.localizedMessage}")
             }
         }
     }
 
-    private fun handleChangeNameSuccess(any: Any) {
-
+    private fun handleChangeNameSuccess() {
+        mutableNameUpdated.postValue(true)
     }
 
 

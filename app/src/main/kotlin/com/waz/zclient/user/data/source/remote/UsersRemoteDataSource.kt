@@ -6,13 +6,12 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestApi
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 
 class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNetworkService) {
 
     suspend fun profile(): Flow<UserApi> = usersNetworkService.profile().toFlow()
 
-    suspend fun changeName(value: String): Flow<Void> =  flow { usersNetworkService.changeName(UserApi(name=value)).toFlow()  }
+    suspend fun changeName(value: String): Flow<Void> =  usersNetworkService.changeName(UserApi(name=value)).toFlow()
 
     suspend fun changeHandle(value: String): Either<Failure, Any> = requestApi { usersNetworkService.changeHandle(value) }
 
