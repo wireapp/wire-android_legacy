@@ -6,12 +6,18 @@ import okhttp3.Response
 
 class AccessTokenInterceptor(private val authTokenHandler: AuthTokenHandler) : Interceptor {
 
+    companion object {
+        private const val RESPONSE_HEADER_REFRESH_TOKEN_KEY = "Cookie"
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val token = authTokenHandler.accessToken()
 
         return when (token != String.empty()) {
             true -> addAuthHeader(chain, token)
             false -> chain.proceed(chain.request())
+        }.also {
+            updateRefreshTokenFromResponse(it)
         }
     }
 
@@ -23,4 +29,11 @@ class AccessTokenInterceptor(private val authTokenHandler: AuthTokenHandler) : I
             .build()
         return chain.proceed(authenticatedRequest)
     }
+
+    private fun updateRefreshTokenFromResponse(response: Response) =
+        response.headers()[RESPONSE_HEADER_REFRESH_TOKEN_KEY]?.let {
+            if (authTokenHandler.refreshToken() != it) {
+                authTokenHandler.updateRefreshToken(it)
+            }
+        }
 }
