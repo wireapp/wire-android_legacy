@@ -11,5 +11,4 @@ class TokenService(private val apiService: ApiService,
         apiService.request(
             tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken")), AccessTokenResponse.EMPTY
         )
-
 }
