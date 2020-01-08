@@ -18,7 +18,7 @@ class RawResponseRegistryTest {
     @Test
     fun `given an action is added, performs the action with given response when notifyRawResponse is called`() {
         val action: (Response<*>) -> Unit = mock(Function1::class.java) as (Response<*>) -> Unit
-        val response= mock(Response::class.java)
+        val response = mock(Response::class.java)
 
         rawResponseRegistry.addRawResponseAction(action)
 
