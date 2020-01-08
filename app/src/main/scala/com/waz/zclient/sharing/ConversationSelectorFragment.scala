@@ -128,7 +128,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
         layout.removeAllViews()
 
         val contentHeight = getDimenPx(content match {
-          case NewContent()  => R.dimen.zero
+          case NewContent  => R.dimen.zero
           case TextContent(_)  => R.dimen.collections__multi_share__text_preview__height
           case ImageContent(_) => R.dimen.collections__multi_share__image_preview__height
           case FileContent(_)  => R.dimen.collections__multi_share__file_preview__height
@@ -138,7 +138,7 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
 
         val inflater = getLayoutInflater
         content match {
-          case NewContent() =>
+          case NewContent =>
 
           case TextContent(text) =>
             inflater.inflate(R.layout.share_preview_text, layout).findViewById[TypefaceTextView](R.id.text_content).setText(text)

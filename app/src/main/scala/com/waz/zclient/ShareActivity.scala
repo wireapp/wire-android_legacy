@@ -94,7 +94,7 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     if (!incomingIntent.isShareIntent) finish()
     else {
       if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == TextIntentType) sharing.publishTextContent(incomingIntent.getText.toString)
-      else if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent())
+      else if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent)
       else {
         inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>

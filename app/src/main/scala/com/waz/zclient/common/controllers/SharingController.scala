@@ -50,7 +50,7 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
     def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
       content match {
-        case NewContent()   =>
+        case NewContent   =>
           conversationController.switchConversation(convs.head)
         case TextContent(t) =>
           conversationController.sendTextMessage(convs, t, Nil, None, Some(expiration))
@@ -90,7 +90,7 @@ object SharingController {
     val uris: Seq[URIWrapper]
   }
 
-  case class NewContent() extends SharableContent { override val uris = Seq.empty }
+  case object NewContent extends SharableContent { override val uris = Seq.empty }
 
   case class TextContent(text: String) extends SharableContent { override val uris = Seq.empty }
 
