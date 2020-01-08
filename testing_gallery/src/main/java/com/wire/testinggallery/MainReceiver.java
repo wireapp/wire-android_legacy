@@ -23,6 +23,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.provider.Settings;
 
+import com.wire.testinggallery.utils.Extensions;
+
 public class MainReceiver extends BroadcastReceiver {
     private static final String COMMAND = "command";
     private static final String PACKAGE_NAME = "package";
@@ -51,7 +53,7 @@ public class MainReceiver extends BroadcastReceiver {
                 }
                 shareIntent = getTextIntent(text);
             } else {
-                Uri uri = getLatestAssetUriByCommand(applicationContext, command);
+                Uri uri = getLatestAssetUriByCommand(command);
                 shareIntent = getStreamIntent(applicationContext, uri);
             }
             shareIntent.setPackage(packageName);
@@ -92,17 +94,16 @@ public class MainReceiver extends BroadcastReceiver {
         return shareIntent;
     }
 
-    private Uri getLatestAssetUriByCommand(Context applicationContext, String command) {
-        DocumentResolver resolver = new DocumentResolver(applicationContext.getContentResolver());
+    private Uri getLatestAssetUriByCommand(String command) {
         switch (command) {
             case COMMAND_SHARE_FILE:
-                return resolver.getDocumentUri();
+                return DocumentResolver.getFile(Extensions.TEXTFILE);
             case COMMAND_SHARE_IMAGE:
-                return resolver.getImageUri();
+                return DocumentResolver.getFile(Extensions.IMAGE);
             case COMMAND_SHARE_VIDEO:
-                return resolver.getVideoUri();
+                return DocumentResolver.getFile(Extensions.VIDEO);
             case COMMAND_SHARE_AUDIO:
-                return resolver.getAudioUri();
+                return DocumentResolver.getFile(Extensions.AUDIO);
             default:
                 throw new RuntimeException(String.format("Cannot identify the command : %s", command));
         }

@@ -18,15 +18,10 @@
 package com.wire.testinggallery;
 
 import android.annotation.TargetApi;
-import android.content.ContentResolver;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
-
-import com.wire.testinggallery.utils.Extensions;
 
 import java.io.File;
 
@@ -38,59 +33,12 @@ public class DocumentResolver {
     public static final File WIRE_TESTING_FILES_DIRECTORY =
         Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY);
 
-    private final ContentResolver contentResolver;
-
-    public DocumentResolver(ContentResolver contentResolver) {
-        this.contentResolver = contentResolver;
+    public static Uri getFile(String extension) {
+        Log.i(TAG, String.format("Received request for Fileextension %s", extension));
+        return fileQuery(extension);
     }
 
-    public Uri getDocumentUri() {
-        Log.i(TAG, "Received request for File");
-        return fileQuery(Extensions.TEXTFILE);
-    }
-
-    public Uri getBackupUri() {
-        Log.i(TAG, "Received request for Backup");
-        return fileQuery(Extensions.BACKUP);
-    }
-
-    public Uri getVideoUri() {
-        Log.i(TAG, "Received request for Video file");
-        return fileQuery(Extensions.VIDEO);
-    }
-
-    public Uri getAudioUri() {
-        Log.i(TAG, "Received request for Audio file");
-        return fileQuery(Extensions.AUDIO);
-    }
-
-    public Uri getImageUri() {
-        Log.i(TAG, "Received request for Image");
-        return fileQuery(Extensions.IMAGE);
-    }
-
-    private Uri mediaQuery(Uri baseUri, String[] projection) {
-        Cursor cursor = null;
-        try {
-            cursor = contentResolver.query(baseUri, projection, null, null, MediaStore.Files.FileColumns.DATE_ADDED + " DESC");
-            if (cursor == null) {
-                return null;
-            }
-            final int columnFileIdIndex = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns._ID);
-            if (cursor.moveToNext()) {
-                final int id = cursor.getInt(columnFileIdIndex);
-                return Uri.withAppendedPath(baseUri, String.valueOf(id));
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-
-        return null;
-    }
-
-    private Uri fileQuery(String acceptedExtension) {
+    private static Uri fileQuery(String acceptedExtension) {
         File[] files = WIRE_TESTING_FILES_DIRECTORY.listFiles();
         Log.i(TAG, String.format("%s files found in %s", files.length, WIRE_TESTING_FILES_DIRECTORY));
         File lastUpdatedFile = null;
@@ -122,7 +70,7 @@ public class DocumentResolver {
         return null;
     }
 
-    private boolean fileHasAcceptableExtension(File file, String acceptedExtension) {
+    private static boolean fileHasAcceptableExtension(File file, String acceptedExtension) {
         String[] fileParts = file.getName().split("\\.");
         String fileExtension = fileParts[fileParts.length - 1].toLowerCase();
         return acceptedExtension.equals(fileExtension);

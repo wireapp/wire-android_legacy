@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 
 import com.wire.testinggallery.DocumentResolver;
+import com.wire.testinggallery.utils.Extensions;
 
 public class Textfile extends FileType {
     public Textfile(){
@@ -14,7 +15,7 @@ public class Textfile extends FileType {
     }
 
     public void handle(Activity activity){
-        activity.setResult(Activity.RESULT_OK, new Intent().setData(new DocumentResolver(activity.getContentResolver()).getDocumentUri()));
+        activity.setResult(Activity.RESULT_OK, new Intent().setData(DocumentResolver.getFile(Extensions.TEXTFILE)));
         activity.finish();
     }
 }
