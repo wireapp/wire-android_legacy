@@ -46,27 +46,27 @@ public class DocumentResolver {
 
     public Uri getDocumentUri() {
         Log.i(TAG, "Received request for File");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.TEXTFILE);
+        return fileQuery(Extensions.TEXTFILE);
     }
 
     public Uri getBackupUri() {
         Log.i(TAG, "Received request for Backup");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.BACKUP);
+        return fileQuery(Extensions.BACKUP);
     }
 
     public Uri getVideoUri() {
         Log.i(TAG, "Received request for Video file");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.VIDEO);
+        return fileQuery(Extensions.VIDEO);
     }
 
     public Uri getAudioUri() {
         Log.i(TAG, "Received request for Audio file");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.AUDIO);
+        return fileQuery(Extensions.AUDIO);
     }
 
     public Uri getImageUri() {
         Log.i(TAG, "Received request for Image");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.IMAGE);
+        return fileQuery(Extensions.IMAGE);
     }
 
     private Uri mediaQuery(Uri baseUri, String[] projection) {
@@ -90,9 +90,9 @@ public class DocumentResolver {
         return null;
     }
 
-    private Uri fileQuery(File baseDir, String acceptedExtension) {
-        File[] files = baseDir.listFiles();
-        Log.i(TAG, String.format("%s files found in %s", files.length, baseDir));
+    private Uri fileQuery(String acceptedExtension) {
+        File[] files = WIRE_TESTING_FILES_DIRECTORY.listFiles();
+        Log.i(TAG, String.format("%s files found in %s", files.length, WIRE_TESTING_FILES_DIRECTORY));
         File lastUpdatedFile = null;
         long theLastModifiedTime = 0;
         if (files.length > 0) {
