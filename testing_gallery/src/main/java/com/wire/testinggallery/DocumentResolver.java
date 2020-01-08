@@ -26,46 +26,17 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import com.wire.testinggallery.utils.Extensions;
+
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 @TargetApi(Build.VERSION_CODES.FROYO)
 public class DocumentResolver {
 
     private static final String TAG = "TestingGallery";
     private static final String WIRE_DIRECTORY = "wire";
-
     public static final File WIRE_TESTING_FILES_DIRECTORY =
         Environment.getExternalStoragePublicDirectory(WIRE_DIRECTORY);
-
-    private final static List<String> FILE_EXTENSIONS = new ArrayList<String>() {{
-        add("txt");
-    }};
-    private final static List<String> VIDEO_EXTENSIONS = new ArrayList<String>() {{
-        add("mp4");
-        add("avi");
-        add("wmv");
-        add("mkv");
-    }};
-    private final static List<String> AUDIO_EXTENSIONS = new ArrayList<String>() {{
-        add("mp3");
-        add("wma");
-        add("ac3");
-        add("ogg");
-        add("m4a");
-    }};
-    private final static List<String> IMAGE_EXTENSIONS = new ArrayList<String>() {{
-        add("gif");
-        add("bmp");
-        add("jpg");
-        add("jpeg");
-        add("png");
-    }};
-
-    private final static List<String> BACKUP_EXTENSIONS = new ArrayList<String>() {{
-        add("android_wbu");
-    }};
 
     private final ContentResolver contentResolver;
 
@@ -75,27 +46,27 @@ public class DocumentResolver {
 
     public Uri getDocumentUri() {
         Log.i(TAG, "Received request for File");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, FILE_EXTENSIONS);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.TEXTFILE);
     }
 
     public Uri getBackupUri() {
         Log.i(TAG, "Received request for Backup");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, BACKUP_EXTENSIONS);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.BACKUP);
     }
 
     public Uri getVideoUri() {
         Log.i(TAG, "Received request for Video file");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, VIDEO_EXTENSIONS);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.VIDEO);
     }
 
     public Uri getAudioUri() {
         Log.i(TAG, "Received request for Audio file");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, AUDIO_EXTENSIONS);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.AUDIO);
     }
 
     public Uri getImageUri() {
         Log.i(TAG, "Received request for Image");
-        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, IMAGE_EXTENSIONS);
+        return fileQuery(WIRE_TESTING_FILES_DIRECTORY, Extensions.IMAGE);
     }
 
     private Uri mediaQuery(Uri baseUri, String[] projection) {
@@ -119,7 +90,7 @@ public class DocumentResolver {
         return null;
     }
 
-    private Uri fileQuery(File baseDir, List<String> acceptableExtensions) {
+    private Uri fileQuery(File baseDir, String acceptedExtension) {
         File[] files = baseDir.listFiles();
         Log.i(TAG, String.format("%s files found in %s", files.length, baseDir));
         File lastUpdatedFile = null;
@@ -131,7 +102,7 @@ public class DocumentResolver {
                 }
                 long modifiedTime = file.lastModified();
                 if (modifiedTime > theLastModifiedTime &&
-                    fileHasAcceptableExtension(file, acceptableExtensions)) {
+                    fileHasAcceptableExtension(file, acceptedExtension)) {
 
                     theLastModifiedTime = modifiedTime;
                     lastUpdatedFile = file;
@@ -151,12 +122,9 @@ public class DocumentResolver {
         return null;
     }
 
-    private boolean fileHasAcceptableExtension(File file, List<String> acceptableExtensions) {
-        if (acceptableExtensions.contains("*")) {
-            return true;
-        }
+    private boolean fileHasAcceptableExtension(File file, String acceptedExtension) {
         String[] fileParts = file.getName().split("\\.");
         String fileExtension = fileParts[fileParts.length - 1].toLowerCase();
-        return acceptableExtensions.contains(fileExtension);
+        return acceptedExtension.equals(fileExtension);
     }
 }
