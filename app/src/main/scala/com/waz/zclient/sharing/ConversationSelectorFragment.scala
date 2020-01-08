@@ -302,7 +302,8 @@ class ConversationSelectorAdapter(context: Context, filter: Signal[String], mult
   conversationSelectEvent.onUi {
     case (conv, add) =>
       if (multiPicker)  { selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv)) } else {
-        if (add) selectedConversations.mutate(convs => convs :+ conv) else selectedConversations.mutate(_ => Seq())
+        selectedConversations.mutate(_ => Seq())
+        if (add) selectedConversations.mutate(convs => convs :+ conv)
       }
       notifyDataSetChanged()
   }
