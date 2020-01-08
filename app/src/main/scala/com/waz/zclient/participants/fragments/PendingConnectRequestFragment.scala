@@ -3,21 +3,17 @@ package com.waz.zclient.participants.fragments
 import android.os.Bundle
 import com.waz.api.User.ConnectionStatus
 import com.waz.model.UserId
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.controllers.navigation.Page
-import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.messages.UsersController
-import com.waz.zclient.pages.main.MainPhoneFragment
-import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
-import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 import com.waz.zclient.R
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
+import com.waz.zclient.messages.UsersController
+import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.UserRequester
-
-import scala.concurrent.duration._
+import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 
 class PendingConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui
@@ -47,7 +43,7 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
         if (fromParticipants)
         for {
             conv    <- convController.currentConv.head
-            remPerm <- participantsController.selfRole.map(_.canRemoveGroupMember).head
+            remPerm <- removeMemberPermission.head
           } yield
           if (conv.isActive && remPerm)
             convScreenController.showConversationMenu(false, conv.id)
@@ -55,7 +51,7 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
 
   override protected lazy val footerMenu = returning(view[FooterMenu](R.id.not_tabbed_footer)) { vh =>
     if (fromParticipants) {
-      subs += participantsController.selfRole.map(_.canRemoveGroupMember).map { remPerm =>
+      subs += removeMemberPermission.map { remPerm =>
           getString(if (remPerm)  R.string.glyph__more else R.string.empty_string)
         }.onUi(text => vh.foreach(_.setRightActionText(text)))
     }
@@ -71,18 +67,8 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
       vh.foreach(_.setCallback(footerCallback))
   }
 
-  override def onBackPressed(): Boolean = {
-    pickUserController.hideUserProfile()
-    if (fromParticipants) participantsController.selectedParticipant ! None
 
-    if (fromDeepLink)
-      CancellableFuture.delay(750.millis).map { _ =>
-          navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
-        }
-    else
-      navigationController.setLeftPage(returnPage, PendingConnectRequestFragment.Tag)
-    false
-  }
+  override protected val Tag: String = PendingConnectRequestFragment.Tag
 }
 
 object PendingConnectRequestFragment {
