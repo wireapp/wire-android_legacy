@@ -17,6 +17,7 @@
  */
 package com.waz.zclient
 
+import android.app.Activity
 import android.content.Intent
 import android.content.Intent._
 import android.content.res.Configuration
@@ -539,6 +540,8 @@ class MainActivity extends BaseActivity
 
 object MainActivity {
   val ClientRegStateArg: String = "ClientRegStateArg"
+
+  def newIntent(activity: Activity) = new Intent(activity, classOf[MainActivity]).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
   private val slideAnimations = Set(
     (SetOrRequestPasswordFragment.Tag, VerifyEmailFragment.Tag),

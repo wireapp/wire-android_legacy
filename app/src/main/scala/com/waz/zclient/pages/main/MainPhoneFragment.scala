@@ -20,7 +20,7 @@ package com.waz.zclient.pages.main
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ShortcutManager
-import android.os.Bundle
+import android.os.{Build, Bundle}
 import android.provider.MediaStore
 import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.FragmentManager
@@ -56,6 +56,7 @@ import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
+import com.waz.zclient.shortcuts.Shortcuts
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
@@ -75,7 +76,6 @@ class MainPhoneFragment extends FragmentHelper
 
   import MainPhoneFragment._
   import Threading.Implicits.Ui
-  import com.waz.zclient.pages.main.shortcuts.Shortcuts._
 
   import scala.collection.JavaConverters._
 
@@ -211,15 +211,15 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   private def initShortcutDestinations(): Unit = {
-    if (BuildConfig.APPLICATION_ID.equalsIgnoreCase("com.wire.internal")) {
+    //Only for internal builds for now, will be for production when approved by QA.
+    if (Build.VERSION.SDK_INT > 25 && BuildConfig.FLAVOR.equals("internal")) {
+      val shortcuts = new Shortcuts()
       val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
 
-      val intent = new Intent(getActivity, classOf[MainActivity])
-      intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-
-      val newMessageShortcutInfo = newMessageShortcut(getActivity, intent)
-      val sharePhotoShortcutInfo = sharePhotoShortcut(getActivity, intent)
-      val groupConversationShortcutInfo = groupConversationShortcut(getActivity, intent)
+      val intent = MainActivity.newIntent(getActivity)
+      val newMessageShortcutInfo = shortcuts.newMessageShortcut(getActivity, intent)
+      val sharePhotoShortcutInfo = shortcuts.sharePhotoShortcut(getActivity, intent)
+      val groupConversationShortcutInfo = shortcuts.groupConversationShortcut(getActivity, intent)
 
       shortcutManager.setDynamicShortcuts(
         List(newMessageShortcutInfo, sharePhotoShortcutInfo, groupConversationShortcutInfo).asJava)
@@ -227,12 +227,11 @@ class MainPhoneFragment extends FragmentHelper
   }
 
   private def checkShortcutActions(): Unit = {
-    val action = getActivity.getIntent.getAction
-    action match {
-      case NewGroupConversation => newGroupConversation()
-      case SharePhoto           => openGalleryPicker()
-      case NewMessage           => goToConversation()
-      case _                    =>
+    getActivity.getIntent.getAction match {
+      case Shortcuts.NEW_GROUP_CONVERSATION => newGroupConversation()
+      case Shortcuts.SHARE_PHOTO            => openGalleryPicker()
+      case Shortcuts.NEW_MESSAGE            => goToConversation()
+      case _  =>
     }
   }
 
@@ -259,15 +258,14 @@ class MainPhoneFragment extends FragmentHelper
     resetAction()
   }
 
-  private def openGalleryPicker() = {
+  private def openGalleryPicker() =
     inject[PermissionsService].requestAllPermissions(ListSet(android.Manifest.permission.READ_EXTERNAL_STORAGE)).map {
       case true =>
         val galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        startActivityForResult(galleryIntent, SharePhotoRequestCode)
+        startActivityForResult(galleryIntent, Shortcuts.SHARE_PHOTO_REQUEST_CODE)
         resetAction()
       case _    =>
     }(Threading.Ui)
-  }
 
   private def goToShareImage(data: Intent) = {
     val intent = new Intent(getActivity, classOf[ShareActivity])
@@ -278,9 +276,8 @@ class MainPhoneFragment extends FragmentHelper
     startActivity(intent)
   }
 
-  private def resetAction() = {
+  private def resetAction() =
     getActivity.getIntent.setAction("")
-  }
 
   override def onStart(): Unit = {
     super.onStart()
@@ -305,7 +302,7 @@ class MainPhoneFragment extends FragmentHelper
 
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent): Unit = {
     super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode == SharePhotoRequestCode) {
+    if (requestCode == Shortcuts.SHARE_PHOTO_REQUEST_CODE) {
       if (resultCode == Activity.RESULT_OK) {
         goToShareImage(data)
       }

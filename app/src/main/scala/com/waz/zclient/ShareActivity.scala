@@ -69,11 +69,9 @@ class ShareActivity extends BaseActivity with ActivityHelper {
     setContentView(R.layout.main_share)
 
     if (savedInstanceState == null) {
-      val bundle = new Bundle()
-      bundle.putBoolean(ConversationSelectorFragment.MultiPickerArgumentKey, getIntent.getType != MessageIntentType)
       getSupportFragmentManager
         .beginTransaction
-        .add(R.id.fl_main_content, ConversationSelectorFragment.newInstance(bundle), ConversationSelectorFragment.TAG)
+        .add(R.id.fl_main_content, ConversationSelectorFragment.newInstance(getIntent.getType != MessageIntentType), ConversationSelectorFragment.TAG)
         .commit
     }
     confirmationMenu
@@ -92,20 +90,20 @@ class ShareActivity extends BaseActivity with ActivityHelper {
   }
 
   private def handleIncomingIntent() = {
-    val ir = ShareCompat.IntentReader.from(this)
-    if (!ir.isShareIntent) finish()
+    val incomingIntent = ShareCompat.IntentReader.from(this)
+    if (!incomingIntent.isShareIntent) finish()
     else {
-      if (ir.getStreamCount == 0 && ir.getType == TextIntentType) sharing.publishTextContent(ir.getText.toString)
-      else if (ir.getStreamCount == 0 && ir.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent())
+      if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == TextIntentType) sharing.publishTextContent(incomingIntent.getText.toString)
+      else if (incomingIntent.getStreamCount == 0 && incomingIntent.getType == MessageIntentType) sharing.sharableContent ! Some(NewContent())
       else {
         inject[PermissionsService].requestAllPermissions(ListSet(READ_EXTERNAL_STORAGE)).map {
           case true =>
             verbose(l"${RichIntent(getIntent)}")
             val uris =
-              (if (ir.isMultipleShare) (0 until ir.getStreamCount).flatMap(i => Option(ir.getStream(i))) else Option(ir.getStream).toSeq)
+              (if (incomingIntent.isMultipleShare) (0 until incomingIntent.getStreamCount).flatMap(i => Option(incomingIntent.getStream(i))) else Option(incomingIntent.getStream).toSeq)
                 .flatMap(uri => getPath(getApplicationContext, uri))
             if (uris.nonEmpty)
-              sharing.sharableContent ! Some(if (ir.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris) else FileContent(uris))
+              sharing.sharableContent ! Some(if (incomingIntent.getType.startsWith(ImageIntentType) && uris.size == 1) ImageContent(uris) else FileContent(uris))
             else finish()
           case _    => finish()
         }(Threading.Ui)

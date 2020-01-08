@@ -261,10 +261,12 @@ object ConversationSelectorFragment {
   val MultiPickerArgumentKey = "multiPickerArgumentKey"
   val TAG = ConversationSelectorFragment.getClass.getSimpleName
 
-  def newInstance(args: Bundle): ConversationSelectorFragment = {
-    val fragment = new ConversationSelectorFragment
-    fragment.setArguments(args)
-    fragment
+  def newInstance(multiPicker: Boolean): ConversationSelectorFragment = {
+    val bundle = new Bundle()
+    bundle.putBoolean(MultiPickerArgumentKey, multiPicker)
+    returning(new ConversationSelectorFragment) {
+      _.setArguments(bundle)
+    }
   }
 }
 
@@ -300,9 +302,7 @@ class ConversationSelectorAdapter(context: Context, filter: Signal[String], mult
   conversationSelectEvent.onUi {
     case (conv, add) =>
       if (multiPicker)  { selectedConversations.mutate(convs => if (add) convs :+ conv else convs.filterNot(_ == conv)) } else {
-        selectedConversations.mutate(_ => Seq())
-        if (add) selectedConversations.mutate(convs => convs :+ conv)
-
+        if (add) selectedConversations.mutate(convs => convs :+ conv) else selectedConversations.mutate(_ => Seq())
       }
       notifyDataSetChanged()
   }
