@@ -29,7 +29,12 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.settings_title)
         settings_recycler_view.adapter = SettingsMainListAdapter(SettingsMainListFactory.generateList(requireContext()), this)
-
+//        TODO: code for temporarily testing the network/authentication layer.
+//        TODO: DELETE WHEN NETWORK LAYER IS FINALIZED
+//        Thread(Runnable {
+//            val clientSampleRepo : ClientsRepository = get()
+//            clientSampleRepo.allClients()
+//        }).start()
     }
 
     override fun onItemClicked(position: Int) {
