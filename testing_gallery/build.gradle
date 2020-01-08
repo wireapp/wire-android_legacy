@@ -8,9 +8,16 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
+
     def majorVersion = 7
     def minorVersion = 2
     def patchVersion = 0
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 
     signingConfigs {
         if (file("signing.gradle").exists()) {
@@ -46,9 +53,14 @@ android {
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:1.1.0"
+    implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.google.guava:guava:24.1-jre'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:3.1.0'
+    testImplementation 'org.assertj:assertj-core:3.11.1'
+    testImplementation 'org.robolectric:robolectric:4.3'
 }
 
 //add pretty naming to apk filename
