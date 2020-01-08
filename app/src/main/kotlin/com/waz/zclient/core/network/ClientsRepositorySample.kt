@@ -4,14 +4,16 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.core.network.api.client.ClientsApi
 import com.waz.zclient.core.network.api.client.ClientsService
 import com.waz.zclient.features.clients.ClientEntity
+import org.koin.dsl.module
 
 /**
  * This demonstrates the usage of the Network API.
  * TODO: Remove this when used and implemented somewhere else.
  */
-abstract class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
+class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
 
     //Data mapping/transformation should happen at this level and repositories should
     //always deal with Entities and return Domain types
@@ -41,4 +43,12 @@ class ClientsRemoteDataSource(private val clientsService: ClientsService) {
  */
 data class ClientDomain(private val name: String) {
     companion object { fun empty() = ClientDomain(String.empty()) }
+}
+
+//DI
+val clientsSampleModule = module {
+    factory { get<ApiService>().createApi(ClientsApi::class.java) }
+    factory { ClientsService(get(), get()) }
+    single { ClientsRemoteDataSource(get()) }
+    single { ClientsRepository(get()) }
 }
