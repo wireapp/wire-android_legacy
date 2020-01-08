@@ -7,21 +7,18 @@ import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 import timber.log.Timber
-import java.io.EOFException
 
-suspend inline fun <reified T> requestApi(responseCall: suspend () -> Response<T>): Either<NetworkFailure, T> {
+suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<NetworkFailure, T> {
     try {
         val response = responseCall()
         if (response.isSuccessful) {
             val body = response.body()
-            body?.let { return Either.Right(body) }
+            body?.let {
+                return Either.Right(body)
+            }
         }
         return Either.Left(HttpError(response.code(), response.message()))
-    }
-    catch (e: EOFException) {
-        return Either.Right(T::class.java.newInstance())
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
         return Either.Left(NetworkServiceError)
     }
 }
@@ -58,19 +55,6 @@ private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R
                     is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
                     else -> Timber.e("Network request failed with unknown error ")
                 }
-            }
-        }
-    }
-
-suspend fun <R> saveData(saveToNetwork: suspend () -> Either<Failure, R>,
-                         saveToDatabase: suspend () -> Either<Failure, R>): Either<Failure, R> =
-    with(saveToNetwork()) {
-        onSuccess { runBlocking { saveToDatabase() } }
-        onFailure {
-            when (it) {
-                is NetworkServiceError -> Timber.e("Network request failed with generic error ")
-                is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
-                else -> Timber.e("Network request failed with unknown error ")
             }
         }
     }
