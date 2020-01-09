@@ -133,8 +133,6 @@ object Preferences {
         None)
       implicit lazy val AuthCookieCodec = apply[Cookie](_.str, Cookie, Cookie(""))
 
-      implicit lazy val SpotifyRefreshTokenCodec = apply[RefreshToken](_.str, RefreshToken, RefreshToken(""))
-
       //TODO use an enumcodec somehow
       implicit lazy val IntensityLevelCodec = apply[IntensityLevel](_.toString, IntensityLevel.valueOf, IntensityLevel.FULL)
 

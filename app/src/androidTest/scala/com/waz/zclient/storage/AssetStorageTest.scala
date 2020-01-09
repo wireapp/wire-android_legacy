@@ -22,7 +22,8 @@ import java.net.URI
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
 import com.waz.model._
-import com.waz.service.assets2.AssetStorageImpl.AssetDao
+import com.waz.service.assets.{Asset, ImageDetails, LocalSource, NoEncryption}
+import com.waz.service.assets.AssetStorageImpl.AssetDao
 import com.waz.service.assets2._
 import org.junit.runner.RunWith
 

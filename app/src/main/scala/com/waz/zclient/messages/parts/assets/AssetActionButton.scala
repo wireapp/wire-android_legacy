@@ -23,7 +23,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.util.AttributeSet
-import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
+import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.global.AccentColorController

@@ -23,7 +23,7 @@ import java.util.Date
 import com.google.protobuf.nano.MessageNano
 import com.waz.db.Col.{blob, text}
 import com.waz.model._
-import com.waz.service.assets2.Codec
+import com.waz.service.assets.Codec
 import com.waz.utils.wrappers.{DBContentValues, DBCursor, DBProgram}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import org.threeten.bp.Instant

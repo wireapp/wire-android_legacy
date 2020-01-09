@@ -24,7 +24,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.MessageContent
 import com.waz.model.{MessageContent => _, _}
-import com.waz.service.assets2.{Content, ContentForUpload}
+import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.tracking.GroupConversationEvent
 import com.waz.threading.Threading
 import com.waz.zclient.camera.CameraFragment

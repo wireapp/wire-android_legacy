@@ -19,15 +19,12 @@ package com.waz.zclient.giphy
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
-import androidx.recyclerview.widget.RecyclerView
 import android.view.{View, ViewGroup}
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.AssetData
-import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.service.media.GiphyService.GifObject
-import com.waz.ui.MemoryImageCache.BitmapRequest
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.EventContext
 import com.waz.zclient.giphy.GiphyGridViewAdapter.ScrollGifCallback
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.pages.main.conversation.views.AspectRatioImageView
@@ -35,9 +32,6 @@ import com.waz.zclient.ui.utils.MathUtils
 import com.waz.zclient.{Injector, R, ViewHelper}
 
 object GiphyGridViewAdapter {
-
-  type AssetLoader = (AssetData, BitmapRequest) => Signal[BitmapResult]
-
   class ViewHolder(view: View,
                    val scrollGifCallback: GiphyGridViewAdapter.ScrollGifCallback)
                   (implicit val ec: EventContext, injector: Injector)

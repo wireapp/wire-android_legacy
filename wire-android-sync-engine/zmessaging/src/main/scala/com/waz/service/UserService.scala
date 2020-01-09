@@ -27,11 +27,11 @@ import com.waz.service.AccountsService.UserDeleted
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserSearchService.UserSearchEntry
 import com.waz.service.UserService._
-import com.waz.service.assets2._
+import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUpload, NoEncryption}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.AssetClient2.Retention
+import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils._
@@ -42,7 +42,6 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Right
-
 
 trait UserService {
   def userUpdateEventsStage: Stage.Atomic

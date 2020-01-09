@@ -27,11 +27,11 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.GenericContent._
 import com.waz.model.{Mention, MessageId, _}
 import com.waz.service._
-import com.waz.service.assets2.UploadAsset
+import com.waz.service.assets.UploadAsset
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.otr.VerificationStateUpdater.{ClientUnverified, MemberAdded, VerificationChange}
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.AssetClient2
+import com.waz.sync.client.AssetClient
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
@@ -83,8 +83,8 @@ trait MessagesService {
 
   def messageSent(convId: ConvId, msgId: MessageId, newTime: RemoteInstant): Future[Option[MessageData]]
   def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]]
-  def retentionPolicy2ById(convId: ConvId): Future[AssetClient2.Retention]
-  def retentionPolicy2(convData: ConversationData): Future[AssetClient2.Retention]
+  def retentionPolicy2ById(convId: ConvId): Future[AssetClient.Retention]
+  def retentionPolicy2(convData: ConversationData): Future[AssetClient.Retention]
 
   def findMessageIds(convId: ConvId): Future[Set[MessageId]]
 
@@ -240,8 +240,8 @@ class MessagesServiceImpl(selfUserId:   UserId,
                                asset: UploadAsset,
                                expectsReadReceipt: ReadReceiptSettings = AllDisabled,
                                exp: Option[Option[FiniteDuration]] = None): Future[MessageData] = {
-    import assets2.Asset
     import com.waz.model.GenericContent.{Asset => GenericAsset}
+    import com.waz.service.assets.Asset
 
     val tpe = asset.details match {
       case _: Asset.Image => Message.Type.IMAGE_ASSET
@@ -464,7 +464,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
         else msg
       }
 
-  override def retentionPolicy2ById(convId: ConvId): Future[AssetClient2.Retention] =
+  override def retentionPolicy2ById(convId: ConvId): Future[AssetClient.Retention] =
     convs.convById(convId).flatMap {
       case Some(c) => retentionPolicy2(c)
       case None =>
@@ -472,8 +472,8 @@ class MessagesServiceImpl(selfUserId:   UserId,
         Future.failed(new IllegalArgumentException(s"No conversation with id $convId found"))
     }
 
-  override def retentionPolicy2(convData: ConversationData): Future[AssetClient2.Retention] = {
-    import AssetClient2.Retention
+  override def retentionPolicy2(convData: ConversationData): Future[AssetClient.Retention] = {
+    import AssetClient.Retention
 
     if (teamId.isDefined || convData.team.isDefined) {
       members

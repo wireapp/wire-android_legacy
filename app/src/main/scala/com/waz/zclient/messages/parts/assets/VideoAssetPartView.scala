@@ -21,7 +21,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, ImageView}
-import com.waz.service.assets2.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
+import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.glide.WireGlide

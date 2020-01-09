@@ -24,7 +24,7 @@ import android.text.format.Formatter
 import android.util.AttributeSet
 import android.view.View
 import android.widget.{FrameLayout, TextView}
-import com.waz.service.assets2.{AssetStatus, UploadAssetStatus}
+import com.waz.service.assets.{AssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}

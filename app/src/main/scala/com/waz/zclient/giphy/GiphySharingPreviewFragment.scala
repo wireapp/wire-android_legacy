@@ -29,7 +29,7 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.waz.model.{AssetData, Mime}
-import com.waz.service.assets2.{Content, ContentForUpload}
+import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.media.GiphyService.GifObject
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.{NetworkModeService, ZMessaging}
