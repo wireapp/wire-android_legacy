@@ -32,7 +32,7 @@ class AccessTokenAuthenticatorTest : UnitTest() {
 
     @Test
     fun `when renewing access token is successful, adds new access token to header`() {
-        val newAccessToken = "newAccessToken"
+        val newAccessToken = AccessToken("newToken", "newType","newExpiry")
         val refreshToken = "refreshToken"
         `when`(authToken.refreshToken()).thenReturn(refreshToken)
         `when`(authToken.renewAccessToken(refreshToken)).thenReturn(Either.Right(newAccessToken))
@@ -54,7 +54,7 @@ class AccessTokenAuthenticatorTest : UnitTest() {
         verify(authToken).updateAccessToken(newAccessToken)
         verify(request).header("Authorization")
         verify(reqBuilder).removeHeader("Authorization")
-        verify(reqBuilder).addHeader("Authorization", "Bearer $newAccessToken")
+        verify(reqBuilder).addHeader("Authorization", "Bearer ${newAccessToken.token}")
         verify(reqBuilder).build()
         verifyNoMoreInteractions(authToken, reqBuilder)
     }

@@ -31,7 +31,7 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
 
             return tokenResult.fold({ null }) {
                 authTokenHandler.updateAccessToken(it)
-                proceedWithNewAccessToken(response, it)
+                proceedWithNewAccessToken(response, it.token)
             }
         }
     }
@@ -41,8 +41,7 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
             response.request()
                 .newBuilder()
                 .removeHeader(AUTH_HEADER)
-                .addHeader(AUTH_HEADER,
-                    "$AUTH_HEADER_TOKEN_TYPE $newAccessToken")
+                .addHeader(AUTH_HEADER, "$AUTH_HEADER_TOKEN_TYPE $newAccessToken")
                 .build()
         }
 

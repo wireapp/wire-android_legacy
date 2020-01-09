@@ -8,6 +8,7 @@ import com.waz.zclient.core.di.NetworkDependencyProvider.retrofit
 import com.waz.zclient.core.network.AccessTokenAuthenticator
 import com.waz.zclient.core.network.AccessTokenInterceptor
 import com.waz.zclient.core.network.AccessTokenLocalDataSource
+import com.waz.zclient.core.network.AccessTokenMapper
 import com.waz.zclient.core.network.AccessTokenRemoteDataSource
 import com.waz.zclient.core.network.AccessTokenRepository
 import com.waz.zclient.core.network.ApiService
@@ -69,7 +70,8 @@ val networkModule: Module = module {
             androidContext().getSharedPreferences("DUMMY_USER_PREFS", Context.MODE_PRIVATE)
         )
     }
-    single { AccessTokenRepository(get(), get()) }
+    single { AccessTokenMapper() }
+    single { AccessTokenRepository(get(), get(), get()) }
     single { AuthTokenHandler(get()) }
     single { AccessTokenAuthenticator(get()) }
     single { AccessTokenInterceptor(get()) }

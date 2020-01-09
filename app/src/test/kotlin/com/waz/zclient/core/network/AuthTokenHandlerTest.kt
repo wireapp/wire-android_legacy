@@ -11,8 +11,6 @@ class AuthTokenHandlerTest : UnitTest() {
 
     private lateinit var authTokenHandler: AuthTokenHandler
 
-    private val myToken = "MyToken"
-
     @Mock private lateinit var tokenRepository: AccessTokenRepository
 
     @Before
@@ -27,6 +25,7 @@ class AuthTokenHandlerTest : UnitTest() {
     }
 
     @Test fun `should update the access token`() {
+        val myToken = AccessToken("myToken", "myType", "myExpiry")
         authTokenHandler.updateAccessToken(myToken)
         verify(tokenRepository).updateAccessToken(myToken)
         verifyNoMoreInteractions(tokenRepository)
@@ -39,8 +38,8 @@ class AuthTokenHandlerTest : UnitTest() {
     }
 
     @Test fun `should update the refresh token`() {
-        authTokenHandler.updateRefreshToken(myToken)
-        verify(tokenRepository).updateRefreshToken(myToken)
+        authTokenHandler.updateRefreshToken("refreshToken")
+        verify(tokenRepository).updateRefreshToken("refreshToken")
         verifyNoMoreInteractions(tokenRepository)
     }
 
