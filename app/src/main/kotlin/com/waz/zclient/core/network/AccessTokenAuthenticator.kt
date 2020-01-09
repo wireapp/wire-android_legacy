@@ -23,6 +23,7 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
      * This authenticate() method is called when server returns 401 Unauthorized.
      */
     override fun authenticate(route: Route?, response: Response): Request? {
+        updateRefreshToken(response)
         val refreshToken = authTokenHandler.refreshToken()
 
         synchronized(this) {
@@ -30,7 +31,6 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
 
             return tokenResult.fold({ null }) {
                 authTokenHandler.updateAccessToken(it)
-                updateRefreshToken(response)
                 proceedWithNewAccessToken(response, it)
             }
         }
