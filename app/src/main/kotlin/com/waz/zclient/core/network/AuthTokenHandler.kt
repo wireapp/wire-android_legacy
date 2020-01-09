@@ -6,11 +6,6 @@ import com.waz.zclient.core.functional.map
 
 class AuthTokenHandler(private val tokenRepository: AccessTokenRepository) {
 
-    companion object {
-        const val AUTH_HEADER = "Authorization"
-        const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
-    }
-
     fun accessToken() = tokenRepository.accessToken()
     fun updateAccessToken(newAccessToken: String) = tokenRepository.updateAccessToken(newAccessToken)
 
