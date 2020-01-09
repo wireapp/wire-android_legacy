@@ -55,7 +55,7 @@ object Intents {
     Intent(context, userId)
 
   def OpenCallingScreen()(implicit context: Context) =
-    PendingIntent.getActivity(context, System.currentTimeMillis().toInt, new Intent(context, classOf[CallingActivity]), 0)
+    PendingIntent.getActivity(context, System.currentTimeMillis().toInt, new Intent(context, classOf[CallingActivity]), PendingIntent.FLAG_UPDATE_CURRENT)
 
   def SharingIntent(implicit context: Context) =
     new Intent(context, classOf[MainActivity]).putExtra(FromSharingExtra, true)
