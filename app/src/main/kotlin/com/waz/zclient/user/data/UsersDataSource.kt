@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 
+@ExperimentalCoroutinesApi
 class UsersDataSource constructor(
     private val usersRemoteDataSource: UsersRemoteDataSource,
     private val usersLocalDataSource: UsersLocalDataSource,
     private val userMapper: UserMapper) : UsersRepository {
 
-    @ExperimentalCoroutinesApi
     override suspend fun profileDetails(): Flow<User> = profileDetailsLocally()
         .catch {
             profileDetailsRemotely().onSuccess {

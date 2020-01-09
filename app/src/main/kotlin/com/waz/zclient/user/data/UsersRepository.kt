@@ -5,7 +5,6 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.user.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
-
 interface UsersRepository {
     suspend fun profileDetails(): Flow<User>
     suspend fun changeName(value: String): Either<Failure, Any>
