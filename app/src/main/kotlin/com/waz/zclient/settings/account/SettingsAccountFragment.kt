@@ -13,7 +13,6 @@ import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragmentListener
-import com.waz.zclient.settings.account.model.UserProfileItem
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
@@ -48,13 +47,44 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
             error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
             }
-            profile.observe(viewLifecycleOwner) { profile ->
-                updateProfile(profile)
+            name.observe(viewLifecycleOwner) { name ->
+                updateAccountName(name)
+            }
+            handle.observe(viewLifecycleOwner) { handle ->
+                updateAccountHandle(handle)
+            }
+            email.observe(viewLifecycleOwner) { emailState ->
+                updateAccountEmail(emailState)
+            }
+            phone.observe(viewLifecycleOwner) { phoneState ->
+                updateAccountPhoneNumber(phoneState)
             }
             nameUpdated.observe(viewLifecycleOwner) {
                 loadData()
             }
 
+        }
+    }
+
+    private fun updateAccountHandle(handle: String) {
+        preferences_account_handle_title.text = handle
+    }
+
+    private fun updateAccountName(name: String) {
+        preferences_account_handle_title.text = name
+    }
+
+    private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {
+        when (phoneState) {
+            is ProfileDetailNull -> preferences_account_phone_title.text = getString(R.string.pref_account_add_email_title)
+            is ProfileDetail -> preferences_account_phone_title.text = phoneState.value
+        }
+    }
+
+    private fun updateAccountEmail(emailState: ProfileDetailsState) {
+        when (emailState) {
+            is ProfileDetailNull -> preferences_account_email_title.text = getString(R.string.pref_account_add_email_title)
+            is ProfileDetail -> preferences_account_email_title.text = emailState.value
         }
     }
 
@@ -71,16 +101,6 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
 
     private fun showErrorMessage(errorMessage: String) {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
-    }
-
-    private fun updateProfile(userProfileItem: UserProfileItem) {
-        with(userProfileItem) {
-            preferences_account_name_title.text = name
-            preferences_account_handle_title.text = handle
-            preferences_account_email_title.text = if (!email.isNullOrEmpty()) email else getString(R.string.pref_account_add_email_title)
-            preferences_account_phone_title.text = if (!phone.isNullOrEmpty()) phone else getString(R.string.pref_account_add_phone_title)
-
-        }
     }
 
     private fun showEditNameDialogFragment() {

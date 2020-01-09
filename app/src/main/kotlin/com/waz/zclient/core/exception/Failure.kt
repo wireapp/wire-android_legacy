@@ -18,9 +18,13 @@ object Unauthorized : NetworkFailure()
 object Forbidden : NetworkFailure()
 object NotFound : NetworkFailure()
 object InternalServerError : NetworkFailure()
+
 data class HttpError(val errorCode: Int, val errorMessage: String) : NetworkFailure()
 
 object DatabaseError : DatabaseFailure()
+
+//TODO: Improve to a more sufficient error propagation for Flow "data flows"
+data class FlowError(val throwable: Throwable) : Failure()
 
 /** * Extend this class for feature specific failures.*/
 abstract class FeatureFailure : Failure()

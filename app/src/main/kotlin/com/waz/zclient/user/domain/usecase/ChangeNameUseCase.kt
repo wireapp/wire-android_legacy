@@ -1,15 +1,16 @@
 package com.waz.zclient.user.domain.usecase
 
 
-import com.waz.zclient.core.usecase.FlowUseCase
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.user.data.UsersRepository
-import kotlinx.coroutines.flow.Flow
 
 
 class ChangeNameUseCase(private val usersRepository: UsersRepository)
-    : FlowUseCase<Void, ChangeNameParams>() {
+    : UseCase<Any, ChangeNameParams>() {
 
-    override suspend fun run(params: ChangeNameParams): Flow<Void> =
+    override suspend fun run(params: ChangeNameParams): Either<Failure, Any> =
         usersRepository.changeName(params.name)
 }
 

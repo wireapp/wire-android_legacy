@@ -1,6 +1,5 @@
 package com.waz.zclient.user.domain.usecase
 
-
 import com.waz.zclient.core.usecase.FlowUseCase
 import com.waz.zclient.user.data.UsersRepository
 import com.waz.zclient.user.domain.model.User
