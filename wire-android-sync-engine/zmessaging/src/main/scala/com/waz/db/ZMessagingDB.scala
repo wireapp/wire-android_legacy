@@ -65,7 +65,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 125
+  val DbVersion = 126
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
@@ -390,6 +390,49 @@ object ZMessagingDB {
     Migration(124,125) { db =>
       db.execSQL(s"ALTER TABLE ${ConversationMemberDataDao.table.name} ADD COLUMN ${ConversationMemberDataDao.Role.name} TEXT DEFAULT '${ConversationRole.AdminRole.label}'")
       db.execSQL(ConversationRoleActionDao.table.createSql)
+    },
+    Migration(125,126) { db =>
+      db.execSQL(
+        s"""
+           | UPDATE Users
+           | SET name = display_name
+           | WHERE display_name IS NOT NULL AND display_name IS NOT "" AND name IS NOT display_name
+        """.stripMargin)
+      db.execSQL(
+        """
+          | CREATE TABLE UsersCopy (
+          | _id TEXT PRIMARY KEY,
+          | teamId TEXT, name TEXT, email TEXT, phone TEXT, tracking_id TEXT,
+          | picture TEXT, accent INTEGER, skey TEXT, connection TEXT, conn_timestamp INTEGER,
+          | conn_msg TEXT, conversation TEXT, relation TEXT, timestamp INTEGER,
+          | verified TEXT, deleted INTEGER, availability INTEGER,
+          | handle TEXT, provider_id TEXT, integration_id TEXT, expires_at INTEGER,
+          | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
+          | )
+        """.stripMargin)
+      db.execSQL(
+        """
+          |INSERT INTO UsersCopy(
+          | _id,
+          | teamId, name, email, phone, tracking_id,
+          | picture, accent, skey, connection, conn_timestamp,
+          | conn_msg, conversation, relation, timestamp,
+          | verified, deleted, availability,
+          | handle, provider_id, integration_id, expires_at,
+          | managed_by, self_permissions, copy_permissions, created_by
+          | )
+          | SELECT
+          | _id,
+          | teamId, name, email, phone, tracking_id,
+          | picture, accent, skey, connection, conn_timestamp,
+          | conn_msg, conversation, relation, timestamp,
+          | verified, deleted, availability,
+          | handle, provider_id, integration_id, expires_at,
+          | managed_by, self_permissions, copy_permissions, created_by
+          | FROM Users
+        """.stripMargin)
+      db.execSQL("DROP TABLE Users")
+      db.execSQL("ALTER TABLE UsersCopy RENAME TO Users")
     }
   )
 }

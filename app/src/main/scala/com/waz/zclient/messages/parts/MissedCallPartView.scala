@@ -55,9 +55,9 @@ class MissedCallPartView(context: Context, attrs: AttributeSet, style: Int) exte
   private val locale = getLocale
   private val msg = user map {
     case u if u.isSelf => getString(R.string.content__missed_call__you_called)
-    case u if u.getDisplayName.isEmpty => ""
+    case u if u.name.isEmpty => ""
     case u =>
-      getString(R.string.content__missed_call__xxx_called, u.getDisplayName.toUpperCase(locale))
+      getString(R.string.content__missed_call__xxx_called, u.name.toUpperCase(locale))
   }
 
   msg.on(Threading.Ui) { m =>
