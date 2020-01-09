@@ -48,7 +48,7 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
     private fun updateRefreshToken(response: Response) =
         response.headers()["Cookie"]?.let {
             if (authTokenHandler.refreshToken() != it) {
-                authTokenHandler.updateRefreshToken(it)
+                authTokenHandler.updateRefreshToken(RefreshTokenResponse(it))
             }
         }
 }

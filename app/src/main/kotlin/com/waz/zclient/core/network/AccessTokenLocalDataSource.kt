@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.waz.zclient.storage.extension.putString
 import com.waz.zclient.storage.extension.remove
-import com.waz.zclient.storage.extension.string
 
 class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences) {
 
@@ -17,10 +16,9 @@ class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences)
 
     fun updateAccessToken(newToken: AccessTokenPreference) = writeAccessToken(newToken)
 
-    fun refreshToken(): String? = userPreferences.string(KEY_REFRESH_TOKEN)
+    fun refreshToken(): RefreshTokenPreference? = readRefreshToken()
 
-    fun updateRefreshToken(newRefreshToken: String) =
-        userPreferences.putString(KEY_REFRESH_TOKEN, newRefreshToken)
+    fun updateRefreshToken(newRefreshToken: RefreshTokenPreference) = writeRefreshToken(newRefreshToken)
 
     fun wipeOutAccessToken() = userPreferences.remove(KEY_ACCESS_TOKEN)
 
@@ -34,5 +32,15 @@ class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences)
     private fun readAccessToken(): AccessTokenPreference? =
         userPreferences.getString(KEY_ACCESS_TOKEN, null)?.let {
             Gson().fromJson(it, AccessTokenPreference::class.java)
+        }
+
+    private fun writeRefreshToken(preference: RefreshTokenPreference) = userPreferences.putString(
+        KEY_REFRESH_TOKEN,
+        Gson().toJson(preference, RefreshTokenPreference::class.java)
+    )
+
+    private fun readRefreshToken(): RefreshTokenPreference? =
+        userPreferences.getString(KEY_REFRESH_TOKEN, null)?.let {
+            Gson().fromJson(it, RefreshTokenPreference::class.java)
         }
 }
