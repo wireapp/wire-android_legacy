@@ -8,9 +8,14 @@ import com.waz.zclient.core.network.api.token.AccessTokenResponse
 class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataSource,
                             private val localDataSource: AccessTokenLocalDataSource) {
 
-    fun accessToken(): String = localDataSource.accessToken() ?: String.empty()
+    fun accessToken(): String = localDataSource.accessToken()?.token ?: String.empty()
 
-    fun updateAccessToken(newToken: String) = localDataSource.updateAccessToken(newToken)
+    //TODO: convert newToken from String to an object
+    fun updateAccessToken(newToken: String) = localDataSource.updateAccessToken(AccessTokenPreference(
+        token = newToken,
+        tokenType = "",
+        expiresIn = ""
+    ))
 
     fun refreshToken(): String = localDataSource.refreshToken() ?: String.empty()
 

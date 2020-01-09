@@ -6,4 +6,4 @@ fun SharedPreferences.putString(key: String, value: String) = edit().putString(k
 
 fun SharedPreferences.string(key: String, defValue: String = ""): String? = getString(key, defValue)
 
-fun SharedPreferences.removeString(key: String) = edit().remove(key).apply()
+fun SharedPreferences.remove(key: String) = edit().remove(key).apply()
