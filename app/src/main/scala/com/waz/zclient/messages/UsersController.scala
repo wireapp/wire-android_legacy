@@ -169,6 +169,14 @@ class UsersController(implicit injector: Injector, context: Context)
       _          <- connection.ignoreConnection(userId)
     } yield ()
   }
+
+  def unblockUser(userId: UserId): Future[Unit] = {
+    import Threading.Implicits.Background
+    for {
+      connection <- connectionService.head
+      _          <- connection.unblockConnection(userId)
+    } yield ()
+  }
 }
 
 object UsersController {

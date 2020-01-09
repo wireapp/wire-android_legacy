@@ -62,7 +62,7 @@ class ConnectRequestFragment extends UntabbedRequestFragment {
 
     if (fromParticipants) {
       subs += removeMemberPermission.map { remPerm =>
-        getString(if (remPerm)  R.string.glyph__more else R.string.empty_string)
+        getString(if (remPerm) R.string.glyph__more else R.string.empty_string)
       }.onUi(text => vh.foreach(_.setRightActionText(text)))
     }
   }

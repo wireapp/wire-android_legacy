@@ -44,7 +44,7 @@ import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
-import com.waz.zclient.participants.fragments.{ConnectRequestFragment, PendingConnectRequestFragment, SendConnectRequestFragment}
+import com.waz.zclient.participants.fragments.{BlockedUserFragment, ConnectRequestFragment, PendingConnectRequestFragment, SendConnectRequestFragment}
 import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, UserRequester}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -68,7 +68,6 @@ class ConversationListManagerFragment extends Fragment
   with NavigationControllerObserver
   with ConversationListFragment.Container
   with ConversationScreenControllerObserver
-  with BlockedUserProfileFragment.Container
   with BottomNavigationView.OnNavigationItemSelectedListener {
 
   import ConversationListManagerFragment._
@@ -314,8 +313,8 @@ class ConversationListManagerFragment extends Fragment
 
           case BLOCKED =>
             show(
-              BlockedUserProfileFragment.newInstance(userId.str, userRequester),
-              BlockedUserProfileFragment.Tag
+              BlockedUserFragment.newInstance(userId, userRequester),
+              BlockedUserFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
           case _ => //

@@ -45,10 +45,7 @@ import com.waz.api.User.ConnectionStatus._
 
 import scala.concurrent.Future
 
-class ParticipantFragment extends ManagerFragment
-  with ConversationScreenControllerObserver
-  with BlockedUserProfileFragment.Container {
-
+class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver {
   import ParticipantFragment._
 
   implicit def ctx: Context = getActivity
@@ -251,8 +248,8 @@ class ParticipantFragment extends ManagerFragment
         openUserProfileFragment(newInstance(userId,UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == BLOCKED =>
-        import BlockedUserProfileFragment._
-        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+        import BlockedUserFragment._
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
         import SendConnectRequestFragment._
