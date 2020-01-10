@@ -1,9 +1,6 @@
 package com.waz.zclient.settings.account
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.user.domain.model.User
@@ -23,23 +20,24 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
                                            private val changeHandleUseCase: ChangeHandleUseCase)
     : ViewModel() {
 
-    private val mutableName = MutableLiveData<String>()
-    private val mutableHandle = MutableLiveData<String>()
-    private val mutableEmail = MutableLiveData<ProfileDetailsState>()
-    private val mutablePhone = MutableLiveData<ProfileDetailsState>()
+    private val mutableProfileData = MutableLiveData<User>()
     private val mutableError = MutableLiveData<String>()
 
-    val name: LiveData<String>
-        get() = mutableName
+    val name: LiveData<String> = Transformations.map(mutableProfileData) {
+        return@map it.name
+    }
 
-    val handle: LiveData<String>
-        get() = mutableHandle
+    val handle: LiveData<String> = Transformations.map(mutableProfileData) {
+        return@map it.handle
+    }
 
-    val email: LiveData<ProfileDetailsState>
-        get() = mutableEmail
+    val email: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
+        return@map if (it.email.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(it.email)
+    }
 
-    val phone: LiveData<ProfileDetailsState>
-        get() = mutablePhone
+    val phone: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
+        return@map if (it.phone.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(it.phone)
+    }
 
     val error: LiveData<String>
         get() = mutableError
@@ -75,10 +73,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     }
 
     private fun handleProfileSuccess(user: User) {
-        mutableName.postValue(user.name)
-        mutableHandle.postValue(user.handle)
-        mutableEmail.postValue(if (user.email.isNullOrEmpty()) ProfileDetailNull else user.name?.let { ProfileDetail(it) })
-        mutablePhone.postValue(if (user.phone.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(user.phone))
+        mutableProfileData.postValue(user)
     }
 
     private fun handleError(failure: Failure) {

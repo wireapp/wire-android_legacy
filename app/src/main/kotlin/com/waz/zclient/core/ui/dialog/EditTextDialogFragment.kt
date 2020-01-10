@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
 import kotlinx.android.synthetic.main.dialog_fragment_edit_text.view.*
 
@@ -19,8 +20,8 @@ class EditTextDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val title = arguments?.getString(TITLE_BUNDLE_KEY, "")
-        val initialValue = arguments?.getString(DEFAULT_TEXT_BUNDLE_KEY, "")
+        val title = arguments?.getString(TITLE_BUNDLE_KEY, String.empty())
+        val initialValue = arguments?.getString(DEFAULT_TEXT_BUNDLE_KEY, String.empty())
         val inflater = requireActivity().layoutInflater
         val view = inflater.inflate(R.layout.dialog_fragment_edit_text, null)
 
