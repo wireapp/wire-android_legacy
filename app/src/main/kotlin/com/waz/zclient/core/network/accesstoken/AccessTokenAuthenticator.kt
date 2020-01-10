@@ -1,4 +1,4 @@
-package com.waz.zclient.core.network
+package com.waz.zclient.core.network.accesstoken
 
 import okhttp3.Authenticator
 import okhttp3.Request

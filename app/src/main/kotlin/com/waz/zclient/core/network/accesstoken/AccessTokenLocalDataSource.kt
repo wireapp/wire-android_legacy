@@ -1,4 +1,4 @@
-package com.waz.zclient.core.network
+package com.waz.zclient.core.network.accesstoken
 
 import android.content.SharedPreferences
 import com.google.gson.Gson

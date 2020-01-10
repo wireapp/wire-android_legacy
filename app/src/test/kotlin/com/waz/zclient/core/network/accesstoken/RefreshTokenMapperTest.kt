@@ -1,6 +1,8 @@
-package com.waz.zclient.core.network
+package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
+import com.waz.zclient.core.network.accesstoken.RefreshTokenPreference
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test

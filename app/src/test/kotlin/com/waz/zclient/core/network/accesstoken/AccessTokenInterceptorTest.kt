@@ -1,4 +1,4 @@
-package com.waz.zclient.core.network
+package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.UnitTest
 import okhttp3.Interceptor
