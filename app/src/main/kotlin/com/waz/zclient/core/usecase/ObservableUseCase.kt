@@ -1,7 +1,7 @@
 package com.waz.zclient.core.usecase
 
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.FlowError
+import com.waz.zclient.core.exception.GenericUseCaseError
 import com.waz.zclient.core.functional.Either
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -21,7 +21,7 @@ abstract class ObservableUseCase<out Type, in Params> where Type : Any {
             try {
                 backgroundJob.await().collect { onResult(Either.Right(it)) }
             } catch (e: Throwable) {
-                Either.Left(FlowError(e))
+                Either.Left(GenericUseCaseError(e))
             }
         }
     }

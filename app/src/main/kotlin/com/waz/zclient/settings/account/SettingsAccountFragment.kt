@@ -111,7 +111,7 @@ class SettingsAccountFragment : Fragment() {
 
     private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {
         when (phoneState) {
-            is ProfileDetailNull -> updateAccountPhoneNumberTitle(getString(R.string.pref_account_add_phone_title))
+            is ProfileDetailEmpty -> updateAccountPhoneNumberTitle(getString(R.string.pref_account_add_phone_title))
             is ProfileDetail -> updateAccountPhoneNumberTitle(phoneState.value)
         }
     }
@@ -122,7 +122,7 @@ class SettingsAccountFragment : Fragment() {
 
     private fun updateAccountEmail(emailState: ProfileDetailsState) {
         when (emailState) {
-            is ProfileDetailNull -> updateAccountEmailTitle(getString(R.string.pref_account_add_email_title))
+            is ProfileDetailEmpty -> updateAccountEmailTitle(getString(R.string.pref_account_add_email_title))
             is ProfileDetail -> updateAccountEmailTitle(emailState.value)
         }
     }

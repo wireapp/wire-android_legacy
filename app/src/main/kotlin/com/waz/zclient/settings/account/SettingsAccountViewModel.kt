@@ -8,7 +8,7 @@ import com.waz.zclient.user.domain.usecase.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) : ProfileDetailsState()
-object ProfileDetailNull : ProfileDetailsState()
+object ProfileDetailEmpty : ProfileDetailsState()
 
 sealed class ProfileDetailsState
 
@@ -32,11 +32,11 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     }
 
     val email: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
-        return@map if (it.email.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(it.email)
+        return@map if (it.email.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.email)
     }
 
     val phone: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
-        return@map if (it.phone.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(it.phone)
+        return@map if (it.phone.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.phone)
     }
 
     val error: LiveData<String>

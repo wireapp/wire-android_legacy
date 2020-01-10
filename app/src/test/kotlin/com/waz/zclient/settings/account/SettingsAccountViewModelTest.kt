@@ -114,7 +114,7 @@ class SettingsAccountViewModelTest {
 
         userFlow.collect {
             viewModel.email.observeOnce {
-                it shouldBe ProfileDetailNull
+                it shouldBe ProfileDetailEmpty
             }
         }
     }
@@ -142,7 +142,7 @@ class SettingsAccountViewModelTest {
 
         userFlow.collect {
             viewModel.phone.observeOnce {
-                it shouldBe ProfileDetailNull
+                it shouldBe ProfileDetailEmpty
             }
         }
     }
