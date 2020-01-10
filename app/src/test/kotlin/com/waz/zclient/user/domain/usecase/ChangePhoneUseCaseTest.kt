@@ -39,6 +39,6 @@ class ChangePhoneUseCaseTest {
     }
 
     companion object {
-        const val TEST_PHONE = "+499477466343"
+        private const val TEST_PHONE = "+499477466343"
     }
 }

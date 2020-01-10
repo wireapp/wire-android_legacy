@@ -38,6 +38,6 @@ class ChangeNameUseCaseTest {
     }
 
     companion object {
-        const val TEST_NAME = "Test name"
+        private const val TEST_NAME = "Test name"
     }
 }

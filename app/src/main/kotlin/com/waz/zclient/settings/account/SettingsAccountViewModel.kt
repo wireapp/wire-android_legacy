@@ -79,9 +79,9 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private fun handleError(failure: Failure) {
         when (failure) {
             is HttpError ->
-                mutableError.postValue(" ${failure.errorCode} + ${failure.errorMessage}")
+                mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")
             else ->
-                mutableError.postValue(" Misc error scenario")
+                mutableError.postValue("Misc error scenario")
         }
     }
 }

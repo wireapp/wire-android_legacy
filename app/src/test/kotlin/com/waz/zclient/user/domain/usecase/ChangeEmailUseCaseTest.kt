@@ -38,6 +38,6 @@ class ChangeEmailUseCaseTest {
     }
 
     companion object {
-        const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_EMAIL = "email@wire.com"
     }
 }

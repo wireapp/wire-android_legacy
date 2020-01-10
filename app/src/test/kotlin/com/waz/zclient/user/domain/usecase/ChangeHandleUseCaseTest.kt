@@ -38,6 +38,6 @@ class ChangeHandleUseCaseTest {
     }
 
     companion object {
-        const val TEST_HANDLE = "@wire"
+        private const val TEST_HANDLE = "@wire"
     }
 }
