@@ -7,11 +7,13 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
 class ChangeHandleUseCaseTest {
+
     private lateinit var changeHandleUseCase: ChangeHandleUseCase
 
     @Mock
@@ -28,11 +30,11 @@ class ChangeHandleUseCaseTest {
 
     @Test
     fun `Given update handle use case is executed, then the repository should update handle`() = runBlockingTest {
-        Mockito.`when`(changeHandleParams.handle).thenReturn(TEST_HANDLE)
+        `when`(changeHandleParams.handle).thenReturn(TEST_HANDLE)
 
         changeHandleUseCase.run(changeHandleParams)
 
-        Mockito.verify(userRepository).changeHandle(eq(TEST_HANDLE))
+        verify(userRepository).changeHandle(eq(TEST_HANDLE))
     }
 
     companion object {

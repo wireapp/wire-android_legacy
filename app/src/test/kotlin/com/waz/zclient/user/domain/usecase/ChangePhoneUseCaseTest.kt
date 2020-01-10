@@ -8,6 +8,8 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
@@ -29,11 +31,11 @@ class ChangePhoneUseCaseTest {
 
     @Test
     fun `Given update phone use case is executed, then the repository should update phone`() = runBlockingTest {
-        Mockito.`when`(changePhoneParams.phoneNumber).thenReturn(TEST_PHONE)
+        `when`(changePhoneParams.phoneNumber).thenReturn(TEST_PHONE)
 
         changePhoneUseCase.run(changePhoneParams)
 
-        Mockito.verify(userRepository).changePhone(eq(TEST_PHONE))
+        verify(userRepository).changePhone(eq(TEST_PHONE))
     }
 
     companion object {

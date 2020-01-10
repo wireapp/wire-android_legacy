@@ -7,7 +7,8 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
@@ -29,11 +30,11 @@ class ChangeNameUseCaseTest {
 
     @Test
     fun `Given update name use case is executed, then the repository should update name`() = runBlockingTest {
-        Mockito.`when`(changeNameParams.name).thenReturn(TEST_NAME)
+        `when`(changeNameParams.name).thenReturn(TEST_NAME)
 
         changeNameUseCase.run(changeNameParams)
 
-        Mockito.verify(userRepository).changeName(eq(TEST_NAME))
+        verify(userRepository).changeName(eq(TEST_NAME))
     }
 
     companion object {

@@ -6,7 +6,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
@@ -27,6 +27,6 @@ class GetUserProfileUseCaseTest {
     fun `Given get profile details use case is executed, then the repository should retrieve profile details`() = runBlockingTest {
         getUserProfileUseCase.run(Unit)
 
-        Mockito.verify(userRepository).profileDetails()
+        verify(userRepository).profileDetails()
     }
 }
