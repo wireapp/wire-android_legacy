@@ -14,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
@@ -61,7 +62,7 @@ class UserRepositoryTest {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given profileDetails() is called and local database request fails and api request succeeeeds, then map api response and emit it in flow`() = runBlockingTest {
+    fun `Given profileDetails() is called and local database request fails and api request succeeds, then map api response and emit it in flow`() = runBlockingTest {
         `when`(usersRemoteDataSource.profileDetails()).thenReturn(Either.Right(userApi))
 
         usersRepository.profileDetails()
@@ -74,6 +75,7 @@ class UserRepositoryTest {
             runBlockingTest {
                 val user = userMapper.toUser(it)
                 verify(usersLocalDataSource).insertUser(eq(userMapper.toUserDao(user)))
+                assert(usersRepository.profileDetails().single() == user)
             }
         }
 
