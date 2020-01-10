@@ -40,65 +40,22 @@ class UserLocalDataSourceTest {
 
     @Test
     fun `Given profile() is called, when dao result is successful, then return the data`() {
-        runBlocking {
 
-            `when`(userDbService.selectById(TEST_USER_ID)).thenReturn(userDao)
-
-            usersLocalDataSource.profile()
-
-            verify(userDbService).selectById(TEST_USER_ID)
-
-            assert(usersLocalDataSource.profile().isRight)
-        }
     }
 
     @Test(expected = CancellationException::class)
     fun `Given profile() is called, when dao result is an error, then return the error`() {
-        runBlocking {
-
-            `when`(userDbService.selectById(TEST_USER_ID)).thenReturn(userDao)
-
-            usersLocalDataSource.profile()
-
-            verify(userDbService).selectById(TEST_USER_ID)
-
-            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
-            delay(200)
-
-            assert(usersLocalDataSource.profile().isLeft)
-        }
 
     }
 
     @Test
     fun `Assert changeName() is successful`() {
-        runBlocking {
 
-
-            usersLocalDataSource.changeName(TEST_NAME)
-
-            verify(userDbService).updateName(TEST_USER_ID,TEST_NAME)
-
-            assert(usersLocalDataSource.changeName(TEST_NAME).isRight)
-        }
     }
 
     @Test(expected = CancellationException::class)
     fun `Assert changeName() is failing`() {
-        runBlocking {
 
-
-            usersLocalDataSource.changeName(TEST_NAME)
-
-            verify(userDbService).updateName(TEST_USER_ID,TEST_NAME)
-
-            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
-            delay(200)
-
-            assert(usersLocalDataSource.changeName(TEST_NAME).isLeft)
-        }
 
     }
 

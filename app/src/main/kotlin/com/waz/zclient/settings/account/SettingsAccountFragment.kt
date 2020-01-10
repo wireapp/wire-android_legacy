@@ -30,7 +30,7 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
         initViewModel()
         initAccountName()
         initResetPassword()
-        loadData()
+        loadProfile()
     }
 
     private fun initAccountName() {
@@ -67,7 +67,7 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
                 updateAccountPhoneNumber(phoneState)
             }
             nameUpdated.observe(viewLifecycleOwner) {
-                loadData()
+                this@SettingsAccountFragment.loadProfile()
             }
 
         }
@@ -95,7 +95,7 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
         }
     }
 
-    private fun loadData() {
+    private fun loadProfile() {
         lifecycleScope.launchWhenResumed {
             settingsAccountViewModel.loadProfile()
         }

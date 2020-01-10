@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.FlowError
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeNameParams
@@ -26,7 +25,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private val mutableHandle = MutableLiveData<String>()
     private val mutableEmail = MutableLiveData<ProfileDetailsState>()
     private val mutablePhone = MutableLiveData<ProfileDetailsState>()
-    private val mutableNameUpdated = MutableLiveData<Boolean>().apply { setValue(false) }
+    private val mutableNameUpdated = MutableLiveData<Boolean>(false)
     private val mutableError = MutableLiveData<String>()
 
     val name: LiveData<String>
@@ -48,10 +47,9 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         get() = mutableError
 
     fun loadProfile() {
-        getUserProfileUseCase(scope = viewModelScope, params = Unit,
-            onSuccess = { user -> handleProfileSuccess(user) },
-            onError = { handleError((FlowError(it))) }
-        )
+        getUserProfileUseCase(viewModelScope, Unit) {
+            it.fold(::handleError, ::handleProfileSuccess)
+        }
     }
 
     fun updateName(name: String) {
