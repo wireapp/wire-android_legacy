@@ -11,32 +11,32 @@ import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
-class ChangeNameUseCaseTest {
+class ChangePhoneUseCaseTest {
 
-    private lateinit var changeNameUseCase: ChangeNameUseCase
+    private lateinit var changePhoneUseCase: ChangePhoneUseCase
 
     @Mock
     private lateinit var userRepository: UsersRepository
 
     @Mock
-    private lateinit var changeNameParams: ChangeNameParams
+    private lateinit var changePhoneParams: ChangePhoneParams
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        changeNameUseCase = ChangeNameUseCase(userRepository)
+        changePhoneUseCase = ChangePhoneUseCase(userRepository)
     }
 
     @Test
-    fun `Given update name use case is executed, then the repository should update name`() = runBlockingTest {
-        Mockito.`when`(changeNameParams.name).thenReturn(TEST_NAME)
+    fun `Given update phone use case is executed, then the repository should update phone`() = runBlockingTest {
+        Mockito.`when`(changePhoneParams.phoneNumber).thenReturn(TEST_PHONE)
 
-        changeNameUseCase.run(changeNameParams)
+        changePhoneUseCase.run(changePhoneParams)
 
-        Mockito.verify(userRepository).changeName(eq(TEST_NAME))
+        Mockito.verify(userRepository).changePhone(eq(TEST_PHONE))
     }
 
     companion object {
-        const val TEST_NAME = "Test name"
+        const val TEST_PHONE = "+499477466343"
     }
 }

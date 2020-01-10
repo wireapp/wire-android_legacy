@@ -11,32 +11,31 @@ import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
-class ChangeNameUseCaseTest {
-
-    private lateinit var changeNameUseCase: ChangeNameUseCase
+class ChangeHandleUseCaseTest {
+    private lateinit var changeHandleUseCase: ChangeHandleUseCase
 
     @Mock
     private lateinit var userRepository: UsersRepository
 
     @Mock
-    private lateinit var changeNameParams: ChangeNameParams
+    private lateinit var changeHandleParams: ChangeHandleParams
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        changeNameUseCase = ChangeNameUseCase(userRepository)
+        changeHandleUseCase = ChangeHandleUseCase(userRepository)
     }
 
     @Test
-    fun `Given update name use case is executed, then the repository should update name`() = runBlockingTest {
-        Mockito.`when`(changeNameParams.name).thenReturn(TEST_NAME)
+    fun `Given update handle use case is executed, then the repository should update handle`() = runBlockingTest {
+        Mockito.`when`(changeHandleParams.handle).thenReturn(TEST_HANDLE)
 
-        changeNameUseCase.run(changeNameParams)
+        changeHandleUseCase.run(changeHandleParams)
 
-        Mockito.verify(userRepository).changeName(eq(TEST_NAME))
+        Mockito.verify(userRepository).changeHandle(eq(TEST_HANDLE))
     }
 
     companion object {
-        const val TEST_NAME = "Test name"
+        const val TEST_HANDLE = "@wire"
     }
 }

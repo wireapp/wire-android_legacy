@@ -4,7 +4,6 @@ import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
-import com.waz.zclient.storage.db.users.model.UserDao
 import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
@@ -37,9 +36,6 @@ class UserRepositoryTest {
 
     @Mock
     private lateinit var userMapper: UserMapper
-
-    @Mock
-    private lateinit var userDao: UserDao
 
     @Mock
     private lateinit var userApi: UserApi
