@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 
 @ExperimentalCoroutinesApi
-abstract class FlowUseCase<out Type, in Params> where Type : Any {
+abstract class ObservableUseCase<out Type, in Params> where Type : Any {
 
     abstract suspend fun run(params: Params): Flow<Type>
 

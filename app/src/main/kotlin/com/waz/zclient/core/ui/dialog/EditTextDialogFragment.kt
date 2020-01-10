@@ -13,6 +13,10 @@ class EditTextDialogFragment : DialogFragment() {
 
     private var listener: EditTextDialogFragmentListener? = null
 
+    interface EditTextDialogFragmentListener {
+        fun onTextEdited(newValue: String)
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
         val title = arguments?.getString(TITLE_BUNDLE_KEY, "")
@@ -45,6 +49,9 @@ class EditTextDialogFragment : DialogFragment() {
     }
 
     companion object {
+        private const val TITLE_BUNDLE_KEY = "titleBundleKey"
+        private const val DEFAULT_TEXT_BUNDLE_KEY = "defaultTextBundleKey"
+
         fun newInstance(title: String, defaultValue: String, dialogListener: EditTextDialogFragmentListener):
             EditTextDialogFragment = EditTextDialogFragment().withArgs {
             putString(TITLE_BUNDLE_KEY, title)
@@ -52,9 +59,6 @@ class EditTextDialogFragment : DialogFragment() {
                 DEFAULT_TEXT_BUNDLE_KEY, defaultValue
             )
         }.also { it.listener = dialogListener }
-
-        private const val TITLE_BUNDLE_KEY = "titleBundleKey"
-        private const val DEFAULT_TEXT_BUNDLE_KEY = "defaultTextBundleKey"
     }
 }
 

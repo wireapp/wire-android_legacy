@@ -12,12 +12,11 @@ import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
-import com.waz.zclient.core.ui.dialog.EditTextDialogFragmentListener
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 
-class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
+class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialogFragmentListener {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
 
@@ -29,10 +28,18 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
         initViewModel()
-        setupListeners()
+        initAccountName()
+        initResetPassword()
         loadData()
     }
 
+    private fun initAccountName() {
+        preferences_account_name.setOnClickListener { showEditNameDialogFragment() }
+    }
+
+    private fun initResetPassword() {
+        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
+    }
 
     override fun onTextEdited(newValue: String) {
         settingsAccountViewModel.updateName(newValue)
@@ -88,11 +95,6 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
         }
     }
 
-    private fun setupListeners() {
-        preferences_account_name.setOnClickListener { showEditNameDialogFragment() }
-        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
-    }
-
     private fun loadData() {
         lifecycleScope.launchWhenResumed {
             settingsAccountViewModel.loadProfile()
@@ -110,8 +112,9 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragmentListener {
     }
 
     companion object {
-        fun newInstance() = SettingsAccountFragment()
         private const val Accounts = "|ACCOUNTS|"
+
+        fun newInstance() = SettingsAccountFragment()
     }
 }
 
