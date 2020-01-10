@@ -39,7 +39,7 @@ open class Network {
     companion object {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
-        private const val API_TOKEN = "k96VSCYJzQQt4oEszry66kjSTEDj8bO3mzcKAKcl5K5Mn0y7Zqvda1VlYZr2dl4YEJ8e9Lf5y2CT_UP55ByxDA==.v=1.k=1.d=1578483091.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=5119181315155724728"
+        private const val API_TOKEN ="PjYjDRzJja_8kdOxECQWDD2PMx5IlnLYumK1OFPMgp2CUNlvwfJybFT2tOuo-W-wpyUAsuCFbiZ3EV8dJzw5Aw==.v=1.k=1.d=1578659364.t=a.l=.u=276209c9-2024-4916-a5b6-bfd65b1ca641.c=12476928544549163507"
     }
 }
 

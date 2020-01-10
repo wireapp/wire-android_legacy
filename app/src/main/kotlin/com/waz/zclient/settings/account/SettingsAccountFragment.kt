@@ -14,9 +14,11 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
 
+@ExperimentalCoroutinesApi
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
@@ -30,12 +32,45 @@ class SettingsAccountFragment : Fragment() {
         initToolbar()
         initViewModel()
         initAccountName()
+        initAccountHandle()
+        initAccountEmail()
+        initAccountPhone()
         initResetPassword()
         loadProfile()
     }
 
+    //TODO Will need changing to a phone dialog
+    private fun initAccountPhone() {
+        preferences_account_phone.setOnClickListener {
+            val title = getString(R.string.pref_account_add_phone_title)
+            val defaultValue = preferences_account_phone_title.text.toString()
+            showEditDialog(title, defaultValue) { settingsAccountViewModel.updatePhone(it) }
+        }
+    }
+
+    private fun initAccountEmail() {
+        preferences_account_email.setOnClickListener {
+            val title = getString(R.string.pref_account_add_email_title)
+            val defaultValue = preferences_account_email_title.text.toString()
+            showEditDialog(title, defaultValue) { settingsAccountViewModel.updateEmail(it) }
+        }
+    }
+
+    //TODO Will need changing to a handle fragment instead of a basic input dialog
+    private fun initAccountHandle() {
+        preferences_account_handle.setOnClickListener {
+            val title = getString(R.string.pref__account_action__dialog__change_username__title)
+            val defaultValue = preferences_account_handle_title.text.toString()
+            showEditDialog(title, defaultValue) { settingsAccountViewModel.updateHandle(it) }
+        }
+    }
+
     private fun initAccountName() {
-        preferences_account_name.setOnClickListener { showEditNameDialogFragment() }
+        preferences_account_name.setOnClickListener {
+            val title = getString(R.string.pref_account_edit_name_title)
+            val defaultValue = preferences_account_name_title.text.toString()
+            showEditDialog(title, defaultValue) { settingsAccountViewModel.updateName(it) }
+        }
     }
 
     private fun initResetPassword() {
@@ -71,7 +106,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun updateAccountName(name: String) {
-        preferences_account_handle_title.text = name
+        preferences_account_name_title.text = name
     }
 
     private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {
@@ -98,11 +133,11 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
-    private fun showEditNameDialogFragment() {
-        EditTextDialogFragment.newInstance(getString(R.string.pref_account_edit_name_title),
-            preferences_account_name_title.text.toString(), object : EditTextDialogFragment.EditTextDialogFragmentListener {
+
+    private fun showEditDialog(title: String, defaultValue: String, updateFunc: (String) -> Unit) {
+        EditTextDialogFragment.newInstance(title, defaultValue, object : EditTextDialogFragment.EditTextDialogFragmentListener {
             override fun onTextEdited(newValue: String) {
-                settingsAccountViewModel.updateName(newValue)
+                updateFunc(newValue)
             }
         }).show(requireActivity().supportFragmentManager, String.empty())
     }

@@ -8,17 +8,20 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.ChangeNameParams
-import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) : ProfileDetailsState()
 object ProfileDetailNull : ProfileDetailsState()
 
 sealed class ProfileDetailsState
 
+@ExperimentalCoroutinesApi
 class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-                                           private val changeNameUseCase: ChangeNameUseCase)
+                                           private val changeNameUseCase: ChangeNameUseCase,
+                                           private val changePhoneUseCase: ChangePhoneUseCase,
+                                           private val changeEmailUseCase: ChangeEmailUseCase,
+                                           private val changeHandleUseCase: ChangeHandleUseCase)
     : ViewModel() {
 
     private val mutableName = MutableLiveData<String>()
@@ -50,6 +53,24 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
 
     fun updateName(name: String) {
         changeNameUseCase(viewModelScope, ChangeNameParams(name)) {
+            it.fold(::handleError) {}
+        }
+    }
+
+    fun updatePhone(phoneNumber: String) {
+        changePhoneUseCase(viewModelScope, ChangePhoneParams(phoneNumber)) {
+            it.fold(::handleError) {}
+        }
+    }
+
+    fun updateHandle(handle: String) {
+        changeHandleUseCase(viewModelScope, ChangeHandleParams(handle)) {
+            it.fold(::handleError) {}
+        }
+    }
+
+    fun updateEmail(email: String) {
+        changeEmailUseCase(viewModelScope, ChangeEmailParams(email)) {
             it.fold(::handleError) {}
         }
     }
