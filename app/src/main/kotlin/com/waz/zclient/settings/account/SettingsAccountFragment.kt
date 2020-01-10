@@ -71,7 +71,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun updateAccountName(name: String) {
-        preferences_account_handle_title.text = name
+        preferences_account_name_title.text = name
     }
 
     private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {
