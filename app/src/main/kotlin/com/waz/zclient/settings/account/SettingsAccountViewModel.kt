@@ -1,6 +1,5 @@
 package com.waz.zclient.settings.account
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -85,9 +84,9 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private fun handleError(failure: Failure) {
         when (failure) {
             is HttpError ->
-                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
+                mutableError.postValue(" ${failure.errorCode} + ${failure.errorMessage}")
             else ->
-                Log.e(javaClass.simpleName, "Misc error scenario")
+                mutableError.postValue(" Misc error scenario")
         }
     }
 }
