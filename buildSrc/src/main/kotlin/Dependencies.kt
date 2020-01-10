@@ -1,5 +1,9 @@
 @file:Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
 
+object Config {
+    val properties = mutableMapOf<String, Boolean>()
+}
+
 object Versions {
     //wire android client
     const val ANDROID_CLIENT_MAJOR_VERSION = "3.44."
@@ -7,8 +11,11 @@ object Versions {
     //core
     const val KOTLIN = "1.3.60"
     const val WIRE_TRANSLATIONS = "1.+"
-    val AVS = System.getenv("AVS_VERSION") ?: "5.3.191@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
+
+    //avs
+    val AVS_PUBLIC = "5.3.191@aar"
+    val AVS_INTERNAL = System.getenv("AVS_VERSION") ?: "5.4.15@aar"
 
     //build
     const val COROUTINES = "1.3.2"
@@ -68,7 +75,8 @@ object BuildDependencies {
     val wire = WireDependencyMap(mapOf(
         "audioNotifications" to "com.wire:audio-notifications:${Versions.WIRE_AUDIO}",
         "translations" to "com.wire:wiretranslations:${Versions.WIRE_TRANSLATIONS}",
-        "avs" to "com.wire:${System.getenv("AVS_NAME") ?: "avs"}:${Versions.AVS}"
+        "avsPublic" to "com.wire:avs:${Versions.AVS_PUBLIC}",
+        "avsInternal" to "com.wire:${System.getenv("AVS_NAME") ?: "avs"}:${Versions.AVS_INTERNAL}"
     ))
     val androidX = AndroidXDependencyMap(mapOf(
         "material" to "com.google.android.material:material:${Versions.ANDROIDX_MATERIAL}",

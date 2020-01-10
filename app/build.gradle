@@ -291,7 +291,13 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesCore
     implementation BuildDependencies.kotlin.coroutinesAndroid
 
-    implementation BuildDependencies.wire.avs
+    //TODO
+    if (Config.properties["useInternalAvsVersion"] != null) {
+        implementation BuildDependencies.wire.avsPublic
+    } else {
+        implementation BuildDependencies.wire.avsInternal
+    }
+
     implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
