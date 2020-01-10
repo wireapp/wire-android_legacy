@@ -27,15 +27,6 @@ class UsersDataSource constructor(
             }
         }
 
-    override suspend fun changeName(value: String) = changeNameRemotely(value)
-        .onSuccess { runBlocking { changeNameLocally(value) } }
-
-    override suspend fun changeHandle(value: String) = usersRemoteDataSource.changeHandle(value)
-
-    override suspend fun changeEmail(value: String) = usersRemoteDataSource.changeEmail(value)
-
-    override suspend fun changePhone(value: String) = usersRemoteDataSource.changePhone(value)
-
     private suspend fun profileDetailsRemotely() = usersRemoteDataSource.profileDetails()
         .map { userMapper.toUser(it) }
 
@@ -44,8 +35,32 @@ class UsersDataSource constructor(
 
     private suspend fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.insertUser(userMapper.toUserDao(it)) }
 
-    private suspend fun changeNameRemotely(value: String) = usersRemoteDataSource.changeName(value)
+    override suspend fun changeName(name: String) = changeNameLocally(name)
+        .onSuccess { runBlocking { changeNameRemotely(name) } }
 
-    private suspend fun changeNameLocally(value: String) = usersLocalDataSource.changeName(value)
+    private suspend fun changeNameRemotely(name: String) = usersRemoteDataSource.changeName(name)
+
+    private suspend fun changeNameLocally(name: String) = usersLocalDataSource.changeName(name)
+
+    override suspend fun changeHandle(handle: String) = changeHandleLocally(handle)
+        .onSuccess { runBlocking { changeHandleRemotely(handle) } }
+
+    private suspend fun changeHandleRemotely(handle: String) = usersRemoteDataSource.changeHandle(handle)
+
+    private suspend fun changeHandleLocally(handle: String) = usersLocalDataSource.changeHandle(handle)
+
+    override suspend fun changeEmail(email: String) = changeEmailLocally(email)
+        .onSuccess { runBlocking { changeEmailRemotely(email) } }
+
+    private suspend fun changeEmailRemotely(email: String) = usersRemoteDataSource.changeEmail(email)
+
+    private suspend fun changeEmailLocally(email: String) = usersLocalDataSource.changeEmail(email)
+
+    override suspend fun changePhone(phone: String) = changePhoneLocally(phone)
+        .onSuccess { runBlocking { changePhoneRemotely(phone) } }
+
+    private suspend fun changePhoneRemotely(phone: String) = usersRemoteDataSource.changePhone(phone)
+
+    private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
 
 }
