@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
@@ -108,7 +109,7 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
     private fun showEditNameDialogFragment() {
         EditTextDialogFragment.newInstance(getString(R.string.pref_account_edit_name_title),
             preferences_account_name_title.text.toString(), this)
-            .show(requireActivity().supportFragmentManager, "")
+            .show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {
