@@ -117,7 +117,7 @@ object QuickReplyContentAdapter {
       zms <- inject[Signal[ZMessaging]]
       msg <- message
       user <- zms.usersStorage.signal(msg.userId)
-    } yield user.displayName
+    } yield user.name
 
     val contentStr = message.zip(userName) map {
       case (msg, name) if isGroupConv =>

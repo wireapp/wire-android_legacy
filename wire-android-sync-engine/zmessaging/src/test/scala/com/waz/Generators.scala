@@ -100,9 +100,8 @@ object Generators {
     conversation          <- arbitrary[Option[RConvId]]
     relation              <- arbitrary[Relation]
     syncTimestamp         <- arbitrary[Option[LocalInstant]]
-    displayName           <- arbitrary[Name]
     handle                <- arbitrary[Option[Handle]]
-  } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, displayName, handle = handle))
+  } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, handle = handle))
 
   implicit lazy val arbOpenGraphDataImage: Arbitrary[OpenGraphImage] = Arbitrary(
     for {

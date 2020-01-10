@@ -167,7 +167,7 @@ class UserServiceImpl(selfUserId:        UserId,
 
   override def findUser(id: UserId): Future[Option[UserData]] = usersStorage.get(id)
 
-  override def getOrCreateUser(id: UserId) = usersStorage.getOrElseUpdate(id, {
+  override def getOrCreateUser(id: UserId) = usersStorage.getOrCreate(id, {
     sync.syncUsers(Set(id))
     UserData(id, None, Name.Empty, None, None, connection = ConnectionStatus.Unconnected, searchKey = SearchKey.Empty, handle = None)
   })

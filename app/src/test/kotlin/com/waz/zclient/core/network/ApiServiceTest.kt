@@ -26,12 +26,9 @@ class ApiServiceTest : UnitTest() {
     @Mock
     private lateinit var networkClient: NetworkClient
 
-    @Mock
-    private lateinit var rawResponseRegistry: RawResponseRegistry
-
     @Before
     fun setUp() {
-        apiService = ApiService(networkHandler, threadHandler, networkClient, rawResponseRegistry)
+        apiService = ApiService(networkHandler, threadHandler, networkClient)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -52,33 +49,6 @@ class ApiServiceTest : UnitTest() {
         val inOrder = inOrder(threadHandler, networkHandler)
         inOrder.verify(threadHandler).isUIThread()
         inOrder.verify(networkHandler).isConnected
-    }
-
-    @Test
-    fun `given call is successful, notifies rawResponseRegistry with received response`() {
-        `when`(threadHandler.isUIThread()).thenReturn(false)
-        `when`(networkHandler.isConnected).thenReturn(true)
-
-        val (call, response) = mockResponse<String>()
-        `when`(response.isSuccessful).thenReturn(true)
-
-        apiService.request(call, String.empty())
-
-        verify(rawResponseRegistry).notifyRawResponseReceived(response)
-    }
-
-
-    @Test
-    fun `given call is not successful, does not call rawResponseRegistry`() {
-        `when`(threadHandler.isUIThread()).thenReturn(false)
-        `when`(networkHandler.isConnected).thenReturn(true)
-
-        val (call, response) = mockResponse<String>()
-        `when`(response.isSuccessful).thenReturn(false)
-
-        apiService.request(call, String.empty())
-
-        verifyNoInteractions(rawResponseRegistry)
     }
 
     @Test

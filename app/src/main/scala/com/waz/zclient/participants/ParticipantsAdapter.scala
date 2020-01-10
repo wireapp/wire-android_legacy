@@ -104,7 +104,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
         isAdmin = participants.get(user.id).contains(ConversationRole.AdminRole),
         isSelf = user.id == selfId
       ))
-      .sortBy(_.userData.getDisplayName.str)
+      .sortBy(_.userData.name.str)
 
   protected lazy val positions = for {
     tId               <- team
@@ -384,7 +384,7 @@ object ParticipantsAdapter {
         case None    => view.setUserData(participant.userData, teamId, hideStatus)
       }
       view.setSeparatorVisible(!lastRow)
-      view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.getDisplayName}")
+      view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.name}")
     }
   }
 
@@ -509,7 +509,7 @@ class LikesAndReadsAdapter(userIds: Signal[Set[UserId]], createSubtitle:  Option
       isGuest = user.isGuest(tId) && !user.isWireBot,
       isAdmin = false, // unused
       isSelf  = user.id == selfId
-    )).sortBy(_.userData.getDisplayName.str)
+    )).sortBy(_.userData.name.str)
 
   override protected lazy val positions = users.map { us =>
     val people = us.toList.filterNot(_.userData.isWireBot)

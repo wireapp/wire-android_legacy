@@ -1,0 +1,29 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector android:alpha="0.7" android:autoMirrored="true"
+    android:height="42dp" android:viewportHeight="42"
+    android:viewportWidth="42" android:width="42dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M0,0h42v42h-42z"
+        android:strokeColor="#00000000" android:strokeWidth="1"/>
+    <path android:fillColor="#000000" android:fillType="nonZero"
+        android:pathData="M21,26C22.3807,26 23.5,27.1193 23.5,28.5C23.5,29.8807 22.3807,31 21,31C19.6193,31 18.5,29.8807 18.5,28.5C18.5,27.1193 19.6193,26 21,26ZM13.5,22.25C14.8807,22.25 16,23.3693 16,24.75C16,26.1307 14.8807,27.25 13.5,27.25C12.1193,27.25 11,26.1307 11,24.75C11,23.3693 12.1193,22.25 13.5,22.25ZM28.5,22.25C29.8807,22.25 31,23.3693 31,24.75C31,26.1307 29.8807,27.25 28.5,27.25C27.1193,27.25 26,26.1307 26,24.75C26,23.3693 27.1193,22.25 28.5,22.25ZM13.5,14.75C14.8807,14.75 16,15.8693 16,17.25C16,18.6307 14.8807,19.75 13.5,19.75C12.1193,19.75 11,18.6307 11,17.25C11,15.8693 12.1193,14.75 13.5,14.75ZM28.5,14.75C29.8807,14.75 31,15.8693 31,17.25C31,18.6307 29.8807,19.75 28.5,19.75C27.1193,19.75 26,18.6307 26,17.25C26,15.8693 27.1193,14.75 28.5,14.75ZM21,11C22.3807,11 23.5,12.1193 23.5,13.5C23.5,14.8807 22.3807,16 21,16C19.6193,16 18.5,14.8807 18.5,13.5C18.5,12.1193 19.6193,11 21,11Z"
+        android:strokeColor="#00000000" android:strokeWidth="1"/>
+</vector>

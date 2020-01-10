@@ -61,7 +61,7 @@ class UsersController(implicit injector: Injector, context: Context)
 
   def displayName(id: UserId): Signal[DisplayName] = zMessaging.flatMap { zms =>
     if (zms.selfUserId == id) Signal const Me
-    else user(id).map(u => Other(if (u.deleted) getString(R.string.default_deleted_username) else u.getDisplayName))
+    else user(id).map(u => Other(if (u.deleted) getString(R.string.default_deleted_username) else u.name))
   }
 
   lazy val availabilityVisible: Signal[Boolean] = for {
@@ -149,7 +149,7 @@ class UsersController(implicit injector: Injector, context: Context)
       uToConnect <- user(userId).head
       zms <- zMessaging.head
       message = getString(R.string.connect__message, uToConnect.name, uSelf.name)
-      conv <- zms.connection.connectToUser(userId, message, uToConnect.displayName)
+      conv <- zms.connection.connectToUser(userId, message, uToConnect.name)
     } yield conv
   }
 }
