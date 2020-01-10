@@ -52,9 +52,6 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
 
     private fun initViewModel() {
         with(settingsAccountViewModel) {
-            error.observe(viewLifecycleOwner) { errorMessage ->
-                showErrorMessage(errorMessage)
-            }
             name.observe(viewLifecycleOwner) { name ->
                 updateAccountName(name)
             }
@@ -67,10 +64,9 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
             phone.observe(viewLifecycleOwner) { phoneState ->
                 updateAccountPhoneNumber(phoneState)
             }
-            nameUpdated.observe(viewLifecycleOwner) {
-                this@SettingsAccountFragment.loadProfile()
+            error.observe(viewLifecycleOwner) { errorMessage ->
+                showErrorMessage(errorMessage)
             }
-
         }
     }
 
