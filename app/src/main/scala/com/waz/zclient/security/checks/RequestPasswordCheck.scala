@@ -95,8 +95,7 @@ class RequestPasswordCheck(pwdCtrl: PasswordController, prefs: UserPreferences)(
                                      }(Threading.Ui)
     case PasswordCancelled =>
     case BiometricError(err) =>
-      dialog.showError(Some(err))
-      dialog.cancelBiometric()
+      verbose(l"biometric error $err")
     case BiometricSuccess =>
       dialog.close()
       passwordCheckSatisfied.success(true)
