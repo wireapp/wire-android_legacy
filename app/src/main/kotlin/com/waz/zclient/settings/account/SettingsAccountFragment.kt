@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 
-class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialogFragmentListener {
+class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
 
@@ -40,10 +40,6 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
 
     private fun initResetPassword() {
         preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
-    }
-
-    override fun onTextEdited(newValue: String) {
-        settingsAccountViewModel.updateName(newValue)
     }
 
     private fun initToolbar() {
@@ -104,8 +100,11 @@ class SettingsAccountFragment : Fragment(), EditTextDialogFragment.EditTextDialo
 
     private fun showEditNameDialogFragment() {
         EditTextDialogFragment.newInstance(getString(R.string.pref_account_edit_name_title),
-            preferences_account_name_title.text.toString(), this)
-            .show(requireActivity().supportFragmentManager, String.empty())
+            preferences_account_name_title.text.toString(), object : EditTextDialogFragment.EditTextDialogFragmentListener {
+            override fun onTextEdited(newValue: String) {
+                settingsAccountViewModel.updateName(newValue)
+            }
+        }).show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {
