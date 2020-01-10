@@ -125,7 +125,7 @@ class SettingsAccountFragment : Fragment() {
 
     private fun loadProfile() {
         lifecycleScope.launchWhenResumed {
-            settingsAccountViewModel.loadProfile()
+            settingsAccountViewModel.loadProfileDetails()
         }
     }
 

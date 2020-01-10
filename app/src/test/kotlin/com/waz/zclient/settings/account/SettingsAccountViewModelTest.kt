@@ -2,8 +2,7 @@ package com.waz.zclient.settings.account
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,13 +24,27 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeNameUseCase: ChangeNameUseCase
 
     @Mock
+    private lateinit var changePhoneUseCase: ChangePhoneUseCase
+
+    @Mock
+    private lateinit var changeEmailUseCase: ChangeEmailUseCase
+
+    @Mock
+    private lateinit var changeHandleUseCase: ChangeHandleUseCase
+
+    @Mock
     private lateinit var user: User
 
     private lateinit var userFlow: Flow<User>
 
     @Before
     fun setup() {
-        viewModel = SettingsAccountViewModel(getUserProfileUseCase, changeNameUseCase)
+        viewModel = SettingsAccountViewModel(
+            getUserProfileUseCase,
+            changeNameUseCase,
+            changePhoneUseCase,
+            changeEmailUseCase,
+            changeHandleUseCase)
         userFlow = flowOf(user)
     }
 
@@ -71,12 +84,22 @@ class SettingsAccountViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given account name is updated successfully, then account name observer is notified`() {
+    fun `given account name is updated and fails with HttpError, then error observer is notified`() {
 
     }
 
     @Test
-    fun `given account name is updated and fails with HttpError, then error observer is notified`() {
+    fun `given account handle is updated and fails with HttpError, then error observer is notified`() {
+
+    }
+
+    @Test
+    fun `given account email is updated and fails with HttpError, then error observer is notified`() {
+
+    }
+
+    @Test
+    fun `given account phone is updated and fails with HttpError, then error observer is notified`() {
 
     }
 

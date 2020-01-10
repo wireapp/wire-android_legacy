@@ -45,7 +45,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     val error: LiveData<String>
         get() = mutableError
 
-    fun loadProfile() {
+    fun loadProfileDetails() {
         getUserProfileUseCase(viewModelScope, Unit) {
             it.fold(::handleError, ::handleProfileSuccess)
         }
