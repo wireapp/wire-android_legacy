@@ -77,7 +77,7 @@ class UserRemoteDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersRemoteDataSource.profileDetails().isLeft)
         }
@@ -129,7 +129,7 @@ class UserRemoteDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersRemoteDataSource.changeName(TEST_NAME).isLeft)
         }
@@ -181,7 +181,7 @@ class UserRemoteDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersRemoteDataSource.changeHandle(TEST_HANDLE).isLeft)
         }
@@ -233,7 +233,7 @@ class UserRemoteDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersRemoteDataSource.changeEmail(TEST_EMAIL).isLeft)
         }
@@ -285,13 +285,14 @@ class UserRemoteDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersRemoteDataSource.changePhone(TEST_PHONE).isLeft)
         }
     }
 
     companion object {
+        private const val CANCELLATION_DELAY = 200L
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
         private const val TEST_NAME = "name"
         private const val TEST_EMAIL = "email@wire.com"
