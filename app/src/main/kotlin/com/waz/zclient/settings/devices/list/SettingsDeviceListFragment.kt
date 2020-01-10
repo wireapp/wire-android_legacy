@@ -11,7 +11,7 @@ import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.core.lists.RecyclerViewItemClickListener
+import com.waz.zclient.core.ui.list.RecyclerViewItemClickListener
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.settings.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.settings.devices.list.adapter.DevicesViewHolder

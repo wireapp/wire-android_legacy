@@ -10,8 +10,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
-import com.waz.zclient.settings.account.model.UserProfileItem
+import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
@@ -28,8 +29,17 @@ class SettingsAccountFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
         initViewModel()
-        setupListeners()
-        loadData()
+        initAccountName()
+        initResetPassword()
+        loadProfile()
+    }
+
+    private fun initAccountName() {
+        preferences_account_name.setOnClickListener { showEditNameDialogFragment() }
+    }
+
+    private fun initResetPassword() {
+        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
     }
 
     private fun initToolbar() {
@@ -38,26 +48,49 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initViewModel() {
         with(settingsAccountViewModel) {
-            loading.observe(viewLifecycleOwner) { isLoading ->
-                updateLoadingVisibility(isLoading)
+            name.observe(viewLifecycleOwner) { name ->
+                updateAccountName(name)
+            }
+            handle.observe(viewLifecycleOwner) { handle ->
+                updateAccountHandle(handle)
+            }
+            email.observe(viewLifecycleOwner) { emailState ->
+                updateAccountEmail(emailState)
+            }
+            phone.observe(viewLifecycleOwner) { phoneState ->
+                updateAccountPhoneNumber(phoneState)
             }
             error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
             }
-            profile.observe(viewLifecycleOwner) { profile ->
-                updateProfile(profile)
-            }
-
         }
     }
 
-    private fun setupListeners() {
-        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
+    private fun updateAccountHandle(handle: String) {
+        preferences_account_handle_title.text = handle
     }
 
-    private fun loadData() {
+    private fun updateAccountName(name: String) {
+        preferences_account_name_title.text = name
+    }
+
+    private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {
+        when (phoneState) {
+            is ProfileDetailNull -> preferences_account_phone_title.text = getString(R.string.pref_account_add_email_title)
+            is ProfileDetail -> preferences_account_phone_title.text = phoneState.value
+        }
+    }
+
+    private fun updateAccountEmail(emailState: ProfileDetailsState) {
+        when (emailState) {
+            is ProfileDetailNull -> preferences_account_email_title.text = getString(R.string.pref_account_add_email_title)
+            is ProfileDetail -> preferences_account_email_title.text = emailState.value
+        }
+    }
+
+    private fun loadProfile() {
         lifecycleScope.launchWhenResumed {
-            settingsAccountViewModel.loadData()
+            settingsAccountViewModel.loadProfile()
         }
     }
 
@@ -65,23 +98,20 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
-    private fun updateLoadingVisibility(isLoading: Boolean?) {
-        //Show hide progress indicator
-    }
-
-    private fun updateProfile(userProfileItem: UserProfileItem) {
-        preferences_account_name_title.text = userProfileItem.name
-        preferences_account_email_title.text = userProfileItem.email
-        preferences_account_handle_title.text = userProfileItem.handle
-        preferences_account_phone_title.text = userProfileItem.phone
+    private fun showEditNameDialogFragment() {
+        EditTextDialogFragment.newInstance(getString(R.string.pref_account_edit_name_title),
+            preferences_account_name_title.text.toString(), object : EditTextDialogFragment.EditTextDialogFragmentListener {
+            override fun onTextEdited(newValue: String) {
+                settingsAccountViewModel.updateName(newValue)
+            }
+        }).show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {
-        fun newInstance() = SettingsAccountFragment()
         private const val Accounts = "|ACCOUNTS|"
+
+        fun newInstance() = SettingsAccountFragment()
     }
-
-
 }
 
 
