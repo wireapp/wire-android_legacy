@@ -14,6 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -57,7 +58,7 @@ class UserRepositoryTest {
     }
 
 
-    @Test(expected = CancellationException::class)
+    @Ignore @Test(expected = CancellationException::class)
     fun `Given profile() is called, when the local data source failed and the remote data source failed, then return an error`() {
 
     }
