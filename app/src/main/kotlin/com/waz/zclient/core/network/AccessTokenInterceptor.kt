@@ -1,16 +1,15 @@
 package com.waz.zclient.core.network
 
-import com.waz.zclient.core.extension.empty
 import okhttp3.Interceptor
 import okhttp3.Response
 
-class AccessTokenInterceptor(private val authTokenHandler: AuthTokenHandler) : Interceptor {
+class AccessTokenInterceptor(private val repository: AccessTokenRepository) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val token = authTokenHandler.accessToken()
+        val accessToken = repository.accessToken()
 
-        return when (token != String.empty()) {
-            true -> addAuthHeader(chain, token)
+        return when (accessToken != AccessToken.EMPTY) {
+            true -> addAuthHeader(chain, accessToken.token)
             false -> chain.proceed(chain.request())
         }
     }

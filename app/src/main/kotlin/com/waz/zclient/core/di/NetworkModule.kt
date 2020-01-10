@@ -12,9 +12,9 @@ import com.waz.zclient.core.network.AccessTokenMapper
 import com.waz.zclient.core.network.AccessTokenRemoteDataSource
 import com.waz.zclient.core.network.AccessTokenRepository
 import com.waz.zclient.core.network.ApiService
-import com.waz.zclient.core.network.AuthTokenHandler
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.core.network.RefreshTokenMapper
 import com.waz.zclient.core.network.RetrofitClient
 import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
@@ -71,9 +71,9 @@ val networkModule: Module = module {
         )
     }
     single { AccessTokenMapper() }
-    single { AccessTokenRepository(get(), get(), get()) }
-    single { AuthTokenHandler(get()) }
-    single { AccessTokenAuthenticator(get()) }
+    single { RefreshTokenMapper() }
+    single { AccessTokenRepository(get(), get(), get(), get()) }
+    single { AccessTokenAuthenticator(get(), get()) }
     single { AccessTokenInterceptor(get()) }
     single<NetworkClient> { RetrofitClient(get()) }
     single { ApiService(get(), get(), get()) }

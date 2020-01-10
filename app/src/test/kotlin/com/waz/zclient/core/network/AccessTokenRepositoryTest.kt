@@ -3,7 +3,6 @@ package com.waz.zclient.core.network
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.ServerError
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.onFailure
@@ -26,19 +25,23 @@ class AccessTokenRepositoryTest : UnitTest() {
     private lateinit var localDataSource: AccessTokenLocalDataSource
 
     @Mock
-    private lateinit var mapper: AccessTokenMapper
+    private lateinit var accessTokenMapper: AccessTokenMapper
+
+    @Mock
+    private lateinit var refreshTokenMapper: RefreshTokenMapper
 
     private lateinit var accessTokenRepository: AccessTokenRepository
 
     @Before
     fun setUp() {
-        accessTokenRepository = AccessTokenRepository(remoteDataSource, localDataSource, mapper)
+        accessTokenRepository =
+            AccessTokenRepository(remoteDataSource, localDataSource, accessTokenMapper, refreshTokenMapper)
     }
 
     @Test
     fun `given localDataSource with accessTokenPref, when accessToken called, returns its accessToken mapping`() {
         `when`(localDataSource.accessToken()).thenReturn(ACCESS_TOKEN_PREF)
-        `when`(mapper.from(ACCESS_TOKEN_PREF)).thenReturn(ACCESS_TOKEN)
+        `when`(accessTokenMapper.from(ACCESS_TOKEN_PREF)).thenReturn(ACCESS_TOKEN)
 
         val token = accessTokenRepository.accessToken()
 
@@ -47,29 +50,30 @@ class AccessTokenRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `given localDataSource doesn't have an accessToken, when accessToken called, returns null`() {
+    fun `given localDataSource doesn't have an accessToken, when accessToken called, returns empty AccessToken`() {
         `when`(localDataSource.accessToken()).thenReturn(null)
 
         val token = accessTokenRepository.accessToken()
 
         verify(localDataSource).accessToken()
-        token shouldBe null
+        token shouldBe AccessToken.EMPTY
     }
 
     @Test
     fun `when updateAccessToken is called, calls localDataSource with the mapping of given token`() {
-        `when`(mapper.toPreference(ACCESS_TOKEN)).thenReturn(ACCESS_TOKEN_PREF)
+        `when`(accessTokenMapper.toPreference(ACCESS_TOKEN)).thenReturn(ACCESS_TOKEN_PREF)
 
         accessTokenRepository.updateAccessToken(ACCESS_TOKEN)
 
-        verify(mapper).toPreference(ACCESS_TOKEN)
+        verify(accessTokenMapper).toPreference(ACCESS_TOKEN)
         verify(localDataSource).updateAccessToken(ACCESS_TOKEN_PREF)
         verifyNoMoreInteractions(remoteDataSource, localDataSource)
     }
 
     @Test
-    fun `given localDataSource has a refreshToken, when refreshToken called, returns it`() {
-        `when`(localDataSource.refreshToken()).thenReturn(REFRESH_TOKEN)
+    fun `given localDataSource has a refreshToken, when refreshToken called, returns mapping of local refreshToken`() {
+        `when`(localDataSource.refreshToken()).thenReturn(REFRESH_TOKEN_PREF)
+        `when`(refreshTokenMapper.from(REFRESH_TOKEN_PREF)).thenReturn(REFRESH_TOKEN)
 
         val token = accessTokenRepository.refreshToken()
 
@@ -78,57 +82,59 @@ class AccessTokenRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `given localDataSource doesn't have a refreshToken, when refreshToken called, returns empty string`() {
+    fun `given localDataSource doesn't have a refreshToken, when refreshToken called, returns empty RefreshToken`() {
         `when`(localDataSource.refreshToken()).thenReturn(null)
 
         val token = accessTokenRepository.refreshToken()
 
         verify(localDataSource).refreshToken()
-        token shouldBe String.empty()
+        token shouldBe RefreshToken.EMPTY
     }
 
     @Test
-    fun `when updateRefreshToken is called, calls localDataSource with given token`() {
-        accessTokenRepository.updateRefreshToken(NEW_TOKEN)
+    fun `when updateRefreshToken is called, calls localDataSource with mapping of given token`() {
+        `when`(refreshTokenMapper.toPreference(REFRESH_TOKEN)).thenReturn(REFRESH_TOKEN_PREF)
 
-        verify(localDataSource).updateRefreshToken(NEW_TOKEN)
+        accessTokenRepository.updateRefreshToken(REFRESH_TOKEN)
+
+        verify(localDataSource).updateRefreshToken(REFRESH_TOKEN_PREF)
         verifyNoMoreInteractions(remoteDataSource, localDataSource)
     }
 
     @Test
     fun `when renewAccessToken is called, calls remoteDataSource with given refresh token`() {
-        `when`(mapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
-        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN)).thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
+        `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
+        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
 
         accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-        verify(remoteDataSource).renewAccessToken(REFRESH_TOKEN)
+        verify(remoteDataSource).renewAccessToken(REFRESH_TOKEN.token)
         verifyNoMoreInteractions(remoteDataSource, localDataSource)
     }
 
     @Test
-    fun `given remote call is successful, when renewAccessToken is called, returns mapping of the accessTokenResponse`
-        () {
-        `when`(remoteDataSource.renewAccessToken(any())).thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
-        `when`(mapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
+    fun `given remote call's successful, when renewAccessToken's called, returns mapping of the accessTokenResponse`() {
+        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token))
+            .thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
+        `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
 
         val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-        verify(mapper).from(ACCESS_TOKEN_RESPONSE)
+        verify(accessTokenMapper).from(ACCESS_TOKEN_RESPONSE)
         tokenResponse.isRight shouldBe true
         tokenResponse.map { it shouldBe ACCESS_TOKEN }
     }
 
     @Test
     fun `given remote call fails, when renewAccessToken is called, returns the error without any mapping`() {
-        `when`(remoteDataSource.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
+        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Left(ServerError))
 
         val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-        verify(mapper, never()).from(any<AccessTokenResponse>())
+        verify(accessTokenMapper, never()).from(any<AccessTokenResponse>())
         tokenResponse.isLeft shouldBe true
         tokenResponse.onFailure { it shouldBe ServerError }
-        verifyNoMoreInteractions(mapper)
+        verifyNoMoreInteractions(accessTokenMapper)
     }
 
     @Test
@@ -147,7 +153,7 @@ class AccessTokenRepositoryTest : UnitTest() {
         private val ACCESS_TOKEN_RESPONSE =
             AccessTokenResponse("respToken", "respType", "respUser", "respExpiry")
 
-        private const val REFRESH_TOKEN = "refreshToken"
-        private const val NEW_TOKEN = "newToken"
+        private val REFRESH_TOKEN = RefreshToken("refreshToken")
+        private val REFRESH_TOKEN_PREF = RefreshTokenPreference("refreshToken")
     }
 }

@@ -12,7 +12,10 @@ import okhttp3.Route
  * refresh is being performed. In-flight requests that fail with a 401 (unauthorized)
  * are automatically retried.
  */
-class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) : Authenticator {
+class AccessTokenAuthenticator(
+    private val repository: AccessTokenRepository,
+    private val refreshTokenMapper: RefreshTokenMapper
+) : Authenticator {
 
     companion object {
         const val AUTH_HEADER = "Authorization"
@@ -24,13 +27,13 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
      */
     override fun authenticate(route: Route?, response: Response): Request? {
         updateRefreshToken(response)
-        val refreshToken = authTokenHandler.refreshToken()
+        val refreshToken = repository.refreshToken()
 
         synchronized(this) {
-            val tokenResult = authTokenHandler.renewAccessToken(refreshToken)
+            val tokenResult = repository.renewAccessToken(refreshToken)
 
             return tokenResult.fold({ null }) {
-                authTokenHandler.updateAccessToken(it)
+                repository.updateAccessToken(it)
                 proceedWithNewAccessToken(response, it.token)
             }
         }
@@ -47,8 +50,9 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
 
     private fun updateRefreshToken(response: Response) =
         response.headers()["Cookie"]?.let {
-            if (authTokenHandler.refreshToken() != it) {
-                authTokenHandler.updateRefreshToken(RefreshTokenResponse(it))
+            val newRefreshToken = refreshTokenMapper.fromTokenText(it)
+            if (repository.refreshToken() != newRefreshToken) {
+                repository.updateRefreshToken(newRefreshToken)
             }
         }
 }

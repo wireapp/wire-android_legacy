@@ -1,41 +1,32 @@
 package com.waz.zclient.core.network
 
 import com.google.gson.annotations.SerializedName
-import org.threeten.bp.Instant //TODO: should we continue using this library?
+import org.threeten.bp.Instant
 
-data class RefreshToken(
-    val token: String,
-    val expiryDate: Instant?
-)
+data class RefreshToken(val token: String) {
 
-inline class RefreshTokenResponse(val tokenText: String)
+    val expiryDate by lazy { calculateExpiryDate() }
 
-data class RefreshTokenPreference(
-    @SerializedName("token")
-    val token: String,
-    @SerializedName("expiryDate")
-    val expiryDate: Long
-)
-
-class RefreshTokenMapper {
-    fun from(response: RefreshTokenResponse) = response.tokenText.let {
-        RefreshToken(it, calculateExpiryDate(it))
-    }
-
-    private fun calculateExpiryDate(tokenText: String): Instant? {
-        val parts = tokenText.split('.')
+    private fun calculateExpiryDate(): Instant? {
+        val parts = token.split('.')
         val datePart = parts.find { it.contains("d=") }?.drop(2)
         return datePart?.toLong()?.let { Instant.ofEpochSecond(it) }
     }
 
-    fun toResponse(refreshToken: RefreshToken) = RefreshTokenResponse(refreshToken.token)
+    companion object {
+        val EMPTY = RefreshToken("")
+    }
+}
 
-    fun from(pref: RefreshTokenPreference) = RefreshToken(pref.token, Instant.ofEpochSecond(pref.expiryDate))
+data class RefreshTokenPreference(
+    @SerializedName("token")
+    val token: String
+)
 
-    fun toPreference(refreshToken: RefreshToken) = RefreshTokenPreference(
-        token = refreshToken.token,
-        expiryDate = refreshToken.expiryDate!!.epochSecond //TODO check nullities
-    )
+class RefreshTokenMapper {
+    fun fromTokenText(tokenText: String) = RefreshToken(tokenText)
 
-    fun responseToPref(response: RefreshTokenResponse): RefreshTokenPreference = toPreference(from(response))
+    fun from(pref: RefreshTokenPreference) = RefreshToken(pref.token)
+
+    fun toPreference(refreshToken: RefreshToken) = RefreshTokenPreference(refreshToken.token)
 }
