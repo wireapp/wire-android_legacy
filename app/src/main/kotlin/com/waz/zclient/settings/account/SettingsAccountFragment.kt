@@ -41,6 +41,9 @@ class SettingsAccountFragment : Fragment() {
 
     //TODO Will need changing to a phone dialog
     private fun initAccountPhone() {
+        settingsAccountViewModel.phone.observe(viewLifecycleOwner) { phoneState ->
+            updateAccountPhoneNumber(phoneState)
+        }
         preferences_account_phone.setOnClickListener {
             val title = getString(R.string.pref_account_add_phone_title)
             val defaultValue = preferences_account_phone_title.text.toString()
@@ -49,6 +52,9 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountEmail() {
+        settingsAccountViewModel.email.observe(viewLifecycleOwner) { emailState ->
+            updateAccountEmail(emailState)
+        }
         preferences_account_email.setOnClickListener {
             val title = getString(R.string.pref_account_add_email_title)
             val defaultValue = preferences_account_email_title.text.toString()
@@ -58,6 +64,9 @@ class SettingsAccountFragment : Fragment() {
 
     //TODO Will need changing to a handle fragment instead of a basic input dialog
     private fun initAccountHandle() {
+        settingsAccountViewModel.handle.observe(viewLifecycleOwner) { handle ->
+            updateAccountHandle(handle)
+        }
         preferences_account_handle.setOnClickListener {
             val title = getString(R.string.pref__account_action__dialog__change_username__title)
             val defaultValue = preferences_account_handle_title.text.toString()
@@ -66,6 +75,9 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountName() {
+        settingsAccountViewModel.name.observe(viewLifecycleOwner) { name ->
+            updateAccountName(name)
+        }
         preferences_account_name.setOnClickListener {
             val title = getString(R.string.pref_account_edit_name_title)
             val defaultValue = preferences_account_name_title.text.toString()
@@ -83,18 +95,6 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initViewModel() {
         with(settingsAccountViewModel) {
-            name.observe(viewLifecycleOwner) { name ->
-                updateAccountName(name)
-            }
-            handle.observe(viewLifecycleOwner) { handle ->
-                updateAccountHandle(handle)
-            }
-            email.observe(viewLifecycleOwner) { emailState ->
-                updateAccountEmail(emailState)
-            }
-            phone.observe(viewLifecycleOwner) { phoneState ->
-                updateAccountPhoneNumber(phoneState)
-            }
             error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
             }
