@@ -35,6 +35,8 @@ app/signing.gradle
 *local.gradle.kts
 testing-gallery/*.keystore
 testing-gallery/signing.gradle
+.cxx
+libs
 
 target
 app/flavor-*

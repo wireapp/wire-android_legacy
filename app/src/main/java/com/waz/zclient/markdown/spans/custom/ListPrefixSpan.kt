@@ -24,23 +24,23 @@ import android.text.style.ParagraphStyle
 import android.text.style.ReplacementSpan
 
 /**
- * A ListPrefixSpan simply monospaces the spanned text and right aligns to a specified container
+ * A ListPrefixSpan simply monospace the spanned text and right aligns to a specified container
  * width. The `digits` property is the max number of digits containers and `digitWidth` is the
  * width of each container.
  */
-class ListPrefixSpan(
-    val digits: Int,
-    val digitWidth: Int,
-    val color: Int
-) : ReplacementSpan(), ParagraphStyle {
+class ListPrefixSpan(private val digits: Int, private val digitWidth: Int, val color: Int)
+    : ReplacementSpan(), ParagraphStyle {
 
-    override fun getSize(paint: Paint?, text: CharSequence?, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int {
-        if (fm == null || paint == null) return (end - start) * digitWidth
+    override fun getSize(paint: Paint, text: CharSequence?, start: Int, end: Int,
+                         fm: Paint.FontMetricsInt?): Int {
+        if (fm == null) return (end - start) * digitWidth
         return paint.getFontMetricsInt(fm)
     }
 
-    override fun draw(canvas: Canvas?, text: CharSequence?, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint?) {
-        if (canvas == null || text == null || paint == null) return
+    override fun draw(canvas: Canvas, text: CharSequence?, start: Int, end: Int, x: Float, top: Int,
+        y: Int, bottom: Int, paint: Paint) {
+
+        if (text == null) return
 
         // ensure this span is attached to the text
         val spanned = text as Spanned
@@ -61,7 +61,7 @@ class ListPrefixSpan(
         val oldColor = paint.color
         paint.color = color
 
-        for (i in 0 until prefix.length) {
+        for (i in prefix.indices) {
             val charWidth = paint.measureText(prefix, i, i + 1)
             val halfFreeSpace = (digitWidth - charWidth) / 2f
             val charOffset = (i * digitWidth) + halfFreeSpace

@@ -27,30 +27,23 @@ import android.text.style.QuoteSpan
  * CustomQuoteSpan extends QuoteSpan by allowing the width of the stripe and the gap between
  * the stripe and the content to be specified.
  */
-class CustomQuoteSpan(
-    color: Int,
-    val stripeWidthSize: Int,
-    val gapWidthSize: Int,
-    private val density: Float = 1f,
-    val beforeSpacing: Int = 0,
-    val afterSpacing: Int = 0
-) : QuoteSpan(color) {
+class CustomQuoteSpan(color: Int, val stripeWidthSize: Int, val gapWidthSize: Int,
+                      private val density: Float = 1f, private val beforeSpacing: Int = 0,
+                      private val afterSpacing: Int = 0) : QuoteSpan(color) {
 
-    override fun getLeadingMargin(first: Boolean): Int {
-        return ((stripeWidthSize + gapWidthSize) * density).toInt()
-    }
+    override fun getLeadingMargin(first: Boolean) =
+        ((stripeWidthSize + gapWidthSize) * density).toInt()
 
-    override fun drawLeadingMargin(
-        c: Canvas?, p: Paint?, x: Int, dir: Int, top: Int, baseline: Int, bottom: Int,
-        text: CharSequence?, start: Int, end: Int, first: Boolean, layout: Layout?
-    ) {
+    override fun drawLeadingMargin(c: Canvas, p: Paint, x: Int, dir: Int, top: Int, baseline: Int,
+                                   bottom: Int, text: CharSequence, start: Int, end: Int,
+                                   first: Boolean, layout: Layout) {
+
         val spanned = text as Spanned
         val spanStart = spanned.getSpanStart(this)
         val spanEnd = spanned.getSpanEnd(this)
 
         // ensure this span is attached to the text
         if (!(spanStart <= start && spanEnd >= end)) return
-        if (c == null || p == null) return
 
         // we want to top and bottom of the stripe to align with the top and bottom of the text.
         // if there is before and after spacing applied, then we must counter it by offsetting

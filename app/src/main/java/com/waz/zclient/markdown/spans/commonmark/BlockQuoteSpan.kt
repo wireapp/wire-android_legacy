@@ -27,15 +27,8 @@ import org.commonmark.node.Node
 /**
  * The span corresponding to the Commonmark "BlockQuote" node.
  */
-class BlockQuoteSpan(
-    val color: Int,
-    val stripeColor: Int,
-    val stripeWidth: Int,
-    val gapWidth: Int,
-    val beforeSpacing: Int,
-    val afterSpacing: Int,
-    density: Float = 1f
-) : BlockSpan() {
+class BlockQuoteSpan(val color: Int, val stripeColor: Int, val stripeWidth: Int, val gapWidth: Int,
+                     val beforeSpacing: Int, val afterSpacing: Int, density: Float = 1f) : BlockSpan() {
 
     init {
         add(CustomQuoteSpan(stripeColor, stripeWidth, gapWidth, density, beforeSpacing, afterSpacing))

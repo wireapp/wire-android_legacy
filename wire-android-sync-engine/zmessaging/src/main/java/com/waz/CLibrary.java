@@ -19,7 +19,6 @@ package com.waz;
 
 import com.sun.jna.Library;
 import com.sun.jna.Structure;
-import com.waz.utils.jna.Size_t;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,9 +26,7 @@ import java.util.List;
 public interface CLibrary extends Library {
 
     class Members extends Structure {
-        public static class ByReference extends Members implements Structure.ByReference { }
-        public Member.ByReference membv;
-        public Size_t membc;
+        Member.ByReference membv;
 
         public Members() { }
         public Member.ByReference[] toArray(int size) {

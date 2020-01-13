@@ -44,6 +44,6 @@ interface GroupSpan {
     // Add a span to the group.
     fun add(span: Any)
 
-    // The Commonmark node represented by the group.
+    // The Common mark node represented by the group.
     fun toNode(literal: String? = null) : Node
 }

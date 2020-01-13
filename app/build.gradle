@@ -80,7 +80,7 @@ task copyCustomResources(type: Copy) {
 android {
     //Trigger the licenseFormat task at least once in any compile phase
     applicationVariants.all { variant ->
-        variant.javaCompiler.dependsOn(rootProject.licenseFormat)
+        variant.javaCompileProvider.get().dependsOn(rootProject.licenseFormat)
     }
 
     preBuild.dependsOn(copyCustomResources)

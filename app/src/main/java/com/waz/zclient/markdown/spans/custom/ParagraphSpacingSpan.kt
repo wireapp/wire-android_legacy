@@ -36,14 +36,13 @@ class ParagraphSpacingSpan(val before: Int, val after: Int) : LineHeightSpan.Wit
     private var ascent: Int? = null
     private var top: Int? = null
 
-    override fun chooseHeight(text: CharSequence?, start: Int, end: Int, spanstartv: Int, v: Int, fm: Paint.FontMetricsInt?) {
+    override fun chooseHeight(text: CharSequence?, start: Int, end: Int, spanstartv: Int, v: Int,
+                              fm: Paint.FontMetricsInt?) =
         chooseHeight(text, start, end, spanstartv, v, fm, null)
-    }
 
-    override fun chooseHeight(
-        text: CharSequence?, start: Int, end: Int,
-        spanstartv: Int, v: Int, fm: Paint.FontMetricsInt?, paint: TextPaint?
-    ) {
+    override fun chooseHeight(text: CharSequence?, start: Int, end: Int, spanstartv: Int, v: Int,
+                              fm: Paint.FontMetricsInt?, paint: TextPaint?) {
+
         if (text !is Spanned) return
 
         val density = paint?.density ?: 1f
