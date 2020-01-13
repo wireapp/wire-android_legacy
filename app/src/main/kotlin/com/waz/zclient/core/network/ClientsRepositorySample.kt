@@ -17,12 +17,12 @@ class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
 
     //Data mapping/transformation should happen at this level and repositories should
     //always deal with Entities and return Domain types
-    fun allClients(): Either<Failure, List<ClientDomain>> =
+    suspend fun allClients(): Either<Failure, List<ClientDomain>> =
         remoteDataSource.allClients().map { clientEntities -> clientEntities.map { ClientDomain.empty() } }
 
     //Data mapping/transformation should happen at this level and repositories should
     //always deal with Entities and return Domain types
-    fun clientById(clientId: String?): Either<Failure, ClientDomain> =
+    suspend fun clientById(clientId: String?): Either<Failure, ClientDomain> =
         remoteDataSource.clientById(clientId).map { ClientDomain.empty() }
 }
 
@@ -32,8 +32,8 @@ class ClientsRepository(private val remoteDataSource: ClientsRemoteDataSource) {
  */
 class ClientsRemoteDataSource(private val clientsService: ClientsService) {
 
-    fun allClients(): Either<Failure, List<ClientEntity>> = clientsService.allClients()
-    fun clientById(clientId: String?): Either<Failure, ClientEntity> = clientsService.clientById(clientId)
+    suspend fun allClients(): Either<Failure, List<ClientEntity>> = clientsService.allClients()
+    suspend fun clientById(clientId: String?): Either<Failure, ClientEntity> = clientsService.clientById(clientId)
 }
 
 /**

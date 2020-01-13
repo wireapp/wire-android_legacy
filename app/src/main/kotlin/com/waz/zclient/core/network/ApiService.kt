@@ -11,33 +11,32 @@ import com.waz.zclient.core.exception.Unauthorized
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Either.Left
 import com.waz.zclient.core.functional.Either.Right
-import com.waz.zclient.core.threading.ThreadHandler
-import retrofit2.Call
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 
 class ApiService(private val networkHandler: NetworkHandler,
-                 private val threadHandler: ThreadHandler,
                  private val networkClient: NetworkClient) {
 
     fun <T> createApi(clazz: Class<T>) = networkClient.create(clazz)
 
-    fun <T> request(call: Call<T>, default: T): Either<Failure, T> {
-        require(!threadHandler.isUIThread())
-
-        return when (networkHandler.isConnected) {
-            true -> performRequest(call, default)
-            false, null -> Left(NetworkConnection)
+    suspend fun <T> request(call: suspend () -> Response<T>, default: T): Either<Failure, T> =
+        withContext(Dispatchers.IO) {
+            return@withContext when (networkHandler.isConnected) {
+                true -> performRequest(call, default)
+                false, null -> Left(NetworkConnection)
+            }
         }
-    }
 
-    private fun <T> performRequest(call: Call<T>, default: T): Either<Failure, T> {
+    private suspend fun <T> performRequest(call: suspend () -> Response<T>, default: T): Either<Failure, T> {
         return try {
-            val response = call.execute()
+            val response = call()
             when (response.isSuccessful) {
                 true -> Right(response.body() ?: default)
                 false -> handleRequestError(response)
             }
         } catch (exception: Throwable) {
+            //todo: check coroutine exceptions (e.g. Cancelled)
             Left(ServerError)
         }
     }

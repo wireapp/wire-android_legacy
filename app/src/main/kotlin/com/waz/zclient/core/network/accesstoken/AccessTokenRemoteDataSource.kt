@@ -7,6 +7,6 @@ import com.waz.zclient.core.network.api.token.TokenService
 
 class AccessTokenRemoteDataSource(private val tokenService: TokenService) {
 
-    fun renewAccessToken(refreshToken: String) : Either<Failure, AccessTokenResponse> =
+    suspend fun renewAccessToken(refreshToken: String) : Either<Failure, AccessTokenResponse> =
         tokenService.renewAccessToken(refreshToken)
 }

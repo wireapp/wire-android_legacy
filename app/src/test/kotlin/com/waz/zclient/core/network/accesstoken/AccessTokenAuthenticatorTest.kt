@@ -4,6 +4,8 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
@@ -19,6 +21,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 
+@ExperimentalCoroutinesApi
 class AccessTokenAuthenticatorTest : UnitTest() {
 
     private lateinit var accessTokenAuthenticator: AccessTokenAuthenticator
@@ -35,7 +38,7 @@ class AccessTokenAuthenticatorTest : UnitTest() {
     }
 
     @Test
-    fun `when renewing access token is successful, adds new access token to header`() {
+    fun `when renewing access token is successful, adds new access token to header`() = runBlockingTest {
         `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
         `when`(repository.renewAccessToken(REFRESH_TOKEN)).thenReturn(Either.Right(ACCESS_TOKEN))
 
@@ -62,7 +65,7 @@ class AccessTokenAuthenticatorTest : UnitTest() {
     }
 
     @Test
-    fun `when renewing access token fails, gives up and returns null request`() {
+    fun `when renewing access token fails, gives up and returns null request`() = runBlockingTest {
         `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
         `when`(repository.renewAccessToken(REFRESH_TOKEN)).thenReturn(Either.Left(ServerError))
 
@@ -80,51 +83,54 @@ class AccessTokenAuthenticatorTest : UnitTest() {
     }
 
     @Test
-    fun `when response returns a "Cookie" header different than current refresh token, updates refresh token`() {
-        val newToken = "newRefreshToken"
-        val newRefreshToken = RefreshToken(newToken)
+    fun `when response returns a "Cookie" header different than current refresh token, updates refresh token`() =
+        runBlockingTest {
+            val newToken = "newRefreshToken"
+            val newRefreshToken = RefreshToken(newToken)
 
-        `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
-        `when`(mapper.fromTokenText(any())).thenReturn(newRefreshToken)
+            `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
+            `when`(mapper.fromTokenText(any())).thenReturn(newRefreshToken)
 
-        val response = mockResponse(refreshToken = newToken)
-        //bypass adding headers to request. we're not interested
-        `when`(repository.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
+            val response = mockResponse(refreshToken = newToken)
+            //bypass adding headers to request. we're not interested
+            `when`(repository.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
 
-        accessTokenAuthenticator.authenticate(mock(Route::class.java), response)
+            accessTokenAuthenticator.authenticate(mock(Route::class.java), response)
 
-        verify(repository, times(2)).refreshToken()
-        verify(repository).updateRefreshToken(newRefreshToken)
-        verify(repository, never()).updateRefreshToken(REFRESH_TOKEN)
-    }
-
-    @Test
-    fun `when response returns a "Cookie" header same as current RefreshToken's token, does not update current one`() {
-        `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
-        `when`(mapper.fromTokenText(REFRESH_TOKEN.token)).thenReturn(RefreshToken(REFRESH_TOKEN.token))
-
-        val response = mockResponse(refreshToken = REFRESH_TOKEN.token)
-        //bypass adding headers to request. we're not interested
-        `when`(repository.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
-
-        accessTokenAuthenticator.authenticate(mock(Route::class.java), response)
-
-        verify(repository, times(2)).refreshToken()
-        verify(repository, never()).updateRefreshToken(any())
-    }
+            verify(repository, times(2)).refreshToken()
+            verify(repository).updateRefreshToken(newRefreshToken)
+            verify(repository, never()).updateRefreshToken(REFRESH_TOKEN)
+        }
 
     @Test
-    fun `when response does not return a "Cookie" header, does not attempt to update refresh token`() {
-        `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
-        val response = mockResponse(refreshToken = null)
-        //bypass adding headers to request. we're not interested
-        `when`(repository.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
+    fun `when response returns a "Cookie" header same as current RefreshToken's token, does not update current one`() =
+        runBlockingTest {
+            `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
+            `when`(mapper.fromTokenText(REFRESH_TOKEN.token)).thenReturn(RefreshToken(REFRESH_TOKEN.token))
 
-        accessTokenAuthenticator.authenticate(mock(Route::class.java), response)
+            val response = mockResponse(refreshToken = REFRESH_TOKEN.token)
+            //bypass adding headers to request. we're not interested
+            `when`(repository.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
 
-        verify(repository).refreshToken()
-        verify(repository, never()).updateRefreshToken(any())
-    }
+            accessTokenAuthenticator.authenticate(mock(Route::class.java), response)
+
+            verify(repository, times(2)).refreshToken()
+            verify(repository, never()).updateRefreshToken(any())
+        }
+
+    @Test
+    fun `when response does not return a "Cookie" header, does not attempt to update refresh token`() =
+        runBlockingTest {
+            `when`(repository.refreshToken()).thenReturn(REFRESH_TOKEN)
+            val response = mockResponse(refreshToken = null)
+            //bypass adding headers to request. we're not interested
+            `when`(repository.renewAccessToken(any())).thenReturn(Either.Left(ServerError))
+
+            accessTokenAuthenticator.authenticate(mock(Route::class.java), response)
+
+            verify(repository).refreshToken()
+            verify(repository, never()).updateRefreshToken(any())
+        }
 
     private fun mockResponse(refreshToken: String? = null): Response {
         val response = mock(Response::class.java)

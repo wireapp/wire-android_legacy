@@ -7,8 +7,9 @@ import com.waz.zclient.core.network.ApiService
 class TokenService(private val apiService: ApiService,
                    private val tokenApi: TokenApi) {
 
-    fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
+    suspend fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
         apiService.request(
-            tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken")), AccessTokenResponse.EMPTY
+            { tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken")) },
+            AccessTokenResponse.EMPTY
         )
 }

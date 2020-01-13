@@ -1,6 +1,7 @@
 package com.waz.zclient.devices.data.source.remote.model
 
 import com.google.gson.annotations.SerializedName
+import com.waz.zclient.core.extension.empty
 
 data class ClientApi(
     @SerializedName("id")
@@ -25,11 +26,24 @@ data class ClientApi(
     val model: String,
 
     @SerializedName("location")
-    val location: ClientLocationApi)
+    val location: ClientLocationApi
+) {
+    companion object {
+        val EMPTY = ClientApi(
+            String.empty(), String.empty(), String.empty(), String.empty(), String.empty(), String.empty(),
+            String.empty(), ClientLocationApi.EMPTY
+        )
+    }
+}
 
 data class ClientLocationApi(
     @SerializedName("lon")
     val long: Double,
 
     @SerializedName("lat")
-    val lat: Double)
+    val lat: Double
+) {
+    companion object {
+        val EMPTY = ClientLocationApi(Double.NaN, Double.NaN)
+    }
+}

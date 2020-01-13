@@ -7,6 +7,8 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.network.api.token.AccessTokenResponse
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
@@ -101,41 +103,47 @@ class AccessTokenRepositoryTest : UnitTest() {
         verifyNoMoreInteractions(remoteDataSource, localDataSource)
     }
 
+    @ExperimentalCoroutinesApi
     @Test
-    fun `when renewAccessToken is called, calls remoteDataSource with given refresh token`() {
-        `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
-        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
+    fun `when renewAccessToken is called, calls remoteDataSource with given refresh token`() =
+        runBlockingTest {
+            `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
+            `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
 
-        accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
+            accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-        verify(remoteDataSource).renewAccessToken(REFRESH_TOKEN.token)
-        verifyNoMoreInteractions(remoteDataSource, localDataSource)
-    }
+            verify(remoteDataSource).renewAccessToken(REFRESH_TOKEN.token)
+            verifyNoMoreInteractions(remoteDataSource, localDataSource)
+        }
 
+    @ExperimentalCoroutinesApi
     @Test
-    fun `given remote call's successful, when renewAccessToken's called, returns mapping of the accessTokenResponse`() {
-        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token))
-            .thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
-        `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
+    fun `given remote call's successful, when renewAccessToken's called, returns mapping of the accessTokenResponse`() =
+        runBlockingTest {
+            `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token))
+                .thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
+            `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
 
-        val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
+            val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-        verify(accessTokenMapper).from(ACCESS_TOKEN_RESPONSE)
-        tokenResponse.isRight shouldBe true
-        tokenResponse.map { it shouldBe ACCESS_TOKEN }
-    }
+            verify(accessTokenMapper).from(ACCESS_TOKEN_RESPONSE)
+            tokenResponse.isRight shouldBe true
+            tokenResponse.map { it shouldBe ACCESS_TOKEN }
+        }
 
+    @ExperimentalCoroutinesApi
     @Test
-    fun `given remote call fails, when renewAccessToken is called, returns the error without any mapping`() {
-        `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Left(ServerError))
+    fun `given remote call fails, when renewAccessToken is called, returns the error without any mapping`() =
+        runBlockingTest {
+            `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Left(ServerError))
 
-        val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
+            val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-        verify(accessTokenMapper, never()).from(any<AccessTokenResponse>())
-        tokenResponse.isLeft shouldBe true
-        tokenResponse.onFailure { it shouldBe ServerError }
-        verifyNoMoreInteractions(accessTokenMapper)
-    }
+            verify(accessTokenMapper, never()).from(any<AccessTokenResponse>())
+            tokenResponse.isLeft shouldBe true
+            tokenResponse.onFailure { it shouldBe ServerError }
+            verifyNoMoreInteractions(accessTokenMapper)
+        }
 
     @Test
     fun `when wipeOutTokens is called, wipes out both access and refresh tokens`() {

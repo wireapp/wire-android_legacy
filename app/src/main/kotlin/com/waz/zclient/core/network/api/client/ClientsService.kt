@@ -8,9 +8,9 @@ import com.waz.zclient.features.clients.ClientEntity
 class ClientsService(private val apiService: ApiService,
                      private val clientsApi: ClientsApi) {
 
-    fun allClients(): Either<Failure, List<ClientEntity>> =
-        apiService.request(clientsApi.allClients(), emptyList())
+    suspend fun allClients(): Either<Failure, List<ClientEntity>> =
+        apiService.request({clientsApi.allClients()}, emptyList())
 
-    fun clientById(clientId: String?): Either<Failure, ClientEntity> =
-        apiService.request(clientsApi.clientById(clientId), ClientEntity.empty())
+    suspend fun clientById(clientId: String?): Either<Failure, ClientEntity> =
+        apiService.request({clientsApi.clientById(clientId)}, ClientEntity.empty())
 }

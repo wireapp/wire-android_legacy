@@ -21,7 +21,7 @@ class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataS
     fun updateRefreshToken(newRefreshToken: RefreshToken) =
         localDataSource.updateRefreshToken(refreshTokenMapper.toPreference(newRefreshToken))
 
-    fun renewAccessToken(refreshToken: RefreshToken): Either<Failure, AccessToken> =
+    suspend fun renewAccessToken(refreshToken: RefreshToken): Either<Failure, AccessToken> =
         remoteDataSource.renewAccessToken(refreshToken.token).map { accessTokenMapper.from(it) }
 
     fun wipeOutTokens() {
