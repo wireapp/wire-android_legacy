@@ -124,7 +124,7 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
     case Some(userData) =>
       val request = new ConfirmationRequest.Builder()
         .withHeader(getString(R.string.confirmation_menu__header))
-        .withMessage(getString(R.string.confirmation_menu_text_with_name, userData.getDisplayName))
+        .withMessage(getString(R.string.confirmation_menu_text_with_name, userData.name))
         .withPositiveButton(getString(R.string.confirmation_menu__confirm_remove))
         .withNegativeButton(getString(R.string.confirmation_menu__cancel))
         .withConfirmationCallback(new TwoButtonConfirmationCallback() {

@@ -1,6 +1,13 @@
 package com.waz.zclient.core.network
 
-import com.waz.zclient.core.exception.*
+import com.waz.zclient.core.exception.BadRequest
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.Forbidden
+import com.waz.zclient.core.exception.InternalServerError
+import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.exception.NotFound
+import com.waz.zclient.core.exception.ServerError
+import com.waz.zclient.core.exception.Unauthorized
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.Either.Left
 import com.waz.zclient.core.functional.Either.Right
@@ -10,8 +17,7 @@ import retrofit2.Response
 
 class ApiService(private val networkHandler: NetworkHandler,
                  private val threadHandler: ThreadHandler,
-                 private val networkClient: NetworkClient,
-                 private val rawResponseRegistry: RawResponseRegistry) {
+                 private val networkClient: NetworkClient) {
 
     fun <T> createApi(clazz: Class<T>) = networkClient.create(clazz)
 
@@ -28,10 +34,7 @@ class ApiService(private val networkHandler: NetworkHandler,
         return try {
             val response = call.execute()
             when (response.isSuccessful) {
-                true -> {
-                    rawResponseRegistry.notifyRawResponseReceived(response)
-                    Right(response.body() ?: default)
-                }
+                true -> Right(response.body() ?: default)
                 false -> handleRequestError(response)
             }
         } catch (exception: Throwable) {

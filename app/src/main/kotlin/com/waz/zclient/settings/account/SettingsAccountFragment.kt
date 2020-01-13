@@ -14,9 +14,10 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
+@ExperimentalCoroutinesApi
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
@@ -71,7 +72,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun updateAccountName(name: String) {
-        preferences_account_handle_title.text = name
+        preferences_account_name_title.text = name
     }
 
     private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {

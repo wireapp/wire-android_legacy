@@ -11,12 +11,14 @@ import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeNameParams
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) : ProfileDetailsState()
 object ProfileDetailNull : ProfileDetailsState()
 
 sealed class ProfileDetailsState
 
+@ExperimentalCoroutinesApi
 class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
                                            private val changeNameUseCase: ChangeNameUseCase)
     : ViewModel() {
@@ -57,7 +59,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private fun handleProfileSuccess(user: User) {
         mutableName.postValue(user.name)
         mutableHandle.postValue(user.handle)
-        mutableEmail.postValue(if (user.email.isNullOrEmpty()) ProfileDetailNull else user.name?.let { ProfileDetail(it) })
+        mutableEmail.postValue(if (user.email.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(user.email))
         mutablePhone.postValue(if (user.phone.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(user.phone))
     }
 
