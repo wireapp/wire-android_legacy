@@ -1,6 +1,7 @@
 package com.waz.zclient.settings.account
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
@@ -19,12 +20,19 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
-import org.mockito.MockitoAnnotations
-
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class SettingsAccountViewModelTest {
+class SettingsAccountViewModelTest : UnitTest() {
+
+    companion object {
+        private const val TEST_NAME = "testName"
+        private const val TEST_HANDLE = "@Wire"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_PHONE = "+497573889375"
+        private const val TEST_ERROR_CODE = 401
+        private const val TEST_ERROR_MESSAGE = "Unauthorised Error"
+    }
 
     private lateinit var viewModel: SettingsAccountViewModel
 
@@ -53,7 +61,6 @@ class SettingsAccountViewModelTest {
 
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         viewModel = SettingsAccountViewModel(
             getUserProfileUseCase,
             changeNameUseCase,
@@ -198,14 +205,5 @@ class SettingsAccountViewModelTest {
         viewModel.error.observeOnce {
             it shouldBe "$TEST_ERROR_CODE + $TEST_ERROR_MESSAGE"
         }
-    }
-
-    companion object {
-        private const val TEST_NAME = "testName"
-        private const val TEST_HANDLE = "@Wire"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_PHONE = "+497573889375"
-        private const val TEST_ERROR_CODE = 401
-        private const val TEST_ERROR_MESSAGE = "Unauthorised Error"
     }
 }

@@ -24,19 +24,19 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     private val mutableError = MutableLiveData<String>()
 
     val name: LiveData<String> = Transformations.map(mutableProfileData) {
-        return@map it.name
+        it.name
     }
 
     val handle: LiveData<String> = Transformations.map(mutableProfileData) {
-        return@map it.handle
+        it.handle
     }
 
     val email: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
-        return@map if (it.email.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.email)
+        if (it.email.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.email)
     }
 
     val phone: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
-        return@map if (it.phone.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.phone)
+        if (it.phone.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.phone)
     }
 
     val error: LiveData<String>
@@ -77,11 +77,10 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     }
 
     private fun handleError(failure: Failure) {
-        when (failure) {
-            is HttpError ->
-                mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")
-            else ->
-                mutableError.postValue("Misc error scenario")
+        if (failure is HttpError) {
+            mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")
+        } else {
+            mutableError.postValue("Misc error scenario")
         }
     }
 }
