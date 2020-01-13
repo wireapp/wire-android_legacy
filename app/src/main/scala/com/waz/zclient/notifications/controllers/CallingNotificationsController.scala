@@ -213,6 +213,8 @@ object CallingNotificationsController {
 
   val CallImageSizeDp = 64
 
+  def isAndroid10OrAbove: Boolean = Build.VERSION.SDK_INT >= 29
+
   def androidNotificationBuilder(not: CallNotification, treatAsIncomingCall: Boolean = false)(implicit cxt: content.Context): NotificationCompat.Builder = {
     val title = if (not.isGroup) not.convName else not.caller
 
@@ -238,7 +240,7 @@ object CallingNotificationsController {
       .setContentText(message)
       .setContentIntent(OpenCallingScreen())
       .setStyle(style)
-      .setFullScreenIntent(OpenCallingScreen(), true)
+      .setFullScreenIntent(OpenCallingScreen(), isAndroid10OrAbove)
       .setCategory(NotificationCompat.CATEGORY_CALL)
       .setPriority(priority)
       .setOnlyAlertOnce(true)
