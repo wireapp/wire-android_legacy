@@ -22,30 +22,48 @@ import android.content.res.Resources;
 import android.os.Environment;
 
 import com.wire.testinggallery.R;
+import com.wire.testinggallery.models.Audio;
+import com.wire.testinggallery.models.Backup;
+import com.wire.testinggallery.models.FileType;
+import com.wire.testinggallery.models.Image;
+import com.wire.testinggallery.models.PlainText;
+import com.wire.testinggallery.models.Textfile;
+import com.wire.testinggallery.models.Video;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class FileUtils {
+
+    public static final List<FileType> fileTypes = new ArrayList<FileType>()
+    {{
+        add(new Textfile());
+        add(new Video());
+        add(new Audio());
+        add(new Image());
+        add(new Backup());
+        add(new PlainText());
+    }};
+
     public enum TEST_FILE_TYPES {
         ALL,
         VIDEO,
         AUDIO,
         BACKUP,
         PICTURE,
-        TEXTFILE
+        TEXTFILE;
     }
-
 
     public static void copyStreams(InputStream from, OutputStream to) {
         try {

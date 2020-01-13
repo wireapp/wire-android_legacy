@@ -35,13 +35,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.common.base.Supplier;
 import com.wire.testinggallery.backup.ExportFile;
-import com.wire.testinggallery.models.Audio;
-import com.wire.testinggallery.models.Backup;
-import com.wire.testinggallery.models.FileType;
-import com.wire.testinggallery.models.Image;
-import com.wire.testinggallery.models.PlainText;
-import com.wire.testinggallery.models.Textfile;
-import com.wire.testinggallery.models.Video;
 import com.wire.testinggallery.precondition.PreconditionCheckers;
 import com.wire.testinggallery.precondition.PreconditionFixers;
 import com.wire.testinggallery.utils.FileUtils;
@@ -50,9 +43,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
@@ -67,16 +58,6 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog alertDialog = null;
     private Map<Integer, Supplier<Boolean>> checkMap;
     private Map<Integer, Supplier<Void>> fixMap;
-
-    public static final List<FileType> fileTypes = new ArrayList<FileType>()
-    {{
-        add(new Textfile());
-        add(new Video());
-        add(new Audio());
-        add(new Image());
-        add(new Backup());
-        add(new PlainText());
-    }};
 
     @Override
     protected void onCreate(Bundle bundle) {

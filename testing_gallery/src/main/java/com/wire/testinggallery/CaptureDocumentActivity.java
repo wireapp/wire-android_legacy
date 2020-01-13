@@ -53,7 +53,7 @@ public class CaptureDocumentActivity extends AppCompatActivity {
     private void addAvailableFileTypesButtons(){
         //the layout on which you are working
         final LinearLayout layout = this.findViewById(R.id.file_chooser_popup);
-        for(FileType type : MainActivity.fileTypes) {
+        for(FileType type : FileUtils.fileTypes) {
             //set the properties for button
             Button btn = new Button(this);
             btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -75,7 +75,7 @@ public class CaptureDocumentActivity extends AppCompatActivity {
      * @return
      */
     private FileType getFileTypeByMime(String mime){
-        for(FileType type : MainActivity.fileTypes) {
+        for(FileType type : FileUtils.fileTypes) {
             if(type.getMimeType().startsWith(mime) || type.getMimeType().equals(mime)){
                 //we found our FileType
                 return type;
