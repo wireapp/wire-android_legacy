@@ -31,14 +31,12 @@ import androidx.fragment.app.{DialogFragment, FragmentActivity}
 import com.google.android.material.textfield.{TextInputEditText, TextInputLayout}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream}
 import com.waz.utils.returning
 import com.waz.zclient.messages.ExecutorWrapper
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{FragmentHelper, R}
-
-import scala.concurrent.duration._
 
 class RequestPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
   import RequestPasswordDialog._
@@ -73,7 +71,7 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     .setNegativeButtonText(getString(R.string.request_password_biometric_cancel))
     .build
 
-  private lazy val prompt: BiometricPrompt = new BiometricPrompt(getActivity, ExecutorWrapper(Threading.Ui), new BiometricPrompt.AuthenticationCallback {
+  private lazy val prompt: BiometricPrompt = new BiometricPrompt(this, ExecutorWrapper(Threading.Ui), new BiometricPrompt.AuthenticationCallback {
     override def onAuthenticationError(errorCode: Int, errString: CharSequence): Unit = {
       super.onAuthenticationError(errorCode, errString)
       onAnswer ! (if (errorCode == BiometricConstants.ERROR_NEGATIVE_BUTTON) BiometricCancelled else BiometricError(errString.toString))
@@ -103,14 +101,8 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
       })
     )
 
-    // FIXME: the delay is necessary because of a bug introduced in androidx.biometric:1.0.0-alpha04
-    // https://stackoverflow.com/questions/55934108/fragmentmanager-is-already-executing-transactions-when-executing-biometricprompt
-    // try to apply the proposed solution
-    if (useBiometric) CancellableFuture.delay(100.millis).map { _ =>
-      prompt.authenticate(promptInfo)
-    }(Threading.Ui)
-
-    builder.create
+    if (useBiometric) prompt.authenticate(promptInfo)
+    returning(builder.create)(_.getWindow.setDimAmount(1.0f))
   }
 
   def show(activity: FragmentActivity): Unit =
@@ -161,8 +153,6 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     super.onActivityCreated(savedInstanceState)
 
     if (!useBiometric) getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-    //hide content of wire when it's locked
-    getDialog.getWindow.setDimAmount(1.0f)
   }
 }
 
