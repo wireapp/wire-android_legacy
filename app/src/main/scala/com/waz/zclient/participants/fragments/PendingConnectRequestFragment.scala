@@ -75,11 +75,12 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
     pickUserController.hideUserProfile()
     if (fromParticipants) participantsController.selectedParticipant ! None
 
-      if (fromDeepLink) {
-        CancellableFuture.delay(750.millis).map { _ =>
-            navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
-          }
-      } else navigationController.setLeftPage(returnPage, PendingConnectRequestFragment.Tag)
+    if (fromDeepLink)
+      CancellableFuture.delay(750.millis).map { _ =>
+          navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
+        }
+    else
+      navigationController.setLeftPage(returnPage, PendingConnectRequestFragment.Tag)
     false
   }
 }
@@ -87,11 +88,11 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
 object PendingConnectRequestFragment {
   val Tag: String = classOf[PendingConnectRequestFragment].getName
 
-    def newInstance(userId: UserId, userRequester: UserRequester): PendingConnectRequestFragment =
-    returning(new PendingConnectRequestFragment)(fragment =>
-        fragment.setArguments(returning(new Bundle) { args =>
-            args.putString(UntabbedRequestFragment.ArgumentUserId, userId.str)
-            args.putString(UntabbedRequestFragment.ArgumentUserRequester, userRequester.toString)
-          })
-        )
+  def newInstance(userId: UserId, userRequester: UserRequester): PendingConnectRequestFragment =
+    returning(new PendingConnectRequestFragment)(
+      _.setArguments(returning(new Bundle) { args =>
+        args.putString(UntabbedRequestFragment.ArgumentUserId, userId.str)
+        args.putString(UntabbedRequestFragment.ArgumentUserRequester, userRequester.toString)
+      })
+    )
 }
