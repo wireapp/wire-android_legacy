@@ -3,10 +3,12 @@ package com.wire.testinggallery.models;
 import android.app.Activity;
 
 public abstract class FileType {
+
     int position;
     String name;
     String extension;
     String mimeType;
+
     public abstract void handle(Activity activity);
     public int getPosition() {
         return position;
@@ -20,6 +22,4 @@ public abstract class FileType {
     public String getMimeType() {
         return mimeType;
     }
-
-
 }

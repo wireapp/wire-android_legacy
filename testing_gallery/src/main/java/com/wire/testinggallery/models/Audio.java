@@ -7,6 +7,7 @@ import com.wire.testinggallery.DocumentResolver;
 import com.wire.testinggallery.utils.Extensions;
 
 public class Audio extends FileType {
+
     public Audio(){
         position = 2;
         name = "audio";

@@ -22,30 +22,48 @@ import android.content.res.Resources;
 import android.os.Environment;
 
 import com.wire.testinggallery.R;
+import com.wire.testinggallery.models.Audio;
+import com.wire.testinggallery.models.Backup;
+import com.wire.testinggallery.models.FileType;
+import com.wire.testinggallery.models.Image;
+import com.wire.testinggallery.models.PlainText;
+import com.wire.testinggallery.models.Textfile;
+import com.wire.testinggallery.models.Video;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class FileUtils {
+
+    public static final List<FileType> fileTypes = new ArrayList<FileType>()
+    {{
+        add(new Textfile());
+        add(new Video());
+        add(new Audio());
+        add(new Image());
+        add(new Backup());
+        add(new PlainText());
+    }};
+
     public enum TEST_FILE_TYPES {
         ALL,
         VIDEO,
         AUDIO,
         BACKUP,
         PICTURE,
-        TEXTFILE
+        TEXTFILE;
     }
-
 
     public static void copyStreams(InputStream from, OutputStream to) {
         try {
@@ -73,20 +91,19 @@ public class FileUtils {
     }
 
     public static String getFileFromArchiveAsString(File zipFile, String desiredFileName) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = byteArrayOutputStream;
-        FileInputStream fileInputStream = new FileInputStream(zipFile);
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream);
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final FileInputStream fileInputStream = new FileInputStream(zipFile);
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream);
         ZipEntry zipEntry;
         while ((zipEntry = zipInputStream.getNextEntry()) != null) {
             if (zipEntry.getName().equals(desiredFileName)) {
                 byte[] buffer = new byte[8192];
                 int len;
                 while ((len = zipInputStream.read(buffer)) != -1) {
-                    out.write(buffer, 0, len);
+                    ((OutputStream) byteArrayOutputStream).write(buffer, 0, len);
                 }
-                out.close();
+                ((OutputStream) byteArrayOutputStream).close();
                 break;
             }
         }
@@ -122,11 +139,11 @@ public class FileUtils {
 
     private static void copyRawFileToSdCard(Resources resources, int fileId, String name, Context context) {
         File pathSDCard = Environment.getExternalStoragePublicDirectory(context.getString(R.string.default_wire_testing_folder));
-        if(pathSDCard.isDirectory() == false) {
+        if(!pathSDCard.isDirectory()) {
             pathSDCard.mkdirs();
         }
 
-        if(new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile() == false) {
+        if(!new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile()) {
             try {
                 final InputStream in = resources.openRawResource(fileId);
                 FileOutputStream out = null;
@@ -142,8 +159,6 @@ public class FileUtils {
                     in.close();
                     out.close();
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
