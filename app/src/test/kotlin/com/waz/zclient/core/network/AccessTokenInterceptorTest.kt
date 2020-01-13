@@ -29,7 +29,8 @@ class AccessTokenInterceptorTest : UnitTest() {
 
     @Test
     fun `if there's an access token, adds it to request's header`() {
-        `when`(authTokenHandler.accessToken()).thenReturn("testToken")
+        val testToken = "testToken"
+        `when`(authTokenHandler.accessToken()).thenReturn(testToken)
 
         val chain = mock(Interceptor.Chain::class.java)
         val initialRequest = mock(Request::class.java)
@@ -47,7 +48,7 @@ class AccessTokenInterceptorTest : UnitTest() {
         accessTokenInterceptor.intercept(chain)
 
         verify(authTokenHandler).accessToken()
-        verify(requestBuilder).addHeader("Authorization", "Bearer testToken")
+        verify(requestBuilder).addHeader("Authorization", "Bearer $testToken")
         verify(chain).proceed(requestWithHeader)
         verify(requestBuilder, never()).removeHeader("Authorization")
     }
@@ -66,5 +67,4 @@ class AccessTokenInterceptorTest : UnitTest() {
         //also verify that there's no attempt to create a new request
         verifyNoMoreInteractions(request)
     }
-
 }

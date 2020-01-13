@@ -1,0 +1,29 @@
+<!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<vector android:alpha="0.7" android:autoMirrored="true"
+    android:height="42dp" android:viewportHeight="42"
+    android:viewportWidth="42" android:width="42dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M0,0h42v42h-42z"
+        android:strokeColor="#00000000" android:strokeWidth="1"/>
+    <path android:fillColor="#000000" android:fillType="evenOdd"
+        android:pathData="M30.0082,11C30.556,11 31,11.4553 31,11.9918L31,30.0082C31,30.556 30.5447,31 30.0082,31L11.9918,31C11.444,31 11,30.5447 11,30.0082L11,11.9918C11,11.444 11.4553,11 11.9918,11L30.0082,11ZM28.5,13.5L13.5,13.5L13.5,24.7745L18.5,22.25L28.5,26.6084L28.5,13.5ZM23.5,16C24.8807,16 26,17.1193 26,18.5C26,19.8807 24.8807,21 23.5,21C22.1193,21 21,19.8807 21,18.5C21,17.1193 22.1193,16 23.5,16Z"
+        android:strokeColor="#00000000" android:strokeWidth="1"/>
+</vector>

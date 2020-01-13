@@ -1,5 +1,6 @@
 package com.waz.zclient.user.domain.usecase
 
+import com.waz.zclient.UnitTest
 import com.waz.zclient.user.data.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -7,10 +8,9 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
-class GetUserProfileUseCaseTest {
+class GetUserProfileUseCaseTest : UnitTest() {
 
     private lateinit var getUserProfileUseCase: GetUserProfileUseCase
 
@@ -19,7 +19,6 @@ class GetUserProfileUseCaseTest {
 
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         getUserProfileUseCase = GetUserProfileUseCase(userRepository)
     }
 

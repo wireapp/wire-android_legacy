@@ -306,6 +306,8 @@ object SingleParticipantFragment {
   }
 
   private val TabToOpen: String = "TAB_TO_OPEN"
+
+
   private val FromDeepLink: String = "FROM_DEEP_LINK"
 
   def newInstance(tabToOpen: Option[String] = None, fromDeepLink: Boolean = false): SingleParticipantFragment =

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 
 @ExperimentalCoroutinesApi
-abstract class ObservableUseCase<out Type, in Params> where Type : Any {
+abstract class ObservableUseCase<out Type, in Params> {
 
     abstract suspend fun run(params: Params): Flow<Type>
 
@@ -21,7 +21,7 @@ abstract class ObservableUseCase<out Type, in Params> where Type : Any {
             try {
                 backgroundJob.await().collect { onResult(Either.Right(it)) }
             } catch (e: Throwable) {
-                Either.Left(GenericUseCaseError(e))
+                onResult(Either.Left(GenericUseCaseError(e)))
             }
         }
     }
