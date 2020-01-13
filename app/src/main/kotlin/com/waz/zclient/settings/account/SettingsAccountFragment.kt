@@ -14,9 +14,10 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
+@ExperimentalCoroutinesApi
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()

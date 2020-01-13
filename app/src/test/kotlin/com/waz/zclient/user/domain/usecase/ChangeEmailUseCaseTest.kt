@@ -12,31 +12,31 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
-class ChangeNameUseCaseTest : UnitTest() {
+class ChangeEmailUseCaseTest : UnitTest() {
 
     companion object {
-        private const val TEST_NAME = "Test name"
+        private const val TEST_EMAIL = "email@wire.com"
     }
 
-    private lateinit var changeNameUseCase: ChangeNameUseCase
+    private lateinit var changeEmailUseCase: ChangeEmailUseCase
 
     @Mock
     private lateinit var userRepository: UsersRepository
 
     @Mock
-    private lateinit var changeNameParams: ChangeNameParams
+    private lateinit var changeEmailParams: ChangeEmailParams
 
     @Before
     fun setup() {
-        changeNameUseCase = ChangeNameUseCase(userRepository)
+        changeEmailUseCase = ChangeEmailUseCase(userRepository)
     }
 
     @Test
-    fun `Given update name use case is executed, then the repository should update name`() = runBlockingTest {
-        `when`(changeNameParams.newName).thenReturn(TEST_NAME)
+    fun `Given update email use case is executed, then the repository should update email`() = runBlockingTest {
+        `when`(changeEmailParams.newEmail).thenReturn(TEST_EMAIL)
 
-        changeNameUseCase.run(changeNameParams)
+        changeEmailUseCase.run(changeEmailParams)
 
-        verify(userRepository).changeName(eq(TEST_NAME))
+        verify(userRepository).changeEmail(eq(TEST_EMAIL))
     }
 }
