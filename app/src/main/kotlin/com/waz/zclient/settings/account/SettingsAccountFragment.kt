@@ -16,9 +16,11 @@ import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 class SettingsAccountFragment : Fragment() {
 

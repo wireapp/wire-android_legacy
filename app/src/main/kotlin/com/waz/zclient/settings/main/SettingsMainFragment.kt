@@ -18,7 +18,11 @@ import com.waz.zclient.settings.main.list.SettingsMainListFactory
 import com.waz.zclient.settings.options.SettingsOptionsFragment
 import com.waz.zclient.settings.support.SettingsSupportFragment
 import kotlinx.android.synthetic.main.fragment_settings_main.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@ExperimentalCoroutinesApi
+@InternalCoroutinesApi
 class SettingsMainFragment : Fragment(), OnItemClickListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
