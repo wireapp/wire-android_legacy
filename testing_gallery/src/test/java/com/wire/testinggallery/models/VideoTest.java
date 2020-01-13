@@ -15,39 +15,39 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-public class AudioTest extends AndroidTest {
+public class VideoTest extends AndroidTest {
 
-    private Audio audio;
+    private Video video;
 
     @Before
     public void setUp() {
-        audio = new Audio();
+        video = new Video();
     }
 
     @Test
     public void shouldReturnCorrectPosition() {
-        assertThat(audio.getPosition()).isEqualTo(2);
+        assertThat(video.getPosition()).isEqualTo(1);
     }
 
     @Test
     public void shouldReturnCorrectName() {
-        assertThat(audio.getName()).isEqualTo("audio");
+        assertThat(video.getName()).isEqualTo("video");
     }
 
     @Test
     public void shouldReturnCorrectMimeType() {
-        assertThat(audio.getMimeType()).isEqualTo("audio/mp4a-latm");
+        assertThat(video.getMimeType()).isEqualTo("video/mp4");
     }
 
     @Test
     public void shouldReturnCorrectExtension() {
-        assertThat(audio.getExtension()).isEqualTo("m4a");
+        assertThat(video.getExtension()).isEqualTo("mp4");
     }
 
     @Test
     public void shouldHandleActionCorrectly() {
         final Activity activity = mock(Activity.class);
-        audio.handle(activity);
+        video.handle(activity);
 
         verify(activity).setResult(eq(Activity.RESULT_OK), any(Intent.class));
         verify(activity).finish();
