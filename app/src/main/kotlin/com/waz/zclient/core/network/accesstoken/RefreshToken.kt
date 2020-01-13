@@ -1,6 +1,7 @@
 package com.waz.zclient.core.network.accesstoken
 
 import com.google.gson.annotations.SerializedName
+import com.waz.zclient.core.extension.empty
 import org.threeten.bp.Instant
 
 data class RefreshToken(val token: String) {
@@ -14,7 +15,7 @@ data class RefreshToken(val token: String) {
     }
 
     companion object {
-        val EMPTY = RefreshToken("")
+        val EMPTY = RefreshToken(String.empty())
     }
 }
 

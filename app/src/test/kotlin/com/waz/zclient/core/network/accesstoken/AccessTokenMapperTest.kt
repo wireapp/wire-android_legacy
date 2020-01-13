@@ -42,17 +42,6 @@ class AccessTokenMapperTest : UnitTest() {
         accessToken.expiresIn shouldBe ACCESS_TOKEN_RESPONSE.expiresIn
     }
 
-    @Test
-    fun `given an AccessToken, maps it to AccessTokenResponse`() {
-        val accessTokenResponse = mapper.toResponse(ACCESS_TOKEN)
-
-        accessTokenResponse.token shouldBe ACCESS_TOKEN.token
-        accessTokenResponse.type shouldBe ACCESS_TOKEN.tokenType
-        accessTokenResponse.expiresIn shouldBe ACCESS_TOKEN.expiresIn
-        accessTokenResponse.userId shouldBe "" //TODO pass userId somehow
-    }
-
-
     companion object {
         private val ACCESS_TOKEN = AccessToken("token", "type", "expiry")
         private val ACCESS_TOKEN_PREF =

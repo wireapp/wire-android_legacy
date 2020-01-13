@@ -1,21 +1,20 @@
 package com.waz.zclient.core.di
 
-import android.content.Context
 import com.waz.zclient.BuildConfig
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClient
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.di.NetworkDependencyProvider.retrofit
+import com.waz.zclient.core.network.ApiService
+import com.waz.zclient.core.network.NetworkClient
+import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.core.network.RetrofitClient
 import com.waz.zclient.core.network.accesstoken.AccessTokenAuthenticator
 import com.waz.zclient.core.network.accesstoken.AccessTokenInterceptor
 import com.waz.zclient.core.network.accesstoken.AccessTokenLocalDataSource
 import com.waz.zclient.core.network.accesstoken.AccessTokenMapper
 import com.waz.zclient.core.network.accesstoken.AccessTokenRemoteDataSource
 import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
-import com.waz.zclient.core.network.ApiService
-import com.waz.zclient.core.network.NetworkClient
-import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
-import com.waz.zclient.core.network.RetrofitClient
 import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
 import com.waz.zclient.core.threading.ThreadHandler
@@ -64,12 +63,7 @@ val networkModule: Module = module {
     single { createHttpClient(get(), get()) }
     single { retrofit(get()) }
     single { AccessTokenRemoteDataSource(get()) }
-    single {
-        AccessTokenLocalDataSource(
-            //TODO: get from other(global?) module
-            androidContext().getSharedPreferences("DUMMY_USER_PREFS", Context.MODE_PRIVATE)
-        )
-    }
+    single { AccessTokenLocalDataSource(get()) }
     single { AccessTokenMapper() }
     single { RefreshTokenMapper() }
     single { AccessTokenRepository(get(), get(), get(), get()) }

@@ -1,16 +1,18 @@
 package com.waz.zclient.core.network.accesstoken
 
-import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.waz.zclient.storage.extension.putString
 import com.waz.zclient.storage.extension.remove
+import com.waz.zclient.storage.pref.UserPreferences
 
-class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences) {
+class AccessTokenLocalDataSource(private val userPreferences: UserPreferences) {
 
     companion object {
         private const val KEY_ACCESS_TOKEN = "accessToken"
         private const val KEY_REFRESH_TOKEN = "refreshToken"
     }
+
+    private val activeUserPrefs get() = userPreferences.current()
 
     fun accessToken(): AccessTokenPreference? = readAccessToken()
 
@@ -20,27 +22,27 @@ class AccessTokenLocalDataSource(private val userPreferences: SharedPreferences)
 
     fun updateRefreshToken(newRefreshToken: RefreshTokenPreference) = writeRefreshToken(newRefreshToken)
 
-    fun wipeOutAccessToken() = userPreferences.remove(KEY_ACCESS_TOKEN)
+    fun wipeOutAccessToken() = activeUserPrefs.remove(KEY_ACCESS_TOKEN)
 
-    fun wipeOutRefreshToken() = userPreferences.remove(KEY_REFRESH_TOKEN)
+    fun wipeOutRefreshToken() = activeUserPrefs.remove(KEY_REFRESH_TOKEN)
 
-    private fun writeAccessToken(accessToken: AccessTokenPreference) = userPreferences.putString(
+    private fun writeAccessToken(accessToken: AccessTokenPreference) = activeUserPrefs.putString(
         KEY_ACCESS_TOKEN,
         Gson().toJson(accessToken, AccessTokenPreference::class.java)
     )
 
     private fun readAccessToken(): AccessTokenPreference? =
-        userPreferences.getString(KEY_ACCESS_TOKEN, null)?.let {
+        activeUserPrefs.getString(KEY_ACCESS_TOKEN, null)?.let {
             Gson().fromJson(it, AccessTokenPreference::class.java)
         }
 
-    private fun writeRefreshToken(preference: RefreshTokenPreference) = userPreferences.putString(
+    private fun writeRefreshToken(preference: RefreshTokenPreference) = activeUserPrefs.putString(
         KEY_REFRESH_TOKEN,
         Gson().toJson(preference, RefreshTokenPreference::class.java)
     )
 
     private fun readRefreshToken(): RefreshTokenPreference? =
-        userPreferences.getString(KEY_REFRESH_TOKEN, null)?.let {
+        activeUserPrefs.getString(KEY_REFRESH_TOKEN, null)?.let {
             Gson().fromJson(it, RefreshTokenPreference::class.java)
         }
 }

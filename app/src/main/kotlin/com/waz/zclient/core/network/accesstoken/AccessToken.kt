@@ -31,11 +31,4 @@ class AccessTokenMapper {
         tokenType = accessToken.tokenType,
         expiresIn = accessToken.expiresIn
     )
-
-    fun toResponse(accessToken: AccessToken) = AccessTokenResponse(
-        token = accessToken.token,
-        type = accessToken.tokenType,
-        userId = "", //TODO: current user id
-        expiresIn = accessToken.expiresIn
-    )
 }
