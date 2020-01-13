@@ -6,6 +6,8 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

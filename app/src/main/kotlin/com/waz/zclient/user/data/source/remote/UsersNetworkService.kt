@@ -5,6 +5,7 @@ import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.GET
 import retrofit2.http.PUT
+import retrofit2.http.Path
 
 
 interface UsersNetworkService {
@@ -23,4 +24,7 @@ interface UsersNetworkService {
 
     @PUT("/self/phone")
     suspend fun changePhone(@Field("phone") phone: String): Response<Void>
+
+    @GET("/users/handles/{newHandle}")
+    suspend fun doesHandleExist(@Path("handle") newHandle: String): Response<Boolean>
 }

@@ -1,5 +1,7 @@
 package com.waz.zclient.user.data
 
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.user.data.mapper.UserMapper
@@ -62,5 +64,7 @@ class UsersDataSource constructor(
     private suspend fun changePhoneRemotely(phone: String) = usersRemoteDataSource.changePhone(phone)
 
     private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
+
+    override suspend fun doesHandleExist(newHandle: String): Either<Failure, Boolean> = usersRemoteDataSource.doesHandleExist(newHandle)
 
 }
