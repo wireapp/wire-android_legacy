@@ -9,7 +9,7 @@ class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNe
 
     suspend fun profileDetails(): Either<Failure, UserApi> = requestApi { usersNetworkService.profileDetails() }
 
-    suspend fun changeName(name: String): Either<Failure, Any> = requestApi { usersNetworkService.changeName(UserApi(name = name)) }
+    suspend fun changeName(name: String): Either<Failure, Any> = requestApi { usersNetworkService.changeName(name) }
 
     suspend fun changeHandle(handle: String): Either<Failure, Any> = requestApi { usersNetworkService.changeHandle(handle) }
 

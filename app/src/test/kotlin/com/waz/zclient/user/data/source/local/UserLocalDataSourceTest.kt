@@ -67,7 +67,7 @@ class UserLocalDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersLocalDataSource.insertUser(user).isLeft)
         }
@@ -95,7 +95,7 @@ class UserLocalDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersLocalDataSource.changeName(TEST_NAME).isLeft)
         }
@@ -123,7 +123,7 @@ class UserLocalDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersLocalDataSource.changeHandle(TEST_HANDLE).isLeft)
         }
@@ -149,7 +149,7 @@ class UserLocalDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersLocalDataSource.changeEmail(TEST_EMAIL).isLeft)
         }
@@ -175,13 +175,14 @@ class UserLocalDataSourceTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
-            delay(200)
+            delay(CANCELLATION_DELAY)
 
             assert(usersLocalDataSource.changePhone(TEST_PHONE).isLeft)
         }
     }
 
     companion object {
+        private const val CANCELLATION_DELAY = 200L
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
         private const val TEST_USER_ID = "userId"
         private const val TEST_NAME = "name"
