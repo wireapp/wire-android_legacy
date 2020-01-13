@@ -90,6 +90,7 @@ class UserRepositoryTest : UnitTest() {
         usersRepository.changeName(TEST_NAME)
 
         verify(usersLocalDataSource).changeName(eq(TEST_NAME))
+        verifyNoInteractions(usersRemoteDataSource)
     }
 
     @Test
@@ -108,6 +109,7 @@ class UserRepositoryTest : UnitTest() {
         usersRepository.changeEmail(TEST_EMAIL)
 
         verify(usersLocalDataSource).changeEmail(eq(TEST_EMAIL))
+        verifyNoInteractions(usersRemoteDataSource)
     }
 
     @Test
@@ -126,6 +128,7 @@ class UserRepositoryTest : UnitTest() {
         usersRepository.changeHandle(TEST_HANDLE)
 
         verify(usersLocalDataSource).changeHandle(eq(TEST_HANDLE))
+        verifyNoInteractions(usersRemoteDataSource)
     }
 
     @Test
@@ -144,6 +147,7 @@ class UserRepositoryTest : UnitTest() {
         usersRepository.changePhone(TEST_PHONE)
 
         verify(usersLocalDataSource).changePhone(eq(TEST_PHONE))
+        verifyNoInteractions(usersRemoteDataSource)
     }
 
     @Test
