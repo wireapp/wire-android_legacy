@@ -34,14 +34,13 @@ public class CaptureDocumentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.file_chooser_popup);
 
-
         FileUtils.prepareSdCard(getResources(), FileUtils.TEST_FILE_TYPES.ALL, this.getApplicationContext());
-        String mime = getIntent().getType();
+        final String mime = getIntent().getType();
 
         if(mime == null)
             return;
 
-        FileType type = getFileTypeByMime(mime);
+        final FileType type = getFileTypeByMime(mime);
         if(type != null)
             if(type.getClass().equals(Textfile.class)) {
                 addAvailableFileTypesButtons();
@@ -53,11 +52,12 @@ public class CaptureDocumentActivity extends AppCompatActivity {
 
     private void addAvailableFileTypesButtons(){
         //the layout on which you are working
-        LinearLayout layout = this.findViewById(R.id.file_chooser_popup);
+        final LinearLayout layout = this.findViewById(R.id.file_chooser_popup);
         for(FileType type : MainActivity.fileTypes) {
             //set the properties for button
             Button btn = new Button(this);
-            btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
             btn.setText(String.format(
                 String.format(getString(R.string.file_chooser_popup_selection_string_format),
                     type.getName(), type.getExtension())));

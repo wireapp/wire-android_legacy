@@ -21,7 +21,6 @@ package com.wire.testinggallery;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -68,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog alertDialog = null;
     private Map<Integer, Supplier<Boolean>> checkMap;
     private Map<Integer, Supplier<Void>> fixMap;
+
     public static final List<FileType> fileTypes = new ArrayList<FileType>()
     {{
         add(new Textfile());
@@ -81,11 +81,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
+        initActivity();
+    }
+
+    private void initActivity() {
         initCheckAndFix();
         showInfoUi();
         requestSilentlyRights(this);
         mapTableHandlers();
         checkPreconditions();
+
         FileUtils.prepareSdCard(getResources(), FileUtils.TEST_FILE_TYPES.ALL, getApplicationContext());
     }
 
@@ -106,14 +111,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
         requestSilentlyRights(this);
         checkPreconditions();
-        Intent intent = getIntent();
+
+        final Intent intent = getIntent();
         if (intent == null) {
             return;
         }
-        String action = intent.getAction();
-        String type = intent.getType();
+        final String action = intent.getAction();
+        final String type = intent.getType();
+
         if (Intent.ACTION_SEND.equals(action) && type != null) {
             Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
             handleFile(uri, intent.getScheme());
@@ -122,9 +130,9 @@ public class MainActivity extends AppCompatActivity {
 
     @TargetApi(Build.VERSION_CODES.CUPCAKE)
     private void handleFile(Uri backupUri, String scheme) {
-        String fileName = getFilename(getContentResolver(), backupUri, scheme);
+        final String fileName = getFilename(getContentResolver(), backupUri, scheme);
         if (!fileName.isEmpty()) {
-            File targetFile = new File(String.format("%s/%s", WIRE_TESTING_FILES_DIRECTORY, fileName));
+            final File targetFile = new File(String.format("%s/%s", WIRE_TESTING_FILES_DIRECTORY, fileName));
             if (targetFile.exists()) {
                 targetFile.delete();
             }
@@ -158,21 +166,18 @@ public class MainActivity extends AppCompatActivity {
         showAlert("Received file has no name!!!");
     }
 
-    private AlertDialog showAlert(String message) {
+    private void showAlert(String message) {
         if (alertDialog == null) {
             alertDialog = new AlertDialog.Builder(this).create();
         }
         alertDialog.hide();
         alertDialog.setMessage(message);
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-            new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                    finish();
-                }
+            (dialog, which) -> {
+                dialog.dismiss();
+                finish();
             });
         alertDialog.show();
-        return alertDialog;
     }
 
     private void mapTableHandlers() {
@@ -180,12 +185,9 @@ public class MainActivity extends AppCompatActivity {
             final Supplier<Void> fixSupplier = fixMap.get(id);
 
             Button fixButton = findViewById(id);
-            fixButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    fixSupplier.get();
-                    checkPreconditions();
-                }
+            fixButton.setOnClickListener(view -> {
+                fixSupplier.get();
+                checkPreconditions();
             });
         }
     }

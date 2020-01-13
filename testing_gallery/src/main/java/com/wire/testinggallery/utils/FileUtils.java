@@ -73,20 +73,19 @@ public class FileUtils {
     }
 
     public static String getFileFromArchiveAsString(File zipFile, String desiredFileName) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStream out = byteArrayOutputStream;
-        FileInputStream fileInputStream = new FileInputStream(zipFile);
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream);
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final FileInputStream fileInputStream = new FileInputStream(zipFile);
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream);
         ZipEntry zipEntry;
         while ((zipEntry = zipInputStream.getNextEntry()) != null) {
             if (zipEntry.getName().equals(desiredFileName)) {
                 byte[] buffer = new byte[8192];
                 int len;
                 while ((len = zipInputStream.read(buffer)) != -1) {
-                    out.write(buffer, 0, len);
+                    ((OutputStream) byteArrayOutputStream).write(buffer, 0, len);
                 }
-                out.close();
+                ((OutputStream) byteArrayOutputStream).close();
                 break;
             }
         }
@@ -122,11 +121,11 @@ public class FileUtils {
 
     private static void copyRawFileToSdCard(Resources resources, int fileId, String name, Context context) {
         File pathSDCard = Environment.getExternalStoragePublicDirectory(context.getString(R.string.default_wire_testing_folder));
-        if(pathSDCard.isDirectory() == false) {
+        if(!pathSDCard.isDirectory()) {
             pathSDCard.mkdirs();
         }
 
-        if(new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile() == false) {
+        if(!new File(pathSDCard.getAbsolutePath() + File.separator + name).isFile()) {
             try {
                 final InputStream in = resources.openRawResource(fileId);
                 FileOutputStream out = null;
@@ -142,8 +141,6 @@ public class FileUtils {
                     in.close();
                     out.close();
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
