@@ -1,5 +1,6 @@
 package com.waz.zclient.user.data
 
+import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
@@ -20,11 +21,18 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-class UserRepositoryTest {
+class UserRepositoryTest : UnitTest() {
+
+    companion object {
+        private const val TEST_NAME = "testName"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@Handle"
+        private const val TEST_PHONE = "+49766378499"
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+    }
 
     private lateinit var usersRepository: UsersRepository
 
@@ -42,7 +50,6 @@ class UserRepositoryTest {
 
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         usersRepository = UsersDataSource(usersRemoteDataSource, usersLocalDataSource, userMapper)
     }
 
@@ -147,13 +154,5 @@ class UserRepositoryTest {
         usersRepository.changePhone(TEST_PHONE)
 
         verify(usersRemoteDataSource).changePhone(eq(TEST_PHONE))
-    }
-
-    companion object {
-        private const val TEST_NAME = "testName"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@Handle"
-        private const val TEST_PHONE = "+49766378499"
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
     }
 }

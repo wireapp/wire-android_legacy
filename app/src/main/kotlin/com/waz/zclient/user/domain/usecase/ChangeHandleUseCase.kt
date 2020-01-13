@@ -9,9 +9,9 @@ class ChangeHandleUseCase(private val usersRepository: UsersRepository)
     : UseCase<Any, ChangeHandleParams>() {
 
     override suspend fun run(params: ChangeHandleParams): Either<Failure, Any> =
-        usersRepository.changeHandle(params.handle)
+        usersRepository.changeHandle(params.newHandle)
 }
 
-data class ChangeHandleParams(val handle: String)
+data class ChangeHandleParams(val newHandle: String)
 
 

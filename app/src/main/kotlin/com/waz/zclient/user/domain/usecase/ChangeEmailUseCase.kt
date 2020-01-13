@@ -9,7 +9,7 @@ class ChangeEmailUseCase(private val usersRepository: UsersRepository)
     : UseCase<Any, ChangeEmailParams>() {
 
     override suspend fun run(params: ChangeEmailParams): Either<Failure, Any> =
-        usersRepository.changeEmail(params.email)
+        usersRepository.changeEmail(params.newEmail)
 }
 
-data class ChangeEmailParams(val email: String)
+data class ChangeEmailParams(val newEmail: String)
