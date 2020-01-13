@@ -17,7 +17,6 @@ import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
 @ExperimentalCoroutinesApi
 class SettingsAccountFragment : Fragment() {
 

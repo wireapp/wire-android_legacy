@@ -1,5 +1,6 @@
 package com.waz.zclient.user.data.source.remote
 
+import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.CancellationException
@@ -10,12 +11,21 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.*
-import org.mockito.MockitoAnnotations
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
 import retrofit2.Response
 
 @ExperimentalCoroutinesApi
-class UserRemoteDataSourceTest {
+class UserRemoteDataSourceTest : UnitTest() {
+
+    companion object {
+        private const val CANCELLATION_DELAY = 200L
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+        private const val TEST_NAME = "name"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@handle"
+        private const val TEST_PHONE = "+4977738847664"
+    }
 
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
@@ -25,19 +35,23 @@ class UserRemoteDataSourceTest {
     @Mock
     private lateinit var userApi: UserApi
 
+    @Mock
+    private lateinit var userResponse: Response<UserApi>
+
+    @Mock
+    private lateinit var emptyResponse: Response<Unit>
+
     @Before
     fun setUp() {
-        MockitoAnnotations.initMocks(this)
         usersRemoteDataSource = UsersRemoteDataSource(usersNetworkService)
     }
 
     @Test
     fun `Given profileDetails() is called, when api response success and response body is not null, then return a successful response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.profileDetails()).thenReturn(response as Response<UserApi>?)
+            `when`(userResponse.body()).thenReturn(userApi)
+            `when`(userResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
 
             usersRemoteDataSource.profileDetails()
 
@@ -50,10 +64,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given profileDetails() is called, when api response success and response body is null, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(null)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.profileDetails()).thenReturn(response as Response<UserApi>?)
+            `when`(userResponse.body()).thenReturn(null)
+            `when`(userResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
 
             usersRemoteDataSource.profileDetails()
 
@@ -66,10 +79,9 @@ class UserRemoteDataSourceTest {
     @Test(expected = CancellationException::class)
     fun `Given profileDetails() is called, when api response is cancelled, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.profileDetails()).thenReturn(response as Response<UserApi>?)
+            `when`(userResponse.body()).thenReturn(userApi)
+            `when`(userResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
 
             usersRemoteDataSource.profileDetails()
 
@@ -86,10 +98,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changeName() is called, when api response success and response body is not null, then return a successful response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeName(TEST_NAME)
 
@@ -102,26 +113,25 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changeName() is called, when api response success and response body is null, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(null)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(null)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(emptyResponse)
 
-            usersRemoteDataSource.changeEmail(TEST_NAME)
+            usersRemoteDataSource.changeName(TEST_NAME)
 
-            verify(usersNetworkService).changeEmail(eq(TEST_NAME))
+            verify(usersNetworkService).changeName(eq(TEST_NAME))
 
-            assert(usersRemoteDataSource.changeEmail(TEST_NAME).isLeft)
+            assert(usersRemoteDataSource.changeName(TEST_NAME).isLeft)
         }
     }
+
 
     @Test(expected = CancellationException::class)
     fun `Given changeName() is called, when api response is cancelled, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeName(TEST_NAME)
 
@@ -138,10 +148,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changeHandle() is called, when api response success and response body is not null, then return a successful response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeHandle(TEST_HANDLE)
 
@@ -154,10 +163,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changeHandle() is called, when api response success and response body is null, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(null)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(null)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeHandle(TEST_HANDLE)
 
@@ -170,10 +178,9 @@ class UserRemoteDataSourceTest {
     @Test(expected = CancellationException::class)
     fun `Given changeHandle() is called, when api response is cancelled, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeHandle(TEST_HANDLE)
 
@@ -190,10 +197,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changeEmail() is called, when api response success and response body is not null, then return a successful response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeEmail(TEST_EMAIL)
 
@@ -206,10 +212,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changeEmail() is called, when api response success and response body is null, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(null)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(null)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeEmail(TEST_EMAIL)
 
@@ -222,10 +227,9 @@ class UserRemoteDataSourceTest {
     @Test(expected = CancellationException::class)
     fun `Given changeEmail() is called, when api response is cancelled, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changeEmail(TEST_EMAIL)
 
@@ -242,10 +246,9 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changePhone() is called, when api response success and response body is not null, then return a successful response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changePhone(TEST_PHONE)
 
@@ -258,10 +261,8 @@ class UserRemoteDataSourceTest {
     @Test
     fun `Given changePhone() is called, when api response success and response body is null, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(null)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changePhone(TEST_PHONE)
 
@@ -274,10 +275,9 @@ class UserRemoteDataSourceTest {
     @Test(expected = CancellationException::class)
     fun `Given changePhone() is called, when api response is cancelled, then return an error response`() {
         runBlockingTest {
-            val response = mock(Response::class.java)
-            `when`(response.body()).thenReturn(userApi)
-            `when`(response.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(response as Response<Void>?)
+            `when`(emptyResponse.body()).thenReturn(Unit)
+            `when`(emptyResponse.isSuccessful).thenReturn(true)
+            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(emptyResponse)
 
             usersRemoteDataSource.changePhone(TEST_PHONE)
 
@@ -291,13 +291,5 @@ class UserRemoteDataSourceTest {
         }
     }
 
-    companion object {
-        private const val CANCELLATION_DELAY = 200L
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-        private const val TEST_NAME = "name"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@handle"
-        private const val TEST_PHONE = "+4977738847664"
-    }
 
 }

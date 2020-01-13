@@ -14,10 +14,16 @@ import okhttp3.Route
  */
 class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) : Authenticator {
 
+    companion object {
+        const val AUTH_HEADER = "Authorization"
+        const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
+    }
+
     /**
      * This authenticate() method is called when server returns 401 Unauthorized.
      */
     override fun authenticate(route: Route?, response: Response): Request? {
+        updateRefreshToken(response)
         val refreshToken = authTokenHandler.refreshToken()
 
         synchronized(this) {
@@ -27,18 +33,23 @@ class AccessTokenAuthenticator(private val authTokenHandler: AuthTokenHandler) :
                 authTokenHandler.updateAccessToken(it)
                 proceedWithNewAccessToken(response, it)
             }
-
         }
     }
 
     private fun proceedWithNewAccessToken(response: Response, newAccessToken: String): Request? =
-        response.request().header(AuthTokenHandler.AUTH_HEADER)?.let {
+        response.request().header(AUTH_HEADER)?.let {
             response.request()
                 .newBuilder()
-                .removeHeader(AuthTokenHandler.AUTH_HEADER)
-                .addHeader(AuthTokenHandler.AUTH_HEADER,
-                    "${AuthTokenHandler.AUTH_HEADER_TOKEN_TYPE} $newAccessToken")
+                .removeHeader(AUTH_HEADER)
+                .addHeader(AUTH_HEADER,
+                    "$AUTH_HEADER_TOKEN_TYPE $newAccessToken")
                 .build()
         }
 
+    private fun updateRefreshToken(response: Response) =
+        response.headers()["Cookie"]?.let {
+            if (authTokenHandler.refreshToken() != it) {
+                authTokenHandler.updateRefreshToken(it)
+            }
+        }
 }

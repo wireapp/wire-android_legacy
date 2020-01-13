@@ -92,7 +92,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
 
   private val initials = teamAndUser.map {
     case (_, Some(team)) => team.name
-    case (user, _) => user.displayName
+    case (user, _) => user.name
   }.map(NameParts.maybeInitial(_).getOrElse(""))
 
   private val drawableCorners = teamAndUser.map {
@@ -120,7 +120,7 @@ class ProfileAccountTab(val context: Context, val attrs: AttributeSet, val defSt
   setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 
   teamAndUser.map {
-    case (userData, None) => userData.getDisplayName
+    case (userData, None) => userData.name
     case (userData, Some(team)) => team.name
   }.onUi { setContentDescription(_) }
 

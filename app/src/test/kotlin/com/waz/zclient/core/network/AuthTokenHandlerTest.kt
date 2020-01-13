@@ -49,6 +49,4 @@ class AuthTokenHandlerTest : UnitTest() {
         verify(tokenRepository).wipeOutTokens()
         verifyNoMoreInteractions(tokenRepository)
     }
-
-   //TODO: add tests for updateRefreshTokenFromResponse
 }

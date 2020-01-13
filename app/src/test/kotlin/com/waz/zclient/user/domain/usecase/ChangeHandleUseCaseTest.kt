@@ -1,5 +1,6 @@
 package com.waz.zclient.user.domain.usecase
 
+import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
 import com.waz.zclient.user.data.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -9,10 +10,13 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 
 @ExperimentalCoroutinesApi
-class ChangeHandleUseCaseTest {
+class ChangeHandleUseCaseTest : UnitTest() {
+
+    companion object {
+        private const val TEST_HANDLE = "@wire"
+    }
 
     private lateinit var changeHandleUseCase: ChangeHandleUseCase
 
@@ -24,20 +28,15 @@ class ChangeHandleUseCaseTest {
 
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         changeHandleUseCase = ChangeHandleUseCase(userRepository)
     }
 
     @Test
     fun `Given update handle use case is executed, then the repository should update handle`() = runBlockingTest {
-        `when`(changeHandleParams.handle).thenReturn(TEST_HANDLE)
+        `when`(changeHandleParams.newHandle).thenReturn(TEST_HANDLE)
 
         changeHandleUseCase.run(changeHandleParams)
 
         verify(userRepository).changeHandle(eq(TEST_HANDLE))
-    }
-
-    companion object {
-        private const val TEST_HANDLE = "@wire"
     }
 }
