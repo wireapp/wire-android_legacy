@@ -43,6 +43,7 @@
         android:id="@+id/user_handle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:textColor="?wireSecondaryTextColor"
         android:textSize="@dimen/wire__text_size__regular"
         android:layout_marginTop="@dimen/wire__padding__small"
