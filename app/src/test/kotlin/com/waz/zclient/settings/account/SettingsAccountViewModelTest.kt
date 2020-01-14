@@ -78,7 +78,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.loadProfileDetails()
 
-        getUserProfileUseCase.run(Unit).collect {
+        userFlow.collect {
             viewModel.name.observeOnce {
                 it shouldBe TEST_NAME
             }

@@ -1,15 +1,19 @@
 package com.waz.zclient.user.data.source.remote
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.eq
+import com.waz.zclient.capture
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
+import org.amshove.kluent.shouldBe
+import org.json.JSONObject
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
@@ -25,6 +29,10 @@ class UserRemoteDataSourceTest : UnitTest() {
         private const val TEST_EMAIL = "email@wire.com"
         private const val TEST_HANDLE = "@handle"
         private const val TEST_PHONE = "+4977738847664"
+        private const val NAME_REQUEST_BODY_KEY = "name"
+        private const val EMAIL_REQUEST_BODY_KEY = "email"
+        private const val HANDLE_REQUEST_BODY_KEY = "handle"
+        private const val PHONE_REQUEST_BODY_KEY = "phone"
     }
 
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
@@ -41,6 +49,9 @@ class UserRemoteDataSourceTest : UnitTest() {
     @Mock
     private lateinit var emptyResponse: Response<Unit>
 
+    @Captor
+    private lateinit var requestBodyArgumentCaptor: ArgumentCaptor<JSONObject>
+
     @Before
     fun setUp() {
         usersRemoteDataSource = UsersRemoteDataSource(usersNetworkService)
@@ -48,248 +59,172 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given profileDetails() is called, when api response success and response body is not null, then return a successful response`() {
-        runBlockingTest {
-            `when`(userResponse.body()).thenReturn(userApi)
-            `when`(userResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
-
-            usersRemoteDataSource.profileDetails()
-
-            verify(usersNetworkService).profileDetails()
-
-            assert(usersRemoteDataSource.profileDetails().isRight)
-        }
+        validateProfileDetailsScenario(responseBody = userApi, isRight = true, cancelable = false)
     }
 
     @Test
     fun `Given profileDetails() is called, when api response success and response body is null, then return an error response`() {
-        runBlockingTest {
-            `when`(userResponse.body()).thenReturn(null)
-            `when`(userResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
-
-            usersRemoteDataSource.profileDetails()
-
-            verify(usersNetworkService).profileDetails()
-
-            assert(usersRemoteDataSource.profileDetails().isLeft)
-        }
+        validateProfileDetailsScenario(responseBody = null, isRight = false, cancelable = false)
     }
 
     @Test(expected = CancellationException::class)
     fun `Given profileDetails() is called, when api response is cancelled, then return an error response`() {
-        runBlockingTest {
-            `when`(userResponse.body()).thenReturn(userApi)
-            `when`(userResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
+        validateProfileDetailsScenario(responseBody = userApi, isRight = false, cancelable = true)
+    }
 
-            usersRemoteDataSource.profileDetails()
+    private fun validateProfileDetailsScenario(responseBody: UserApi?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(userResponse.body()).thenReturn(responseBody)
+        `when`(userResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
 
-            verify(usersNetworkService).profileDetails()
+        usersRemoteDataSource.profileDetails()
 
+        verify(usersNetworkService).profileDetails()
+
+        if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
             delay(CANCELLATION_DELAY)
-
-            assert(usersRemoteDataSource.profileDetails().isLeft)
         }
+
+        usersRemoteDataSource.profileDetails().isRight shouldBe isRight
     }
 
     @Test
     fun `Given changeName() is called, when api response success and response body is not null, then return a successful response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeName(TEST_NAME)
-
-            verify(usersNetworkService).changeName(eq(TEST_NAME))
-
-            assert(usersRemoteDataSource.changeName(TEST_NAME).isRight)
-        }
+        validateChangeNameScenario(responseBody = Unit, isRight = true, cancelable = false)
     }
 
     @Test
     fun `Given changeName() is called, when api response success and response body is null, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(null)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeName(TEST_NAME)
-
-            verify(usersNetworkService).changeName(eq(TEST_NAME))
-
-            assert(usersRemoteDataSource.changeName(TEST_NAME).isLeft)
-        }
+        validateChangeNameScenario(responseBody = null, isRight = false, cancelable = false)
     }
-
 
     @Test(expected = CancellationException::class)
     fun `Given changeName() is called, when api response is cancelled, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeName(TEST_NAME)).thenReturn(emptyResponse)
+        validateChangeNameScenario(responseBody = Unit, isRight = false, cancelable = true)
+    }
 
-            usersRemoteDataSource.changeName(TEST_NAME)
+    private fun validateChangeNameScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.changeName(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
 
-            verify(usersNetworkService).changeName(TEST_NAME)
+        usersRemoteDataSource.changeName(TEST_NAME)
 
+        verify(usersNetworkService).changeName(capture(requestBodyArgumentCaptor))
+
+        if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
             delay(CANCELLATION_DELAY)
-
-            assert(usersRemoteDataSource.changeName(TEST_NAME).isLeft)
         }
+
+        requestBodyArgumentCaptor.value.getString(NAME_REQUEST_BODY_KEY) shouldBe TEST_NAME
+
+        usersRemoteDataSource.changeName(TEST_NAME).isRight shouldBe isRight
     }
 
     @Test
     fun `Given changeHandle() is called, when api response success and response body is not null, then return a successful response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeHandle(TEST_HANDLE)
-
-            verify(usersNetworkService).changeHandle(eq(TEST_HANDLE))
-
-            assert(usersRemoteDataSource.changeHandle(TEST_HANDLE).isRight)
-        }
+        validateChangeHandleScenario(responseBody = Unit, isRight = true, cancelable = false)
     }
 
     @Test
     fun `Given changeHandle() is called, when api response success and response body is null, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(null)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeHandle(TEST_HANDLE)
-
-            verify(usersNetworkService).changeHandle(eq(TEST_HANDLE))
-
-            assert(usersRemoteDataSource.changeHandle(TEST_HANDLE).isLeft)
-        }
+        validateChangeHandleScenario(responseBody = null, isRight = false, cancelable = false)
     }
 
     @Test(expected = CancellationException::class)
     fun `Given changeHandle() is called, when api response is cancelled, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeHandle(TEST_HANDLE)).thenReturn(emptyResponse)
+        validateChangeHandleScenario(responseBody = Unit, isRight = false, cancelable = true)
+    }
 
-            usersRemoteDataSource.changeHandle(TEST_HANDLE)
+    private fun validateChangeHandleScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.changeHandle(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
 
-            verify(usersNetworkService).changeHandle(TEST_HANDLE)
+        usersRemoteDataSource.changeHandle(TEST_HANDLE)
 
+        verify(usersNetworkService).changeHandle(capture(requestBodyArgumentCaptor))
+
+        if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
             delay(CANCELLATION_DELAY)
-
-            assert(usersRemoteDataSource.changeHandle(TEST_HANDLE).isLeft)
         }
+
+        requestBodyArgumentCaptor.value.getString(HANDLE_REQUEST_BODY_KEY) shouldBe TEST_HANDLE
+
+        usersRemoteDataSource.changeHandle(TEST_HANDLE).isRight shouldBe isRight
     }
 
     @Test
     fun `Given changeEmail() is called, when api response success and response body is not null, then return a successful response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeEmail(TEST_EMAIL)
-
-            verify(usersNetworkService).changeEmail(eq(TEST_EMAIL))
-
-            assert(usersRemoteDataSource.changeEmail(TEST_EMAIL).isRight)
-        }
+        validateChangeEmailScenario(responseBody = Unit, isRight = true, cancelable = false)
     }
 
     @Test
     fun `Given changeEmail() is called, when api response success and response body is null, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(null)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeEmail(TEST_EMAIL)
-
-            verify(usersNetworkService).changeEmail(eq(TEST_EMAIL))
-
-            assert(usersRemoteDataSource.changeEmail(TEST_EMAIL).isLeft)
-        }
+        validateChangeEmailScenario(responseBody = null, isRight = false, cancelable = false)
     }
 
     @Test(expected = CancellationException::class)
     fun `Given changeEmail() is called, when api response is cancelled, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changeEmail(TEST_EMAIL)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changeEmail(TEST_EMAIL)
-
-            verify(usersNetworkService).changeEmail(TEST_EMAIL)
-
-            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
-            delay(CANCELLATION_DELAY)
-
-            assert(usersRemoteDataSource.changeEmail(TEST_EMAIL).isLeft)
-        }
+        validateChangeEmailScenario(responseBody = Unit, isRight = false, cancelable = true)
     }
+
+    private fun validateChangeEmailScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.changeEmail(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.changeEmail(TEST_EMAIL)
+
+        verify(usersNetworkService).changeEmail(capture(requestBodyArgumentCaptor))
+
+        if (cancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        requestBodyArgumentCaptor.value.getString(EMAIL_REQUEST_BODY_KEY) shouldBe TEST_EMAIL
+
+        usersRemoteDataSource.changeEmail(TEST_EMAIL).isRight shouldBe isRight
+    }
+
 
     @Test
     fun `Given changePhone() is called, when api response success and response body is not null, then return a successful response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(emptyResponse)
+        validateChangePhoneScenario(responseBody = Unit, isRight = true, cancelable = false)
 
-            usersRemoteDataSource.changePhone(TEST_PHONE)
-
-            verify(usersNetworkService).changePhone(eq(TEST_PHONE))
-
-            assert(usersRemoteDataSource.changePhone(TEST_PHONE).isRight)
-        }
     }
 
     @Test
     fun `Given changePhone() is called, when api response success and response body is null, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(emptyResponse)
+        validateChangePhoneScenario(responseBody = null, isRight = false, cancelable = false)
 
-            usersRemoteDataSource.changePhone(TEST_PHONE)
-
-            verify(usersNetworkService).changePhone(eq(TEST_PHONE))
-
-            assert(usersRemoteDataSource.changePhone(TEST_PHONE).isLeft)
-        }
     }
 
     @Test(expected = CancellationException::class)
     fun `Given changePhone() is called, when api response is cancelled, then return an error response`() {
-        runBlockingTest {
-            `when`(emptyResponse.body()).thenReturn(Unit)
-            `when`(emptyResponse.isSuccessful).thenReturn(true)
-            `when`(usersNetworkService.changePhone(TEST_PHONE)).thenReturn(emptyResponse)
-
-            usersRemoteDataSource.changePhone(TEST_PHONE)
-
-            verify(usersNetworkService).changePhone(TEST_PHONE)
-
-            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-
-            delay(CANCELLATION_DELAY)
-
-            assert(usersRemoteDataSource.changePhone(TEST_PHONE).isLeft)
-        }
+        validateChangePhoneScenario(responseBody = Unit, isRight = false, cancelable = true)
     }
 
+    private fun validateChangePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.changePhone(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
 
+        usersRemoteDataSource.changePhone(TEST_PHONE)
+
+        verify(usersNetworkService).changePhone(capture(requestBodyArgumentCaptor))
+
+        if (cancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        requestBodyArgumentCaptor.value.getString(PHONE_REQUEST_BODY_KEY) shouldBe TEST_PHONE
+
+        usersRemoteDataSource.changePhone(TEST_PHONE).isRight shouldBe isRight
+    }
 }
