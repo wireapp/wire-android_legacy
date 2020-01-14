@@ -71,9 +71,7 @@ class SettingsAccountFragment : Fragment() {
             updateAccountHandle(handle)
         }
         preferences_account_handle.setOnClickListener {
-            val title = getString(R.string.pref__account_action__dialog__change_username__title)
-            val defaultValue = preferences_account_handle_title.text.toString()
-            showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updateHandle(it) }
+            showEditHandleDialog { settingsAccountViewModel.updateHandle(it) }
         }
     }
 
