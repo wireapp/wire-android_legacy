@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
+import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -64,7 +65,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             verify(userDbService).insert(eq(user))
 
-            assert(usersLocalDataSource.insertUser(user).isRight)
+            usersLocalDataSource.insertUser(user).isRight shouldBe true
         }
     }
 
@@ -79,7 +80,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             delay(CANCELLATION_DELAY)
 
-            assert(usersLocalDataSource.insertUser(user).isLeft)
+            usersLocalDataSource.insertUser(user).isRight shouldBe false
         }
     }
 
@@ -91,7 +92,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             verify(userDbService).updateName(eq(TEST_USER_ID), eq(TEST_NAME))
 
-            assert(usersLocalDataSource.changeName(TEST_NAME).isRight)
+            usersLocalDataSource.changeName(TEST_NAME).isRight shouldBe true
         }
     }
 
@@ -107,7 +108,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             delay(CANCELLATION_DELAY)
 
-            assert(usersLocalDataSource.changeName(TEST_NAME).isLeft)
+            usersLocalDataSource.changeName(TEST_NAME).isRight shouldBe false
         }
 
     }
@@ -119,7 +120,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             verify(userDbService).updateHandle(eq(TEST_USER_ID), eq(TEST_HANDLE))
 
-            assert(usersLocalDataSource.changeHandle(TEST_HANDLE).isRight)
+            usersLocalDataSource.changeHandle(TEST_HANDLE).isRight shouldBe true
         }
     }
 
@@ -135,7 +136,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             delay(CANCELLATION_DELAY)
 
-            assert(usersLocalDataSource.changeHandle(TEST_HANDLE).isLeft)
+            usersLocalDataSource.changeHandle(TEST_HANDLE).isRight shouldBe false
         }
     }
 
@@ -146,7 +147,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             verify(userDbService).updateEmail(eq(TEST_USER_ID), eq(TEST_EMAIL))
 
-            assert(usersLocalDataSource.changeEmail(TEST_EMAIL).isRight)
+            usersLocalDataSource.changeEmail(TEST_EMAIL).isRight shouldBe true
         }
     }
 
@@ -161,7 +162,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             delay(CANCELLATION_DELAY)
 
-            assert(usersLocalDataSource.changeEmail(TEST_EMAIL).isLeft)
+            usersLocalDataSource.changeEmail(TEST_EMAIL).isRight shouldBe false
         }
     }
 
@@ -172,7 +173,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             verify(userDbService).updatePhone(eq(TEST_USER_ID), eq(TEST_PHONE))
 
-            assert(usersLocalDataSource.changePhone(TEST_PHONE).isRight)
+            usersLocalDataSource.changePhone(TEST_PHONE).isRight shouldBe true
         }
     }
 
@@ -187,7 +188,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             delay(CANCELLATION_DELAY)
 
-            assert(usersLocalDataSource.changePhone(TEST_PHONE).isLeft)
+            usersLocalDataSource.changePhone(TEST_PHONE).isRight shouldBe false
         }
     }
 }
