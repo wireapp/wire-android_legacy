@@ -9,7 +9,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
-import org.json.JSONObject
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
@@ -29,10 +28,6 @@ class UserRemoteDataSourceTest : UnitTest() {
         private const val TEST_EMAIL = "email@wire.com"
         private const val TEST_HANDLE = "@handle"
         private const val TEST_PHONE = "+4977738847664"
-        private const val NAME_REQUEST_BODY_KEY = "name"
-        private const val EMAIL_REQUEST_BODY_KEY = "email"
-        private const val HANDLE_REQUEST_BODY_KEY = "handle"
-        private const val PHONE_REQUEST_BODY_KEY = "phone"
     }
 
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
@@ -50,7 +45,16 @@ class UserRemoteDataSourceTest : UnitTest() {
     private lateinit var emptyResponse: Response<Unit>
 
     @Captor
-    private lateinit var requestBodyArgumentCaptor: ArgumentCaptor<JSONObject>
+    private lateinit var changeEmailRequestCaptor: ArgumentCaptor<ChangeEmailRequest>
+
+    @Captor
+    private lateinit var changePhoneRequestCaptor: ArgumentCaptor<ChangePhoneRequest>
+
+    @Captor
+    private lateinit var changeHandleRequestCaptor: ArgumentCaptor<ChangeHandleRequest>
+
+    @Captor
+    private lateinit var changeNameRequestCaptor: ArgumentCaptor<ChangeNameRequest>
 
     @Before
     fun setUp() {
@@ -107,18 +111,18 @@ class UserRemoteDataSourceTest : UnitTest() {
     private fun validateChangeNameScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changeName(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
+        `when`(usersNetworkService.changeName(capture(changeNameRequestCaptor))).thenReturn(emptyResponse)
 
         usersRemoteDataSource.changeName(TEST_NAME)
 
-        verify(usersNetworkService).changeName(capture(requestBodyArgumentCaptor))
+        verify(usersNetworkService).changeName(capture(changeNameRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
         }
 
-        requestBodyArgumentCaptor.value.getString(NAME_REQUEST_BODY_KEY) shouldBe TEST_NAME
+        changeNameRequestCaptor.value.name shouldBe TEST_NAME
 
         usersRemoteDataSource.changeName(TEST_NAME).isRight shouldBe isRight
     }
@@ -141,18 +145,18 @@ class UserRemoteDataSourceTest : UnitTest() {
     private fun validateChangeHandleScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changeHandle(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
+        `when`(usersNetworkService.changeHandle(capture(changeHandleRequestCaptor))).thenReturn(emptyResponse)
 
         usersRemoteDataSource.changeHandle(TEST_HANDLE)
 
-        verify(usersNetworkService).changeHandle(capture(requestBodyArgumentCaptor))
+        verify(usersNetworkService).changeHandle(capture(changeHandleRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
         }
 
-        requestBodyArgumentCaptor.value.getString(HANDLE_REQUEST_BODY_KEY) shouldBe TEST_HANDLE
+        changeHandleRequestCaptor.value.handle shouldBe TEST_HANDLE
 
         usersRemoteDataSource.changeHandle(TEST_HANDLE).isRight shouldBe isRight
     }
@@ -175,18 +179,18 @@ class UserRemoteDataSourceTest : UnitTest() {
     private fun validateChangeEmailScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changeEmail(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
+        `when`(usersNetworkService.changeEmail(capture(changeEmailRequestCaptor))).thenReturn(emptyResponse)
 
         usersRemoteDataSource.changeEmail(TEST_EMAIL)
 
-        verify(usersNetworkService).changeEmail(capture(requestBodyArgumentCaptor))
+        verify(usersNetworkService).changeEmail(capture(changeEmailRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
         }
 
-        requestBodyArgumentCaptor.value.getString(EMAIL_REQUEST_BODY_KEY) shouldBe TEST_EMAIL
+        changeEmailRequestCaptor.value.email shouldBe TEST_EMAIL
 
         usersRemoteDataSource.changeEmail(TEST_EMAIL).isRight shouldBe isRight
     }
@@ -212,18 +216,18 @@ class UserRemoteDataSourceTest : UnitTest() {
     private fun validateChangePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changePhone(capture(requestBodyArgumentCaptor))).thenReturn(emptyResponse)
+        `when`(usersNetworkService.changePhone(capture(changePhoneRequestCaptor))).thenReturn(emptyResponse)
 
         usersRemoteDataSource.changePhone(TEST_PHONE)
 
-        verify(usersNetworkService).changePhone(capture(requestBodyArgumentCaptor))
+        verify(usersNetworkService).changePhone(capture(changePhoneRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
         }
 
-        requestBodyArgumentCaptor.value.getString(PHONE_REQUEST_BODY_KEY) shouldBe TEST_PHONE
+        changePhoneRequestCaptor.value.phone shouldBe TEST_PHONE
 
         usersRemoteDataSource.changePhone(TEST_PHONE).isRight shouldBe isRight
     }
