@@ -8,7 +8,7 @@ import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
-import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.UpdateHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +52,7 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeEmailUseCase: ChangeEmailUseCase
 
     @Mock
-    private lateinit var changeHandleUseCase: ChangeHandleUseCase
+    private lateinit var changeHandleUseCase: UpdateHandleUseCase
 
     @Mock
     private lateinit var user: User

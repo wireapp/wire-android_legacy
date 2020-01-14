@@ -7,13 +7,14 @@ import com.waz.zclient.core.functional.getOrElse
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.user.data.UsersRepository
 
-object HandleTooLongError : ValidateHandleState()
-object HandleTooShortError : ValidateHandleState()
-object HandleInvalidError : ValidateHandleState()
-object HandleExistsAlreadyError : ValidateHandleState()
-object HandleIsAvailable : ValidateHandleState()
+object HandleTooLongError : ValidateHandleError()
+object HandleTooShortError : ValidateHandleError()
+object HandleInvalidError : ValidateHandleError()
+object HandleExistsAlreadyError : ValidateHandleError()
+object HandleIsAvailable : ValidateHandleSuccess()
 
-sealed class ValidateHandleState : FeatureFailure()
+sealed class ValidateHandleSuccess
+sealed class ValidateHandleError : FeatureFailure()
 
 class ValidateHandleUseCase(private val usersRepository: UsersRepository)
     : UseCase<String, ValidateHandleParams>() {

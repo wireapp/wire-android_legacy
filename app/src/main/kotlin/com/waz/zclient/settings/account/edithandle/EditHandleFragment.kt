@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -20,6 +21,7 @@ class EditHandleFragment : DialogFragment() {
 
     companion object {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
+        private const val DIALOG_IS_CANCELABLE_BUNDLE_KEY = "dialogIsCancelableBundleKey"
 
         fun newInstance(currentHandle: String?, handleChangedListener: HandleChangedListener):
             EditHandleFragment = EditHandleFragment()
@@ -62,6 +64,9 @@ class EditHandleFragment : DialogFragment() {
 
     private fun initViews(view: View?) {
         view?.let {
+            val suggestedHandle = arguments?.getString(CURRENT_HANDLE_BUNDLE_KEY, String.empty())
+            val isCancelable = arguments?.getBoolean(DIALOG_IS_CANCELABLE_BUNDLE_KEY, false)
+
             handleInput = it.findViewById(R.id.edit_handle_edit_text)
             handleInput.addTextChangedListener(changeHandleTextWatcher)
 
@@ -70,7 +75,7 @@ class EditHandleFragment : DialogFragment() {
             }
 
             it.findViewById<View>(R.id.edit_handle_back_button).setOnClickListener {
-                editHandleFragmentViewModel.onBackButtonClicked()
+                editHandleFragmentViewModel.onBackButtonClicked(suggestedHandle, true)
             }
         }
 

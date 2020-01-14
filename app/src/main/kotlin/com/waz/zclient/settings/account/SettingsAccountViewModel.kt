@@ -7,7 +7,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
-import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.UpdateHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) {
@@ -21,7 +21,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
                                            private val changeNameUseCase: ChangeNameUseCase,
                                            private val changePhoneUseCase: ChangePhoneUseCase,
                                            private val changeEmailUseCase: ChangeEmailUseCase,
-                                           private val changeHandleUseCase: ChangeHandleUseCase)
+                                           private val changeHandleUseCase: UpdateHandleUseCase)
     : ViewModel() {
 
     private val mutableProfileData = MutableLiveData<User>()
