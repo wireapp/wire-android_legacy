@@ -24,28 +24,26 @@ class ValidateHandleUseCase(private val usersRepository: UsersRepository)
         private val HANDLE_REGEX = """^([a-z]|[0-9]|_)*""".toRegex()
     }
 
-    override suspend fun run(params: ValidateHandleParams): Either<Failure, String> {
-        val newHandle = params.newHandle
-        val handleAvailable = usersRepository.doesHandleExist(newHandle).getOrElse(HandleIsAvailable)
-        return if (handleAvailable is HandleIsAvailable) {
-            isHandleValid(newHandle)
+    override suspend fun run(params: ValidateHandleParams): Either<Failure, String> =
+        if (handleAvailable(params.newHandle) is HandleIsAvailable) {
+            isHandleValid(params.newHandle)
         } else {
             Either.Left(HandleExistsAlreadyError)
         }
-    }
 
-    private fun isHandleValid(newHandle: String): Either<Failure, String> {
-        if (newHandle.matches(HANDLE_REGEX)) {
-            if (newHandle.length > HANDLE_MAX_LENGTH) {
-                return Either.Left(HandleTooLongError)
-            } else if (newHandle.length < HANDLE_MIN_LENGTH) {
-                return Either.Left(HandleTooShortError)
-            }
+    private suspend fun handleAvailable(newHandle: String)
+        = usersRepository.doesHandleExist(newHandle).getOrElse(HandleIsAvailable)
+
+    private fun isHandleValid(newHandle: String): Either<Failure, String> =
+        if (!newHandle.matches(HANDLE_REGEX)) {
+            Either.Left(HandleInvalidError)
         } else {
-            return Either.Left(HandleInvalidError)
+            when {
+                newHandle.length > HANDLE_MAX_LENGTH -> Either.Left(HandleTooLongError)
+                newHandle.length < HANDLE_MIN_LENGTH -> Either.Left(HandleTooShortError)
+                else -> Either.Right(newHandle)
+            }
         }
-        return Either.Right(newHandle)
-    }
 }
 
 data class ValidateHandleParams(val newHandle: String)
