@@ -1451,8 +1451,7 @@
 
 
     <!-- Shortcuts -->
-    <string name="shortcut_create_group_short_label">Create Group</string>
-    <string name="shortcut_create_group_long_label">Create Group Conversation</string>
+    <string name="shortcut_create_group_label">Create Group</string>
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
 

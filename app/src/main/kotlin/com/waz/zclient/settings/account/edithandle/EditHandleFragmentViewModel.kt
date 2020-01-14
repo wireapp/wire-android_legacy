@@ -34,7 +34,7 @@ class EditHandleFragmentViewModel(private val validateHandleUseCase: ValidateHan
 
     fun beforeHandleTextChanged(oldHandle: String) {
         validateHandleUseCase(viewModelScope, ValidateHandleParams(oldHandle)) {
-            it.fold({ if (it != HandleInvalidError) previousInput = oldHandle }) {}
+            it.fold({ failure -> if (failure != HandleInvalidError) previousInput = oldHandle }) {}
         }
     }
 

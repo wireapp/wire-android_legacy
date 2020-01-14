@@ -11,6 +11,7 @@ object HandleTooLongError : ValidateHandleState()
 object HandleTooShortError : ValidateHandleState()
 object HandleInvalidError : ValidateHandleState()
 object HandleExistsAlreadyError : ValidateHandleState()
+object HandleIsAvailable : ValidateHandleState()
 
 sealed class ValidateHandleState : FeatureFailure()
 
@@ -25,11 +26,10 @@ class ValidateHandleUseCase(private val usersRepository: UsersRepository)
 
     override suspend fun run(params: ValidateHandleParams): Either<Failure, String> {
         val newHandle = params.newHandle
-        val handleAvailable = usersRepository.doesHandleExist(newHandle).getOrElse(true)
-        return if (handleAvailable) {
+        val handleAvailable = usersRepository.doesHandleExist(newHandle).getOrElse(HandleIsAvailable)
+        return if (handleAvailable is HandleIsAvailable) {
             isHandleValid(newHandle)
         } else {
-            //TODO Don't like this, it'll never hit but won't let me return otherwise.
             Either.Left(HandleExistsAlreadyError)
         }
     }
