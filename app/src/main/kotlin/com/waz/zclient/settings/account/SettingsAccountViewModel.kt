@@ -3,14 +3,16 @@ package com.waz.zclient.settings.account
 import androidx.lifecycle.*
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-data class ProfileDetail(val value: String) : ProfileDetailsState()
-object ProfileDetailEmpty : ProfileDetailsState()
-
-sealed class ProfileDetailsState
+data class ProfileDetail(val value: String) {
+    companion object {
+        val EMPTY = ProfileDetail(String.empty())
+    }
+}
 
 @ExperimentalCoroutinesApi
 class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
@@ -31,12 +33,12 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         it.handle
     }
 
-    val email: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
-        if (it.email.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.email)
+    val email: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
+        if (it.email.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.email)
     }
 
-    val phone: LiveData<ProfileDetailsState> = Transformations.map(mutableProfileData) {
-        if (it.phone.isNullOrEmpty()) ProfileDetailEmpty else ProfileDetail(it.phone)
+    val phone: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
+        if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
     }
 
     val error: LiveData<String>
@@ -76,6 +78,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         mutableProfileData.postValue(user)
     }
 
+    //TODO valid error scenarios once the networking has been integrated
     private fun handleError(failure: Failure) {
         if (failure is HttpError) {
             mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")

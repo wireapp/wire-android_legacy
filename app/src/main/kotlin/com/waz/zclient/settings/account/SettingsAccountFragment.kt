@@ -108,26 +108,18 @@ class SettingsAccountFragment : Fragment() {
         preferences_account_name_title.text = name
     }
 
-    private fun updateAccountPhoneNumber(phoneState: ProfileDetailsState) {
-        when (phoneState) {
-            is ProfileDetailEmpty -> updateAccountPhoneNumberTitle(getString(R.string.pref_account_add_phone_title))
-            is ProfileDetail -> updateAccountPhoneNumberTitle(phoneState.value)
+    private fun updateAccountPhoneNumber(phoneState: ProfileDetail) {
+        preferences_account_phone_title.text = when (phoneState) {
+            ProfileDetail.EMPTY -> getString(R.string.pref_account_add_phone_title)
+            else -> phoneState.value
         }
     }
 
-    private fun updateAccountPhoneNumberTitle(phoneNumber: String) {
-        preferences_account_phone_title.text = phoneNumber
-    }
-
-    private fun updateAccountEmail(emailState: ProfileDetailsState) {
-        when (emailState) {
-            is ProfileDetailEmpty -> updateAccountEmailTitle(getString(R.string.pref_account_add_email_title))
-            is ProfileDetail -> updateAccountEmailTitle(emailState.value)
+    private fun updateAccountEmail(emailState: ProfileDetail) {
+        preferences_account_email_title.text = when (emailState) {
+            ProfileDetail.EMPTY -> getString(R.string.pref_account_add_email_title)
+            else -> emailState.value
         }
-    }
-
-    private fun updateAccountEmailTitle(email: String) {
-        preferences_account_email_title.text = email
     }
 
     private fun loadProfile() {
@@ -139,7 +131,6 @@ class SettingsAccountFragment : Fragment() {
     private fun showErrorMessage(errorMessage: String) {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
-
 
     private fun showEditDialog(title: String, defaultValue: String, updateFunc: (String) -> Unit) {
         EditTextDialogFragment.newInstance(title, defaultValue, object : EditTextDialogFragment.EditTextDialogFragmentListener {
