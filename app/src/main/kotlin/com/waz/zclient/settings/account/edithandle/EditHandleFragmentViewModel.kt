@@ -13,7 +13,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class EditHandleFragmentViewModel(
-    private val changeHandleUseCase: UpdateHandleUseCase,
+    private val changeHandleUseCase: ChangeHandleUseCase,
     private val retrieveHandleUseCase: RetrieveHandleUseCase,
     private val validateHandleUseCase: ValidateHandleUseCase) : ViewModel() {
 
@@ -69,7 +69,7 @@ class EditHandleFragmentViewModel(
     }
 
     fun onBackButtonClicked(suggestedHandle: String?, isDialogCancelable: Boolean) {
-        if (!isDialogCancelable && !suggestedHandle.isNullOrEmpty())) {
+        if (!isDialogCancelable && !suggestedHandle.isNullOrEmpty()) {
             changeHandleUseCase(viewModelScope, ChangeHandleParams(suggestedHandle))
         }
     }

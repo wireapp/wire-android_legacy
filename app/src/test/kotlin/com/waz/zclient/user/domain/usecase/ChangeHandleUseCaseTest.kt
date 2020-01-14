@@ -4,7 +4,7 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
 import com.waz.zclient.user.data.UsersRepository
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
-import com.waz.zclient.user.domain.usecase.handle.UpdateHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -20,7 +20,7 @@ class ChangeHandleUseCaseTest : UnitTest() {
         private const val TEST_HANDLE = "@wire"
     }
 
-    private lateinit var changeHandleUseCase: UpdateHandleUseCase
+    private lateinit var changeHandleUseCase: ChangeHandleUseCase
 
     @Mock
     private lateinit var userRepository: UsersRepository
@@ -30,7 +30,7 @@ class ChangeHandleUseCaseTest : UnitTest() {
 
     @Before
     fun setup() {
-        changeHandleUseCase = UpdateHandleUseCase(userRepository)
+        changeHandleUseCase = ChangeHandleUseCase(userRepository)
     }
 
     @Test

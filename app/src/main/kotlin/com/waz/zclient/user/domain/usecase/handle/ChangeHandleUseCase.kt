@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.user.data.UsersRepository
 
-class UpdateHandleUseCase(private val usersRepository: UsersRepository)
+class ChangeHandleUseCase(private val usersRepository: UsersRepository)
     : UseCase<Any, ChangeHandleParams>() {
 
     override suspend fun run(params: ChangeHandleParams): Either<Failure, Any> =
