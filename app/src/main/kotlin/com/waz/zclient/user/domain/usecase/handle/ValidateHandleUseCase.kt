@@ -31,8 +31,8 @@ class ValidateHandleUseCase(private val usersRepository: UsersRepository)
             Either.Left(HandleExistsAlreadyError)
         }
 
-    private suspend fun handleAvailable(newHandle: String)
-        = usersRepository.doesHandleExist(newHandle).getOrElse(HandleIsAvailable)
+    private suspend fun handleAvailable(newHandle: String) =
+        usersRepository.doesHandleExist(newHandle).getOrElse(HandleIsAvailable)
 
     private fun isHandleValid(newHandle: String): Either<Failure, String> =
         if (!newHandle.matches(HANDLE_REGEX)) {
