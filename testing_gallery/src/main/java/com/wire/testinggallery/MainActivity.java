@@ -34,6 +34,13 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.common.base.Supplier;
+import com.wire.testinggallery.models.Audio;
+import com.wire.testinggallery.models.Backup;
+import com.wire.testinggallery.models.FileType;
+import com.wire.testinggallery.models.Image;
+import com.wire.testinggallery.models.PlainText;
+import com.wire.testinggallery.models.Textfile;
+import com.wire.testinggallery.models.Video;
 import com.wire.testinggallery.backup.ExportFile;
 import com.wire.testinggallery.precondition.PreconditionCheckers;
 import com.wire.testinggallery.precondition.PreconditionFixers;
@@ -49,7 +56,6 @@ import java.util.Map;
 import static com.wire.testinggallery.DocumentResolver.WIRE_TESTING_FILES_DIRECTORY;
 import static com.wire.testinggallery.precondition.PreconditionsManager.requestSilentlyRights;
 import static com.wire.testinggallery.utils.FileUtils.copyStreams;
-import static com.wire.testinggallery.utils.FileUtils.getFileFromArchiveAsString;
 import static com.wire.testinggallery.utils.InfoDisplayManager.showToast;
 import static com.wire.testinggallery.utils.UriUtils.getFilename;
 
@@ -109,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.CUPCAKE)
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void handleFile(Uri backupUri, String scheme) {
         final String fileName = getFilename(getContentResolver(), backupUri, scheme);
         if (!fileName.isEmpty()) {
@@ -130,20 +136,11 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            try {
-                if (fileName.toLowerCase().endsWith("_wbu")) {
-                    ExportFile exportFile = ExportFile.fromJson(getFileFromArchiveAsString(targetFile, "export.json"));
-                    setIntent(null);
-                    showAlert(String.format("%s was saved\nBackup user id:%s", fileName, exportFile.getUserId()));
-                    return;
-                }
-                setIntent(null);
-                showToast(this, String.format("%s was saved", fileName));
-                return;
-            } catch (IOException e) {
-                showAlert(String.format("There was an error during file analyze: %s", e.getLocalizedMessage()));
-            }
+            setIntent(null);
+            showAlert(String.format("%s was saved", fileName));
+            return;
         }
+        setIntent(null);
         showAlert("Received file has no name!!!");
     }
 
@@ -166,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
             final Supplier<Void> fixSupplier = fixMap.get(id);
 
             Button fixButton = findViewById(id);
-            fixButton.setOnClickListener(view -> {
+            fixButton.setOnClickListener(v -> {
                 fixSupplier.get();
                 checkPreconditions();
             });

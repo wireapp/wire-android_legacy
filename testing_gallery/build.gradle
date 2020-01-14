@@ -11,7 +11,7 @@ android {
 
     def majorVersion = 7
     def minorVersion = 2
-    def patchVersion = 0
+    def patchVersion = 1
 
     testOptions {
         unitTests {

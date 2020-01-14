@@ -63,6 +63,7 @@ public class CaptureDocumentActivity extends AppCompatActivity {
                     type.getName(), type.getExtension())));
 
             btn.setOnClickListener(v -> type.handle(this));
+            btn.setContentDescription(String.format(getString(R.string.file_chooser_popup_selection_string_format), type.getName(), type.getExtension()));
             btn.setId(type.getPosition());
             //add button to the layout
             layout.addView(btn);
