@@ -10,26 +10,26 @@ import retrofit2.http.PUT
 interface UsersNetworkService {
 
     companion object {
-        private const val BASE = "/self"
+        private const val SELF = "/self"
         private const val PHONE = "/phone"
         private const val EMAIL = "/email"
         private const val HANDLE = "/handle"
         private const val NAME = "/name"
     }
 
-    @GET(BASE)
+    @GET(SELF)
     suspend fun profileDetails(): Response<UserApi>
 
-    @PUT("$BASE$NAME")
+    @PUT("$SELF$NAME")
     suspend fun changeName(@Body name: ChangeNameRequest): Response<Unit>
 
-    @PUT("$BASE$HANDLE")
+    @PUT("$SELF$HANDLE")
     suspend fun changeHandle(@Body handle: ChangeHandleRequest): Response<Unit>
 
-    @PUT("$BASE$EMAIL")
+    @PUT("$SELF$EMAIL")
     suspend fun changeEmail(@Body email: ChangeEmailRequest): Response<Unit>
 
-    @PUT("$BASE$PHONE")
+    @PUT("$SELF$PHONE")
     suspend fun changePhone(@Body phone: ChangePhoneRequest): Response<Unit>
 }
 
