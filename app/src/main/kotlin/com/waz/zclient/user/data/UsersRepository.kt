@@ -4,6 +4,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HandleValidationState
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.user.domain.model.User
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleState
 import kotlinx.coroutines.flow.Flow
 
 interface UsersRepository {
@@ -12,5 +13,5 @@ interface UsersRepository {
     suspend fun changeHandle(handle: String): Either<Failure, Any>
     suspend fun changeEmail(email: String): Either<Failure, Any>
     suspend fun changePhone(phone: String): Either<Failure, Any>
-    suspend fun doesHandleExist(newHandle: String): Either<Failure, HandleValidationState>
+    suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleState>
 }

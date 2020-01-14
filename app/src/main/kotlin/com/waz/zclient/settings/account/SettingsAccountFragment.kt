@@ -33,20 +33,18 @@ class SettingsAccountFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
-        initViewModel()
+        initErrorHandling()
         initAccountName()
         initAccountHandle()
         initAccountEmail()
-        initAccountPhone()
+        initAccountPhoneNumber()
         initResetPassword()
         loadProfile()
     }
 
     //TODO Will need changing to a phone dialog
-    private fun initAccountPhone() {
-        settingsAccountViewModel.phone.observe(viewLifecycleOwner) { phoneState ->
-            updateAccountPhoneNumber(phoneState)
-        }
+    private fun initAccountPhoneNumber() {
+        settingsAccountViewModel.phone.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
         preferences_account_phone.setOnClickListener {
             val title = getString(R.string.pref_account_add_phone_title)
             val defaultValue = preferences_account_phone_title.text.toString()
@@ -55,9 +53,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountEmail() {
-        settingsAccountViewModel.email.observe(viewLifecycleOwner) { emailState ->
-            updateAccountEmail(emailState)
-        }
+        settingsAccountViewModel.email.observe(viewLifecycleOwner) { updateAccountEmail(it) }
         preferences_account_email.setOnClickListener {
             val title = getString(R.string.pref_account_add_email_title)
             val defaultValue = preferences_account_email_title.text.toString()
@@ -67,18 +63,14 @@ class SettingsAccountFragment : Fragment() {
 
     //TODO Will need changing to a handle fragment instead of a basic input dialog
     private fun initAccountHandle() {
-        settingsAccountViewModel.handle.observe(viewLifecycleOwner) { handle ->
-            updateAccountHandle(handle)
-        }
+        settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
         preferences_account_handle.setOnClickListener {
             showEditHandleDialog { settingsAccountViewModel.updateHandle(it) }
         }
     }
 
     private fun initAccountName() {
-        settingsAccountViewModel.name.observe(viewLifecycleOwner) { name ->
-            updateAccountName(name)
-        }
+        settingsAccountViewModel.name.observe(viewLifecycleOwner) { updateAccountName(it) }
         preferences_account_name.setOnClickListener {
             val title = getString(R.string.pref_account_edit_name_title)
             val defaultValue = preferences_account_name_title.text.toString()
@@ -94,7 +86,7 @@ class SettingsAccountFragment : Fragment() {
         activity?.title = getString(R.string.pref_account_screen_title)
     }
 
-    private fun initViewModel() {
+    private fun initErrorHandling() {
         with(settingsAccountViewModel) {
             error.observe(viewLifecycleOwner) { errorMessage ->
                 showErrorMessage(errorMessage)
