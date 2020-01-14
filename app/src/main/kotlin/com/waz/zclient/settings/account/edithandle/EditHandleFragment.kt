@@ -65,7 +65,7 @@ class EditHandleFragment : DialogFragment() {
     private fun initViews(view: View?) {
         view?.let {
             val suggestedHandle = arguments?.getString(CURRENT_HANDLE_BUNDLE_KEY, String.empty())
-            val isCancelable = arguments?.getBoolean(DIALOG_IS_CANCELABLE_BUNDLE_KEY, false)
+            val isCancelable = arguments?.getBoolean(DIALOG_IS_CANCELABLE_BUNDLE_KEY, true) ?: true
 
             handleInput = it.findViewById(R.id.edit_handle_edit_text)
             handleInput.addTextChangedListener(changeHandleTextWatcher)
@@ -75,7 +75,7 @@ class EditHandleFragment : DialogFragment() {
             }
 
             it.findViewById<View>(R.id.edit_handle_back_button).setOnClickListener {
-                editHandleFragmentViewModel.onBackButtonClicked(suggestedHandle, true)
+                editHandleFragmentViewModel.onBackButtonClicked(suggestedHandle, isCancelable)
             }
         }
 
