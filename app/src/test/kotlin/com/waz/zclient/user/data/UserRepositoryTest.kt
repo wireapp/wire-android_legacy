@@ -16,6 +16,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.test.runBlockingTest
+import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -77,7 +78,8 @@ class UserRepositoryTest : UnitTest() {
             runBlockingTest {
                 val user = userMapper.toUser(it)
                 verify(usersLocalDataSource).insertUser(eq(userMapper.toUserDao(user)))
-                assert(usersRepository.profileDetails().single() == user)
+
+                usersRepository.profileDetails().single() shouldBe user
             }
         }
 
@@ -90,7 +92,6 @@ class UserRepositoryTest : UnitTest() {
         usersRepository.changeName(TEST_NAME)
 
         verify(usersLocalDataSource).changeName(eq(TEST_NAME))
-
         verifyNoInteractions(usersRemoteDataSource)
     }
 

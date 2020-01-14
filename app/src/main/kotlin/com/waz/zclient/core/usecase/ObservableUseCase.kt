@@ -1,14 +1,14 @@
 package com.waz.zclient.core.usecase
 
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.FlowError
+import com.waz.zclient.core.exception.GenericUseCaseError
 import com.waz.zclient.core.functional.Either
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 
 @ExperimentalCoroutinesApi
-abstract class ObservableUseCase<out Type, in Params> where Type : Any {
+abstract class ObservableUseCase<out Type, in Params> {
 
     abstract suspend fun run(params: Params): Flow<Type>
 
@@ -21,7 +21,7 @@ abstract class ObservableUseCase<out Type, in Params> where Type : Any {
             try {
                 backgroundJob.await().collect { onResult(Either.Right(it)) }
             } catch (e: Throwable) {
-                Either.Left(FlowError(e))
+                onResult(Either.Left(GenericUseCaseError(e)))
             }
         }
     }

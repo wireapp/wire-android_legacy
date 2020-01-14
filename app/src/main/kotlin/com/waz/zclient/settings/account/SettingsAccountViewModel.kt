@@ -1,50 +1,50 @@
 package com.waz.zclient.settings.account
 
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.ChangeNameParams
-import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-data class ProfileDetail(val value: String) : ProfileDetailsState()
-object ProfileDetailNull : ProfileDetailsState()
-
-sealed class ProfileDetailsState
+data class ProfileDetail(val value: String) {
+    companion object {
+        val EMPTY = ProfileDetail(String.empty())
+    }
+}
 
 @ExperimentalCoroutinesApi
 class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-                                           private val changeNameUseCase: ChangeNameUseCase)
+                                           private val changeNameUseCase: ChangeNameUseCase,
+                                           private val changePhoneUseCase: ChangePhoneUseCase,
+                                           private val changeEmailUseCase: ChangeEmailUseCase,
+                                           private val changeHandleUseCase: ChangeHandleUseCase)
     : ViewModel() {
 
-    private val mutableName = MutableLiveData<String>()
-    private val mutableHandle = MutableLiveData<String>()
-    private val mutableEmail = MutableLiveData<ProfileDetailsState>()
-    private val mutablePhone = MutableLiveData<ProfileDetailsState>()
+    private val mutableProfileData = MutableLiveData<User>()
     private val mutableError = MutableLiveData<String>()
 
-    val name: LiveData<String>
-        get() = mutableName
+    val name: LiveData<String> = Transformations.map(mutableProfileData) {
+        it.name
+    }
 
-    val handle: LiveData<String>
-        get() = mutableHandle
+    val handle: LiveData<String> = Transformations.map(mutableProfileData) {
+        it.handle
+    }
 
-    val email: LiveData<ProfileDetailsState>
-        get() = mutableEmail
+    val email: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
+        if (it.email.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.email)
+    }
 
-    val phone: LiveData<ProfileDetailsState>
-        get() = mutablePhone
+    val phone: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
+        if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
+    }
 
     val error: LiveData<String>
         get() = mutableError
 
-    fun loadProfile() {
+    fun loadProfileDetails() {
         getUserProfileUseCase(viewModelScope, Unit) {
             it.fold(::handleError, ::handleProfileSuccess)
         }
@@ -56,19 +56,34 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         }
     }
 
-    private fun handleProfileSuccess(user: User) {
-        mutableName.postValue(user.name)
-        mutableHandle.postValue(user.handle)
-        mutableEmail.postValue(if (user.email.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(user.email))
-        mutablePhone.postValue(if (user.phone.isNullOrEmpty()) ProfileDetailNull else ProfileDetail(user.phone))
+    fun updatePhone(phoneNumber: String) {
+        changePhoneUseCase(viewModelScope, ChangePhoneParams(phoneNumber)) {
+            it.fold(::handleError) {}
+        }
     }
 
+    fun updateHandle(handle: String) {
+        changeHandleUseCase(viewModelScope, ChangeHandleParams(handle)) {
+            it.fold(::handleError) {}
+        }
+    }
+
+    fun updateEmail(email: String) {
+        changeEmailUseCase(viewModelScope, ChangeEmailParams(email)) {
+            it.fold(::handleError) {}
+        }
+    }
+
+    private fun handleProfileSuccess(user: User) {
+        mutableProfileData.postValue(user)
+    }
+
+    //TODO valid error scenarios once the networking has been integrated
     private fun handleError(failure: Failure) {
-        when (failure) {
-            is HttpError ->
-                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
-            else ->
-                Log.e(javaClass.simpleName, "Misc error scenario")
+        if (failure is HttpError) {
+            mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")
+        } else {
+            mutableError.postValue("Misc error scenario")
         }
     }
 }
