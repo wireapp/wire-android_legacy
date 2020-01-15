@@ -6,12 +6,6 @@ import com.waz.zclient.core.usecase.UseCase
 
 class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
 
-    companion object {
-        private const val HANDLE_MAX_LENGTH = 21
-        private const val HANDLE_MIN_LENGTH = 2
-        private val HANDLE_REGEX = """^([a-z]|[0-9]|_)*""".toRegex()
-    }
-
     override suspend fun run(params: ValidateHandleParams): Either<Failure, String> =
         if (!params.newHandle.matches(HANDLE_REGEX)) {
             Either.Left(HandleInvalidError)
@@ -22,6 +16,12 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
                 else -> Either.Right(params.newHandle)
             }
         }
+
+    companion object {
+        private const val HANDLE_MAX_LENGTH = 21
+        private const val HANDLE_MIN_LENGTH = 2
+        private val HANDLE_REGEX = """^([a-z]|[0-9]|_)*""".toRegex()
+    }
 }
 
 data class ValidateHandleParams(val newHandle: String)
