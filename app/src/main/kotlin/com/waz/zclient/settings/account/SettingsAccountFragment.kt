@@ -125,7 +125,6 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
-    //TODO will be used in part 2.
     private fun showEditHandleDialog(updateHandle: (String) -> Unit) {
         settingsAccountViewModel.handle.value?.let {
             EditHandleFragment.newInstance(
