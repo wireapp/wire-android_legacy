@@ -2,6 +2,7 @@ package com.waz.zclient.user.data.source.remote
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.capture
+import com.waz.zclient.eq
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +29,10 @@ class UserRemoteDataSourceTest : UnitTest() {
         private const val TEST_EMAIL = "email@wire.com"
         private const val TEST_HANDLE = "@handle"
         private const val TEST_PHONE = "+4977738847664"
+        private const val HANDLE_TAKEN = 200
+        private const val HANDLE_INVALID = 400
+        private const val HANDLE_AVAILABLE = 404
+        private const val HANDLE_UNKNOWN = 500
     }
 
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
@@ -230,5 +235,41 @@ class UserRemoteDataSourceTest : UnitTest() {
         changePhoneRequestCaptor.value.phone shouldBe TEST_PHONE
 
         usersRemoteDataSource.changePhone(TEST_PHONE).isRight shouldBe isRight
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is 200, then return a failure`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_TAKEN)
+        validateHandleExists()
+
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is 400, then return a failure`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_INVALID)
+        validateHandleExists()
+
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is 404, then return a HandleIsAvailable success`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_AVAILABLE)
+        validateHandleExists(isError = false)
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is not 200, 400 or 404, then return a failure`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_UNKNOWN)
+        validateHandleExists()
+    }
+
+    private fun validateHandleExists(isError: Boolean = true) = runBlockingTest {
+        `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
+
+        verify(usersNetworkService).doesHandleExist(eq(TEST_HANDLE))
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isLeft shouldBe isError
     }
 }

@@ -34,7 +34,7 @@ interface UsersNetworkService {
     suspend fun changePhone(@Body phone: ChangePhoneRequest): Response<Unit>
 
     @GET("/users/handles/{newHandle}")
-    suspend fun doesHandleExist(@Path("handle") newHandle: String): Response<Boolean>
+    suspend fun doesHandleExist(@Path("handle") newHandle: String): Response<Unit>
 
 }
 

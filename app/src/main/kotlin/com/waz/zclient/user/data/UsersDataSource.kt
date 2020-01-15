@@ -8,7 +8,7 @@ import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.handle.ValidateHandleState
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -66,6 +66,6 @@ class UsersDataSource constructor(
 
     private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
 
-    override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleState> = usersRemoteDataSource.doesHandleExist(newHandle)
+    override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> = usersRemoteDataSource.doesHandleExist(newHandle)
 
 }
