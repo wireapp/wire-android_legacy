@@ -107,15 +107,13 @@ class ChatHeadView(val context: Context, val attrs: AttributeSet, val defStyleAt
   def setIntegration(integration: IntegrationData): Unit =
     setInfo(optionsForIntegration(integration, attributes))
 
-  def setInfo(options: ChatHeadViewOptions): Unit = {
-    verbose(l"will set options: $options")
+  def setInfo(options: ChatHeadViewOptions): Unit =
     if (options.picture.isEmpty) {
       WireGlide(context).clear(this)
       setImageDrawable(options.placeholder)
-    } else {
+    } else
       options.glideRequest.into(this)
-    }
-  }
+
 
   private def optionsForIntegration(integration: IntegrationData, attributes: Attributes): ChatHeadViewOptions =
     ChatHeadViewOptions(
