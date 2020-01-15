@@ -47,7 +47,7 @@ data class ClientDomain(private val name: String) {
 
 //DI
 val clientsSampleModule = module {
-    factory { get<ApiService>().createApi(ClientsApi::class.java) }
+    factory { get<NetworkClient>().create(ClientsApi::class.java) }
     factory { ClientsService(get(), get()) }
     single { ClientsRemoteDataSource(get()) }
     single { ClientsRepository(get()) }

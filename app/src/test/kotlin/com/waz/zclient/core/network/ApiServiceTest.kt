@@ -27,14 +27,13 @@ class ApiServiceTest : UnitTest() {
     private lateinit var apiService: ApiService
 
     @Mock
-    private lateinit var networkHandler: NetworkHandler
-
-    @Mock
-    private lateinit var networkClient: NetworkClient
+    private lateinit var mockNetworkHandler: NetworkHandler
 
     @Before
     fun setUp() {
-        apiService = ApiService(networkHandler, networkClient)
+        apiService = object : ApiService() {
+            override val networkHandler: NetworkHandler = mockNetworkHandler
+        }
     }
 
     @Test
@@ -68,7 +67,7 @@ class ApiServiceTest : UnitTest() {
     }
 
     private suspend fun assertHttpError(httpErrorCode: Int, failure: Failure) {
-        `when`(networkHandler.isConnected).thenReturn(true)
+        `when`(mockNetworkHandler.isConnected).thenReturn(true)
 
         val response = mock(Response::class.java) as Response<String>
         `when`(response.isSuccessful).thenReturn(false)

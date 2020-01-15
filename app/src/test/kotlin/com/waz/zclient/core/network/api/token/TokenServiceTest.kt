@@ -1,22 +1,22 @@
 package com.waz.zclient.core.network.api.token
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.any
 import com.waz.zclient.capture
-import com.waz.zclient.core.network.ApiService
+import com.waz.zclient.core.network.NetworkHandler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.`should contain`
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 
 class TokenServiceTest : UnitTest() {
 
     @Mock
-    private lateinit var apiService: ApiService
+    private lateinit var networkHandler: NetworkHandler
 
     @Mock
     private lateinit var tokenApi: TokenApi
@@ -25,22 +25,21 @@ class TokenServiceTest : UnitTest() {
 
     @Before
     fun setUp() {
-        tokenService = TokenService(apiService, tokenApi)
+        tokenService = TokenService(networkHandler, tokenApi)
     }
 
     @ExperimentalCoroutinesApi
     @Test
-    fun `given refresh token, when renewing access token, adds refresh token as a header to request`() =
-        runBlockingTest {
-            //FIXME: how to validate suspend functions??
+    fun `given refresh token, when renewing access token, adds refresh token as a header to request`() {
+        runBlocking {
             val refreshToken = "testToken"
+            `when`(networkHandler.isConnected).thenReturn(true)
 
             tokenService.renewAccessToken(refreshToken)
-
-            verify(apiService).request(any(), any<AccessTokenResponse>())
 
             val argumentCaptor = ArgumentCaptor.forClass(Map::class.java) as ArgumentCaptor<Map<String, String>>
             verify(tokenApi).access(capture(argumentCaptor))
             argumentCaptor.value `should contain` ("Cookie" to "zuid=$refreshToken")
         }
+    }
 }
