@@ -108,8 +108,8 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   val currentConvIsGroup: Signal[Boolean] =
     for {
       convs   <- conversations
-      convId  <- currentConvId
-      isGroup <- convs.groupConversation(convId)
+      convId  <- currentConvIdOpt
+      isGroup <- convId.fold(Signal.const(false))(convs.groupConversation)
     } yield isGroup
 
   val currentConvIsTeamOnly: Signal[Boolean] = currentConv.map(_.isTeamOnly)

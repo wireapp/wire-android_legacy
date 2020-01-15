@@ -38,9 +38,8 @@ class UnconnectedParticipantAdapter(userId:      UserId,
 
 
   def set(timerText:       Option[String],
-          participantRole: ConversationRole,
-          selfRole:        ConversationRole
-         ): Unit = {
+          participantRole: Option[ConversationRole] = None,
+          selfRole:        Option[ConversationRole] = None): Unit = {
     this.timerText       = timerText
     this.participantRole = participantRole
     this.selfRole        = selfRole
@@ -69,7 +68,7 @@ class UnconnectedParticipantAdapter(userId:      UserId,
   }
 
   override def getItemViewType(position: Int): Int =
-    if (position == 0) UnconnectedParticipantAdapter.UserName
+    if (position == 0) UserName
     else if (position == 2 && isGroupAdminViewVisible) GroupAdmin
     else Header
 }
