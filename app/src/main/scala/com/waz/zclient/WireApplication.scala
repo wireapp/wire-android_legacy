@@ -22,7 +22,6 @@ import java.net.{InetSocketAddress, Proxy}
 import java.util.Calendar
 
 import android.app.{Activity, ActivityManager, NotificationManager}
-import android.content.pm.ShortcutManager
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
