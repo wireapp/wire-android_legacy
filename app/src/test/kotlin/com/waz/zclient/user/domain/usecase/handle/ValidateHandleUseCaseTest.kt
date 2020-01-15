@@ -1,5 +1,82 @@
 package com.waz.zclient.user.domain.usecase.handle
 
+import com.waz.zclient.UnitTest
+import com.waz.zclient.core.functional.map
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runBlockingTest
+import org.amshove.kluent.shouldBe
+import org.junit.Before
+import org.junit.Test
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
 
-//TODO will be implemented in PART 2.
-class ValidateHandleUseCaseTest
+@ExperimentalCoroutinesApi
+class ValidateHandleUseCaseTest : UnitTest() {
+
+    private lateinit var validateHandleUseCase: ValidateHandleUseCase
+
+    @Mock
+    private lateinit var validateHandleParams: ValidateHandleParams
+
+    @Before
+    fun setup() {
+        validateHandleUseCase = ValidateHandleUseCase()
+    }
+
+    @Test
+    fun `Given run is executed, handle doesn't match regex, then return failure`() = runBlockingTest {
+        val handle = "----7_.handle"
+        verifyValidateUseCase(handle)
+    }
+
+    @Test
+    fun `Given run is executed, handle matches regex, length is over max, then return failure`() {
+        val handle = "thisisalonghandlethatshouldnotbethislong"
+        verifyValidateUseCase(handle)
+    }
+
+    @Test
+    fun `Given run is executed, handle matches regex, length is 1, then return failure`() {
+        val handle = "h"
+        verifyValidateUseCase(handle)
+    }
+
+    @Test
+    fun `Given run is executed, handle matches regex, handle fits requirements, then return success`() {
+        val handle = "wire"
+        verifyValidateUseCase(handle, isError = false)
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given run is executed, handle fits requirements, but request anceled, then return false`() {
+        val handle = "wire"
+        verifyValidateUseCase(handle, isCancelable = true)
+    }
+
+    private fun verifyValidateUseCase(handle: String, isError: Boolean = true, isCancelable: Boolean = false) = runBlockingTest {
+        `when`(validateHandleParams.newHandle).thenReturn(handle)
+
+        validateHandleUseCase.run(validateHandleParams)
+
+        if (isCancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        if (!isError) {
+            validateHandleUseCase.run(validateHandleParams).map {
+                it shouldBe handle
+            }
+        }
+
+        validateHandleUseCase.run(validateHandleParams).isLeft shouldBe isError
+    }
+
+    companion object {
+        private const val TEST_EXCEPTION_MESSAGE = "The request has been cancelled"
+        private const val CANCELLATION_DELAY = 200L
+    }
+}

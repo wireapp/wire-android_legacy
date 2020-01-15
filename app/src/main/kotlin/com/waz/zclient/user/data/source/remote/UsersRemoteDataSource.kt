@@ -8,12 +8,6 @@ import com.waz.zclient.user.domain.usecase.handle.*
 
 class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNetworkService) {
 
-    companion object {
-        private const val HANDLE_TAKEN = 200
-        private const val HANDLE_INVALID = 400
-        private const val HANDLE_AVAILABLE = 404
-    }
-
     suspend fun profileDetails(): Either<Failure, UserApi> = requestApi { usersNetworkService.profileDetails() }
 
     suspend fun changeName(name: String): Either<Failure, Any> = requestApi { usersNetworkService.changeName(ChangeNameRequest(name)) }
@@ -31,4 +25,10 @@ class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNe
             HANDLE_AVAILABLE -> Either.Right(HandleIsAvailable)
             else -> Either.Left(HandleUnknownError)
         }
+
+    companion object {
+        private const val HANDLE_TAKEN = 200
+        private const val HANDLE_INVALID = 400
+        private const val HANDLE_AVAILABLE = 404
+    }
 }

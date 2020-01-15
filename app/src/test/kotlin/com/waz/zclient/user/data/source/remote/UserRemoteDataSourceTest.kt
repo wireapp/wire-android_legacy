@@ -22,19 +22,6 @@ import retrofit2.Response
 @ExperimentalCoroutinesApi
 class UserRemoteDataSourceTest : UnitTest() {
 
-    companion object {
-        private const val CANCELLATION_DELAY = 200L
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-        private const val TEST_NAME = "name"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@handle"
-        private const val TEST_PHONE = "+4977738847664"
-        private const val HANDLE_TAKEN = 200
-        private const val HANDLE_INVALID = 400
-        private const val HANDLE_AVAILABLE = 404
-        private const val HANDLE_UNKNOWN = 500
-    }
-
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
     @Mock
@@ -282,5 +269,18 @@ class UserRemoteDataSourceTest : UnitTest() {
         }
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isLeft shouldBe isError
+    }
+
+    companion object {
+        private const val CANCELLATION_DELAY = 200L
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+        private const val TEST_NAME = "name"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@handle"
+        private const val TEST_PHONE = "+4977738847664"
+        private const val HANDLE_TAKEN = 200
+        private const val HANDLE_INVALID = 400
+        private const val HANDLE_AVAILABLE = 404
+        private const val HANDLE_UNKNOWN = 500
     }
 }

@@ -28,14 +28,11 @@ class GetHandleUseCaseTest : UnitTest() {
     @Mock
     private lateinit var user: User
 
-    private lateinit var handleFlow: Flow<String>
-
     private lateinit var userFlow: Flow<User>
 
     @Before
     fun setup() {
         getHandleUseCase = GetHandleUseCase(usersRepository)
-        handleFlow = flow { TEST_HANDLE }
         userFlow = flow { user }
     }
 
@@ -49,7 +46,6 @@ class GetHandleUseCaseTest : UnitTest() {
         userFlow.map {
             getHandleUseCase.run(Unit).single() shouldBe it.handle
         }
-
     }
 
     companion object {
