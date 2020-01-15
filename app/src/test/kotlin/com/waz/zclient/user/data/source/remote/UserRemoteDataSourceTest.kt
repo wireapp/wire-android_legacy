@@ -263,12 +263,23 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateHandleExists()
     }
 
-    private fun validateHandleExists(isError: Boolean = true) = runBlockingTest {
+    @Test(expected = CancellationException::class)
+    fun `Given doesHandleExist() is called, and the request is cancelled, then return a failure`() {
+        validateHandleExists(cancelled = true)
+    }
+
+
+    private fun validateHandleExists(isError: Boolean = true, cancelled: Boolean = false) = runBlockingTest {
         `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
 
         verify(usersNetworkService).doesHandleExist(eq(TEST_HANDLE))
+
+        if (cancelled) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isLeft shouldBe isError
     }
