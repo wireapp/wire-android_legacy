@@ -137,9 +137,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       toAdd <- skipPreviouslyDeleted(msgs)
       (systemMsgs, contentMsgs) = toAdd.partition(_.isSystemMessage)
       sm <- addSystemMessages(convId, systemMsgs)
-      _  =  verbose(l"SYNC system messages added (${sm.size})")
       cm <- addContentMessages(convId, contentMsgs)
-      _  =  verbose(l"SYNC content messages added (${cm.size})")
     } yield sm.toSet ++ cm
 
   private def skipPreviouslyDeleted(msgs: Seq[MessageData]) =
@@ -179,9 +177,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       }
     }
 
-  private def addContentMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] = {
-    verbose(l"SYNC addContentMessages($convId, ${msgs.map(_.id)})")
-
+  private def addContentMessages(convId: ConvId, msgs: Seq[MessageData]): Future[Set[MessageData]] =
     msgs.size match {
       case 0 =>
         Future.successful(Set.empty)
@@ -192,7 +188,6 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         val updaters = msgs.groupBy(_.id).map { case (id, data) => id -> Merger.messageDataMerger(data) }
         messagesStorage.updateOrCreateAll(updaters)
     }
-  }
 
   private[service] def addMessage(msg: MessageData): Future[Option[MessageData]] = addMessages(msg.convId, Seq(msg)).map(_.headOption)
 

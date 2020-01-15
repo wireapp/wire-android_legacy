@@ -116,19 +116,19 @@ class PushServiceImpl(selfUserId:           UserId,
 
   notificationStorage.registerEventHandler { () =>
     Serialized.future(PipelineKey) {
-      verbose(l"SYNC events processing started")
+      verbose(l"events processing started")
       val t = System.currentTimeMillis()
       for {
         _ <- Future.successful(processing ! true)
         _ <- processEncryptedRows()
         _ <- processDecryptedRows()
         _ <- Future.successful(processing ! false)
-        _ = verbose(l"SYNC events processing finished, time: ${System.currentTimeMillis() - t}ms")
+        _ = verbose(l"events processing finished, time: ${System.currentTimeMillis() - t}ms")
       } yield {}
     }.recover {
       case ex =>
         processing ! false
-        error(l"SYNC Unable to process events: $ex")
+        error(l"Unable to process events: $ex")
     }
   }
 
@@ -189,16 +189,14 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private val timeOffset = System.currentTimeMillis()
   @inline private def timePassed = System.currentTimeMillis() - timeOffset
-  verbose(l"SYNC PushService created with the time offset: $timeOffset")
 
   wsPushService.notifications { nots =>
-    verbose(l"SYNC notifications received: ${nots.size}")
     syncNotifications(StoreNotifications(nots))
   }
 
   wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){
     case source@WebSocketChange(true) =>
-      verbose(l"SYNC sync history due to web socket change")
+      verbose(l"sync history due to web socket change")
       syncNotifications(SyncHistory(source))
     case _ =>
   }
@@ -206,7 +204,6 @@ class PushServiceImpl(selfUserId:           UserId,
   private var fetchInProgress: Future[Unit] = Future.successful(())
 
   override def syncNotifications(syncMode: SyncMode): Future[Unit] = {
-    verbose(l"SYNC syncNotifications $syncMode")
     def fetch(syncMode: SyncMode) = syncMode match {
       case StoreNotifications(notifications) => storeNotifications(notifications)
       case SyncHistory(source, withRetries)  => syncHistory(source, withRetries)
@@ -218,7 +215,6 @@ class PushServiceImpl(selfUserId:           UserId,
 
   private def storeNotifications(nots: Seq[PushNotificationEncoded]): Future[Unit] =
     if (nots.nonEmpty) {
-      verbose(l"SYNC storeNotifications")
       for {
         _   <- fcmService.markNotificationsWithState(nots.map(_.id).toSet, Fetched)
         _   <- notificationStorage.saveAll(nots)

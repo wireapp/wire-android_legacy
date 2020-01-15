@@ -59,6 +59,7 @@ trait Preferences {
     Preference[A](this, key)
 
   protected def getValue[A: PrefCodec](key: PrefKey[A]): Future[A]
+
   def setValue[A: PrefCodec](key: PrefKey[A], value: A): Future[Unit]
 }
 
@@ -68,13 +69,12 @@ object Preferences {
 
     import Threading.Implicits.Background
 
-    def apply():          Future[A]    = prefs.getValue(key).map { v => verbose(l"Getting $key: value: ???")(prefs.logTag); v } //TODO get LogShow for type A
-    def update(value: A): Future[Unit] = {
-      verbose(l"Setting $key: value ???")(prefs.logTag) //TODO get LogShow for type A
-      prefs.setValue(key, value).map { _ => signal.publish(value, Threading.Background)}
-    }
+    def apply(): Future[A] = prefs.getValue(key)
 
-    def :=(value: A):      Future[Unit] = update(value)
+    def update(value: A): Future[Unit] = prefs.setValue(key, value).map { _ => signal.publish(value, Threading.Background) }
+    
+    def :=(value: A): Future[Unit] = update(value)
+
     def mutate(f: A => A): Future[Unit] = apply().flatMap(cur => update(f(cur)))
 
     def flatMutate(f: A => Future[A]) = apply().flatMap(cur => f(cur).flatMap(n => update(n)))
@@ -90,7 +90,9 @@ object Preferences {
 
     trait PrefCodec[A] {
       def encode(v: A): String
+
       def decode(str: String): A
+
       val default: A
     }
 
@@ -98,16 +100,19 @@ object Preferences {
     object PrefCodec {
       def apply[A](enc: A => String, dec: String => A, defaultVal: A): PrefCodec[A] = new PrefCodec[A] {
         override def encode(v: A): String = enc(v)
+
         override def decode(str: String): A = dec(str)
+
         override val default = defaultVal
       }
 
-      implicit lazy val StrCodec     = apply[String] (identity,       identity,                   "")
-      implicit lazy val IntCodec     = apply[Int]    (String.valueOf, java.lang.Integer.parseInt, 0)
-      implicit lazy val LongCodec    = apply[Long]   (String.valueOf, java.lang.Long.parseLong,   0)
+      implicit lazy val StrCodec = apply[String](identity, identity, "")
+      implicit lazy val IntCodec = apply[Int](String.valueOf, java.lang.Integer.parseInt, 0)
+      implicit lazy val LongCodec = apply[Long](String.valueOf, java.lang.Long.parseLong, 0)
       implicit lazy val BooleanCodec = apply[Boolean](String.valueOf, java.lang.Boolean.parseBoolean, false)
 
       implicit def idCodec[A: Id]: PrefCodec[A] = apply[A](implicitly[Id[A]].encode, implicitly[Id[A]].decode, implicitly[Id[A]].empty)
+
       implicit def optCodec[A: PrefCodec]: PrefCodec[Option[A]] = apply[Option[A]](_.fold("")(implicitly[PrefCodec[A]].encode), { str => if (str == "") None else Some(implicitly[PrefCodec[A]].decode(str)) }, None)
 
       implicit lazy val InstantCodec = apply[Instant](d => String.valueOf(d.toEpochMilli), s => Instant.ofEpochMilli(java.lang.Long.parseLong(s)), Instant.EPOCH)
@@ -122,11 +127,11 @@ object Preferences {
 
       implicit lazy val FiniteDurationCodec = apply[Option[FiniteDuration]](d => String.valueOf(d.getOrElse(0.millis).toMillis), parseFiniteDurationOpt, None)
 
-      implicit lazy val AuthTokenCodec = apply[Option[AccessToken]] (
+      implicit lazy val AuthTokenCodec = apply[Option[AccessToken]](
         { t => optCodec[String].encode(t map AccessToken.Encoder.apply map (_.toString)) },
         { s => optCodec[String].decode(s) map (new JSONObject(_)) map (AccessToken.Decoder.apply(_)) },
         None)
-      implicit lazy val AuthCookieCodec = apply[Cookie] (_.str, Cookie, Cookie(""))
+      implicit lazy val AuthCookieCodec = apply[Cookie](_.str, Cookie, Cookie(""))
 
       implicit lazy val SpotifyRefreshTokenCodec = apply[RefreshToken](_.str, RefreshToken, RefreshToken(""))
 
@@ -134,16 +139,17 @@ object Preferences {
       implicit lazy val IntensityLevelCodec = apply[IntensityLevel](_.toString, IntensityLevel.valueOf, IntensityLevel.FULL)
 
       import com.waz.service.AccountManager.ClientRegistrationState._
-      implicit lazy val SelfClientIdCodec = apply[ClientRegistrationState] ({
-        case Unregistered    => "Unregistered"
+
+      implicit lazy val SelfClientIdCodec = apply[ClientRegistrationState]({
+        case Unregistered => "Unregistered"
         case PasswordMissing => "PasswordMissing"
-        case LimitReached    => "LimitReached"
-        case Registered(id)  => id.str
+        case LimitReached => "LimitReached"
+        case Registered(id) => id.str
       }, {
-        case "Unregistered"    => Unregistered
+        case "Unregistered" => Unregistered
         case "PasswordMissing" => PasswordMissing
-        case "LimitReached"    => LimitReached
-        case id                => Registered(ClientId(id))
+        case "LimitReached" => LimitReached
+        case id => Registered(ClientId(id))
       }, Unregistered)
 
       implicit lazy val EmailAddressCodec = apply[EmailAddress](_.str, EmailAddress(_), EmailAddress(""))
@@ -154,6 +160,7 @@ object Preferences {
       implicit lazy val ConversationFoldersUiStateCodec = apply[Map[FolderId, Boolean]](ConversationFoldersUiState.encode, ConversationFoldersUiState.decode, Map.empty)
 
       object ConversationFoldersUiState extends CirceJSONSupport {
+
         import io.circe.{Decoder, Encoder, ObjectEncoder, parser}
 
         lazy val encoder: ObjectEncoder[Map[FolderId, Boolean]] = Encoder.encodeMap[FolderId, Boolean]
@@ -164,7 +171,9 @@ object Preferences {
         def decode(json: String): Map[FolderId, Boolean] =
           parser.decode(json)(decoder).right.toOption.getOrElse(Map.empty)
       }
+
     }
+
   }
 
   case class PrefKey[A: PrefCodec](str: String, customDefault: A = null.asInstanceOf[A]) {
@@ -172,6 +181,7 @@ object Preferences {
 
     override def toString = s"$str (def: $default)"
   }
+
 }
 
 
@@ -197,14 +207,14 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
 
     oldPrefFiles
       .map(_.getAll.asScala)
-      .foldLeft(Map.empty[String, Any]){ case (cur, i) => cur ++ i }
+      .foldLeft(Map.empty[String, Any]) { case (cur, i) => cur ++ i }
       .foreach {
         case (key, value) =>
           value match {
-            case v: String  => editor.putString(key, v)
+            case v: String => editor.putString(key, v)
             case v: Boolean => editor.putBoolean(key, v)
-            case v: Int     => editor.putInt(key, v)
-            case v: Long    => editor.putLong(key, v)
+            case v: Int => editor.putInt(key, v)
+            case v: Long => editor.putLong(key, v)
             case v => warn(l"Preference ${showString(key)} has unexpected type. Leaving out of migration")
           }
       }
@@ -221,10 +231,10 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
     val codec = implicitly[PrefCodec[A]]
     import PrefCodec._
     (codec match {
-      case IntCodec     => prefs.getInt    (key.str, key.default.asInstanceOf[Int])
+      case IntCodec => prefs.getInt(key.str, key.default.asInstanceOf[Int])
       case BooleanCodec => prefs.getBoolean(key.str, key.default.asInstanceOf[Boolean])
-      case LongCodec    => prefs.getLong   (key.str, key.default.asInstanceOf[Long])
-      case _            => Option(prefs.getString (key.str, null)).map(codec.decode).getOrElse(key.default)
+      case LongCodec => prefs.getLong(key.str, key.default.asInstanceOf[Long])
+      case _ => Option(prefs.getString(key.str, null)).map(codec.decode).getOrElse(key.default)
     }).asInstanceOf[A]
   }
 
@@ -233,7 +243,6 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
 
       //No need to update the signal. The SharedPreferences Listener will do this for us.
       override def update(value: A) = {
-        verbose(l"Setting $key, value: ???") //TODO get LogShow for type A
         setValue[A](key, value)
       }
 
@@ -264,10 +273,10 @@ class GlobalPreferences(context: Context, prefs: SharedPreferences) extends Pref
       val codec = implicitly[PrefCodec[A]]
       val editor = prefs.edit()
       codec match {
-        case IntCodec     => editor.putInt    (key.str, value.asInstanceOf[Int])
+        case IntCodec => editor.putInt(key.str, value.asInstanceOf[Int])
         case BooleanCodec => editor.putBoolean(key.str, value.asInstanceOf[Boolean])
-        case LongCodec    => editor.putLong   (key.str, value.asInstanceOf[Long])
-        case _            => editor.putString (key.str, codec.encode(value))
+        case LongCodec => editor.putLong(key.str, value.asInstanceOf[Long])
+        case _ => editor.putString(key.str, codec.encode(value))
       }
       editor.apply()
     }
@@ -316,9 +325,9 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
       verbose(l"migrating global prefs to user prefs: ${currentPrefs.map(showString)}")
       import UserPreferences._
 
-      val shareContacts = if (!currentPrefs.contains(ShareContacts.str))    setValue(ShareContacts,    gPrefs.getFromPref(GlobalPreferences._ShareContacts))    else Future.successful({})
-      val darKTheme     = if (!currentPrefs.contains(DarkTheme.str))        setValue(DarkTheme,        gPrefs.getFromPref(GlobalPreferences._DarkTheme))        else Future.successful({})
-      val sounds        =
+      val shareContacts = if (!currentPrefs.contains(ShareContacts.str)) setValue(ShareContacts, gPrefs.getFromPref(GlobalPreferences._ShareContacts)) else Future.successful({})
+      val darKTheme = if (!currentPrefs.contains(DarkTheme.str)) setValue(DarkTheme, gPrefs.getFromPref(GlobalPreferences._DarkTheme)) else Future.successful({})
+      val sounds =
         if (!currentPrefs.contains(Sounds.str)) {
           import IntensityLevel._
           val level = gPrefs.getFromPref(GlobalPreferences._SoundsPrefKey) match {
@@ -359,38 +368,38 @@ object GlobalPreferences {
     returning(new GlobalPreferences(context, context.getSharedPreferences("com.wire.preferences", Context.MODE_PRIVATE)))(_.migrate())
   }
 
-  lazy val LoggingInUser           = PrefKey[Option[UserInfo]]("logging_in_user") //only to be used during DB import
+  lazy val LoggingInUser = PrefKey[Option[UserInfo]]("logging_in_user") //only to be used during DB import
 
-  lazy val ActiveAccountPref       = PrefKey[Option[UserId]]("active_account")
-  lazy val CurrentAccountPrefOld   = PrefKey[Option[AccountId]]("CurrentUserPref")
+  lazy val ActiveAccountPref = PrefKey[Option[UserId]]("active_account")
+  lazy val CurrentAccountPrefOld = PrefKey[Option[AccountId]]("CurrentUserPref")
 
-  lazy val FirstTimeWithTeams      = PrefKey[Boolean]("first_time_with_teams", customDefault = true)
-  lazy val DatabasesRenamed        = PrefKey[Boolean]("databases_renamed", customDefault = false)
+  lazy val FirstTimeWithTeams = PrefKey[Boolean]("first_time_with_teams", customDefault = true)
+  lazy val DatabasesRenamed = PrefKey[Boolean]("databases_renamed", customDefault = false)
 
-  lazy val BackendDrift            = PrefKey[Duration]("backend_drift")
+  lazy val BackendDrift = PrefKey[Duration]("backend_drift")
 
   //TODO think of a nicer way of ensuring that these key values are used in UI - right now, we need to manually check they're correct
-  lazy val AutoAnswerCallPrefKey   = PrefKey[Boolean]("PREF_KEY_AUTO_ANSWER_ENABLED")
-  lazy val V31AssetsEnabledKey     = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")
-  lazy val WsForegroundKey         = PrefKey[Boolean]("websocket_foreground_service_enabled_1", customDefault = false)
-  lazy val CheckedForPlayServices  = PrefKey[Boolean]("checked_for_google_play_services", customDefault = false)
-  lazy val SkipTerminatingState    = PrefKey[Boolean]("skip_terminating_state") //for calling
+  lazy val AutoAnswerCallPrefKey = PrefKey[Boolean]("PREF_KEY_AUTO_ANSWER_ENABLED")
+  lazy val V31AssetsEnabledKey = PrefKey[Boolean]("PREF_V31_ASSETS_ENABLED")
+  lazy val WsForegroundKey = PrefKey[Boolean]("websocket_foreground_service_enabled_1", customDefault = false)
+  lazy val CheckedForPlayServices = PrefKey[Boolean]("checked_for_google_play_services", customDefault = false)
+  lazy val SkipTerminatingState = PrefKey[Boolean]("skip_terminating_state") //for calling
 
-  lazy val PushEnabledKey          = PrefKey[Boolean]("PUSH_ENABLED", customDefault = true)
-  lazy val PushToken               = PrefKey[Option[PushToken]]("PUSH_TOKEN")
+  lazy val PushEnabledKey = PrefKey[Boolean]("PUSH_ENABLED", customDefault = true)
+  lazy val PushToken = PrefKey[Option[PushToken]]("PUSH_TOKEN")
 
-  lazy val LastUpToDateSyncTime    = PrefKey[Long]   ("LastUpToDateSync")
-  lazy val LastCheckedVersion      = PrefKey[Int]    ("UpToDateVersion")
-  lazy val VersionUpToDate         = PrefKey[Boolean]("UpToDate", customDefault = true)
+  lazy val LastUpToDateSyncTime = PrefKey[Long]("LastUpToDateSync")
+  lazy val LastCheckedVersion = PrefKey[Int]("UpToDateVersion")
+  lazy val VersionUpToDate = PrefKey[Boolean]("UpToDate", customDefault = true)
 
-  lazy val LastCacheCleanup        = PrefKey[Long]("LastCacheCleanup")
+  lazy val LastCacheCleanup = PrefKey[Long]("LastCacheCleanup")
 
   lazy val GPSErrorDialogShowCount = PrefKey[Int]("PREF_PLAY_SERVICES_ERROR_SHOW_COUNT")
 
-  lazy val AnalyticsEnabled           = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = false)
+  lazy val AnalyticsEnabled = PrefKey[Boolean]("PREF_KEY_PRIVACY_ANALYTICS_ENABLED", customDefault = false)
   lazy val ShowMarketingConsentDialog = PrefKey[Boolean]("show_marketing_consent_dialog", customDefault = true) //can be set to false by automation
 
-  lazy val LastEphemeralValue      = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
+  lazy val LastEphemeralValue = PrefKey[Option[FiniteDuration]]("last_ephemeral_value", customDefault = None)
 
   lazy val ShouldCreateFullConversation = PrefKey[Boolean]("should_create_full_conv", customDefault = false)
 
@@ -403,10 +412,10 @@ object GlobalPreferences {
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
-  lazy val _ShareContacts          = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
-  lazy val _DarkTheme              = PrefKey[Boolean]("DarkTheme")
-  lazy val _SoundsPrefKey          = PrefKey[String] ("PREF_KEY_SOUND")
-  lazy val _DownloadImages         = PrefKey[String]("zms_pref_image_download")
+  lazy val _ShareContacts = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
+  lazy val _DarkTheme = PrefKey[Boolean]("DarkTheme")
+  lazy val _SoundsPrefKey = PrefKey[String]("PREF_KEY_SOUND")
+  lazy val _DownloadImages = PrefKey[String]("zms_pref_image_download")
 
 }
 
@@ -415,77 +424,77 @@ object UserPreferences {
   def apply(context: Context, storage: ZmsDatabase, globalPreferences: GlobalPreferences) =
     returning(new UserPreferences(context, storage))(_.migrate(globalPreferences))
 
-  lazy val IsLogin                          = PrefKey[Boolean]("is_login")
-  lazy val IsNewClient                      = PrefKey[Boolean]("is_new_client")
+  lazy val IsLogin = PrefKey[Boolean]("is_login")
+  lazy val IsNewClient = PrefKey[Boolean]("is_new_client")
 
-  lazy val CrashesAndAnalyticsRequestShown  = PrefKey[Boolean]("usage_data_permissions_shown", customDefault = true) //true to avoid harassing existing users
-  lazy val AskMarketingConsentAgain         = PrefKey[Boolean]("ask_marketing_consent_again") //used if the user views privacy policy instead of giving consent
+  lazy val CrashesAndAnalyticsRequestShown = PrefKey[Boolean]("usage_data_permissions_shown", customDefault = true) //true to avoid harassing existing users
+  lazy val AskMarketingConsentAgain = PrefKey[Boolean]("ask_marketing_consent_again") //used if the user views privacy policy instead of giving consent
 
-  lazy val SelfClient                       = PrefKey[ClientRegistrationState]("self_client")
-  lazy val PrivateMode                      = PrefKey[Boolean]("private_mode")
-  lazy val SelfPermissions                  = PrefKey[Long]("self_permissions")
-  lazy val CopyPermissions                  = PrefKey[Long]("copy_permissions")
+  lazy val SelfClient = PrefKey[ClientRegistrationState]("self_client")
+  lazy val PrivateMode = PrefKey[Boolean]("private_mode")
+  lazy val SelfPermissions = PrefKey[Long]("self_permissions")
+  lazy val CopyPermissions = PrefKey[Long]("copy_permissions")
 
-  lazy val PendingEmail                     = PrefKey[Option[EmailAddress]]("pending_email")
-  lazy val PendingPassword                  = PrefKey[Boolean]("pending_password") //true if the user needs to set a password
-  lazy val PendingPhone                     = PrefKey[Option[PhoneNumber]]("pending_phone")
+  lazy val PendingEmail = PrefKey[Option[EmailAddress]]("pending_email")
+  lazy val PendingPassword = PrefKey[Boolean]("pending_password") //true if the user needs to set a password
+  lazy val PendingPhone = PrefKey[Option[PhoneNumber]]("pending_phone")
 
-  lazy val ShareContacts                    = PrefKey[Boolean]       ("share_contacts")
-  lazy val ShowShareContacts                = PrefKey[Boolean]       ("show_share_contacts", customDefault = true) //whether to ask for permission or not
-  lazy val DarkTheme                        = PrefKey[Boolean]       ("dark_theme")
-  lazy val Sounds                           = PrefKey[IntensityLevel]("sounds")
-  lazy val DownloadImagesAlways             = PrefKey[Boolean]       ("download_images_always", customDefault = true)
+  lazy val ShareContacts = PrefKey[Boolean]("share_contacts")
+  lazy val ShowShareContacts = PrefKey[Boolean]("show_share_contacts", customDefault = true) //whether to ask for permission or not
+  lazy val DarkTheme = PrefKey[Boolean]("dark_theme")
+  lazy val Sounds = PrefKey[IntensityLevel]("sounds")
+  lazy val DownloadImagesAlways = PrefKey[Boolean]("download_images_always", customDefault = true)
 
-  lazy val SelectedConvId                   = PrefKey[Option[ConvId]]      ("selected_conv_id")
-  lazy val SpotifyRefreshToken              = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
+  lazy val SelectedConvId = PrefKey[Option[ConvId]]("selected_conv_id")
+  lazy val SpotifyRefreshToken = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
 
-  lazy val OtrLastPrekey                    = PrefKey[Int]        ("otr_last_prekey_id")
-  lazy val LastStableNotification           = PrefKey[Option[Uid]]("last_notification_id")
+  lazy val OtrLastPrekey = PrefKey[Int]("otr_last_prekey_id")
+  lazy val LastStableNotification = PrefKey[Option[Uid]]("last_notification_id")
 
   lazy val LastSelfClientsSyncRequestedTime = PrefKey[Long]("last_self_clients_sync_requested")
 
-  lazy val LastReceivedConvEvent            = PrefKey[Instant]("last_received_conv_event_time")
-  lazy val LastFetchedConvEvent             = PrefKey[Instant]("last_fetched_conv_event_time", customDefault = Instant.ofEpochMilli(1))
-  lazy val LastFetchedConvEventLocal        = PrefKey[Instant]("last_fetched_local_time")
-  lazy val GcmRegistrationTime              = PrefKey[Instant]("gcm_registration_time")
-  lazy val GcmRegistrationRetry             = PrefKey[Int]    ("gcm_registration_retry_count")
+  lazy val LastReceivedConvEvent = PrefKey[Instant]("last_received_conv_event_time")
+  lazy val LastFetchedConvEvent = PrefKey[Instant]("last_fetched_conv_event_time", customDefault = Instant.ofEpochMilli(1))
+  lazy val LastFetchedConvEventLocal = PrefKey[Instant]("last_fetched_local_time")
+  lazy val GcmRegistrationTime = PrefKey[Instant]("gcm_registration_time")
+  lazy val GcmRegistrationRetry = PrefKey[Int]("gcm_registration_retry_count")
 
-  lazy val AddressBookVersion               = PrefKey[Option[Int]]    ("address_book_version_of_last_upload")
-  lazy val AddressBookLastUpload            = PrefKey[Option[Instant]]("address_book_last_upload_time")
+  lazy val AddressBookVersion = PrefKey[Option[Int]]("address_book_version_of_last_upload")
+  lazy val AddressBookLastUpload = PrefKey[Option[Instant]]("address_book_last_upload_time")
 
-  lazy val RingTone                         = PrefKey[String]("ringtone_key")
-  lazy val TextTone                         = PrefKey[String]("text_key")
-  lazy val PingTone                         = PrefKey[String]("ping_key")
+  lazy val RingTone = PrefKey[String]("ringtone_key")
+  lazy val TextTone = PrefKey[String]("text_key")
+  lazy val PingTone = PrefKey[String]("ping_key")
 
-  lazy val VBREnabled                       = PrefKey[Boolean]("variable_bit_rate_enabled", customDefault = true)
-  lazy val VibrateEnabled                   = PrefKey[Boolean]("vibrate_enabled")
-  lazy val SendButtonEnabled                = PrefKey[Boolean]("send_button_enabled", customDefault = true)
-  lazy val MessagePreview                   = PrefKey[Boolean]("message_previews_enabled", customDefault = true)
-  lazy val HideScreenContent                = PrefKey[Boolean]("hide_screen_content", customDefault = false)
+  lazy val VBREnabled = PrefKey[Boolean]("variable_bit_rate_enabled", customDefault = true)
+  lazy val VibrateEnabled = PrefKey[Boolean]("vibrate_enabled")
+  lazy val SendButtonEnabled = PrefKey[Boolean]("send_button_enabled", customDefault = true)
+  lazy val MessagePreview = PrefKey[Boolean]("message_previews_enabled", customDefault = true)
+  lazy val HideScreenContent = PrefKey[Boolean]("hide_screen_content", customDefault = false)
 
-  lazy val CurrentNotifications             = PrefKey[Set[Int]]("current_notifications", customDefault = Set.empty[Int])
+  lazy val CurrentNotifications = PrefKey[Set[Int]]("current_notifications", customDefault = Set.empty[Int])
 
   //increment number to perform slow sync on particular type
-  lazy val ShouldSyncConversations          = PrefKey[Boolean]("should_sync_conversations_2", customDefault = true)
-  lazy val ShouldSyncInitial                = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
-  lazy val ShouldSyncUsers                  = PrefKey[Boolean]("should_sync_users_1", customDefault = true)
-  lazy val ShouldSyncTeam                   = PrefKey[Boolean]("should_sync_team_1", customDefault = true)
-  lazy val ShouldSyncFolders                = PrefKey[Boolean]("should_sync_folders", customDefault = true)
+  lazy val ShouldSyncConversations = PrefKey[Boolean]("should_sync_conversations_2", customDefault = true)
+  lazy val ShouldSyncInitial = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
+  lazy val ShouldSyncUsers = PrefKey[Boolean]("should_sync_users_1", customDefault = true)
+  lazy val ShouldSyncTeam = PrefKey[Boolean]("should_sync_team_1", customDefault = true)
+  lazy val ShouldSyncFolders = PrefKey[Boolean]("should_sync_folders", customDefault = true)
 
   // fix for duplicated entries in the database, left there by a bug from an old version of the app
-  lazy val FixDuplicatedConversations       = PrefKey[Boolean]("fix_duplicated_conversations", customDefault = true)
+  lazy val FixDuplicatedConversations = PrefKey[Boolean]("fix_duplicated_conversations", customDefault = true)
 
-  lazy val CheckMutedStatus                 = PrefKey[Boolean]("check_muted_status", customDefault = true)
+  lazy val CheckMutedStatus = PrefKey[Boolean]("check_muted_status", customDefault = true)
 
-  lazy val ReadReceiptsRemotelyChanged      = PrefKey[Boolean]("read_receipts_remotely_changed", customDefault = false)
+  lazy val ReadReceiptsRemotelyChanged = PrefKey[Boolean]("read_receipts_remotely_changed", customDefault = false)
 
-  lazy val StatusNotificationsBitmask       = PrefKey[Int]("status_notifications_bitmask", customDefault = 0)
-  lazy val ShouldWarnStatusNotifications    = PrefKey[Boolean]( "should_warn_status_notifications", customDefault = true)
+  lazy val StatusNotificationsBitmask = PrefKey[Int]("status_notifications_bitmask", customDefault = 0)
+  lazy val ShouldWarnStatusNotifications = PrefKey[Boolean]("should_warn_status_notifications", customDefault = true)
 
-  lazy val AskedForLocationPermission       = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
+  lazy val AskedForLocationPermission = PrefKey[Boolean]("asked_for_location_permission", customDefault = false)
 
-  lazy val ConversationListType             = PrefKey[Int]("conversation_list_type", customDefault = -1)
-  lazy val ConversationFoldersUiState       = PrefKey[Map[FolderId, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
+  lazy val ConversationListType = PrefKey[Int]("conversation_list_type", customDefault = -1)
+  lazy val ConversationFoldersUiState = PrefKey[Map[FolderId, Boolean]]("conversation_folders_ui_state", customDefault = Map.empty)
 
-  lazy val FailedPasswordAttempts           = PrefKey[Int]("failed_password_attempts", customDefault = 0)
+  lazy val FailedPasswordAttempts = PrefKey[Int]("failed_password_attempts", customDefault = 0)
 }
