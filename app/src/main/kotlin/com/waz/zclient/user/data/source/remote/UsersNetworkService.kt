@@ -16,6 +16,8 @@ interface UsersNetworkService {
         private const val EMAIL = "/email"
         private const val HANDLE = "/handle"
         private const val NAME = "/name"
+        private const val USERS = "/users"
+        private const val HANDLES = "/handles"
     }
 
     @GET(SELF)
@@ -33,7 +35,7 @@ interface UsersNetworkService {
     @PUT("$SELF$PHONE")
     suspend fun changePhone(@Body phone: ChangePhoneRequest): Response<Unit>
 
-    @GET("/users/handles/{newHandle}")
+    @GET("$USERS$HANDLES/{newHandle}")
     suspend fun doesHandleExist(@Path("handle") newHandle: String): Response<Boolean>
 
 }

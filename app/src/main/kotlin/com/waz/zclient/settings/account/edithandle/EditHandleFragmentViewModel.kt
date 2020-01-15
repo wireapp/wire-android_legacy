@@ -24,16 +24,16 @@ class EditHandleFragmentViewModel(
 
     private var previousInput: String = String.empty()
 
-    private val handle: LiveData<String>
+    val handle: LiveData<String>
         get() = mutableHandle
 
-    private val error: LiveData<ValidateHandleError>
+    val error: LiveData<ValidateHandleError>
         get() = mutableError
 
-    private val okEnabled: LiveData<Boolean>
+    val okEnabled: LiveData<Boolean>
         get() = mutableOkEnabled
 
-    private val dismiss: LiveData<Unit>
+    val dismiss: LiveData<Unit>
         get() = mutableDismiss
 
     fun beforeHandleTextChanged(oldHandle: String) {
