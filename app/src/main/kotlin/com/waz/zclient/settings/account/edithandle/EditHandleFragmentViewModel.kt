@@ -20,6 +20,8 @@ class EditHandleFragmentViewModel(
     private var mutableHandle = MutableLiveData<String>()
     private var mutableError = MutableLiveData<ValidateHandleError>()
     private var mutableOkEnabled = MutableLiveData<Boolean>()
+    private var mutableDismiss = MutableLiveData<Unit>()
+
     private var previousInput: String = String.empty()
 
     private val handle: LiveData<String>
@@ -30,6 +32,9 @@ class EditHandleFragmentViewModel(
 
     private val okEnabled: LiveData<Boolean>
         get() = mutableOkEnabled
+
+    private val dismiss: LiveData<Unit>
+        get() = mutableDismiss
 
     fun beforeHandleTextChanged(oldHandle: String) {
         validateHandleUseCase(viewModelScope, ValidateHandleParams(oldHandle)) {
@@ -57,6 +62,26 @@ class EditHandleFragmentViewModel(
 
     private fun handleValidationSuccess(validatedHandle: String) {
         mutableOkEnabled.postValue(true)
+        mutableHandle.postValue(validatedHandle)
+    }
+
+    fun onOkButtonClicked(handleInput: String) {
+        validateHandleUseCase(viewModelScope, ValidateHandleParams(handleInput)) {
+            it.fold(::handleFailure, ::updateHandle)
+        }
+    }
+
+    fun onBackButtonClicked(suggestedHandle: String?, isDialogCancelable: Boolean) {
+        if (!isDialogCancelable && !suggestedHandle.isNullOrEmpty()) {
+            updateHandle(suggestedHandle)
+        }
+        mutableDismiss.postValue(Unit)
+    }
+
+    private fun updateHandle(handle: String) {
+        changeHandleUseCase(viewModelScope, ChangeHandleParams(handle)) {
+            it.fold({ handleFailure(HandleUnknownError) }, { mutableDismiss.postValue(Unit) })
+        }
     }
 
     private fun handleFailure(failure: Failure) {
@@ -71,13 +96,5 @@ class EditHandleFragmentViewModel(
         }
     }
 
-    fun onOkButtonClicked(handleInput: String) {
 
-    }
-
-    fun onBackButtonClicked(suggestedHandle: String?, isDialogCancelable: Boolean) {
-        if (!isDialogCancelable && !suggestedHandle.isNullOrEmpty()) {
-            changeHandleUseCase(viewModelScope, ChangeHandleParams(suggestedHandle))
-        }
-    }
 }
