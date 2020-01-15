@@ -5,7 +5,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.usecase.handle.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -15,15 +14,13 @@ import kotlinx.coroutines.InternalCoroutinesApi
 class EditHandleViewModel(
     private val checkHandleExistsUseCase: CheckHandleExistsUseCase,
     private val changeHandleUseCase: ChangeHandleUseCase,
-    private val retrieveHandleUseCase: GetHandleUseCase,
+    private val getHandleUseCase: GetHandleUseCase,
     private val validateHandleUseCase: ValidateHandleUseCase) : ViewModel() {
 
     private var mutableHandle = MutableLiveData<String>()
     private var mutableError = MutableLiveData<ValidateHandleError>()
     private var mutableOkEnabled = MutableLiveData<Boolean>()
     private var mutableDismiss = MutableLiveData<Unit>()
-
-    private var previousInput: String = String.empty()
 
     val handle: LiveData<String>
         get() = mutableHandle
@@ -39,31 +36,22 @@ class EditHandleViewModel(
 
     fun beforeHandleTextChanged(oldHandle: String) {
         validateHandleUseCase(viewModelScope, ValidateHandleParams(oldHandle)) {
-            it.fold({ failure -> if (failure != HandleInvalidError) previousInput = oldHandle }) {}
+            it.fold({ failure -> if (failure != HandleInvalidError) mutableHandle.postValue(oldHandle) }) {}
         }
     }
 
     fun afterHandleTextChanged(newHandle: String) {
-        retrieveHandleUseCase(viewModelScope, Unit) {
+        getHandleUseCase(viewModelScope, Unit) {
             it.fold(::handleFailure) { currentHandle -> handleRetrievalSuccess(currentHandle, newHandle) }
         }
     }
 
     private fun handleRetrievalSuccess(currentHandle: String, newHandle: String) {
         if (!currentHandle.equals(newHandle, ignoreCase = true)) {
-            validateHandle(newHandle)
+            checkHandleExistsUseCase(viewModelScope, CheckHandleExistsParams(currentHandle)) {
+                it.fold(::handleFailure) { validateHandle(currentHandle) }
+            }
         }
-    }
-
-    private fun validateHandle(newHandle: String) {
-        validateHandleUseCase(viewModelScope, ValidateHandleParams(newHandle)) {
-            it.fold(::handleFailure, ::handleValidationSuccess)
-        }
-    }
-
-    private fun handleValidationSuccess(validatedHandle: String) {
-        mutableOkEnabled.postValue(true)
-        mutableHandle.postValue(validatedHandle)
     }
 
     fun onOkButtonClicked(handleInput: String) {
@@ -79,6 +67,17 @@ class EditHandleViewModel(
         mutableDismiss.postValue(Unit)
     }
 
+    private fun validateHandle(newHandle: String) {
+        validateHandleUseCase(viewModelScope, ValidateHandleParams(newHandle)) {
+            it.fold(::handleFailure, ::handleValidationSuccess)
+        }
+    }
+
+    private fun handleValidationSuccess(validatedHandle: String) {
+        mutableOkEnabled.postValue(true)
+        mutableHandle.postValue(validatedHandle)
+    }
+
     private fun updateHandle(handle: String) {
         changeHandleUseCase(viewModelScope, ChangeHandleParams(handle)) {
             it.fold({ handleFailure(HandleUnknownError) }, { mutableDismiss.postValue(Unit) })
@@ -88,9 +87,6 @@ class EditHandleViewModel(
     private fun handleFailure(failure: Failure) {
         mutableOkEnabled.postValue(false)
         when (failure) {
-            is HandleInvalidError, is HandleTooLongError -> {
-                mutableHandle.postValue(previousInput)
-            }
             is HandleUnknownError, is HandleExistsAlreadyError -> {
                 mutableError.postValue(failure as ValidateHandleError)
             }

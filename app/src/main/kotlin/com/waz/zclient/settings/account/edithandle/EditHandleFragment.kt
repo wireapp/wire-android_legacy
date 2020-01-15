@@ -35,6 +35,7 @@ class EditHandleFragment : DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
+        isCancelable = false
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
@@ -46,8 +47,6 @@ class EditHandleFragment : DialogFragment() {
         initBackButton()
         initOkButton()
         initHandleInput()
-
-        isCancelable = false
     }
 
     private fun initHandleInput() {
