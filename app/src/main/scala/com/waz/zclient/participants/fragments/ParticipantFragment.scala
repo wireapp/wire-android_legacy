@@ -28,7 +28,7 @@ import com.waz.model.otr.ClientId
 import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.connect.{PendingConnectRequestFragment, SendConnectRequestFragment}
+import com.waz.zclient.connect.PendingConnectRequestFragment
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
@@ -48,7 +48,6 @@ import scala.concurrent.Future
 
 class ParticipantFragment extends ManagerFragment
   with ConversationScreenControllerObserver
-  with SendConnectRequestFragment.Container
   with BlockedUserProfileFragment.Container
   with PendingConnectRequestFragment.Container {
 
@@ -254,7 +253,7 @@ class ParticipantFragment extends ManagerFragment
         openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
-        import com.waz.zclient.connect.SendConnectRequestFragment._
+        import SendConnectRequestFragment._
         openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
       case _ =>
     }
@@ -284,8 +283,6 @@ class ParticipantFragment extends ManagerFragment
     verbose(l"onUnblockedUser $restoredConversationWithUser")
     convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
   }
-
-  override def onConnectRequestWasSentToUser(): Unit = screenController.hideUser()
 
   override def onHideOtrClient(): Unit = getChildFragmentManager.popBackStack()
 

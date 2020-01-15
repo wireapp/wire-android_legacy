@@ -50,8 +50,8 @@ final class SingleParticipantAdapter(userId: UserId,
     this.fields          = fields
     this.timerText       = timerText
     this.readReceipts    = readReceipts
-    this.participantRole = participantRole
-    this.selfRole        = selfRole
+    this.participantRole = Some(participantRole)
+    this.selfRole        = Some(selfRole)
     notifyDataSetChanged()
   }
 
