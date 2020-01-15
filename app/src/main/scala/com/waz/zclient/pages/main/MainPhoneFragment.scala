@@ -214,7 +214,7 @@ class MainPhoneFragment extends FragmentHelper
     //Only for internal builds for now, will be for production when approved by QA.
     if (Build.VERSION.SDK_INT > 25 && BuildConfig.FLAVOR.equals("internal")) {
       val shortcuts = new Shortcuts()
-      val shortcutManager = getActivity.getSystemService(classOf[ShortcutManager])
+      val shortcutManager = inject[ShortcutManager]
 
       val intent = MainActivity.newIntent(getActivity)
       val newMessageShortcutInfo = shortcuts.newMessageShortcut(getActivity, intent)
