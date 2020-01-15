@@ -7,15 +7,24 @@ import com.waz.zclient.core.usecase.UseCase
 class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
 
     override suspend fun run(params: ValidateHandleParams): Either<Failure, String> =
-        if (!params.newHandle.matches(HANDLE_REGEX)) {
+        if (!handleCharactersValid(params.newHandle)) {
             Either.Left(HandleInvalidError)
         } else {
             when {
-                params.newHandle.length > HANDLE_MAX_LENGTH -> Either.Left(HandleTooLongError)
-                params.newHandle.length < HANDLE_MIN_LENGTH -> Either.Left(HandleTooShortError)
+                isHandleTooLong(params.newHandle) -> Either.Left(HandleTooLongError)
+                isHandleTooShort(params.newHandle) -> Either.Left(HandleTooShortError)
                 else -> Either.Right(params.newHandle)
             }
         }
+
+    private fun handleCharactersValid(handle: String) =
+        handle.matches(HANDLE_REGEX)
+
+    private fun isHandleTooLong(handle: String) =
+        handle.length > HANDLE_MAX_LENGTH
+
+    private fun isHandleTooShort(handle: String) =
+        handle.length < HANDLE_MIN_LENGTH
 
     companion object {
         private const val HANDLE_MAX_LENGTH = 21

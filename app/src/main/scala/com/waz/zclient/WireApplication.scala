@@ -22,7 +22,6 @@ import java.net.{InetSocketAddress, Proxy}
 import java.util.Calendar
 
 import android.app.{Activity, ActivityManager, NotificationManager}
-import android.content.pm.ShortcutManager
 import android.content.{Context, ContextWrapper}
 import android.hardware.SensorManager
 import android.media.AudioManager
@@ -130,7 +129,6 @@ object WireApplication extends DerivedLogTag {
     bind [AudioManager]         to ctx.getSystemService(Context.AUDIO_SERVICE).asInstanceOf[AudioManager]
     bind [SensorManager]        to ctx.getSystemService(Context.SENSOR_SERVICE).asInstanceOf[SensorManager]
     bind [NotificationManager]  to ctx.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
-    bind [ShortcutManager]      to ctx.getSystemService(Context.SHORTCUT_SERVICE).asInstanceOf[ShortcutManager]
     bind [TelephonyManager]     to ctx.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
     bind [RenderScript]         to RenderScript.create(ctx)
 

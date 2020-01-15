@@ -12,7 +12,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class EditHandleFragmentViewModel(
+class EditHandleViewModel(
     private val checkHandleExistsUseCase: CheckHandleExistsUseCase,
     private val changeHandleUseCase: ChangeHandleUseCase,
     private val retrieveHandleUseCase: GetHandleUseCase,
