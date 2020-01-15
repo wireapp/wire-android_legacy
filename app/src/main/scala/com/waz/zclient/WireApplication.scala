@@ -130,7 +130,6 @@ object WireApplication extends DerivedLogTag {
     bind [AudioManager]         to ctx.getSystemService(Context.AUDIO_SERVICE).asInstanceOf[AudioManager]
     bind [SensorManager]        to ctx.getSystemService(Context.SENSOR_SERVICE).asInstanceOf[SensorManager]
     bind [NotificationManager]  to ctx.getSystemService(Context.NOTIFICATION_SERVICE).asInstanceOf[NotificationManager]
-    bind [ShortcutManager]      to ctx.getSystemService(Context.SHORTCUT_SERVICE).asInstanceOf[ShortcutManager]
     bind [TelephonyManager]     to ctx.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
     bind [RenderScript]         to RenderScript.create(ctx)
 
