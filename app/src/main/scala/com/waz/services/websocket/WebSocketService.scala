@@ -58,7 +58,7 @@ class WebSocketController(implicit inj: Injector) extends Injectable with Derive
 
   lazy val serviceInForeground: Signal[Boolean] =
     for {
-      uiActive <- global.lifecycle.uiActive
+      uiActive       <- global.lifecycle.uiActive
       (zmsWithWS, _) <- accountWebsocketStates
     } yield !uiActive && zmsWithWS.nonEmpty
 
