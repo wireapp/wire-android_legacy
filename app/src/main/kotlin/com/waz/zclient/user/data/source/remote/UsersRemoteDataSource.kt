@@ -24,7 +24,7 @@ class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNe
 
     suspend fun changePhone(phone: String): Either<Failure, Any> = requestApi { usersNetworkService.changePhone(ChangePhoneRequest(phone)) }
 
-    suspend fun doesHandleExist(newHandle: String): Either<ValidateHandleError, ValidateHandleSuccess> =
+    suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
         when (usersNetworkService.doesHandleExist(newHandle).code()) {
             HANDLE_TAKEN -> Either.Left(HandleExistsAlreadyError)
             HANDLE_INVALID -> Either.Left(HandleInvalidError)

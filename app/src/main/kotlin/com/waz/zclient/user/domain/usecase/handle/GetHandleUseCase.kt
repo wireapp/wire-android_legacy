@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-class RetrieveHandleUseCase(private val userRepository: UsersRepository) : ObservableUseCase<String, Unit>() {
+class GetHandleUseCase(private val userRepository: UsersRepository) : ObservableUseCase<String, Unit>() {
 
     override suspend fun run(params: Unit): Flow<String> = flow {
         userRepository.profileDetails().map {

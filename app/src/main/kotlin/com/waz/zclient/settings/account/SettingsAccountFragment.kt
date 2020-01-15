@@ -65,7 +65,9 @@ class SettingsAccountFragment : Fragment() {
     private fun initAccountHandle() {
         settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
         preferences_account_handle.setOnClickListener {
-            showEditHandleDialog { settingsAccountViewModel.updateHandle(it) }
+            val title = getString(R.string.pref_account_username_title)
+            val defaultValue = preferences_account_handle_title.text.toString()
+            showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updateHandle(it) }
         }
     }
 
@@ -126,6 +128,7 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
+    //TODO will be used in part 2.
     private fun showEditHandleDialog(updateHandle: (String) -> Unit) {
         settingsAccountViewModel.handle.value?.let {
             EditHandleFragment.newInstance(it, object : EditHandleFragment.HandleChangedListener {

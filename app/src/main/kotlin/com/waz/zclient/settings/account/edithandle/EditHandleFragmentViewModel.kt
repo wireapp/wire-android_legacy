@@ -13,8 +13,9 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class EditHandleFragmentViewModel(
+    private val checkHandleExistsUseCase: CheckHandleExistsUseCase,
     private val changeHandleUseCase: ChangeHandleUseCase,
-    private val retrieveHandleUseCase: RetrieveHandleUseCase,
+    private val retrieveHandleUseCase: GetHandleUseCase,
     private val validateHandleUseCase: ValidateHandleUseCase) : ViewModel() {
 
     private var mutableHandle = MutableLiveData<String>()
