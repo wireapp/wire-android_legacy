@@ -132,7 +132,7 @@ class SettingsAccountFragment : Fragment() {
                 override fun onHandleChanged(handle: String) {
                     updateHandle(handle)
                 }
-            })
+            }).show(requireActivity().supportFragmentManager, String.empty())
         }
     }
 
