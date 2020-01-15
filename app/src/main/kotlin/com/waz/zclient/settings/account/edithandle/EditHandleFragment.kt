@@ -1,12 +1,12 @@
 package com.waz.zclient.settings.account.edithandle
 
 import android.os.Bundle
+import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
-import com.waz.zclient.core.extension.textChanged
 import com.waz.zclient.core.extension.withArgs
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,9 +35,15 @@ class EditHandleFragment : DialogFragment() {
     }
 
     private fun initListeners() {
-        edit_handle_edit_text.textChanged(
-            beforeFunc = { handle -> editHandleViewModel.beforeHandleTextChanged(handle) },
-            afterFunc = { handle -> editHandleViewModel.afterHandleTextChanged(handle) })
+        edit_handle_edit_text.addTextChangedListener(object : HandleTextChangedListener {
+            override fun afterTextChanged(s: Editable?) {
+                editHandleViewModel.afterHandleTextChanged(s.toString())
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                editHandleViewModel.beforeHandleTextChanged(s.toString())
+            }
+        })
 
         edit_handle_ok_button.setOnClickListener {
             editHandleViewModel.onOkButtonClicked(edit_handle_edit_text.text.toString())
