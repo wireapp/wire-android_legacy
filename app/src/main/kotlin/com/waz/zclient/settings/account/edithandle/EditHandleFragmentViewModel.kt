@@ -61,7 +61,14 @@ class EditHandleFragmentViewModel(
 
     private fun handleFailure(failure: Failure) {
         mutableOkEnabled.postValue(false)
-
+        when (failure) {
+            is HandleInvalidError, is HandleTooLongError -> {
+                mutableHandle.postValue(previousInput)
+            }
+            is HandleUnknownError, is HandleExistsAlreadyError -> {
+                mutableError.postValue(failure as ValidateHandleError)
+            }
+        }
     }
 
     fun onOkButtonClicked(handleInput: String) {

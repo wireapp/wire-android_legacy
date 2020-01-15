@@ -28,6 +28,7 @@ class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNe
         when (usersNetworkService.doesHandleExist(newHandle).code()) {
             HANDLE_TAKEN -> Either.Left(HandleExistsAlreadyError)
             HANDLE_INVALID -> Either.Left(HandleInvalidError)
-            else -> Either.Right(HandleIsAvailable)
+            HANDLE_AVAILABLE -> Either.Right(HandleIsAvailable)
+            else -> Either.Left(HandleUnknownError)
         }
 }
