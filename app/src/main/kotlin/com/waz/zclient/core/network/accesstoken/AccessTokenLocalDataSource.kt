@@ -14,35 +14,28 @@ class AccessTokenLocalDataSource(private val userPreferences: UserPreferences) {
 
     private val activeUserPrefs get() = userPreferences.current()
 
-    fun accessToken(): AccessTokenPreference? = readAccessToken()
+    fun accessToken(): AccessTokenPreference? =
+        readItem(KEY_ACCESS_TOKEN, AccessTokenPreference::class.java)
 
-    fun updateAccessToken(newToken: AccessTokenPreference) = writeAccessToken(newToken)
+    fun updateAccessToken(newToken: AccessTokenPreference) =
+        writeItem(KEY_ACCESS_TOKEN, newToken, AccessTokenPreference::class.java)
 
-    fun refreshToken(): RefreshTokenPreference? = readRefreshToken()
+    fun refreshToken(): RefreshTokenPreference? =
+        readItem(KEY_REFRESH_TOKEN, RefreshTokenPreference::class.java)
 
-    fun updateRefreshToken(newRefreshToken: RefreshTokenPreference) = writeRefreshToken(newRefreshToken)
+    fun updateRefreshToken(newRefreshToken: RefreshTokenPreference) =
+        writeItem(KEY_REFRESH_TOKEN, newRefreshToken, RefreshTokenPreference::class.java)
 
     fun wipeOutAccessToken() = activeUserPrefs.remove(KEY_ACCESS_TOKEN)
 
     fun wipeOutRefreshToken() = activeUserPrefs.remove(KEY_REFRESH_TOKEN)
 
-    private fun writeAccessToken(accessToken: AccessTokenPreference) = activeUserPrefs.putString(
-        KEY_ACCESS_TOKEN,
-        Gson().toJson(accessToken, AccessTokenPreference::class.java)
-    )
+    //TODO: might move into a util
+    private fun <T> writeItem(key: String, item: T, itemClass: Class<T>) =
+        activeUserPrefs.putString(key, Gson().toJson(item, itemClass))
 
-    private fun readAccessToken(): AccessTokenPreference? =
-        activeUserPrefs.getString(KEY_ACCESS_TOKEN, null)?.let {
-            Gson().fromJson(it, AccessTokenPreference::class.java)
-        }
-
-    private fun writeRefreshToken(preference: RefreshTokenPreference) = activeUserPrefs.putString(
-        KEY_REFRESH_TOKEN,
-        Gson().toJson(preference, RefreshTokenPreference::class.java)
-    )
-
-    private fun readRefreshToken(): RefreshTokenPreference? =
-        activeUserPrefs.getString(KEY_REFRESH_TOKEN, null)?.let {
-            Gson().fromJson(it, RefreshTokenPreference::class.java)
+    private fun <T> readItem(key: String, itemClass: Class<T>): T? =
+        activeUserPrefs.getString(key, null)?.let {
+            Gson().fromJson(it, itemClass)
         }
 }
