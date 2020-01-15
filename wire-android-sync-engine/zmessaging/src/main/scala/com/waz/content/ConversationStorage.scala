@@ -55,16 +55,15 @@ class ConversationStorageImpl(storage: ZmsDatabase)
   import EventContext.Implicits.global
   private implicit val dispatcher = new SerialDispatchQueue(name = "ConversationStorage")
 
-  onAdded.on(dispatcher) { cs =>
-    verbose(l"${cs.size} convs added")
-    updateSearchKey(cs)
-  }
+  onAdded.on(dispatcher) { cs => updateSearchKey(cs)}
 
-  def setUnknownVerification(convId: ConvId) = update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
+  def setUnknownVerification(convId: ConvId) =
+    update(convId, { c => c.copy(verified = if (c.verified == Verification.UNVERIFIED) UNKNOWN else c.verified) })
 
   onUpdated.on(dispatcher) { cs =>
-    verbose(l"${cs.size} convs updated")
-    updateSearchKey(cs collect { case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c })
+    updateSearchKey(cs.collect {
+      case (p, c) if p.name != c.name || (p.convType == Group) != (c.convType == Group) || (c.name.nonEmpty && c.searchKey.isEmpty) => c
+    })
   }
 
   private val init = for {

@@ -282,14 +282,12 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
           if (restore.isFailure) global.trackingService.historyRestored(false) // HistoryRestoreSucceeded is sent from the new AccountManager
         }.get // if the import failed this will rethrow the exception
 
-      verbose(l"getOrCreateAccountManager: $userId")
+
       val managers = await { accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head }
       val manager = managers.find(_.userId == userId)
       if (manager.nonEmpty) {
-        warn(l"AccountManager for: $userId already created")
         manager
       } else {
-        verbose(l"No AccountManager for: $userId, creating new one")
         val account = await(storage.flatMap(_.get(userId)))
         val user = await {
           for {
@@ -354,7 +352,6 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     }).disableAutowiring()
 
   override def getZms(userId: UserId): Future[Option[ZMessaging]] = {
-    verbose(l"getZms: $userId")
     zmsInstances.head.map(_.find(_.selfUserId == userId))
   }
 
@@ -380,12 +377,10 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     * Switches the current account to the given user id. If the other account cannot be authorized
     * (no cookie) or if anything else goes wrong, we leave the user logged out.
     */
-  override def setAccount(userId: Option[UserId]) = {
-    verbose(l"setAccount: $userId")
-    userId match {
-      case Some(id) =>
-        activeAccountId.head.flatMap {
-          case Some(cur) if cur == id => Future.successful({})
+  override def setAccount(userId: Option[UserId]) = userId match {
+    case Some(id) =>
+      activeAccountId.head.flatMap {
+        case Some(cur) if cur == id => Future.successful({})
           case Some(_)   => accountManagers.head.map(_.find(_.userId == id)).flatMap {
             case Some(_) => activeAccountPref := Some(id)
             case _ =>
@@ -394,27 +389,23 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
           }
           case _ => activeAccountPref := Some(id)
         }
-      case None => activeAccountPref := None
-    }
+    case None => activeAccountPref := None
   }
 
   def requestVerificationEmail(email: EmailAddress) =
     regClient.requestVerificationEmail(email)
 
   override def requestPhoneCode(phone: PhoneNumber, login: Boolean, call: Boolean = false) = {
-    verbose(l"requestPhoneConfirmationCode: $phone, login=$login, call=$call")
     phoneNumbers.normalize(phone).flatMap { normalizedPhone =>
       regClient.requestPhoneCode(normalizedPhone.getOrElse(phone), login, call)
     }
   }
 
   override def requestEmailCode(email: EmailAddress) = {
-    verbose(l"requestEmailConfirmationCode: $email")
     regClient.requestEmailCode(email)
   }
 
   override def verifyPhoneNumber(phone: PhoneNumber, code: ConfirmationCode, dryRun: Boolean) = {
-    verbose(l"verifyPhoneNumber: $phone, $code, $dryRun")
     phoneNumbers.normalize(phone).flatMap { normalizedPhone =>
       regClient.verifyRegistrationMethod(Left(normalizedPhone.getOrElse(phone)), code, dryRun).map(_.fold(Left(_), _ => Right({})))
       //TODO handle label and cookie!(https://github.com/wireapp/android-project/issues/51)
@@ -422,13 +413,11 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   }
 
   override def verifyEmailAddress(email: EmailAddress, code: ConfirmationCode, dryRun: Boolean = true) = {
-    verbose(l"verifyEmailAddress: $email, $code, $dryRun")
     regClient.verifyRegistrationMethod(Right(email), code, dryRun).map(_.fold(Left(_), _ => Right({})))
     //TODO handle label and cookie! (https://github.com/wireapp/android-project/issues/51)
   }
 
   override def login(loginCredentials: Credentials) = {
-    verbose(l"login: $loginCredentials")
     loginClient.login(loginCredentials).flatMap {
       case Right(LoginResult(token, Some(cookie), _)) => //TODO handle label (https://github.com/wireapp/android-project/issues/51)
         loginClient.getSelfUserInfo(token).flatMap {
@@ -448,7 +437,6 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   }
 
   override def register(registerCredentials: Credentials, name: Name, teamName: Option[Name] = None) = {
-    verbose(l"register: $registerCredentials, name: $name, teamName: $teamName")
     regClient.register(registerCredentials, name, teamName).flatMap {
       case Right((user, Some((cookie, _)))) =>
         for {
@@ -466,8 +454,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     }
   }
 
-  private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Option[Credentials]): Future[Unit] = {
-    verbose(l"addAccountEntry: $user, $cookie, $token, $credentials")
+  private def addAccountEntry(user: UserInfo, cookie: Cookie, token: Option[AccessToken], credentials: Option[Credentials]): Future[Unit] =
     storage.flatMap(
       _.updateOrCreate(
         user.id,
@@ -480,10 +467,8 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
         AccountData(user.id, user.teamId, cookie, token, password = credentials.flatMap(_.maybePassword), ssoId = user.ssoId)
       )
     ).map(_ => {})
-  }
 
-  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] = {
-    verbose(l"login: $userId $cookie")
+  override def ssoLogin(userId: UserId, cookie: Cookie): Future[Either[ErrorResponse, (HasOtherClients, HadDB)]] =
     loginClient.access(cookie, None).flatMap {
       case Right(loginResult) =>
         loginClient.getSelfUserInfo(loginResult.accessToken).flatMap {
@@ -503,7 +488,6 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
         verbose(l"login - access error: $error")
         Future.successful(Left(error))
     }
-  }
 
   override def wipeDataForAllAccounts(): Future[Unit] = {
     def delete(file: File) =

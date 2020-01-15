@@ -137,7 +137,6 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   private def cancelNots(nots: Seq[CallingNotificationsController.CallNotification]): Unit = {
     val notsIds = nots.map(_.id).toSet
-    verbose(l"cancelNots($notsIds)")
     val toCancel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       val activeIds = notificationManager.getActiveNotifications.map(_.getId).toSet
       Future.successful(activeIds -- notsIds)
@@ -152,15 +151,12 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
   }
 
   notifications.map(_.filter(!_.isMainCall)).onUi { nots =>
-    verbose(l"${nots.size} call notifications")
-
     cancelNots(nots)
     nots.foreach { not =>
         val builder = androidNotificationBuilder(not)
 
         def showNotification() = {
           if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            verbose(l"Adding not: ${not.id}")
             currentNotificationsPref.head.foreach(_.mutate(_ + not.id))
           }
           notificationManager.notify(CallNotificationTag, not.id, builder.build())
