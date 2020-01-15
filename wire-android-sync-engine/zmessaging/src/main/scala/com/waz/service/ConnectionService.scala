@@ -186,15 +186,15 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   }
 
   override def acceptConnection(userId: UserId): Future[ConversationData] =
-    users.updateConnectionStatus(userId, ConnectionStatus.Accepted) map {
+    users.updateConnectionStatus(userId, ConnectionStatus.Accepted).map {
       case Some(_) =>
-        sync.postConnectionStatus(userId, ConnectionStatus.Accepted) map { syncId =>
+        sync.postConnectionStatus(userId, ConnectionStatus.Accepted).map { syncId =>
           sync.syncConversations(Set(ConvId(userId.str)), Some(syncId))
         }
       case _ =>
     } flatMap { _ =>
-      getOrCreateOneToOneConversation(userId, convType = ConversationType.OneToOne) flatMap { conv =>
-        convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false)) flatMap { updated =>
+      getOrCreateOneToOneConversation(userId, convType = ConversationType.OneToOne).flatMap { conv =>
+        convsContent.updateConversation(conv.id, Some(ConversationType.OneToOne), hidden = Some(false)).flatMap { updated =>
           messages.addMemberJoinMessage(conv.id, selfUserId, Set(selfUserId), firstMessage = true) map { _ =>
             updated.fold(conv)(_._2)
           }
@@ -231,20 +231,20 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     } yield updated
 
 
-  override def cancelConnection(userId: UserId): Future[Option[UserData]] = {
+  override def cancelConnection(userId: UserId): Future[Option[UserData]] =
     users.updateUserData(userId, { user =>
       if (user.connection == ConnectionStatus.PendingFromUser) user.copy(connection = ConnectionStatus.Cancelled)
       else {
         warn(l"can't cancel connection for user in wrong state: $user")
         user
       }
-    }) flatMap {
+    }).flatMap {
       case Some((prev, user)) if prev != user =>
         sync.postConnectionStatus(userId, ConnectionStatus.Cancelled)
-        convsContent.setConversationHidden(ConvId(user.id.str), hidden = true) map { _ => Some(user) }
-      case None => Future successful None
+        convsContent.setConversationHidden(ConvId(user.id.str), hidden = true).map { _ => Some(user) }
+      case None =>
+        Future.successful(None)
     }
-  }
 
   /**
     * Finds or creates local one-to-one conversation with given user and/or remoteId.

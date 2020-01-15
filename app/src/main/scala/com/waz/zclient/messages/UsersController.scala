@@ -137,7 +137,7 @@ class UsersController(implicit injector: Injector, context: Context)
 
   def conv(msg: MessageData) = {
     for {
-      zms <- zMessaging
+      zms  <- zMessaging
       conv <- zms.convsStorage.signal(msg.convId)
     } yield conv
   }
@@ -145,11 +145,11 @@ class UsersController(implicit injector: Injector, context: Context)
   def connectToUser(userId: UserId): Future[Option[ConversationData]] = {
     import Threading.Implicits.Background
     for {
-      uSelf <- selfUser.head
-      uToConnect <- user(userId).head
-      zms <- zMessaging.head
-      message = getString(R.string.connect__message, uToConnect.name, uSelf.name)
-      conv <- zms.connection.connectToUser(userId, message, uToConnect.name)
+      connection <- inject[Signal[ConnectionService]].head
+      self       <- selfUser.head
+      otherUser  <- user(userId).head
+      message    =  getString(R.string.connect__message, otherUser.name, self.name)
+      conv       <- connection.connectToUser(userId, message, otherUser.name)
     } yield conv
   }
 
@@ -157,7 +157,7 @@ class UsersController(implicit injector: Injector, context: Context)
     import Threading.Implicits.Background
     for {
       connection <- inject[Signal[ConnectionService]].head
-      _ <- connection.cancelConnection(userId)
+      _          <- connection.cancelConnection(userId)
     } yield ()
   }
 }
