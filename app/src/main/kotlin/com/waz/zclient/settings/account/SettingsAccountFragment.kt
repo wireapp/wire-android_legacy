@@ -128,11 +128,14 @@ class SettingsAccountFragment : Fragment() {
     //TODO will be used in part 2.
     private fun showEditHandleDialog(updateHandle: (String) -> Unit) {
         settingsAccountViewModel.handle.value?.let {
-            EditHandleFragment.newInstance(it, true, object : EditHandleFragment.HandleChangedListener {
-                override fun onHandleChanged(handle: String) {
-                    updateHandle(handle)
-                }
-            }).show(requireActivity().supportFragmentManager, String.empty())
+            EditHandleFragment.newInstance(
+                currentHandle = it,
+                isCancelable = true,
+                handleChangedListener = object : EditHandleFragment.HandleChangedListener {
+                    override fun onHandleChanged(handle: String) {
+                        updateHandle(handle)
+                    }
+                }).show(requireActivity().supportFragmentManager, String.empty())
         }
     }
 

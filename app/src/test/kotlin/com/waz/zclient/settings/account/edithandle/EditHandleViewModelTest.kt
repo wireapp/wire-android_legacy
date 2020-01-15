@@ -103,7 +103,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid,  check exists succeeds, validation fails with HandleInvalidError, ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid,  check exists succeeds, validation fails with HandleInvalidError, ok button should be disabled and error updated`() =
         runBlockingTest {
 
         }
@@ -127,7 +127,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onOkButtonClicked is called, validateHandle fails with HandleInvalidError, ok button should be disabled`() =
+    fun `given onOkButtonClicked is called, validateHandle fails with HandleInvalidError, ok button should be disabled and error updated`() =
         runBlockingTest {
 
         }

@@ -27,7 +27,7 @@ class ValidateHandleUseCaseTest : UnitTest() {
     }
 
     @Test
-    fun `Given run is executed, handle doesn't match regex, then return failure`() = runBlockingTest {
+    fun `Given run is executed, handle doesn't match regex, then return failure`() {
         val handle = "----7_.handle"
         verifyValidateUseCase(handle)
     }

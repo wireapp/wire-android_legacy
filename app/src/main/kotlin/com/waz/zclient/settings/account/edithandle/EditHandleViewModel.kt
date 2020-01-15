@@ -87,7 +87,7 @@ class EditHandleViewModel(
     private fun handleFailure(failure: Failure) {
         mutableOkEnabled.postValue(false)
         when (failure) {
-            is HandleUnknownError, is HandleExistsAlreadyError -> {
+            is HandleInvalidError, is HandleUnknownError, is HandleExistsAlreadyError -> {
                 mutableError.postValue(failure as ValidateHandleError)
             }
         }
