@@ -10,14 +10,6 @@ import retrofit2.http.Path
 
 interface UsersNetworkService {
 
-    companion object {
-        private const val SELF = "/self"
-        private const val PHONE = "/phone"
-        private const val EMAIL = "/email"
-        private const val HANDLE = "/handle"
-        private const val NAME = "/name"
-    }
-
     @GET(SELF)
     suspend fun profileDetails(): Response<UserApi>
 
@@ -33,9 +25,18 @@ interface UsersNetworkService {
     @PUT("$SELF$PHONE")
     suspend fun changePhone(@Body phone: ChangePhoneRequest): Response<Unit>
 
-    @GET("/users/handles/{newHandle}")
+    @GET("$USERS$HANDLES/{newHandle}")
     suspend fun doesHandleExist(@Path("handle") newHandle: String): Response<Unit>
 
+    companion object {
+        private const val SELF = "/self"
+        private const val PHONE = "/phone"
+        private const val EMAIL = "/email"
+        private const val HANDLE = "/handle"
+        private const val NAME = "/name"
+        private const val USERS = "/users"
+        private const val HANDLES = "/handles"
+    }
 }
 
 data class ChangeNameRequest(
