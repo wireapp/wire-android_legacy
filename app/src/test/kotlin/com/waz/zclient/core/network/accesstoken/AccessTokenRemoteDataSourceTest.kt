@@ -1,6 +1,7 @@
 package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.network.accesstoken.AccessTokenRemoteDataSource
 import com.waz.zclient.core.network.api.token.TokenService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest

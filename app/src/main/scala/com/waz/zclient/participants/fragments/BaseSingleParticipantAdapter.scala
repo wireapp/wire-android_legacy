@@ -44,10 +44,10 @@ class BaseSingleParticipantAdapter(userId: UserId,
   import BaseSingleParticipantAdapter._
 
   protected var timerText:       Option[String] = None
-  protected var participantRole: ConversationRole = ConversationRole.MemberRole
-  protected var selfRole:        ConversationRole = ConversationRole.MemberRole
+  protected var participantRole: Option[ConversationRole] = None
+  protected var selfRole:        Option[ConversationRole] = None
 
-  protected def isGroupAdminViewVisible: Boolean = isGroup && !isWireless && selfRole.canModifyOtherMember
+  protected def isGroupAdminViewVisible: Boolean = isGroup && !isWireless && selfRole.exists(_.canModifyOtherMember)
   protected def hasInformation: Boolean = false
 
   val onParticipantRoleChange = EventStream[ConversationRole]
@@ -63,9 +63,9 @@ class BaseSingleParticipantAdapter(userId: UserId,
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
     case h: ParticipantHeaderRowViewHolder =>
-      h.bind(userId, isGuest, isExternal, isGroup && participantRole == ConversationRole.AdminRole, timerText, isDarkTheme, hasInformation)
+      h.bind(userId, isGuest, isExternal, isGroup && participantRole.contains(ConversationRole.AdminRole), timerText, isDarkTheme, hasInformation)
     case h: GroupAdminViewHolder =>
-      h.bind(onParticipantRoleChange, participantRole == ConversationRole.AdminRole)
+      h.bind(onParticipantRoleChange, participantRole.contains(ConversationRole.AdminRole))
   }
 
   override def getItemCount: Int = if (isGroupAdminViewVisible) 2 else 1

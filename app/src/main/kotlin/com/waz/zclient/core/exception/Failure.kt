@@ -24,7 +24,7 @@ data class HttpError(val errorCode: Int, val errorMessage: String) : NetworkFail
 object DatabaseError : DatabaseFailure()
 
 //TODO: Improve to a more sufficient error propagation for Flow "data flows"
-data class FlowError(val throwable: Throwable) : Failure()
+data class GenericUseCaseError(val throwable: Throwable) : Failure()
 
 /** * Extend this class for feature specific failures.*/
 abstract class FeatureFailure : Failure()

@@ -36,7 +36,7 @@ import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
+import com.waz.zclient.connect.PendingConnectRequestManagerFragment
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
@@ -46,6 +46,7 @@ import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
+import com.waz.zclient.participants.fragments.SendConnectRequestFragment
 import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, UserRequester}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -69,7 +70,6 @@ class ConversationListManagerFragment extends Fragment
   with NavigationControllerObserver
   with ConversationListFragment.Container
   with ConversationScreenControllerObserver
-  with SendConnectRequestFragment.Container
   with BlockedUserProfileFragment.Container
   with PendingConnectRequestManagerFragment.Container
   with BottomNavigationView.OnNavigationItemSelectedListener {
@@ -459,9 +459,6 @@ class ConversationListManagerFragment extends Fragment
     }
 
   override def dismissUserProfile() =
-    pickUserController.hideUserProfile()
-
-  override def onConnectRequestWasSentToUser() =
     pickUserController.hideUserProfile()
 
   override def dismissSingleUserProfile() =
