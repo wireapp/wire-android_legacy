@@ -44,15 +44,22 @@ class ApiService(
         }
     }
 
-    @Suppress("MagicNumber")
     private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
         return when (response.code()) {
-            400 -> Left(BadRequest)
-            401 -> Left(Unauthorized)
-            403 -> Left(Forbidden)
-            404 -> Left(NotFound)
-            500 -> Left(InternalServerError)
+            CODE_BAD_REQUEST -> Left(BadRequest)
+            CODE_UNAUTHORIZED -> Left(Unauthorized)
+            CODE_FORBIDDEN -> Left(Forbidden)
+            CODE_NOT_FOUND -> Left(NotFound)
+            CODE_INTERNAL_SERVER_ERROR -> Left(InternalServerError)
             else -> Left(ServerError)
         }
+    }
+
+    companion object {
+        private const val CODE_BAD_REQUEST = 400
+        private const val CODE_UNAUTHORIZED = 401
+        private const val CODE_FORBIDDEN = 403
+        private const val CODE_NOT_FOUND = 404
+        private const val CODE_INTERNAL_SERVER_ERROR = 500
     }
 }
