@@ -10,8 +10,8 @@ class ClientsService(override val networkHandler: NetworkHandler,
                      private val clientsApi: ClientsApi) : ApiService() {
 
     suspend fun allClients(): Either<Failure, List<ClientEntity>> =
-        request({clientsApi.allClients()}, emptyList())
+        request(emptyList()) { clientsApi.allClients() }
 
     suspend fun clientById(clientId: String?): Either<Failure, ClientEntity> =
-        request({clientsApi.clientById(clientId)}, ClientEntity.empty())
+        request(ClientEntity.empty()) { clientsApi.clientById(clientId) }
 }

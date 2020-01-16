@@ -2,6 +2,7 @@ package com.waz.zclient.core.network
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.BadRequest
+import com.waz.zclient.core.exception.EmptyResponseBody
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.Forbidden
 import com.waz.zclient.core.exception.InternalServerError
@@ -33,6 +34,23 @@ class ApiServiceTest : UnitTest() {
     fun setUp() {
         apiService = object : ApiService() {
             override val networkHandler: NetworkHandler = mockNetworkHandler
+        }
+    }
+
+    @Test
+    fun `given no default argument, when response is successful but has no body, returns EmptyResponseBody failure`() {
+        runBlocking {
+            `when`(mockNetworkHandler.isConnected).thenReturn(true)
+
+            val response = mock(Response::class.java) as Response<String>
+            `when`(response.isSuccessful).thenReturn(true)
+            `when`(response.body()).thenReturn(null)
+            val responseFunc: suspend () -> Response<String> = { response }
+
+            val result = apiService.request(default = null, call = responseFunc)
+
+            result.isLeft shouldBe true
+            result.onFailure { it shouldBe EmptyResponseBody }
         }
     }
 
@@ -74,7 +92,7 @@ class ApiServiceTest : UnitTest() {
         `when`(response.code()).thenReturn(httpErrorCode)
         val responseFunc: suspend () -> Response<String> = { response }
 
-        val result = apiService.request(responseFunc, String.empty())
+        val result = apiService.request(String.empty(), responseFunc)
 
         result.isLeft shouldBe true
         result.onFailure { it shouldBe failure }

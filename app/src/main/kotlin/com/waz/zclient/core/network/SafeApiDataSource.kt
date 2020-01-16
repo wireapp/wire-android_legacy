@@ -8,21 +8,6 @@ import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 import timber.log.Timber
 
-suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<NetworkFailure, T> {
-    try {
-        val response = responseCall()
-        if (response.isSuccessful) {
-            val body = response.body()
-            body?.let {
-                return Either.Right(body)
-            }
-        }
-        return Either.Left(HttpError(response.code(), response.message()))
-    } catch (e: Exception) {
-        return Either.Left(NetworkServiceError)
-    }
-}
-
 suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseFailure, R> =
     try {
         Either.Right(localRequest())

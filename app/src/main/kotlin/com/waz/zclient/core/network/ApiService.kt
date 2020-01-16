@@ -1,6 +1,7 @@
 package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.BadRequest
+import com.waz.zclient.core.exception.EmptyResponseBody
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.Forbidden
 import com.waz.zclient.core.exception.InternalServerError
@@ -16,7 +17,7 @@ import retrofit2.Response
 abstract class ApiService {
     abstract val networkHandler: NetworkHandler
 
-    suspend fun <T> request(call: suspend () -> Response<T>, default: T): Either<Failure, T> =
+    suspend fun <T> request(default: T? = null, call: suspend () -> Response<T>): Either<Failure, T> =
         withContext(Dispatchers.IO) {
             return@withContext when (networkHandler.isConnected) {
                 true -> performRequest(call, default)
@@ -24,11 +25,12 @@ abstract class ApiService {
             }
         }
 
-    private suspend fun <T> performRequest(call: suspend () -> Response<T>, default: T): Either<Failure, T> {
+    private suspend fun <T> performRequest(call: suspend () -> Response<T>, default: T? = null): Either<Failure, T> {
         return try {
             val response = call()
             when (response.isSuccessful) {
-                true -> Either.Right(response.body() ?: default)
+                true -> response.body()?.let { Either.Right(it) }
+                    ?: (default?.let { Either.Right(it) } ?: Either.Left(EmptyResponseBody))
                 false -> handleRequestError(response)
             }
         } catch (exception: Throwable) {

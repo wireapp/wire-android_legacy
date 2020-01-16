@@ -2,12 +2,13 @@ package com.waz.zclient.user.data.source.remote
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.capture
+import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
@@ -18,7 +19,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import retrofit2.Response
 
-@ExperimentalCoroutinesApi
 class UserRemoteDataSourceTest : UnitTest() {
 
     companion object {
@@ -34,6 +34,9 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Mock
     private lateinit var usersNetworkService: UsersNetworkService
+
+    @Mock
+    private lateinit var networkHandler: NetworkHandler
 
     @Mock
     private lateinit var userApi: UserApi
@@ -58,7 +61,8 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Before
     fun setUp() {
-        usersRemoteDataSource = UsersRemoteDataSource(usersNetworkService)
+        `when`(networkHandler.isConnected).thenReturn(true)
+        usersRemoteDataSource = UsersRemoteDataSource(usersNetworkService, networkHandler)
     }
 
     @Test
@@ -76,7 +80,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateProfileDetailsScenario(responseBody = userApi, isRight = false, cancelable = true)
     }
 
-    private fun validateProfileDetailsScenario(responseBody: UserApi?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+    private fun validateProfileDetailsScenario(responseBody: UserApi?, isRight: Boolean, cancelable: Boolean) = runBlocking {
         `when`(userResponse.body()).thenReturn(responseBody)
         `when`(userResponse.isSuccessful).thenReturn(true)
         `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
@@ -108,7 +112,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateChangeNameScenario(responseBody = Unit, isRight = false, cancelable = true)
     }
 
-    private fun validateChangeNameScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+    private fun validateChangeNameScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
         `when`(usersNetworkService.changeName(capture(changeNameRequestCaptor))).thenReturn(emptyResponse)
@@ -142,7 +146,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateChangeHandleScenario(responseBody = Unit, isRight = false, cancelable = true)
     }
 
-    private fun validateChangeHandleScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+    private fun validateChangeHandleScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
         `when`(usersNetworkService.changeHandle(capture(changeHandleRequestCaptor))).thenReturn(emptyResponse)
@@ -176,7 +180,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateChangeEmailScenario(responseBody = Unit, isRight = false, cancelable = true)
     }
 
-    private fun validateChangeEmailScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+    private fun validateChangeEmailScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
         `when`(usersNetworkService.changeEmail(capture(changeEmailRequestCaptor))).thenReturn(emptyResponse)
@@ -213,7 +217,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateChangePhoneScenario(responseBody = Unit, isRight = false, cancelable = true)
     }
 
-    private fun validateChangePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+    private fun validateChangePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
         `when`(emptyResponse.body()).thenReturn(responseBody)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
         `when`(usersNetworkService.changePhone(capture(changePhoneRequestCaptor))).thenReturn(emptyResponse)

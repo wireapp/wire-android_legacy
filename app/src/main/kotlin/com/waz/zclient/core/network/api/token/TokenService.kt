@@ -11,7 +11,7 @@ class TokenService(
 ) : ApiService() {
 
     suspend fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
-        request({
+        request(AccessTokenResponse.EMPTY) {
             tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken"))
-        }, AccessTokenResponse.EMPTY)
+        }
 }
