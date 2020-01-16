@@ -25,8 +25,8 @@ interface UsersNetworkService {
     @PUT("$SELF$PHONE")
     suspend fun changePhone(@Body phone: ChangePhoneRequest): Response<Unit>
 
-    @GET("$USERS$HANDLES/{newHandle}")
-    suspend fun doesHandleExist(@Path("handle") newHandle: String): Response<Unit>
+    @GET("$USERS$HANDLES/{handle}")
+    suspend fun doesHandleExist(@Path("handle") handle: String): Response<Unit>
 
     companion object {
         private const val SELF = "/self"
