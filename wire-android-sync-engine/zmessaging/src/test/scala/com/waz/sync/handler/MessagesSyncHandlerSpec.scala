@@ -21,8 +21,8 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.cache.CacheService
 import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.model._
+import com.waz.service.assets.{AssetService, AssetStorage, UploadAssetStorage}
 import com.waz.service.{ErrorsService, Timeouts}
-import com.waz.service.assets2.{AssetService, AssetStorage, UploadAssetStorage}
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
@@ -42,7 +42,6 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
   val otrSync       = mock[OtrSyncHandler]
   val convs         = mock[ConversationsContentUpdater]
   val storage       = mock[MessagesStorage]
-  val assetSync     = mock[AssetSyncHandler]
   val sync          = mock[SyncServiceHandle]
   val assets        = mock[AssetService]
   val errors        = mock[ErrorsService]
@@ -53,7 +52,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
   val timeouts      = new Timeouts()
 
   def getHandler: MessagesSyncHandler = {
-    new MessagesSyncHandler(account1Id, service, msgContent, clients, otrSync, convs, storage, assetSync, sync, assets, assetStorage, uploads, cache, members, tracking, errors, timeouts)
+    new MessagesSyncHandler(account1Id, service, msgContent, clients, otrSync, convs, storage, sync, assets, assetStorage, uploads, cache, members, tracking, errors, timeouts)
   }
 
   scenario("post invalid message should fail immediately") {

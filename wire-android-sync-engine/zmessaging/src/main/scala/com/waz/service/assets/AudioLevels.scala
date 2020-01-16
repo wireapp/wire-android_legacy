@@ -27,7 +27,7 @@ import com.waz.bitmap.video.{MediaCodecHelper, TrackDecoder}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.log.LogSE._
-import com.waz.model.AssetMetaData.Loudness
+import com.waz.model.AssetMetaData
 import com.waz.model.Mime
 import com.waz.threading.CancellableFuture.{CancelException, DefaultCancelException}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -42,11 +42,11 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
   import AudioLevels._
   import Threading.Implicits.Background
 
-  def createAudioOverview(content: URI, mime: Mime, numBars: Int = 100): CancellableFuture[Option[Loudness]] =
+  def createAudioOverview(content: URI, mime: Mime, numBars: Int = 100): CancellableFuture[Option[AssetMetaData.Loudness]] =
     if (mime == Mime.Audio.PCM) createPCMAudioOverview(content, numBars)
     else createOtherAudioOverview(content, numBars)
 
-  private def createPCMAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[Loudness]] =
+  private def createPCMAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[AssetMetaData.Loudness]] =
     ContentURIs.queryContentUriMetaData(context, content).map(_.size).lift.flatMap {
       case None =>
         warn(l"cannot generate preview: no length available for $content")
@@ -69,7 +69,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
             loudnessOverview(numBars, rmsOfBuffers) // select RMS peaks and convert to an intuitive scale
           }
 
-          overview.acquire(levels => Some(Loudness(levels)))
+          overview.acquire(levels => Some(AssetMetaData.Loudness(levels)))
         }(Threading.IO).recover {
           case c: CancelException => throw c
           case NonFatal(cause) =>
@@ -78,7 +78,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
         })(_.onCancelled(cancelRequested.set(true)))
     }
 
-  private def createOtherAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[Loudness]] = {
+  private def createOtherAudioOverview(content: URI, numBars: Int): CancellableFuture[Option[AssetMetaData.Loudness]] = {
     val cancelRequested = new AtomicBoolean
     returning(CancellableFuture {
       val overview = for {
@@ -99,7 +99,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
         loudnessOverview(numBars, rmsOfBuffers) // select RMS peaks and convert to an intuitive scale
       }
 
-      overview.acquire(levels => Some(Loudness(levels)))
+      overview.acquire(levels => Some(AssetMetaData.Loudness(levels)))
     }(Threading.Background).recover {
       case c: CancelException => throw c
       case NonFatal(cause) =>

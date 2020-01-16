@@ -108,9 +108,8 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
     if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
-      getContext.startActivity(new Intent(getContext, classOf[SettingsMainActivity])
-        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-      )
+      getContext.startActivity(SettingsMainActivity.newIntent(getContext)
+        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
     } else {
         navigator.goTo(SettingsBackStackKey())
     }
@@ -276,7 +275,7 @@ class ProfileViewController(view: ProfileView)(implicit inj: Injector, ec: Event
   self.on(Threading.Ui) { self =>
     view.setAccentColor(AccentColor(self.accent).color)
     self.handle.foreach(handle => view.setHandle(StringUtils.formatHandle(handle.string)))
-    view.setUserName(self.getDisplayName)
+    view.setUserName(self.name)
   }
 
   for {

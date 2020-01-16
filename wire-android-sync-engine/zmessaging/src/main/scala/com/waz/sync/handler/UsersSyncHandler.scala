@@ -25,8 +25,7 @@ import com.waz.model.UserInfo.ProfilePicture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.UserService
-import com.waz.service.assets2.AssetService
-import com.waz.service.images.ImageAssetGenerator
+import com.waz.service.assets.AssetService
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
@@ -35,12 +34,10 @@ import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
 
-class UsersSyncHandler(assetSync: AssetSyncHandler,
-                       userService: UserService,
+class UsersSyncHandler(userService: UserService,
                        usersStorage: UsersStorage,
                        assets: AssetService,
                        usersClient: UsersClient,
-                       imageGenerator: ImageAssetGenerator,
                        otrSync: OtrSyncHandler) extends DerivedLogTag {
 
   import Threading.Implicits.Background

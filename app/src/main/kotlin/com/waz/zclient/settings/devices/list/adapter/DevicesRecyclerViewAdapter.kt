@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.annotation.NonNull
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.core.lists.RecyclerViewItemClickListener
+import com.waz.zclient.core.ui.list.RecyclerViewItemClickListener
 import com.waz.zclient.settings.devices.model.ClientItem
 import com.waz.zclient.utilities.DateAndTimeUtils
 import kotlinx.android.synthetic.main.item_view_devices.view.*

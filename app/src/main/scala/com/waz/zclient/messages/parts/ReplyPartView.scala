@@ -26,7 +26,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.assets2.Asset
+import com.waz.service.assets.Asset
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events._
@@ -101,7 +101,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
 
   quoteComposer
     .map { _
-      .map(u => if (u.isWireBot) u.name else u.getDisplayName)
+      .map(u => if (u.isWireBot) u.name else u.name)
       .getOrElse(Name.Empty)
     }
     .onUi(name.setText(_))

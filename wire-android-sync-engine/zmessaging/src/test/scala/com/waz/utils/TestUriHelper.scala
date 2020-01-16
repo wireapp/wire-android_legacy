@@ -21,7 +21,7 @@ import java.io.InputStream
 import java.net.URI
 
 import com.waz.model.Mime
-import com.waz.service.assets2.UriHelper
+import com.waz.service.assets.UriHelper
 
 import scala.util.Try
 

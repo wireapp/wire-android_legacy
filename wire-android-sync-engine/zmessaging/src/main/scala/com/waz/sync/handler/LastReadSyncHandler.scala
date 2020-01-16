@@ -33,7 +33,6 @@ import scala.concurrent.Future
 class LastReadSyncHandler(selfUserId: UserId,
                           convs: ConversationStorage,
                           metadata: MetaDataService,
-                          convSync: ConversationsSyncHandler,
                           msgsSync: MessagesSyncHandler,
                           otrSync: OtrSyncHandler) extends DerivedLogTag {
 

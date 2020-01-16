@@ -43,7 +43,7 @@ class UserDetailsView(val context: Context, val attrs: AttributeSet, val defStyl
     case None => ""
   }.onUi(userNameTextView.setText(_))
 
-  userId.flatMap(users.user).map(_.getDisplayName).onUi(userInfoTextView.setText(_))
+  userId.flatMap(users.user).map(_.name).onUi(userInfoTextView.setText(_))
 
   def setUserId(id: UserId): Unit =
     Option(id).fold(throw new IllegalArgumentException("UserId should not be null"))(userId ! _)

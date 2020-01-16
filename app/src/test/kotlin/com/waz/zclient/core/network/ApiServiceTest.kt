@@ -8,7 +8,6 @@ import com.waz.zclient.core.threading.ThreadHandler
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import retrofit2.Call

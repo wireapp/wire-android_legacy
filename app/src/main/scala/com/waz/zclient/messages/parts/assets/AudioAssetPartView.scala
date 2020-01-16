@@ -21,8 +21,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.{FrameLayout, SeekBar}
-import com.waz.service.assets2.Asset.{Audio, Video}
-import com.waz.service.assets2.AssetStatus
+import com.waz.service.assets.AssetStatus
+import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.R

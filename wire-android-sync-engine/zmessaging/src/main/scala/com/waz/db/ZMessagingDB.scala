@@ -45,11 +45,13 @@ import com.waz.model.UserData.UserDataDao
 import com.waz.model._
 import com.waz.model.otr.UserClients.UserClientsDao
 import com.waz.model.sync.SyncJob.SyncJobDao
-import com.waz.service.assets2.AssetStorageImpl.AssetDao
-import com.waz.service.assets2.DownloadAssetStorage.DownloadAssetDao
-import com.waz.service.assets2.UploadAssetStorage.UploadAssetDao
+import com.waz.service.assets.AssetStorageImpl.AssetDao
+import com.waz.service.assets.DownloadAssetStorage.DownloadAssetDao
+import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.repository.FCMNotificationStatsRepository.FCMNotificationStatsDao
 import com.waz.repository.FCMNotificationsRepository.FCMNotificationsDao
+import com.waz.service.assets
+import com.waz.service.assets.{AESKey2, AES_CBC_Encryption, Asset, AudioDetails, BlobDetails, ImageDetails, Loudness, NoEncryption, VideoDetails}
 import com.waz.service.tracking.TrackingService
 
 import scala.util.{Success, Try}
@@ -65,7 +67,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 125
+  val DbVersion = 126
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
@@ -312,8 +314,8 @@ object ZMessagingDB {
     },
     Migration(120, 121) { db =>
       import com.waz.model.AssetData.{AssetDataDao => OldAssetDao}
-      import com.waz.service.assets2.AssetStorageImpl.{AssetDao => NewAssetDao}
-      import com.waz.service.assets2._
+      import com.waz.service.assets.AssetStorageImpl.{AssetDao => NewAssetDao}
+      import com.waz.service.assets._
 
       //Create new tables
       db.execSQL(UploadAssetDao.table.createSql)
@@ -328,7 +330,7 @@ object ZMessagingDB {
       def convertAsset(old: AssetData): Try[Asset] = Try {
         val encryption = old.otrKey.map(k => AES_CBC_Encryption(AESKey2(k.bytes)))
 
-        Asset(
+        assets.Asset(
           id = old.remoteId.map(rid => AssetId(rid.str)).getOrElse(old.id),
           token = old.token,
           sha = old.sha.get,
@@ -390,6 +392,49 @@ object ZMessagingDB {
     Migration(124,125) { db =>
       db.execSQL(s"ALTER TABLE ${ConversationMemberDataDao.table.name} ADD COLUMN ${ConversationMemberDataDao.Role.name} TEXT DEFAULT '${ConversationRole.AdminRole.label}'")
       db.execSQL(ConversationRoleActionDao.table.createSql)
+    },
+    Migration(125,126) { db =>
+      db.execSQL(
+        s"""
+           | UPDATE Users
+           | SET name = display_name
+           | WHERE display_name IS NOT NULL AND display_name IS NOT "" AND name IS NOT display_name
+        """.stripMargin)
+      db.execSQL(
+        """
+          | CREATE TABLE UsersCopy (
+          | _id TEXT PRIMARY KEY,
+          | teamId TEXT, name TEXT, email TEXT, phone TEXT, tracking_id TEXT,
+          | picture TEXT, accent INTEGER, skey TEXT, connection TEXT, conn_timestamp INTEGER,
+          | conn_msg TEXT, conversation TEXT, relation TEXT, timestamp INTEGER,
+          | verified TEXT, deleted INTEGER, availability INTEGER,
+          | handle TEXT, provider_id TEXT, integration_id TEXT, expires_at INTEGER,
+          | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
+          | )
+        """.stripMargin)
+      db.execSQL(
+        """
+          |INSERT INTO UsersCopy(
+          | _id,
+          | teamId, name, email, phone, tracking_id,
+          | picture, accent, skey, connection, conn_timestamp,
+          | conn_msg, conversation, relation, timestamp,
+          | verified, deleted, availability,
+          | handle, provider_id, integration_id, expires_at,
+          | managed_by, self_permissions, copy_permissions, created_by
+          | )
+          | SELECT
+          | _id,
+          | teamId, name, email, phone, tracking_id,
+          | picture, accent, skey, connection, conn_timestamp,
+          | conn_msg, conversation, relation, timestamp,
+          | verified, deleted, availability,
+          | handle, provider_id, integration_id, expires_at,
+          | managed_by, self_permissions, copy_permissions, created_by
+          | FROM Users
+        """.stripMargin)
+      db.execSQL("DROP TABLE Users")
+      db.execSQL("ALTER TABLE UsersCopy RENAME TO Users")
     }
   )
 }

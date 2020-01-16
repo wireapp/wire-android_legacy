@@ -29,7 +29,6 @@ import android.view.{OrientationEventListener, Surface, WindowManager}
 import androidx.exifinterface.media.ExifInterface
 import com.waz.bitmap.BitmapUtils
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.images.ImageAssetGenerator
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture
 import com.waz.utils.events.{EventContext, Signal}
@@ -343,7 +342,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
   private def getPictureSize(pms: CameraParamsWrapper) =
     pms.get.getSupportedPictureSizes.asScala.map(new CameraSizeWrapper(_)).minBy { s =>
       val is16_9 = math.abs( (s.width.toDouble / s.height) - GlobalCameraController.Ratio_16_9 ) < 0.01
-      val differenceToHeight = Math.abs(s.height - ImageAssetGenerator.MediumSize)
+      val differenceToHeight = Math.abs(s.height - GlobalCameraController.MediumSize)
       (!is16_9, differenceToHeight) //Ordering[Boolean] considers false < true, so we want to flip the is16_9 check to give them preference
     }
 
@@ -373,6 +372,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
 
 object GlobalCameraController {
   val Ratio_16_9: Double = 16.0 / 9.0
+  val MediumSize = 1448
 }
 
 object WireCamera {

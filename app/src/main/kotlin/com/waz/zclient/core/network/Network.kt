@@ -15,6 +15,7 @@ open class Network {
 
                 val newRequest = chain.request().newBuilder()
                     .addHeader("Content-Type", "application/json")
+                    .addHeader("Accept", "application/json")
                     .addHeader("Authorization", "Bearer $API_TOKEN")
                     .build()
                 chain.proceed(newRequest)
@@ -39,6 +40,10 @@ open class Network {
         private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
         //Hardcoded just for testing
         @Suppress("MaxLineLength")
-        private const val API_TOKEN = "LadIdRjgenj_5iVB-RzSSk-Ut24YWCK-JO3oS3l5JZ4WGZNYoMou1B1_oyauAocYmk8cMgB6RNRVimFxpMd0BQ==.v=1.k=1.d=1576085133.t=a.l=.u=aa4e0112-bc8c-493e-8677-9fde2edf3567.c=13416685046832935484"
+        private const val API_TOKEN = "T-2SC4EOT-ngH3Ne9OcfiT9csFfKaSHUN8DM6193KEI1jFIt9YSQLbYmZ_TMpu7IXdWSqfQ_SEB219jkPI7ZCw==.v=1.k=1.d=1578664301.t=a.l=.u=276209c9-2024-4916-a5b6-bfd65b1ca641.c=15273515518311654250"
     }
 }
+
+
+
+

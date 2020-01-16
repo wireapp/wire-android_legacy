@@ -126,10 +126,9 @@ class MessagesStorageImpl(context:     Context,
   def msgsFilteredIndex(conv: ConvId): Seq[ConvMessagesIndex] = filteredIndexes.get(conv).values.toSeq
 
   onAdded { added =>
-    verbose(l"SYNC onAdded: ${added.map(_.id)}")
     Future.traverse(added.groupBy(_.convId)) { case (convId, msgs) =>
       msgsFilteredIndex(convId).foreach(_.add(msgs))
-      returning(msgsIndex(convId).flatMap { index =>
+      msgsIndex(convId).flatMap { index =>
         index.add(msgs).flatMap(_ => index.firstMessageId) map { first =>
           // XXX: calling update here is a bit ugly
           val ms = msgs.map {
@@ -139,18 +138,16 @@ class MessagesStorageImpl(context:     Context,
             case msg => msg
           }
         }
-      }){ _ => verbose(l"SYNC onAdded finished") }
+      }
     } .recoverWithLog()
   }
 
   onUpdated { updates =>
-    verbose(l"SYNC onUpdated: ${updates.size}")
     Future.traverse(updates.groupBy(_._1.convId)) { case (convId, msgs) =>{
         msgsFilteredIndex(convId).foreach(_.update(msgs))
         for {
           index <- msgsIndex(convId)
           _     <- index.update(msgs)
-          _     =  verbose(l"SYNC onUpdated finished")
         } yield ()
       } .recoverWithLog()
     }

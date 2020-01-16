@@ -35,12 +35,10 @@ class EventPipelineImpl(transformersByName: => Vector[Vector[Event] => Future[Ve
 
   override def apply(input: Traversable[Event]): Future[Unit] = {
     val inputEvents = input.toVector
-    verbose(l"SYNC pipeline apply for events (${inputEvents.size}): ${inputEvents.map(_.hashCode()).mkString(",")}")
     val t = System.currentTimeMillis()
     for {
       events <- transformers.foldLeft(successful(inputEvents))((l, r) => l.flatMap(r))
       _      <- scheduler(events)
-      _      =  verbose(l"SYNC pipeline apply, events scheduled, time: ${System.currentTimeMillis() - t}ms")
     } yield ()
   }
 }

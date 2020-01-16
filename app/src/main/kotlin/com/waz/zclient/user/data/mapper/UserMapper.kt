@@ -36,13 +36,13 @@ class UserMapper {
     }
 
     fun toUserDao(user: User) = with(user) {
-        UserDao(id = id, teamId = teamId, name = name,
+        UserDao(id = id.toString(), teamId = teamId, name = name.toString(),
             handle = handle, email = email, phone = phone,
             trackingId = trackingId, picture = picture,
             accentId = accentId, sKey = sKey,
             connection = connection, connectionTimestamp = connectionTimestamp,
             connectionMessage = connectionMessage, conversation = conversation, relation = relation,
-            timestamp = timestamp, displayName = displayName, verified = verified, deleted = deleted,
+            timestamp = timestamp, displayName = displayName, verified = verified, deleted = deleted!!.toInt(),
             availability = availability, providerId = providerId,
             integrationId = integrationId, expiresAt = expiresAt, managedBy = managedBy,
             selfPermission = selfPermission, copyPermission = copyPermission,

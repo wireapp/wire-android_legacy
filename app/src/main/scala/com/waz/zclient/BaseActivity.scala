@@ -107,14 +107,6 @@ class BaseActivity extends AppCompatActivity
       WebSocketService(this)
     } (Threading.Ui)
 
-  override protected def onResumeFragments(): Unit = {
-    verbose(l"onResumeFragments")
-    super.onResumeFragments()
-  }
-
-  override def onWindowFocusChanged(hasFocus: Boolean): Unit = {
-    verbose(l"onWindowFocusChanged: $hasFocus")
-  }
 
   def getBaseTheme: Int = themeController.forceLoadDarkTheme
 
@@ -129,10 +121,6 @@ class BaseActivity extends AppCompatActivity
     }
   }
 
-  override protected def onPause(): Unit = {
-    verbose(l"onPause")
-    super.onPause()
-  }
 
   override protected def onSaveInstanceState(outState: Bundle): Unit = {
     verbose(l"onSaveInstanceState")

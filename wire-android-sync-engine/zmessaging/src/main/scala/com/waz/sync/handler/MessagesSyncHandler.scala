@@ -30,8 +30,8 @@ import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
 import com.waz.model.sync.ReceiptType
-import com.waz.service.assets2.Asset.{General, Image}
-import com.waz.service.assets2.{AssetService, _}
+import com.waz.service.assets.{AssetService, AssetStorage, PreviewEmpty, PreviewNotReady, PreviewNotUploaded, PreviewUploaded, UploadAsset, UploadAssetStatus, UploadAssetStorage}
+import com.waz.service.assets.Asset.{General, Image}
 import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.otr.OtrClientsService
@@ -57,7 +57,6 @@ class MessagesSyncHandler(selfUserId: UserId,
                           otrSync:    OtrSyncHandler,
                           convs:      ConversationsContentUpdater,
                           storage:    MessagesStorage,
-                          assetSync:  AssetSyncHandler,
                           sync:       SyncServiceHandle,
                           assets:     AssetService,
                           assetStorage: AssetStorage,

@@ -30,4 +30,5 @@ abstract class UnitTest {
     @Rule
     @JvmField
     val injectMocks = InjectMocksRule.create(this@UnitTest)
+
 }

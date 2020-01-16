@@ -19,25 +19,22 @@ package com.waz.sync.handler
 
 import java.io.File
 
-import com.waz.log.LogSE._
 import com.waz.api.Message
 import com.waz.api.Message.Part
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.AssetMetaData.Image.Tag.Medium
+import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, LinkPreview, Text}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
-import com.waz.service.assets2.Asset.General
-import com.waz.service.assets2.{AES_CBC_Encryption, AssetService, Content, ContentForUpload, Asset => Asset2}
-import com.waz.service.images.{ImageAssetGenerator, ImageLoader}
+import com.waz.service.assets.{AES_CBC_Encryption, AssetService, Content, ContentForUpload, Asset => Asset2}
 import com.waz.service.messages.MessagesService
 import com.waz.service.otr.OtrServiceImpl
 import com.waz.sync.SyncResult
-import com.waz.sync.client.AssetClient2.Retention
+import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.sync.client.{ErrorOr, OpenGraphClient}
 import com.waz.sync.otr.OtrSyncHandler
@@ -50,12 +47,9 @@ import scala.concurrent.Future
 class OpenGraphSyncHandler(convs:           ConversationStorage,
                            messages:        MessagesStorage,
                            otrService:      OtrServiceImpl,
-                           assetSync:       AssetSyncHandler,
                            assets:          AssetService,
                            otrSync:         OtrSyncHandler,
                            client:          OpenGraphClient,
-                           imageGenerator:  ImageAssetGenerator,
-                           imageLoader:     ImageLoader,
                            messagesService: MessagesService) extends DerivedLogTag {
   import com.waz.threading.Threading.Implicits.Background
 

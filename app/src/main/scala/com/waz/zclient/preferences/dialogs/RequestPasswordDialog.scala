@@ -31,16 +31,12 @@ import androidx.fragment.app.{DialogFragment, FragmentActivity}
 import com.google.android.material.textfield.{TextInputEditText, TextInputLayout}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream}
 import com.waz.utils.returning
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.ExecutorWrapper
 import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.{FragmentHelper, R}
-
-import scala.concurrent.duration._
-import scala.util.Try
 
 class RequestPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
   import RequestPasswordDialog._
@@ -75,25 +71,39 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     .setNegativeButtonText(getString(R.string.request_password_biometric_cancel))
     .build
 
-  private lazy val prompt: BiometricPrompt = new BiometricPrompt(getActivity, ExecutorWrapper(Threading.Ui), new BiometricPrompt.AuthenticationCallback {
+  private lazy val prompt: BiometricPrompt = new BiometricPrompt(this, ExecutorWrapper(Threading.Ui), new BiometricPrompt.AuthenticationCallback {
     override def onAuthenticationError(errorCode: Int, errString: CharSequence): Unit = {
       super.onAuthenticationError(errorCode, errString)
-      verbose(l"onAuthenticationError, code: $errorCode, str: $errString")
       onAnswer ! (if (errorCode == BiometricConstants.ERROR_NEGATIVE_BUTTON) BiometricCancelled else BiometricError(errString.toString))
     }
 
     override def onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult): Unit = {
       super.onAuthenticationSucceeded(result)
-      verbose(l"onAuthenticationSucceeded: $result")
       onAnswer ! BiometricSuccess
     }
 
     override def onAuthenticationFailed(): Unit = {
       super.onAuthenticationFailed()
-      verbose(l"onAuthenticationFailed")
       onAnswer ! BiometricFailure
     }
   })
+
+  private lazy val dialog: AlertDialog = {
+    val builder = new AlertDialog.Builder(getActivity)
+      .setView(root)
+      .setTitle(title)
+      .setMessage(message)
+      .setPositiveButton(R.string.request_password_ok, null)
+
+    Option(getBooleanArg(IsCancellable)).foreach(
+      if (_) builder.setNegativeButton(R.string.request_password_cancel, new OnClickListener {
+        override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! PasswordCancelled
+      })
+    )
+
+    if (useBiometric) prompt.authenticate(promptInfo)
+    returning(builder.create)(_.getWindow.setDimAmount(1.0f))
+  }
 
   def show(activity: FragmentActivity): Unit =
     activity.getSupportFragmentManager
@@ -124,41 +134,25 @@ class RequestPasswordDialog extends DialogFragment with FragmentHelper with Deri
     if (!useBiometric) passwordEditText.requestFocus()
     errorLayout
 
-    val builder = new AlertDialog.Builder(getActivity)
-      .setView(root)
-      .setTitle(title)
-      .setMessage(message)
-      .setPositiveButton(R.string.request_password_ok, null)
-
-    Option(getBooleanArg(IsCancellable)).foreach(
-      if (_) builder.setNegativeButton(R.string.request_password_cancel, new OnClickListener {
-        override def onClick(dialog: DialogInterface, which: Int): Unit = onAnswer ! PasswordCancelled
-      })
-    )
-
-    builder.create
+    dialog
   }
 
   override def onStart() = {
     super.onStart()
-    verbose(l"onStart")
-    Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { d =>
-      d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-        def onClick(v: View) = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
-      })
-    }
+    dialog.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+      def onClick(v: View) = onAnswer ! PasswordAnswer(Password(passwordEditText.getText.toString))
+    })
+  }
 
-    // FIXME: the delay is necessary because of a bug introduced in androidx.biometric:1.0.0-alpha04
-    // https://stackoverflow.com/questions/55934108/fragmentmanager-is-already-executing-transactions-when-executing-biometricprompt
-    // try to apply the proposed solution
-    if (useBiometric) CancellableFuture.delay(100.millis).map { _ => prompt.authenticate(promptInfo) }(Threading.Ui)
+  override def onStop() = {
+    dialog.dismiss()
+    super.onStop()
   }
 
   override def onActivityCreated(savedInstanceState: Bundle) = {
     super.onActivityCreated(savedInstanceState)
+
     if (!useBiometric) getDialog.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
-    //hide content of wire when it's locked
-    getDialog.getWindow.setDimAmount(1.0f)
   }
 }
 
