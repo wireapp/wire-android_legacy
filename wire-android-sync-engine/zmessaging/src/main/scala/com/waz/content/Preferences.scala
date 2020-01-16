@@ -444,7 +444,6 @@ object UserPreferences {
   lazy val DownloadImagesAlways = PrefKey[Boolean]("download_images_always", customDefault = true)
 
   lazy val SelectedConvId = PrefKey[Option[ConvId]]("selected_conv_id")
-  lazy val SpotifyRefreshToken = PrefKey[Option[RefreshToken]]("spotify_refresh_token")
 
   lazy val OtrLastPrekey = PrefKey[Int]("otr_last_prekey_id")
   lazy val LastStableNotification = PrefKey[Option[Uid]]("last_notification_id")
