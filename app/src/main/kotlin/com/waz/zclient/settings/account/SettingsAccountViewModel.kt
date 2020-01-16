@@ -6,6 +6,8 @@ import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) {

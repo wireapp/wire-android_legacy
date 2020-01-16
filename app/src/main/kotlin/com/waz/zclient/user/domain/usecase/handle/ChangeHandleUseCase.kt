@@ -1,4 +1,4 @@
-package com.waz.zclient.user.domain.usecase
+package com.waz.zclient.user.domain.usecase.handle
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
