@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.core.ui.text.TextChangedListener
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -18,8 +19,6 @@ import org.koin.android.viewmodel.ext.android.viewModel
 class EditHandleFragment : DialogFragment() {
 
     private val editHandleViewModel: EditHandleViewModel by viewModel()
-
-    private var listener: HandleChangedListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +34,7 @@ class EditHandleFragment : DialogFragment() {
     }
 
     private fun initListeners() {
-        edit_handle_edit_text.addTextChangedListener(object : HandleTextChangedListener {
+        edit_handle_edit_text.addTextChangedListener(object : TextChangedListener {
             override fun afterTextChanged(s: Editable?) {
                 editHandleViewModel.afterHandleTextChanged(s.toString())
             }
@@ -54,20 +53,13 @@ class EditHandleFragment : DialogFragment() {
         }
     }
 
-    interface HandleChangedListener {
-        fun onHandleChanged(handle: String)
-    }
-
     companion object {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
 
-        fun newInstance(currentHandle: String?, handleChangedListener: HandleChangedListener):
+        fun newInstance(currentHandle: String?):
             EditHandleFragment = EditHandleFragment()
             .withArgs {
                 putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle)
-            }.also {
-                it.listener = handleChangedListener
             }
     }
-
 }
