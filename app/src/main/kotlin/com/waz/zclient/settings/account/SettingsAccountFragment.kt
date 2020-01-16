@@ -64,7 +64,7 @@ class SettingsAccountFragment : Fragment() {
     private fun initAccountHandle() {
         settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
         preferences_account_handle.setOnClickListener {
-            showEditHandleDialog { settingsAccountViewModel.updateHandle(it) }
+            showEditHandleDialog()
         }
     }
 
@@ -125,16 +125,11 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
-    private fun showEditHandleDialog(updateHandle: (String) -> Unit) {
+    private fun showEditHandleDialog() {
         settingsAccountViewModel.handle.value?.let {
             EditHandleFragment.newInstance(
                 currentHandle = it,
-                isCancelable = true,
-                handleChangedListener = object : EditHandleFragment.HandleChangedListener {
-                    override fun onHandleChanged(handle: String) {
-                        updateHandle(handle)
-                    }
-                }).show(requireActivity().supportFragmentManager, String.empty())
+                isCancelable = true).show(requireActivity().supportFragmentManager, String.empty())
         }
     }
 

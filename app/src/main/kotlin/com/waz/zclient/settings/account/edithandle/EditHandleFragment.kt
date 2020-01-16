@@ -15,6 +15,7 @@ import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
 import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
 import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
+import com.waz.zclient.core.ui.text.TextChangedListener
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -25,8 +26,6 @@ import org.koin.android.viewmodel.ext.android.viewModel
 class EditHandleFragment : DialogFragment() {
 
     private val editHandleViewModel: EditHandleViewModel by viewModel()
-
-    private var listener: HandleChangedListener? = null
 
     private val suggestedHandle: String by lazy {
         arguments?.getString(CURRENT_HANDLE_BUNDLE_KEY, String.empty()) ?: String.empty()
@@ -52,7 +51,7 @@ class EditHandleFragment : DialogFragment() {
     private fun initHandleInput() {
         edit_handle_edit_text.setText(suggestedHandle)
         edit_handle_edit_text.setSelection(suggestedHandle.length)
-        edit_handle_edit_text.addTextChangedListener(object : HandleTextChangedListener {
+        edit_handle_edit_text.addTextChangedListener(object : TextChangedListener {
             override fun afterTextChanged(s: Editable?) {
                 editHandleViewModel.afterHandleTextChanged(s.toString())
             }
@@ -106,22 +105,15 @@ class EditHandleFragment : DialogFragment() {
         edit_handle_edit_text.setSelection(edit_handle_edit_text.length())
     }
 
-    interface HandleChangedListener {
-        fun onHandleChanged(handle: String)
-    }
-
     companion object {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
         private const val DIALOG_IS_CANCELABLE_BUNDLE_KEY = "dialogIsCancelableBundleKey"
 
-        fun newInstance(currentHandle: String, isCancelable: Boolean, handleChangedListener: HandleChangedListener):
+        fun newInstance(currentHandle: String, isCancelable: Boolean):
             EditHandleFragment = EditHandleFragment()
             .withArgs {
                 putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle)
                 putBoolean(DIALOG_IS_CANCELABLE_BUNDLE_KEY, isCancelable)
-            }.also {
-                it.listener = handleChangedListener
             }
     }
-
 }
