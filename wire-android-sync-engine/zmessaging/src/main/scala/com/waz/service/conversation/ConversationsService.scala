@@ -28,7 +28,7 @@ import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
 import com.waz.service._
-import com.waz.service.assets2.AssetService
+import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.tracking.{GuestsAllowedToggled, TrackingService}

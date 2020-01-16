@@ -34,7 +34,6 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.assets.AudioLevels.peakLoudness
-import com.waz.service.assets2.GeneralFileCache
 import com.waz.service.{AccountsService, ErrorsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -72,7 +71,6 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
   import Threading.Implicits.Background
 
   private lazy val stateSource = returning(Signal[State](Idle))(_.disableAutowiring())
-  private lazy val saveDir = AssetService.assetDir(context)
   private implicit def implicitContext: Context = context
 
   lazy val state: Signal[State] = stateSource
@@ -82,7 +80,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
 
   context.registerReceiver(interruptionBroadcastReceiver, interruptionIntentFilter)
 
-  def play(key: MediaKey, content: Content): Future[State] = transitionF {
+  def play(key: MediaKey, content: GlobalRecordAndPlayService.Content): Future[State] = transitionF {
     case Idle =>
       withAudioFocus()(playOrResumeTransition(key, Left(content)))
     case Playing(player, `key`) =>
@@ -108,7 +106,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
       }
   } (s"error while starting playback $key ($content)", Some(PLAYBACK_FAILURE))
 
-  private def playOrResumeTransition(key: MediaKey, contentOrPlayer: Either[Content, Player]): Future[Transition] =
+  private def playOrResumeTransition(key: MediaKey, contentOrPlayer: Either[GlobalRecordAndPlayService.Content, Player]): Future[Transition] =
     Future(contentOrPlayer).flatMap(_.fold(content => Player(content, Observe(key)), successful)).flatMap { p =>
       contentOrPlayer.fold(_ => p.start(), _ => p.resume()).map(_ => Next(Playing(p, key))).andThenFuture {
         case Failure(cause) => p.release()
@@ -156,7 +154,7 @@ class GlobalRecordAndPlayService(cache: CacheService, context: Context, fileCach
       }
     }
 
-  def setPlayhead(key: MediaKey, content: Content, playhead: bp.Duration): Future[State] = {
+  def setPlayhead(key: MediaKey, content: GlobalRecordAndPlayService.Content, playhead: bp.Duration): Future[State] = {
     def seek(maybePlayer: Option[Player] = None) =
       maybePlayer.fold2(Player(content, Observe(key)), successful).flatMap { player =>
         player.repositionPlayhead(playhead).map(_ => returning(player)(_ => verbose(l"repositioned playhead: $playhead"))).andThenFuture {

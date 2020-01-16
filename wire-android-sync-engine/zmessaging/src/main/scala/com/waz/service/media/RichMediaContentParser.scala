@@ -24,7 +24,7 @@ import com.waz.api.Message.Part
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.{Mention, MessageContent}
-import com.waz.sync.client.{SoundCloudClient, YouTubeClient}
+import com.waz.sync.client.YouTubeClient
 import com.waz.utils.wrappers.URI
 
 import scala.util.Try
@@ -36,15 +36,13 @@ object RichMediaContentParser extends DerivedLogTag {
 
   def findMatches(content: String, mentionsRanges: Seq[(Int, Int)] = Nil, weblinkEnabled: Boolean = false): Iterator[(Int, Int, Part.Type)] = {
 
-    val knownDomains = (YouTubeClient.DomainNames.map(_ -> YOUTUBE) ++
-      SoundCloudClient.domainNames.map(_ -> SOUNDCLOUD)
-      ).toMap
+    val knownDomains = YouTubeClient.DomainNames.map(_ -> YOUTUBE).toMap
 
     def validate(content: String, uri: URI, tpe: Part.Type): Boolean = tpe match {
       case YOUTUBE     => youtubeVideoId(uri).isDefined
-      case SOUNDCLOUD  => Option(uri.getPath).exists(_.nonEmpty)
-      case TWITTER     => uri.toString.matches(TwitterRegex.regex)
-      case SPOTIFY     => SpotifyPathRegex.unapplySeq(uri.getPath).isDefined
+      case SOUNDCLOUD  => weblinkEnabled && ! WebLinkBlackList(content)
+      case TWITTER     => weblinkEnabled && ! WebLinkBlackList(content)
+      case SPOTIFY     => weblinkEnabled && ! WebLinkBlackList(content)
       case WEB_LINK    => weblinkEnabled && ! WebLinkBlackList(content)
       case _           => false
     }
@@ -114,9 +112,6 @@ object RichMediaContentParser extends DerivedLogTag {
   // UI generates 'sytem' text message: '... via giphy.com`, eventually we should stop using those fake messages,
   // for now having a blacklist should do
   val WebLinkBlackList = Set("giphy.com")
-
-  val SpotifyPathRegex = "(?i)/(artist|album|track|playlist)/[0-9A-Za-z-_]+/?".r
-  val TwitterRegex = """(?i)(https?://)?(www\.)?twitter\.com/[0-9A-Za-z-_]+/status/\d*/?""".r
 
   def youtubeVideoId(youtubeUrl: String): Option[String] = decode(youtubeUrl)(youtubeVideoId)
   private def youtubeVideoId(uri: URI): Option[String] = try {

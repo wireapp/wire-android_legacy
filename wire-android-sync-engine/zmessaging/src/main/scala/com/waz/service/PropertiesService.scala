@@ -23,7 +23,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.{FoldersEvent, PropertyEvent, ReadReceiptEnabledPropertyEvent, UnknownPropertyEvent}
 import com.waz.service.EventScheduler.Stage
-import com.waz.service.assets2.Codec
+import com.waz.service.assets.Codec
 import com.waz.service.push.PushService
 import com.waz.service.push.PushService.{ForceSync, SyncHistory}
 import com.waz.sync.{SyncRequestService, SyncServiceHandle}

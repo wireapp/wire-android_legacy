@@ -23,10 +23,11 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.model.messages.media.MediaAssetData.MediaWithImages
 import com.waz.model.messages.media.TrackData
 import com.waz.model._
+import com.waz.service.assets.{AES_CBC_Encryption, AssetService, Content, ContentForUpload, DetailsNotReady, PreviewNotReady, UploadAsset, UploadAssetStatus}
 import com.waz.service.assets2._
 import com.waz.service.messages.MessagesService
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.client.AssetClient2.Retention
+import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.YouTubeClient
 import com.waz.utils.wrappers.URI
 import org.threeten.bp.Instant

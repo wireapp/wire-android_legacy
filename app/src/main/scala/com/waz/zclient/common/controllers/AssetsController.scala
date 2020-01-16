@@ -35,11 +35,11 @@ import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
+import com.waz.service
 import com.waz.service.ZMessaging
-import com.waz.service.assets.GlobalRecordAndPlayService
+import com.waz.service.assets.{Asset, AssetService, DownloadAsset, GeneralAsset, GlobalRecordAndPlayService, PreviewNotUploaded, PreviewUploaded, UploadAsset}
 import com.waz.service.assets.GlobalRecordAndPlayService.{AssetMediaKey, Content, MediaKey, UnauthenticatedContent}
-import com.waz.service.assets2.Asset.{Audio, Video}
-import com.waz.service.assets2.{AssetStatus, _}
+import com.waz.service.assets.Asset.{Audio, Video}
 import com.waz.service.messages.MessagesService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
@@ -105,14 +105,14 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       status <- a.assetSignal(id)
     } yield status
 
-  def assetStatusSignal(assetId: Signal[GeneralAssetId]): Signal[(AssetStatus, Option[Progress])] =
+  def assetStatusSignal(assetId: Signal[GeneralAssetId]): Signal[(service.assets.AssetStatus, Option[Progress])] =
     for {
       a <- assets
       id <- assetId
       status <- a.assetStatusSignal(id)
     } yield status
 
-  def assetStatusSignal(assetId: GeneralAssetId): Signal[(AssetStatus, Option[Progress])] =
+  def assetStatusSignal(assetId: GeneralAssetId): Signal[(service.assets.AssetStatus, Option[Progress])] =
     assetStatusSignal(Signal.const(assetId))
 
   def assetPreviewId(assetId: Signal[GeneralAssetId]): Signal[Option[GeneralAssetId]] =

@@ -22,7 +22,6 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.Message
 import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
-import com.waz.service.assets2._
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -34,7 +33,8 @@ import com.waz.model.sync.ReceiptType
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.currentBeDrift
 import com.waz.service._
-import com.waz.service.assets2.Asset.Video
+import com.waz.service.assets.{AES_CBC_Encryption, AssetService, ContentForUpload, UploadAsset}
+import com.waz.service.assets.Asset.Video
 import com.waz.service.conversation.ConversationsService.generateTempConversationId
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.TrackingService

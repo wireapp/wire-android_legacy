@@ -42,10 +42,9 @@ import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
-import com.waz.service.assets2._
+import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, AssetTransformationsService, AssetTransformationsServiceImpl, ImageDownscalingCompressing, UriHelper}
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
-import com.waz.service.images.ImageLoader
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
@@ -59,7 +58,7 @@ import com.waz.utils.SafeBase64
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
-import com.waz.zclient.assets2.{AndroidImageRecoder, AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
+import com.waz.zclient.assets.{AndroidImageRecoder, AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
@@ -108,7 +107,6 @@ object WireApplication extends DerivedLogTag {
     if (Option(APP_INSTANCE).isEmpty) false // too early
     else APP_INSTANCE.ensureInitialized()
 
-  type AccountToImageLoader = (UserId) => Future[Option[ImageLoader]]
   type AccountToAssetsStorage = (UserId) => Future[Option[AssetStorage]]
   type AccountToUsersStorage = (UserId) => Future[Option[UsersStorage]]
   type AccountToConvsStorage = (UserId) => Future[Option[ConversationStorage]]
@@ -163,7 +161,6 @@ object WireApplication extends DerivedLogTag {
     bind [CustomBackendClient]            to inject[GlobalModule].customBackendClient
 
     import com.waz.threading.Threading.Implicits.Background
-    bind [AccountToImageLoader]   to (userId => inject[AccountsService].getZms(userId).map(_.map(_.imageLoader)))
     bind [AccountToAssetsStorage] to (userId => inject[AccountsService].getZms(userId).map(_.map(_.assetsStorage)))
     bind [AccountToUsersStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.usersStorage)))
     bind [AccountToConvsStorage]  to (userId => inject[AccountsService].getZms(userId).map(_.map(_.convsStorage)))
@@ -190,7 +187,6 @@ object WireApplication extends DerivedLogTag {
     bind [Signal[AssetStorage]]                  to inject[Signal[ZMessaging]].map(_.assetsStorage)
     bind [Signal[AssetService]]                  to inject[Signal[ZMessaging]].map(_.assetService)
     bind [Signal[MessagesStorage]]               to inject[Signal[ZMessaging]].map(_.messagesStorage)
-    bind [Signal[ImageLoader]]                   to inject[Signal[ZMessaging]].map(_.imageLoader)
     bind [Signal[MessagesService]]               to inject[Signal[ZMessaging]].map(_.messages)
     bind [Signal[IntegrationsService]]           to inject[Signal[ZMessaging]].map(_.integrations)
     bind [Signal[UserPreferences]]               to inject[Signal[ZMessaging]].map(_.userPrefs)

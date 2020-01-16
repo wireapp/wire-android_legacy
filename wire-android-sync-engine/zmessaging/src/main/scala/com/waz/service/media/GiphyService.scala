@@ -20,7 +20,6 @@ package com.waz.service.media
 import java.net.URL
 
 import com.waz.model.Dim2
-import com.waz.service.images.ImageAssetGenerator
 import com.waz.service.media.GiphyService.{Gif, GifObject}
 import com.waz.sync.client.GiphyClient
 import com.waz.sync.client.GiphyClient.GiphyResponse
@@ -33,6 +32,8 @@ trait GiphyService {
 }
 
 object GiphyService {
+  val MaxGifSize         = 5 * 1024 * 1024
+
   case class GifObject(id: String, original: Gif, preview: Option[Gif])
   case class Gif(dimensions: Dim2, sizeInBytes: Long, source: URL)
 }
@@ -66,6 +67,6 @@ class GiphyServiceImpl(client: GiphyClient)(implicit ec: ExecutionContext) exten
   }
 
   private def isGifValid(gifObject: GifObject): Boolean =
-    gifObject.original.sizeInBytes <= ImageAssetGenerator.MaxGifSize
+    gifObject.original.sizeInBytes <= GiphyService.MaxGifSize
 
 }

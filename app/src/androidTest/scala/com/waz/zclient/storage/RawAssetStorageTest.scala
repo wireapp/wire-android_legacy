@@ -22,9 +22,11 @@ import java.net.URI
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
 import com.waz.model._
-import com.waz.service.assets2.UploadAssetStorage.UploadAssetDao
+import com.waz.service.assets
+import com.waz.service.assets.{ImageDetails, LocalSource, NoEncryption, PreviewEmpty, UploadAsset}
+import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.service.assets2.{AssetStatus, _}
-import com.waz.sync.client.AssetClient2.Retention
+import com.waz.sync.client.AssetClient.Retention
 import org.junit.runner.RunWith
 
 /**
@@ -63,7 +65,7 @@ class RawAssetStorageTest extends GeneralStorageTest(UploadAssetDao)(
       public = true,
       details = ImageDetails(Dim2(1,2)),
       assetId = None,
-      status = AssetStatus.Done,
+      status = assets.AssetStatus.Done,
       preview = PreviewEmpty
     )
 //    RawAsset(

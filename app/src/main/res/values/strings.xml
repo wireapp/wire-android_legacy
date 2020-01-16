@@ -397,8 +397,6 @@
 
     <!-- Rich media -->
     <string name="content__youtube__error__text">video not found</string>
-    <string name="mediaplayer__message__onsoundcloud">on SoundCloud</string>
-    <string name="mediaplayer__message__onspotify">on Spotify</string>
 
     <!-- Invite banner -->
 

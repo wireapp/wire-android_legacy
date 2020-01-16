@@ -28,7 +28,7 @@ import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
-import com.waz.sync.client.{AssetClient, MessagesClient, OtrClient}
+import com.waz.sync.client.{MessagesClient, OtrClient}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
 import com.waz.sync.otr.{OtrClientsSyncHandler, OtrSyncHandlerImpl}
 import com.waz.threading.CancellableFuture
@@ -41,7 +41,6 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
   val selfClientId       = ClientId("client-id")
   val otrClient          = mock[OtrClient]
   val msgClient          = mock[MessagesClient]
-  val assetClient        = mock[AssetClient]
   val service            = mock[OtrService]
   val convStorage        = mock[ConversationStorage]
   val convsService       = mock[ConversationsService]
@@ -214,7 +213,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
   def getSyncHandler = {
     (push.waitProcessing _).expects().anyNumberOfTimes.returning(Future.successful({}))
-    new OtrSyncHandlerImpl(teamId, selfClientId, otrClient, msgClient, assetClient, service, convsService, convStorage, users, members, errors, clientsSyncHandler, push, usersStorage)
+    new OtrSyncHandlerImpl(teamId, selfClientId, otrClient, msgClient, service, convsService, convStorage, users, members, errors, clientsSyncHandler, push, usersStorage)
   }
 
 }

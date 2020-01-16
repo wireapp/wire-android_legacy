@@ -30,7 +30,7 @@ import com.waz.model.sync.SyncRequest.PostConvRole
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._
-import com.waz.service.assets2.UploadAssetStatus
+import com.waz.service.assets.UploadAssetStatus
 import com.waz.sync.SyncResult.Failure
 import com.waz.threading.Threading
 import org.threeten.bp.Instant

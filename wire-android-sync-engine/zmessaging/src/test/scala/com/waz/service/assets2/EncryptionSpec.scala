@@ -20,6 +20,7 @@ package com.waz.service.assets2
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 
 import com.waz.TestData
+import com.waz.service.assets.{AES_CBC_Encryption, Encryption, NoEncryption, Salt}
 import com.waz.specs.ZSpec
 import com.waz.utils.IoUtils
 import org.junit.runner.RunWith
