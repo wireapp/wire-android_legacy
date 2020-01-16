@@ -20,7 +20,7 @@ package com.waz.zclient.participants
 import android.content.Context
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.ZMessaging
+import com.waz.service.{ConnectionService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
@@ -116,7 +116,11 @@ class ParticipantsController(implicit injector: Injector, context: Context, ec: 
 
   def getUser(userId: UserId): Future[Option[UserData]] = zms.head.flatMap(_.usersStorage.get(userId))
 
-  def blockUser(userId: UserId): Future[Option[UserData]] = zms.head.flatMap(_.connection.blockConnection(userId))
+  def blockUser(userId: UserId): Future[Option[UserData]] = for {
+    connection <- inject[Signal[ConnectionService]].head
+    user       <- connection.blockConnection(userId)
+    _          =  unselectParticipant()
+  } yield user
 
   def unblockUser(userId: UserId): Future[ConversationData] = zms.head.flatMap(_.connection.unblockConnection(userId))
 

@@ -40,7 +40,6 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
@@ -443,28 +442,14 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
-  override def onUnblockedUser(restoredConversationWithUser: ConvId) = {
-    pickUserController.hideUserProfile()
-    verbose(l"onUnblockedUser $restoredConversationWithUser")
-    convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
-  }
-
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
     if (inConvList) {
       OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Mode.Normal(inConvList))).show()
     }
 
-  override def dismissUserProfile() =
-    pickUserController.hideUserProfile()
-
-  override def dismissSingleUserProfile() =
-    dismissUserProfile()
-
   override def onHideUser() = {}
 
   override def onHideOtrClient() = {}
-
-  override def showRemoveConfirmation(userId: UserId) = {}
 
   override def onNavigationItemSelected(item: MenuItem): Boolean = {
     item.getItemId match {
