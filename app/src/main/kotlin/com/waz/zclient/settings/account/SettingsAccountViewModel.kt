@@ -1,11 +1,20 @@
 package com.waz.zclient.settings.account
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.*
+import com.waz.zclient.user.domain.usecase.ChangeEmailParams
+import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
+import com.waz.zclient.user.domain.usecase.ChangeNameParams
+import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
+import com.waz.zclient.user.domain.usecase.ChangePhoneParams
+import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -82,11 +91,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
 
     //TODO valid error scenarios once the networking has been integrated
     private fun handleError(failure: Failure) {
-        if (failure is HttpError) {
-            mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")
-        } else {
-            mutableError.postValue("Misc error scenario")
-        }
+        mutableError.postValue("Failure: $failure")
     }
 }
 

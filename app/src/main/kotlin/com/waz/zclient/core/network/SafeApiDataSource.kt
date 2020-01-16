@@ -1,11 +1,13 @@
 package com.waz.zclient.core.network
 
-import com.waz.zclient.core.exception.*
+import com.waz.zclient.core.exception.DatabaseError
+import com.waz.zclient.core.exception.DatabaseFailure
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.NetworkFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking
-import retrofit2.Response
 import timber.log.Timber
 
 suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseFailure, R> =
@@ -36,8 +38,7 @@ private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R
             onSuccess { runBlocking { saveToDatabase(it) } }
             onFailure {
                 when (it) {
-                    is NetworkServiceError -> Timber.e("Network request failed with generic error ")
-                    is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
+                    is NetworkFailure -> Timber.e("Network request failed with generic error ")
                     else -> Timber.e("Network request failed with unknown error ")
                 }
             }
