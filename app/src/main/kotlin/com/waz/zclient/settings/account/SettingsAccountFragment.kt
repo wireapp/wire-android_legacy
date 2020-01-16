@@ -127,9 +127,8 @@ class SettingsAccountFragment : Fragment() {
 
     private fun showEditHandleDialog() {
         settingsAccountViewModel.handle.value?.let {
-            EditHandleFragment.newInstance(
-                currentHandle = it,
-                isCancelable = true).show(requireActivity().supportFragmentManager, String.empty())
+            EditHandleFragment.newInstance(it)
+                .show(requireActivity().supportFragmentManager, String.empty())
         }
     }
 

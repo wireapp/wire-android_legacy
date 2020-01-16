@@ -22,17 +22,13 @@ class EditHandleViewModel(
     private var mutableOkEnabled = MutableLiveData<Boolean>()
     private var mutableDismiss = MutableLiveData<Unit>()
 
-    val handle: LiveData<String>
-        get() = mutableHandle
+    val handle: LiveData<String> = mutableHandle
 
-    val error: LiveData<ValidateHandleError>
-        get() = mutableError
+    val error: LiveData<ValidateHandleError> = mutableError
 
-    val okEnabled: LiveData<Boolean>
-        get() = mutableOkEnabled
+    val okEnabled: LiveData<Boolean> = mutableOkEnabled
 
-    val dismiss: LiveData<Unit>
-        get() = mutableDismiss
+    val dismiss: LiveData<Unit> = mutableDismiss
 
     fun beforeHandleTextChanged(oldHandle: String) {
         validateHandleUseCase(viewModelScope, ValidateHandleParams(oldHandle)) {
@@ -60,8 +56,8 @@ class EditHandleViewModel(
         }
     }
 
-    fun onBackButtonClicked(suggestedHandle: String?, isDialogCancelable: Boolean) {
-        if (!isDialogCancelable && !suggestedHandle.isNullOrEmpty()) {
+    fun onBackButtonClicked(suggestedHandle: String?) {
+        if (!suggestedHandle.isNullOrEmpty()) {
             updateHandle(suggestedHandle)
         }
         mutableDismiss.postValue(Unit)

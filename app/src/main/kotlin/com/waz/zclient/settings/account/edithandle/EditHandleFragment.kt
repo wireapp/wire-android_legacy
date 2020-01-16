@@ -49,8 +49,7 @@ class EditHandleFragment : DialogFragment() {
     }
 
     private fun initHandleInput() {
-        edit_handle_edit_text.setText(suggestedHandle)
-        edit_handle_edit_text.setSelection(suggestedHandle.length)
+        updateHandleText(suggestedHandle)
         edit_handle_edit_text.doBeforeTextChanged { text, _, _, _ ->
             editHandleViewModel.beforeHandleTextChanged(text.toString())
         }
@@ -66,9 +65,8 @@ class EditHandleFragment : DialogFragment() {
     }
 
     private fun initBackButton() {
-        val isCancelable = arguments?.getBoolean(DIALOG_IS_CANCELABLE_BUNDLE_KEY, true) ?: true
         edit_handle_back_button.setOnClickListener {
-            editHandleViewModel.onBackButtonClicked(suggestedHandle, isCancelable)
+            editHandleViewModel.onBackButtonClicked(suggestedHandle)
         }
     }
 
@@ -103,13 +101,11 @@ class EditHandleFragment : DialogFragment() {
 
     companion object {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
-        private const val DIALOG_IS_CANCELABLE_BUNDLE_KEY = "dialogIsCancelableBundleKey"
 
-        fun newInstance(currentHandle: String, isCancelable: Boolean):
+        fun newInstance(currentHandle: String):
             EditHandleFragment = EditHandleFragment()
             .withArgs {
                 putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle)
-                putBoolean(DIALOG_IS_CANCELABLE_BUNDLE_KEY, isCancelable)
             }
     }
 }

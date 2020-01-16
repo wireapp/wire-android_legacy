@@ -51,7 +51,7 @@ class ValidateHandleUseCaseTest : UnitTest() {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given run is executed, handle fits requirements, but request anceled, then return false`() {
+    fun `Given run is executed, handle fits requirements, but request canceled, then return false`() {
         val handle = "wire"
         verifyValidateUseCase(handle, isCancelable = true)
     }

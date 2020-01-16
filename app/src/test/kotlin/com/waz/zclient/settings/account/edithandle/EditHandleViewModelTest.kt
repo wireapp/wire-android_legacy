@@ -3,29 +3,21 @@ package com.waz.zclient.settings.account.edithandle
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.exception.DatabaseError
-import com.waz.zclient.core.exception.GenericUseCaseError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.domain.usecase.handle.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldBeInstanceOf
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verifyNoInteractions
-import java.util.concurrent.CancellationException
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -51,85 +43,71 @@ class EditHandleViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given beforeHandTextChange is called and validation fails with HandleInvalidError, then handle input should not be updated`() =
+    fun `given beforeHandTextChange is called when validation fails with HandleInvalidError, then handle input should not be updated`() =
         runBlockingTest {
-            editHandleViewModel.beforeHandleTextChanged(HANDLE_INVALID)
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
+
+            editHandleViewModel.beforeHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.handle.observeOnce {
                 it shouldBe String.empty()
             }
+
+            editHandleViewModel.error.observeOnce {
+                it shouldBe HandleInvalidError
+            }
         }
 
     @Test
-    fun `given beforeHandTextChange is called and validation do not fail with HandleInvalidError, then handle input should be updated`() =
+    fun `given beforeHandTextChange is called when validation does not with HandleInvalidError, then handle input should be updated`() =
         runBlockingTest {
-            editHandleViewModel.beforeHandleTextChanged(HANDLE_TOO_LONG)
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
+
+            editHandleViewModel.beforeHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.handle.observeOnce {
-                it shouldBe HANDLE_TOO_LONG
+                it shouldBe TEST_HANDLE
             }
-
-        }
-
-    @Test(expected = CancellationException::class)
-    fun `given afterHandleTextChanged is called and getHandleUseCase fails with GenericUseCaseError, then okButton should be disabled`() =
-        runBlockingTest {
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
-
-            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
-            delay(CANCELLATION_DELAY)
-
-            editHandleViewModel.okEnabled.observeOnce {
-                it shouldBe false
-            }
-
-            getHandleUseCase.invoke(any(), any()) {
-                it.onFailure { failure ->
-                    failure shouldBeInstanceOf GenericUseCaseError::class.java
-                }
-            }
-
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput valid, checkExist succeeds, validation succeeds, handle should update `() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput != currentHandle, checkExist succeeds, validation succeeds, then handle should update`() =
         runBlockingTest {
-
-            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_HANDLE)
-            val handleFlow: Flow<String> = flow { NON_DUPLICATED_HANDLE }
+            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Right(HandleIsAvailable))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe true
             }
             editHandleViewModel.handle.observeOnce {
-                it shouldBe NON_DUPLICATED_HANDLE
+                it shouldBe NON_DUPLICATED_TEST_HANDLE
             }
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is invalid, check exists use case should not be called`() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput == currentHandle, then CheckExistsUseCase should not be called`() =
         runBlockingTest {
-            val handleFlow: Flow<String> = flow { GENERIC_HANDLE }
+            val handleFlow: Flow<String> = flow { TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             verifyNoInteractions(checkHandleExistsUseCase)
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid, check exists fails with HandleUnknwonError, then ok button is disabled and error should be updated`() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput != currentHandle, check exists fails with HandleUnknownError, then ok button is disabled and error should be updated`() =
         runBlockingTest {
-            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_HANDLE)
-            val handleFlow: Flow<String> = flow { NON_DUPLICATED_HANDLE }
+            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleUnknownError))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -141,14 +119,14 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid, check exists fails with HandleAlreadyTakenError, then ok button is disabled and error should be updated`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists fails with HandleAlreadyTakenError, then ok button is disabled and error should be updated`() =
         runBlockingTest {
-            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_HANDLE)
-            val handleFlow: Flow<String> = flow { NON_DUPLICATED_HANDLE }
+            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleExistsAlreadyError))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -159,20 +137,15 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid, check exists succeeds, validation fails with HandleTooLongError, ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleTooLongError then ok button should be disabled`() =
         runBlockingTest {
-            val checkExistsParams = CheckHandleExistsParams(HANDLE_TOO_LONG)
-            val handleFlow: Flow<String> = flow { HANDLE_TOO_LONG }
+            val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
-
-            validateHandleUseCase.invoke(TestCoroutineScope(TestCoroutineDispatcher()), ValidateHandleParams(HANDLE_TOO_LONG)) {
-                it.onFailure { failure ->
-                    failure shouldBeInstanceOf HandleTooLongError::class.java
-                }
-            }
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -180,20 +153,14 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid,  check exists succeeds, validation fails with HandleTooShortError, ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleTooShortError then ok button should be disabled`() =
         runBlockingTest {
-            val checkExistsParams = CheckHandleExistsParams(HANDLE_TOO_SHORT)
-            val handleFlow: Flow<String> = flow { HANDLE_TOO_SHORT }
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
-            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(checkHandleExistsUseCase.run(any())).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(validateHandleUseCase.run((any()))).thenReturn(Either.Left(HandleTooShortError))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
-
-            validateHandleUseCase.invoke(TestCoroutineScope(TestCoroutineDispatcher()), ValidateHandleParams(HANDLE_TOO_SHORT)) {
-                it.onFailure { failure ->
-                    failure shouldBeInstanceOf HandleTooShortError::class.java
-                }
-            }
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -201,47 +168,48 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid, check exists succeeds, validation fails with HandleUnknownError, ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleUnknownError then ok button should be disabled`() =
         runBlockingTest {
-            val checkExistsParams = CheckHandleExistsParams(HANDLE_TOO_SHORT)
-            val handleFlow: Flow<String> = flow { HANDLE_TOO_SHORT }
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
-            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(checkHandleExistsUseCase.run(any())).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleUnknownError))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
+            editHandleViewModel.error.observeOnce {
+                it shouldBe HandleUnknownError
+            }
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
             }
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, getHandleUseCase succeeds, currentInput is valid, check exists succeeds, validation fails with HandleInvalidError, ok button should be disabled and error updated`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleInvalidError, then ok button should be disabled and error updated`() =
         runBlockingTest {
-            val checkExistsParams = CheckHandleExistsParams(HANDLE_INVALID)
-            val handleFlow: Flow<String> = flow { HANDLE_INVALID }
+            val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
-            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(checkHandleExistsUseCase.run(any())).thenReturn(Either.Right(HandleIsAvailable))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
 
-            editHandleViewModel.afterHandleTextChanged(GENERIC_HANDLE)
-
-            validateHandleUseCase.invoke(TestCoroutineScope(TestCoroutineDispatcher()), ValidateHandleParams(HANDLE_INVALID)) {
-                it.onFailure { failure ->
-                    failure shouldBeInstanceOf HandleInvalidError::class.java
-                }
-            }
+            editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
             }
+
+            editHandleViewModel.error.observeOnce {
+                it shouldBe HandleInvalidError
+            }
         }
 
     @Test
-    fun `given onOkButtonClicked is called, validateHandle succeeds, updateHandle succeeds, dialog is dismissed`() =
+    fun `given onOkButtonClicked is called, when validateHandle succeeds and updateHandle succeeds then dialog is dismissed`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            editHandleViewModel.onOkButtonClicked(GENERIC_HANDLE)
+            editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
             editHandleViewModel.dismiss.observeOnce {
                 it shouldBe Unit
@@ -249,11 +217,12 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onOkButtonClicked is called, validateHandle fails with HandleTooLongError, ok button should be disabled`() =
+    fun `given onOkButtonClicked is called, when validateHandle fails with HandleTooLongError then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
 
-            editHandleViewModel.onOkButtonClicked(HANDLE_TOO_LONG)
+            editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -261,17 +230,12 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onOkButtonClicked is called, validateHandle fails with HandleTooShortError, ok button should be disabled`() =
+    fun `given onOkButtonClicked is called, when validateHandle fails with HandleTooShortError then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooShortError))
 
-            editHandleViewModel.onOkButtonClicked(HANDLE_TOO_SHORT)
-
-            validateHandleUseCase.invoke(TestCoroutineScope(TestCoroutineDispatcher()), ValidateHandleParams(HANDLE_TOO_SHORT)) {
-                it.onFailure { failure ->
-                    failure shouldBeInstanceOf HandleTooShortError::class.java
-                }
-            }
+            editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -279,61 +243,67 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onOkButtonClicked is called, validateHandle fails with HandleInvalidError, ok button should be disabled and error updated`() =
+    fun `given onOkButtonClicked is called, when validateHandle fails with HandleInvalidError then ok button should be disabled and error updated`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
 
-            editHandleViewModel.onOkButtonClicked(HANDLE_INVALID)
-
-            validateHandleUseCase.invoke(TestCoroutineScope(TestCoroutineDispatcher()), ValidateHandleParams(HANDLE_INVALID)) {
-                it.onFailure { failure ->
-                    failure shouldBeInstanceOf HandleInvalidError::class.java
-                }
-            }
-
-            editHandleViewModel.okEnabled.observeOnce {
-                it shouldBe false
-            }
-        }
-
-    @Test
-    fun `given onOkButtonClicked is called, validateHandle fails with HandleUnknownError, error message should be updated`() =
-        runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-
-            editHandleViewModel.onOkButtonClicked(HANDLE_INVALID)
+            editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBeInstanceOf HandleUnknownError::class.java
+                it shouldBe HandleInvalidError
             }
         }
 
     @Test
-    fun `given onOkButtonClicked is called, validateHandle succeeds, update handle fails with HandleUnknownError, ok button should be disabled`() =
+    fun `given onOkButtonClicked is called, when validateHandle fails with HandleUnknownError then error message should be updated`() =
+        runBlockingTest {
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleUnknownError))
+
+            editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
+
+            editHandleViewModel.okEnabled.observeOnce {
+                it shouldBe false
+            }
+
+            editHandleViewModel.error.observeOnce {
+                it shouldBe HandleUnknownError
+            }
+        }
+
+    @Test
+    fun `given onOkButtonClicked is called, when validateHandle succeeds and update handle fails with HandleUnknownError, then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Left(DatabaseError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Right(TEST_HANDLE))
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Left(HandleUnknownError))
 
-            editHandleViewModel.onOkButtonClicked(GENERIC_HANDLE)
+            editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBeInstanceOf HandleUnknownError::class.java
+                it shouldBe HandleUnknownError
             }
         }
 
     @Test
-    fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is valid, update handle succeeds, handle should be update, dialog should dismiss`() =
+    fun `given onBackButtonClicked is called, when suggestHandle is valid and update handle succeeds, then handle should be updated and dialog should dismiss`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            editHandleViewModel.onBackButtonClicked(GENERIC_HANDLE, false)
+            editHandleViewModel.onBackButtonClicked(TEST_HANDLE)
+
+            editHandleViewModel.handle.observeOnce {
+                it shouldBe TEST_HANDLE
+            }
 
             editHandleViewModel.dismiss.observeOnce {
                 it shouldBe Unit
@@ -341,11 +311,15 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is valid, update handle fails with HandleUnknownError, ok button should be disabled, dialog should dismiss`() =
+    fun `given onBackButtonClicked is called, when suggestHandle is valid and handle fails with HandleUnknownError then ok button should be disabled and dialog should dismiss`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            editHandleViewModel.onBackButtonClicked(GENERIC_HANDLE, false)
+            editHandleViewModel.onBackButtonClicked(TEST_HANDLE)
+
+            editHandleViewModel.okEnabled.observeOnce {
+                it shouldBe false
+            }
 
             editHandleViewModel.dismiss.observeOnce {
                 it shouldBe Unit
@@ -353,11 +327,11 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onBackButtonClicked is called, isCancelable is true, suggestHandle is valid, dialog should dismiss`() =
+    fun `given onBackButtonClicked is called, when suggestHandle is null, then dialog should dismiss`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            editHandleViewModel.onBackButtonClicked(GENERIC_HANDLE, true)
+            editHandleViewModel.onBackButtonClicked(null)
 
             editHandleViewModel.dismiss.observeOnce {
                 it shouldBe Unit
@@ -365,23 +339,11 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is null, dialog should dismiss`() =
+    fun `given onBackButtonClicked is called, when suggestHandle is empty, then dialog should dismiss`() =
         runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            editHandleViewModel.onBackButtonClicked(null, false)
-
-            editHandleViewModel.dismiss.observeOnce {
-                it shouldBe Unit
-            }
-        }
-
-    @Test
-    fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is empty, dialog should dismiss`() =
-        runBlockingTest {
-            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
-
-            editHandleViewModel.onBackButtonClicked(String.empty(), true)
+            editHandleViewModel.onBackButtonClicked(String.empty())
 
             editHandleViewModel.dismiss.observeOnce {
                 it shouldBe Unit
@@ -389,13 +351,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     companion object {
-        private const val HANDLE_INVALID = "---___hh9@@wire"
-        private const val GENERIC_HANDLE = "wire"
-        private const val NON_DUPLICATED_HANDLE = "wire1"
-        private const val HANDLE_TOO_SHORT = "w"
-        private const val HANDLE_TOO_LONG = "thishandleiswaytoolongforwhatwewantinthisapplication"
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again"
-        private const val CANCELLATION_DELAY = 200L
-
+        private const val NON_DUPLICATED_TEST_HANDLE = "testHandle1"
+        private const val TEST_HANDLE = "testHandle"
     }
 }

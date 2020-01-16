@@ -26,7 +26,7 @@ object Versions {
     const val ANDROIDX_MEDIA = "1.0.0"
     const val ANDROIDX_LIFECYCLE = "2.2.0-rc03"
     const val ANDROIDX_LIFECYCLE_EXTENSIONS = "2.1.0"
-    const val ANDROIDX_CORE_KTX = "1.1.0"
+    const val ANDROIDX_CORE_KTX = "1.0.2"
     const val ANDROIDX_ROOM = "2.2.2"
     const val ANDROIDX_BIOMETRIC = "1.0.1"
     const val ANDROIDX_ANNOTATION = "1.0.0"
