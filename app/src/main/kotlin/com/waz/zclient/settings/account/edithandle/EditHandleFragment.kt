@@ -1,11 +1,12 @@
 package com.waz.zclient.settings.account.edithandle
 
 import android.os.Bundle
-import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
+import androidx.core.widget.doAfterTextChanged
+import androidx.core.widget.doBeforeTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
@@ -15,7 +16,6 @@ import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
 import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
 import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
-import com.waz.zclient.core.ui.text.TextChangedListener
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -43,23 +43,20 @@ class EditHandleFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViewModel()
+        initHandleInput()
         initBackButton()
         initOkButton()
-        initHandleInput()
     }
 
     private fun initHandleInput() {
         edit_handle_edit_text.setText(suggestedHandle)
         edit_handle_edit_text.setSelection(suggestedHandle.length)
-        edit_handle_edit_text.addTextChangedListener(object : TextChangedListener {
-            override fun afterTextChanged(s: Editable?) {
-                editHandleViewModel.afterHandleTextChanged(s.toString())
-            }
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                editHandleViewModel.beforeHandleTextChanged(s.toString())
-            }
-        })
+        edit_handle_edit_text.doBeforeTextChanged { text, _, _, _ ->
+            editHandleViewModel.beforeHandleTextChanged(text.toString())
+        }
+        edit_handle_edit_text.doAfterTextChanged {
+            editHandleViewModel.afterHandleTextChanged(it.toString())
+        }
     }
 
     private fun initOkButton() {
@@ -90,7 +87,6 @@ class EditHandleFragment : DialogFragment() {
             is HandleUnknownError -> getString(R.string.pref__account_action__dialog__change_username__error_unknown)
             else -> String.empty()
         }
-
         when (error) {
             is HandleUnknownError, HandleInvalidError -> shakeInputField()
         }
