@@ -29,8 +29,8 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
-
 }
 
 dependencies {
@@ -47,4 +47,8 @@ dependencies {
     implementation BuildDependencies.koin.androidCore
     implementation BuildDependencies.koin.androidScope
     implementation BuildDependencies.koin.androidViewModel
+
+    testImplementation TestDependencies.jUnit
+    testImplementation TestDependencies.mockito.core
+    testImplementation TestDependencies.mockito.inline
 }

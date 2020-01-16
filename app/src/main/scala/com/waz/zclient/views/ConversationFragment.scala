@@ -35,8 +35,8 @@ import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
+import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.{TeamSizeThreshold, ZMessaging}
-import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}

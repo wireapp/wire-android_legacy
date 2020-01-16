@@ -117,8 +117,6 @@ android {
         // Need to exclude all armeabi/mips libs
         // as not all of our libs support these architectures
         exclude 'lib/armeabi/libgnustl_shared.so'
-        exclude 'lib/armeabi/libspotify_embedded_shared.so'
-        exclude 'lib/armeabi/libspotify_sdk.so'
         exclude 'lib/mips/librs.blur.so'
         exclude 'lib/mips/librs.decode.so'
         exclude 'lib/mips/librsjni.so'

@@ -24,8 +24,9 @@ import com.waz.model.AssetMetaData.Loudness
 import com.waz.model.AssetStatus.{DownloadFailed, UploadCancelled, UploadDone, UploadFailed, UploadInProgress, UploadNotStarted}
 import com.waz.model.nano.Messages
 import com.waz.model.nano.Messages.MessageEdit
-import com.waz.service.assets2.Asset.{Audio, General, Image, Video}
-import com.waz.service.assets2.{AES_CBC_Encryption, UploadAsset, UploadAssetStatus, Asset => Asset2}
+import com.waz.service.assets
+import com.waz.service.assets.Asset.{Audio, Image, Video}
+import com.waz.service.assets.{AES_CBC_Encryption, UploadAsset, UploadAssetStatus}
 import com.waz.utils._
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.wrappers.URI
@@ -81,7 +82,7 @@ object GenericContent {
           }
         }
 
-      def apply(asset: Asset2): Original =
+      def apply(asset: assets.Asset): Original =
         returning(new Messages.Asset.Original) { o =>
           o.mimeType = asset.mime.str
           o.size = asset.size
@@ -178,7 +179,7 @@ object GenericContent {
         }
       }
 
-      def apply(asset: Asset2): Preview = returning(new Messages.Asset.Preview()) { p =>
+      def apply(asset: assets.Asset): Preview = returning(new Messages.Asset.Preview()) { p =>
         p.mimeType = asset.mime.str
         p.size = asset.size
         p.remote = RemoteData(asset)
@@ -216,7 +217,7 @@ object GenericContent {
           ak.encryption.foreach(v => rData.encryption = v.value)
         }
 
-      def apply(asset: Asset2): RemoteData =
+      def apply(asset: assets.Asset): RemoteData =
         returning(new Messages.Asset.RemoteData) { rData =>
           rData.assetId = asset.id.str
           asset.token.foreach(token => rData.assetToken = token.str)
@@ -253,7 +254,7 @@ object GenericContent {
       proto.expectsReadConfirmation = expectsReadConfirmation
     }
 
-    def apply(asset: UploadAsset, preview: Option[Asset2], expectsReadConfirmation: Boolean): Messages.Asset =
+    def apply(asset: UploadAsset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Messages.Asset =
       returning(new Messages.Asset) { proto =>
         proto.original = Original(asset)
         preview.foreach(p => proto.preview = Preview(p))
@@ -265,7 +266,7 @@ object GenericContent {
         proto.expectsReadConfirmation = expectsReadConfirmation
       }
 
-    def apply(asset: Asset2, preview: Option[Asset2], expectsReadConfirmation: Boolean): Messages.Asset =
+    def apply(asset: assets.Asset, preview: Option[assets.Asset], expectsReadConfirmation: Boolean): Messages.Asset =
       returning(new Messages.Asset) { proto =>
         proto.original = Original(asset)
         preview.foreach(p => proto.preview = Preview(p))

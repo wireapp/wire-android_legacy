@@ -23,7 +23,7 @@ import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.model.messages.media.MediaAssetData
 import com.waz.model.messages.media.MediaAssetData.MediaWithImages
-import com.waz.service.assets2._
+import com.waz.service.assets.{AES_CBC_Encryption, AssetService, Content, ContentForUpload}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.client.YouTubeClient
 import com.waz.threading.Threading
@@ -32,7 +32,8 @@ import com.waz.sync.client.ErrorOr
 
 import scala.concurrent.Future
 
-class YouTubeMediaService(client: YouTubeClient, assets: AssetService,
+class YouTubeMediaService(client: YouTubeClient,
+                          assets: AssetService,
                           messages: MessagesService) extends DerivedLogTag {
   import Threading.Implicits.Background
 

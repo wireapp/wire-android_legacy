@@ -151,13 +151,11 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
 
   //Specify empty to force remove all tokens, or else only remove if `toRemove` contains the current token.
   override def resetGlobalToken(toRemove: Vector[PushToken] = Vector.empty) = {
-    verbose(l"resetGlobalToken")
     _currentToken().flatMap {
       case Some(t) if toRemove.contains(t) || toRemove.isEmpty =>
         if (deletingToken.isCompleted) {
           deletingToken = for {
             _ <- retry({
-              verbose(l"Deleting all push tokens")
               googleApi.deleteAllPushTokens()
             })
             _ <- _currentToken := None
@@ -169,7 +167,6 @@ class GlobalTokenServiceImpl(googleApi: GoogleApi,
   }
 
   override def setNewToken() = {
-    verbose(l"setNewToken")
     if (settingToken.isCompleted) {
       settingToken = for {
         t <- retry(returning(googleApi.getPushToken)(t => verbose(l"Setting new push token: $t")))

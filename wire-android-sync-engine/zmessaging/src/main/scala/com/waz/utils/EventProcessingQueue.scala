@@ -100,13 +100,13 @@ class SerialProcessingQueue[A](processor: Seq[A] => Future[Any], name: String = 
     Future.successful(())
 
   protected def processQueue(): Future[Any] = {
-    verbose(l"SYNC processQueue")
+    verbose(l"processQueue")
     post(processQueueNow())
   }
 
   protected def processQueueNow(): Future[Any] = {
     val events = Iterator.continually(queue.poll()).takeWhile(_ != null).toVector
-    verbose(l"SYNC processQueueNow, events: $events")
+    verbose(l"processQueueNow, events: $events")
     if (events.nonEmpty) processor(events).recoverWithLog()
     else Future.successful(())
   }
@@ -129,7 +129,6 @@ class ThrottledProcessingQueue[A](delay: FiniteDuration, processor: Seq[A] => Fu
     if (waiting.compareAndSet(false, true)) {
       post {
         val d = math.max(0, lastDispatched - System.currentTimeMillis() + delay.toMillis)
-        verbose(l"SYNC processQueue, delaying: $d millis")
         waitFuture = CancellableFuture.delay(d.millis)
         if (!waiting.get()) waitFuture.cancel()(logTag) // to avoid race conditions with `flush`
         waitFuture.future.flatMap { _ =>

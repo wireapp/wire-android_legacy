@@ -27,8 +27,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
-import com.waz.service.assets2.Asset.Image
-import com.waz.service.assets2.AssetService
+import com.waz.service.assets.AssetService
+import com.waz.service.assets.Asset.Image
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.CancellableFuture
 import com.waz.utils._

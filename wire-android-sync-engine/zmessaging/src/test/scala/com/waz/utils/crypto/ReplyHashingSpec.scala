@@ -22,8 +22,7 @@ import java.math.BigInteger
 import com.waz.api.Message
 import com.waz.model.GenericContent.{Location, Text}
 import com.waz.model._
-import com.waz.service.assets2.Asset.General
-import com.waz.service.assets2.{Asset, AssetStorage, BlobDetails, NoEncryption}
+import com.waz.service.assets.{Asset, AssetStorage, BlobDetails, NoEncryption}
 import com.waz.specs.AndroidFreeSpec
 
 import scala.concurrent.Future

@@ -20,7 +20,7 @@ package com.waz.service.assets
 import java.util.UUID
 
 import android.content.Context
-import com.waz.service.assets.GlobalRecordAndPlayService.{Content, MediaPointer, PCMContent, UnauthenticatedContent}
+import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent, UnauthenticatedContent, Content => GRAPContent}
 import com.waz.utils._
 import org.threeten.bp
 
@@ -45,7 +45,7 @@ object Player {
     def onError(msg: String): Unit
   }
 
-  def apply(content: Content, observer: Observer)(implicit context: Context): Future[Player] = content match {
+  def apply(content: GRAPContent, observer: Observer)(implicit context: Context): Future[Player] = content match {
     case c @ UnauthenticatedContent(_) => successful(DefaultPlayer(c, observer))
     case c @ PCMContent(_) => PCMPlayer(c, observer)
   }

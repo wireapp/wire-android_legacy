@@ -21,7 +21,7 @@ import android.content.Context
 import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{LocalInstant, MessageData, ReadReceipt}
+import com.waz.model.{LocalInstant, MessageData, ReadReceipt, UserId}
 import com.waz.service.messages.{MessageAndLikes, MessagesService}
 import com.waz.service.{NetworkModeService, ZMessaging}
 import com.waz.threading.CancellableFuture
@@ -106,7 +106,7 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
   val conv = message.flatMap(signals.conv)
 
   val timestampText = for {
-    selfUserId  <- signals.selfUserId
+    selfUserId  <- inject[Signal[UserId]]
     convId      <- conv.map(_.id)
     isGroup     <- conversationController.groupConversation(convId)
     isTeamConv  <- conv.map(_.team.nonEmpty)

@@ -25,7 +25,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
 import com.waz.service._
-import com.waz.service.assets.AssetService
 import com.waz.service.conversation.{ConversationOrderEventsService, ConversationsContentUpdaterImpl, ConversationsService}
 import com.waz.service.messages.MessagesService
 import com.waz.sync.SyncResult
@@ -54,7 +53,6 @@ class ConversationsSyncHandler(selfUserId:          UserId,
                                convEvents:          ConversationOrderEventsService,
                                convStorage:         ConversationStorage,
                                errorsService:       ErrorsService,
-                               assetService:        AssetService,
                                conversationsClient: ConversationsClient,
                                genericMessages:     GenericMessageService,
                                rolesService:        ConversationRolesService,

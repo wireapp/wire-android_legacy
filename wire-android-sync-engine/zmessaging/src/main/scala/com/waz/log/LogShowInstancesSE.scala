@@ -23,31 +23,22 @@ import java.net.URI
 import android.net.Uri
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.{MessageContent => _, _}
-import com.waz.content.MessagesCursor
 import com.waz.content.Preferences.PrefKey
 import com.waz.log.LogSE._
 import com.waz.model.AccountData.Password
 import com.waz.model.ManagedBy.ManagedBy
-import com.waz.model.Picture
-import com.waz.model.UserInfo.ProfilePicture
-import com.waz.model.messages.media.{ArtistData, TrackData}
 import com.waz.model._
 import com.waz.model.messages.media.{ArtistData, TrackData}
 import com.waz.model.otr.{Client, UserClients}
 import com.waz.model.sync.{ReceiptType, SyncCommand, SyncJob, SyncRequest}
-import com.waz.service.assets.AssetService.RawAssetInput
-import com.waz.service.assets.AssetService.RawAssetInput.{BitmapInput, ByteInput, UriInput, WireAssetInput}
 import com.waz.service.assets.GlobalRecordAndPlayService._
-import com.waz.service.assets.{GlobalRecordAndPlayService, Player}
-import com.waz.service.assets2._
+import com.waz.service.assets.{Asset => Asset2, _}
 import com.waz.service.call.Avs.AvsClosedReason.reasonString
 import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo
 import com.waz.service.otr.OtrService.SessionId
-import com.waz.service.{PropertyKey, SearchResults}
+import com.waz.service.{PropertyKey, SearchResults, assets}
 import com.waz.sync.SyncResult
-import com.waz.sync.client.AssetClient.Retention
-import com.waz.sync.client.AssetClient2.UploadResponse2
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
 import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.utils.{sha2, wrappers}
@@ -84,14 +75,6 @@ trait LogShowInstancesSE {
 
   implicit val SSOIdShow: LogShow[SSOId] = create(id => s"SSOId(subject: ${sha2(id.subject)}, tenant:${sha2(id.tenant)})")
   implicit val ManagedByShow: LogShow[ManagedBy] = create(id => s"ManagedBy($id)")
-
-  implicit val RawAssetInputLogShow: LogShow[RawAssetInput] =
-    createFrom {
-      case UriInput(uri)                => l"UriInput($uri)"
-      case ByteInput(bytes)             => l"ByteInput(size: ${bytes.length})"
-      case BitmapInput(bm, orientation) => l"BitmapInput(@${showString(bm.toString)}, orientation: $orientation)"
-      case WireAssetInput(id)           => l"WireAssetInput($id)"
-    }
 
   implicit val CredentialsLogShow: LogShow[Credentials] =
     createFrom {
@@ -167,7 +150,7 @@ trait LogShowInstancesSE {
       l"Mention(userId: $userId, start: $start, length: $length)"
     }
 
-  implicit val AssetLogShow: LogShow[Asset] =
+  implicit val AssetLogShow: LogShow[Asset2] =
     LogShow.createFrom { a =>
       import a._
       l"Asset(id: $id | token: $token | sha: $sha | encryption: $encryption | localSource: $localSource | preview: $preview | details: $details | convId: $convId)"
@@ -194,7 +177,7 @@ trait LogShowInstancesSE {
         """.stripMargin
     }
 
-  implicit val AssetStatusLogShow: LogShow[com.waz.service.assets2.AssetStatus] =
+  implicit val AssetStatusLogShow: LogShow[assets.AssetStatus] =
     LogShow.createFrom { s => l"AssetStatus(${showString(s.getClass.getName)})" }
 
   implicit val TrackDataLogShow: LogShow[TrackData] =

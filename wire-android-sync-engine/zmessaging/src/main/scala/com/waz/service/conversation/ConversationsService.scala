@@ -28,7 +28,7 @@ import com.waz.model.ConversationData.ConversationType.isOneToOne
 import com.waz.model.ConversationData.{ConversationType, Link, getAccessAndRoleForGroupConv}
 import com.waz.model._
 import com.waz.service._
-import com.waz.service.assets2.AssetService
+import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.{NotificationService, PushService}
 import com.waz.service.tracking.{GuestsAllowedToggled, TrackingService}
@@ -127,7 +127,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   }
 
   push.onHistoryLost { req =>
-    verbose(l"SYNC onSlowSyncNeeded($req)")
+    verbose(l"onSlowSyncNeeded($req)")
     // TODO: this is just very basic implementation creating empty message
     // This should be updated to include information about possibly missed changes
     // this message will be shown rarely (when notifications stream skips data)

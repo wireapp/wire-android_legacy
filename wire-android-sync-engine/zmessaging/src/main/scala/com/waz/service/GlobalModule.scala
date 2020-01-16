@@ -30,12 +30,9 @@ import com.waz.client.{RegistrationClient, RegistrationClientImpl}
 import com.waz.content._
 import com.waz.log.{LogsService, LogsServiceImpl}
 import com.waz.permissions.PermissionsService
-import com.waz.service.assets.{AudioTranscoder, GlobalRecordAndPlayService}
-import com.waz.service.assets2.GeneralFileCacheImpl
+import com.waz.service.assets.{AudioTranscoder, GeneralFileCacheImpl, GlobalRecordAndPlayService}
 import com.waz.service.backup.{BackupManager, BackupManagerImpl}
 import com.waz.service.call._
-import com.waz.service.downloads._
-import com.waz.service.images.{ImageLoader, ImageLoaderImpl}
 import com.waz.service.push._
 import com.waz.service.tracking.{TrackingService, TrackingServiceImpl}
 import com.waz.sync.client._
@@ -86,18 +83,14 @@ trait GlobalModule {
   def urlCreator:               UrlCreator
   def httpClient:               HttpClient
   def httpClientForLongRunning: HttpClient
-  def globalAssetClient:        AssetClient
-  def globalLoader:             AssetLoader
   def videoTranscoder:          VideoTranscoder
   def audioTranscoder:          AudioTranscoder
-  def loaderService:            AssetLoaderService
   def cacheCleanup:             CacheCleaningService
   def accountsStorage:          AccountStorage
   def accountsStorageOld:       AccountsStorageOld
   def teamsStorage:             TeamsStorage
   def recordingAndPlayback:     GlobalRecordAndPlayService
   def tempFiles:                TempFileService
-  def imageLoader:              ImageLoader
   def blacklistClient:          VersionBlacklistClient
   def blacklist:                VersionBlacklistService
   def factory:                  ZMessagingFactory
@@ -164,15 +157,9 @@ class GlobalModuleImpl(val context:                 AContext,
 
   implicit lazy val requestInterceptor: RequestInterceptor       = RequestInterceptor.identity
 
-  //Not to be used in zms instances
-  lazy val globalAssetClient:   AssetClient                      = new AssetClientImpl(cache)(urlCreator, httpClientForLongRunning)
-  lazy val globalLoader:        AssetLoader                      = new AssetLoaderImpl(context, None, network, globalAssetClient, audioTranscoder, videoTranscoder, cache, imageCache, bitmapDecoder, trackingService)(urlCreator, requestInterceptor)
-  //end of warning...
-
   lazy val tempFiles:           TempFileService                  = wire[TempFileService]
   lazy val videoTranscoder:     VideoTranscoder                  = VideoTranscoder(context)
   lazy val audioTranscoder:     AudioTranscoder                  = wire[AudioTranscoder]
-  lazy val loaderService:       AssetLoaderService               = wire[AssetLoaderService]
 
   lazy val cacheCleanup                                          = wire[CacheCleaningService]
 
@@ -186,8 +173,6 @@ class GlobalModuleImpl(val context:                 AContext,
 
   lazy val teamsStorage:        TeamsStorage                     = wire[TeamsStorageImpl]
   lazy val recordingAndPlayback                                  = wire[GlobalRecordAndPlayService]
-
-  lazy val imageLoader:         ImageLoader                      = new ImageLoaderImpl(context, cache, imageCache, bitmapDecoder, permissions, loaderService, globalLoader) { override def tag = "Global" }
 
   lazy val blacklistClient                                       = new VersionBlacklistClientImpl(backend)(httpClient)
   lazy val blacklist                                             = new VersionBlacklistService(metadata, prefs, blacklistClient)
@@ -227,18 +212,14 @@ class EmptyGlobalModule extends GlobalModule {
   override def reporting:                GlobalReportingService                              = ???
   override def loginClient:              LoginClient                                         = ???
   override def regClient:                RegistrationClient                                  = ???
-  override def globalAssetClient:        AssetClient                                         = ???
-  override def globalLoader:             AssetLoader                                         = ???
   override def videoTranscoder:          VideoTranscoder                                     = ???
   override def audioTranscoder:          AudioTranscoder                                     = ???
-  override def loaderService:            AssetLoaderService                                  = ???
   override def cacheCleanup:             CacheCleaningService                                = ???
   override def accountsStorage:          AccountStorage                                      = ???
   override def accountsStorageOld:       AccountsStorageOld                                  = ???
   override def teamsStorage:             TeamsStorage                                        = ???
   override def recordingAndPlayback:     GlobalRecordAndPlayService                          = ???
   override def tempFiles:                TempFileService                                     = ???
-  override def imageLoader:              ImageLoader                                         = ???
   override def blacklistClient:          VersionBlacklistClient                              = ???
   override def blacklist:                VersionBlacklistService                             = ???
   override def factory:                  ZMessagingFactory                                   = ???
