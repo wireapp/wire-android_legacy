@@ -23,7 +23,6 @@ import org.amshove.kluent.shouldBeInstanceOf
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
 import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verifyNoInteractions
 import java.util.concurrent.CancellationException
@@ -332,7 +331,7 @@ class EditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is valid, update handle succeeds, handle should be update, dialog should dismiss`() =
         runBlockingTest {
-            Mockito.`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
 
             editHandleViewModel.onBackButtonClicked(GENERIC_HANDLE, false)
 
@@ -344,7 +343,7 @@ class EditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is valid, update handle fails with HandleUnknownError, ok button should be disabled, dialog should dismiss`() =
         runBlockingTest {
-            Mockito.`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
 
             editHandleViewModel.onBackButtonClicked(GENERIC_HANDLE, false)
 
@@ -356,7 +355,7 @@ class EditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, isCancelable is true, suggestHandle is valid, dialog should dismiss`() =
         runBlockingTest {
-            Mockito.`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
 
             editHandleViewModel.onBackButtonClicked(GENERIC_HANDLE, true)
 
@@ -368,7 +367,7 @@ class EditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is null, dialog should dismiss`() =
         runBlockingTest {
-            Mockito.`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
 
             editHandleViewModel.onBackButtonClicked(null, false)
 
@@ -380,7 +379,7 @@ class EditHandleViewModelTest : UnitTest() {
     @Test
     fun `given onBackButtonClicked is called, isCancelable is false, suggestHandle is empty, dialog should dismiss`() =
         runBlockingTest {
-            Mockito.`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
+            lenient().`when`(changeHandleUseCase.run(ChangeHandleParams(GENERIC_HANDLE))).thenReturn(Either.Right(Unit))
 
             editHandleViewModel.onBackButtonClicked(String.empty(), true)
 
