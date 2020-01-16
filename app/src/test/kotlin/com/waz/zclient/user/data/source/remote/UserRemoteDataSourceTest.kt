@@ -5,7 +5,6 @@ import com.waz.zclient.capture
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -19,6 +18,9 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import retrofit2.Response
 
+//TODO: try to use runBlockingTest once the issue with threading solved:
+//https://github.com/Kotlin/kotlinx.coroutines/issues/1222
+//https://github.com/Kotlin/kotlinx.coroutines/issues/1204
 class UserRemoteDataSourceTest : UnitTest() {
 
     companion object {

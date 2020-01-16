@@ -13,6 +13,9 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 
+//TODO: try to use runBlockingTest once the issue with threading solved:
+//https://github.com/Kotlin/kotlinx.coroutines/issues/1222
+//https://github.com/Kotlin/kotlinx.coroutines/issues/1204
 class TokenServiceTest : UnitTest() {
 
     @Mock
