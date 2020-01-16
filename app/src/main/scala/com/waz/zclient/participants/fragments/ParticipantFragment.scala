@@ -242,9 +242,13 @@ class ParticipantFragment extends ManagerFragment
       case Some(user) if user.connection == ACCEPTED || user.expiresAt.isDefined || isTeamMember =>
         openUserProfileFragment(SingleParticipantFragment.newInstance(), SingleParticipantFragment.Tag)
 
-      case Some(user) if user.connection == PENDING_FROM_OTHER || user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
+      case Some(user) if user.connection == PENDING_FROM_USER || user.connection == IGNORED =>
         import PendingConnectRequestFragment._
         openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
+
+      case Some(user) if user.connection == PENDING_FROM_OTHER =>
+        import ConnectRequestFragment._
+        openUserProfileFragment(newInstance(userId,UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == BLOCKED =>
         import BlockedUserProfileFragment._
