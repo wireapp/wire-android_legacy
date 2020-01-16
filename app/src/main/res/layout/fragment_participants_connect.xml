@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    style="?wireBackground">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/not_tabbed_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="@dimen/wire__padding__regular"/>
+
+    <LinearLayout
+        android:id="@+id/ll__connect_request__accept_menu"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/connect_request__footer_menu__height"
+        android:layout_marginBottom="@dimen/connect_request__footer_menu__padding_bottom"
+        android:paddingStart="@dimen/wire__padding__big"
+        android:paddingEnd="@dimen/wire__padding__big"
+        android:orientation="horizontal">
+
+        <com.waz.zclient.ui.views.ZetaButton
+            android:id="@+id/zb__connect_request__ignore_button"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/framework_confirmation_menu_button_height"
+            android:layout_weight="1"
+            android:layout_marginEnd="@dimen/connect_request__common_users__chathead__vertical_padding"
+            android:gravity="center"
+            android:text="@string/connect_request__ignore_button__text"
+            app:w_font="@string/wire__typeface__light"
+            android:textAllCaps="true"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="@color/text__primary_light" />
+
+        <com.waz.zclient.ui.views.ZetaButton
+            android:id="@+id/zb__connect_request__accept_button"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/framework_confirmation_menu_button_height"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/connect_request__common_users__chathead__vertical_padding"
+            android:gravity="center"
+            android:text="@string/send_connect_request__connect_button__text"
+            app:w_font="@string/wire__typeface__light"
+            android:textAllCaps="true"
+            android:textSize="@dimen/wire__text_size__small"
+            android:textColor="@color/text__primary_dark" />
+    </LinearLayout>
+
+    <!-- Footer with left & right actions -->
+    <com.waz.zclient.views.menus.FooterMenu
+        android:id="@+id/not_tabbed_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom|center_horizontal"
+        android:background="?wireBackgroundColor"/>
+</LinearLayout>
