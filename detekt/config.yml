@@ -462,7 +462,7 @@ style:
   FunctionOnlyReturningConstant:
     active: true
     ignoreOverridableFunction: true
-    excludedFunctions: 'describeContents'
+    excludedFunctions: "describeContents, empty"
     excludeAnnotatedFunction: "dagger.Provides"
   LibraryCodeMustSpecifyReturnType:
     active: true

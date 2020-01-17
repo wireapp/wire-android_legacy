@@ -32,6 +32,7 @@ class ApiService(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun <T> performRequest(call: Call<T>, default: T): Either<Failure, T> {
         return try {
             val response = call.execute()

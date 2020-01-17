@@ -24,5 +24,4 @@ class UsersLocalDataSource constructor(
     suspend fun changeEmail(value: String) = requestDatabase { userService.updateEmail(userId, value) }
 
     suspend fun changePhone(value: String) = requestDatabase { userService.updatePhone(userId, value) }
-
 }

@@ -5,13 +5,11 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.user.data.UsersRepository
 
-class ChangeNameUseCase(private val usersRepository: UsersRepository)
-    : UseCase<Any, ChangeNameParams>() {
+class ChangeNameUseCase(private val usersRepository: UsersRepository) :
+    UseCase<Any, ChangeNameParams>() {
 
     override suspend fun run(params: ChangeNameParams): Either<Failure, Any> =
         usersRepository.changeName(params.newName)
 }
 
 data class ChangeNameParams(val newName: String)
-
-

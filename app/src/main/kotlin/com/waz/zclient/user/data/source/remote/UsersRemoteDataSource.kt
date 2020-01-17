@@ -4,7 +4,11 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestApi
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.usecase.handle.*
+import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
+import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
+import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
 
 class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNetworkService) {
 

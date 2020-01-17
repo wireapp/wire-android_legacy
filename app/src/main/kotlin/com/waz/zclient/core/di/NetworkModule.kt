@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package com.waz.zclient.core.di
 
 import com.waz.zclient.BuildConfig

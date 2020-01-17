@@ -5,7 +5,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.user.domain.usecase.handle.*
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.CheckHandleExistsParams
+import com.waz.zclient.user.domain.usecase.handle.CheckHandleExistsUseCase
+import com.waz.zclient.user.domain.usecase.handle.GetHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
+import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleParams
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 
@@ -15,7 +25,8 @@ class EditHandleViewModel(
     private val checkHandleExistsUseCase: CheckHandleExistsUseCase,
     private val changeHandleUseCase: ChangeHandleUseCase,
     private val getHandleUseCase: GetHandleUseCase,
-    private val validateHandleUseCase: ValidateHandleUseCase) : ViewModel() {
+    private val validateHandleUseCase: ValidateHandleUseCase
+) : ViewModel() {
 
     private var mutableHandle = MutableLiveData<String>()
     private var mutableError = MutableLiveData<ValidateHandleError>()

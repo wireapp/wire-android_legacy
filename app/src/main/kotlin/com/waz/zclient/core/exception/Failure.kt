@@ -30,4 +30,3 @@ data class GenericUseCaseError(val throwable: Throwable) : Failure()
 abstract class FeatureFailure : Failure()
 
 sealed class HandleValidationState : FeatureFailure()
-
