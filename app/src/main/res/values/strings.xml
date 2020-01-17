@@ -1460,6 +1460,6 @@
     <string name="edit_account_handle_error_invalid_characters">Invalid characters: a–z, 0–9, and _ only</string>
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
     <string name="edit_account_handle_error_update_error">Unable to update your username at this time. Please try again later.</string>
-    <string name="edit_account_handle_success">Username available</string>
+    <string name="edit_account_handle_is_available">Username available</string>
 
 </resources>

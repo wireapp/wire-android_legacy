@@ -74,7 +74,7 @@ class EditHandleFragment : DialogFragment() {
 
     private fun updateSuccessMessage() {
         edit_handle_edit_text_container.setErrorTextAppearance(R.style.InputHandle_Green)
-        edit_handle_edit_text_container.error = getString(R.string.edit_account_handle_success)
+        edit_handle_edit_text_container.error = getString(R.string.edit_account_handle_is_available)
     }
 
     private fun updateErrorMessage(error: ValidateHandleError) {
@@ -101,7 +101,6 @@ class EditHandleFragment : DialogFragment() {
     private fun updateHandleText(handle: String) {
         edit_handle_edit_text.setText(handle)
         edit_handle_edit_text.setSelection(edit_handle_edit_text.length())
-        edit_handle_edit_text_container.error = String.empty()
     }
 
     companion object {
