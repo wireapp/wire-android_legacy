@@ -2,13 +2,21 @@ package com.waz.zclient.user.data.source.remote
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.capture
+import com.waz.zclient.core.functional.onFailure
+import com.waz.zclient.core.functional.onSuccess
+import com.waz.zclient.eq
 import com.waz.zclient.user.data.source.remote.model.UserApi
+import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
+import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
+import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldBeInstanceOf
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
@@ -20,15 +28,6 @@ import retrofit2.Response
 
 @ExperimentalCoroutinesApi
 class UserRemoteDataSourceTest : UnitTest() {
-
-    companion object {
-        private const val CANCELLATION_DELAY = 200L
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-        private const val TEST_NAME = "name"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@handle"
-        private const val TEST_PHONE = "+4977738847664"
-    }
 
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
@@ -55,6 +54,9 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Captor
     private lateinit var changeNameRequestCaptor: ArgumentCaptor<ChangeNameRequest>
+
+    @Captor
+    private lateinit var changeAccentColorRequestCaptor: ArgumentCaptor<ChangeAccentColorRequest>
 
     @Before
     fun setUp() {
@@ -230,5 +232,123 @@ class UserRemoteDataSourceTest : UnitTest() {
         changePhoneRequestCaptor.value.phone shouldBe TEST_PHONE
 
         usersRemoteDataSource.changePhone(TEST_PHONE).isRight shouldBe isRight
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is 200, then return a failure`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_TAKEN)
+        validateHandleExistsFailure(errorClass = HandleExistsAlreadyError::class.java)
+
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is 400, then return a failure`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_INVALID)
+        validateHandleExistsFailure(errorClass = HandleInvalidError::class.java)
+
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is 404, then return a HandleIsAvailable success`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_AVAILABLE)
+        validateHandleExistsSuccess()
+    }
+
+    @Test
+    fun `Given doesHandleExist() is called, when response code is not 200, 400 or 404, then return a failure`() {
+        `when`(emptyResponse.code()).thenReturn(HANDLE_UNKNOWN)
+        validateHandleExistsFailure(errorClass = HandleUnknownError::class.java)
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given doesHandleExist() is called, and the request is cancelled, then return a failure`() {
+        validateHandleExistsFailure(cancelled = true, errorClass = HandleUnknownError::class.java)
+    }
+
+    private fun validateHandleExistsSuccess() = runBlockingTest {
+        `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
+
+        verify(usersNetworkService).doesHandleExist(eq(TEST_HANDLE))
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isRight shouldBe true
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE).onSuccess {
+            it shouldBeInstanceOf HandleIsAvailable::class.java
+        }
+    }
+
+
+    private fun validateHandleExistsFailure(cancelled: Boolean = false, errorClass: Class<*>) = runBlockingTest {
+        `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
+
+        verify(usersNetworkService).doesHandleExist(eq(TEST_HANDLE))
+
+        if (cancelled) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isLeft shouldBe true
+
+        usersRemoteDataSource.doesHandleExist(TEST_HANDLE).onFailure {
+            it shouldBeInstanceOf errorClass
+        }
+    }
+
+
+    @Test
+    fun `Given changeAccentColor() is called, when api response success and response body is not null, then return a successful response`() {
+        validateChangeAccentColorScenario(responseBody = Unit, isRight = true, cancelable = false)
+
+    }
+
+    @Test
+    fun `Given changeAccentColor() is called, when api response success and response body is null, then return an error response`() {
+        validateChangeAccentColorScenario(responseBody = null, isRight = false, cancelable = false)
+
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given changeAccentColor() is called, when api response is cancelled, then return an error response`() {
+        validateChangeAccentColorScenario(responseBody = Unit, isRight = false, cancelable = true)
+    }
+
+    private fun validateChangeAccentColorScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.changeAccentColor(capture(changeAccentColorRequestCaptor))).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.changeAccentColor(TEST_COLOR_ID)
+
+        verify(usersNetworkService).changeAccentColor(capture(changeAccentColorRequestCaptor))
+
+        if (cancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        changeAccentColorRequestCaptor.value.accentId shouldBe TEST_COLOR_ID
+
+        usersRemoteDataSource.changeAccentColor(TEST_COLOR_ID).isRight shouldBe isRight
+    }
+
+
+
+    companion object {
+        private const val CANCELLATION_DELAY = 200L
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+        private const val TEST_NAME = "name"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@handle"
+        private const val TEST_PHONE = "+4977738847664"
+        private const val HANDLE_TAKEN = 200
+        private const val HANDLE_INVALID = 400
+        private const val HANDLE_AVAILABLE = 404
+        private const val HANDLE_UNKNOWN = 500
+        private const val TEST_COLOR_ID = 2
     }
 }
