@@ -69,6 +69,10 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
+            editHandleViewModel.error.observeOnce {
+                it shouldBe HandleSameAsCurrentError
+            }
+
             verifyNoInteractions(checkHandleExistsUseCase)
         }
 

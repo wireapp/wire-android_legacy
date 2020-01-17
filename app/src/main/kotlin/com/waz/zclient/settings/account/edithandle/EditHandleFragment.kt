@@ -85,12 +85,11 @@ class EditHandleFragment : DialogFragment() {
             is HandleTooLongError -> getString(R.string.edit_account_handle_error_too_long)
             is HandleInvalidError -> getString(R.string.edit_account_handle_error_invalid_characters)
             is HandleUnknownError -> getString(R.string.edit_account_handle_error_unknown_error)
-            is HandleUpdateError -> getString(R.string.edit_account_handle_error_update_error)
             else -> String.empty()
         }
 
         when (error) {
-            is HandleInvalidError, is HandleUnknownError -> shakeInputField()
+            is HandleInvalidError, HandleUnknownError -> shakeInputField()
         }
     }
 
