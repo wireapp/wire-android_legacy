@@ -13,11 +13,9 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
-import org.mockito.Mockito.verifyNoMoreInteractions
+import org.mockito.Mockito.*
 
+@ExperimentalCoroutinesApi
 class AccessTokenRepositoryTest : UnitTest() {
 
     @Mock
@@ -103,7 +101,6 @@ class AccessTokenRepositoryTest : UnitTest() {
         verifyNoMoreInteractions(remoteDataSource, localDataSource)
     }
 
-    @ExperimentalCoroutinesApi
     @Test
     fun `when renewAccessToken is called, calls remoteDataSource with given refresh token`() =
         runBlockingTest {
@@ -116,7 +113,6 @@ class AccessTokenRepositoryTest : UnitTest() {
             verifyNoMoreInteractions(remoteDataSource, localDataSource)
         }
 
-    @ExperimentalCoroutinesApi
     @Test
     fun `given remote call's successful, when renewAccessToken's called, returns mapping of the accessTokenResponse`() =
         runBlockingTest {
@@ -131,7 +127,6 @@ class AccessTokenRepositoryTest : UnitTest() {
             tokenResponse.map { it shouldBe ACCESS_TOKEN }
         }
 
-    @ExperimentalCoroutinesApi
     @Test
     fun `given remote call fails, when renewAccessToken is called, returns the error without any mapping`() =
         runBlockingTest {
