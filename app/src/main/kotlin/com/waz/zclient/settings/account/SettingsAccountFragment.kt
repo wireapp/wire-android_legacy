@@ -63,9 +63,7 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initAccountHandle() {
         settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
-        preferences_account_handle.setOnClickListener {
-            showEditHandleDialog()
-        }
+        preferences_account_handle.setOnClickListener { showEditHandleDialog() }
     }
 
     private fun initAccountName() {
@@ -86,10 +84,8 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initErrorHandling() {
-        with(settingsAccountViewModel) {
-            error.observe(viewLifecycleOwner) { errorMessage ->
-                showErrorMessage(errorMessage)
-            }
+        settingsAccountViewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            showErrorMessage(errorMessage)
         }
     }
 

@@ -60,12 +60,13 @@
                     android:layout_alignParentTop="true"
                     app:errorEnabled="true">
 
-                    <androidx.appcompat.widget.AppCompatEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_handle_edit_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:drawableStart="@drawable/empty_at"
-                        android:inputType="textNoSuggestions|textVisiblePassword"
+                        android:inputType="textNoSuggestions|text"
+                        android:maxLength="22"
                         android:maxLines="1"
                         android:paddingBottom="@dimen/prefs__username_change__edit_text_bottom_padding"
                         android:visibility="visible" />
@@ -89,17 +90,6 @@
                     android:layout_alignEnd="@id/edit_handle_edit_text_container"
                     android:layout_alignBottom="@id/act__at"
                     android:layout_marginEnd="@dimen/prefs__username_change__loading__margin_end" />
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
-                    android:layout_marginStart="@dimen/wire__padding__4"
-                    android:layout_marginEnd="@dimen/wire__padding__4"
-                    android:text="@string/pref__account_action__dialog__change_username__rules"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="@dimen/wire__text_size__regular"
-                    app:w_font="@string/wire__typeface__regular" />
 
             </RelativeLayout>
 

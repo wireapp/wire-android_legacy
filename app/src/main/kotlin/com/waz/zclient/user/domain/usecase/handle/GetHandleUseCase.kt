@@ -5,17 +5,14 @@ import com.waz.zclient.user.data.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-class GetHandleUseCase(private val userRepository: UsersRepository) : ObservableUseCase<String, Unit>() {
+class GetHandleUseCase(private val userRepository: UsersRepository) : ObservableUseCase<String?, Unit>() {
 
-    override suspend fun run(params: Unit): Flow<String> = flow {
-        userRepository.profileDetails().map {
+    override suspend fun run(params: Unit): Flow<String?> =
+        userRepository.profileDetails().mapLatest {
             it.handle
         }
-    }
-
 }

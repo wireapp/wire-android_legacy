@@ -32,7 +32,6 @@ val userDao = UserDao(
     conversation = "test",
     relation = "test",
     timestamp = 11838383,
-    displayName = "test",
     verified = "test",
     deleted = 0,
     availability = 1,

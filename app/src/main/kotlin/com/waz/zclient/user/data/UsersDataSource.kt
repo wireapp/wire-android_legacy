@@ -38,29 +38,29 @@ class UsersDataSource constructor(
 
     private suspend fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.insertUser(userMapper.toUserDao(it)) }
 
-    override suspend fun changeName(name: String) = changeNameLocally(name)
-        .onSuccess { runBlocking { changeNameRemotely(name) } }
+    override suspend fun changeName(name: String) = changeNameRemotely(name)
+        .onSuccess { runBlocking { changeNameLocally(name) } }
 
     private suspend fun changeNameRemotely(name: String) = usersRemoteDataSource.changeName(name)
 
     private suspend fun changeNameLocally(name: String) = usersLocalDataSource.changeName(name)
 
-    override suspend fun changeHandle(handle: String) = changeHandleLocally(handle)
-        .onSuccess { runBlocking { changeHandleRemotely(handle) } }
+    override suspend fun changeHandle(handle: String) = changeHandleRemotely(handle)
+        .onSuccess { runBlocking { changeHandleLocally(handle) } }
 
     private suspend fun changeHandleRemotely(handle: String) = usersRemoteDataSource.changeHandle(handle)
 
     private suspend fun changeHandleLocally(handle: String) = usersLocalDataSource.changeHandle(handle)
 
-    override suspend fun changeEmail(email: String) = changeEmailLocally(email)
-        .onSuccess { runBlocking { changeEmailRemotely(email) } }
+    override suspend fun changeEmail(email: String) = changeEmailRemotely(email)
+        .onSuccess { runBlocking { changeEmailLocally(email) } }
 
     private suspend fun changeEmailRemotely(email: String) = usersRemoteDataSource.changeEmail(email)
 
     private suspend fun changeEmailLocally(email: String) = usersLocalDataSource.changeEmail(email)
 
-    override suspend fun changePhone(phone: String) = changePhoneLocally(phone)
-        .onSuccess { runBlocking { changePhoneRemotely(phone) } }
+    override suspend fun changePhone(phone: String) = changePhoneRemotely(phone)
+        .onSuccess { runBlocking { changePhoneLocally(phone) } }
 
     private suspend fun changePhoneRemotely(phone: String) = usersRemoteDataSource.changePhone(phone)
 

@@ -6,16 +6,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import androidx.core.widget.doAfterTextChanged
-import androidx.core.widget.doBeforeTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
-import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
-import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
-import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
+import com.waz.zclient.user.domain.usecase.handle.*
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -50,9 +46,6 @@ class EditHandleFragment : DialogFragment() {
 
     private fun initHandleInput() {
         updateHandleText(suggestedHandle)
-        edit_handle_edit_text.doBeforeTextChanged { text, _, _, _ ->
-            editHandleViewModel.beforeHandleTextChanged(text.toString())
-        }
         edit_handle_edit_text.doAfterTextChanged {
             editHandleViewModel.afterHandleTextChanged(it.toString())
         }
@@ -72,21 +65,32 @@ class EditHandleFragment : DialogFragment() {
 
     private fun initViewModel() {
         with(editHandleViewModel) {
-            handle.observe(viewLifecycleOwner) { updateHandleText(it) }
+            success.observe(viewLifecycleOwner) { updateSuccessMessage() }
             error.observe(viewLifecycleOwner) { updateErrorMessage(it) }
             okEnabled.observe(viewLifecycleOwner) { edit_handle_ok_button.isEnabled = it }
             dismiss.observe(viewLifecycleOwner) { dismiss() }
         }
     }
 
+    private fun updateSuccessMessage() {
+        edit_handle_edit_text_container.setErrorTextAppearance(R.style.InputHandle_Green)
+        edit_handle_edit_text_container.error = getString(R.string.edit_account_handle_success)
+    }
+
     private fun updateErrorMessage(error: ValidateHandleError) {
+        edit_handle_edit_text_container.setErrorTextAppearance(R.style.InputHandle_Red)
         edit_handle_edit_text_container.error = when (error) {
-            is HandleExistsAlreadyError -> getString(R.string.pref__account_action__dialog__change_username__error_already_taken)
-            is HandleUnknownError -> getString(R.string.pref__account_action__dialog__change_username__error_unknown)
+            is HandleExistsAlreadyError -> getString(R.string.edit_account_handle_error_already_taken)
+            is HandleTooShortError -> getString(R.string.edit_account_handle_error_too_short)
+            is HandleTooLongError -> getString(R.string.edit_account_handle_error_too_long)
+            is HandleInvalidError -> getString(R.string.edit_account_handle_error_invalid_characters)
+            is HandleUnknownError -> getString(R.string.edit_account_handle_error_unknown_error)
+            is HandleUpdateError -> getString(R.string.edit_account_handle_error_update_error)
             else -> String.empty()
         }
+
         when (error) {
-            is HandleUnknownError, HandleInvalidError -> shakeInputField()
+            is HandleInvalidError, is HandleUnknownError -> shakeInputField()
         }
     }
 
@@ -97,6 +101,7 @@ class EditHandleFragment : DialogFragment() {
     private fun updateHandleText(handle: String) {
         edit_handle_edit_text.setText(handle)
         edit_handle_edit_text.setSelection(edit_handle_edit_text.length())
+        edit_handle_edit_text_container.error = String.empty()
     }
 
     companion object {

@@ -14,10 +14,6 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ChangeNameUseCaseTest : UnitTest() {
 
-    companion object {
-        private const val TEST_NAME = "Test name"
-    }
-
     private lateinit var changeNameUseCase: ChangeNameUseCase
 
     @Mock
@@ -39,4 +35,9 @@ class ChangeNameUseCaseTest : UnitTest() {
 
         verify(userRepository).changeName(eq(TEST_NAME))
     }
+
+    companion object {
+        private const val TEST_NAME = "Test name"
+    }
+
 }

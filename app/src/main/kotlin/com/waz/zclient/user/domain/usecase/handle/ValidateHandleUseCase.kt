@@ -11,6 +11,7 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
             Either.Left(HandleInvalidError)
         } else {
             when {
+                params.newHandle.isEmpty() -> Either.Left(HandleEmptyError)
                 isHandleTooLong(params.newHandle) -> Either.Left(HandleTooLongError)
                 isHandleTooShort(params.newHandle) -> Either.Left(HandleTooShortError)
                 else -> Either.Right(params.newHandle)

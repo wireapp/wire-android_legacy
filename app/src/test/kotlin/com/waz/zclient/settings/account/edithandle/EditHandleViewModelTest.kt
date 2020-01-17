@@ -43,34 +43,6 @@ class EditHandleViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given beforeHandTextChange is called when validation fails with HandleInvalidError, then handle input should not be updated`() =
-        runBlockingTest {
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
-
-            editHandleViewModel.beforeHandleTextChanged(TEST_HANDLE)
-
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe String.empty()
-            }
-
-            editHandleViewModel.error.observeOnce {
-                it shouldBe HandleInvalidError
-            }
-        }
-
-    @Test
-    fun `given beforeHandTextChange is called when validation does not with HandleInvalidError, then handle input should be updated`() =
-        runBlockingTest {
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
-
-            editHandleViewModel.beforeHandleTextChanged(TEST_HANDLE)
-
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe TEST_HANDLE
-            }
-        }
-
-    @Test
     fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, checkExist succeeds, validation succeeds, then handle should update`() =
         runBlockingTest {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
@@ -83,8 +55,9 @@ class EditHandleViewModelTest : UnitTest() {
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe true
             }
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe NON_DUPLICATED_TEST_HANDLE
+
+            editHandleViewModel.success.observeOnce {
+                it shouldBe HandleIsAvailable
             }
         }
 
@@ -301,8 +274,8 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onBackButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe TEST_HANDLE
+            editHandleViewModel.okEnabled.observeOnce {
+                it shouldBe true
             }
 
             editHandleViewModel.dismiss.observeOnce {

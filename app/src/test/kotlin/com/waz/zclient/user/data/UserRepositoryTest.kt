@@ -1,7 +1,7 @@
 package com.waz.zclient.user.data
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.core.exception.DatabaseError
+import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
@@ -25,14 +25,6 @@ import org.mockito.Mockito.*
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 class UserRepositoryTest : UnitTest() {
-
-    companion object {
-        private const val TEST_NAME = "testName"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@Handle"
-        private const val TEST_PHONE = "+49766378499"
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-    }
 
     private lateinit var usersRepository: UsersRepository
 
@@ -86,79 +78,79 @@ class UserRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `Given changeName() is called and local request fails, then update local database, but don't update remote`() = runBlockingTest {
-        `when`(usersLocalDataSource.changeName(TEST_NAME)).thenReturn(Either.Left(DatabaseError))
-
-        usersRepository.changeName(TEST_NAME)
-
-        verify(usersLocalDataSource).changeName(eq(TEST_NAME))
-        verifyNoInteractions(usersRemoteDataSource)
-    }
-
-    @Test
-    fun `Given changeName() is called and local request is success, then update api`() = runBlockingTest {
-        `when`(usersLocalDataSource.changeName(TEST_NAME)).thenReturn(Either.Right(Unit))
+    fun `Given changeName() is called and remote request fails, then don't update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeName(TEST_NAME)).thenReturn(Either.Left(ServerError))
 
         usersRepository.changeName(TEST_NAME)
 
         verify(usersRemoteDataSource).changeName(eq(TEST_NAME))
+        verifyNoInteractions(usersLocalDataSource)
     }
 
     @Test
-    fun `Given changeEmail() is called and local request fails, then update local database, but don't update remote`() = runBlockingTest {
-        `when`(usersLocalDataSource.changeEmail(TEST_EMAIL)).thenReturn(Either.Left(DatabaseError))
+    fun `Given changeName() is called and remote request is success, then update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeName(TEST_NAME)).thenReturn(Either.Right(Unit))
 
-        usersRepository.changeEmail(TEST_EMAIL)
+        usersRepository.changeName(TEST_NAME)
 
-        verify(usersLocalDataSource).changeEmail(eq(TEST_EMAIL))
-        verifyNoInteractions(usersRemoteDataSource)
+        verify(usersLocalDataSource).changeName(eq(TEST_NAME))
     }
 
     @Test
-    fun `Given changeEmail() is called and local request is success, then update api`() = runBlockingTest {
-        `when`(usersLocalDataSource.changeEmail(TEST_EMAIL)).thenReturn(Either.Right(Unit))
+    fun `Given changeEmail() is called and remote request fails, then don't update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeEmail(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
 
         usersRepository.changeEmail(TEST_EMAIL)
 
         verify(usersRemoteDataSource).changeEmail(eq(TEST_EMAIL))
+        verifyNoInteractions(usersLocalDataSource)
     }
 
     @Test
-    fun `Given changeHandle() is called and local request fails, then update local database, but don't update remote`() = runBlockingTest {
-        `when`(usersLocalDataSource.changeHandle(TEST_HANDLE)).thenReturn(Either.Left(DatabaseError))
+    fun `Given changeEmail() is called and remote request is success, then update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeEmail(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
-        usersRepository.changeHandle(TEST_HANDLE)
+        usersRepository.changeEmail(TEST_EMAIL)
 
-        verify(usersLocalDataSource).changeHandle(eq(TEST_HANDLE))
-        verifyNoInteractions(usersRemoteDataSource)
+        verify(usersLocalDataSource).changeEmail(eq(TEST_EMAIL))
     }
 
     @Test
-    fun `Given changeHandle() is called and local request is success, then update api`() = runBlockingTest {
-        `when`(usersLocalDataSource.changeHandle(TEST_HANDLE)).thenReturn(Either.Right(Unit))
+    fun `Given changeHandle() is called and remote request fails, then don't update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeHandle(TEST_HANDLE)).thenReturn(Either.Left(ServerError))
 
         usersRepository.changeHandle(TEST_HANDLE)
 
         verify(usersRemoteDataSource).changeHandle(eq(TEST_HANDLE))
+        verifyNoInteractions(usersLocalDataSource)
     }
 
     @Test
-    fun `Given changePhone() is called and local request fails, then update local database, but don't update remote`() = runBlockingTest {
-        `when`(usersLocalDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Left(DatabaseError))
+    fun `Given changeHandle() is called and remote request is success, then update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeHandle(TEST_HANDLE)).thenReturn(Either.Right(Unit))
 
-        usersRepository.changePhone(TEST_PHONE)
+        usersRepository.changeHandle(TEST_HANDLE)
 
-        verify(usersLocalDataSource).changePhone(eq(TEST_PHONE))
-        verifyNoInteractions(usersRemoteDataSource)
+        verify(usersLocalDataSource).changeHandle(eq(TEST_HANDLE))
     }
 
     @Test
-    fun `Given changePhone() is called and local request is success, then update api`() = runBlockingTest {
-        `when`(usersLocalDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Right(Unit))
+    fun `Given changePhone() is called and remote request fails then don't update remote`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Left(ServerError))
 
         usersRepository.changePhone(TEST_PHONE)
 
         verify(usersRemoteDataSource).changePhone(eq(TEST_PHONE))
+        verifyNoInteractions(usersLocalDataSource)
+    }
+
+    @Test
+    fun `Given changePhone() is called and local request is success, then update api`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Right(Unit))
+
+        usersRepository.changePhone(TEST_PHONE)
+
+        verify(usersLocalDataSource).changePhone(eq(TEST_PHONE))
     }
 
     @Test
@@ -167,4 +159,13 @@ class UserRepositoryTest : UnitTest() {
 
         verify(usersRemoteDataSource).doesHandleExist(eq(TEST_HANDLE))
     }
+
+    companion object {
+        private const val TEST_NAME = "testName"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@Handle"
+        private const val TEST_PHONE = "+49766378499"
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+    }
+
 }

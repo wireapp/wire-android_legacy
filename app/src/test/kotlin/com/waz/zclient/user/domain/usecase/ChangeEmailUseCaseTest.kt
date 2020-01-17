@@ -14,10 +14,6 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ChangeEmailUseCaseTest : UnitTest() {
 
-    companion object {
-        private const val TEST_EMAIL = "email@wire.com"
-    }
-
     private lateinit var changeEmailUseCase: ChangeEmailUseCase
 
     @Mock
@@ -39,4 +35,9 @@ class ChangeEmailUseCaseTest : UnitTest() {
 
         verify(userRepository).changeEmail(eq(TEST_EMAIL))
     }
+
+    companion object {
+        private const val TEST_EMAIL = "email@wire.com"
+    }
+
 }

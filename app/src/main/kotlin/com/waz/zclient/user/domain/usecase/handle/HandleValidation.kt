@@ -7,6 +7,9 @@ object HandleTooShortError : ValidateHandleError()
 object HandleInvalidError : ValidateHandleError()
 object HandleExistsAlreadyError : ValidateHandleError()
 object HandleUnknownError : ValidateHandleError()
+object HandleUpdateError : ValidateHandleError()
+object HandleEmptyError : ValidateHandleError()
+object HandleSameAsCurrentError : ValidateHandleError()
 object HandleIsAvailable : ValidateHandleSuccess()
 
 sealed class ValidateHandleSuccess
