@@ -84,9 +84,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initErrorHandling() {
-        settingsAccountViewModel.error.observe(viewLifecycleOwner) { errorMessage ->
-            showErrorMessage(errorMessage)
-        }
+        settingsAccountViewModel.error.observe(viewLifecycleOwner) { showErrorMessage(it) }
     }
 
     private fun updateAccountHandle(handle: String) {
