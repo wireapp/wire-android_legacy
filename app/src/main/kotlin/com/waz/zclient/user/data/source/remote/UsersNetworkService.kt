@@ -31,6 +31,9 @@ interface UsersNetworkService {
 
     @PUT("$SELF$PHONE")
     suspend fun changePhone(@Body phone: ChangePhoneRequest): Response<Unit>
+
+    @PUT("$SELF")
+    suspend fun changeAccentColor(@Body accentColorId: ChangeAccentColorRequest): Response<Unit>
 }
 
 data class ChangeNameRequest(
@@ -47,4 +50,8 @@ data class ChangePhoneRequest(
 
 data class ChangeHandleRequest(
     @SerializedName("handle") val handle: String
+)
+
+data class ChangeAccentColorRequest(
+    @SerializedName("accent_id") val accentId: Int
 )

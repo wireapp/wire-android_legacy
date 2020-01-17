@@ -7,6 +7,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
 data class ProfileDetail(val value: String) {
     companion object {
@@ -14,13 +15,15 @@ data class ProfileDetail(val value: String) {
     }
 }
 
+@InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-                                           private val changeNameUseCase: ChangeNameUseCase,
-                                           private val changePhoneUseCase: ChangePhoneUseCase,
-                                           private val changeEmailUseCase: ChangeEmailUseCase,
-                                           private val changeHandleUseCase: ChangeHandleUseCase)
-    : ViewModel() {
+class SettingsAccountViewModel constructor(
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val changeNameUseCase: ChangeNameUseCase,
+    private val changePhoneUseCase: ChangePhoneUseCase,
+    private val changeEmailUseCase: ChangeEmailUseCase,
+    private val changeHandleUseCase: ChangeHandleUseCase,
+    private val changeAccentColorUseCase: ChangeAccentColorUseCase) : ViewModel() {
 
     private val mutableProfileData = MutableLiveData<User>()
     private val mutableError = MutableLiveData<String>()
@@ -40,6 +43,11 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
     val phone: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
         if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
     }
+
+    val accentColor: LiveData<Int> = Transformations.map(mutableProfileData) {
+        if (it.accentId == 0) DEFAULT_ACCENT_COLOR_ID else it.accentId
+    }
+
 
     val error: LiveData<String>
         get() = mutableError
@@ -74,6 +82,12 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         }
     }
 
+    fun updateAccentColor(accentColorId: Int) {
+        changeAccentColorUseCase(viewModelScope, ChangeAccentColorParams(accentColorId)) {
+            it.fold(::handleError) {}
+        }
+    }
+
     private fun handleProfileSuccess(user: User) {
         mutableProfileData.postValue(user)
     }
@@ -85,6 +99,10 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         } else {
             mutableError.postValue("Misc error scenario")
         }
+    }
+    companion object{
+
+        private const val DEFAULT_ACCENT_COLOR_ID = 1
     }
 }
 

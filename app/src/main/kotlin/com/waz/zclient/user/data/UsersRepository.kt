@@ -11,4 +11,5 @@ interface UsersRepository {
     suspend fun changeHandle(handle: String): Either<Failure, Any>
     suspend fun changeEmail(email: String): Either<Failure, Any>
     suspend fun changePhone(phone: String): Either<Failure, Any>
+    suspend fun changeAccentColor(accentColorId: Int): Either<Failure, Any>
 }

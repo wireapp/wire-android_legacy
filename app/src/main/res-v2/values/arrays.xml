@@ -47,5 +47,22 @@
         <item>@string/glyph__speaker_loud</item>
     </array>
 
+    <array name="settings_accent_colors">
+        <item>@color/accent_blue</item>
+        <item>@color/accent_green</item>
+        <item>@color/accent_red</item>
+        <item>@color/accent_orange</item>
+        <item>@color/accent_pink</item>
+        <item>@color/accent_magenta</item>
+    </array>
+
+    <array name="settings_accent_colors_ids">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+    </array>
 </resources>
 

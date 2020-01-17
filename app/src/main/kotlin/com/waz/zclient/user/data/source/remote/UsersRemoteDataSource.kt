@@ -16,4 +16,6 @@ class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNe
     suspend fun changeEmail(email: String): Either<Failure, Any> = requestApi { usersNetworkService.changeEmail(ChangeEmailRequest(email)) }
 
     suspend fun changePhone(phone: String): Either<Failure, Any> = requestApi { usersNetworkService.changePhone(ChangePhoneRequest(phone)) }
+
+    suspend fun changeAccentColor(accentColorId: Int): Either<Failure, Any> = requestApi { usersNetworkService.changeAccentColor(ChangeAccentColorRequest(accentColorId)) }
 }

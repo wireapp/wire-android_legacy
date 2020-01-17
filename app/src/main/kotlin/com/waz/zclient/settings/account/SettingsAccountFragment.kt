@@ -13,14 +13,19 @@ import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
+import com.waz.zclient.settings.account.color.AccentColorDialogFragment
+import com.waz.zclient.settings.account.color.OnAccentColorChangedListener
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
 @ExperimentalCoroutinesApi
+@InternalCoroutinesApi
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
+    private lateinit var  accentColorDialogFragment : AccentColorDialogFragment
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_settings_account, container, false)
@@ -34,6 +39,7 @@ class SettingsAccountFragment : Fragment() {
         initAccountHandle()
         initAccountEmail()
         initAccountPhoneNumber()
+        initAccountAccentColor()
         initResetPassword()
         loadProfile()
     }
@@ -76,6 +82,15 @@ class SettingsAccountFragment : Fragment() {
         }
     }
 
+    private fun initAccountAccentColor() {
+
+        settingsAccountViewModel.accentColor.observe(viewLifecycleOwner) { colorId ->
+            updateAccountAccentColor(colorId)
+            preferences_account_accent.setOnClickListener { showColorPickerDialog(colorId) }
+        }
+
+    }
+
     private fun initResetPassword() {
         preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
     }
@@ -92,8 +107,9 @@ class SettingsAccountFragment : Fragment() {
         }
     }
 
-    private fun updateAccountHandle(handle: String) {
-        preferences_account_handle_title.text = handle
+    //TODO : Change DrawbleStart to the selected accent color
+    private fun updateAccountAccentColor(color: Int) {
+        //preferences_account_accent.text =
     }
 
     private fun updateAccountName(name: String) {
@@ -114,6 +130,10 @@ class SettingsAccountFragment : Fragment() {
         }
     }
 
+    private fun updateAccountHandle(handle: String) {
+        preferences_account_handle_title.text = handle
+    }
+
     private fun loadProfile() {
         lifecycleScope.launchWhenResumed {
             settingsAccountViewModel.loadProfileDetails()
@@ -132,11 +152,26 @@ class SettingsAccountFragment : Fragment() {
         }).show(requireActivity().supportFragmentManager, String.empty())
     }
 
+
+    private fun showColorPickerDialog(colorId: Int) {
+       accentColorDialogFragment = AccentColorDialogFragment.newInstance(colorId, object : OnAccentColorChangedListener {
+            override fun onAccentColorChanged(colorId: Int) {
+                loadProfile()
+                settingsAccountViewModel.updateAccentColor(colorId)
+                accentColorDialogFragment.dismiss()
+            }
+        })
+        accentColorDialogFragment.show(requireActivity().supportFragmentManager, String.empty())
+
+    }
+
     companion object {
         private const val Accounts = "|ACCOUNTS|"
 
         fun newInstance() = SettingsAccountFragment()
     }
+
+
 }
 
 

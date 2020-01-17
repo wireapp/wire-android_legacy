@@ -63,4 +63,11 @@ class UsersDataSource constructor(
 
     private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
 
+    override suspend fun changeAccentColor(accentColorId: Int)  = changeAccentColorRemotely(accentColorId)
+        .onSuccess { runBlocking { changeAccentColorLocally(accentColorId) } }
+
+    private suspend fun changeAccentColorRemotely(accentColorId: Int) = usersRemoteDataSource.changeAccentColor(accentColorId)
+
+    private suspend fun changeAccentColorLocally(accentColorId: Int) = usersLocalDataSource.changeAccentColor(accentColorId)
+
 }
