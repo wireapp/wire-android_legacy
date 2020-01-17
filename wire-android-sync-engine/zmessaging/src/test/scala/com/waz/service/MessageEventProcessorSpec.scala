@@ -27,7 +27,7 @@ import com.waz.model.GenericContent.Asset
 import com.waz.model._
 import com.waz.model.nano.Messages
 import com.waz.model.otr.UserClients
-import com.waz.service.assets2.{AssetService, DownloadAssetStorage}
+import com.waz.service.assets.{AssetService, DownloadAssetStorage}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.service.messages.{MessageEventProcessor, MessagesContentUpdater, MessagesService}
 import com.waz.specs.AndroidFreeSpec

@@ -27,7 +27,7 @@ import com.bumptech.glide.load.resource.bitmap.{CenterCrop, RoundedCorners}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.api.Message.Type
 import com.waz.model.{AssetId, GeneralAssetId, MessageData}
-import com.waz.service.assets2.{Asset, GeneralAsset}
+import com.waz.service.assets.{Asset, GeneralAsset}
 import com.waz.utils.returning
 import com.waz.zclient.conversation.ReplyView.ReplyBackgroundDrawable
 import com.waz.zclient.glide.WireGlide

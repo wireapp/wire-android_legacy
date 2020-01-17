@@ -20,23 +20,20 @@ package com.waz.zclient.notifications.controllers
 
 import android.app.{NotificationManager, PendingIntent}
 import android.content
-import android.graphics.{Bitmap, Color}
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.waz.bitmap.BitmapUtils
 import com.waz.content.UserPreferences
-import com.waz.model._
-import com.waz.service.assets.AssetService.BitmapResult
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.assets.AssetService.BitmapResult.BitmapLoaded
+import com.waz.model._
 import com.waz.service.call.CallInfo.CallState._
-import com.waz.service.{AccountManager, AccountsService, GlobalModule, ZMessaging}
+import com.waz.service.{AccountManager, AccountsService, GlobalModule}
 import com.waz.services.calling.CallWakeService._
 import com.waz.services.calling.CallingNotificationsService
 import com.waz.threading.Threading.Implicits.Background
+import com.waz.utils._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.{Context, Intent}
-import com.waz.utils._
 import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
@@ -76,11 +73,11 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     for {
       zs                     <- inject[AccountsService].zmsInstances
       (curCallId, allCallsF) <- filteredGlobalProfile
-      bitmaps                <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
+      bitmaps                <- Signal.sequence(allCallsF.map { case (conv, (_, account)) =>
                                   zs.find(_.selfUserId == account)
                                     .fold2(
                                       Signal.const(conv -> Option.empty[Bitmap]),
-                                      z => getBitmapSignal(z, caller).map(conv -> _)
+                                      z => Signal.const(conv -> Option.empty[Bitmap]) // //TODO: Use new assets engine to fetch the bitmap
                                     )
                                 }: _*).map(_.toMap)
       notInfo                <- Signal.sequence(allCallsF.map { case (conv, (caller, account)) =>
@@ -137,7 +134,6 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   private def cancelNots(nots: Seq[CallingNotificationsController.CallNotification]): Unit = {
     val notsIds = nots.map(_.id).toSet
-    verbose(l"cancelNots($notsIds)")
     val toCancel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       val activeIds = notificationManager.getActiveNotifications.map(_.getId).toSet
       Future.successful(activeIds -- notsIds)
@@ -152,15 +148,12 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
   }
 
   notifications.map(_.filter(!_.isMainCall)).onUi { nots =>
-    verbose(l"${nots.size} call notifications")
-
     cancelNots(nots)
     nots.foreach { not =>
         val builder = androidNotificationBuilder(not)
 
         def showNotification() = {
           if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            verbose(l"Adding not: ${not.id}")
             currentNotificationsPref.head.foreach(_.mutate(_ + not.id))
           }
           notificationManager.notify(CallNotificationTag, not.id, builder.build())
@@ -177,14 +170,6 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
     }
   }
 
-  private def getBitmapSignal(z: ZMessaging, caller: UserId) = for {
-      Some(id) <- z.usersStorage.optSignal(caller).map(_.flatMap(_.picture))
-      bitmap   <- Signal.const[BitmapResult](BitmapResult.Empty) //TODO: Use new assets engine to fetch the bitmap
-    } yield
-      bitmap match {
-        case BitmapLoaded(bmp, _) => Option(BitmapUtils.createRoundBitmap(bmp, callImageSizePx, 0, Color.TRANSPARENT))
-        case _ => None
-      }
 }
 
 object CallingNotificationsController {

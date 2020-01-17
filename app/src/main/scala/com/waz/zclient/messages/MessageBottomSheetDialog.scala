@@ -22,7 +22,7 @@ import android.content.Context
 import com.waz.api.Message
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.service.assets2.AssetStatus
+import com.waz.service.assets.AssetStatus
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.MessageBottomSheetDialog.{Actions, MessageAction, Params}

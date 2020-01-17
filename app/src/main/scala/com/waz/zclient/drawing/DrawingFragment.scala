@@ -31,7 +31,7 @@ import android.widget.{FrameLayout, TextView}
 import com.waz.api.MemoryImageCache
 import com.waz.model._
 import com.waz.permissions.PermissionsService
-import com.waz.service.assets2.{AssetService, Content, UriHelper}
+import com.waz.service.assets.{AssetService, Content, UriHelper}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning

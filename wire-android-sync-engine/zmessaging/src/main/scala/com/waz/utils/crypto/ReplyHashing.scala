@@ -30,7 +30,7 @@ import java.lang.Math.round
 
 import com.waz.api.Message.Type._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.assets2.AssetStorage
+import com.waz.service.assets.AssetStorage
 
 trait ReplyHashing {
   def hashMessage(m: MessageData): Future[Sha256]

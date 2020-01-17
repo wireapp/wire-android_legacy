@@ -27,7 +27,7 @@ import android.widget.{FrameLayout, ImageView, TextView}
 import com.bumptech.glide.request.RequestOptions
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{Mime, Name}
-import com.waz.service.assets2.Content
+import com.waz.service.assets.Content
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.utils.wrappers.{URI => URIWrapper}

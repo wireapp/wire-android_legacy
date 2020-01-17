@@ -245,8 +245,7 @@ object MessageView extends DerivedLogTag {
              AudioAsset |
              WebLink |
              YouTube |
-             Location |
-             SoundMedia => FileLike
+             Location => FileLike
         case Image | VideoAsset => ImageLike
         case MemberChange |
              OtrMessage |

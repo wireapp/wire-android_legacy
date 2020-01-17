@@ -1,28 +1,28 @@
 /**
- * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2018 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.zclient.appentry
 
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.os.Bundle
 import android.view.View
-import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
 import androidx.fragment.app.FragmentManager.OnBackStackChangedListener
+import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, GlobalModule}
@@ -81,7 +81,7 @@ class AppEntryActivity extends BaseActivity {
   private lazy val progressView = ViewUtils.getView(this, R.id.liv__progress).asInstanceOf[LoadingIndicatorView]
   private lazy val countryController: CountryController = new CountryController(this)
   private lazy val invitesController = inject[InvitationsController]
-  private lazy val spinnerController  = inject[SpinnerController]
+  private lazy val spinnerController = inject[SpinnerController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val deepLinkService: DeepLinkService = inject[DeepLinkService]
   private var createdFromSavedInstance: Boolean = false
@@ -148,7 +148,7 @@ class AppEntryActivity extends BaseActivity {
     skipButton.onClick(onEnterApplication(false))
 
     spinnerController.spinnerShowing.onUi {
-      case Show(animation, forcedTheme)=> progressView.show(animation, darkTheme = forcedTheme.getOrElse(true), 300)
+      case Show(animation, forcedTheme) => progressView.show(animation, darkTheme = forcedTheme.getOrElse(true), 300)
       case Hide(Some(message)) => progressView.hideWithMessage(message, 750)
       case Hide(_) => progressView.hide()
     }
@@ -168,37 +168,34 @@ class AppEntryActivity extends BaseActivity {
 
         inject[AccentColorController].accentColor.head.flatMap { color =>
           showConfirmationDialog(
-            title       = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
-            msg         = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+            title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+            msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
             positiveRes = R.string.custom_backend_dialog_connect,
             negativeRes = android.R.string.cancel,
-            color       = color
+            color = color
           )
         }.foreach {
-        case false =>
-          verbose(l"cancelling backend switch")
-        case true =>
-          enableProgress(true)
-          inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
-            case Left(errorResponse) =>
-              error(l"error trying to download backend config.", errorResponse)
-              enableProgress(false)
+          case false =>
+          case true =>
+            enableProgress(true)
+            inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+              case Left(errorResponse) =>
+                error(l"error trying to download backend config.", errorResponse)
+                enableProgress(false)
 
-              showErrorDialog(
+                showErrorDialog(
                   R.string.custom_backend_dialog_network_error_title,
                   R.string.custom_backend_dialog_network_error_message)
 
-            case Right(config) =>
-              verbose(l"got config response: $config")
-              enableProgress(false)
+              case Right(config) =>
+                enableProgress(false)
 
-              inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
-              verbose(l"switched backend")
+                inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
 
-              // re-present fragment for updated ui.
-              getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-              showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-          }
+                // re-present fragment for updated ui.
+                getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+            }
         }
 
       case DoNotOpenDeepLink(Access, UserLoggedIn) =>
@@ -248,11 +245,11 @@ class AppEntryActivity extends BaseActivity {
         // if the SSO token is present we will handle it in onResume
         case _ =>
           Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
-            case Some(LoginArgVal) =>      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+            case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
             case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
             case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
               showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
-            case _ =>                      showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+            case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
           }
       }(Threading.Ui)
   }

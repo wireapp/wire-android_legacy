@@ -32,8 +32,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{AssetId, Mime}
 import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
+import com.waz.service.assets.{Content, ContentForUpload}
 import com.waz.service.assets.GlobalRecordAndPlayService.AssetMediaKey
-import com.waz.service.assets2.{Content, ContentForUpload}
 import com.waz.threading.Threading
 import com.waz.utils.events.{ClockSignal, Signal}
 import com.waz.utils.wrappers.URI

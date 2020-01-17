@@ -64,7 +64,6 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
   jobsMap ++= jobs map { job => job.id -> job }
 
   def add(job: SyncJob): SyncJob = {
-    verbose(l"add($job)")
     jobsMap.get(job.id) match {
       case Some(prev) => update(prev, job)
       case None =>
@@ -77,7 +76,6 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
   def get(id: SyncId): Option[SyncJob] = jobsMap.get(id)
 
   def remove(id: SyncId) = {
-    verbose(l"remove($id)")
     jobsMap.remove(id) foreach { onRemoved ! _ }
     saveQueue ! id
   }
@@ -103,7 +101,6 @@ class SyncStorage(db: Database, jobs: Seq[SyncJob]) extends DerivedLogTag {
   }
 
   private def save(job: SyncJob) = {
-    verbose(l"save($job)")
     jobsMap.put(job.id, job)
     saveQueue ! job.id
   }

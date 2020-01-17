@@ -63,7 +63,6 @@ class MessageViewFactory extends DerivedLogTag {
         case ConnectRequest     => inflate(R.layout.message_connect_request, parent, false)
         case ConversationStart  => inflate(R.layout.message_conversation_start, parent, false)
         case WirelessLink       => inflate(R.layout.message_wireless_link, parent, false)
-        case SoundMedia         => inflate(R.layout.message_soundmedia, parent, false)
         case MissedCall         => inflate(R.layout.message_missed_call, parent, false)
         case EphemeralDots      => inflate(R.layout.message_ephemeral_dots_view, parent, false)
         case WifiWarning        => inflate(R.layout.message_wifi_warning, parent, false)

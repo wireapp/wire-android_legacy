@@ -160,4 +160,11 @@ class UserRepositoryTest : UnitTest() {
 
         verify(usersRemoteDataSource).changePhone(eq(TEST_PHONE))
     }
+
+    @Test
+    fun `Given checkHandleExists() is called, then call api to check`() = runBlockingTest {
+        usersRepository.doesHandleExist(TEST_HANDLE)
+
+        verify(usersRemoteDataSource).doesHandleExist(eq(TEST_HANDLE))
+    }
 }

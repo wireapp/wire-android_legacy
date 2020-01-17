@@ -23,7 +23,7 @@ import com.waz.content.AccountStorage
 import com.waz.model.AccountData.Password
 import com.waz.model.{AccountData, EmailAddress}
 import com.waz.service.AccountsService
-import com.waz.service.assets2.UriHelper
+import com.waz.service.assets.UriHelper
 import com.waz.sync.client.{AuthenticationManager, LoginClient, LoginClientImpl}
 import com.waz.utils.TestUriHelper
 import com.waz.znet2.http.HttpClient
@@ -76,6 +76,6 @@ trait AuthenticationConfig {
 
   lazy val uriHelper: UriHelper = new TestUriHelper
 
-  def setUpAccountData(accountData: AccountData)
+  def setUpAccountData(accountData: AccountData): Unit
 
 }

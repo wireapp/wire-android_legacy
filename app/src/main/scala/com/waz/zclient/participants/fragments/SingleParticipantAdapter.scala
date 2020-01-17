@@ -26,15 +26,16 @@ import com.waz.zclient.R
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
 
-final class SingleParticipantAdapter(userId: UserId,
-                               isGuest: Boolean,
-                               isExternal: Boolean,
-                               isDarkTheme: Boolean,
-                               isGroup: Boolean,
-                               isWireless: Boolean
-                              )(implicit context: Context)
+final class SingleParticipantAdapter(userId:      UserId,
+                                     isGuest:     Boolean,
+                                     isExternal:  Boolean,
+                                     isDarkTheme: Boolean,
+                                     isGroup:     Boolean,
+                                     isWireless:  Boolean
+                                    )(implicit context: Context)
   extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
-  import BaseSingleParticipantAdapter._
+  import BaseSingleParticipantAdapter.{Header, GroupAdmin}
+  import SingleParticipantAdapter._
 
   private var fields:       Seq[UserField] = Seq.empty
   private var readReceipts: Option[String] = None
@@ -56,20 +57,20 @@ final class SingleParticipantAdapter(userId: UserId,
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = viewType match {
-    case SingleParticipantAdapter.CustomField =>
+    case CustomField =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_custom_field_row, parent,false)
-      SingleParticipantAdapter.CustomFieldRowViewHolder(view)
-    case SingleParticipantAdapter.ReadReceipts =>
+      CustomFieldRowViewHolder(view)
+    case ReadReceipts =>
       val view = LayoutInflater.from(parent.getContext).inflate(R.layout.participant_footer_row, parent, false)
-      SingleParticipantAdapter.ReadReceiptsRowViewHolder(view)
+      ReadReceiptsRowViewHolder(view)
     case _ =>
       super.onCreateViewHolder(parent, viewType)
   }
 
   override def onBindViewHolder(holder: ViewHolder, position: Int): Unit = holder match {
-    case h: SingleParticipantAdapter.ReadReceiptsRowViewHolder =>
+    case h: ReadReceiptsRowViewHolder =>
       h.bind(readReceipts)
-    case h: SingleParticipantAdapter.CustomFieldRowViewHolder =>
+    case h: CustomFieldRowViewHolder =>
       h.bind(fields(position - (if(isGroupAdminViewVisible) 2 else 1)))
     case _ =>
       super.onBindViewHolder(holder, position)
@@ -81,7 +82,7 @@ final class SingleParticipantAdapter(userId: UserId,
   override def getItemId(position: Int): Long = getItemViewType(position) match {
     case Header                        => 0L
     case GroupAdmin                    => 1L
-    case SingleParticipantAdapter.ReadReceipts => 2L
+    case ReadReceipts                  => 2L
     case _  if isGroupAdminViewVisible => fields(position - 2).key.hashCode.toLong
     case _                             => fields(position - 1).key.hashCode.toLong
   }
@@ -89,8 +90,8 @@ final class SingleParticipantAdapter(userId: UserId,
   override def getItemViewType(position: Int): Int =
     if (position == 0) Header
     else if (position == 1 && isGroupAdminViewVisible) GroupAdmin
-    else if (position == getItemCount - 1) SingleParticipantAdapter.ReadReceipts
-    else SingleParticipantAdapter.CustomField
+    else if (position == getItemCount - 1) ReadReceipts
+    else CustomField
 }
 
 

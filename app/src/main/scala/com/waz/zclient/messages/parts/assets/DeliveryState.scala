@@ -21,10 +21,10 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model._
-import com.waz.service.assets2.{DownloadAssetStatus, AssetStatus, UploadAssetStatus}
 import com.waz.utils.events.Signal
 import com.waz.log.LogSE._
-
+import com.waz.service.assets
+import com.waz.service.assets.{DownloadAssetStatus, UploadAssetStatus}
 
 sealed trait DeliveryState extends SafeToLog
 
@@ -48,7 +48,7 @@ object DeliveryState extends DerivedLogTag {
 
   case object Unknown extends DeliveryState
 
-  private def apply(as: AssetStatus, ms: Message.Status): DeliveryState = {
+  private def apply(as: assets.AssetStatus, ms: Message.Status): DeliveryState = {
     val res = (as, ms) match {
       case (UploadAssetStatus.Cancelled, _) => Cancelled
       case (UploadAssetStatus.Failed, _) => UploadFailed
@@ -60,13 +60,13 @@ object DeliveryState extends DerivedLogTag {
           case _ => Uploading
         }
       case (DownloadAssetStatus.InProgress, _) => Downloading
-      case (AssetStatus.Done, _) => Complete
+      case (assets.AssetStatus.Done, _) => Complete
       case _ => Unknown
     }
     verbose(l"Mapping Asset.Status: $as, and Message.Status $ms to DeliveryState: $res")
     res
   }
 
-  def apply(message: Signal[MessageData], asset: Signal[AssetStatus]): Signal[DeliveryState] =
+  def apply(message: Signal[MessageData], asset: Signal[assets.AssetStatus]): Signal[DeliveryState] =
     message.zip(asset).map { case (m, s) => apply(s, m.state) }
 }

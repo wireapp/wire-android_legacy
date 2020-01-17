@@ -20,11 +20,9 @@ package com.waz.sync.otr
 import com.waz.api.Verification
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.internalError
-import com.waz.cache.LocalData
 import com.waz.content.{ConversationStorage, MembersStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.AssetData.RemoteData
 import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.conversation.ConversationsService
@@ -33,10 +31,8 @@ import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, UserService}
 import com.waz.sync.SyncResult
 import com.waz.sync.SyncResult.Failure
-import com.waz.sync.client.AssetClient.{Metadata, Retention, UploadResponse}
 import com.waz.sync.client.OtrClient.{ClientMismatch, EncryptedContent, MessageResponse}
 import com.waz.sync.client._
-import com.waz.threading.CancellableFuture
 import com.waz.utils.crypto.AESUtils
 
 import scala.concurrent.Future
@@ -45,7 +41,6 @@ import scala.util.control.NonFatal
 
 trait OtrSyncHandler {
   def postOtrMessage(convId: ConvId, message: GenericMessage, recipients: Option[Set[UserId]] = None, nativePush: Boolean = true): Future[Either[ErrorResponse, RemoteInstant]]
-  def uploadAssetDataV3(data: LocalData, key: Option[AESKey], mime: Mime = Mime.Default, retention: Retention): CancellableFuture[Either[ErrorResponse, RemoteData]]
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
   def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, RemoteInstant]]
 }
@@ -54,7 +49,6 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                          selfClientId:       ClientId,
                          otrClient:          OtrClient,
                          msgClient:          MessagesClient,
-                         assetClient:        AssetClient,
                          service:            OtrService,
                          convsService:       ConversationsService,
                          convStorage:        ConversationStorage,
@@ -153,20 +147,6 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       case Left(err) =>
         error(l"postOtrMessage failed with error: $err")
         successful(Left(err))
-    }
-
-  override def uploadAssetDataV3(data: LocalData, key: Option[AESKey], mime: Mime = Mime.Default, retention: Retention = Retention.Persistent) =
-    key match {
-      case Some(k) => CancellableFuture.lift(service.encryptAssetData(k, data)) flatMap {
-        case (sha, encrypted, encryptionAlg) => assetClient.uploadAsset(Metadata(retention = retention), encrypted, Mime.Default).map { //encrypted data => Default mime
-          case Right(UploadResponse(rId, _, token)) => Right(RemoteData(Some(rId), token, key, Some(sha), Some(encryptionAlg)))
-          case Left(err) => Left(err)
-        }
-      }
-      case _ => assetClient.uploadAsset(Metadata(public = true), data, mime).map {
-        case Right(UploadResponse(rId, _, _)) => Right(RemoteData(Some(rId)))
-        case Left(err) => Left(err)
-      }
     }
 
   override def postSessionReset(convId: ConvId, user: UserId, client: ClientId) = {

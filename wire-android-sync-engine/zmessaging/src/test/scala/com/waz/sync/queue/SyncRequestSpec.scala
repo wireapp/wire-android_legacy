@@ -21,7 +21,7 @@ import com.waz.model.sync.SyncJob.Priority
 import com.waz.model.sync.SyncRequest.{PostAssetStatus, RegisterPushToken}
 import com.waz.model.sync.{SyncJob, SyncRequest}
 import com.waz.model._
-import com.waz.service.assets2.UploadAssetStatus
+import com.waz.service.assets.UploadAssetStatus
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.queue.SyncJobMerger.Merged
 

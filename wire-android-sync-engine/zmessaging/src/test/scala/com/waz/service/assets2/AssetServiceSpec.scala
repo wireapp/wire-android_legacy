@@ -28,9 +28,10 @@ import com.waz.log.LogShow
 import com.waz.model.errors.NotFoundLocal
 import com.waz.model.{AccountData, AssetId, Mime, Sha256, UploadAssetId}
 import com.waz.service.AccountsService
+import com.waz.service.assets._
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.AssetClient2.{FileWithSha, Retention}
-import com.waz.sync.client.{AssetClient2, AssetClient2Impl}
+import com.waz.sync.client.AssetClient.{FileWithSha, Retention}
+import com.waz.sync.client.{AssetClient, AssetClientImpl}
 import com.waz.threading.CancellableFuture
 import com.waz.utils.{IoUtils, ReactiveStorageImpl2, UnlimitedInMemoryStorage, returning}
 import com.waz.{AuthenticationConfig, FilesystemUtils, ZIntegrationMockSpec}
@@ -52,7 +53,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
   private val previewService      = mock[AssetPreviewService]
   private val cache               = mock[AssetContentCache]
   private val rawCache            = mock[UploadAssetContentCache]
-  private val client              = mock[AssetClient2]
+  private val client              = mock[AssetClient]
   private val uriHelperMock       = mock[UriHelper]
   private val syncHandle          = mock[SyncServiceHandle]
 
@@ -76,7 +77,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
   )
 
   private def service(rawAssetStorage: UploadAssetStorage = rawAssetStorage,
-                      client: AssetClient2 = client): AssetService =
+                      client: AssetClient = client): AssetService =
     new AssetServiceImpl(
       assetStorage,
       rawAssetStorage,
@@ -258,7 +259,7 @@ class AssetServiceSpec extends ZIntegrationMockSpec with DerivedLogTag with Auth
 
       for {
         _ <- Future.successful(())
-        client = new AssetClient2Impl
+        client = new AssetClientImpl
         rawAssetStorage = new ReactiveStorageImpl2(new UnlimitedInMemoryStorage[UploadAssetId, UploadAsset]()) with UploadAssetStorage
         assetService = service(rawAssetStorage, client)
 

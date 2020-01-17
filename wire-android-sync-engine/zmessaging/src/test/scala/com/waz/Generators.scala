@@ -33,8 +33,8 @@ import com.waz.model.messages.media._
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncRequest._
 import com.waz.model.sync.{SyncJob, SyncRequest}
+import com.waz.service.assets.UploadAssetStatus
 import com.waz.service.{SearchKey, SearchQuery}
-import com.waz.service.assets2.UploadAssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}

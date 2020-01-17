@@ -27,11 +27,11 @@ import com.waz.service.AccountsService.UserDeleted
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.UserSearchService.UserSearchEntry
 import com.waz.service.UserService._
-import com.waz.service.assets2._
+import com.waz.service.assets.{AssetService, AssetStorage, Content, ContentForUpload, NoEncryption}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
-import com.waz.sync.client.AssetClient2.Retention
+import com.waz.sync.client.AssetClient.Retention
 import com.waz.sync.client.{CredentialsUpdateClient, ErrorOr, UsersClient}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils._
@@ -42,7 +42,6 @@ import scala.collection.breakOut
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Right
-
 
 trait UserService {
   def userUpdateEventsStage: Stage.Atomic
@@ -173,7 +172,7 @@ class UserServiceImpl(selfUserId:        UserId,
   })
 
   override def updateConnectionStatus(id: UserId, status: UserData.ConnectionStatus, time: Option[RemoteInstant] = None, message: Option[String] = None) =
-    usersStorage.update(id, { user => returning(user.updateConnectionStatus(status, time, message))(u => verbose(l"updateConnectionStatus($u)")) }) map {
+    usersStorage.update(id, { _.updateConnectionStatus(status, time, message)}).map {
       case Some((prev, updated)) if prev != updated => Some(updated)
       case _ => None
     }
@@ -256,82 +255,63 @@ class UserServiceImpl(selfUserId:        UserId,
   }
 
   //TODO - remove and find a better flow for the settings
-  override def setEmail(email: EmailAddress, password: Password) = {
-    verbose(l"setEmail: $email, password: $password")
+  override def setEmail(email: EmailAddress, password: Password) =
     credentialsClient.updateEmail(email).future.flatMap {
       case Right(_) => setPassword(password)
       case Left(e) => Future.successful(Left(e))
     }
-  }
 
-  override def updateEmail(email: EmailAddress) = {
-    verbose(l"updateEmail: $email")
+
+  override def updateEmail(email: EmailAddress) =
     credentialsClient.updateEmail(email).future
-  }
 
-  override def updatePhone(phone: PhoneNumber) = {
-    verbose(l"updatePhone: $phone")
+  override def updatePhone(phone: PhoneNumber) =
     credentialsClient.updatePhone(phone).future
-  }
 
-  override def clearPhone(): ErrorOr[Unit] = {
-    verbose(l"clearPhone")
+
+  override def clearPhone(): ErrorOr[Unit] =
     for {
       resp <- credentialsClient.clearPhone().future
       _    <- resp.mapFuture(_ => usersStorage.update(selfUserId, _.copy(phone = None)).map(_ => {}))
     } yield resp
-  }
 
   // A hacky solution for now: we pretend to change the password to itself and interpret
   // the error message "password must differ" as the correct one and all others as failures.
   // Note that it's not possible to get `Right` as the response from BE.
-  override def checkPassword(password: Password): ErrorOr[Unit] = {
-    verbose(l"checkPassword: $password")
+  override def checkPassword(password: Password): ErrorOr[Unit] =
     credentialsClient.updatePassword(password, Some(password)).future.map {
       case Left(err) if err.code == PasswordMustDifferCode && err.label == PasswordMustDifferLabel => Right(())
       case otherErr => otherErr
     }
-  }
 
-  override def changePassword(newPassword: Password, currentPassword: Password) = {
-    verbose(l"changePassword: $newPassword, $currentPassword")
+  override def changePassword(newPassword: Password, currentPassword: Password) =
     credentialsClient.updatePassword(newPassword, Some(currentPassword)).future.flatMap {
       case Left(err) => Future.successful(Left(err))
       case Right(_)  => accsStorage.update(selfUserId, _.copy(password = Some(newPassword))).map(_ => Right({}))
     }
-  }
 
-  override def setPassword(password: Password) = {
-    verbose(l"setPassword: $password")
+  override def setPassword(password: Password) =
     credentialsClient.updatePassword(password, None).future.flatMap {
       case Left(err) => Future.successful(Left(err))
       case Right(_)  => accsStorage.update(selfUserId, _.copy(password = Some(password))).map(_ => Right({}))
     }
-  }
 
-  override def updateHandle(handle: Handle) = {
-    verbose(l"updateHandle: $handle")
+  override def updateHandle(handle: Handle) =
     credentialsClient.updateHandle(handle).future.flatMap {
       case Right(_) => usersStorage.update(selfUserId, _.copy(handle = Some(handle))).map(_ => Right({}))
       case Left(err) => Future.successful(Left(err))
     }
-  }
 
-  override def updateName(name: Name) = {
-    verbose(l"updateName: $name")
+  override def updateName(name: Name) =
     updateAndSync(_.copy(name = name), _ => sync.postSelfName(name))
-  }
 
-  override def updateAccentColor(color: AccentColor) = {
-    verbose(l"updateAccentColor: $color")
+  override def updateAccentColor(color: AccentColor) =
     updateAndSync(_.copy(accent = color.id), _ => sync.postSelfUser(UserInfo(selfUserId, accentId = Some(color.id))))
-  }
 
-  override def updateAvailability(availability: Availability) = {
+  override def updateAvailability(availability: Availability) =
     updateAndSync(
       _.copy(availability = availability),
       _ => teamSize.runIfBelowStatusPropagationThreshold(() => sync.postAvailability(availability)))
-  }
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
     usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))
@@ -383,10 +363,7 @@ class ExpiredUsersService(push:         PushService,
   members.onDeleted(_.foreach { m =>
     members.getByUsers(Set(m._1)).map(_.isEmpty).map {
       case true =>
-        timers.get(m._1).foreach { t =>
-          verbose(l"Cancelled timer for user: ${m._1}")
-          t.cancel()
-        }
+        timers.get(m._1).foreach(_.cancel())
         timers -= m._1
       case _ =>
     }
@@ -400,9 +377,7 @@ class ExpiredUsersService(push:         PushService,
       val woTimer = wireless.filter(u => (wireless.map(_.id) -- timers.keySet).contains(u.id))
       woTimer.foreach { u =>
         val delay = LocalInstant.Now.toRemote(drift).remainingUntil(u.expiresAt.get + 10.seconds)
-        verbose(l"Creating timer to remove user: ${u.id}:${u.name} in $delay")
         timers += u.id -> CancellableFuture.delay(delay).map { _ =>
-          verbose(l"Wireless user ${u.id}:${u.name} is expired, informing BE")
           sync.syncUsers(Set(u.id))
           timers -= u.id
         }
