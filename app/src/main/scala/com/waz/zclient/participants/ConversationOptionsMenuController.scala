@@ -259,13 +259,9 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           .setMessage(getString(R.string.confirmation_menu__block_text_with_name, displayName))
           .setNegativeButton(R.string.confirmation_menu__confirm_block, new DialogInterface.OnClickListener {
             override def onClick(dialog: DialogInterface, which: Int): Unit = {
-              zMessaging.head.flatMap(_.connection.blockConnection(userId)).map { _ =>
-                if (!mode.inConversationList || curConvId.contains(convId))
-                  convController.setCurrentConversationToNext(ConversationChangeRequester.BLOCK_USER)
-
-                if (!mode.inConversationList) {
-                  screenController.hideUser()
-                }
+              participantsController.blockUser(userId).map { _ =>
+                convController.leave(convId)
+                switchToConversationList()
               }(Threading.Ui)
             }
           }).create

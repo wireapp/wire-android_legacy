@@ -11,7 +11,6 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
-import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
 
@@ -22,9 +21,10 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
   private lazy val convController       = inject[ConversationController]
   private lazy val accountsController   = inject[UserAccountsController]
   private lazy val convScreenController = inject[IConversationScreenController]
-  private lazy val pickUserController   = inject[IPickUserController]
 
   private lazy val isIgnoredConnection = usersController.user(userToConnectId).map(_.connection == ConnectionStatus.IGNORED)
+
+  override protected val Tag: String = PendingConnectRequestFragment.Tag
 
   override protected lazy val footerCallback = new FooterMenuCallback {
     override def onLeftActionClicked(): Unit =
@@ -66,9 +66,6 @@ class PendingConnectRequestFragment extends UntabbedRequestFragment {
 
       vh.foreach(_.setCallback(footerCallback))
   }
-
-
-  override protected val Tag: String = PendingConnectRequestFragment.Tag
 }
 
 object PendingConnectRequestFragment {
