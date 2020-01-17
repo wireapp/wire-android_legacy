@@ -41,4 +41,5 @@ data class ClientDao(
     val encKey: String,
 
     @ColumnInfo(name = "macKey")
-    val macKey: String)
+    val macKey: String
+)

@@ -17,7 +17,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
 
-        buildConfigField 'boolean', 'KOTLIN_SETTINGS_MIGRATION', "false"
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS_MIGRATION', "true"
     }
 
     buildTypes {
@@ -51,4 +51,7 @@ dependencies {
     testImplementation TestDependencies.jUnit
     testImplementation TestDependencies.mockito.core
     testImplementation TestDependencies.mockito.inline
+    testImplementation TestDependencies.kluent
+    //noinspection GradleDynamicVersion
+    testImplementation "org.json:json:+"
 }

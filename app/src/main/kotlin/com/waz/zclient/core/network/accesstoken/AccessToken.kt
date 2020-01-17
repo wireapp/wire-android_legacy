@@ -2,6 +2,7 @@ package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.network.api.token.AccessTokenResponse
+import com.waz.zclient.storage.db.accountdata.AccessTokenEntity
 
 data class AccessToken(
     val token: String,
@@ -14,10 +15,10 @@ data class AccessToken(
 }
 
 class AccessTokenMapper {
-    fun from(preference: AccessTokenPreference) = AccessToken(
-        token = preference.token,
-        tokenType = preference.tokenType,
-        expiresIn = preference.expiresIn
+    fun from(entity: AccessTokenEntity) = AccessToken(
+        token = entity.token,
+        tokenType = entity.tokenType,
+        expiresIn = entity.expiresInMillis.toString()
     )
 
     fun from(response: AccessTokenResponse) = AccessToken(
@@ -26,9 +27,9 @@ class AccessTokenMapper {
         expiresIn = response.expiresIn
     )
 
-    fun toPreference(accessToken: AccessToken) = AccessTokenPreference(
+    fun toEntity(accessToken: AccessToken) = AccessTokenEntity(
         token = accessToken.token,
         tokenType = accessToken.tokenType,
-        expiresIn = accessToken.expiresIn
+        expiresInMillis = accessToken.expiresIn.toLong()
     )
 }

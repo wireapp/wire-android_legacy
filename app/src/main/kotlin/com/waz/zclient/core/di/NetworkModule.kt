@@ -16,6 +16,7 @@ import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
 import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
+import com.waz.zclient.storage.db.GlobalDatabase
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
@@ -60,7 +61,7 @@ val networkModule: Module = module {
     single { createHttpClient(get(), get()) }
     single { retrofit(get()) }
     single { AccessTokenRemoteDataSource(get()) }
-    single { AccessTokenLocalDataSource(get()) }
+    single { AccessTokenLocalDataSource(get(), get<GlobalDatabase>().activeAccountsDao()) }
     single { AccessTokenMapper() }
     single { RefreshTokenMapper() }
     single { AccessTokenRepository(get(), get(), get(), get()) }

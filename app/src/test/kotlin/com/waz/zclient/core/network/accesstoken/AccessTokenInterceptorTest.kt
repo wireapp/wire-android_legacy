@@ -1,6 +1,8 @@
 package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.UnitTest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -14,6 +16,7 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 
+@ExperimentalCoroutinesApi
 class AccessTokenInterceptorTest : UnitTest() {
 
     @Mock
@@ -28,7 +31,7 @@ class AccessTokenInterceptorTest : UnitTest() {
 
     @Test
     fun `if there's an AccessToken, adds its token to request's header`() {
-        `when`(repository.accessToken()).thenReturn(ACCESS_TOKEN)
+        runBlockingTest { `when`(repository.accessToken()).thenReturn(ACCESS_TOKEN) }
 
         val chain = mock(Interceptor.Chain::class.java)
         val initialRequest = mock(Request::class.java)
@@ -45,7 +48,7 @@ class AccessTokenInterceptorTest : UnitTest() {
 
         accessTokenInterceptor.intercept(chain)
 
-        verify(repository).accessToken()
+        runBlockingTest { verify(repository).accessToken() }
         verify(requestBuilder).addHeader("Authorization", "Bearer ${ACCESS_TOKEN.token}")
         verify(chain).proceed(requestWithHeader)
         verify(requestBuilder, never()).removeHeader("Authorization")
@@ -55,7 +58,7 @@ class AccessTokenInterceptorTest : UnitTest() {
     fun `if AccessToken is empty, doesn't add authorization header`() {
         val chain = mock(Interceptor.Chain::class.java)
         val request = mock(Request::class.java)
-        `when`(repository.accessToken()).thenReturn(AccessToken.EMPTY)
+        runBlockingTest { `when`(repository.accessToken()).thenReturn(AccessToken.EMPTY) }
         `when`(chain.request()).thenReturn(request)
         `when`(chain.proceed(request)).thenReturn(mock(Response::class.java))
 

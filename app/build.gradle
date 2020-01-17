@@ -130,7 +130,7 @@ android {
         buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
         buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
         buildConfigField 'Integer', 'PASSWORD_MAX_ATTEMPTS',         "$buildtimeConfiguration.configuration.password_max_attempts"
-        buildConfigField 'boolean', 'KOTLIN_SETTINGS_MIGRATION', "false"
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS_MIGRATION', "true"
     }
 
     packagingOptions {

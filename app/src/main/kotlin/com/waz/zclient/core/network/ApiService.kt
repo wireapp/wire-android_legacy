@@ -28,10 +28,11 @@ abstract class ApiService {
     private suspend fun <T> performRequest(call: suspend () -> Response<T>, default: T? = null): Either<Failure, T> {
         return try {
             val response = call()
-            when (response.isSuccessful) {
-                true -> response.body()?.let { Either.Right(it) }
+            if (response.isSuccessful) {
+                response.body()?.let { Either.Right(it) }
                     ?: (default?.let { Either.Right(it) } ?: Either.Left(EmptyResponseBody))
-                false -> handleRequestError(response)
+            } else {
+                handleRequestError(response)
             }
         } catch (exception: Throwable) {
             //todo: check coroutine exceptions (e.g. Cancelled)

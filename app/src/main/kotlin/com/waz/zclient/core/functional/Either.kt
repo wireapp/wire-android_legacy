@@ -15,9 +15,8 @@
  */
 package com.waz.zclient.core.functional
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.waz.zclient.core.functional.Either.Left
+import com.waz.zclient.core.functional.Either.Right
 
 /**
  * Represents a value of one of two possible types (a disjoint union).
@@ -121,4 +120,19 @@ fun <L, R> Either<L, R>.getOrElse(value: R): R =
         is Either.Left -> value
         is Either.Right -> b
     }
+
+//region coroutine helpers
+
+/**
+ * Applies fnL if this is a Left or fnR if this is a Right.
+ * @see Left
+ * @see Right
+ */
+suspend fun <L, R, T> Either<L, R>.foldSuspendable(fnL: suspend (L) -> T?, fnR: suspend (R) -> T?): T? =
+    when (this) {
+        is Left -> fnL(a)
+        is Right -> fnR(b)
+    }
+
+//endregion
 
