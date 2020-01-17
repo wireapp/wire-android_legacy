@@ -71,7 +71,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput != currentHandle, checkExist succeeds, validation succeeds, then handle should update`() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, checkExist succeeds, validation succeeds, then handle should update`() =
         runBlockingTest {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
@@ -100,7 +100,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput != currentHandle, check exists fails with HandleUnknownError, then ok button is disabled and error should be updated`() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, check exists fails with HandleUnknownError, then ok button disabled and error updated`() =
         runBlockingTest {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
@@ -119,7 +119,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists fails with HandleAlreadyTakenError, then ok button is disabled and error should be updated`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, check exists fails with HandleAlreadyTakenError, then ok button is disabled and error should be updated`() =
         runBlockingTest {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
@@ -137,7 +137,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleTooLongError then ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, check exists succeeds and validation fails with HandleTooLongError then ok button should be disabled`() =
         runBlockingTest {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
@@ -153,7 +153,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleTooShortError then ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, check exists succeeds and validation fails with HandleTooShortError then ok button should be disabled`() =
         runBlockingTest {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
@@ -168,7 +168,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleUnknownError then ok button should be disabled`() =
+    fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, check exists succeeds and validation fails with HandleUnknownError then ok button should be disabled`() =
         runBlockingTest {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
@@ -186,7 +186,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, currentInput != currentHandle, check exists succeeds and validation fails with HandleInvalidError, then ok button should be disabled and error updated`() =
+    fun `given afterHandleTextChanged is called when getHandleUseCase succeeds, check exists succeeds and validation fails with HandleInvalidError, then ok button should be disabled and error updated`() =
         runBlockingTest {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
