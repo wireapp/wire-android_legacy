@@ -80,16 +80,16 @@ class EditHandleFragment : DialogFragment() {
     private fun updateErrorMessage(error: ValidateHandleError) {
         edit_handle_edit_text_container.setErrorTextAppearance(R.style.InputHandle_Red)
         edit_handle_edit_text_container.error = when (error) {
-            is HandleExistsAlreadyError -> getString(R.string.edit_account_handle_error_already_taken)
-            is HandleTooShortError -> getString(R.string.edit_account_handle_error_too_short)
-            is HandleTooLongError -> getString(R.string.edit_account_handle_error_too_long)
-            is HandleInvalidError -> getString(R.string.edit_account_handle_error_invalid_characters)
-            is HandleUnknownError -> getString(R.string.edit_account_handle_error_unknown_error)
+            is HandleALreadyExists -> getString(R.string.edit_account_handle_error_already_taken)
+            is HandleTooShort -> getString(R.string.edit_account_handle_error_too_short)
+            is HandleTooLong -> getString(R.string.edit_account_handle_error_too_long)
+            is HandleInvalid -> getString(R.string.edit_account_handle_error_invalid_characters)
+            is UnknownError -> getString(R.string.edit_account_handle_error_unknown_error)
             else -> String.empty()
         }
 
         when (error) {
-            is HandleInvalidError, HandleUnknownError -> shakeInputField()
+            is HandleInvalid, UnknownError -> shakeInputField()
         }
     }
 

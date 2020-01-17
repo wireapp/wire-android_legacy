@@ -49,7 +49,7 @@ class EditHandleViewModel(
                     it.fold(::handleFailure) { handleIsAvailableSuccess() }
                 }
             } else {
-                handleFailure(HandleSameAsCurrentError)
+                handleFailure(HandleSameAsCurrent)
             }
         }
     }
@@ -74,7 +74,7 @@ class EditHandleViewModel(
 
     private fun updateHandle(handle: String) {
         changeHandleUseCase(viewModelScope, ChangeHandleParams(handle)) {
-            it.fold({ handleFailure(HandleUnknownError) }, { mutableDismiss.postValue(Unit) })
+            it.fold({ handleFailure(UnknownError) }, { mutableDismiss.postValue(Unit) })
         }
     }
 

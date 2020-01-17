@@ -20,10 +20,10 @@ class UsersRemoteDataSource constructor(private val usersNetworkService: UsersNe
 
     suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
         when (usersNetworkService.doesHandleExist(newHandle).code()) {
-            HANDLE_TAKEN -> Either.Left(HandleExistsAlreadyError)
-            HANDLE_INVALID -> Either.Left(HandleInvalidError)
+            HANDLE_TAKEN -> Either.Left(HandleALreadyExists)
+            HANDLE_INVALID -> Either.Left(HandleInvalid)
             HANDLE_AVAILABLE -> Either.Right(HandleIsAvailable)
-            else -> Either.Left(HandleUnknownError)
+            else -> Either.Left(UnknownError)
         }
 
     companion object {

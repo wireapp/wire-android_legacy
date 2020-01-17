@@ -8,12 +8,12 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
 
     override suspend fun run(params: ValidateHandleParams): Either<Failure, String> =
         if (!handleCharactersValid(params.newHandle)) {
-            Either.Left(HandleInvalidError)
+            Either.Left(HandleInvalid)
         } else {
             when {
                 params.newHandle.isEmpty() -> Either.Left(HandleEmptyError)
-                isHandleTooLong(params.newHandle) -> Either.Left(HandleTooLongError)
-                isHandleTooShort(params.newHandle) -> Either.Left(HandleTooShortError)
+                isHandleTooLong(params.newHandle) -> Either.Left(HandleTooLong)
+                isHandleTooShort(params.newHandle) -> Either.Left(HandleTooShort)
                 else -> Either.Right(params.newHandle)
             }
         }

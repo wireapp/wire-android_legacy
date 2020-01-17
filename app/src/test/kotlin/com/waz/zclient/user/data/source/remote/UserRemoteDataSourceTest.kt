@@ -6,10 +6,10 @@ import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.eq
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
-import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
+import com.waz.zclient.user.domain.usecase.handle.HandleALreadyExists
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
-import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
+import com.waz.zclient.user.domain.usecase.handle.UnknownError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -234,14 +234,14 @@ class UserRemoteDataSourceTest : UnitTest() {
     @Test
     fun `Given doesHandleExist() is called, when response code is 200, then return a failure`() {
         `when`(emptyResponse.code()).thenReturn(HANDLE_TAKEN)
-        validateHandleExistsFailure(errorClass = HandleExistsAlreadyError::class.java)
+        validateHandleExistsFailure(errorClass = HandleALreadyExists::class.java)
 
     }
 
     @Test
     fun `Given doesHandleExist() is called, when response code is 400, then return a failure`() {
         `when`(emptyResponse.code()).thenReturn(HANDLE_INVALID)
-        validateHandleExistsFailure(errorClass = HandleInvalidError::class.java)
+        validateHandleExistsFailure(errorClass = HandleInvalid::class.java)
 
     }
 
@@ -254,12 +254,12 @@ class UserRemoteDataSourceTest : UnitTest() {
     @Test
     fun `Given doesHandleExist() is called, when response code is not 200, 400 or 404, then return a failure`() {
         `when`(emptyResponse.code()).thenReturn(HANDLE_UNKNOWN)
-        validateHandleExistsFailure(errorClass = HandleUnknownError::class.java)
+        validateHandleExistsFailure(errorClass = UnknownError::class.java)
     }
 
     @Test(expected = CancellationException::class)
     fun `Given doesHandleExist() is called, and the request is cancelled, then return a failure`() {
-        validateHandleExistsFailure(cancelled = true, errorClass = HandleUnknownError::class.java)
+        validateHandleExistsFailure(cancelled = true, errorClass = UnknownError::class.java)
     }
 
     private fun validateHandleExistsSuccess() = runBlockingTest {
