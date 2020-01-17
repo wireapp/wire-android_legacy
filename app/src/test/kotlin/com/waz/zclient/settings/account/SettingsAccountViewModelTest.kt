@@ -59,9 +59,6 @@ class SettingsAccountViewModelTest : UnitTest() {
 
     private lateinit var userFlow: Flow<User>
 
-    @get:Rule
-    val rule = InstantTaskExecutorRule()
-
     @Before
     fun setup() {
         viewModel = SettingsAccountViewModel(
