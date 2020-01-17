@@ -6,6 +6,26 @@ apply plugin: 'com.mutualmobile.gradle.plugins.dexinfo'
 
 apply from: 'config/quality.gradle'
 
+//region avs
+//TODO: Migrate this configuration to new dependency system
+ext {
+    avsVersion = '5.3.191@aar'
+    avsInternalVersion = avsVersion //leave this here in case we want to test specific AVS versions on internal
+    avsName = 'avs'
+    avsGroup = 'com.wire'
+
+    // proprietary avs artifact configuration
+    customAvsVersion = '5.4.9@aar'
+    customAvsInternalVersion = customAvsVersion
+    customAvsName = 'avs'
+    customAvsGroup = 'com.wearezeta.avs'
+}
+
+if (project.file('user.gradle').exists()) {
+    apply from: "user.gradle"
+}
+//endregion avs
+
 task copyCustomResources(type: Copy) {
     if (buildtimeConfiguration.customResourcesPath == null) {
         return
@@ -281,6 +301,25 @@ dexinfo {
 }
 
 dependencies {
+
+    //region avs
+    // TODO Migrate this configuration to new dependency system
+    boolean internal = true
+    for (String taskName : gradle.startParameter.taskNames) {
+        if (taskName.contains("Prod") || taskName.contains("Candidate") || taskName == "aPR") {
+            internal = false
+            break
+        }
+    }
+
+    // For using local files in app/libs
+    //implementation (name:'avs', ext:'aar')
+    //implementation (name:'audio-notifications', ext:'aar')
+    //implementation (name:'zmessaging-android', ext:'aar')
+
+    implementation "$avsGroup:$avsName:${internal ? avsInternalVersion : avsVersion}"
+    //endregion avs
+
     implementation LegacyDependencies.scalaLibrary
     implementation LegacyDependencies.scalaReflect
     implementation LegacyDependencies.scalaShapeless
@@ -289,7 +328,8 @@ dependencies {
     implementation BuildDependencies.kotlin.coroutinesCore
     implementation BuildDependencies.kotlin.coroutinesAndroid
 
-    implementation BuildDependencies.wire.avs
+    // TODO uncomment when new dependency system supports avs
+//    implementation BuildDependencies.wire.avs
     implementation BuildDependencies.wire.audioNotifications
     //don't include wire translations for custom builds
     if (buildtimeConfiguration.customResourcesPath == null) {
@@ -321,6 +361,7 @@ dependencies {
     implementation BuildDependencies.androidX.lifecycleExtensions
     implementation BuildDependencies.androidX.roomRuntime
     implementation BuildDependencies.androidX.roomKtx
+    implementation BuildDependencies.androidX.coreKtx
     implementation BuildDependencies.androidX.biometric
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'

@@ -43,8 +43,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
     }
 
-    val error: LiveData<String>
-        get() = mutableError
+    val error: LiveData<String> = mutableError
 
     fun loadProfileDetails() {
         getUserProfileUseCase(viewModelScope, Unit) {

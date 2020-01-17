@@ -40,11 +40,10 @@ import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
-import com.waz.zclient.participants.fragments.{ConnectRequestFragment, PendingConnectRequestFragment, SendConnectRequestFragment}
+import com.waz.zclient.participants.fragments.{BlockedUserFragment, ConnectRequestFragment, PendingConnectRequestFragment, SendConnectRequestFragment}
 import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, UserRequester}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -68,7 +67,6 @@ class ConversationListManagerFragment extends Fragment
   with NavigationControllerObserver
   with ConversationListFragment.Container
   with ConversationScreenControllerObserver
-  with BlockedUserProfileFragment.Container
   with BottomNavigationView.OnNavigationItemSelectedListener {
 
   import ConversationListManagerFragment._
@@ -314,8 +312,8 @@ class ConversationListManagerFragment extends Fragment
 
           case BLOCKED =>
             show(
-              BlockedUserProfileFragment.newInstance(userId.str, userRequester),
-              BlockedUserProfileFragment.Tag
+              BlockedUserFragment.newInstance(userId, userRequester),
+              BlockedUserFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
           case _ => //
@@ -444,28 +442,14 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
-  override def onUnblockedUser(restoredConversationWithUser: ConvId) = {
-    pickUserController.hideUserProfile()
-    verbose(l"onUnblockedUser $restoredConversationWithUser")
-    convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
-  }
-
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
     if (inConvList) {
       OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Mode.Normal(inConvList))).show()
     }
 
-  override def dismissUserProfile() =
-    pickUserController.hideUserProfile()
-
-  override def dismissSingleUserProfile() =
-    dismissUserProfile()
-
   override def onHideUser() = {}
 
   override def onHideOtrClient() = {}
-
-  override def showRemoveConfirmation(userId: UserId) = {}
 
   override def onNavigationItemSelected(item: MenuItem): Boolean = {
     item.getItemId match {

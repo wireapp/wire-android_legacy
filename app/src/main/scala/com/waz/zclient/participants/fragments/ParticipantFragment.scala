@@ -30,10 +30,8 @@ import com.waz.utils.returning
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.controllers.singleimage.ISingleImageController
 import com.waz.zclient.conversation.ConversationController
-import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.integrations.IntegrationDetailsFragment
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
 import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, ParticipantsController, UserRequester}
@@ -45,10 +43,7 @@ import com.waz.api.User.ConnectionStatus._
 
 import scala.concurrent.Future
 
-class ParticipantFragment extends ManagerFragment
-  with ConversationScreenControllerObserver
-  with BlockedUserProfileFragment.Container {
-
+class ParticipantFragment extends ManagerFragment with ConversationScreenControllerObserver {
   import ParticipantFragment._
 
   implicit def ctx: Context = getActivity
@@ -251,8 +246,8 @@ class ParticipantFragment extends ManagerFragment
         openUserProfileFragment(newInstance(userId,UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == BLOCKED =>
-        import BlockedUserProfileFragment._
-        openUserProfileFragment(newInstance(userId.str, UserRequester.PARTICIPANTS), Tag)
+        import BlockedUserFragment._
+        openUserProfileFragment(newInstance(userId, UserRequester.PARTICIPANTS), Tag)
 
       case Some(user) if user.connection == CANCELLED || user.connection == UNCONNECTED =>
         import SendConnectRequestFragment._
@@ -263,19 +258,6 @@ class ParticipantFragment extends ManagerFragment
 
   override def onHideUser(): Unit = if (screenController.isShowingUser) {
     getChildFragmentManager.popBackStack()
-  }
-
-  override def showRemoveConfirmation(userId: UserId): Unit =
-    participantsController.showRemoveConfirmation(userId)
-
-  override def dismissUserProfile(): Unit = screenController.hideUser()
-
-  override def dismissSingleUserProfile(): Unit = dismissUserProfile()
-
-  override def onUnblockedUser(restoredConversationWithUser: ConvId): Unit = {
-    screenController.hideUser()
-    verbose(l"onUnblockedUser $restoredConversationWithUser")
-    convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
   }
 
   override def onHideOtrClient(): Unit = getChildFragmentManager.popBackStack()
