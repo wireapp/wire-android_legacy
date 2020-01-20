@@ -22,5 +22,3 @@ class SettingsAdvancedFragment : Fragment() {
         fun newInstance() = SettingsAdvancedFragment()
     }
 }
-
-

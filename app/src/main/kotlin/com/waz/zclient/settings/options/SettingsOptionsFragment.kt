@@ -22,5 +22,3 @@ class SettingsOptionsFragment : Fragment() {
         fun newInstance() = SettingsOptionsFragment()
     }
 }
-
-

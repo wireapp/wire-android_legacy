@@ -6,8 +6,10 @@ import com.waz.zclient.storage.db.users.service.UserDbService
 import com.waz.zclient.storage.pref.GlobalPreferences
 import kotlinx.coroutines.flow.Flow
 
-class UsersLocalDataSource constructor(private val userService: UserDbService,
-                                       globalPreferences: GlobalPreferences) {
+class UsersLocalDataSource constructor(
+    private val userService: UserDbService,
+    globalPreferences: GlobalPreferences
+) {
 
     private val userId = globalPreferences.activeUserId
 
@@ -22,5 +24,4 @@ class UsersLocalDataSource constructor(private val userService: UserDbService,
     suspend fun changeEmail(value: String) = requestDatabase { userService.updateEmail(userId, value) }
 
     suspend fun changePhone(value: String) = requestDatabase { userService.updatePhone(userId, value) }
-
 }

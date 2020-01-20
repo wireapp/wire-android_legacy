@@ -9,7 +9,6 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
 import kotlinx.android.synthetic.main.dialog_fragment_edit_text.view.*
 
-
 class EditTextDialogFragment : DialogFragment() {
 
     companion object {
@@ -48,11 +47,13 @@ class EditTextDialogFragment : DialogFragment() {
 
         return AlertDialog.Builder(requireContext())
             .setTitle(title)
-            .setView(view).setPositiveButton(getString(android.R.string.ok)) { _, _ -> positiveButtonAction(view.edit_text.text.toString().trim()) }
+            .setView(view)
+            .setPositiveButton(getString(android.R.string.ok)) { _, _ ->
+                positiveButtonAction(view.edit_text.text.toString().trim())
+            }
             .setNegativeButton(getString(android.R.string.cancel)) { _, _ -> negativeButtonAction() }
             .create()
     }
-
 
     private fun positiveButtonAction(newValue: String) {
         listener?.onTextEdited(newValue)
@@ -63,4 +64,3 @@ class EditTextDialogFragment : DialogFragment() {
         dismiss()
     }
 }
-
