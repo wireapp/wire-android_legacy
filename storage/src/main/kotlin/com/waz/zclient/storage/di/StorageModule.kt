@@ -14,7 +14,7 @@ val storageModule: Module = module {
     single { GlobalPreferences(androidContext()) }
     single {
         Room.databaseBuilder(androidContext(),
-            UserDatabase::class.java, GlobalPreferences(androidContext()).activeUserId)
+            UserDatabase::class.java, get<GlobalPreferences>().activeUserId)
             .addMigrations(UserDatabaseMigration()).build()
     }
     single { UserPreferences(androidContext(), get()) }
