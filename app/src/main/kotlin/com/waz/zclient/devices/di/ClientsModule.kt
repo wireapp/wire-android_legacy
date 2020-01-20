@@ -11,7 +11,6 @@ import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-
 val clientsModule: Module = module {
     single { ClientsDataSource(get(), get(), get()) as ClientsRepository }
     factory { ClientMapper() }

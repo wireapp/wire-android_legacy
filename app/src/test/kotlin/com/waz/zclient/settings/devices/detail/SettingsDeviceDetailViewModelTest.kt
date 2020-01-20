@@ -38,7 +38,7 @@ class SettingsDeviceDetailViewModelTest {
     fun `given data is loaded successfully, then assert data is mapped correctly`() {
         val params = GetSpecificClientParams(TEST_ID)
         val location = Mockito.mock<ClientLocation>(ClientLocation::class.java)
-        val client = Client(time = TEST_TIME, label = TEST_LABEL, _class = TEST_CLASS, type = TEST_TYPE, id = TEST_ID, model = TEST_MODEL, location = location)
+        val client = Client(time = TEST_TIME, label = TEST_LABEL, clazz = TEST_CLASS, type = TEST_TYPE, id = TEST_ID, model = TEST_MODEL, location = location)
 
         runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Right(client)) }
 

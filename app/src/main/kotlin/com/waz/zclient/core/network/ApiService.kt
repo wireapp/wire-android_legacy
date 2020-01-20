@@ -25,6 +25,7 @@ abstract class ApiService {
             }
         }
 
+    @Suppress("TooGenericExceptionCaught")
     private suspend fun <T> performRequest(call: suspend () -> Response<T>, default: T? = null): Either<Failure, T> {
         return try {
             val response = call()
@@ -42,12 +43,20 @@ abstract class ApiService {
 
     private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
         return when (response.code()) {
-            400 -> Either.Left(BadRequest)
-            401 -> Either.Left(Unauthorized)
-            403 -> Either.Left(Forbidden)
-            404 -> Either.Left(NotFound)
-            500 -> Either.Left(InternalServerError)
+            CODE_BAD_REQUEST -> Either.Left(BadRequest)
+            CODE_UNAUTHORIZED -> Either.Left(Unauthorized)
+            CODE_FORBIDDEN -> Either.Left(Forbidden)
+            CODE_NOT_FOUND -> Either.Left(NotFound)
+            CODE_INTERNAL_SERVER_ERROR -> Either.Left(InternalServerError)
             else -> Either.Left(ServerError)
         }
+    }
+
+    companion object {
+        private const val CODE_BAD_REQUEST = 400
+        private const val CODE_UNAUTHORIZED = 401
+        private const val CODE_FORBIDDEN = 403
+        private const val CODE_NOT_FOUND = 404
+        private const val CODE_INTERNAL_SERVER_ERROR = 500
     }
 }

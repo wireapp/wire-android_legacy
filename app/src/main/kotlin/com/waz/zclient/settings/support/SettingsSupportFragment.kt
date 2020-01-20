@@ -25,5 +25,3 @@ class SettingsSupportFragment : Fragment() {
         fun newInstance() = SettingsSupportFragment()
     }
 }
-
-

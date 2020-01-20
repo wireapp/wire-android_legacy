@@ -26,12 +26,13 @@ data class ProfileDetail(val value: String) {
 }
 
 @ExperimentalCoroutinesApi
-class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-                                           private val changeNameUseCase: ChangeNameUseCase,
-                                           private val changePhoneUseCase: ChangePhoneUseCase,
-                                           private val changeEmailUseCase: ChangeEmailUseCase,
-                                           private val changeHandleUseCase: ChangeHandleUseCase)
-    : ViewModel() {
+class SettingsAccountViewModel(
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val changeNameUseCase: ChangeNameUseCase,
+    private val changePhoneUseCase: ChangePhoneUseCase,
+    private val changeEmailUseCase: ChangeEmailUseCase,
+    private val changeHandleUseCase: ChangeHandleUseCase
+) : ViewModel() {
 
     private val mutableProfileData = MutableLiveData<User>()
     private val mutableError = MutableLiveData<String>()
@@ -52,8 +53,7 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
     }
 
-    val error: LiveData<String>
-        get() = mutableError
+    val error: LiveData<String> = mutableError
 
     fun loadProfileDetails() {
         getUserProfileUseCase(viewModelScope, Unit) {
@@ -94,5 +94,3 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         mutableError.postValue("Failure: $failure")
     }
 }
-
-

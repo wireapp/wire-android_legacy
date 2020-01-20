@@ -10,8 +10,7 @@ import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.settings.devices.model.ClientItem
 
-class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClientsUseCase)
-    : ViewModel() {
+class SettingsDeviceListViewModel(private val getAllClientsUseCase: GetAllClientsUseCase) : ViewModel() {
 
     private val mutableLoading = MutableLiveData<Boolean>()
     private val mutableError = MutableLiveData<String>()

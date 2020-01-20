@@ -20,7 +20,7 @@ import org.koin.dsl.module
 @ExperimentalCoroutinesApi
 val settingsAccountModule: Module = module {
     viewModel { SettingsAccountViewModel(get(), get(), get(), get(), get()) }
-    viewModel { EditHandleViewModel(get(), get(), get()) }
+    viewModel { EditHandleViewModel(get(), get(), get(), get()) }
     factory { CheckHandleExistsUseCase(get()) }
     factory { GetHandleUseCase(get()) }
     factory { ValidateHandleUseCase() }

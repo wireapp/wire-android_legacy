@@ -19,9 +19,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
+@Suppress("TooManyFunctions")
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
@@ -61,13 +61,10 @@ class SettingsAccountFragment : Fragment() {
         }
     }
 
-    //TODO Will need changing to a handle fragment instead of a basic input dialog
     private fun initAccountHandle() {
         settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
         preferences_account_handle.setOnClickListener {
-            val title = getString(R.string.pref_account_username_title)
-            val defaultValue = preferences_account_handle_title.text.toString()
-            showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updateHandle(it) }
+            showEditHandleDialog()
         }
     }
 
@@ -81,7 +78,9 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initResetPassword() {
-        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
+        preferences_account_reset_password.setOnClickListener {
+            openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl()))
+        }
     }
 
     private fun initToolbar() {
@@ -128,19 +127,21 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
     }
 
-    //TODO will be used in part 2.
-    private fun showEditHandleDialog(updateHandle: (String) -> Unit) {
+    private fun showEditHandleDialog() {
         settingsAccountViewModel.handle.value?.let {
-            EditHandleFragment.newInstance(it).show(requireActivity().supportFragmentManager, String.empty())
+            EditHandleFragment.newInstance(it)
+                .show(requireActivity().supportFragmentManager, String.empty())
         }
     }
 
     private fun showGenericEditDialog(title: String, defaultValue: String, updateFunc: (String) -> Unit) {
-        EditTextDialogFragment.newInstance(title, defaultValue, object : EditTextDialogFragment.EditTextDialogFragmentListener {
-            override fun onTextEdited(newValue: String) {
-                updateFunc(newValue)
+        EditTextDialogFragment.newInstance(title, defaultValue,
+            object : EditTextDialogFragment.EditTextDialogFragmentListener {
+                override fun onTextEdited(newValue: String) {
+                    updateFunc(newValue)
+                }
             }
-        }).show(requireActivity().supportFragmentManager, String.empty())
+        ).show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {
@@ -149,5 +150,3 @@ class SettingsAccountFragment : Fragment() {
         fun newInstance() = SettingsAccountFragment()
     }
 }
-
-

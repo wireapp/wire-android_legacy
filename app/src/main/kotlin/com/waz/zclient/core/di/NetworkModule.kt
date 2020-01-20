@@ -1,3 +1,4 @@
+@file:Suppress("MatchingDeclarationName")
 package com.waz.zclient.core.di
 
 import com.waz.zclient.BuildConfig
@@ -38,8 +39,10 @@ object NetworkDependencyProvider {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-    fun createHttpClient(accessTokenInterceptor: AccessTokenInterceptor,
-                         accessTokenAuthenticator: AccessTokenAuthenticator): OkHttpClient =
+    fun createHttpClient(
+        accessTokenInterceptor: AccessTokenInterceptor,
+        accessTokenAuthenticator: AccessTokenAuthenticator
+    ): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(accessTokenInterceptor)
             .authenticator(accessTokenAuthenticator)
