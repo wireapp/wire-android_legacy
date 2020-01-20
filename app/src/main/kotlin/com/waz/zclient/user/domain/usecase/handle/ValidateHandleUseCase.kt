@@ -24,7 +24,7 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
         handle.length > HANDLE_MAX_LENGTH
 
     private fun isHandleTooShort(handle: String) =
-        handle.length < HANDLE_MIN_LENGTH || handle.isEmpty()
+        handle.length < HANDLE_MIN_LENGTH
 
     companion object {
         private const val HANDLE_MAX_LENGTH = 21
