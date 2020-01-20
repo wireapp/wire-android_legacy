@@ -107,7 +107,7 @@ class AudioTranscoder(tempFiles: TempFileService, context: Context) {
               encoder.queueInputBuffer(inputBufferIndex, 0, 0, 0, BUFFER_FLAG_END_OF_STREAM)
             } else {
               val shorts = ByteBuffer.wrap(readBuffer, 0, bytesRead).order(LITTLE_ENDIAN).asShortBuffer
-              val presentationTimeUs = (samplesSoFar / SizeOf.SHORT) * 1000000L / PCM.sampleRate
+              val presentationTimeUs = (samplesSoFar / PCM.SizeOfShort) * 1000000L / PCM.sampleRate
               samplesSoFar += shorts.remaining()
               inputBuffer.position(0)
               inputBuffer.asShortBuffer.put(shorts)
@@ -128,7 +128,7 @@ class AudioTranscoder(tempFiles: TempFileService, context: Context) {
             out.write(outputBuffer)
           }
           encoder.releaseOutputBuffer(outputBufferIndex, false)
-          if (outputBufferInfo.presentationTimeUs > 0L) reporter.foreach(_.running(samplesSoFar * SizeOf.SHORT))
+          if (outputBufferInfo.presentationTimeUs > 0L) reporter.foreach(_.running(samplesSoFar * PCM.SizeOfShort))
           endOfOutput = (outputBufferInfo.flags & BUFFER_FLAG_END_OF_STREAM) != 0
         } else if (outputBufferIndex == INFO_OUTPUT_BUFFERS_CHANGED) {
           outputBuffers = outputBuffersOf(encoder)
@@ -156,7 +156,7 @@ object AudioTranscoder {
   val sampleRate = PCM.sampleRate
 
   def estimatedSizeBasedOnBitrate(byteCount: Long): Long =
-    math.round(((byteCount / SizeOf.SHORT).toDouble / sampleRate.toDouble) * (bitRate.toDouble / 8d)).toLong
+    math.round(((byteCount / PCM.SizeOfShort).toDouble / sampleRate.toDouble) * (bitRate.toDouble / 8d)).toLong
 
   def adtsHeader(aacFrameLength: Int): ByteBuffer = { // see https://wiki.multimedia.cx/index.php?title=ADTS
     val profile = MediaCodecInfo.CodecProfileLevel.AACObjectLC

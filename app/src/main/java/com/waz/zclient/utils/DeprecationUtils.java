@@ -17,8 +17,6 @@
  */
 package com.waz.zclient.utils;
 
-
-import android.app.Notification;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -53,8 +51,6 @@ public class DeprecationUtils {
     public static int FLAG_TURN_SCREEN_ON = WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
 
     public static int FLAG_SHOW_WHEN_LOCKED = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
-
-    public static int PRIORITY_MAX = Notification.PRIORITY_MAX;
 
     public static int WAKE_LOCK_OPTIONS = PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
                                           PowerManager.FULL_WAKE_LOCK          |

@@ -21,7 +21,6 @@ import android.database.Cursor
 import android.os.Parcel
 import android.provider.ContactsContract.DisplayNameSources
 import com.google.protobuf.nano.MessageNano
-import com.waz.api.CoreList
 import com.waz.cache.CacheEntryData
 import com.waz.content.MsgCursor
 import com.waz.model.{otr => _, _}
@@ -52,14 +51,6 @@ package object testutils {
       override def isEmpty(thing: api.UiSignal[_]): Boolean = thing.isEmpty
     }
 
-    implicit lazy val CoreListLength = new Length[CoreList[_]] {
-      override def lengthOf(obj: CoreList[_]): Long = obj.size()
-    }
-
-    implicit lazy val CoreListEmptiness: Emptiness[CoreList[_]] = new Emptiness[CoreList[_]] {
-      override def isEmpty(thing: CoreList[_]): Boolean = thing.size() == 0
-    }
-
     implicit class MessagesCursorSeq(list: MsgCursor) extends Seq[MessageAndLikes] {
       override def length: Int = list.size
       override def apply(idx: Int): MessageAndLikes = list(idx)
@@ -75,23 +66,6 @@ package object testutils {
 
     implicit class EnrichedInt(val a: Int) extends AnyVal {
       def times(f: => Unit): Unit = (1 to a) foreach (_ => f)
-    }
-
-    implicit class CoreListAsScala[A](list: CoreList[A]) {
-      def asScala: Vector[A] = (0 until list.size).map(list.get)(breakOut)
-    }
-
-    implicit class RichCoreListSeq[T](list: CoreList[T]) extends Seq[T] {
-      override def length: Int = list.size
-      override def apply(idx: Int): T = list.get(idx)
-      override def iterator: Iterator[T] = new Iterator[T]() {
-        var idx = 0
-        override def hasNext: Boolean = idx < list.size
-        override def next(): T = {
-          idx += 1
-          list.get(idx - 1)
-        }
-      }
     }
 
     implicit class UiSignalIsSignal[A](val s: api.UiSignal[A]) extends AnyVal {
