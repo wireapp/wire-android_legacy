@@ -39,7 +39,7 @@ import kotlin.math.abs
 
 /**
  * Handles permissions across fragments and activities.
- * Credit to Michael Spitsin for the inspiration around the permissions.
+ * Credit to Michael Spitsin for .
  * https://medium.com/@programmerr47/working-with-permissions-in-android-bbba823be785
  */
 
@@ -82,7 +82,7 @@ class PermissionManager : FragmentLifecycleObserver, ActivityLifecycleObserver {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    suspend fun requestPermissions(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) = withContext(Dispatchers.Main) {
+    fun requestPermissions(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
         request(permissions, StrictPermissionHandler(result), result)
     }
 

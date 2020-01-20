@@ -48,8 +48,8 @@ class SettingsAccountFragment : Fragment() {
         loadProfile()
         permissionManager.readPhoneState {
             it.fold(
-                { Toast.makeText(requireContext(), "Permission denied", Toast.LENGTH_LONG).show() },
-                { Toast.makeText(requireContext(), "Permission Granted", Toast.LENGTH_LONG).show() })
+                { showErrorMessage("Permission Denied") },
+                { showErrorMessage("Permission Granted") })
         }
     }
 
