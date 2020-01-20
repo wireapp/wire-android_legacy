@@ -8,7 +8,6 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.user.domain.usecase.handle.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.lang.UnknownError
 import java.util.*
 
 @ExperimentalCoroutinesApi
