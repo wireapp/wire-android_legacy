@@ -21,15 +21,6 @@ import retrofit2.Response
 @ExperimentalCoroutinesApi
 class UserRemoteDataSourceTest : UnitTest() {
 
-    companion object {
-        private const val CANCELLATION_DELAY = 200L
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-        private const val TEST_NAME = "name"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@handle"
-        private const val TEST_PHONE = "+4977738847664"
-    }
-
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
     @Mock
@@ -55,6 +46,9 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Captor
     private lateinit var changeNameRequestCaptor: ArgumentCaptor<ChangeNameRequest>
+
+    @Captor
+    private lateinit var changeAccentColorRequestCaptor: ArgumentCaptor<ChangeAccentColorRequest>
 
     @Before
     fun setUp() {
@@ -230,5 +224,51 @@ class UserRemoteDataSourceTest : UnitTest() {
         changePhoneRequestCaptor.value.phone shouldBe TEST_PHONE
 
         usersRemoteDataSource.changePhone(TEST_PHONE).isRight shouldBe isRight
+    }
+
+    @Test
+    fun `Given changeAccentColor() is called, when api response success and response body is not null, then return a successful response`() {
+        validateChangeAccentColorScenario(responseBody = Unit, isRight = true, cancelable = false)
+
+    }
+
+    @Test
+    fun `Given changeAccentColor() is called, when api response success and response body is null, then return an error response`() {
+        validateChangeAccentColorScenario(responseBody = null, isRight = false, cancelable = false)
+
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given changeAccentColor() is called, when api response is cancelled, then return an error response`() {
+        validateChangeAccentColorScenario(responseBody = Unit, isRight = false, cancelable = true)
+    }
+
+    private fun validateChangeAccentColorScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlockingTest {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.changeAccentColor(capture(changeAccentColorRequestCaptor))).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.changeAccentColor(TEST_COLOR)
+
+        verify(usersNetworkService).changeAccentColor(capture(changeAccentColorRequestCaptor))
+
+        if (cancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        changeAccentColorRequestCaptor.value.accentId shouldBe TEST_COLOR
+
+        usersRemoteDataSource.changeAccentColor(TEST_COLOR).isRight shouldBe isRight
+    }
+
+    companion object {
+        private const val CANCELLATION_DELAY = 200L
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+        private const val TEST_NAME = "name"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@handle"
+        private const val TEST_PHONE = "+4977738847664"
+        private const val TEST_COLOR = 2
     }
 }

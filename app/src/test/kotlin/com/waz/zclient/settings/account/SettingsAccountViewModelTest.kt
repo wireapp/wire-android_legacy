@@ -26,15 +26,6 @@ import org.mockito.Mockito.mock
 @InternalCoroutinesApi
 class SettingsAccountViewModelTest : UnitTest() {
 
-    companion object {
-        private const val TEST_NAME = "testName"
-        private const val TEST_HANDLE = "@Wire"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_PHONE = "+497573889375"
-        private const val TEST_ERROR_CODE = 401
-        private const val TEST_ERROR_MESSAGE = "Unauthorised Error"
-    }
-
     private lateinit var viewModel: SettingsAccountViewModel
 
     @Mock
@@ -53,6 +44,9 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeHandleUseCase: ChangeHandleUseCase
 
     @Mock
+    private lateinit var changeAccentColorUseCase: ChangeAccentColorUseCase
+
+    @Mock
     private lateinit var user: User
 
     private lateinit var userFlow: Flow<User>
@@ -67,7 +61,8 @@ class SettingsAccountViewModelTest : UnitTest() {
             changeNameUseCase,
             changePhoneUseCase,
             changeEmailUseCase,
-            changeHandleUseCase)
+            changeHandleUseCase,
+            changeAccentColorUseCase)
         userFlow = flow { user }
     }
 
@@ -206,5 +201,28 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.error.observeOnce {
             it shouldBe "$TEST_ERROR_CODE + $TEST_ERROR_MESSAGE"
         }
+    }
+
+    @Test
+    fun `given account accent color is updated and fails with HttpError, then error observer is notified`() {
+        val changeAccentColorParams = mock(ChangeAccentColorParams::class.java)
+
+        runBlockingTest { lenient().`when`(changeAccentColorUseCase.run(changeAccentColorParams)).thenReturn(Either.Left(HttpError(TEST_ERROR_CODE, TEST_ERROR_MESSAGE))) }
+
+        viewModel.updateAccentColor(TEST_ACCENT_COLOR)
+
+        viewModel.error.observeOnce {
+            it shouldBe "$TEST_ERROR_CODE + $TEST_ERROR_MESSAGE"
+        }
+    }
+
+    companion object {
+        private const val TEST_NAME = "testName"
+        private const val TEST_HANDLE = "@Wire"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_PHONE = "+497573889375"
+        private const val TEST_ACCENT_COLOR = 2
+        private const val TEST_ERROR_CODE = 401
+        private const val TEST_ERROR_MESSAGE = "Unauthorised Error"
     }
 }

@@ -2,6 +2,7 @@ package com.waz.zclient.user.data
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.DatabaseError
+import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
@@ -25,14 +26,6 @@ import org.mockito.Mockito.*
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 class UserRepositoryTest : UnitTest() {
-
-    companion object {
-        private const val TEST_NAME = "testName"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_HANDLE = "@Handle"
-        private const val TEST_PHONE = "+49766378499"
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-    }
 
     private lateinit var usersRepository: UsersRepository
 
@@ -159,5 +152,36 @@ class UserRepositoryTest : UnitTest() {
         usersRepository.changePhone(TEST_PHONE)
 
         verify(usersRemoteDataSource).changePhone(eq(TEST_PHONE))
+    }
+
+    @Test
+    fun `Given changeAccentColor() is called and remote request is success, then update database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeAccentColor(TEST_ACCENT_COLOR)).thenReturn(Either.Right(Unit))
+
+        usersRepository.changeAccentColor(TEST_ACCENT_COLOR)
+
+        verify(usersRemoteDataSource).changeAccentColor(eq(TEST_ACCENT_COLOR))
+        verify(usersLocalDataSource).changeAccentColor(eq(TEST_ACCENT_COLOR))
+    }
+
+    @Test
+    fun `Given changeAccentColor() is called and remote request fails, then don't update local database`() = runBlockingTest {
+        `when`(usersRemoteDataSource.changeAccentColor(TEST_ACCENT_COLOR)).thenReturn(Either.Left(HttpError(TEST_ERROR_CODE, TEST_ERROR_MESSAGE)))
+
+        usersRepository.changeAccentColor(TEST_ACCENT_COLOR)
+
+        verify(usersRemoteDataSource).changeAccentColor(eq(TEST_ACCENT_COLOR))
+        verifyNoInteractions(usersLocalDataSource)
+    }
+
+    companion object {
+        private const val TEST_NAME = "testName"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_HANDLE = "@Handle"
+        private const val TEST_PHONE = "+49766378499"
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+        private const val TEST_ERROR_CODE = 401
+        private const val TEST_ERROR_MESSAGE = "Unauthorised Error"
+        private const val TEST_ACCENT_COLOR = 2
     }
 }
