@@ -15,9 +15,11 @@ import com.waz.zclient.core.threading.ThreadHandler
 import retrofit2.Call
 import retrofit2.Response
 
-class ApiService(private val networkHandler: NetworkHandler,
-                 private val threadHandler: ThreadHandler,
-                 private val networkClient: NetworkClient) {
+class ApiService(
+    private val networkHandler: NetworkHandler,
+    private val threadHandler: ThreadHandler,
+    private val networkClient: NetworkClient
+) {
 
     fun <T> createApi(clazz: Class<T>) = networkClient.create(clazz)
 
@@ -30,6 +32,7 @@ class ApiService(private val networkHandler: NetworkHandler,
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun <T> performRequest(call: Call<T>, default: T): Either<Failure, T> {
         return try {
             val response = call.execute()
@@ -44,12 +47,20 @@ class ApiService(private val networkHandler: NetworkHandler,
 
     private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
         return when (response.code()) {
-            400 -> Left(BadRequest)
-            401 -> Left(Unauthorized)
-            403 -> Left(Forbidden)
-            404 -> Left(NotFound)
-            500 -> Left(InternalServerError)
+            CODE_BAD_REQUEST -> Left(BadRequest)
+            CODE_UNAUTHORIZED -> Left(Unauthorized)
+            CODE_FORBIDDEN -> Left(Forbidden)
+            CODE_NOT_FOUND -> Left(NotFound)
+            CODE_INTERNAL_SERVER_ERROR -> Left(InternalServerError)
             else -> Left(ServerError)
         }
+    }
+
+    companion object {
+        private const val CODE_BAD_REQUEST = 400
+        private const val CODE_UNAUTHORIZED = 401
+        private const val CODE_FORBIDDEN = 403
+        private const val CODE_NOT_FOUND = 404
+        private const val CODE_INTERNAL_SERVER_ERROR = 500
     }
 }

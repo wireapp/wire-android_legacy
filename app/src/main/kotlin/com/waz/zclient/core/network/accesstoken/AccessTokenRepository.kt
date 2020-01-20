@@ -4,10 +4,12 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 
-class AccessTokenRepository(private val remoteDataSource: AccessTokenRemoteDataSource,
-                            private val localDataSource: AccessTokenLocalDataSource,
-                            private val accessTokenMapper: AccessTokenMapper,
-                            private val refreshTokenMapper: RefreshTokenMapper) {
+class AccessTokenRepository(
+    private val remoteDataSource: AccessTokenRemoteDataSource,
+    private val localDataSource: AccessTokenLocalDataSource,
+    private val accessTokenMapper: AccessTokenMapper,
+    private val refreshTokenMapper: RefreshTokenMapper
+) {
 
     fun accessToken(): AccessToken =
         localDataSource.accessToken()?.let { accessTokenMapper.from(it) } ?: AccessToken.EMPTY

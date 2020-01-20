@@ -81,8 +81,10 @@ class EditHandleFragment : DialogFragment() {
 
     private fun updateErrorMessage(error: ValidateHandleError) {
         edit_handle_edit_text_container.error = when (error) {
-            is HandleExistsAlreadyError -> getString(R.string.pref__account_action__dialog__change_username__error_already_taken)
-            is HandleUnknownError -> getString(R.string.pref__account_action__dialog__change_username__error_unknown)
+            is HandleExistsAlreadyError ->
+                getString(R.string.pref__account_action__dialog__change_username__error_already_taken)
+            is HandleUnknownError ->
+                getString(R.string.pref__account_action__dialog__change_username__error_unknown)
             else -> String.empty()
         }
         when (error) {

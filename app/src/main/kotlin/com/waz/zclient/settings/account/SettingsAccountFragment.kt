@@ -19,9 +19,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
+@Suppress("TooManyFunctions")
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
@@ -78,7 +78,9 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initResetPassword() {
-        preferences_account_reset_password.setOnClickListener { openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl())) }
+        preferences_account_reset_password.setOnClickListener {
+            openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl()))
+        }
     }
 
     private fun initToolbar() {
@@ -133,11 +135,13 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun showGenericEditDialog(title: String, defaultValue: String, updateFunc: (String) -> Unit) {
-        EditTextDialogFragment.newInstance(title, defaultValue, object : EditTextDialogFragment.EditTextDialogFragmentListener {
-            override fun onTextEdited(newValue: String) {
-                updateFunc(newValue)
+        EditTextDialogFragment.newInstance(title, defaultValue,
+            object : EditTextDialogFragment.EditTextDialogFragmentListener {
+                override fun onTextEdited(newValue: String) {
+                    updateFunc(newValue)
+                }
             }
-        }).show(requireActivity().supportFragmentManager, String.empty())
+        ).show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {
@@ -146,5 +150,3 @@ class SettingsAccountFragment : Fragment() {
         fun newInstance() = SettingsAccountFragment()
     }
 }
-
-

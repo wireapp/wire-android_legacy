@@ -17,5 +17,4 @@ class GetHandleUseCase(private val userRepository: UsersRepository) : Observable
             it.handle
         }
     }
-
 }

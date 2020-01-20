@@ -2,7 +2,6 @@ package com.waz.zclient.core.config
 
 import com.waz.zclient.BuildConfig
 
-
 object Config {
     fun developerSettingsEnabled() = BuildConfig.DEVELOPER_FEATURES_ENABLED
     fun appLockForced() = BuildConfig.FORCE_APP_LOCK

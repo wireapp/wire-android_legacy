@@ -10,7 +10,6 @@ import kotlinx.android.synthetic.main.activity_settings_new.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 
-
 class SettingsMainActivity : AppCompatActivity() {
 
     @ExperimentalCoroutinesApi

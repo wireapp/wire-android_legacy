@@ -11,7 +11,8 @@ data class AccessTokenResponse(
     @SerializedName("user")
     val userId: String,
     @SerializedName("expires_in")
-    val expiresIn: String) {
+    val expiresIn: String
+) {
 
     companion object {
         val EMPTY = AccessTokenResponse(String.empty(), String.empty(), String.empty(), String.empty())
