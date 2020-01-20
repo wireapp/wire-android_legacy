@@ -439,10 +439,8 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
 
   def shouldSendReadReceipts(convId: ConvId, readReceiptSettings: ReadReceiptSettings): Future[Boolean] =
     convs.isGroupConversation(convId).map {
-      case true =>
-        readReceiptSettings.convSetting.contains(1)
-      case false =>
-        readReceiptSettings.selfSettings && readReceiptSettings.convSetting.contains(1)
+      case true  => readReceiptSettings.convSetting.contains(1)
+      case false => readReceiptSettings.selfSettings
     }
 
   override def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]] = {

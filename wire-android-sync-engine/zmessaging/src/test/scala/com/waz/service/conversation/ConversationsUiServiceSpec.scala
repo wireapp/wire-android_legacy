@@ -19,7 +19,7 @@ package com.waz.service.conversation
 
 import com.waz.content._
 import com.waz.model._
-import com.waz.service.assets2.AssetService
+import com.waz.service.assets.AssetService
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.push.PushService
 import com.waz.service.{ErrorsService, NetworkModeService, PropertiesService}
@@ -83,16 +83,6 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
     scenario("1-to-1 conversation setting empty means RR are never sent") {
       val convId = ConvId("test")
       val rrSettings = ReadReceiptSettings(selfSettings = false, None)
-      val service = getService().asInstanceOf[ConversationsUiServiceImpl]
-
-      (convsService.isGroupConversation _).expects(convId).once().returning(Future.successful(false))
-
-      Await.result(service.shouldSendReadReceipts(convId, rrSettings), 1.second) shouldEqual false
-    }
-
-    scenario("1-to-1 conversation setting off means RR are not sent, despite user option") {
-      val convId = ConvId("test")
-      val rrSettings = ReadReceiptSettings(selfSettings = true, Some(0))
       val service = getService().asInstanceOf[ConversationsUiServiceImpl]
 
       (convsService.isGroupConversation _).expects(convId).once().returning(Future.successful(false))
