@@ -83,12 +83,10 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountAccentColor() {
-
         settingsAccountViewModel.accentColor.observe(viewLifecycleOwner) { colorId ->
             updateAccountAccentColor(colorId)
             preferences_account_accent.setOnClickListener { showColorPickerDialog(colorId) }
         }
-
     }
 
     private fun initResetPassword() {
@@ -161,7 +159,6 @@ class SettingsAccountFragment : Fragment() {
             }
         })
         accentColorDialogFragment.show(requireActivity().supportFragmentManager, String.empty())
-
     }
 
     companion object {
@@ -169,8 +166,6 @@ class SettingsAccountFragment : Fragment() {
 
         fun newInstance() = SettingsAccountFragment()
     }
-
-
 }
 
 

@@ -48,7 +48,6 @@ class SettingsAccountViewModel constructor(
         if (it.accentId == 0) DEFAULT_ACCENT_COLOR_ID else it.accentId
     }
 
-
     val error: LiveData<String>
         get() = mutableError
 
@@ -101,7 +100,6 @@ class SettingsAccountViewModel constructor(
         }
     }
     companion object{
-
         private const val DEFAULT_ACCENT_COLOR_ID = 1
     }
 }
