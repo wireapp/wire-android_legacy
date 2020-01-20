@@ -1,6 +1,6 @@
 package com.waz.zclient.user.di
 
-import com.waz.zclient.core.network.Network
+import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.user.data.UsersDataSource
 import com.waz.zclient.user.data.UsersRepository
@@ -18,7 +18,7 @@ val usersModule: Module = module {
     factory { UserMapper() }
     factory { UsersRemoteDataSource(get(), get()) }
     factory { UsersLocalDataSource(get(), get()) }
-    factory { Network().networkClient().create(UsersNetworkService::class.java) }
+    factory { get<NetworkClient>().create(UsersNetworkService::class.java) }
     factory { get<UserDatabase>().userDbService() }
     factory { get<UserDatabase>().userPreferencesDbService() }
 }
