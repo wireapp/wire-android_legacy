@@ -33,13 +33,11 @@ import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 /**
  * Handles permissions across fragments and activities.
- * Credit to Michael Spitsin for .
+ * Credit to Michael Spitsin for the inspiration behind this mechanism.
  * https://medium.com/@programmerr47/working-with-permissions-in-android-bbba823be785
  */
 
