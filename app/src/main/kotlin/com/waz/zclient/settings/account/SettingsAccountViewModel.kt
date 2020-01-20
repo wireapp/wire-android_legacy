@@ -6,7 +6,6 @@ import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
-import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) {
@@ -16,12 +15,11 @@ data class ProfileDetail(val value: String) {
 }
 
 @ExperimentalCoroutinesApi
-class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase,
-                                           private val changeNameUseCase: ChangeNameUseCase,
-                                           private val changePhoneUseCase: ChangePhoneUseCase,
-                                           private val changeEmailUseCase: ChangeEmailUseCase,
-                                           private val changeHandleUseCase: ChangeHandleUseCase)
-    : ViewModel() {
+class SettingsAccountViewModel(
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val changeNameUseCase: ChangeNameUseCase,
+    private val changePhoneUseCase: ChangePhoneUseCase,
+    private val changeEmailUseCase: ChangeEmailUseCase) : ViewModel() {
 
     private val mutableProfileData = MutableLiveData<User>()
     private val mutableError = MutableLiveData<String>()
@@ -81,5 +79,3 @@ class SettingsAccountViewModel constructor(private val getUserProfileUseCase: Ge
         }
     }
 }
-
-

@@ -5,9 +5,10 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.features.clients.ClientEntity
 
-class ClientsService(private val apiService: ApiService,
-                     private val clientsApi: ClientsApi) {
-
+class ClientsService(
+    private val apiService: ApiService,
+    private val clientsApi: ClientsApi
+) {
     fun allClients(): Either<Failure, List<ClientEntity>> =
         apiService.request(clientsApi.allClients(), emptyList())
 

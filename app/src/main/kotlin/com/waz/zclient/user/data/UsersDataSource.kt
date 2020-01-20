@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 
 @ExperimentalCoroutinesApi
-class UsersDataSource constructor(
+@Suppress("TooManyFunctions")
+class UsersDataSource(
     private val usersRemoteDataSource: UsersRemoteDataSource,
     private val usersLocalDataSource: UsersLocalDataSource,
-    private val userMapper: UserMapper) : UsersRepository {
+    private val userMapper: UserMapper
+) : UsersRepository {
 
     override suspend fun profileDetails(): Flow<User> = profileDetailsLocally()
         .catch {
@@ -36,7 +38,9 @@ class UsersDataSource constructor(
     private fun profileDetailsLocally(): Flow<User> = usersLocalDataSource.profileDetails()
         .map { userMapper.toUser(it) }
 
-    private suspend fun saveUser(): suspend (User) -> Unit = { usersLocalDataSource.insertUser(userMapper.toUserDao(it)) }
+    private suspend fun saveUser(): suspend (User) -> Unit = {
+        usersLocalDataSource.insertUser(userMapper.toUserDao(it))
+    }
 
     override suspend fun changeName(name: String) = changeNameRemotely(name)
         .onSuccess { runBlocking { changeNameLocally(name) } }
@@ -66,6 +70,6 @@ class UsersDataSource constructor(
 
     private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
 
-    override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> = usersRemoteDataSource.doesHandleExist(newHandle)
-
+    override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
+        usersRemoteDataSource.doesHandleExist(newHandle)
 }

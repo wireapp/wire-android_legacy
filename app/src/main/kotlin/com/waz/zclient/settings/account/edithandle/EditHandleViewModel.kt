@@ -8,6 +8,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.user.domain.usecase.handle.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import java.lang.UnknownError
 import java.util.*
 
 @ExperimentalCoroutinesApi
@@ -16,7 +17,8 @@ class EditHandleViewModel(
     private val checkHandleExistsUseCase: CheckHandleExistsUseCase,
     private val changeHandleUseCase: ChangeHandleUseCase,
     private val getHandleUseCase: GetHandleUseCase,
-    private val validateHandleUseCase: ValidateHandleUseCase) : ViewModel() {
+    private val validateHandleUseCase: ValidateHandleUseCase
+) : ViewModel() {
 
     private var mutableHandle = MutableLiveData<String>()
     private var mutableError = MutableLiveData<ValidateHandleError>()

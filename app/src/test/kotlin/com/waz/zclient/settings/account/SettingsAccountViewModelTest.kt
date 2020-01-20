@@ -39,9 +39,6 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeEmailUseCase: ChangeEmailUseCase
 
     @Mock
-    private lateinit var changeHandleUseCase: ChangeHandleUseCase
-
-    @Mock
     private lateinit var user: User
 
     private lateinit var userFlow: Flow<User>
@@ -52,8 +49,7 @@ class SettingsAccountViewModelTest : UnitTest() {
             getUserProfileUseCase,
             changeNameUseCase,
             changePhoneUseCase,
-            changeEmailUseCase,
-            changeHandleUseCase)
+            changeEmailUseCase)
         userFlow = flow { user }
     }
 

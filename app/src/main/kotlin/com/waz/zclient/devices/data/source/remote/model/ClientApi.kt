@@ -19,17 +19,19 @@ data class ClientApi(
     val type: String,
 
     @SerializedName("class")
-    val _class: String,
+    val clazz: String,
 
     @SerializedName("model")
     val model: String,
 
     @SerializedName("location")
-    val location: ClientLocationApi)
+    val location: ClientLocationApi
+)
 
 data class ClientLocationApi(
     @SerializedName("lon")
     val long: Double,
 
     @SerializedName("lat")
-    val lat: Double)
+    val lat: Double
+)

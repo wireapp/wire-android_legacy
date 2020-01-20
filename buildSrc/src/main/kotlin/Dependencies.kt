@@ -10,6 +10,9 @@ object Versions {
     val AVS = System.getenv("AVS_VERSION") ?: "5.3.191@aar"
     val WIRE_AUDIO = System.getenv("AUDIO_VERSION") ?: "1.209.0@aar"
 
+    //plugins
+    const val DETEKT = "1.2.2"
+
     //build
     const val COROUTINES = "1.3.2"
     const val WORK_MANAGER = "2.0.1"

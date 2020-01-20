@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 import timber.log.Timber
 
+@Suppress("ReturnCount", "TooGenericExceptionCaught")
 suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<NetworkFailure, T> {
     try {
         val response = responseCall()
@@ -24,6 +25,7 @@ suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<Netw
     }
 }
 
+@Suppress("TooGenericExceptionCaught")
 suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseFailure, R> =
     try {
         Either.Right(localRequest())
@@ -36,10 +38,11 @@ suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseF
         Either.Left(DatabaseError)
     }
 
-
-suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
-                           fallbackRequest: suspend () -> Either<Failure, R>,
-                           saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
+suspend fun <R> accessData(
+    mainRequest: suspend () -> Either<Failure, R>,
+    fallbackRequest: suspend () -> Either<Failure, R>,
+    saveToDatabase: suspend (R) -> Unit
+): Either<Failure, R> =
 
     with(mainRequest()) {
         onFailure {
@@ -50,8 +53,11 @@ suspend fun <R> accessData(mainRequest: suspend () -> Either<Failure, R>,
         }
     }
 
-private fun <R> performFallback(fallbackRequest: suspend () -> Either<Failure, R>,
-                                saveToDatabase: suspend (R) -> Unit): Either<Failure, R> =
+private fun <R> performFallback(
+    fallbackRequest: suspend () -> Either<Failure, R>,
+    saveToDatabase: suspend (R) -> Unit
+): Either<Failure, R> =
+
     runBlocking {
         with(fallbackRequest()) {
             onSuccess { runBlocking { saveToDatabase(it) } }

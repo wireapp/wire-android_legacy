@@ -32,7 +32,9 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.settings_title)
-        settings_recycler_view.adapter = SettingsMainListAdapter(SettingsMainListFactory.generateList(requireContext()), this)
+        settings_recycler_view.adapter = SettingsMainListAdapter(
+            SettingsMainListFactory.generateList(requireContext()), this
+        )
 //        TODO: code for temporarily testing the network/authentication layer.
 //        TODO: DELETE WHEN NETWORK LAYER IS FINALIZED
 //        Thread(Runnable {
@@ -67,7 +69,4 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
         private const val DEVELOPER_SETTINGS = 6
         private const val AVS_SETTINGS = 7
     }
-
 }
-
-
