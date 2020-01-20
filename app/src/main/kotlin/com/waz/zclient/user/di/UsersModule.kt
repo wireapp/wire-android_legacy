@@ -1,6 +1,6 @@
 package com.waz.zclient.user.di
 
-import com.waz.zclient.core.network.Network
+import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.user.data.UsersDataSource
 import com.waz.zclient.user.data.UsersRepository
@@ -16,9 +16,9 @@ import org.koin.dsl.module
 val usersModule: Module = module {
     single { UsersDataSource(get(), get(), get()) as UsersRepository }
     factory { UserMapper() }
-    factory { UsersRemoteDataSource(get()) }
+    factory { UsersRemoteDataSource(get(), get()) }
     factory { UsersLocalDataSource(get(), get()) }
-    factory { Network().networkClient().create(UsersNetworkService::class.java) }
+    factory { get<NetworkClient>().create(UsersNetworkService::class.java) }
     factory { get<UserDatabase>().userDbService() }
     factory { get<UserDatabase>().userPreferencesDbService() }
 }

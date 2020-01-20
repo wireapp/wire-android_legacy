@@ -23,6 +23,8 @@ data class HttpError(val errorCode: Int, val errorMessage: String) : NetworkFail
 
 object DatabaseError : DatabaseFailure()
 
+object EmptyResponseBody : Failure()
+
 //TODO: Improve to a more sufficient error propagation for Flow "data flows"
 data class GenericUseCaseError(val throwable: Throwable) : Failure()
 

@@ -7,7 +7,7 @@ import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.ClientMapper
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
-import com.waz.zclient.devices.data.source.remote.model.ClientApi
+import com.waz.zclient.devices.data.source.remote.model.ClientResponse
 import com.waz.zclient.eq
 import com.waz.zclient.storage.db.clients.model.ClientDao
 import kotlinx.coroutines.runBlocking
@@ -127,7 +127,7 @@ class ClientsRepositoryTest {
         }
     }
 
-    private fun generateMockApi(): ClientApi = mock(ClientApi::class.java)
+    private fun generateMockApi(): ClientResponse = mock(ClientResponse::class.java)
 
     private fun generateMockDao(): ClientDao = mock(ClientDao::class.java)
 
