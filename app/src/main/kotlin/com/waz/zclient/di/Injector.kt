@@ -8,12 +8,14 @@ import com.waz.zclient.settings.account.di.settingsAccountModule
 import com.waz.zclient.settings.devices.di.settingsDeviceModule
 import com.waz.zclient.storage.di.storageModule
 import com.waz.zclient.user.di.usersModule
+import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
 
 object Injector {
 
+    @InternalCoroutinesApi
     @JvmStatic
     fun start(context: Context) {
         startKoin {
