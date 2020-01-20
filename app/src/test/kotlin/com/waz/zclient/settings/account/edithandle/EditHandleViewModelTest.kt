@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldNotBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -40,6 +41,15 @@ class EditHandleViewModelTest : UnitTest() {
     @Before
     fun setup() {
         editHandleViewModel = EditHandleViewModel(checkHandleExistsUseCase, changeHandleUseCase, getHandleUseCase, validateHandleUseCase)
+    }
+
+    @Test
+    fun `given afterHandleTextChanged is called,`() {
+        editHandleViewModel.afterHandleTextChanged(TEST_HANDLE.toUpperCase())
+
+        editHandleViewModel.handle.observeOnce {
+            it shouldNotBe TEST_HANDLE.toUpperCase()
+        }
     }
 
     @Test
@@ -328,7 +338,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     companion object {
-        private const val NON_DUPLICATED_TEST_HANDLE = "testHandle1"
-        private const val TEST_HANDLE = "testHandle"
+        private const val NON_DUPLICATED_TEST_HANDLE = "testhandle1"
+        private const val TEST_HANDLE = "testhandle"
     }
 }

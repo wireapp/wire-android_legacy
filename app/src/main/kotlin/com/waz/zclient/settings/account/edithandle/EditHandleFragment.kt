@@ -46,6 +46,10 @@ class EditHandleFragment : DialogFragment() {
 
     private fun initHandleInput() {
         updateHandleText(suggestedHandle)
+        editHandleViewModel.handle.observe(viewLifecycleOwner) {
+            updateHandleText(it)
+        }
+
         edit_handle_edit_text.doAfterTextChanged {
             editHandleViewModel.afterHandleTextChanged(it.toString())
         }

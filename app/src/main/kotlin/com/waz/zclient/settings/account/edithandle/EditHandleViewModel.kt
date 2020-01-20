@@ -8,6 +8,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.user.domain.usecase.handle.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import java.util.*
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
@@ -17,22 +18,26 @@ class EditHandleViewModel(
     private val getHandleUseCase: GetHandleUseCase,
     private val validateHandleUseCase: ValidateHandleUseCase) : ViewModel() {
 
+    private var mutableHandle = MutableLiveData<String>()
     private var mutableError = MutableLiveData<ValidateHandleError>()
     private var mutableOkEnabled = MutableLiveData<Boolean>()
     private var mutableDismiss = MutableLiveData<Unit>()
     private var mutableSuccess = MutableLiveData<ValidateHandleSuccess>()
 
+    val handle: LiveData<String> = mutableHandle
     val success: LiveData<ValidateHandleSuccess> = mutableSuccess
-
     val error: LiveData<ValidateHandleError> = mutableError
-
     val okEnabled: LiveData<Boolean> = mutableOkEnabled
-
     val dismiss: LiveData<Unit> = mutableDismiss
 
     fun afterHandleTextChanged(newHandle: String) {
-        validateHandleUseCase(viewModelScope, ValidateHandleParams(newHandle)) {
-            it.fold(::handleFailure, ::afterTextChangedValidationSuccess)
+        val lowercaseHandle = newHandle.toLowerCase(Locale.getDefault())
+        if (!newHandle.equals(lowercaseHandle, ignoreCase = false)) {
+            mutableHandle.value = lowercaseHandle
+        } else {
+            validateHandleUseCase(viewModelScope, ValidateHandleParams(newHandle)) {
+                it.fold(::handleFailure, ::afterTextChangedValidationSuccess)
+            }
         }
     }
 
