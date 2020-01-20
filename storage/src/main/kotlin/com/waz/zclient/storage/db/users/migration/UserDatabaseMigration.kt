@@ -4,28 +4,50 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.BuildConfig
 
-class UserDatabaseMigration : Migration(125, 126) {
+class UserDatabaseMigration : Migration(START_VERSION, END_VERSION) {
     override fun migrate(database: SupportSQLiteDatabase) {
         if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
-            database.execSQL("CREATE TABLE '$NEW_CLIENT_TABLE_NAME' ('$CLIENT_ID_KEY' TEXT NOT NULL, '$NEW_CLIENT_TIME_KEY' TEXT NOT NULL,  '$CLIENT_LABEL_KEY' TEXT NOT NULL, '$NEW_CLIENT_TYPE_KEY' TEXT NOT NULL, '$CLIENT_CLASS_KEY' TEXT NOT NULL ,'$CLIENT_MODEL_KEY' TEXT NOT NULL,  '$CLIENT_LOCATION_LAT_KEY' REAL NOT NULL,  '$CLIENT_LOCATION_LONG_KEY' REAL NOT NULL, '$NEW_CLIENT_LOCATION_NAME_KEY' TEXT,  '$CLIENT_VERIFICATION_KEY' TEXT NOT NULL,  '$CLIENT_ENC_KEY' TEXT NOT NULL,  '$CLIENT_MAC_KEY' TEXT NOT NULL,  PRIMARY KEY('$CLIENT_ID_KEY'))")
+            database.execSQL("""CREATE TABLE '$NEW_CLIENT_TABLE_NAME' (
+                |'$CLIENT_ID_KEY' TEXT NOT NULL, 
+                |'$NEW_CLIENT_TIME_KEY' TEXT NOT NULL,  
+                |'$CLIENT_LABEL_KEY' TEXT NOT NULL, 
+                |'$NEW_CLIENT_TYPE_KEY' TEXT NOT NULL, 
+                |'$CLIENT_CLASS_KEY' TEXT NOT NULL ,
+                |'$CLIENT_MODEL_KEY' TEXT NOT NULL,  
+                |'$CLIENT_LOCATION_LAT_KEY' REAL NOT NULL,  
+                |'$CLIENT_LOCATION_LONG_KEY' REAL NOT NULL, 
+                |'$NEW_CLIENT_LOCATION_NAME_KEY' TEXT,  
+                |'$CLIENT_VERIFICATION_KEY' TEXT NOT NULL,  
+                |'$CLIENT_ENC_KEY' TEXT NOT NULL,  
+                |'$CLIENT_MAC_KEY' TEXT NOT NULL,  
+                |PRIMARY KEY('$CLIENT_ID_KEY')
+                |)""".trimMargin())
 
             // "KeyValues" to "user_preference" Migration
-            database.execSQL("CREATE TABLE IF NOT EXISTS `$USER_PREFERENCE_TABLE_NAME` (`key` TEXT PRIMARY KEY NOT NULL ,`value` TEXT)")
+            database.execSQL("""CREATE TABLE IF NOT EXISTS `$USER_PREFERENCE_TABLE_NAME` (
+                |`key` TEXT PRIMARY KEY NOT NULL ,
+                |`value` TEXT)""".trimMargin())
             database.execSQL("INSERT INTO $USER_PREFERENCE_TABLE_NAME SELECT * FROM $KEY_VALUES_TABLE_NAME")
 //        database.execSQL("DROP TABLE $KEY_VALUES_TABLE_NAME")
 
             // "Users" to "user" Migration
-            database.execSQL("CREATE TABLE IF NOT EXISTS `$USER_TABLE_NAME` (`_id` TEXT PRIMARY KEY NOT NULL, `teamId` TEXT, `name` TEXT NOT NULL ," +
-                " `email` TEXT , `phone` TEXT , `tracking_id` TEXT , `picture` TEXT , `accent` INTEGER , `skey` TEXT , `connection` TEXT , " +
-                "`conn_timestamp` INTEGER , `conn_msg` TEXT , `conversation` TEXT , `relation` TEXT , `timestamp` INTEGER , `display_name` TEXT ," +
-                " `verified` TEXT , `deleted` INTEGER NOT NULL , `availability` INTEGER , `handle` TEXT , `provider_id` TEXT , `integration_id` TEXT ," +
-                " `expires_at` INTEGER , `managed_by` TEXT , `self_permissions` INTEGER , `copy_permissions` INTEGER , `created_by` TEXT )")
+            database.execSQL("""CREATE TABLE IF NOT EXISTS `$USER_TABLE_NAME` (
+                |`_id` TEXT PRIMARY KEY NOT NULL, 
+                |`teamId` TEXT, `name` TEXT NOT NULL , `email` TEXT , `phone` TEXT ,`tracking_id` TEXT , 
+                |`picture` TEXT , `accent` INTEGER , `skey` TEXT , `connection` TEXT , `conn_timestamp` INTEGER , 
+                |`conn_msg` TEXT , `conversation` TEXT , `relation` TEXT , `timestamp` INTEGER , `display_name` TEXT, 
+                |`verified` TEXT , `deleted` INTEGER NOT NULL , `availability` INTEGER , `handle` TEXT , 
+                |`provider_id` TEXT , `integration_id` TEXT , `expires_at` INTEGER , `managed_by` TEXT , 
+                |`self_permissions` INTEGER , `copy_permissions` INTEGER , `created_by` TEXT 
+                |)""".trimMargin())
             database.execSQL("INSERT INTO $USER_TABLE_NAME SELECT * FROM $USERS_TABLE_NAME")
 //        database.execSQL("DROP TABLE $USERS_TABLE_NAME")
         }
     }
 
     companion object {
+        private const val START_VERSION = 125
+        private const val END_VERSION = 126
         private const val USER_PREFERENCE_TABLE_NAME = "user_preference"
         private const val KEY_VALUES_TABLE_NAME = "KeyValues"
 
@@ -49,6 +71,5 @@ class UserDatabaseMigration : Migration(125, 126) {
         private const val NEW_CLIENT_LOCATION_NAME_KEY = "locationName"
         private const val NEW_CLIENT_TIME_KEY = "time"
         private const val NEW_CLIENT_TYPE_KEY = "type"
-
     }
 }
