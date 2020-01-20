@@ -17,3 +17,7 @@ subprojects {
         detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}"
     }
 }
+
+task detektAll()
+
+subprojects { project -> detektAll.dependsOn("${project.path}:detekt") }
