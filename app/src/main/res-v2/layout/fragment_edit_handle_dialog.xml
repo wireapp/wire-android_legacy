@@ -66,7 +66,7 @@
                         android:layout_height="wrap_content"
                         android:drawableStart="@drawable/empty_at"
                         android:inputType="textNoSuggestions|text"
-                        android:maxLength="22"
+                        android:maxLength="@integer/username_limit"
                         android:maxLines="1"
                         android:paddingBottom="@dimen/prefs__username_change__edit_text_bottom_padding"
                         android:visibility="visible" />

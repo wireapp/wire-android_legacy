@@ -81,7 +81,6 @@ class EditHandleFragment : DialogFragment() {
         edit_handle_edit_text_container.error = when (error) {
             is HandleAlreadyExists -> getString(R.string.edit_account_handle_error_already_taken)
             is HandleTooShort -> getString(R.string.edit_account_handle_error_too_short)
-            is HandleTooLong -> getString(R.string.edit_account_handle_error_too_long)
             is HandleInvalid -> getString(R.string.edit_account_handle_error_invalid_characters)
             is UnknownError -> getString(R.string.edit_account_handle_error_unknown_error)
             else -> String.empty()
