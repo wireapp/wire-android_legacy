@@ -12,6 +12,8 @@ import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.permissions.PermissionManager
+import com.waz.zclient.core.permissions.extension.readPhoneState
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
@@ -25,6 +27,10 @@ import org.koin.android.viewmodel.ext.android.viewModel
 class SettingsAccountFragment : Fragment() {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
+
+    private val permissionManager: PermissionManager by lazy {
+        PermissionManager.newInstance(this)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_settings_account, container, false)
@@ -40,6 +46,11 @@ class SettingsAccountFragment : Fragment() {
         initAccountPhoneNumber()
         initResetPassword()
         loadProfile()
+        permissionManager.readPhoneState {
+            it.fold(
+                { Toast.makeText(requireContext(), "Permission denied", Toast.LENGTH_LONG).show() },
+                { Toast.makeText(requireContext(), "Permission Granted", Toast.LENGTH_LONG).show() })
+        }
     }
 
     //TODO Will need changing to a phone dialog
@@ -142,6 +153,11 @@ class SettingsAccountFragment : Fragment() {
                 }
             }
         ).show(requireActivity().supportFragmentManager, String.empty())
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     companion object {
