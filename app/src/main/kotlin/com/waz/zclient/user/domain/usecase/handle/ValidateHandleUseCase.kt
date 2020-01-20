@@ -11,7 +11,6 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
             Either.Left(HandleInvalid)
         } else {
             when {
-                params.newHandle.isEmpty() -> Either.Left(HandleEmptyError)
                 isHandleTooLong(params.newHandle) -> Either.Left(HandleTooLong)
                 isHandleTooShort(params.newHandle) -> Either.Left(HandleTooShort)
                 else -> Either.Right(params.newHandle)
@@ -25,7 +24,7 @@ class ValidateHandleUseCase : UseCase<String, ValidateHandleParams>() {
         handle.length > HANDLE_MAX_LENGTH
 
     private fun isHandleTooShort(handle: String) =
-        handle.length < HANDLE_MIN_LENGTH
+        handle.length < HANDLE_MIN_LENGTH || handle.isEmpty()
 
     companion object {
         private const val HANDLE_MAX_LENGTH = 21
