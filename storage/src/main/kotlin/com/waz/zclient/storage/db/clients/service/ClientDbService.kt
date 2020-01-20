@@ -1,6 +1,11 @@
 package com.waz.zclient.storage.db.clients.service
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import com.waz.zclient.storage.db.clients.model.ClientDao
 
 @Dao

@@ -11,7 +11,7 @@ class ClientMapper {
         Client(
             time = time,
             label = label,
-            clazz = _class,
+            clazz = clazz,
             type = type,
             id = id,
             model = model,
@@ -39,7 +39,7 @@ class ClientMapper {
             time = time,
             label = label,
             type = type,
-            _class = clazz,
+            clazz = clazz,
             model = model,
             lat = location.lat,
             lon = location.long,
