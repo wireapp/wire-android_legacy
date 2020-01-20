@@ -24,7 +24,5 @@ class UsersLocalDataSource constructor(private val userService: UserDbService,
     suspend fun changePhone(value: String) = requestDatabase { userService.updatePhone(userId, value) }
 
     suspend fun changeAccentColor(value: Int) = requestDatabase { userService.updateAccentColor(userId, value) }
-
-
-
+    
 }

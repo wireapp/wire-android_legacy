@@ -152,7 +152,6 @@ class SettingsAccountFragment : Fragment() {
         }).show(requireActivity().supportFragmentManager, String.empty())
     }
 
-
     private fun showColorPickerDialog(colorId: Int) {
        accentColorDialogFragment = AccentColorDialogFragment.newInstance(colorId, object : OnAccentColorChangedListener {
             override fun onAccentColorChanged(colorId: Int) {
