@@ -20,7 +20,7 @@ class AccentColorDialogFragment : DialogFragment() {
 
         val view = requireActivity().layoutInflater.inflate(R.layout.dialog_fragment_accent_color, null)
 
-        val initialColorId = arguments?.getInt(DEFAULT_ACCENT_COLOR_BUNDLE_KEY, 1)
+        val initialColorId = arguments?.getInt(DEFAULT_ACCENT_COLOR_BUNDLE_KEY, DEFAULT_ACCENT_COLOR_ID)
 
         val colors = resources.getIntArray(R.array.settings_accent_colors_ids).zip(resources.getIntArray(R.array.settings_accent_colors))
             .map { AccentColor(it.first, it.second) }
@@ -35,6 +35,7 @@ class AccentColorDialogFragment : DialogFragment() {
 
     companion object {
         private const val DEFAULT_ACCENT_COLOR_BUNDLE_KEY = "defaultAccentColorBundleKey"
+        private const val DEFAULT_ACCENT_COLOR_ID = 1
 
         fun newInstance(defaultColorId: Int,onAccentColorChangedListener: OnAccentColorChangedListener): AccentColorDialogFragment = AccentColorDialogFragment()
             .withArgs { putInt(DEFAULT_ACCENT_COLOR_BUNDLE_KEY, defaultColorId) }

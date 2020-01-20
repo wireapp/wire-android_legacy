@@ -99,7 +99,8 @@ class SettingsAccountViewModel constructor(
             mutableError.postValue("Misc error scenario")
         }
     }
-    companion object{
+
+    companion object {
         private const val DEFAULT_ACCENT_COLOR_ID = 1
     }
 }

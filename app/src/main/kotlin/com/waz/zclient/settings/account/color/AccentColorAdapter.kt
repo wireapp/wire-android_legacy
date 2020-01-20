@@ -20,13 +20,13 @@ class AccentColorAdapter(private val colors: List<AccentColor>, private val defa
     }
 
     override fun onBindViewHolder(holder: AccentColorViewHolder, position: Int) {
-        holder.bind(colors[position],defaultColorId)
+        holder.bind(colors[position], defaultColorId)
     }
 
     override fun getItemCount(): Int = colors.size
 
     inner class AccentColorViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(color: AccentColor,defaultColorId: Int) {
+        fun bind(color: AccentColor, defaultColorId: Int) {
             with(itemView) {
                 setBackgroundColor(color.colorValue)
                 when (color.id) {
