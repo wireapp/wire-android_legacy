@@ -5,7 +5,7 @@ import com.waz.zclient.core.exception.FeatureFailure
 object HandleTooLong : ValidateHandleError()
 object HandleTooShort : ValidateHandleError()
 object HandleInvalid : ValidateHandleError()
-object HandleALreadyExists : ValidateHandleError()
+object HandleAlreadyExists : ValidateHandleError()
 object HandleEmptyError : ValidateHandleError()
 object HandleSameAsCurrent : ValidateHandleError()
 object HandleIsAvailable : ValidateHandleSuccess()

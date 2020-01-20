@@ -101,7 +101,7 @@ class EditHandleViewModelTest : UnitTest() {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
-            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleALreadyExists))
+            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleAlreadyExists))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
@@ -109,7 +109,7 @@ class EditHandleViewModelTest : UnitTest() {
                 it shouldBe false
             }
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleALreadyExists
+                it shouldBe HandleAlreadyExists
             }
         }
 

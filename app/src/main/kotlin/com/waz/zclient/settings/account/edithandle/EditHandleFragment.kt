@@ -74,13 +74,12 @@ class EditHandleFragment : DialogFragment() {
 
     private fun updateSuccessMessage() {
         edit_handle_edit_text_container.setErrorTextAppearance(R.style.InputHandle_Green)
-        edit_handle_edit_text_container.error = getString(R.string.edit_account_handle_is_available)
     }
 
     private fun updateErrorMessage(error: ValidateHandleError) {
         edit_handle_edit_text_container.setErrorTextAppearance(R.style.InputHandle_Red)
         edit_handle_edit_text_container.error = when (error) {
-            is HandleALreadyExists -> getString(R.string.edit_account_handle_error_already_taken)
+            is HandleAlreadyExists -> getString(R.string.edit_account_handle_error_already_taken)
             is HandleTooShort -> getString(R.string.edit_account_handle_error_too_short)
             is HandleTooLong -> getString(R.string.edit_account_handle_error_too_long)
             is HandleInvalid -> getString(R.string.edit_account_handle_error_invalid_characters)

@@ -91,6 +91,17 @@
                     android:layout_alignBottom="@id/act__at"
                     android:layout_marginEnd="@dimen/prefs__username_change__loading__margin_end" />
 
+                <com.waz.zclient.ui.text.TypefaceTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginStart="@dimen/wire__padding__4"
+                    android:layout_marginEnd="@dimen/wire__padding__4"
+                    android:text="@string/pref__account_action__dialog__change_username__rules"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="@dimen/wire__text_size__regular"
+                    app:w_font="@string/wire__typeface__regular" />
+
             </RelativeLayout>
 
         </LinearLayout>
