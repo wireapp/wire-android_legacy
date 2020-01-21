@@ -7,7 +7,8 @@ import com.waz.zclient.storage.extension.string
 
 class GlobalPreferences(context: Context) {
 
-    private val sharedPreferences: SharedPreferences = context.getSharedPreferences("com.wire.preferences", Context.MODE_PRIVATE)
+    private val sharedPreferences: SharedPreferences =
+        context.getSharedPreferences("com.wire.preferences", Context.MODE_PRIVATE)
 
     var activeUserId: String
         get() = sharedPreferences.string(ACTIVE_ACCOUNT_GLOBAL_PREF_KEY) ?: ""
@@ -16,5 +17,4 @@ class GlobalPreferences(context: Context) {
     companion object {
         private const val ACTIVE_ACCOUNT_GLOBAL_PREF_KEY = "active_account"
     }
-
 }

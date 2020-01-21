@@ -20,7 +20,7 @@ data class ClientDao(
     val type: String,
 
     @ColumnInfo(name = "class")
-    val _class: String,
+    val clazz: String,
 
     @ColumnInfo(name = "model")
     val model: String,
