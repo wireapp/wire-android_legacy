@@ -35,7 +35,7 @@ import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
-import com.waz.zclient.utilities.build.SdkVersionChecker
+import com.waz.zclient.utilities.device.SdkVersionChecker
 import kotlin.math.abs
 
 /**

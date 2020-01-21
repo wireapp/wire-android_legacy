@@ -9,7 +9,7 @@ import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.permissions.extension.readPhoneState
 import com.waz.zclient.core.permissions.result.PermissionDenied
 import com.waz.zclient.core.permissions.result.PermissionGranted
-import com.waz.zclient.utilities.build.SdkVersionChecker
+import com.waz.zclient.utilities.device.SdkVersionChecker
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
