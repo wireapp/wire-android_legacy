@@ -16,9 +16,9 @@ class AccessTokenConverter {
         try {
             val json = JSONObject(tokenString)
             AccessTokenEntity(
-                token = json.getString("token"),
-                tokenType = json.getString("type"),
-                expiresInMillis = json.getLong("expires")
+                token = json.getString(KEY_TOKEN),
+                tokenType = json.getString(KEY_TOKEN_TYPE),
+                expiresInMillis = json.getLong(KEY_EXPIRY)
             )
         } catch (e: JSONException) {
             null
@@ -28,9 +28,15 @@ class AccessTokenConverter {
     fun accessTokenToString(entity: AccessTokenEntity): String =
         """
             {
-                "token": "${entity.token}",
-                "type": "${entity.tokenType}",
-                "expires": ${entity.expiresInMillis}
+                "$KEY_TOKEN": "${entity.token}",
+                "$KEY_TOKEN_TYPE": "${entity.tokenType}",
+                "$KEY_EXPIRY": ${entity.expiresInMillis}
             }
         """.trimIndent()
+
+    companion object {
+        private const val KEY_TOKEN = "token"
+        private const val KEY_TOKEN_TYPE = "type"
+        private const val KEY_EXPIRY = "expires"
+    }
 }
