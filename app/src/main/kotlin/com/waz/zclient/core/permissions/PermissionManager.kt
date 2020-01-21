@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.core.permissions
 
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -42,12 +43,12 @@ import kotlin.math.abs
  * Credit to Michael Spitsin for the inspiration behind this mechanism.
  * https://medium.com/@programmerr47/working-with-permissions-in-android-bbba823be785
  */
-
 typealias PermissionRequester = (Array<String>, Int) -> Unit
 
 typealias PermissionChecker = (String) -> Boolean
 
-class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionChecker()) : FragmentLifecycleObserver, ActivityLifecycleObserver {
+class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionChecker()) :
+    FragmentLifecycleObserver, ActivityLifecycleObserver {
 
     private val requestedPermissionHandlers = mutableMapOf<Int, PermissionHandler>()
     private val pendingPermissions = mutableMapOf<Int, RequestedPermissions>()
@@ -58,16 +59,19 @@ class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionCh
     override fun from(owner: Fragment) {
         if (sdkChecker.isAndroid6orAbove()) {
             requester = owner::requestPermissions
-            checker = { ActivityCompat.checkSelfPermission(owner.requireContext(), it) == PackageManager.PERMISSION_GRANTED }
+            checker = { isGranted(it, owner.requireContext()) }
         }
     }
 
     override fun from(owner: AppCompatActivity) {
         if (sdkChecker.isAndroid6orAbove()) {
             requester = owner::requestPermissions
-            checker = { ActivityCompat.checkSelfPermission(owner, it) == PackageManager.PERMISSION_GRANTED }
+            checker = { isGranted(it, owner) }
         }
     }
+
+    private fun isGranted(permission: String, context: Context): Boolean =
+        ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     fun setup() {
@@ -76,18 +80,33 @@ class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionCh
     }
 
     //TODO still need to figure out how to unit test this
-    fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         if (requestedPermissionHandlers.containsKey(requestCode)) {
-            pendingPermissions[requestCode] = RequestedPermissions(requestedPermissionHandlers.remove(requestCode)!!, permissions, grantResults)
+            pendingPermissions[requestCode] = generateResult(requestCode, permissions, grantResults)
         }
     }
+
+    private fun generateResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) =
+        RequestedPermissions(requestedPermissionHandlers.remove(requestCode)!!, permissions, grantResults)
 
     @RequiresApi(Build.VERSION_CODES.M)
     fun requestPermissions(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
         request(permissions, StrictPermissionHandler(result), result)
     }
 
-    private fun request(permissions: List<String>, handler: PermissionHandler, result: (Either<Failure, PermissionSuccess>) -> Unit) {
+    private fun request(
+        permissions: List<String>,
+        handler: PermissionHandler,
+        result: (Either<Failure, PermissionSuccess>) -> Unit
+    ) {
         val deniedPermissions = ArrayList(permissions.filterNot { checker(it) })
         val permissionArray = deniedPermissions.toTypedArray()
         if (permissionArray.isEmpty()) {
@@ -118,7 +137,8 @@ class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionCh
 private class RequestedPermissions internal constructor(
     private val permissionHandler: PermissionHandler,
     private val resultPermissions: Array<out String>,
-    private val grantResults: IntArray) {
+    private val grantResults: IntArray
+) {
 
     fun onPermissionResult() = permissionHandler.onPermissionResult(resultPermissions, grantResults)
 }

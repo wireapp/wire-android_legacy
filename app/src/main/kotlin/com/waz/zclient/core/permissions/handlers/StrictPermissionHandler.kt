@@ -28,12 +28,23 @@ import com.waz.zclient.core.permissions.result.PermissionSuccess
  * This is the STRICT permission handler because you won't be able to continue down the "happy" path
  * if you deny the permission. More handlers can be added for more lenient paths you'd want the permissions to take.
  */
-class StrictPermissionHandler(private val onResult: (Either<Failure, PermissionSuccess>) -> Unit)
-    : PermissionHandler {
+class StrictPermissionHandler(private val onResult: (Either<Failure, PermissionSuccess>) -> Unit) :
+    PermissionHandler {
 
     override fun onPermissionResult(permissions: Array<out String>, grantResults: IntArray) {
+        onResult(calculateResult(permissions, grantResults))
+    }
+
+    private fun calculateResult(
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ): Either<Failure, PermissionSuccess> {
         val denied = deniedPermissions(grantResults)
-        onResult(if (denied.isEmpty()) Either.Right(PermissionGranted) else Either.Left(PermissionDenied(denied.map { permissions[it] })))
+        return if (denied.isEmpty()) {
+            Either.Right(PermissionGranted)
+        } else {
+            Either.Left(PermissionDenied(denied.map { permissions[it] }))
+        }
     }
 
     private fun deniedPermissions(grantResults: IntArray) =
