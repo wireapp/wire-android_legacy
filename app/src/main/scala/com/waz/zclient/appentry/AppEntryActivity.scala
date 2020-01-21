@@ -35,6 +35,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.auth.WelcomeFragment
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -127,6 +128,10 @@ class AppEntryActivity extends BaseActivity {
   override def onCreate(savedInstanceState: Bundle): Unit = {
     if (getActionBar != null) getActionBar.hide()
     super.onCreate(savedInstanceState)
+
+    if (getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) == WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT)
+      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
+
     ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     setContentView(R.layout.activity_signup)
     enableProgress(false)
@@ -279,8 +284,7 @@ class AppEntryActivity extends BaseActivity {
   def enableProgress(enabled: Boolean): Unit = {
     if (enabled)
       progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
-    else
-      progressView.hide()
+    else if(progressView != null)  progressView.hide()
   }
 
   def abortAddAccount(): Unit =
