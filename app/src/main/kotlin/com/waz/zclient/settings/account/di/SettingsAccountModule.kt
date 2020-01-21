@@ -2,6 +2,7 @@ package com.waz.zclient.settings.account.di
 
 import com.waz.zclient.settings.account.SettingsAccountViewModel
 import com.waz.zclient.settings.account.edithandle.EditHandleViewModel
+import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneViewModel
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
@@ -21,6 +22,7 @@ import org.koin.dsl.module
 val settingsAccountModule: Module = module {
     viewModel { SettingsAccountViewModel(get(), get(), get(), get(), get()) }
     viewModel { EditHandleViewModel(get(), get(), get(), get()) }
+    viewModel { EditPhoneViewModel() }
     factory { CheckHandleExistsUseCase(get()) }
     factory { GetHandleUseCase(get()) }
     factory { ValidateHandleUseCase() }
