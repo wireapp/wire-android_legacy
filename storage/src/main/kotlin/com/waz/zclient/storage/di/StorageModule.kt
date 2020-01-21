@@ -26,5 +26,4 @@ val storageModule: Module = module {
         ).addMigrations(ACTIVE_ACCOUNTS_MIGRATION).build()
     }
     single { UserPreferences(androidContext(), get()) }
-    single {}
 }
