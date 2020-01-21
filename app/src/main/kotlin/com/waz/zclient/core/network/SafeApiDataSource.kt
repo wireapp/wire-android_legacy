@@ -4,30 +4,12 @@ import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.DatabaseFailure
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
-import com.waz.zclient.core.exception.NetworkFailure
 import com.waz.zclient.core.exception.NetworkServiceError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking
-import retrofit2.Response
 import timber.log.Timber
-
-@Suppress("ReturnCount", "TooGenericExceptionCaught")
-suspend fun <T> requestApi(responseCall: suspend () -> Response<T>): Either<NetworkFailure, T> {
-    try {
-        val response = responseCall()
-        if (response.isSuccessful) {
-            val body = response.body()
-            body?.let {
-                return Either.Right(body)
-            }
-        }
-        return Either.Left(HttpError(response.code(), response.message()))
-    } catch (e: Exception) {
-        return Either.Left(NetworkServiceError)
-    }
-}
 
 @Suppress("TooGenericExceptionCaught")
 suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseFailure, R> =

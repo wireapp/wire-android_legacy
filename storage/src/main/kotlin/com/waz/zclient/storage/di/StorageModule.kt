@@ -9,7 +9,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-
 val storageModule: Module = module {
     single { GlobalPreferences(androidContext()) }
     single {
@@ -19,5 +18,3 @@ val storageModule: Module = module {
     }
     single { UserPreferences(androidContext(), get()) }
 }
-
-

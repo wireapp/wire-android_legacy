@@ -3,9 +3,10 @@ package com.waz.zclient.storage.pref
 import android.content.Context
 import android.content.SharedPreferences
 
-class UserPreferences(private val context: Context,
-                      private val globalPreferences: GlobalPreferences) {
-
+class UserPreferences(
+    private val context: Context,
+    private val globalPreferences: GlobalPreferences
+) {
     private fun getPrefFileName(userId: String) = "userPref_$userId"
 
     fun get(userId: String): SharedPreferences =

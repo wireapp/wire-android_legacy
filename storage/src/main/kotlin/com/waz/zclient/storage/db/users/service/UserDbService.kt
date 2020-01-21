@@ -27,4 +27,3 @@ interface UserDbService {
     @Query("UPDATE user SET phone=:phone WHERE _id = :userId")
     suspend fun updatePhone(userId: String, phone: String)
 }
-
