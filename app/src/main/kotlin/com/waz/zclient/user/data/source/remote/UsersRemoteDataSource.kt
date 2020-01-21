@@ -5,7 +5,11 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.usecase.handle.*
+import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
+import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
+import com.waz.zclient.user.domain.usecase.handle.UnknownError
 
 class UsersRemoteDataSource(
     private val usersNetworkService: UsersNetworkService,

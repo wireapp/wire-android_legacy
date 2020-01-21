@@ -11,8 +11,15 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.user.domain.usecase.handle.*
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
+import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
+import com.waz.zclient.user.domain.usecase.handle.HandleTooShort
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
+import com.waz.zclient.user.domain.usecase.handle.UnknownError
+import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_ok_button
+import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_back_button
+import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_edit_text
+import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_edit_text_container
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel

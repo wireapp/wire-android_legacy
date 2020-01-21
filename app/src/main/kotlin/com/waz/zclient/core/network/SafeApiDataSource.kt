@@ -1,8 +1,14 @@
 package com.waz.zclient.core.network
 
 import android.database.sqlite.SQLiteException
-import com.waz.zclient.core.exception.*
+import com.waz.zclient.core.exception.DatabaseError
+import com.waz.zclient.core.exception.DatabaseFailure
+import com.waz.zclient.core.exception.DatabaseStateError
+import com.waz.zclient.core.exception.SQLError
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.exception.NetworkServiceError
+import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking

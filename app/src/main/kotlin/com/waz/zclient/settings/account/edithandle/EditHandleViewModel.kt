@@ -5,10 +5,21 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.user.domain.usecase.handle.*
+import com.waz.zclient.user.domain.usecase.handle.GetHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.CheckHandleExistsUseCase
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleUseCase
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleParams
+import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
+import com.waz.zclient.user.domain.usecase.handle.CheckHandleExistsParams
+import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
+import com.waz.zclient.user.domain.usecase.handle.HandleSameAsCurrent
+import com.waz.zclient.user.domain.usecase.handle.UnknownError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.*
+import java.util.Locale
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi

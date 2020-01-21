@@ -1,11 +1,21 @@
 package com.waz.zclient.settings.account
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.*
+import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
+import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
+import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.domain.usecase.ChangeEmailParams
+import com.waz.zclient.user.domain.usecase.ChangeNameParams
+import com.waz.zclient.user.domain.usecase.ChangePhoneParams
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) {
@@ -19,7 +29,8 @@ class SettingsAccountViewModel(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val changeNameUseCase: ChangeNameUseCase,
     private val changePhoneUseCase: ChangePhoneUseCase,
-    private val changeEmailUseCase: ChangeEmailUseCase) : ViewModel() {
+    private val changeEmailUseCase: ChangeEmailUseCase
+) : ViewModel() {
 
     private val mutableProfileData = MutableLiveData<User>()
     private val mutableError = MutableLiveData<String>()
