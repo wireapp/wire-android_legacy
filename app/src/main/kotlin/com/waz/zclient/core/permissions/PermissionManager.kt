@@ -21,6 +21,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
@@ -33,6 +34,7 @@ import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
+import com.waz.zclient.utilities.build.SdkVersionChecker
 import kotlin.math.abs
 
 /**
@@ -45,25 +47,25 @@ typealias PermissionRequester = (Array<String>, Int) -> Unit
 
 typealias PermissionChecker = (String) -> Boolean
 
-class PermissionManager : FragmentLifecycleObserver, ActivityLifecycleObserver {
+class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionChecker()) : FragmentLifecycleObserver, ActivityLifecycleObserver {
 
     private val requestedPermissionHandlers = mutableMapOf<Int, PermissionHandler>()
     private val pendingPermissions = mutableMapOf<Int, RequestedPermissions>()
 
-    private lateinit var requester: PermissionRequester
-    private lateinit var checker: PermissionChecker
+    internal lateinit var requester: PermissionRequester
+    internal lateinit var checker: PermissionChecker
 
     override fun from(owner: Fragment) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (sdkChecker.isAndroid6orAbove()) {
             requester = owner::requestPermissions
-            checker = { owner.context?.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
+            checker = { ActivityCompat.checkSelfPermission(owner.requireContext(), it) == PackageManager.PERMISSION_GRANTED }
         }
     }
 
     override fun from(owner: AppCompatActivity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (sdkChecker.isAndroid6orAbove()) {
             requester = owner::requestPermissions
-            checker = { owner.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
+            checker = { ActivityCompat.checkSelfPermission(owner, it) == PackageManager.PERMISSION_GRANTED }
         }
     }
 
@@ -73,6 +75,7 @@ class PermissionManager : FragmentLifecycleObserver, ActivityLifecycleObserver {
         pendingPermissions.clear()
     }
 
+    //TODO still need to figure out how to unit test this
     fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestedPermissionHandlers.containsKey(requestCode)) {
             pendingPermissions[requestCode] = RequestedPermissions(requestedPermissionHandlers.remove(requestCode)!!, permissions, grantResults)
