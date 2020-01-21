@@ -134,4 +134,3 @@ suspend fun <L, R, T> Either<L, R>.foldSuspendable(fnL: suspend (L) -> T?, fnR: 
     }
 
 //endregion
-

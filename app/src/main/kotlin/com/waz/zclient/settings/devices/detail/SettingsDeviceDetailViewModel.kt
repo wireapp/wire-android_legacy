@@ -58,5 +58,4 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
     companion object {
         private const val LOG_TAG = "SettingsDeviceDetailVM"
     }
-
 }

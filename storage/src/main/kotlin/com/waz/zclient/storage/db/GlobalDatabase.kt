@@ -10,7 +10,7 @@ import com.waz.zclient.storage.db.accountdata.SsoIdConverter
 
 @Database(entities = [ActiveAccountsEntity::class], version = 25)
 @TypeConverters(value = [AccessTokenConverter::class, SsoIdConverter::class])
-abstract class GlobalDatabase: RoomDatabase() {
+abstract class GlobalDatabase : RoomDatabase() {
 
     abstract fun activeAccountsDao(): ActiveAccountsDao
 
