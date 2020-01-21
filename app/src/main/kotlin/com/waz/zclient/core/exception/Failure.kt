@@ -25,6 +25,8 @@ object DatabaseStateError : DatabaseFailure()
 object SQLError : DatabaseFailure()
 object DatabaseError : DatabaseFailure()
 
+object EmptyResponseBody : Failure()
+
 //TODO: Improve to a more sufficient error propagation for Flow "data flows"
 data class GenericUseCaseError(val throwable: Throwable) : Failure()
 

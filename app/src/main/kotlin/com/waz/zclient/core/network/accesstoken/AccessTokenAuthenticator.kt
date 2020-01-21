@@ -1,5 +1,6 @@
 package com.waz.zclient.core.network.accesstoken
 
+import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
@@ -29,10 +30,10 @@ class AccessTokenAuthenticator(
         updateRefreshToken(response)
         val refreshToken = repository.refreshToken()
 
-        synchronized(this) {
+        return runBlocking {
             val tokenResult = repository.renewAccessToken(refreshToken)
 
-            return tokenResult.fold({ null }) {
+            return@runBlocking tokenResult.fold({ null }) {
                 repository.updateAccessToken(it)
                 proceedWithNewAccessToken(response, it.token)
             }

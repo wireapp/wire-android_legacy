@@ -5,7 +5,6 @@ import com.waz.zclient.BuildConfig
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClient
 import com.waz.zclient.core.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.di.NetworkDependencyProvider.retrofit
-import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.RetrofitClient
@@ -18,7 +17,6 @@ import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
 import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
-import com.waz.zclient.core.threading.ThreadHandler
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
@@ -61,7 +59,6 @@ object NetworkDependencyProvider {
 }
 
 val networkModule: Module = module {
-    single { ThreadHandler() }
     single { NetworkHandler(androidContext()) }
     single { createHttpClient(get(), get()) }
     single { retrofit(get()) }
@@ -73,13 +70,10 @@ val networkModule: Module = module {
     single { AccessTokenAuthenticator(get(), get()) }
     single { AccessTokenInterceptor(get()) }
     single<NetworkClient> { RetrofitClient(get()) }
-    single { ApiService(get(), get(), get()) }
 
     //Token manipulation
-    val apiServiceForToken = "API_SERVICE_FOR_TOKEN"
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
     single<NetworkClient>(named(networkClientForToken)) { RetrofitClient(retrofit(createHttpClientForToken())) }
-    single(named(apiServiceForToken)) { ApiService(get(), get(), get(named(networkClientForToken))) }
-    single { get<ApiService>(named(apiServiceForToken)).createApi(TokenApi::class.java) }
-    single { TokenService(get(named(apiServiceForToken)), get()) }
+    single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
+    single { TokenService(get(), get()) }
 }

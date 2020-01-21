@@ -156,9 +156,8 @@ def prepareCustomizationEnvironment() {
 task ci(dependsOn: [
     ':app:assembleDevDebug',
     ':app:lintDevDebug',
-    // By default on whole app
-    //':app:checkstyle',
-    ':app:pmd'
+    ':app:pmd',
+    ':detektAll'
 ]) {
 
     doLast {

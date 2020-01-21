@@ -18,5 +18,3 @@ val storageModule: Module = module {
     }
     single { UserPreferences(androidContext(), get()) }
 }
-
-
