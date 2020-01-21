@@ -2,9 +2,7 @@ package com.waz.zclient.settings.account.phonenumber.editphone
 
 import android.app.Dialog
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -21,11 +19,16 @@ class EditPhoneFragment : DialogFragment() {
         PermissionManager.newInstance(this)
     }
 
+    private val rootView: View by lazy {
+        requireActivity().layoutInflater.inflate(R.layout.fragment_edit_phone_dialog, null)
+    }
+
     private val editPhoneViewModel: EditPhoneViewModel by viewModel()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireActivity())
             .setTitle(getString(R.string.pref__account_action__dialog__edit_phone__title))
+            .setView(rootView)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 editPhoneViewModel.onOkButtonClicked(
                     country_code_edit_text.text.toString(),
@@ -35,9 +38,6 @@ class EditPhoneFragment : DialogFragment() {
             .setNegativeButton(android.R.string.cancel) { _, _ ->
                 editPhoneViewModel.onCancelButtonClicked()
             }.create()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-        inflater.inflate(R.layout.fragment_edit_phone_dialog, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
