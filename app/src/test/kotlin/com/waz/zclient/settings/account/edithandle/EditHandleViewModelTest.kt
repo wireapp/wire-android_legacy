@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.amshove.kluent.shouldNotBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -43,32 +44,13 @@ class EditHandleViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given beforeHandTextChange is called when validation fails with HandleInvalidError, then handle input should not be updated`() =
-        runBlockingTest {
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
+    fun `given afterHandleTextChanged is called, when input contains capital letters then update handle with lowercase values`() {
+        editHandleViewModel.afterHandleTextChanged(TEST_HANDLE.toUpperCase())
 
-            editHandleViewModel.beforeHandleTextChanged(TEST_HANDLE)
-
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe String.empty()
-            }
-
-            editHandleViewModel.error.observeOnce {
-                it shouldBe HandleInvalidError
-            }
+        editHandleViewModel.handle.observeOnce {
+            assert(it == TEST_HANDLE.toLowerCase())
         }
-
-    @Test
-    fun `given beforeHandTextChange is called when validation does not with HandleInvalidError, then handle input should be updated`() =
-        runBlockingTest {
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
-
-            editHandleViewModel.beforeHandleTextChanged(TEST_HANDLE)
-
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe TEST_HANDLE
-            }
-        }
+    }
 
     @Test
     fun `given afterHandleTextChanged is called, when getHandleUseCase succeeds, checkExist succeeds, validation succeeds, then handle should update`() =
@@ -83,8 +65,9 @@ class EditHandleViewModelTest : UnitTest() {
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe true
             }
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe NON_DUPLICATED_TEST_HANDLE
+
+            editHandleViewModel.success.observeOnce {
+                it shouldBe HandleIsAvailable
             }
         }
 
@@ -96,6 +79,10 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
+            editHandleViewModel.error.observeOnce {
+                it shouldBe HandleSameAsCurrent
+            }
+
             verifyNoInteractions(checkHandleExistsUseCase)
         }
 
@@ -105,7 +92,7 @@ class EditHandleViewModelTest : UnitTest() {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
-            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleUnknownError))
+            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(UnknownError))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
@@ -114,7 +101,7 @@ class EditHandleViewModelTest : UnitTest() {
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleUnknownError
+                it shouldBe UnknownError
             }
         }
 
@@ -124,7 +111,7 @@ class EditHandleViewModelTest : UnitTest() {
             val checkExistsParams = CheckHandleExistsParams(NON_DUPLICATED_TEST_HANDLE)
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
-            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleExistsAlreadyError))
+            lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Left(HandleAlreadyExists))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
@@ -132,7 +119,7 @@ class EditHandleViewModelTest : UnitTest() {
                 it shouldBe false
             }
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleExistsAlreadyError
+                it shouldBe HandleAlreadyExists
             }
         }
 
@@ -143,7 +130,7 @@ class EditHandleViewModelTest : UnitTest() {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(checkExistsParams)).thenReturn(Either.Right(HandleIsAvailable))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLong))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
@@ -158,7 +145,7 @@ class EditHandleViewModelTest : UnitTest() {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(any())).thenReturn(Either.Right(HandleIsAvailable))
-            lenient().`when`(validateHandleUseCase.run((any()))).thenReturn(Either.Left(HandleTooShortError))
+            lenient().`when`(validateHandleUseCase.run((any()))).thenReturn(Either.Left(HandleTooShort))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
@@ -173,12 +160,12 @@ class EditHandleViewModelTest : UnitTest() {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(any())).thenReturn(Either.Right(HandleIsAvailable))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleUnknownError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(UnknownError))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleUnknownError
+                it shouldBe UnknownError
             }
             editHandleViewModel.okEnabled.observeOnce {
                 it shouldBe false
@@ -191,7 +178,7 @@ class EditHandleViewModelTest : UnitTest() {
             val handleFlow: Flow<String> = flow { NON_DUPLICATED_TEST_HANDLE }
             lenient().`when`(getHandleUseCase.run(Unit)).thenReturn(handleFlow)
             lenient().`when`(checkHandleExistsUseCase.run(any())).thenReturn(Either.Right(HandleIsAvailable))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalid))
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
@@ -200,7 +187,7 @@ class EditHandleViewModelTest : UnitTest() {
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleInvalidError
+                it shouldBe HandleInvalid
             }
         }
 
@@ -220,7 +207,7 @@ class EditHandleViewModelTest : UnitTest() {
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleTooLongError then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLongError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooLong))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
@@ -233,7 +220,7 @@ class EditHandleViewModelTest : UnitTest() {
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleTooShortError then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooShortError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleTooShort))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
@@ -246,7 +233,7 @@ class EditHandleViewModelTest : UnitTest() {
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleInvalidError then ok button should be disabled and error updated`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalidError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleInvalid))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
@@ -255,7 +242,7 @@ class EditHandleViewModelTest : UnitTest() {
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleInvalidError
+                it shouldBe HandleInvalid
             }
         }
 
@@ -263,7 +250,7 @@ class EditHandleViewModelTest : UnitTest() {
     fun `given onOkButtonClicked is called, when validateHandle fails with HandleUnknownError then error message should be updated`() =
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Right(Unit))
-            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(HandleUnknownError))
+            lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Left(UnknownError))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
@@ -272,7 +259,7 @@ class EditHandleViewModelTest : UnitTest() {
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleUnknownError
+                it shouldBe UnknownError
             }
         }
 
@@ -281,7 +268,7 @@ class EditHandleViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Left(DatabaseError))
             lenient().`when`(validateHandleUseCase.run(any())).thenReturn(Either.Right(TEST_HANDLE))
-            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Left(HandleUnknownError))
+            lenient().`when`(changeHandleUseCase.run(any())).thenReturn(Either.Left(UnknownError))
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
@@ -290,7 +277,7 @@ class EditHandleViewModelTest : UnitTest() {
             }
 
             editHandleViewModel.error.observeOnce {
-                it shouldBe HandleUnknownError
+                it shouldBe UnknownError
             }
         }
 
@@ -301,8 +288,8 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onBackButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.handle.observeOnce {
-                it shouldBe TEST_HANDLE
+            editHandleViewModel.okEnabled.observeOnce {
+                it shouldBe true
             }
 
             editHandleViewModel.dismiss.observeOnce {
@@ -351,7 +338,7 @@ class EditHandleViewModelTest : UnitTest() {
         }
 
     companion object {
-        private const val NON_DUPLICATED_TEST_HANDLE = "testHandle1"
-        private const val TEST_HANDLE = "testHandle"
+        private const val NON_DUPLICATED_TEST_HANDLE = "testhandle1"
+        private const val TEST_HANDLE = "testhandle"
     }
 }

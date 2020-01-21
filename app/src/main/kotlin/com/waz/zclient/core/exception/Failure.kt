@@ -21,6 +21,8 @@ object InternalServerError : NetworkFailure()
 
 data class HttpError(val errorCode: Int, val errorMessage: String) : NetworkFailure()
 
+object DatabaseStateError : DatabaseFailure()
+object SQLError : DatabaseFailure()
 object DatabaseError : DatabaseFailure()
 
 object EmptyResponseBody : Failure()

@@ -14,10 +14,6 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ChangePhoneUseCaseTest : UnitTest() {
 
-    companion object {
-        private const val TEST_PHONE = "+499477466343"
-    }
-
     private lateinit var changePhoneUseCase: ChangePhoneUseCase
 
     @Mock
@@ -38,5 +34,9 @@ class ChangePhoneUseCaseTest : UnitTest() {
         changePhoneUseCase.run(changePhoneParams)
 
         verify(userRepository).changePhone(eq(TEST_PHONE))
+    }
+
+    companion object {
+        private const val TEST_PHONE = "+499477466343"
     }
 }

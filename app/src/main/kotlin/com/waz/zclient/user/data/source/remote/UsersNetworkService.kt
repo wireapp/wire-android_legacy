@@ -13,7 +13,7 @@ interface UsersNetworkService {
     @GET(SELF)
     suspend fun profileDetails(): Response<UserApi>
 
-    @PUT("$SELF$NAME")
+    @PUT(SELF)
     suspend fun changeName(@Body name: ChangeNameRequest): Response<Unit>
 
     @PUT("$SELF$HANDLE")
