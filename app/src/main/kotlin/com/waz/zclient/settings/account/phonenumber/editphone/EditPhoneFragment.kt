@@ -36,7 +36,6 @@ class EditPhoneFragment : DialogFragment() {
                 editPhoneViewModel.onCancelButtonClicked()
             }.create()
 
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
         inflater.inflate(R.layout.fragment_edit_phone_dialog, container, false)
 
@@ -69,5 +68,4 @@ class EditPhoneFragment : DialogFragment() {
                 putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
             }
     }
-
 }

@@ -7,6 +7,7 @@ import com.waz.zclient.core.permissions.result.PermissionSuccess
 class EditPhoneViewModel : ViewModel() {
 
     fun onOkButtonClicked(countryCode: String, phoneNumber: String) {
+
     }
 
     fun onCancelButtonClicked() {
