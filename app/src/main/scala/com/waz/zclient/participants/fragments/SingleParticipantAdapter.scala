@@ -34,7 +34,7 @@ final class SingleParticipantAdapter(userId:      UserId,
                                      isWireless:  Boolean
                                     )(implicit context: Context)
   extends BaseSingleParticipantAdapter(userId, isGuest, isExternal, isDarkTheme, isGroup, isWireless) {
-  import BaseSingleParticipantAdapter.{Header, GroupAdmin}
+  import BaseSingleParticipantAdapter._
   import SingleParticipantAdapter._
 
   private var fields:       Seq[UserField] = Seq.empty
@@ -96,9 +96,6 @@ final class SingleParticipantAdapter(userId:      UserId,
 
 
 object SingleParticipantAdapter {
-  val CustomField = 0
-  val ReadReceipts = 3
-
   case class CustomFieldRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val name  = view.findViewById[TextView](R.id.custom_field_name)
     private lazy val value = view.findViewById[TextView](R.id.custom_field_value)
@@ -113,6 +110,8 @@ object SingleParticipantAdapter {
     private lazy val readReceiptsInfoTitle = view.findViewById[TypefaceTextView](R.id.read_receipts_info_title)
     private lazy val readReceiptsInfo1     = view.findViewById[TypefaceTextView](R.id.read_receipts_info_1)
     private lazy val readReceiptsInfo2     = view.findViewById[TypefaceTextView](R.id.read_receipts_info_2)
+
+    view.setContentDescription("Read Receipts")
 
     def bind(title: Option[String]): Unit = {
       readReceiptsInfoTitle.setVisible(title.isDefined)
