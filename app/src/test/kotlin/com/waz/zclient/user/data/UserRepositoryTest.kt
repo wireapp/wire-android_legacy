@@ -135,7 +135,7 @@ class UserRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `Given changePhone() is called and remote request fails then don't update remote`() = runBlockingTest {
+    fun `Given changePhone() is called and remote request fails then don't update database`() = runBlockingTest {
         `when`(usersRemoteDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Left(ServerError))
 
         usersRepository.changePhone(TEST_PHONE)
@@ -145,7 +145,7 @@ class UserRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `Given changePhone() is called and local request is success, then update api`() = runBlockingTest {
+    fun `Given changePhone() is called and remote request is success, then update database`() = runBlockingTest {
         `when`(usersRemoteDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Right(Unit))
 
         usersRepository.changePhone(TEST_PHONE)

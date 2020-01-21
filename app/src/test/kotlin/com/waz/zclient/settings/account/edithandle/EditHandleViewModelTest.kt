@@ -44,11 +44,11 @@ class EditHandleViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given afterHandleTextChanged is called,`() {
+    fun `given afterHandleTextChanged is called, when input contains capital letters then update handle with lowercase values`() {
         editHandleViewModel.afterHandleTextChanged(TEST_HANDLE.toUpperCase())
 
         editHandleViewModel.handle.observeOnce {
-            it shouldNotBe TEST_HANDLE.toUpperCase()
+            assert(it == TEST_HANDLE.toLowerCase())
         }
     }
 
