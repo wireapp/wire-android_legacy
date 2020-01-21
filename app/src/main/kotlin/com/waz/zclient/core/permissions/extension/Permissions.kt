@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.core.permissions.extension
 
-import android.os.Build
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.permissions.PermissionManager
@@ -26,7 +25,7 @@ import com.waz.zclient.core.permissions.result.PermissionSuccess
 private val READ_PHONE_STATE = listOf(android.Manifest.permission.READ_PHONE_STATE)
 
 fun PermissionManager.readPhoneState(onResult: (Either<Failure, PermissionSuccess>) -> Unit) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    if (sdkChecker.isAndroid6orAbove()) {
         requestPermissions(READ_PHONE_STATE, onResult)
     }
 }

@@ -47,7 +47,7 @@ typealias PermissionRequester = (Array<String>, Int) -> Unit
 
 typealias PermissionChecker = (String) -> Boolean
 
-class PermissionManager(private val sdkChecker: SdkVersionChecker = SdkVersionChecker()) :
+class PermissionManager(internal val sdkChecker: SdkVersionChecker = SdkVersionChecker()) :
     FragmentLifecycleObserver, ActivityLifecycleObserver {
 
     private val requestedPermissionHandlers = mutableMapOf<Int, PermissionHandler>()

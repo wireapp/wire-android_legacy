@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
+import com.waz.zclient.core.permissions.extension.readPhoneState
 import com.waz.zclient.core.permissions.result.PermissionDenied
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.utilities.build.SdkVersionChecker
@@ -38,6 +39,7 @@ class PermissionManagerTest : UnitTest() {
     fun setup() {
         `when`(sdkChecker.isAndroid6orAbove()).thenReturn(true)
         permissionManager = PermissionManager(sdkChecker)
+        permissionManager.from(fragment)
     }
 
     @Test
@@ -76,8 +78,6 @@ class PermissionManagerTest : UnitTest() {
 
     @Test
     fun `given CAMERA permission is requested strictly from fragment, when CAMERA permission is already granted, then return PermissionGranted `() {
-        permissionManager.from(fragment)
-
         permissionManager.checker = permissionChecker
         permissionManager.requester = permissionRequester
 
@@ -92,8 +92,6 @@ class PermissionManagerTest : UnitTest() {
 
     @Test
     fun `given multiple permissions is requested strictly from fragment, when one permission is denied, then return PermissionDenied `() {
-        permissionManager.from(fragment)
-
         permissionManager.checker = permissionChecker
         permissionManager.requester = permissionRequester
 
@@ -104,6 +102,35 @@ class PermissionManagerTest : UnitTest() {
         permissionManager.requestPermissions(listOfPermissions) { either ->
             either.onFailure {
                 it shouldBe PermissionDenied(listOf(Manifest.permission.RECORD_AUDIO))
+            }
+        }
+    }
+
+
+    @Test
+    fun `given readPhoneState extension method is called, when permission is granted, then return PermissionGranted`() {
+        permissionManager.checker = permissionChecker
+        permissionManager.requester = permissionRequester
+
+        `when`(permissionChecker(Manifest.permission.READ_PHONE_STATE)).thenReturn(true)
+
+        permissionManager.readPhoneState { either ->
+            either.onSuccess {
+                it shouldBe PermissionGranted
+            }
+        }
+    }
+
+    @Test
+    fun `given readPhoneState extension method is called, when permission is granted, then return PermissionDenied`() {
+        permissionManager.checker = permissionChecker
+        permissionManager.requester = permissionRequester
+
+        `when`(permissionChecker(Manifest.permission.READ_PHONE_STATE)).thenReturn(false)
+
+        permissionManager.readPhoneState { either ->
+            either.onFailure {
+                it shouldBe PermissionDenied(listOf(Manifest.permission.READ_PHONE_STATE))
             }
         }
     }
