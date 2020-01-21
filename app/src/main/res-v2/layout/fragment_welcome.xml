@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+
+    Wire
+    Copyright (C) 2019 Wire Swiss GmbH
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/athens_light_gray">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.082" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.304" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.450" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.552" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.889" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/wire_logo_image_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent="0.225"
+        app:layout_constraintHeight_percent="0.084"
+        android:src="@drawable/wire"
+        android:tint="@color/teams_headline_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline1" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/welcome_to_wire_text_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent="0.661"
+        app:layout_constraintHeight_percent="0.070"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center_horizontal"
+        android:lineSpacingExtra="8sp"
+        android:text="@string/welcome_to_wire"
+        android:textColor="@color/outer_space"
+        android:textSize="32sp"
+        android:textStyle="normal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline2"  />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/create_account_button"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent="0.908"
+        app:layout_constraintHeight_percent="0.084"
+        android:background="@drawable/blue_rounded_button"
+        android:fontFamily="sans-serif"
+        android:lineSpacingExtra="-1sp"
+        android:text="@string/new_reg__phone_signup__create_account"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline3" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/login_button"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent="0.908"
+        app:layout_constraintHeight_percent="0.084"
+        android:background="@drawable/light_gray_blue_rounded_button"
+        android:text="@string/app_entry_login"
+        android:textSize="11sp"
+        android:textColor="@color/curious_blue"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline4" />
+
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/enterprise_login_button"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintWidth_percent="0.908"
+        app:layout_constraintHeight_percent="0.084"
+        android:background="@drawable/dark_gray_rounded_button"
+        android:text="@string/welcome_enterprise_log_in"
+        android:textSize="11sp"
+        android:textColor="@color/outer_space"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/guideline5" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -99,7 +99,16 @@
             android:launchMode="singleTask"
             android:label="@string/empty_string"/>
 
+
         <activity
+            android:name=".auth.AuthenticationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--<activity
             android:name=".LaunchActivity"
             android:label="@string/app_name"
             android:noHistory="true"
@@ -133,7 +142,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.VIEW" />
             </intent-filter>
-        </activity>
+        </activity> -->
 
 
         <!-- main activity -->
