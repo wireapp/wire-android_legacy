@@ -6,9 +6,8 @@ import com.waz.zclient.core.exception.DatabaseFailure
 import com.waz.zclient.core.exception.DatabaseStateError
 import com.waz.zclient.core.exception.SQLError
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.NetworkFailure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.exception.NetworkServiceError
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.runBlocking
@@ -52,8 +51,7 @@ private fun <R> performFallback(
             onSuccess { runBlocking { saveToDatabase(it) } }
             onFailure {
                 when (it) {
-                    is NetworkServiceError -> Timber.e("Network request failed with generic error ")
-                    is HttpError -> Timber.e("Network request failed with {${it.errorCode} ${it.errorMessage} ")
+                    is NetworkFailure -> Timber.e("Network request failed with generic error ")
                     else -> Timber.e("Network request failed with unknown error ")
                 }
             }

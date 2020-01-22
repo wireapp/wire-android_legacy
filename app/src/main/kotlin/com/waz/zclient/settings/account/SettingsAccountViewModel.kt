@@ -6,7 +6,6 @@ import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
@@ -83,10 +82,6 @@ class SettingsAccountViewModel(
 
     //TODO valid error scenarios once the networking has been integrated
     private fun handleError(failure: Failure) {
-        if (failure is HttpError) {
-            mutableError.postValue("${failure.errorCode} + ${failure.errorMessage}")
-        } else {
-            mutableError.postValue("Misc error scenario")
-        }
+        mutableError.postValue("Failure: $failure")
     }
 }

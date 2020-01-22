@@ -1,6 +1,5 @@
 package com.waz.zclient.core.network.accesstoken
 
-import com.google.gson.annotations.SerializedName
 import com.waz.zclient.core.extension.empty
 import org.threeten.bp.Instant
 
@@ -19,15 +18,8 @@ data class RefreshToken(val token: String) {
     }
 }
 
-data class RefreshTokenPreference(
-    @SerializedName("token")
-    val token: String
-)
-
 class RefreshTokenMapper {
     fun fromTokenText(tokenText: String) = RefreshToken(tokenText)
 
-    fun from(pref: RefreshTokenPreference) = RefreshToken(pref.token)
-
-    fun toPreference(refreshToken: RefreshToken) = RefreshTokenPreference(refreshToken.token)
+    fun toEntity(refreshToken: RefreshToken): String = refreshToken.token
 }

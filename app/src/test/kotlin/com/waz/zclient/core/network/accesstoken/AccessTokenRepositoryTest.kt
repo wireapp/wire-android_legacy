@@ -7,6 +7,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.network.api.token.AccessTokenResponse
+import com.waz.zclient.storage.db.accountdata.AccessTokenEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
@@ -39,73 +40,79 @@ class AccessTokenRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `given localDataSource with accessTokenPref, when accessToken called, returns its accessToken mapping`() {
-        `when`(localDataSource.accessToken()).thenReturn(ACCESS_TOKEN_PREF)
-        `when`(accessTokenMapper.from(ACCESS_TOKEN_PREF)).thenReturn(ACCESS_TOKEN)
+    fun `given localDataSource with accessTokenPref, when accessToken called, returns its accessToken mapping`() =
+        runBlockingTest {
+            `when`(localDataSource.accessToken()).thenReturn(ACCESS_TOKEN_LOCAL)
+            `when`(accessTokenMapper.from(ACCESS_TOKEN_LOCAL)).thenReturn(ACCESS_TOKEN)
 
-        val token = accessTokenRepository.accessToken()
+            val token = accessTokenRepository.accessToken()
 
-        verify(localDataSource).accessToken()
-        token shouldBe ACCESS_TOKEN
-    }
-
-    @Test
-    fun `given localDataSource doesn't have an accessToken, when accessToken called, returns empty AccessToken`() {
-        `when`(localDataSource.accessToken()).thenReturn(null)
-
-        val token = accessTokenRepository.accessToken()
-
-        verify(localDataSource).accessToken()
-        token shouldBe AccessToken.EMPTY
-    }
+            verify(localDataSource).accessToken()
+            token shouldBe ACCESS_TOKEN
+        }
 
     @Test
-    fun `when updateAccessToken is called, calls localDataSource with the mapping of given token`() {
-        `when`(accessTokenMapper.toPreference(ACCESS_TOKEN)).thenReturn(ACCESS_TOKEN_PREF)
+    fun `given localDataSource doesn't have an accessToken, when accessToken called, returns empty AccessToken`() =
+        runBlockingTest {
+            `when`(localDataSource.accessToken()).thenReturn(null)
 
-        accessTokenRepository.updateAccessToken(ACCESS_TOKEN)
+            val token = accessTokenRepository.accessToken()
 
-        verify(accessTokenMapper).toPreference(ACCESS_TOKEN)
-        verify(localDataSource).updateAccessToken(ACCESS_TOKEN_PREF)
-        verifyNoMoreInteractions(remoteDataSource, localDataSource)
-    }
-
-    @Test
-    fun `given localDataSource has a refreshToken, when refreshToken called, returns mapping of local refreshToken`() {
-        `when`(localDataSource.refreshToken()).thenReturn(REFRESH_TOKEN_PREF)
-        `when`(refreshTokenMapper.from(REFRESH_TOKEN_PREF)).thenReturn(REFRESH_TOKEN)
-
-        val token = accessTokenRepository.refreshToken()
-
-        verify(localDataSource).refreshToken()
-        token shouldBe REFRESH_TOKEN
-    }
+            verify(localDataSource).accessToken()
+            token shouldBe AccessToken.EMPTY
+        }
 
     @Test
-    fun `given localDataSource doesn't have a refreshToken, when refreshToken called, returns empty RefreshToken`() {
-        `when`(localDataSource.refreshToken()).thenReturn(null)
+    fun `when updateAccessToken is called, calls localDataSource with the mapping of given token`() =
+        runBlockingTest {
+            `when`(accessTokenMapper.toEntity(ACCESS_TOKEN)).thenReturn(ACCESS_TOKEN_LOCAL)
 
-        val token = accessTokenRepository.refreshToken()
+            accessTokenRepository.updateAccessToken(ACCESS_TOKEN)
 
-        verify(localDataSource).refreshToken()
-        token shouldBe RefreshToken.EMPTY
-    }
+            verify(accessTokenMapper).toEntity(ACCESS_TOKEN)
+            verify(localDataSource).updateAccessToken(ACCESS_TOKEN_LOCAL)
+            verifyNoMoreInteractions(remoteDataSource, localDataSource)
+        }
 
     @Test
-    fun `when updateRefreshToken is called, calls localDataSource with mapping of given token`() {
-        `when`(refreshTokenMapper.toPreference(REFRESH_TOKEN)).thenReturn(REFRESH_TOKEN_PREF)
+    fun `given localDataSource has a refreshToken, when refreshToken called, returns mapping of local refreshToken`() =
+        runBlockingTest {
+            `when`(localDataSource.refreshToken()).thenReturn(REFRESH_TOKEN_LOCAL)
+            `when`(refreshTokenMapper.fromTokenText(REFRESH_TOKEN_LOCAL)).thenReturn(REFRESH_TOKEN)
 
-        accessTokenRepository.updateRefreshToken(REFRESH_TOKEN)
+            val token = accessTokenRepository.refreshToken()
 
-        verify(localDataSource).updateRefreshToken(REFRESH_TOKEN_PREF)
-        verifyNoMoreInteractions(remoteDataSource, localDataSource)
-    }
+            verify(localDataSource).refreshToken()
+            token shouldBe REFRESH_TOKEN
+        }
+
+    @Test
+    fun `given localDataSource doesn't have a refreshToken, when refreshToken called, returns empty RefreshToken`() =
+        runBlockingTest {
+            `when`(localDataSource.refreshToken()).thenReturn(null)
+
+            val token = accessTokenRepository.refreshToken()
+
+            verify(localDataSource).refreshToken()
+            token shouldBe RefreshToken.EMPTY
+        }
+
+    @Test
+    fun `when updateRefreshToken is called, calls localDataSource with mapping of given token`() =
+        runBlockingTest {
+            `when`(refreshTokenMapper.toEntity(REFRESH_TOKEN)).thenReturn(REFRESH_TOKEN_LOCAL)
+
+            accessTokenRepository.updateRefreshToken(REFRESH_TOKEN)
+
+            verify(localDataSource).updateRefreshToken(REFRESH_TOKEN_LOCAL)
+            verifyNoMoreInteractions(remoteDataSource, localDataSource)
+        }
 
     @Test
     fun `when renewAccessToken is called, calls remoteDataSource with given refresh token`() =
         runBlockingTest {
-            `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
-            `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
+            `when`(accessTokenMapper.from(ACCESS_TOKEN_REMOTE)).thenReturn(ACCESS_TOKEN)
+            `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token)).thenReturn(Either.Right(ACCESS_TOKEN_REMOTE))
 
             accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
@@ -117,12 +124,12 @@ class AccessTokenRepositoryTest : UnitTest() {
     fun `given remote call's successful, when renewAccessToken's called, returns mapping of the accessTokenResponse`() =
         runBlockingTest {
             `when`(remoteDataSource.renewAccessToken(REFRESH_TOKEN.token))
-                .thenReturn(Either.Right(ACCESS_TOKEN_RESPONSE))
-            `when`(accessTokenMapper.from(ACCESS_TOKEN_RESPONSE)).thenReturn(ACCESS_TOKEN)
+                .thenReturn(Either.Right(ACCESS_TOKEN_REMOTE))
+            `when`(accessTokenMapper.from(ACCESS_TOKEN_REMOTE)).thenReturn(ACCESS_TOKEN)
 
             val tokenResponse = accessTokenRepository.renewAccessToken(REFRESH_TOKEN)
 
-            verify(accessTokenMapper).from(ACCESS_TOKEN_RESPONSE)
+            verify(accessTokenMapper).from(ACCESS_TOKEN_REMOTE)
             tokenResponse.isRight shouldBe true
             tokenResponse.map { it shouldBe ACCESS_TOKEN }
         }
@@ -140,23 +147,14 @@ class AccessTokenRepositoryTest : UnitTest() {
             verifyNoMoreInteractions(accessTokenMapper)
         }
 
-    @Test
-    fun `when wipeOutTokens is called, wipes out both access and refresh tokens`() {
-        accessTokenRepository.wipeOutTokens()
-
-        verify(localDataSource).wipeOutAccessToken()
-        verify(localDataSource).wipeOutRefreshToken()
-        verifyNoMoreInteractions(localDataSource, remoteDataSource)
-    }
-
     companion object {
         private val ACCESS_TOKEN = AccessToken("newToken", "newType", "newExpiry")
-        private val ACCESS_TOKEN_PREF =
-            AccessTokenPreference("token", "tokenType", "expiresIn")
-        private val ACCESS_TOKEN_RESPONSE =
+        private val ACCESS_TOKEN_LOCAL =
+            AccessTokenEntity("token", "tokenType", 1000L)
+        private val ACCESS_TOKEN_REMOTE =
             AccessTokenResponse("respToken", "respType", "respUser", "respExpiry")
 
         private val REFRESH_TOKEN = RefreshToken("refreshToken")
-        private val REFRESH_TOKEN_PREF = RefreshTokenPreference("refreshToken")
+        private const val REFRESH_TOKEN_LOCAL = "refreshToken"
     }
 }
