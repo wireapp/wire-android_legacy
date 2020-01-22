@@ -299,7 +299,8 @@ class AppEntryActivity extends BaseActivity {
   def onEnterApplication(openSettings: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
     getControllerFactory.getVerificationController.finishVerification()
     val intent = Intents.EnterAppIntent(openSettings)(this)
-    clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state)))
+    clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state))
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK))
     startActivity(intent)
     finish()
   }
