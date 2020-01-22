@@ -81,5 +81,4 @@
         <item name="android:textColor">@color/white</item>
         <item name="android:layout_marginStart">@dimen/preference_button_padding</item>
     </style>
-
 </resources>

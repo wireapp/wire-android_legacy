@@ -20,6 +20,8 @@ object InternalServerError : NetworkFailure()
 
 object EmptyResponseBody : NetworkFailure()
 
+object DatabaseStateError : DatabaseFailure()
+object SQLError : DatabaseFailure()
 object DatabaseError : DatabaseFailure()
 
 //TODO: Improve to a more sufficient error propagation for Flow "data flows"
