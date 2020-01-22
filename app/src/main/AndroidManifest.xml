@@ -244,6 +244,18 @@
             android:screenOrientation="portrait" />
         <activity android:name=".settings.devices.detail.SettingsDeviceDetailActivity" />
 
+
+        <activity
+            android:name=".appentry.TransparentSSOActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            >
+            <intent-filter>
+                <action android:name="${applicationId}.SSO_LOGIN_ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"

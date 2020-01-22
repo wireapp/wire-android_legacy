@@ -85,6 +85,7 @@
             android:textColor="@drawable/selector__simple_text_button"
             android:textSize="@dimen/wire__text_size__small"
             app:w_font="@string/wire__typeface__medium"
+            android:visibility="invisible"
             />
 
     </FrameLayout>

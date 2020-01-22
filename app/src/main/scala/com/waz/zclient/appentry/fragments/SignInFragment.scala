@@ -155,7 +155,7 @@ class SignInFragment
     emailButton.foreach(_.setVisible(!onlyLogin))
     phoneButton.foreach(_.setVisible(!onlyLogin))
 
-    companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
+    //companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)

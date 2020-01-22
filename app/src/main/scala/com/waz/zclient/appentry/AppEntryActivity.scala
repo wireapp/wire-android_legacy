@@ -138,9 +138,11 @@ class AppEntryActivity extends BaseActivity {
 
     closeButton.onClick(abortAddAccount())
 
-    if (getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) == WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT)
-      showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
-    else showFragment()
+    getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) match {
+      case WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT => showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
+      case WelcomeFragment.BUNDLE_VALUE_SSO_FRAGMENT => showFragment(TransparentSSOFragment(), TransparentSSOFragment.Tag)
+      case _ => showFragment()
+    }
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {

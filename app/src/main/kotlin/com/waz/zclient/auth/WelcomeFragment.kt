@@ -21,7 +21,7 @@ class WelcomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         create_account_button.setOnClickListener { createAccount() }
         login_button.setOnClickListener { login() }
-        enterprise_login_button.setOnClickListener { }
+        enterprise_login_button.setOnClickListener {ssoLogin() }
     }
 
     private fun createAccount() {
@@ -37,11 +37,21 @@ class WelcomeFragment : Fragment() {
         startActivity(loginIntent)
     }
 
+    private fun ssoLogin() {
+        val loginIntent = Intent().apply {
+            action = ACTION_SSO_LOGIN
+            putExtra(BUNDLE_KEY_FRAGMENT_TO_START, BUNDLE_VALUE_SSO_FRAGMENT)
+        }
+        startActivity(loginIntent)
+    }
+
     companion object {
         fun newInstance() = WelcomeFragment()
         private val ACTION_LOGIN = Config.applicationId() + ".LOGIN_ACTION"
         private val ACTION_CREATE_ACCOUNT = Config.applicationId() + ".CREATE_ACCOUNT_ACTION"
+        private val ACTION_SSO_LOGIN = Config.applicationId() + ".SSO_LOGIN_ACTION"
         const val BUNDLE_KEY_FRAGMENT_TO_START = "fragmentToStart"
         const val BUNDLE_VALUE_LOGIN_FRAGMENT = "LoginFragment"
+        const val BUNDLE_VALUE_SSO_FRAGMENT = "ssoFragment"
     }
 }
