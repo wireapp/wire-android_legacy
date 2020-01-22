@@ -6,6 +6,10 @@ import com.waz.zclient.core.permissions.result.PermissionContinued
 import com.waz.zclient.core.permissions.result.PermissionDenied
 import com.waz.zclient.core.permissions.result.PermissionSuccess
 
+/**
+ * This is the LENIENT permission handler because even if the user denies the permission,
+ * you can continue down the happy path
+ */
 class LenientPermissionHandler(private val onResult: (Either<Failure, PermissionSuccess>) -> Unit) :
     PermissionHandler {
 
@@ -21,7 +25,6 @@ class LenientPermissionHandler(private val onResult: (Either<Failure, Permission
         if (denied.isNotEmpty()) {
             onResult(Either.Left(PermissionDenied(denied.map { permissions[it] })))
         }
-
         onResult(Either.Right(PermissionContinued))
     }
 }

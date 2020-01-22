@@ -24,8 +24,8 @@ import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
 
 /**
- * This is the STRICT permission handler because you won't be able to continue down the "happy" path
- * if you deny the permission. More handlers can be added for more lenient paths you'd want the permissions to take.
+ * This is the STRICT permission handler because if the user denies the permission,
+ * you can't continue down the happy path
  */
 class StrictPermissionHandler(private val onResult: (Either<Failure, PermissionSuccess>) -> Unit) :
     PermissionHandler {
