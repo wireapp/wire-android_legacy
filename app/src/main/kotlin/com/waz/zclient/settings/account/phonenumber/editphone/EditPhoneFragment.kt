@@ -8,15 +8,15 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.core.permissions.PermissionManager
-import com.waz.zclient.core.permissions.extension.readPhoneState
+import com.waz.zclient.core.permissions.PermissionManagerFactory
+import com.waz.zclient.core.permissions.extension.strictRequestReadPhoneState
 import kotlinx.android.synthetic.main.fragment_edit_phone_dialog.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class EditPhoneFragment : DialogFragment() {
 
     private val permissionManager by lazy {
-        PermissionManager.newInstance(this)
+        PermissionManagerFactory.getPermissionManager(this)
     }
 
     private val rootView: View by lazy {
@@ -46,7 +46,7 @@ class EditPhoneFragment : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
-        permissionManager.readPhoneState {
+        permissionManager.strictRequestReadPhoneState {
             it.fold(
                 editPhoneViewModel::onReadPhonePermissionDenied,
                 editPhoneViewModel::onReadPhonePermissionGranted

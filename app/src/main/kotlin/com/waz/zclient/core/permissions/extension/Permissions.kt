@@ -24,6 +24,6 @@ import com.waz.zclient.core.permissions.result.PermissionSuccess
 
 private val READ_PHONE_STATE = listOf(android.Manifest.permission.READ_PHONE_STATE)
 
-fun PermissionManager.readPhoneState(onResult: (Either<Failure, PermissionSuccess>) -> Unit) {
+fun PermissionManager.strictRequestReadPhoneState(onResult: (Either<Failure, PermissionSuccess>) -> Unit) {
     strictPermissionRequest(READ_PHONE_STATE, onResult)
 }
