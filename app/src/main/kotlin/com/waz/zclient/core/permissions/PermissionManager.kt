@@ -19,16 +19,16 @@ package com.waz.zclient.core.permissions
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.permissions.handlers.LenientPermissionHandler
 import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
+import com.waz.zclient.core.permissions.result.PermissionDenied
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
 import kotlin.math.abs
@@ -38,21 +38,19 @@ import kotlin.math.abs
  * Credit to Michael Spitsin for the inspiration behind this mechanism.
  * https://medium.com/@programmerr47/working-with-permissions-in-android-bbba823be785
  */
-typealias PermissionRequester = (Array<String>, Int) -> Unit
+typealias PermissionRequester = (Array<out String>, Int) -> Unit
 
 typealias PermissionChecker = (String) -> Boolean
 
-abstract class PermissionManager: LifecycleObserver {
-
-    abstract val runtimePermissionChecker: RuntimePermissionChecker
+abstract class PermissionManager : LifecycleObserver {
 
     private val requestedPermissionHandlers = mutableMapOf<Int, PermissionHandler>()
     private val pendingPermissions = mutableMapOf<Int, RequestedPermissions>()
 
-    protected lateinit var requester: PermissionRequester
-    protected lateinit var checker: PermissionChecker
+    internal lateinit var requester: PermissionRequester
+    internal lateinit var checker: PermissionChecker
 
-    protected fun isGranted(permission: String, context: Context): Boolean =
+    protected fun isGranted(context: Context, permission: String): Boolean =
         ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
@@ -79,9 +77,12 @@ abstract class PermissionManager: LifecycleObserver {
     ) =
         RequestedPermissions(requestedPermissionHandlers.remove(requestCode)!!, permissions, grantResults)
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun requestPermissions(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
-        runtimePermissionChecker.requestPermissions(requester, permissions, resul)
+    fun strictPermissionRequest(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
+        request(permissions, StrictPermissionHandler(result), result)
+    }
+
+    fun lenientPermissionRequest(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
+        request(permissions, LenientPermissionHandler(result), result)
     }
 
     private fun request(

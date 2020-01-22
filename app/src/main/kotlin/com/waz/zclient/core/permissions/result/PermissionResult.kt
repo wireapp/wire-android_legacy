@@ -21,6 +21,7 @@ import com.waz.zclient.core.exception.FeatureFailure
 
 sealed class PermissionSuccess
 object PermissionGranted : PermissionSuccess()
+object PermissionContinued : PermissionSuccess()
 
 data class PermissionDenied(val permissions: List<String>) : PermissionFailure()
 sealed class PermissionFailure : FeatureFailure()

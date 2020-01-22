@@ -46,7 +46,4 @@ class StrictPermissionHandler(private val onResult: (Either<Failure, PermissionS
             Either.Left(PermissionDenied(denied.map { permissions[it] }))
         }
     }
-
-    private fun deniedPermissions(grantResults: IntArray) =
-        grantResults.indices.filter { grantResults[it] != PermissionChecker.PERMISSION_GRANTED }
 }
