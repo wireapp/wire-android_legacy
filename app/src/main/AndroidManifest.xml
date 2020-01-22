@@ -223,11 +223,11 @@
             android:exported="false"
             >
             <intent-filter>
-                <action android:name="com.waz.zclient.CREATE_ACCOUNT_ACTION" />
+                <action android:name="${applicationId}.CREATE_ACCOUNT_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.waz.zclient.LOGIN_ACTION" />
+                <action android:name="${applicationId}.LOGIN_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

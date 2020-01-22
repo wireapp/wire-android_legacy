@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
+import com.waz.zclient.core.config.Config
 import kotlinx.android.synthetic.main.fragment_welcome.*
 
 
@@ -24,13 +25,13 @@ class WelcomeFragment : Fragment() {
     }
 
     private fun createAccount() {
-        val createAccountIntent = Intent().apply { action = "com.waz.zclient.CREATE_ACCOUNT_ACTION" }
+        val createAccountIntent = Intent().apply { action = ACTION_CREATE_ACCOUNT }
         startActivity(createAccountIntent)
     }
 
     private fun login() {
         val loginIntent = Intent().apply {
-            action = "com.waz.zclient.LOGIN_ACTION"
+            action = ACTION_LOGIN
             putExtra(BUNDLE_KEY_FRAGMENT_TO_START, BUNDLE_VALUE_LOGIN_FRAGMENT)
         }
         startActivity(loginIntent)
@@ -38,6 +39,8 @@ class WelcomeFragment : Fragment() {
 
     companion object {
         fun newInstance() = WelcomeFragment()
+        private val ACTION_LOGIN = Config.applicationId() + ".LOGIN_ACTION"
+        private val ACTION_CREATE_ACCOUNT = Config.applicationId() + ".CREATE_ACCOUNT_ACTION"
         const val BUNDLE_KEY_FRAGMENT_TO_START = "fragmentToStart"
         const val BUNDLE_VALUE_LOGIN_FRAGMENT = "LoginFragment"
     }

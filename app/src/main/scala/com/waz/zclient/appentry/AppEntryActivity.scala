@@ -34,6 +34,7 @@ import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
 import com.waz.zclient.auth.WelcomeFragment
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -129,8 +130,6 @@ class AppEntryActivity extends BaseActivity {
     if (getActionBar != null) getActionBar.hide()
     super.onCreate(savedInstanceState)
 
-    if (getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) == WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT)
-      showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
 
     ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     setContentView(R.layout.activity_signup)
@@ -139,7 +138,9 @@ class AppEntryActivity extends BaseActivity {
 
     closeButton.onClick(abortAddAccount())
 
-    showFragment()
+    if (getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) == WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT)
+      showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
+    else showFragment()
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
