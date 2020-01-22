@@ -19,23 +19,17 @@ package com.waz.zclient.core.permissions
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.extension.ActivityLifecycleObserver
-import com.waz.zclient.core.extension.FragmentLifecycleObserver
-import com.waz.zclient.core.extension.addObserver
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.permissions.handlers.LenientPermissionHandler
 import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
-import com.waz.zclient.utilities.build.SdkVersionChecker
 import kotlin.math.abs
 
 /**
@@ -43,12 +37,11 @@ import kotlin.math.abs
  * Credit to Michael Spitsin for the inspiration behind this mechanism.
  * https://medium.com/@programmerr47/working-with-permissions-in-android-bbba823be785
  */
-typealias PermissionRequester = (Array<String>, Int) -> Unit
+typealias PermissionRequester = (Array<out String>, Int) -> Unit
 
 typealias PermissionChecker = (String) -> Boolean
 
-class PermissionManager(internal val sdkChecker: SdkVersionChecker = SdkVersionChecker()) :
-    FragmentLifecycleObserver, ActivityLifecycleObserver {
+abstract class PermissionManager : LifecycleObserver {
 
     private val requestedPermissionHandlers = mutableMapOf<Int, PermissionHandler>()
     private val pendingPermissions = mutableMapOf<Int, RequestedPermissions>()
@@ -56,21 +49,7 @@ class PermissionManager(internal val sdkChecker: SdkVersionChecker = SdkVersionC
     internal lateinit var requester: PermissionRequester
     internal lateinit var checker: PermissionChecker
 
-    override fun from(owner: Fragment) {
-        if (sdkChecker.isAndroid6orAbove()) {
-            requester = owner::requestPermissions
-            checker = { isGranted(it, owner.requireContext()) }
-        }
-    }
-
-    override fun from(owner: AppCompatActivity) {
-        if (sdkChecker.isAndroid6orAbove()) {
-            requester = owner::requestPermissions
-            checker = { isGranted(it, owner) }
-        }
-    }
-
-    private fun isGranted(permission: String, context: Context): Boolean =
+    protected fun isGranted(context: Context, permission: String): Boolean =
         ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
@@ -97,9 +76,12 @@ class PermissionManager(internal val sdkChecker: SdkVersionChecker = SdkVersionC
     ) =
         RequestedPermissions(requestedPermissionHandlers.remove(requestCode)!!, permissions, grantResults)
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun requestPermissions(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
+    fun strictPermissionRequest(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
         request(permissions, StrictPermissionHandler(result), result)
+    }
+
+    fun lenientPermissionRequest(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
+        request(permissions, LenientPermissionHandler(result), result)
     }
 
     private fun request(
@@ -116,21 +98,6 @@ class PermissionManager(internal val sdkChecker: SdkVersionChecker = SdkVersionC
             requestedPermissionHandlers[id] = handler
             requester(permissionArray, id)
         }
-    }
-
-    companion object {
-
-        fun newInstance(owner: AppCompatActivity): PermissionManager =
-            PermissionManager().also {
-                owner.lifecycle.addObserver(it, owner)
-                it.from(owner)
-            }
-
-        fun newInstance(owner: Fragment): PermissionManager =
-            PermissionManager().also {
-                owner.lifecycle.addObserver(it, owner)
-                it.from(owner)
-            }
     }
 }
 

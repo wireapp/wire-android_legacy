@@ -17,6 +17,11 @@
  */
 package com.waz.zclient.core.permissions.handlers
 
+import androidx.core.content.PermissionChecker
+
 interface PermissionHandler {
     fun onPermissionResult(permissions: Array<out String>, grantResults: IntArray)
+
+    fun deniedPermissions(grantResults: IntArray) =
+        grantResults.indices.filter { grantResults[it] != PermissionChecker.PERMISSION_GRANTED }
 }

@@ -15,15 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.waz.zclient.core.permissions.extension
+package com.waz.zclient.utilities.device
 
-import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.permissions.PermissionManager
-import com.waz.zclient.core.permissions.result.PermissionSuccess
+import android.os.Build
 
-private val READ_PHONE_STATE = listOf(android.Manifest.permission.READ_PHONE_STATE)
-
-fun PermissionManager.readPhoneState(onResult: (Either<Failure, PermissionSuccess>) -> Unit) {
-    strictPermissionRequest(READ_PHONE_STATE, onResult)
+class SdkVersionChecker {
+    fun isAndroid6orAbove() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 }

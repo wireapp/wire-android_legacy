@@ -19,30 +19,29 @@ package com.waz.zclient.core.permissions.handlers
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.permissions.result.PermissionContinued
 import com.waz.zclient.core.permissions.result.PermissionDenied
-import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
 
 /**
- * This is the STRICT permission handler because if the user denies the permission,
- * you can't continue down the happy path
+ * This is the LENIENT permission handler because even if the user denies the permission,
+ * you can continue down the happy path
  */
-class StrictPermissionHandler(private val onResult: (Either<Failure, PermissionSuccess>) -> Unit) :
+class LenientPermissionHandler(private val onResult: (Either<Failure, PermissionSuccess>) -> Unit) :
     PermissionHandler {
 
     override fun onPermissionResult(permissions: Array<out String>, grantResults: IntArray) {
-        onResult(calculateResult(permissions, grantResults))
+        calculateResult(permissions, grantResults)
     }
 
     private fun calculateResult(
         permissions: Array<out String>,
         grantResults: IntArray
-    ): Either<Failure, PermissionSuccess> {
+    ) {
         val denied = deniedPermissions(grantResults)
-        return if (denied.isEmpty()) {
-            Either.Right(PermissionGranted)
-        } else {
-            Either.Left(PermissionDenied(denied.map { permissions[it] }))
+        if (denied.isNotEmpty()) {
+            onResult(Either.Left(PermissionDenied(denied.map { permissions[it] })))
         }
+        onResult(Either.Right(PermissionContinued))
     }
 }
