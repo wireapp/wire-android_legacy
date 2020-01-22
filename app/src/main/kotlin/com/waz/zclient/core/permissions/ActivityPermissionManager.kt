@@ -5,8 +5,9 @@ import com.waz.zclient.core.permissions.requesting.PermissionRequesterFactory
 import com.waz.zclient.utilities.device.SdkVersionChecker
 import java.lang.ref.WeakReference
 
-class ActivityPermissionManager(activity: AppCompatActivity,
-                                sdkVersionChecker: SdkVersionChecker = SdkVersionChecker()
+class ActivityPermissionManager(
+    activity: AppCompatActivity,
+    sdkVersionChecker: SdkVersionChecker = SdkVersionChecker()
 ) : PermissionManager() {
 
     private val activityRef = WeakReference<AppCompatActivity>(activity)

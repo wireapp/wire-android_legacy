@@ -28,7 +28,6 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.permissions.handlers.LenientPermissionHandler
 import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
-import com.waz.zclient.core.permissions.result.PermissionDenied
 import com.waz.zclient.core.permissions.result.PermissionGranted
 import com.waz.zclient.core.permissions.result.PermissionSuccess
 import kotlin.math.abs

@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.core.permissions.handlers
 
-import androidx.core.content.PermissionChecker
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.permissions.result.PermissionDenied

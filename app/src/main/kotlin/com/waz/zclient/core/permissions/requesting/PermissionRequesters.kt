@@ -16,7 +16,9 @@ class PostMarshmallowPermissionRequest(val context: WeakReference<Activity>) : P
 }
 
 class PreMarshmallowPermissionRequest : PermissionRequester {
-    override fun invoke(p1: Array<out String>, p2: Int) {}
+    override fun invoke(p1: Array<out String>, p2: Int) {
+        // Pre marshmallow will behaves using the manifest
+    }
 }
 
 class PermissionRequesterFactory private constructor() {
@@ -32,8 +34,3 @@ class PermissionRequesterFactory private constructor() {
             }
     }
 }
-
-
-
-
-
