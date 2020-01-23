@@ -13,8 +13,8 @@ import com.waz.zclient.user.domain.usecase.ChangeEmailParams
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameParams
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.ChangePhoneParams
-import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
+import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneParams
+import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
@@ -30,7 +30,7 @@ data class ProfileDetail(val value: String) {
 class SettingsAccountViewModel(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val changeNameUseCase: ChangeNameUseCase,
-    private val changePhoneUseCase: ChangePhoneUseCase,
+    private val changePhoneNumberUseCase: ChangePhoneNumberUseCase,
     private val changeEmailUseCase: ChangeEmailUseCase,
     private val changeHandleUseCase: ChangeHandleUseCase
 ) : ViewModel() {
@@ -69,7 +69,7 @@ class SettingsAccountViewModel(
     }
 
     fun updatePhone(phoneNumber: String) {
-        changePhoneUseCase(viewModelScope, ChangePhoneParams(phoneNumber)) {
+        changePhoneNumberUseCase(viewModelScope, ChangePhoneParams(phoneNumber)) {
             it.fold(::handleError) {}
         }
     }

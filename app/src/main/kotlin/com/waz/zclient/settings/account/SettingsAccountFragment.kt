@@ -14,7 +14,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
-import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneFragment
+import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -129,7 +129,7 @@ class SettingsAccountFragment : Fragment() {
             .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showEditPhoneDialog() =
-        EditPhoneFragment.newInstance(preferences_account_phone_title.text.toString())
+        EditPhoneDialogFragment.newInstance(preferences_account_phone_title.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showGenericEditDialog(

@@ -1,4 +1,4 @@
-package com.waz.zclient.user.domain.usecase
+package com.waz.zclient.user.domain.usecase.phonenumber
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
@@ -12,13 +12,13 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
-class ChangePhoneUseCaseTest : UnitTest() {
+class ChangePhoneNumberUseCaseTest : UnitTest() {
 
     companion object {
         private const val TEST_PHONE = "+499477466343"
     }
 
-    private lateinit var changePhoneUseCase: ChangePhoneUseCase
+    private lateinit var changePhoneNumberUseCase: ChangePhoneNumberUseCase
 
     @Mock
     private lateinit var userRepository: UsersRepository
@@ -28,14 +28,14 @@ class ChangePhoneUseCaseTest : UnitTest() {
 
     @Before
     fun setup() {
-        changePhoneUseCase = ChangePhoneUseCase(userRepository)
+        changePhoneNumberUseCase = ChangePhoneNumberUseCase(userRepository)
     }
 
     @Test
     fun `Given update phone use case is executed, then the repository should update phone`() = runBlockingTest {
         `when`(changePhoneParams.newPhoneNumber).thenReturn(TEST_PHONE)
 
-        changePhoneUseCase.run(changePhoneParams)
+        changePhoneNumberUseCase.run(changePhoneParams)
 
         verify(userRepository).changePhone(eq(TEST_PHONE))
     }

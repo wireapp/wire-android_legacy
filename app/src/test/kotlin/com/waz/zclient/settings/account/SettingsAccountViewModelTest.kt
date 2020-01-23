@@ -1,6 +1,5 @@
 package com.waz.zclient.settings.account
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.functional.Either
@@ -9,6 +8,8 @@ import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.*
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleParams
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
+import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneParams
+import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.lenient
@@ -46,7 +46,7 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeNameUseCase: ChangeNameUseCase
 
     @Mock
-    private lateinit var changePhoneUseCase: ChangePhoneUseCase
+    private lateinit var changePhoneNumberUseCase: ChangePhoneNumberUseCase
 
     @Mock
     private lateinit var changeEmailUseCase: ChangeEmailUseCase
@@ -64,7 +64,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel = SettingsAccountViewModel(
             getUserProfileUseCase,
             changeNameUseCase,
-            changePhoneUseCase,
+            changePhoneNumberUseCase,
             changeEmailUseCase,
             changeHandleUseCase)
         userFlow = flow { user }
@@ -198,7 +198,7 @@ class SettingsAccountViewModelTest : UnitTest() {
     fun `given account phone is updated and fails with HttpError, then error observer is notified`() {
         val changePhoneParams = mock(ChangePhoneParams::class.java)
 
-        runBlockingTest { lenient().`when`(changePhoneUseCase.run(changePhoneParams)).thenReturn(Either.Left(HttpError(TEST_ERROR_CODE, TEST_ERROR_MESSAGE))) }
+        runBlockingTest { lenient().`when`(changePhoneNumberUseCase.run(changePhoneParams)).thenReturn(Either.Left(HttpError(TEST_ERROR_CODE, TEST_ERROR_MESSAGE))) }
 
         viewModel.updatePhone(TEST_PHONE)
 
