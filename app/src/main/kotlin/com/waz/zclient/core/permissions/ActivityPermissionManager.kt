@@ -18,21 +18,19 @@
 package com.waz.zclient.core.permissions
 
 import androidx.appcompat.app.AppCompatActivity
-import com.waz.zclient.core.permissions.requesting.PermissionRequesterFactory
-import com.waz.zclient.utilities.device.SdkVersionChecker
+import androidx.core.app.ActivityCompat
 import java.lang.ref.WeakReference
 
 class ActivityPermissionManager(
-    activity: AppCompatActivity,
-    sdkVersionChecker: SdkVersionChecker = SdkVersionChecker()
+    activity: AppCompatActivity
 ) : PermissionManager() {
 
-    private val activityRef = WeakReference<AppCompatActivity>(activity)
+    private val activityRef = WeakReference(activity)
 
     init {
         activityRef.get()?.let {
             it.lifecycle.addObserver(this)
-            requester = PermissionRequesterFactory.getPermissionRequester(it, sdkVersionChecker)
+            request = { permissions, id -> ActivityCompat.requestPermissions(it, permissions, id) }
             checker = { permission -> isGranted(it, permission) }
         }
     }
