@@ -26,34 +26,36 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.permissions.handlers.LenientPermissionHandler
-import com.waz.zclient.core.permissions.handlers.PermissionHandler
 import com.waz.zclient.core.permissions.handlers.StrictPermissionHandler
-import com.waz.zclient.core.permissions.result.PermissionGranted
+import com.waz.zclient.core.permissions.requesting.PermissionRequester
+import com.waz.zclient.core.permissions.requesting.RequestedPermissions
 import com.waz.zclient.core.permissions.result.PermissionSuccess
-import kotlin.math.abs
 
 /**
  * Handles permissions across fragments and activities.
  * Credit to Michael Spitsin for the inspiration behind this mechanism.
  * https://medium.com/@programmerr47/working-with-permissions-in-android-bbba823be785
  */
-typealias PermissionRequester = (Array<out String>, Int) -> Unit
-
 typealias PermissionChecker = (String) -> Boolean
+
+typealias PermissionRequest = (Array<out String>, Int) -> Unit
 
 abstract class PermissionManager : LifecycleObserver {
 
-    private val requestedPermissionHandlers = mutableMapOf<Int, PermissionHandler>()
     private val pendingPermissions = mutableMapOf<Int, RequestedPermissions>()
 
-    internal lateinit var requester: PermissionRequester
+    private val permissionRequester: PermissionRequester by lazy {
+        PermissionRequester()
+    }
+
+    internal lateinit var request: PermissionRequest
     internal lateinit var checker: PermissionChecker
 
     protected fun isGranted(context: Context, permission: String): Boolean =
         ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
     @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    fun setup() {
+    fun updatePendingPermissions() {
         pendingPermissions.onEach { it.value.onPermissionResult() }
         pendingPermissions.clear()
     }
@@ -64,48 +66,16 @@ abstract class PermissionManager : LifecycleObserver {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        if (requestedPermissionHandlers.containsKey(requestCode)) {
-            pendingPermissions[requestCode] = generateResult(requestCode, permissions, grantResults)
+        permissionRequester.onRequestPermissionsResult(requestCode, permissions, grantResults) {
+            pendingPermissions[requestCode] = it
         }
     }
 
-    private fun generateResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) =
-        RequestedPermissions(requestedPermissionHandlers.remove(requestCode)!!, permissions, grantResults)
-
     fun strictPermissionRequest(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
-        request(permissions, StrictPermissionHandler(result), result)
+        permissionRequester.request(request, checker, permissions, StrictPermissionHandler(result), result)
     }
 
     fun lenientPermissionRequest(permissions: List<String>, result: (Either<Failure, PermissionSuccess>) -> Unit) {
-        request(permissions, LenientPermissionHandler(result), result)
+        permissionRequester.request(request, checker, permissions, LenientPermissionHandler(result), result)
     }
-
-    private fun request(
-        permissions: List<String>,
-        handler: PermissionHandler,
-        result: (Either<Failure, PermissionSuccess>) -> Unit
-    ) {
-        val deniedPermissions = ArrayList(permissions.filterNot { checker(it) })
-        val permissionArray = deniedPermissions.toTypedArray()
-        if (permissionArray.isEmpty()) {
-            result(Either.Right(PermissionGranted))
-        } else {
-            val id = abs(handler.hashCode().toShort().toInt())
-            requestedPermissionHandlers[id] = handler
-            requester(permissionArray, id)
-        }
-    }
-}
-
-private class RequestedPermissions internal constructor(
-    private val permissionHandler: PermissionHandler,
-    private val resultPermissions: Array<out String>,
-    private val grantResults: IntArray
-) {
-
-    fun onPermissionResult() = permissionHandler.onPermissionResult(resultPermissions, grantResults)
 }

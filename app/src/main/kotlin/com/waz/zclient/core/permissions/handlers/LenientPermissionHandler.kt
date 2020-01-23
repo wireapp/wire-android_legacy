@@ -31,13 +31,10 @@ class LenientPermissionHandler(private val onResult: (Either<Failure, Permission
     PermissionHandler {
 
     override fun onPermissionResult(permissions: Array<out String>, grantResults: IntArray) {
-        calculateResult(permissions, grantResults)
+        generateResult(permissions, grantResults)
     }
 
-    private fun calculateResult(
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    private fun generateResult(permissions: Array<out String>, grantResults: IntArray) {
         val denied = deniedPermissions(grantResults)
         if (denied.isNotEmpty()) {
             onResult(Either.Left(PermissionDenied(denied.map { permissions[it] })))

@@ -31,10 +31,10 @@ class StrictPermissionHandler(private val onResult: (Either<Failure, PermissionS
     PermissionHandler {
 
     override fun onPermissionResult(permissions: Array<out String>, grantResults: IntArray) {
-        onResult(calculateResult(permissions, grantResults))
+        onResult(generateResult(permissions, grantResults))
     }
 
-    private fun calculateResult(
+    private fun generateResult(
         permissions: Array<out String>,
         grantResults: IntArray
     ): Either<Failure, PermissionSuccess> {
