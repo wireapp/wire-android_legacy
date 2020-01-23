@@ -50,6 +50,19 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       event.asInstanceOf[UserConnectionEvent].message should be(Some("Hello Test"))
     }
 
+    scenario("parse UserConnectionEvent with no explicit conversation id") {
+
+      Given("some json data")
+      val js = new JSONObject(userConectionEventData)
+
+      When("parsing json")
+      val event = EventDecoder(js)
+
+      Then("we should have a UserConnectionEvent with convId == selfUser.id") // TODO: This should depend on the user connection event status
+      event.isInstanceOf[UserConnectionEvent] shouldEqual true
+      event.asInstanceOf[UserConnectionEvent].convId should be(RConvId(selfUser.id.str))
+    }
+
     scenario("Read receipt off messages are parsed correctly") {
       val readReceiptJson = new JSONObject(
       s"""{
@@ -247,6 +260,18 @@ object EventSpec {
        |  "connection": {
        |    "status": "sent",
        |    "conversation": "f660330f-f0e3-4511-8d15-71251f44ce32",
+       |    "to": "${otherUser.id}",
+       |    "from": "${selfUser.id}",
+       |    "last_update": "2014-06-12T10:04:02.047Z",
+       |    "message": "Hello Test"
+       |  },
+       |  "type": "user.connection"
+       |}""".stripMargin
+
+  val userConectionEventDataNoConv =
+    s"""{
+       |  "connection": {
+       |    "status": "sent",
        |    "to": "${otherUser.id}",
        |    "from": "${selfUser.id}",
        |    "last_update": "2014-06-12T10:04:02.047Z",

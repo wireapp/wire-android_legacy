@@ -32,7 +32,6 @@ import com.waz.sync.client.{AccessTokenProvider, PushNotificationEncoded}
 import com.waz.sync.client.PushNotificationsClient.NotificationsResponseEncoded
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
-import com.waz.utils.wrappers.URI
 import com.waz.utils.{Backoff, ExponentialBackoff}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client

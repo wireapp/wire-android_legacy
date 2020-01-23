@@ -69,14 +69,16 @@ object RConvEvent extends (Event => RConvId) {
   }
 }
 case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
-case class UserConnectionEvent(convId:       RConvId,
+case class UserConnectionEvent(_convId:      Option[RConvId],
                                from:         UserId,
                                to:           UserId,
                                message:      Option[String],
                                status:       ConnectionStatus,
                                lastUpdated:  RemoteInstant,
                                fromUserName: Option[Name] = None
-                              ) extends UserEvent with RConvEvent
+                              ) extends UserEvent with RConvEvent {
+  override lazy val convId: RConvId = _convId.getOrElse(RConvId(from.str)) // FIXME
+}
 case class UserDeleteEvent(user: UserId) extends UserEvent
 case class OtrClientAddEvent(client: Client) extends OtrClientEvent
 case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
@@ -217,7 +219,16 @@ object Event {
 
     import com.waz.utils.JsonDecoder._
 
-    def connectionEvent(implicit js: JSONObject, name: Option[Name]) = UserConnectionEvent('conversation, 'from, 'to, 'message, ConnectionStatus('status), JsonDecoder.decodeISORemoteInstant('last_update), fromUserName = name)
+    def connectionEvent(implicit js: JSONObject, name: Option[Name]) =
+      UserConnectionEvent(
+        'conversation,
+        'from,
+        'to,
+        'message,
+        ConnectionStatus('status),
+        JsonDecoder.decodeISORemoteInstant('last_update),
+        fromUserName = name
+      )
 
     def contactJoinEvent(implicit js: JSONObject) = ContactJoinEvent('id, 'name)
 
