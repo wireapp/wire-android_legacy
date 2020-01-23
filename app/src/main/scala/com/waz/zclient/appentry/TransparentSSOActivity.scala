@@ -25,6 +25,10 @@ class TransparentSSOActivity
 
   override def onCreate(savedInstanceState: Bundle) : Unit ={
     super.onCreate(savedInstanceState)
+
+    if (themeController.isDarkTheme) setTheme(R.style.Theme_Dark_Transparent)
+    else setTheme(R.style.Theme_Light_Transparent)
+
     setContentView(R.layout.transparent_layout)
     replaceFragment()
   }

@@ -1453,4 +1453,8 @@
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
 
+    <!-- SSO Login -->
+    <string name="sso_login_dialog_title">Enterprise log in</string>
+    <string name="sso_login_dialog_message">Enter your email or SSO access code here:</string>
+
 </resources>

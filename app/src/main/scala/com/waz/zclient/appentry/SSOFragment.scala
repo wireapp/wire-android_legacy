@@ -26,7 +26,6 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -44,8 +43,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private lazy val dialogStaff = new InputDialog.Listener with InputDialog.InputValidator {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn        => verbose(l"Negative")
-      case OnPositiveBtn(input) => verifyInput(input)
+      case OnNegativeBtn          =>  getActivity.finish()
+      case OnPositiveBtn(input)   => verifyInput(input)
     }
 
     override def isInputInvalid(input: String): ValidatorResult =
@@ -79,8 +78,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   protected def showSSODialog(token: Option[String]): Unit =
     if (findChildFragment[InputDialog](SSODialogTag).isEmpty)
       InputDialog.newInstance(
-        title = R.string.app_entry_sso_dialog_title,
-        message = R.string.app_entry_sso_dialog_message,
+        title = R.string.sso_login_dialog_title,
+        message = R.string.sso_login_dialog_message,
         inputHint = Some(R.string.app_entry_sso_input_hint),
         inputValue = token,
         validateInput = true,
