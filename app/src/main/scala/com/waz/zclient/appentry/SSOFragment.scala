@@ -24,10 +24,9 @@ import com.waz.service.SSOService
 import com.waz.zclient.InputDialog._
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
+import com.waz.zclient.appentry.EnterpriseLoginInputType.{Email, SsoCode}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.views.InputBox.EmailValidator
-import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -47,8 +46,11 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private lazy val dialogStaff = new InputDialog.Listener {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn        => verbose(l"Negative")
-      case OnPositiveBtn(input) => verifyInput(input)
+      case OnPositiveBtn(input) => inputValidator.inputType match {
+        case Some(SsoCode) => verifySsoCode(input)
+        case Some(Email) => verifyEmail(input)
+        case _ => throw new IllegalStateException("User should not be able to click the button without a valid input")
+      }
     }
   }
 
@@ -67,7 +69,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   protected def extractTokenAndShowSSODialog(showIfNoToken: Boolean = false): Unit =
     userAccountsController.ssoToken.head.foreach {
-      case Some(token) => verifyInput(token)
+      case Some(token) => verifySsoCode(token)
       case None if findChildFragment[InputDialog](SSODialogTag).isEmpty =>
         extractTokenFromClipboard
           .filter(_.nonEmpty || showIfNoToken)
@@ -91,7 +93,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         .setValidator(inputValidator)
         .show(getChildFragmentManager, SSODialogTag)
 
-  protected def verifyInput(input: String): Future[Unit] =
+  private def verifySsoCode(input: String): Future[Unit] =
     ssoService.extractUUID(input).fold(Future.successful(())) { token =>
       onVerifyingToken(true)
       ssoService.verifyToken(token).flatMap { result =>
@@ -118,18 +120,11 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       }
     }
 
+  private def verifyEmail(email: String): Future[Unit] =
+    Future.successful(()) //TODO send request to BE
+
   protected def activity: AppEntryActivity
 
   protected def onVerifyingToken(verifying: Boolean): Unit =
     inject[SpinnerController].showSpinner(verifying)
-}
-
-case class EnterpriseLoginInputValidator(private val ssoService: SSOService) extends InputValidator {
-  /**
-    * @return Non empty option with error message if input is invalid.
-    */
-  override def isInputInvalid(input: String): ValidatorResult = {
-    if (ssoService.isTokenValid(input.trim) || EmailValidator.isValid(input)) ValidatorResult.Valid
-    else ValidatorResult.Invalid(error = Some("Error!!!")) //todo: show a proper error message
-  }
 }
