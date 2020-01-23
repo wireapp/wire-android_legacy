@@ -34,19 +34,19 @@ class SettingsAccountViewModel(
     private val profileLiveData = MutableLiveData<User>()
     private val _errorLiveData = MutableLiveData<String>()
 
-    val name: LiveData<String> = Transformations.map(profileLiveData) {
+    val nameLiveData: LiveData<String> = Transformations.map(profileLiveData) {
         it.name
     }
 
-    val handle: LiveData<String> = Transformations.map(profileLiveData) {
+    val handleLiveData: LiveData<String> = Transformations.map(profileLiveData) {
         it.handle
     }
 
-    val email: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
+    val emailLiveData: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
         if (it.email.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.email)
     }
 
-    val phone: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
+    val phoneNumberLiveData: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
         if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
     }
 

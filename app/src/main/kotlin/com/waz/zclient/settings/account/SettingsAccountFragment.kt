@@ -52,7 +52,7 @@ class SettingsAccountFragment : Fragment() {
 
     //TODO Will need changing to a phone dialog
     private fun initAccountPhoneNumber() {
-        settingsAccountViewModel.phone.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
+        settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
         settingsAccountPhoneContainerLinearLayout.setOnClickListener {
             val title = getString(R.string.pref_account_add_phone_title)
             val defaultValue = settingsAccountPhoneTitleTextView.text.toString()
@@ -61,7 +61,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountEmail() {
-        settingsAccountViewModel.email.observe(viewLifecycleOwner) { updateAccountEmail(it) }
+        settingsAccountViewModel.emailLiveData.observe(viewLifecycleOwner) { updateAccountEmail(it) }
         settingsAccountEmailContainerLinearLayout.setOnClickListener {
             val title = getString(R.string.pref_account_add_email_title)
             val defaultValue = settingsAccountEmailTitleTextView.text.toString()
@@ -70,12 +70,12 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountHandle() {
-        settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
+        settingsAccountViewModel.handleLiveData.observe(viewLifecycleOwner) { updateAccountHandle(it) }
         settingsAccountHandleContainerLinearLayout.setOnClickListener { showEditHandleDialog() }
     }
 
     private fun initAccountName() {
-        settingsAccountViewModel.name.observe(viewLifecycleOwner) { updateAccountName(it) }
+        settingsAccountViewModel.nameLiveData.observe(viewLifecycleOwner) { updateAccountName(it) }
         settingsAccountNameContainerLinearLayout.setOnClickListener {
             val title = getString(R.string.pref_account_edit_name_title)
             val defaultValue = settingsAccountNameTitleTextView.text.toString()
@@ -130,7 +130,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun showEditHandleDialog() {
-        settingsAccountViewModel.handle.value?.let {
+        settingsAccountViewModel.handleLiveData.value?.let {
             EditHandleFragment.newInstance(it)
                 .show(requireActivity().supportFragmentManager, String.empty())
         }
