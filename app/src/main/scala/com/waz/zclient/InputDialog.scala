@@ -23,10 +23,11 @@ import android.os.Bundle
 import android.text.TextWatcher
 import android.view.View.OnAttachStateChangeListener
 import android.view.{LayoutInflater, View}
-import android.widget.{EditText, TextView}
+import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.google.android.material.textfield.{TextInputEditText, TextInputLayout}
 import com.waz.utils.returning
 import com.waz.zclient.utils.RichTextView
 
@@ -39,7 +40,7 @@ object InputDialog {
   trait ValidatorResult
   object ValidatorResult {
     case object Valid extends ValidatorResult
-    case class Invalid(actions: Option[EditText => Unit] = None) extends ValidatorResult
+    case class Invalid(error: Option[String] = None) extends ValidatorResult
   }
 
   trait InputValidator {
@@ -101,7 +102,8 @@ class InputDialog extends DialogFragment with FragmentHelper {
   }
 
   private lazy val view = LayoutInflater.from(getActivity).inflate(R.layout.dialog_with_input_field, null)
-  private lazy val input = view.findViewById[EditText](R.id.input)
+  private lazy val input = view.findViewById[TextInputEditText](R.id.input)
+  private lazy val textInputLayout = view.findViewById[TextInputLayout](R.id.input_dialog_textinputlayout)
   private lazy val dialog =
     new AlertDialog.Builder(getContext)
       .setView(view)
@@ -156,9 +158,13 @@ class InputDialog extends DialogFragment with FragmentHelper {
     _.isInputInvalid(str) match {
       case ValidatorResult.Valid =>
         if (getBooleanArg(DisablePositiveBtnOnInvalidInput)) positiveBtn.setEnabled(true)
-      case ValidatorResult.Invalid(actions) =>
+        textInputLayout.setErrorEnabled(false)
+      case ValidatorResult.Invalid(error) =>
         if (getBooleanArg(DisablePositiveBtnOnInvalidInput)) positiveBtn.setEnabled(false)
-        actions.foreach(_(input))
+        error.foreach({
+          textInputLayout.setErrorEnabled(true)
+          textInputLayout.setError(_)
+        })
     }
   )
 
