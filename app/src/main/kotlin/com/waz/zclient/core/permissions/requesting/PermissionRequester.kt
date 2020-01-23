@@ -68,7 +68,6 @@ class PermissionRequester {
         permissions,
         grantResults
     )
-
 }
 
 class RequestedPermissions internal constructor(
