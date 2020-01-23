@@ -18,8 +18,11 @@
 package com.waz.zclient.appentry
 
 import android.app.FragmentManager
+import android.util.Log
 import com.waz.api.impl.ErrorResponse
+import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.model2.transport.responses.DomainSuccessful
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog._
 import com.waz.zclient._
@@ -99,29 +102,41 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       ssoService.verifyToken(token).flatMap { result =>
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
-        import ErrorResponse._
         result match {
           case Right(true) =>
             getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
           case Right(false) =>
             showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
-          case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
-            showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(error) =>
-            inject[AccentColorController].accentColor.head.flatMap { color =>
-              showConfirmationDialog(
-                title = getString(R.string.sso_signin_error_title),
-                msg   = getString(R.string.sso_signin_error_try_again_message, error.code.toString),
-                color = color
-              )
-            }.map(_ => ())
+          case Left(errorResponse) => handleVerificationError(errorResponse)
         }
       }
     }
 
-  private def verifyEmail(email: String): Future[Unit] =
-    Future.successful(()) //TODO send request to BE
+  private def verifyEmail(email: String): Future[Unit] = {
+    val domain = ssoService.extractDomain(email)
+    ssoService.verifyDomain(domain).flatMap {
+      case Right(DomainSuccessful(configFileUrl)) =>
+        Log.e("DOMAIN", "SUCCESS "+configFileUrl)
+        Future.successful(()) //TODO: save config file and continue flow
+      case Right(_) =>
+        showErrorDialog("Error", "Domain not found") //TODO better error message
+      case Left(err) => handleVerificationError(err)
+    }
+  }
+
+  private def handleVerificationError(errorResponse: ErrorResponse) = errorResponse match {
+    case ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _) =>
+      showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
+    case error =>
+      inject[AccentColorController].accentColor.head.flatMap { color =>
+        showConfirmationDialog(
+          title = getString(R.string.sso_signin_error_title),
+          msg   = getString(R.string.sso_signin_error_try_again_message, error.code.toString),
+          color = color
+        )
+      }.map(_ => ())
+  }
 
   protected def activity: AppEntryActivity
 
