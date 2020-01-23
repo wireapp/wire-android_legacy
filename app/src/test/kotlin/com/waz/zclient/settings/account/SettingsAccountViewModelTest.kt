@@ -146,7 +146,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updateName(TEST_NAME)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
 
@@ -162,7 +162,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updateEmail(TEST_EMAIL)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
     }
@@ -177,7 +177,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updatePhone(TEST_PHONE)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
     }
