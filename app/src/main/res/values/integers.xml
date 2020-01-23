@@ -107,4 +107,6 @@
     <integer name="slide_transition_fade_duration">250</integer>
 
     <integer name="max_folder_name_length">64</integer>
+    <integer name="country_code_input_limit">4</integer>
+    <integer name="phone_number_input_limit">16</integer>
 </resources>
