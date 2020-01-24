@@ -27,12 +27,12 @@
         android:layout_height="wrap_content">
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/preferences_info_header"
+            android:id="@+id/settingsAccountInfoSectionHeaderTextView"
             style="@style/Settings.Header.TextView"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_details_category_title"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_name"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountNameContainerLinearLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -46,10 +46,10 @@
             android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_handle"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountHandleContainerLinearLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_info_header">
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountInfoSectionHeaderTextView">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountNameTitleTextView"
@@ -74,10 +74,10 @@
             android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_email"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountEmailContainerLinearLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_name">
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountNameContainerLinearLayout">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountHandleTitleTextView"
@@ -102,10 +102,10 @@
             android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_account_phone"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountPhoneContainerLinearLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_handle">
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountHandleContainerLinearLayout">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountEmailTitleTextView"
@@ -133,7 +133,7 @@
             app:layout_constraintBottom_toTopOf="@+id/settingsAccountAppearanceSectionHeaderTextView"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_email">
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountEmailContainerLinearLayout">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountPhoneTitleTextView"
@@ -155,10 +155,10 @@
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_appearance_category_title"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_about_website"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountProfilePictureButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/preferences_account_phone" />
+            app:layout_constraintTop_toBottomOf="@+id/settingsAccountPhoneContainerLinearLayout" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountProfilePictureButton"
@@ -223,7 +223,7 @@
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_personal_information_category_title"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_data_usage_permissions"
+            app:layout_constraintBottom_toTopOf="@+id/settingsAccountDataUsagePermissionsButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/settingsAccountReadReceiptsSubtitleTextView" />
