@@ -14,10 +14,12 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
+import com.waz.zclient.settings.account.logout.LogoutDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountEmailContainerLinearLayout
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountEmailTitleTextView
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountHandleContainerLinearLayout
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountHandleTitleTextView
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountLogoutButton
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountNameContainerLinearLayout
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountNameTitleTextView
 import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountPhoneContainerLinearLayout
@@ -47,7 +49,14 @@ class SettingsAccountFragment : Fragment() {
         initAccountEmail()
         initAccountPhoneNumber()
         initResetPassword()
+        initLogoutButton()
         loadProfile()
+    }
+
+    private fun initLogoutButton() {
+        settingsAccountLogoutButton.setOnClickListener {
+            showLogoutDialog()
+        }
     }
 
     //TODO Will need changing to a phone dialog
@@ -127,6 +136,11 @@ class SettingsAccountFragment : Fragment() {
 
     private fun showErrorMessage(errorMessage: String) {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showLogoutDialog() {
+        LogoutDialogFragment.newInstance()
+            .show(requireActivity().supportFragmentManager, String.empty())
     }
 
     private fun showEditHandleDialog() {
