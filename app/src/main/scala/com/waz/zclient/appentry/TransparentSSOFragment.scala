@@ -30,9 +30,11 @@ class TransparentSSOFragment extends SSOFragment {
     extractTokenAndShowSSODialog(showIfNoToken = true)
 
   override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
+
+  override protected def isParentActivityTransparent: Boolean = true
 }
 
 object TransparentSSOFragment {
   def apply() = new TransparentSSOFragment
-  val Tag: String = getClass.getSimpleName
+  val Tag: String =  "TransparentSSOFragment"
 }

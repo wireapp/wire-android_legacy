@@ -59,7 +59,7 @@
         app:layout_constraintGuide_percent="0.889" />
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/wire_logo_image_view"
+        android:id="@+id/welcomeLogoImageView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:src="@drawable/wire"
@@ -71,7 +71,7 @@
         app:layout_constraintTop_toBottomOf="@+id/guideline1" />
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/welcome_to_wire_text_view"
+        android:id="@+id/welcomeTitleTextView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fontFamily="sans-serif-light"
@@ -88,7 +88,7 @@
         app:layout_constraintTop_toBottomOf="@+id/guideline2"  />
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/create_account_button"
+        android:id="@+id/welcomeCreateAccountButton"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/blue_rounded_button"
@@ -104,7 +104,7 @@
         app:layout_constraintTop_toBottomOf="@+id/guideline3" />
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/login_button"
+        android:id="@+id/welcomeLoginButton"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/light_gray_blue_rounded_button"
@@ -119,7 +119,7 @@
 
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/enterprise_login_button"
+        android:id="@+id/welcomeEnterpriseLoginButton"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/dark_gray_rounded_button"

@@ -112,10 +112,10 @@ class InputDialog extends DialogFragment with FragmentHelper {
           listener.foreach(_.onDialogEvent(OnPositiveBtn(input.getText.toString)))
       })
       .setNegativeButton(getArguments.getInt(NegativeBtn), new DialogInterface.OnClickListener {
-        def onClick(dialog: DialogInterface, which: Int): Unit = {
+        def onClick(dialog: DialogInterface, which: Int): Unit =
           dialog.dismiss()
           listener.foreach(_.onDialogEvent(OnNegativeBtn))
-        }})
+        })
       .create()
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
@@ -136,7 +136,7 @@ class InputDialog extends DialogFragment with FragmentHelper {
 
   override def onStart(): Unit = {
     super.onStart()
-    if (getBooleanArg(ValidateInput)) {
+    if (getBooleanArg(ValidateInput)) {setNegativeButton
       input.addOnAttachStateChangeListener(onAttachStateChangeListener)
       positiveBtn.setEnabled(false)
       textWatcher = Option(input.addTextListener(validate))

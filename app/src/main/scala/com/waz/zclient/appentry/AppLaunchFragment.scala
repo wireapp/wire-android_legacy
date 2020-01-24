@@ -94,4 +94,5 @@ class AppLaunchFragment extends SSOFragment {
     loginButton.foreach(_.onClick(activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)))
   }
 
+  override protected def isParentActivityTransparent: Boolean = false
 }

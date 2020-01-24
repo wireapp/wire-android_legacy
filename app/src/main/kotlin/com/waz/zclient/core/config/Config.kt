@@ -10,4 +10,6 @@ object Config {
     fun versionName() = BuildConfig.VERSION_NAME
     fun websiteUrl() = BuildConfig.WEBSITE_URL
     fun accountsUrl() = BuildConfig.ACCOUNTS_URL
+    fun allowSso() = BuildConfig.ALLOW_SSO
+
 }

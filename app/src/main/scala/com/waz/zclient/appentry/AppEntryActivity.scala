@@ -140,7 +140,6 @@ class AppEntryActivity extends BaseActivity {
 
     getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) match {
       case WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT => showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
-      case WelcomeFragment.BUNDLE_VALUE_SSO_FRAGMENT => showFragment(TransparentSSOFragment(), TransparentSSOFragment.Tag)
       case _ => showFragment()
     }
 

@@ -43,7 +43,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private lazy val dialogStaff = new InputDialog.Listener with InputDialog.InputValidator {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn          =>  getActivity.finish()
+      case OnNegativeBtn          =>  if (isParentActivityTransparent) getActivity.finish()
       case OnPositiveBtn(input)   => verifyInput(input)
     }
 
@@ -119,6 +119,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     }
 
   protected def activity: AppEntryActivity
+
+  protected def isParentActivityTransparent: Boolean
 
   protected def onVerifyingToken(verifying: Boolean): Unit = inject[SpinnerController].showSpinner(verifying)
 }

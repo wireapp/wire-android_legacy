@@ -20,20 +20,21 @@ package com.waz.zclient.appentry
 import android.os.Bundle
 import com.waz.zclient._
 
-class TransparentSSOActivity
-  extends BaseActivity {
+class TransparentSSOActivity extends BaseActivity {
 
-  override def onCreate(savedInstanceState: Bundle) : Unit ={
+  override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
-
-    if (themeController.isDarkTheme) setTheme(R.style.Theme_Dark_Transparent)
-    else setTheme(R.style.Theme_Light_Transparent)
-
+    applyTransparentTheme
     setContentView(R.layout.transparent_layout)
-    replaceFragment()
+    showSsoFragment
   }
 
-  def replaceFragment() = getSupportFragmentManager.beginTransaction()
+  private def applyTransparentTheme() = {
+    if (themeController.isDarkTheme) setTheme(R.style.Theme_Dark_Transparent)
+    else setTheme(R.style.Theme_Light_Transparent)
+  }
+
+  private def showSsoFragment() = getSupportFragmentManager.beginTransaction()
     .replace(R.id.layout_container, TransparentSSOFragment(), TransparentSSOFragment.Tag)
     .commit()
 }

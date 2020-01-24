@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
@@ -19,17 +21,18 @@ class WelcomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        create_account_button.setOnClickListener { createAccount() }
-        login_button.setOnClickListener { login() }
-        enterprise_login_button.setOnClickListener {ssoLogin() }
+        welcomeCreateAccountButton.setOnClickListener { startCreateAccountFlow() }
+        welcomeLoginButton.setOnClickListener { startLoginFlow() }
+        welcomeEnterpriseLoginButton.setOnClickListener { startSsoLoginFlow() }
+        configureSSOButtonVisibility()
     }
 
-    private fun createAccount() {
+    private fun startCreateAccountFlow() {
         val createAccountIntent = Intent().apply { action = ACTION_CREATE_ACCOUNT }
         startActivity(createAccountIntent)
     }
 
-    private fun login() {
+    private fun startLoginFlow() {
         val loginIntent = Intent().apply {
             action = ACTION_LOGIN
             putExtra(BUNDLE_KEY_FRAGMENT_TO_START, BUNDLE_VALUE_LOGIN_FRAGMENT)
@@ -37,12 +40,18 @@ class WelcomeFragment : Fragment() {
         startActivity(loginIntent)
     }
 
-    private fun ssoLogin() {
+    private fun startSsoLoginFlow() {
         val loginIntent = Intent().apply {
             action = ACTION_SSO_LOGIN
-            putExtra(BUNDLE_KEY_FRAGMENT_TO_START, BUNDLE_VALUE_SSO_FRAGMENT)
         }
         startActivity(loginIntent)
+    }
+
+    private fun configureSSOButtonVisibility() {
+        when (Config.allowSso()) {
+            true -> welcomeEnterpriseLoginButton.visibility = VISIBLE
+            false -> welcomeEnterpriseLoginButton.visibility = INVISIBLE
+        }
     }
 
     companion object {
@@ -52,6 +61,5 @@ class WelcomeFragment : Fragment() {
         private val ACTION_SSO_LOGIN = Config.applicationId() + ".SSO_LOGIN_ACTION"
         const val BUNDLE_KEY_FRAGMENT_TO_START = "fragmentToStart"
         const val BUNDLE_VALUE_LOGIN_FRAGMENT = "LoginFragment"
-        const val BUNDLE_VALUE_SSO_FRAGMENT = "ssoFragment"
     }
 }

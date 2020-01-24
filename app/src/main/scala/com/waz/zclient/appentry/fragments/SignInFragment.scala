@@ -51,10 +51,7 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-class SignInFragment
-  extends SSOFragment
-  with View.OnClickListener
-  with CountryController.Observer {
+class SignInFragment extends SSOFragment with View.OnClickListener with CountryController.Observer {
 
   implicit def context: Context = getActivity
 
@@ -154,8 +151,6 @@ class SignInFragment
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
     phoneButton.foreach(_.setVisible(!onlyLogin))
-
-    //companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -438,6 +433,8 @@ class SignInFragment
     }
 
   override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
+
+  override protected def isParentActivityTransparent: Boolean = false
 }
 
 object SignInFragment {
