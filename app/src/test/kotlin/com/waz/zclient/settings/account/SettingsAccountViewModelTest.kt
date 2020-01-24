@@ -60,7 +60,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.name.observeOnce {
+            viewModel.nameLiveData.observeOnce {
                 it shouldBe TEST_NAME
             }
         }
@@ -74,7 +74,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.handle.observeOnce {
+            viewModel.handleLiveData.observeOnce {
                 it shouldBe TEST_HANDLE
             }
         }
@@ -88,7 +88,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.email.observeOnce {
+            viewModel.emailLiveData.observeOnce {
                 it shouldBe ProfileDetail(TEST_NAME)
             }
         }
@@ -102,7 +102,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.email.observeOnce {
+            viewModel.emailLiveData.observeOnce {
                 it shouldBe ProfileDetail.EMPTY
             }
         }
@@ -116,7 +116,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.phone.observeOnce {
+            viewModel.phoneNumberLiveData.observeOnce {
                 it shouldBe ProfileDetail(TEST_PHONE)
             }
         }
@@ -130,7 +130,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.phone.observeOnce {
+            viewModel.phoneNumberLiveData.observeOnce {
                 it shouldBe ProfileDetail.EMPTY
             }
         }
@@ -146,7 +146,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updateName(TEST_NAME)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
 
@@ -162,7 +162,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updateEmail(TEST_EMAIL)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
     }
@@ -177,7 +177,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updatePhone(TEST_PHONE)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
     }

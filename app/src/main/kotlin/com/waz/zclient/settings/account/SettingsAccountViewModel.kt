@@ -8,13 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
+import com.waz.zclient.user.domain.usecase.ChangeEmailParams
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
+import com.waz.zclient.user.domain.usecase.ChangeNameParams
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
+import com.waz.zclient.user.domain.usecase.ChangePhoneParams
 import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
-import com.waz.zclient.user.domain.usecase.ChangeEmailParams
-import com.waz.zclient.user.domain.usecase.ChangeNameParams
-import com.waz.zclient.user.domain.usecase.ChangePhoneParams
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class ProfileDetail(val value: String) {
@@ -31,26 +31,26 @@ class SettingsAccountViewModel(
     private val changeEmailUseCase: ChangeEmailUseCase
 ) : ViewModel() {
 
-    private val mutableProfileData = MutableLiveData<User>()
-    private val mutableError = MutableLiveData<String>()
+    private val profileLiveData = MutableLiveData<User>()
+    private val _errorLiveData = MutableLiveData<String>()
 
-    val name: LiveData<String> = Transformations.map(mutableProfileData) {
+    val nameLiveData: LiveData<String> = Transformations.map(profileLiveData) {
         it.name
     }
 
-    val handle: LiveData<String> = Transformations.map(mutableProfileData) {
+    val handleLiveData: LiveData<String> = Transformations.map(profileLiveData) {
         it.handle
     }
 
-    val email: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
+    val emailLiveData: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
         if (it.email.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.email)
     }
 
-    val phone: LiveData<ProfileDetail> = Transformations.map(mutableProfileData) {
+    val phoneNumberLiveData: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
         if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
     }
 
-    val error: LiveData<String> = mutableError
+    val errorLiveData: LiveData<String> = _errorLiveData
 
     fun loadProfileDetails() {
         getUserProfileUseCase(viewModelScope, Unit) {
@@ -77,11 +77,11 @@ class SettingsAccountViewModel(
     }
 
     private fun handleProfileSuccess(user: User) {
-        mutableProfileData.postValue(user)
+        profileLiveData.postValue(user)
     }
 
     //TODO valid error scenarios once the networking has been integrated
     private fun handleError(failure: Failure) {
-        mutableError.postValue("Failure: $failure")
+        _errorLiveData.postValue("Failure: $failure")
     }
 }
