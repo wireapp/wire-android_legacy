@@ -1,6 +1,5 @@
 package com.waz.zclient.accounts
 
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.network.accesstoken.AccessToken
 import com.waz.zclient.core.network.accesstoken.AccessTokenMapper
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
@@ -17,12 +16,7 @@ data class ActiveAccounts(
 data class SsoId(
     val subject: String,
     val tenant: String
-) {
-
-    companion object {
-        val EMPTY = SsoId(String.empty(), String.empty())
-    }
-}
+)
 
 class AccountMapper {
 
