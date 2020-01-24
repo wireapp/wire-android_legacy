@@ -11,9 +11,9 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.core.permissions.PermissionManagerFactory
 import com.waz.zclient.core.permissions.extension.strictRequestReadPhoneState
-import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogCountryCodeTextInputEditText
-import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogPhoneNumberTextInputEditText
 import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogPhoneNumberTextInputLayout
+import kotlinx.android.synthetic.main.dialog_edit_phone.view.editPhoneDialogCountryCodeTextInputEditText
+import kotlinx.android.synthetic.main.dialog_edit_phone.view.editPhoneDialogPhoneNumberTextInputEditText
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class EditPhoneDialogFragment : DialogFragment() {
@@ -34,8 +34,8 @@ class EditPhoneDialogFragment : DialogFragment() {
             .setView(rootView)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 editPhoneNumberViewModel.onOkButtonClicked(
-                    editPhoneDialogCountryCodeTextInputEditText.text.toString(),
-                    editPhoneDialogPhoneNumberTextInputEditText.text.toString()
+                    rootView.editPhoneDialogCountryCodeTextInputEditText.text.toString(),
+                    rootView.editPhoneDialogPhoneNumberTextInputEditText.text.toString()
                 )
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
