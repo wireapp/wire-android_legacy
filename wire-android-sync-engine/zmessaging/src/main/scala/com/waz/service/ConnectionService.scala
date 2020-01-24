@@ -80,10 +80,20 @@ class ConnectionServiceImpl(selfUserId:      UserId,
   override def handleUserConnectionEvents(events: Seq[UserConnectionEvent]) = {
     def updateOrCreate(event: UserConnectionEvent)(user: Option[UserData]): UserData =
       user.fold {
-        UserData(event.to, None, event.fromUserName.getOrElse(Name.Empty), None, None, connection = event.status, conversation = Some(event.convId), connectionMessage = event.message, searchKey = SearchKey.Empty, connectionLastUpdated = event.lastUpdated,
+        UserData(
+          event.to, None,
+          event.fromUserName.getOrElse(Name.Empty),
+          None,
+          None,
+          connection = event.status,
+          conversation = event.convId,
+          connectionMessage = event.message,
+          searchKey = SearchKey.Empty,
+          connectionLastUpdated = event.lastUpdated,
           handle = None)
       } {
-        _.copy(conversation = Some(event.convId)).updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
+        _.copy(conversation = event.convId)
+         .updateConnectionStatus(event.status, Some(event.lastUpdated), event.message)
       }
 
     val lastEvents = events.groupBy(_.to).map { case (to, es) => to -> es.maxBy(_.lastUpdated) }

@@ -36,8 +36,6 @@ class EventScheduler(layout: EventScheduler.Stage) extends DerivedLogTag {
 
   def enqueue(events: Traversable[Event]): Future[Unit] = queue.enqueue(events.to[Vector]).recoverWithLog()
 
-  def post[A](conv: RConvId)(task: => Future[A]) = queue.post(conv)(task) // TODO this is rather hacky; maybe it could be replaced with a kind of "internal" event, i.e. events caused by events
-
   def createSchedule(events: Traversable[Event]): Schedule = schedule(layout, events.toStream)
 
   private def schedule(stage: Stage, events: Stream[Event]): Schedule = {

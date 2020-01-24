@@ -43,7 +43,7 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       Then("we should have a UserConnectionEvent")
       event.isInstanceOf[UserConnectionEvent] shouldEqual true
       event.asInstanceOf[UserConnectionEvent].status should be(UserData.ConnectionStatus.PendingFromUser)
-      event.asInstanceOf[UserConnectionEvent].convId should be(RConvId("f660330f-f0e3-4511-8d15-71251f44ce32"))
+      event.asInstanceOf[UserConnectionEvent].convId should be(Some(RConvId("f660330f-f0e3-4511-8d15-71251f44ce32")))
       event.asInstanceOf[UserConnectionEvent].to should be(otherUser.id)
       event.asInstanceOf[UserConnectionEvent].from should be(selfUser.id)
       event.asInstanceOf[UserConnectionEvent].lastUpdated should be(RemoteInstant.ofEpochMilli(JsonDecoder.parseDate("2014-06-12T10:04:02.047Z").getTime))
@@ -58,9 +58,9 @@ class EventSpec extends AndroidFreeSpec with GivenWhenThen {
       When("parsing json")
       val event = EventDecoder(js)
 
-      Then("we should have a UserConnectionEvent with convId == selfUser.id") // TODO: This should depend on the user connection event status
+      Then("we should have a UserConnectionEvent with convId == selfUser.id")
       event.isInstanceOf[UserConnectionEvent] shouldEqual true
-      event.asInstanceOf[UserConnectionEvent].convId should be(RConvId(selfUser.id.str))
+      event.asInstanceOf[UserConnectionEvent].convId should be(None)
     }
 
     scenario("Read receipt off messages are parsed correctly") {

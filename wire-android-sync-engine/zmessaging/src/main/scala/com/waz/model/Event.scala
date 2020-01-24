@@ -59,26 +59,16 @@ sealed trait Event {
 sealed trait UserEvent extends Event
 sealed trait OtrClientEvent extends UserEvent
 
-sealed trait RConvEvent extends Event {
-  val convId: RConvId
-}
-object RConvEvent extends (Event => RConvId) {
-  def apply(ev: Event): RConvId = ev match {
-    case ev: RConvEvent => ev.convId
-    case _              => RConvId.Empty
-  }
-}
+
 case class UserUpdateEvent(user: UserInfo, removeIdentity: Boolean = false) extends UserEvent
-case class UserConnectionEvent(_convId:      Option[RConvId],
+case class UserConnectionEvent(convId:      Option[RConvId],
                                from:         UserId,
                                to:           UserId,
                                message:      Option[String],
                                status:       ConnectionStatus,
                                lastUpdated:  RemoteInstant,
                                fromUserName: Option[Name] = None
-                              ) extends UserEvent with RConvEvent {
-  override lazy val convId: RConvId = _convId.getOrElse(RConvId(from.str)) // FIXME
-}
+                              ) extends UserEvent
 case class UserDeleteEvent(user: UserId) extends UserEvent
 case class OtrClientAddEvent(client: Client) extends OtrClientEvent
 case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
@@ -87,7 +77,8 @@ case class ContactJoinEvent(user: UserId, name: Name) extends Event
 
 case class PushTokenRemoveEvent(token: PushToken, senderId: String, client: Option[String]) extends Event
 
-sealed trait ConversationEvent extends RConvEvent {
+sealed trait ConversationEvent extends Event {
+  val convId: RConvId
   val time: RemoteInstant
   val from: UserId
 }
@@ -219,7 +210,7 @@ object Event {
 
     import com.waz.utils.JsonDecoder._
 
-    def connectionEvent(implicit js: JSONObject, name: Option[Name]) =
+    def connectionEvent(implicit js: JSONObject, name: Option[Name]): UserConnectionEvent =
       UserConnectionEvent(
         'conversation,
         'from,
