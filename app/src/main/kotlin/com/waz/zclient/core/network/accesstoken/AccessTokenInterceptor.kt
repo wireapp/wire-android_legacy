@@ -1,12 +1,13 @@
 package com.waz.zclient.core.network.accesstoken
 
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
 
 class AccessTokenInterceptor(private val repository: AccessTokenRepository) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val accessToken = repository.accessToken()
+        val accessToken = runBlocking { repository.accessToken() }
 
         return when (accessToken != AccessToken.EMPTY) {
             true -> addAuthHeader(chain, accessToken.token)

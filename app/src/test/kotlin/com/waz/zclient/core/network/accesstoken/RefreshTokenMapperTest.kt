@@ -1,8 +1,6 @@
 package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
-import com.waz.zclient.core.network.accesstoken.RefreshTokenPreference
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
@@ -26,11 +24,12 @@ class RefreshTokenMapperTest: UnitTest() {
     }
 
     @Test
-    fun `given a RefreshTokenPreference, when from method called, maps its token to RefreshToken's token`() {
-        val refreshTokenPreference = RefreshTokenPreference("someToken")
+    fun `given a RefreshToken, when toEntity method called, returns its token as result`() {
+        val token = "someToken"
+        val refreshToken = RefreshToken(token)
 
-        val refreshToken = refreshTokenMapper.from(refreshTokenPreference)
+        val entityResult = refreshTokenMapper.toEntity(refreshToken)
 
-        refreshToken.token shouldBe refreshTokenPreference.token
+        entityResult shouldBe token
     }
 }

@@ -28,20 +28,20 @@ class UserDatabaseMigration : Migration(START_VERSION, END_VERSION) {
                 |`key` TEXT PRIMARY KEY NOT NULL ,
                 |`value` TEXT)""".trimMargin())
             database.execSQL("INSERT INTO $USER_PREFERENCE_TABLE_NAME SELECT * FROM $KEY_VALUES_TABLE_NAME")
-//        database.execSQL("DROP TABLE $KEY_VALUES_TABLE_NAME")
+            database.execSQL("DROP TABLE $KEY_VALUES_TABLE_NAME")
 
             // "Users" to "user" Migration
             database.execSQL("""CREATE TABLE IF NOT EXISTS `$USER_TABLE_NAME` (
                 |`_id` TEXT PRIMARY KEY NOT NULL, 
                 |`teamId` TEXT, `name` TEXT NOT NULL , `email` TEXT , `phone` TEXT ,`tracking_id` TEXT , 
                 |`picture` TEXT , `accent` INTEGER , `skey` TEXT , `connection` TEXT , `conn_timestamp` INTEGER , 
-                |`conn_msg` TEXT , `conversation` TEXT , `relation` TEXT , `timestamp` INTEGER , `display_name` TEXT, 
+                |`conn_msg` TEXT , `conversation` TEXT , `relation` TEXT , `timestamp` INTEGER, 
                 |`verified` TEXT , `deleted` INTEGER NOT NULL , `availability` INTEGER , `handle` TEXT , 
                 |`provider_id` TEXT , `integration_id` TEXT , `expires_at` INTEGER , `managed_by` TEXT , 
                 |`self_permissions` INTEGER , `copy_permissions` INTEGER , `created_by` TEXT 
                 |)""".trimMargin())
             database.execSQL("INSERT INTO $USER_TABLE_NAME SELECT * FROM $USERS_TABLE_NAME")
-//        database.execSQL("DROP TABLE $USERS_TABLE_NAME")
+            database.execSQL("DROP TABLE $USERS_TABLE_NAME")
         }
     }
 

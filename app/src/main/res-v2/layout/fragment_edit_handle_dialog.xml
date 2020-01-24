@@ -60,12 +60,13 @@
                     android:layout_alignParentTop="true"
                     app:errorEnabled="true">
 
-                    <androidx.appcompat.widget.AppCompatEditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_handle_edit_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:drawableStart="@drawable/empty_at"
-                        android:inputType="textNoSuggestions|textVisiblePassword"
+                        android:inputType="textNoSuggestions|text"
+                        android:maxLength="@integer/username_limit"
                         android:maxLines="1"
                         android:paddingBottom="@dimen/prefs__username_change__edit_text_bottom_padding"
                         android:visibility="visible" />

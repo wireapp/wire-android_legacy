@@ -6,9 +6,9 @@ import com.waz.zclient.user.domain.model.User
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
 import org.junit.Before
@@ -43,8 +43,10 @@ class GetHandleUseCaseTest : UnitTest() {
 
         getHandleUseCase.run(Unit)
 
-        userFlow.map {
-            getHandleUseCase.run(Unit).single() shouldBe it.handle
+        userFlow.mapLatest {
+            getHandleUseCase.run(Unit).collect {
+                it shouldBe TEST_HANDLE
+            }
         }
     }
 
