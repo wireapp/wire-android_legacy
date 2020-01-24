@@ -407,7 +407,7 @@
     </style>
 
 
-    <style name="Theme.Light.Transparent" parent="Theme.Light">
+    <style name="Theme.Light.Transparent">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>
@@ -416,7 +416,7 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
-    <style name="Theme.Dark.Transparent" parent="Theme.Dark">
+    <style name="Theme.Dark.Transparent">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>
