@@ -11,8 +11,9 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.core.permissions.PermissionManagerFactory
 import com.waz.zclient.core.permissions.extension.strictRequestReadPhoneState
-import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneCountryCodeEditText
-import kotlinx.android.synthetic.main.dialog_edit_phone.editPhonePhoneNumberEditText
+import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogCountryCodeTextInputEditText
+import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogPhoneNumberTextInputEditText
+import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogPhoneNumberTextInputLayout
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class EditPhoneDialogFragment : DialogFragment() {
@@ -33,8 +34,8 @@ class EditPhoneDialogFragment : DialogFragment() {
             .setView(rootView)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 editPhoneNumberViewModel.onOkButtonClicked(
-                    editPhoneCountryCodeEditText.text.toString(),
-                    editPhonePhoneNumberEditText.text.toString()
+                    editPhoneDialogCountryCodeTextInputEditText.text.toString(),
+                    editPhoneDialogPhoneNumberTextInputEditText.text.toString()
                 )
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
@@ -46,20 +47,32 @@ class EditPhoneDialogFragment : DialogFragment() {
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 
         initPhoneInput()
-        initError()
+        initCountryCodeInput()
     }
 
-    private fun initError() {
-        editPhoneNumberViewModel.errorLiveData.observe(viewLifecycleOwner) {
-
+    private fun initCountryCodeInput() {
+        editPhoneNumberViewModel.countryCodeErrorLiveData.observe(viewLifecycleOwner) {
+            updateCountryCodeError(getString(it.errorMessage))
         }
     }
 
     private fun initPhoneInput() {
+        editPhoneNumberViewModel.phoneNumberErrorLiveData.observe(viewLifecycleOwner) {
+            updatePhoneNumberError(getString(it.errorMessage))
+        }
         editPhoneNumberViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) {
             showConfirmationDialog(it)
         }
     }
+
+    private fun updateCountryCodeError(errorMessage: String) {
+        editPhoneDialogPhoneNumberTextInputLayout.error = errorMessage
+    }
+
+    private fun updatePhoneNumberError(errorMessage: String) {
+        editPhoneDialogPhoneNumberTextInputLayout.error = errorMessage
+    }
+
 
     private fun showConfirmationDialog(phoneNumber: String) {
         //Show confirmation dialog here

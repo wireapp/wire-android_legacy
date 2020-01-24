@@ -1453,4 +1453,8 @@
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
 
+    <!-- Settings Account - Edit Phone -->
+    <string name="edit_phone_dialog_country_code_error">Invalid country code</string>
+    <string name="edit_phone_dialog_phone_number_error">Invalid phone number</string>
+
 </resources>

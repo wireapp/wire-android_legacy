@@ -8,6 +8,7 @@ import com.waz.zclient.core.usecase.UseCase
 
 object CountryCodeInvalid : ValidatePhoneNumberError()
 object PhoneNumberInvalid : ValidatePhoneNumberError()
+
 sealed class ValidatePhoneNumberError : FeatureFailure()
 
 class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() {
@@ -27,7 +28,6 @@ class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() 
         }
 
     //TODO determine if this is enough to cover all supported countries?
-    //It is an improvement on scala code, but, is it still enough?
     private fun isPhoneNumberValid(phoneNumber: String) =
         phoneNumber.matches(PHONE_NUMBER_REGEX)
 

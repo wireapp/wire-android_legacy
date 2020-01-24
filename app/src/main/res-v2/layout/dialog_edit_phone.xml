@@ -32,26 +32,40 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/editPhoneCountryCodeEditText"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/editPhoneDialogCountryCodeTextInputLayout"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:inputType="phone"
-            android:maxLength="@integer/country_code_input_limit"
-            android:maxLines="1" />
+            android:layout_height="wrap_content">
 
-        <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/editPhonePhoneNumberEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:maxLength="@integer/phone_number_input_limit"
-            android:maxLines="1" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editPhoneDialogCountryCodeTextInputEditText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="phone"
+                android:maxLength="@integer/country_code_input_limit"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/editPhoneDialogPhoneNumberTextInputLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editPhoneDialogPhoneNumberTextInputEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:maxLength="@integer/phone_number_input_limit"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
     </LinearLayout>
 
     <TextView
-        android:id="@+id/editPhoneErrorTextView"
+        android:id="@+id/editPhoneDialogErrorTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="@style/TextAppearance.Design.Error"
