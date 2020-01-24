@@ -136,7 +136,7 @@ class InputDialog extends DialogFragment with FragmentHelper {
 
   override def onStart(): Unit = {
     super.onStart()
-    if (getBooleanArg(ValidateInput)) {setNegativeButton
+    if (getBooleanArg(ValidateInput)) {
       input.addOnAttachStateChangeListener(onAttachStateChangeListener)
       positiveBtn.setEnabled(false)
       textWatcher = Option(input.addTextListener(validate))
