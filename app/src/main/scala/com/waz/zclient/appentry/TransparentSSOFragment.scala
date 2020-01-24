@@ -26,8 +26,7 @@ class TransparentSSOFragment extends SSOFragment {
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.transparent_layout, container, false)
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit =
-    extractTokenAndShowSSODialog(showIfNoToken = true)
+  override def showSsoByDefault: Boolean = true
 }
 
 object TransparentSSOFragment {

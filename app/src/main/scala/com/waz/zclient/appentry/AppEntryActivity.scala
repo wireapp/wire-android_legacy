@@ -22,7 +22,7 @@ import android.content.{Context, Intent}
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.FragmentManager.OnBackStackChangedListener
-import androidx.fragment.app.{Fragment, FragmentActivity, FragmentManager, FragmentTransaction}
+import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, GlobalModule}
@@ -74,7 +74,7 @@ object AppEntryActivity {
     }
 }
 
-class AppEntryActivity extends BaseActivity with ActivityWithFragment {
+class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   import Threading.Implicits.Ui
 
@@ -324,27 +324,8 @@ class AppEntryActivity extends BaseActivity with ActivityWithFragment {
   }
 
   override def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
-    new SsoFragmentReplaceHelper().showFragment(this, f, tag, animated, R.id.fl_main_content)
+    new FragmentTransactionHelper().showFragment(this, f, tag, animated, R.id.fl_main_content)
     enableProgress(false)
   }
 }
 
-class SsoFragmentReplaceHelper() {
-  def showFragment(activity: FragmentActivity, f: => Fragment, tag: String, animated: Boolean = true, layoutId: Int): Unit = {
-    val transaction = activity.getSupportFragmentManager.beginTransaction()
-    if (animated) setDefaultAnimation(transaction)
-    transaction
-      .replace(layoutId, f, tag)
-      .addToBackStack(tag)
-      .commit
-  }
-
-  private def setDefaultAnimation(transaction: FragmentTransaction): FragmentTransaction = {
-    transaction.setCustomAnimations(
-      R.anim.fragment_animation_second_page_slide_in_from_right,
-      R.anim.fragment_animation_second_page_slide_out_to_left,
-      R.anim.fragment_animation_second_page_slide_in_from_left,
-      R.anim.fragment_animation_second_page_slide_out_to_right)
-    transaction
-  }
-}

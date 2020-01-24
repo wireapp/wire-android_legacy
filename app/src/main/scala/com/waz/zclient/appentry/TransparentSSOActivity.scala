@@ -21,7 +21,7 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import com.waz.zclient._
 
-class TransparentSSOActivity extends BaseActivity with ActivityWithFragment {
+class TransparentSSOActivity extends BaseActivity with SSOFragmentHandler {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -40,11 +40,11 @@ class TransparentSSOActivity extends BaseActivity with ActivityWithFragment {
     .commit()
 
   override def showFragment(f: => Fragment, tag: String, animated: Boolean): Unit = {
-    new SsoFragmentReplaceHelper().showFragment(this, f, tag, animated, R.id.layout_container)
+    new FragmentTransactionHelper().showFragment(this, f, tag, animated, R.id.layout_container)
   }
 
-  override def onNegativeClicked(): Unit = {
-    finish()
+  override def onSSODialogDismissed(hasToken: Boolean): Unit = {
+   if (!hasToken) finish()
   }
 }
 

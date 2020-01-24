@@ -35,6 +35,7 @@ object InputDialog {
   trait Event
   case class  OnPositiveBtn(input: String) extends Event
   case object OnNegativeBtn                extends Event
+  case object OnCancel                     extends Event
 
   trait ValidatorResult
   object ValidatorResult {
@@ -113,9 +114,12 @@ class InputDialog extends DialogFragment with FragmentHelper {
       })
       .setNegativeButton(getArguments.getInt(NegativeBtn), new DialogInterface.OnClickListener {
         def onClick(dialog: DialogInterface, which: Int): Unit =
-          dialog.dismiss()
           listener.foreach(_.onDialogEvent(OnNegativeBtn))
         })
+    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+      override def onDismiss(dialogInterface: DialogInterface): Unit =
+        listener.foreach(_.onDialogEvent(OnCancel))
+    })
       .create()
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
