@@ -14,10 +14,6 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ChangeHandleUseCaseTest : UnitTest() {
 
-    companion object {
-        private const val TEST_HANDLE = "@wire"
-    }
-
     private lateinit var changeHandleUseCase: ChangeHandleUseCase
 
     @Mock
@@ -39,4 +35,9 @@ class ChangeHandleUseCaseTest : UnitTest() {
 
         verify(userRepository).changeHandle(eq(TEST_HANDLE))
     }
+
+    companion object {
+        private const val TEST_HANDLE = "@wire"
+    }
+
 }

@@ -21,7 +21,7 @@ import org.koin.dsl.module
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 val settingsAccountModule: Module = module {
-    viewModel { SettingsAccountViewModel(get(), get(), get(), get(), get()) }
+    viewModel { SettingsAccountViewModel(get(), get(), get(), get()) }
     viewModel { EditHandleViewModel(get(), get(), get(), get()) }
     viewModel { EditPhoneNumberViewModel(get(), get()) }
     factory { ValidatePhoneNumberUseCase() }
