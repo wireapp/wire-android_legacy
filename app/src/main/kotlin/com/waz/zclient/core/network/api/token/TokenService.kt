@@ -14,4 +14,9 @@ class TokenService(
         request(AccessTokenResponse.EMPTY) {
             tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken"))
         }
+
+    suspend fun logout(accessToken: String): Either<Failure, Unit> =
+        request {
+            tokenApi.logout(accessToken)
+        }
 }

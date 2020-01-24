@@ -1,6 +1,7 @@
 package com.waz.zclient.storage.db.accountdata
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 
 //TODO: Add dao instrumentation tests
@@ -18,4 +19,10 @@ interface ActiveAccountsDao {
 
     @Query("UPDATE ActiveAccounts SET cookie = :refreshToken WHERE _id = :userId")
     suspend fun updateRefreshToken(userId: String, refreshToken: String)
+
+    @Query("SELECT * from ActiveAccounts")
+    suspend fun activeAccounts(): List<ActiveAccountsEntity>
+
+    @Delete
+    suspend fun removeAccount(account: ActiveAccountsEntity)
 }

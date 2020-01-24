@@ -9,4 +9,7 @@ class AccessTokenRemoteDataSource(private val tokenService: TokenService) {
 
     suspend fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
         tokenService.renewAccessToken(refreshToken)
+
+    suspend fun logout(accessToken: String): Either<Failure, Unit> =
+        tokenService.logout(accessToken)
 }
