@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?><!--
+<?xml version="1.0" encoding="utf-8"?>
+<!--
 
     Wire
-    Copyright (C) 2020 Wire Swiss GmbH
+    Copyright (C) 2018 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,10 +18,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="@color/curious_blue" />
-    <corners android:radius="@dimen/rounded_button_radius" />
-</shape>
-
-
+<resources>
+    <dimen name="rounded_button_radius">6dp</dimen>
+    <dimen name="rounded_button_text_size">12sp</dimen>
+    <dimen name="welcome_title_text_size">32sp</dimen>
+    <dimen name="welcome_title_line_spacing_extra">8sp</dimen>
+</resources>

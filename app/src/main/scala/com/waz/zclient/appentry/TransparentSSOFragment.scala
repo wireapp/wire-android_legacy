@@ -24,7 +24,7 @@ import com.waz.zclient._
 class TransparentSSOFragment extends SSOFragment {
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    inflater.inflate(R.layout.transparent_layout, container, false)
+    inflater.inflate(R.layout.fragment_transparent_sso, container, false)
 
   override def showSsoByDefault: Boolean = true
 }

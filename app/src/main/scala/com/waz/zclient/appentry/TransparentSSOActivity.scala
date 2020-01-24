@@ -26,7 +26,7 @@ class TransparentSSOActivity extends BaseActivity with SSOFragmentHandler {
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
     applyTransparentTheme
-    setContentView(R.layout.transparent_layout)
+    setContentView(R.layout.activity_transparent_sso)
     showSsoFragment
   }
 

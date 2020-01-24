@@ -284,9 +284,10 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
   }
 
   def enableProgress(enabled: Boolean): Unit = {
-    if (enabled)
-      progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
-    else if(progressView != null)  progressView.hide()
+    Option(progressView).foreach { _ =>
+      if (enabled) progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
+      else progressView.hide()
+    }
   }
 
   def abortAddAccount(): Unit =
