@@ -37,8 +37,6 @@ object AppLaunchFragment {
 
 class AppLaunchFragment extends SSOFragment {
 
-  protected def activity = getActivity.asInstanceOf[AppEntryActivity]
-
   private lazy val logo = view[ImageView](R.id.app_entry_logo_image)
 
   private lazy val backendInfo = view[LinearLayout](R.id.app_entry_custom_backend_container)
@@ -93,6 +91,4 @@ class AppLaunchFragment extends SSOFragment {
 
     loginButton.foreach(_.onClick(activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)))
   }
-
-  override protected def isParentActivityTransparent: Boolean = false
 }

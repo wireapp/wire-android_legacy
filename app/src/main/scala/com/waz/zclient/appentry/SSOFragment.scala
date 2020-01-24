@@ -18,6 +18,7 @@
 package com.waz.zclient.appentry
 
 import android.app.FragmentManager
+import androidx.fragment.app.Fragment
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.SSOService
@@ -43,7 +44,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private lazy val dialogStaff = new InputDialog.Listener with InputDialog.InputValidator {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn          =>  if (isParentActivityTransparent) getActivity.finish()
+      case OnNegativeBtn          => activity.onNegativeClicked()
       case OnPositiveBtn(input)   => verifyInput(input)
     }
 
@@ -118,9 +119,12 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       }
     }
 
-  protected def activity: AppEntryActivity
-
-  protected def isParentActivityTransparent: Boolean
+  protected def activity: ActivityWithFragment = getActivity.asInstanceOf[ActivityWithFragment]
 
   protected def onVerifyingToken(verifying: Boolean): Unit = inject[SpinnerController].showSpinner(verifying)
+}
+
+trait ActivityWithFragment {
+  def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit
+  def onNegativeClicked(): Unit = {}
 }

@@ -53,8 +53,6 @@ case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
     }
     about.foreach(_.onClick(inject[BrowserController].openAboutTeams()))
   }
-
-  override protected def isParentActivityTransparent: Boolean = false
 }
 
 object TeamNameFragment {

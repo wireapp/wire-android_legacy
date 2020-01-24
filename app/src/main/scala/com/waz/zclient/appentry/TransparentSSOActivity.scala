@@ -18,9 +18,10 @@
 package com.waz.zclient.appentry
 
 import android.os.Bundle
+import androidx.fragment.app.Fragment
 import com.waz.zclient._
 
-class TransparentSSOActivity extends BaseActivity {
+class TransparentSSOActivity extends BaseActivity with ActivityWithFragment {
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
     super.onCreate(savedInstanceState)
@@ -37,6 +38,14 @@ class TransparentSSOActivity extends BaseActivity {
   private def showSsoFragment() = getSupportFragmentManager.beginTransaction()
     .replace(R.id.layout_container, TransparentSSOFragment(), TransparentSSOFragment.Tag)
     .commit()
+
+  override def showFragment(f: => Fragment, tag: String, animated: Boolean): Unit = {
+    new SsoFragmentReplaceHelper().showFragment(this, f, tag, animated, R.id.layout_container)
+  }
+
+  override def onNegativeClicked(): Unit = {
+    finish()
+  }
 }
 
 
