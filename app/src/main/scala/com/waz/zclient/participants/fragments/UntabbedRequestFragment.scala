@@ -1,37 +1,36 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConversationRole, UserId}
 import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
+import com.waz.zclient.R
 import com.waz.zclient.common.controllers.ThemeController
 import com.waz.zclient.controllers.navigation.Page
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.utils.StringUtils
-import com.waz.zclient.R
-import com.waz.zclient.pages.main.MainPhoneFragment
-import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
+
 import scala.concurrent.duration._
 
-abstract class UntabbedRequestFragment extends SingleParticipantFragment with DerivedLogTag {
-  import UntabbedRequestFragment._
+abstract class UntabbedRequestFragment extends SingleParticipantFragment {
   import Threading.Implicits.Ui
+  import UntabbedRequestFragment._
   
   protected val Tag: String
 
   override protected val layoutId: Int = R.layout.fragment_participants_not_tabbed
 
-  protected lazy val userToConnectId = UserId(getArguments.getString(ArgumentUserId))
+  private lazy val userRequester            = UserRequester.valueOf(getArguments.getString(ArgumentUserRequester))
+  private lazy val fromDeepLink             = userRequester == UserRequester.DEEP_LINK
+  protected lazy val fromParticipants       = userRequester == UserRequester.PARTICIPANTS
+  protected lazy val userToConnectId        = UserId(getArguments.getString(ArgumentUserId))
   protected lazy val removeMemberPermission = participantsController.selfRole.map(_.canRemoveGroupMember)
-  
-  private lazy val userRequester = UserRequester.valueOf(getArguments.getString(ArgumentUserRequester))
-  protected lazy val fromParticipants = userRequester == UserRequester.PARTICIPANTS
-  protected lazy val fromDeepLink     = userRequester == UserRequester.DEEP_LINK
-  
+
   override protected def initViews(savedInstanceState: Bundle): Unit = {
     detailsView
     footerMenu
@@ -67,21 +66,24 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment with De
       }
   }
 
-  protected lazy val returnPage = userRequester match {
-    case UserRequester.SEARCH => Page.PICK_USER
-    case _                    => Page.CONVERSATION_LIST
-  }
-
   override def onBackPressed(): Boolean = {
     inject[IPickUserController].hideUserProfile()
-    if (fromParticipants) participantsController.selectedParticipant ! None
-
-    if (fromDeepLink) {
+    if (fromParticipants) {
+      participantsController.selectedParticipant ! None
+      false
+    } else if (fromDeepLink) {
       CancellableFuture.delay(750.millis).map { _ =>
-        navigationController.setVisiblePage(Page.CONVERSATION_LIST, MainPhoneFragment.Tag)
+        getFragmentManager.popBackStack(Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       }
-    } else navigationController.setLeftPage(returnPage, Tag)
-    false
+      true
+    } else {
+      val returnPage = userRequester match {
+        case UserRequester.SEARCH => Page.PICK_USER
+        case _                    => Page.CONVERSATION_LIST
+      }
+      navigationController.setLeftPage(returnPage, Tag)
+      false
+    }
   }
 }
 
