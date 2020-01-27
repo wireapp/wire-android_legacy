@@ -17,7 +17,7 @@
  */
 package com.waz.service
 
-import com.waz.api.User.ConnectionStatus
+import com.waz.api.ConnectionStatus
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._

@@ -18,14 +18,6 @@
 package com.waz.zclient.ui.utils;
 
 public class MathUtils {
-    /**
-     * @return the value, if it is inside [min, max]
-     *         min if the value is smaller then min
-     *         max if the value is bigger then max
-     */
-    public static long clamp(long value, int min, int max) {
-        return Math.max(min, Math.min(value, max));
-    }
 
     /**
      * @return the value, if it is inside [min, max]

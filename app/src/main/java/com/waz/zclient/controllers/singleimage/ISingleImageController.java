@@ -28,8 +28,6 @@ public interface ISingleImageController {
 
     void setViewReferences(View imageContainer);
 
-    View getImageContainer();
-
     void tearDown();
 
     void clearReferences();

@@ -130,9 +130,6 @@ public class GlyphProgressView extends GlyphTextView {
         return progress;
     }
 
-    public boolean isAnimatingEndlessProgress() {
-        return endlessValueAnimator != null && endlessValueAnimator.isRunning();
-    }
 
     public void setProgressColor(int color) {
         progressPaint.setColor(color);

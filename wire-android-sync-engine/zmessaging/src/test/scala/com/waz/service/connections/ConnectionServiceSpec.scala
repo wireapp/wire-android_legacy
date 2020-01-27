@@ -17,7 +17,7 @@
  */
 package com.waz.service.connections
 
-import com.waz.api.{Message, User}
+import com.waz.api.{ConnectionStatus, Message}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType._
@@ -95,7 +95,7 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
   feature ("connect to user") {
 
-    def setup(user: UserData, expectedNewStatus: User.ConnectionStatus) = {
+    def setup(user: UserData, expectedNewStatus: ConnectionStatus) = {
       (users.getOrCreateUser _).expects(user.id).anyNumberOfTimes().returning(Future.successful(user))
       (users.updateConnectionStatus _).expects(user.id, expectedNewStatus, None, None).anyNumberOfTimes().returning(
         Future.successful(Some(user.copy(connection = expectedNewStatus)))
