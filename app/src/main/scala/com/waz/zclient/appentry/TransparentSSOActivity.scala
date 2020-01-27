@@ -40,7 +40,7 @@ class TransparentSSOActivity extends BaseActivity with SSOFragmentHandler {
     .commit()
 
   override def showFragment(f: => Fragment, tag: String, animated: Boolean): Unit = {
-    new FragmentTransactionHelper().showFragment(this, f, tag, animated, R.id.layout_container)
+    new TransactionHandler().showFragment(this, f, tag, animated, R.id.layout_container)
   }
 
   override def onSSODialogDismissed(hasToken: Boolean): Unit = {

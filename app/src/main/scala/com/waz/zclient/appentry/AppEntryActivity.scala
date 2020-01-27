@@ -326,7 +326,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
   }
 
   override def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
-    new FragmentTransactionHelper().showFragment(this, f, tag, animated, R.id.fl_main_content)
+    new TransactionHandler().showFragment(this, f, tag, animated, R.id.fl_main_content)
     enableProgress(false)
   }
 }
