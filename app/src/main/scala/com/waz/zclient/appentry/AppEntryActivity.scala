@@ -36,7 +36,6 @@ import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
-import com.waz.zclient.auth.WelcomeFragment
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -62,6 +61,8 @@ object AppEntryActivity {
   val MethodArg: String = "method_arg"
   val LoginArgVal: Int = 0
   val CreateTeamArgVal: Int = 1
+
+  val loginAction = BuildConfig.APPLICATION_ID + ".LOGIN_ACTION"
 
   def getLoginArgs: Bundle =
     returning(new Bundle()) { b =>
@@ -138,8 +139,8 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
     closeButton.onClick(abortAddAccount())
 
-    getIntent.getStringExtra(WelcomeFragment.BUNDLE_KEY_FRAGMENT_TO_START) match {
-      case WelcomeFragment.BUNDLE_VALUE_LOGIN_FRAGMENT => showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
+    getIntent.getAction() match {
+      case `loginAction` => showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
       case _ => showFragment()
     }
 

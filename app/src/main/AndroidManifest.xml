@@ -248,6 +248,7 @@
         <activity
             android:name=".appentry.TransparentSSOActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false"
             >
             <intent-filter>
                 <action android:name="${applicationId}.SSO_LOGIN_ACTION" />

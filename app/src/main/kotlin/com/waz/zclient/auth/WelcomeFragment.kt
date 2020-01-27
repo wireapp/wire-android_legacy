@@ -1,15 +1,15 @@
 package com.waz.zclient.auth
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.INVISIBLE
-import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.invisible
+import com.waz.zclient.core.extension.startActivityWithAction
+import com.waz.zclient.core.extension.visible
 import kotlinx.android.synthetic.main.fragment_welcome.*
 
 
@@ -21,45 +21,47 @@ class WelcomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initCreateAccountButtonListener()
+        initLoginButtonListener()
+        initEnterpriseLoginButtonListener()
+        configureEnterpriseLoginVisibility()
+    }
+
+    private fun  initCreateAccountButtonListener() {
         welcomeCreateAccountButton.setOnClickListener { startCreateAccountFlow() }
+    }
+
+    private fun  initLoginButtonListener() {
         welcomeLoginButton.setOnClickListener { startLoginFlow() }
-        welcomeEnterpriseLoginButton.setOnClickListener { startSsoLoginFlow() }
-        configureSSOButtonVisibility()
+    }
+
+    private fun  initEnterpriseLoginButtonListener() {
+        welcomeEnterpriseLoginButton.setOnClickListener { startEnterpriseLoginFlow() }
     }
 
     private fun startCreateAccountFlow() {
-        val createAccountIntent = Intent().apply { action = ACTION_CREATE_ACCOUNT }
-        startActivity(createAccountIntent)
+        startActivityWithAction(ACTION_CREATE_ACCOUNT)
     }
 
     private fun startLoginFlow() {
-        val loginIntent = Intent().apply {
-            action = ACTION_LOGIN
-            putExtra(BUNDLE_KEY_FRAGMENT_TO_START, BUNDLE_VALUE_LOGIN_FRAGMENT)
-        }
-        startActivity(loginIntent)
+        startActivityWithAction(ACTION_LOGIN)
     }
 
-    private fun startSsoLoginFlow() {
-        val loginIntent = Intent().apply {
-            action = ACTION_SSO_LOGIN
-        }
-        startActivity(loginIntent)
+    private fun startEnterpriseLoginFlow() {
+        startActivityWithAction(ACTION_SSO_LOGIN)
+    }
+    private fun configureEnterpriseLoginVisibility() {
+        if (Config.allowSso()) welcomeEnterpriseLoginButton.visible()
+        else welcomeEnterpriseLoginButton.invisible()
     }
 
-    private fun configureSSOButtonVisibility() {
-        when (Config.allowSso()) {
-            true -> welcomeEnterpriseLoginButton.visibility = VISIBLE
-            false -> welcomeEnterpriseLoginButton.visibility = INVISIBLE
-        }
-    }
 
     companion object {
         fun newInstance() = WelcomeFragment()
+        
         private val ACTION_LOGIN = Config.applicationId() + ".LOGIN_ACTION"
         private val ACTION_CREATE_ACCOUNT = Config.applicationId() + ".CREATE_ACCOUNT_ACTION"
         private val ACTION_SSO_LOGIN = Config.applicationId() + ".SSO_LOGIN_ACTION"
-        const val BUNDLE_KEY_FRAGMENT_TO_START = "fragmentToStart"
-        const val BUNDLE_VALUE_LOGIN_FRAGMENT = "LoginFragment"
+
     }
 }

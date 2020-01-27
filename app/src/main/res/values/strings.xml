@@ -1457,4 +1457,7 @@
     <string name="sso_login_dialog_title">Enterprise log in</string>
     <string name="sso_login_dialog_message">Enter your email or SSO access code here:</string>
 
+    <!-- Welcome -->
+    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_enterprise_log_in">Enterprise Log In</string>
 </resources>
