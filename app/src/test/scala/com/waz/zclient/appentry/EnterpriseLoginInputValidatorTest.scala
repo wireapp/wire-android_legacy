@@ -7,6 +7,7 @@ import org.junit.runner.RunWith
 import org.mockito.{Mock, Mockito, MockitoAnnotations}
 import org.mockito.junit.MockitoJUnitRunner
 
+//noinspection AccessorLikeMethodIsUnit
 @RunWith(classOf[MockitoJUnitRunner])
 class EnterpriseLoginInputValidatorTest {
 
@@ -18,10 +19,9 @@ class EnterpriseLoginInputValidatorTest {
   @Before
   def setUp(): Unit = {
     MockitoAnnotations.initMocks(this)
-    enterpriseLoginInputValidator = EnterpriseLoginInputValidator(ssoService)
+    enterpriseLoginInputValidator = EnterpriseLoginInputValidator(ssoService, "ErrorText")
   }
 
-  //noinspection AccessorLikeMethodIsUnit
   @Test
   def isInputInvalid_validEmail_returnsValidResult(): Unit = {
     val email = "somebody@wire.com"
@@ -31,7 +31,6 @@ class EnterpriseLoginInputValidatorTest {
     assert(result == ValidatorResult.Valid)
   }
 
-  //noinspection AccessorLikeMethodIsUnit
   @Test
   def isInputInvalid_validSsoCode_returnsValidResult(): Unit = {
     val ssoCode = "someSsoCode"
@@ -41,7 +40,6 @@ class EnterpriseLoginInputValidatorTest {
     assert(result == ValidatorResult.Valid)
   }
 
-  //noinspection AccessorLikeMethodIsUnit
   @Test
   def isInputInvalid_neitherEmailnorSso_returnsInvalidResultWithError(): Unit = {
     val randomText = "sdlfk2348092///..sdfo"
@@ -54,38 +52,40 @@ class EnterpriseLoginInputValidatorTest {
   }
 
   @Test
-  def inputType_isInputInvalidCalledWithSsoCode_returnsSsoCodeType(): Unit = {
+  def isSsoInput_calledWithValidSsoCode_returnsTrue(): Unit = {
     val ssoCode = "someSsoCode"
     Mockito.when(ssoService.isTokenValid(ssoCode)).thenReturn(true)
 
-    enterpriseLoginInputValidator.isInputInvalid(ssoCode)
+    val result = enterpriseLoginInputValidator.isSsoInput(ssoCode)
 
-    val inputType = enterpriseLoginInputValidator.inputType
-
-    assert(inputType.contains(EnterpriseLoginInputType.SsoCode))
+    assert(result)
   }
 
   @Test
-  def inputType_isInputInvalidCalledWithEmail_returnsEmailType(): Unit = {
-    val email = "somebody@wire.com"
-    Mockito.when(ssoService.isTokenValid(email)).thenReturn(false)
+  def isSsoInput_calledWithInvalidSsoCode_returnsFalse(): Unit = {
+    val ssoCode = "someInvalidSsoCode"
+    Mockito.when(ssoService.isTokenValid(ssoCode)).thenReturn(false)
 
-    enterpriseLoginInputValidator.isInputInvalid(email)
+    val result = enterpriseLoginInputValidator.isSsoInput(ssoCode)
 
-    val inputType = enterpriseLoginInputValidator.inputType
-
-    assert(inputType.contains(EnterpriseLoginInputType.Email))
+    assert(!result)
   }
 
   @Test
-  def inputType_isInputInvalidCalledWithNeitherEmailNorSsoCode_returnsNone(): Unit = {
-    val randomText = "sdlfk2348092///..sdfo"
-    Mockito.when(ssoService.isTokenValid(randomText)).thenReturn(false)
+  def isEmailInput_calledWithValidEmail_returnsTrue(): Unit = {
+    val email = "somebody@team-22-wire.com"
 
-    enterpriseLoginInputValidator.isInputInvalid(randomText)
+    val result = enterpriseLoginInputValidator.isEmailInput(email)
 
-    val inputType = enterpriseLoginInputValidator.inputType
+    assert(result)
+  }
 
-    assert(inputType.isEmpty)
+  @Test
+  def isEmailInput_calledWithInvalidEmail_returnsFalse(): Unit = {
+    val input = "this is not an email"
+
+    val result = enterpriseLoginInputValidator.isEmailInput(input)
+
+    assert(!result)
   }
 }

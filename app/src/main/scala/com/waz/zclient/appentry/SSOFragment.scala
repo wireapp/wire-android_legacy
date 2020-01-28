@@ -27,7 +27,6 @@ import com.waz.service.SSOService
 import com.waz.zclient.InputDialog._
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
-import com.waz.zclient.appentry.EnterpriseLoginInputType.{Email, SsoCode}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.utils.ContextUtils._
@@ -45,17 +44,22 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   private lazy val ssoService             = inject[SSOService]
   private lazy val userAccountsController = inject[UserAccountsController]
 
-  private lazy val inputValidator = EnterpriseLoginInputValidator(ssoService)
+  private lazy val inputValidator = EnterpriseLoginInputValidator(ssoService, "Error!!!") //TODO change error text
 
   private lazy val dialogStaff = new InputDialog.Listener {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnPositiveBtn(input) => inputValidator.inputType match {
-        case Some(SsoCode) => verifySsoCode(input)
-        case Some(Email) => verifyEmail(input)
-        case _ => throw new IllegalStateException("User should not be able to click the button without a valid input")
-      }
+      case OnPositiveBtn(input) => verifyUserInput(input)
     }
   }
+
+  private def verifyUserInput(input: String): Unit =
+    if (inputValidator.isSsoInput(input)) {
+      verifySsoCode(input)
+    } else if (inputValidator.isEmailInput(input)) {
+      verifyEmail(input)
+    } else {
+      throw new IllegalStateException("User should not be able to click the button without a valid input")
+    }
 
   override def onStart(): Unit = {
     super.onStart()
