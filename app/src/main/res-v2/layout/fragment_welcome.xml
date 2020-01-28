@@ -24,35 +24,35 @@
     android:background="@color/athens_light_gray">
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline1"
+        android:id="@+id/welcomeLogoGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.082" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline2"
+        android:id="@+id/welcomeTitleGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.304" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline3"
+        android:id="@+id/welcomeCreateAccountGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.450" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline4"
+        android:id="@+id/welcomeLoginGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.552" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline5"
+        android:id="@+id/welcomeEnterpriseLoginGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -68,7 +68,7 @@
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline1" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeLogoGuideline" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/welcomeTitleTextView"
@@ -85,7 +85,7 @@
         app:layout_constraintHeight_percent="0.070"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline2"  />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeTitleGuideline"  />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/welcomeCreateAccountButton"
@@ -101,7 +101,7 @@
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline3" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeCreateAccountGuideline" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/welcomeLoginButton"
@@ -115,7 +115,7 @@
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline4" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeLoginGuideline" />
 
 
     <androidx.appcompat.widget.AppCompatButton
@@ -130,6 +130,6 @@
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/guideline5" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeEnterpriseLoginGuideline" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
