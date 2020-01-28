@@ -21,7 +21,7 @@ import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.TextWatcher
-import android.view.View.OnAttachStateChangeListener
+import android.view.View.{OnAttachStateChangeListener, OnClickListener}
 import android.view.{LayoutInflater, View}
 import android.widget.TextView
 import androidx.annotation.StringRes
@@ -105,18 +105,29 @@ class InputDialog extends DialogFragment with FragmentHelper {
   private lazy val input = view.findViewById[TextInputEditText](R.id.input)
   private lazy val textInputLayout = view.findViewById[TextInputLayout](R.id.input_dialog_textinputlayout)
   private lazy val dialog =
-    new AlertDialog.Builder(getContext)
+    returning(new AlertDialog.Builder(getContext)
       .setView(view)
       .setTitle(getArguments.getInt(Title))
-      .setPositiveButton(getArguments.getInt(PositiveBtn), new DialogInterface.OnClickListener {
-        def onClick(dialog: DialogInterface, which: Int): Unit =
-          listener.foreach(_.onDialogEvent(OnPositiveBtn(input.getText.toString)))
-      })
-      .setNegativeButton(getArguments.getInt(NegativeBtn), new DialogInterface.OnClickListener {
-        def onClick(dialog: DialogInterface, which: Int): Unit =
-          listener.foreach(_.onDialogEvent(OnNegativeBtn))
-      })
+      .setPositiveButton(getArguments.getInt(PositiveBtn), null)
+      .setNegativeButton(getArguments.getInt(NegativeBtn), null)
       .create()
+    ) { alertDialog =>
+          alertDialog.setOnShowListener(new DialogInterface.OnShowListener {
+            override def onShow(dialog: DialogInterface): Unit = {
+              alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new OnClickListener {
+                override def onClick(v: View): Unit = {
+                  listener.foreach(_.onDialogEvent(OnPositiveBtn(input.getText.toString)))
+                }
+              })
+
+              alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE).setOnClickListener(new OnClickListener {
+                override def onClick(v: View): Unit = {
+                  listener.foreach(_.onDialogEvent(OnNegativeBtn))
+                }
+              })
+            }
+          })
+      }
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
     super.onCreateDialog(savedInstanceState)
@@ -154,19 +165,21 @@ class InputDialog extends DialogFragment with FragmentHelper {
     super.onStop()
   }
 
-  private  def validate(str: String): Unit = validator.foreach(
+  private def validate(str: String): Unit = validator.foreach(
     _.isInputInvalid(str) match {
       case ValidatorResult.Valid =>
         if (getBooleanArg(DisablePositiveBtnOnInvalidInput)) positiveBtn.setEnabled(true)
         textInputLayout.setErrorEnabled(false)
       case ValidatorResult.Invalid(error) =>
         if (getBooleanArg(DisablePositiveBtnOnInvalidInput)) positiveBtn.setEnabled(false)
-        error.foreach({
-          textInputLayout.setErrorEnabled(true)
-          textInputLayout.setError(_)
-        })
+        error.foreach(setError)
     }
   )
+
+  def setError(errorText: String)= {
+    textInputLayout.setErrorEnabled(true)
+    textInputLayout.setError(errorText)
+  }
 
   private def positiveBtn = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
 

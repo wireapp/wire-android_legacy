@@ -1350,6 +1350,9 @@
     <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
     <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
 
+    <string name="enterprise_signin_domain_not_found_error">Sorry, this domain is not registered as enterprise.
+        Enter SSO access code to log in.</string>
+
     <string name="sso_signin_wrong_code_title">Invalid code</string>
     <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
 

@@ -18,7 +18,6 @@
 package com.waz.zclient.appentry
 
 import android.app.FragmentManager
-import android.util.Log
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -84,8 +83,10 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       case _ =>
     }
 
+  private def getSsoDialog: Option[InputDialog] = findChildFragment[InputDialog](SSODialogTag)
+
   protected def showSSODialog(token: Option[String]): Unit =
-    if (findChildFragment[InputDialog](SSODialogTag).isEmpty)
+    if (getSsoDialog.isEmpty)
       InputDialog.newInstance(
         title = R.string.app_entry_sso_dialog_title,
         message = R.string.app_entry_sso_dialog_message,
@@ -106,6 +107,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       ssoService.verifyToken(token).flatMap { result =>
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
+        getSsoDialog.foreach(_.dismiss()) //TODO: might show some errors in the dialog
         result match {
           case Right(true) =>
             getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
@@ -121,11 +123,14 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     val domain = ssoService.extractDomain(email)
     ssoService.verifyDomain(domain).flatMap {
       case Right(DomainSuccessful(configFileUrl)) =>
-        Log.e("DOMAIN", "SUCCESS "+configFileUrl)
+        getSsoDialog.foreach(_.dismiss())
         Future.successful(()) //TODO: save config file and continue flow
-      case Right(_) =>
-        showErrorDialog("Error", "Domain not found") //TODO better error message
-      case Left(err) => handleVerificationError(err)
+      case Right(_) => Future.successful(
+          getSsoDialog.foreach(_.setError(getString(R.string.enterprise_signin_domain_not_found_error)))
+      )
+      case Left(err) =>
+        getSsoDialog.foreach(_.dismiss())
+        handleVerificationError(err)
     }
   }
 
