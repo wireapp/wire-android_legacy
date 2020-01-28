@@ -3,7 +3,7 @@ package com.waz.zclient.devices.data
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.core.network.accessData
+import com.waz.zclient.core.functional.withFallback
 import com.waz.zclient.devices.data.source.ClientMapper
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -15,18 +15,23 @@ class ClientsDataSource constructor(
     private val clientMapper: ClientMapper
 ) : ClientsRepository {
 
-    override suspend fun clientById(clientId: String) =
-        accessData(clientByIdLocal(clientId), clientByIdRemote(clientId), saveClient())
+    override suspend fun clientById(clientId: String): Either<Failure, Client> =
+        clientByIdLocal(clientId)
+            .withFallback { clientByIdRemote(clientId) }
+            .finally { saveClient() }
+            .execute()
 
-    override suspend fun allClients() = accessData(allClientsLocal(), allClientsRemote(), saveAllClients())
+    override suspend fun allClients() =
+        allClientsLocal()
+            .withFallback { allClientsRemote() }
+            .finally { saveAllClients() }
+            .execute()
 
-    private fun clientByIdRemote(clientId: String): suspend () -> Either<Failure, Client> = {
+    private suspend fun clientByIdRemote(clientId: String) =
         remoteDataSource.clientById(clientId).map { clientMapper.toClient(it) }
-    }
 
-    private fun allClientsRemote(): suspend () -> Either<Failure, List<Client>> = {
+    private suspend fun allClientsRemote() =
         remoteDataSource.allClients().map { clientMapper.toListOfClients(it) }
-    }
 
     private fun clientByIdLocal(clientId: String): suspend () -> Either<Failure, Client> = {
         localDataSource.clientById(clientId).map { clientMapper.toClient(it) }
