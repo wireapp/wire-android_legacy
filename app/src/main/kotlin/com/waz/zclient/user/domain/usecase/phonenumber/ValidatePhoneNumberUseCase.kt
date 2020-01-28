@@ -1,7 +1,6 @@
 package com.waz.zclient.user.domain.usecase.phonenumber
 
 import androidx.core.text.isDigitsOnly
-import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
@@ -13,17 +12,20 @@ sealed class ValidatePhoneNumberError : FeatureFailure()
 
 class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() {
 
-    override suspend fun run(params: ValidatePhoneNumberParams): Either<Failure, String> =
-        if (!isCountryCodeValid(params.countryCode)) {
-            Either.Left(CountryCodeInvalid)
-        } else if (!params.phoneNumber.isDigitsOnly()) {
-            Either.Left(PhoneNumberInvalid)
-        } else {
-            val phoneNumber = "${params.countryCode}${params.phoneNumber}"
-            if (isPhoneNumberValid(phoneNumber)) {
-                Either.Left(PhoneNumberInvalid)
-            } else {
-                Either.Right(phoneNumber)
+    override suspend fun run(params: ValidatePhoneNumberParams) =
+        when (!isCountryCodeValid(params.countryCode)) {
+            true -> Either.Left(CountryCodeInvalid)
+            else -> {
+                when (!params.phoneNumber.isDigitsOnly()) {
+                    true -> Either.Left(PhoneNumberInvalid)
+                    else -> {
+                        val phoneNumber = "${params.countryCode}${params.phoneNumber}"
+                        when (isPhoneNumberValid(phoneNumber)) {
+                            true -> Either.Left(PhoneNumberInvalid)
+                            else -> Either.Right(phoneNumber)
+                        }
+                    }
+                }
             }
         }
 
