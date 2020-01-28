@@ -80,7 +80,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
       Await.result(service.shouldSendReadReceipts(convId, rrSettings), 1.second) shouldEqual false
     }
 
-    scenario("1-to-1 conversation setting empty means RR are never sent") {
+    scenario("1-to-1 self settings set to false means RR are never sent") {
       val convId = ConvId("test")
       val rrSettings = ReadReceiptSettings(selfSettings = false, None)
       val service = getService().asInstanceOf[ConversationsUiServiceImpl]
@@ -90,9 +90,9 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
       Await.result(service.shouldSendReadReceipts(convId, rrSettings), 1.second) shouldEqual false
     }
 
-    scenario("RR are sent when convo and user option match") {
+    scenario("1-to-1 self settings set to true means RR are sent") {
       val convId = ConvId("test")
-      val rrSettings = ReadReceiptSettings(selfSettings = true, Some(1))
+      val rrSettings = ReadReceiptSettings(selfSettings = true, None)
       val service = getService().asInstanceOf[ConversationsUiServiceImpl]
 
       (convsService.isGroupConversation _).expects(convId).once().returning(Future.successful(false))
