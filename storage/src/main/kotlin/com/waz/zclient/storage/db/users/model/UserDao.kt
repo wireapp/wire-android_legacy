@@ -53,9 +53,6 @@ data class UserDao(
     @ColumnInfo(name = "timestamp")
     var timestamp: Long?,
 
-    @ColumnInfo(name = "display_name")
-    var displayName: String?,
-
     @ColumnInfo(name = "verified")
     var verified: String?,
 

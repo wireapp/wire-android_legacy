@@ -43,7 +43,6 @@ import com.waz.zclient.conversation.{ConversationController, LikesAndReadsFragme
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.drawing.DrawingFragment
 import com.waz.zclient.giphy.GiphySharingPreviewFragment
-import com.waz.zclient.pages.main.connect.UserProfileContainer
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.profile.camera.CameraContext
 import com.waz.zclient.participants.ParticipantsController
@@ -55,7 +54,6 @@ class ConversationManagerFragment extends FragmentHelper
   with ConversationScreenControllerObserver
   with LocationObserver
   with CollectionsObserver
-  with UserProfileContainer
   with CameraActionObserver {
 
   import Threading.Implicits.Ui
@@ -216,13 +214,6 @@ class ConversationManagerFragment extends FragmentHelper
     navigationController.setRightPage(Page.MESSAGE_STREAM, ConversationManagerFragment.Tag)
   }
 
-  override def dismissUserProfile(): Unit = dismissSingleUserProfile()
-
-  override def dismissSingleUserProfile(): Unit = {
-    getChildFragmentManager.popBackStackImmediate
-    navigationController.setRightPage(Page.MESSAGE_STREAM, ConversationManagerFragment.Tag)
-  }
-
   override def onBitmapSelected(content: Content, cameraContext: CameraContext): Unit =
     if (cameraContext == CameraContext.MESSAGE) {
       val convController = inject[ConversationController]
@@ -276,8 +267,6 @@ class ConversationManagerFragment extends FragmentHelper
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit = {}
 
   override def onHideOtrClient(): Unit = {}
-
-  override def showRemoveConfirmation(userId: UserId): Unit = {}
 
   override def onCameraNotAvailable(): Unit = {}
 

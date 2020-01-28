@@ -1,5 +1,6 @@
 package com.waz.zclient.core.network.accesstoken
 
+import com.waz.zclient.core.functional.foldSuspendable
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -26,17 +27,15 @@ class AccessTokenAuthenticator(
     /**
      * This authenticate() method is called when server returns 401 Unauthorized.
      */
-    override fun authenticate(route: Route?, response: Response): Request? {
+    override fun authenticate(route: Route?, response: Response): Request? = runBlocking {
         updateRefreshToken(response)
         val refreshToken = repository.refreshToken()
 
-        return runBlocking {
-            val tokenResult = repository.renewAccessToken(refreshToken)
+        val tokenResult = repository.renewAccessToken(refreshToken)
 
-            return@runBlocking tokenResult.fold({ null }) {
-                repository.updateAccessToken(it)
-                proceedWithNewAccessToken(response, it.token)
-            }
+        tokenResult.foldSuspendable({ null }) {
+            repository.updateAccessToken(it)
+            proceedWithNewAccessToken(response, it.token)
         }
     }
 
@@ -49,7 +48,7 @@ class AccessTokenAuthenticator(
                 .build()
         }
 
-    private fun updateRefreshToken(response: Response) =
+    private suspend fun updateRefreshToken(response: Response) =
         response.headers()["Cookie"]?.let {
             val newRefreshToken = refreshTokenMapper.fromTokenText(it)
             if (repository.refreshToken() != newRefreshToken) {

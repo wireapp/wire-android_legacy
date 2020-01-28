@@ -288,7 +288,7 @@ class ConversationListManagerFragment extends Fragment
         user <- usersStorage.get(userId)
         userRequester = if (fromDeepLink) UserRequester.DEEP_LINK else UserRequester.SEARCH
       } yield (user, userRequester)).foreach { case (Some(userData), userRequester) =>
-        import com.waz.api.User.ConnectionStatus._
+        import com.waz.api.ConnectionStatus._
         userData.connection match {
           case CANCELLED | UNCONNECTED =>
             if (!userData.isConnected) {

@@ -106,7 +106,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
     customFolderId       <- Signal.future(convListController.getCustomFolderId(convId))
     customFolderData     <- customFolderId.fold(Signal.const[Option[FolderData]](None))(convListController.folder)
   } yield {
-    import com.waz.api.User.ConnectionStatus._
+    import com.waz.api.ConnectionStatus._
 
     val builder = Set.newBuilder[MenuItem]
 

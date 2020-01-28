@@ -17,13 +17,9 @@
  */
 package com.waz.zclient.utils;
 
-import org.threeten.bp.DateTimeUtils;
 import org.threeten.bp.Instant;
-import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneId;
 import org.threeten.bp.ZonedDateTime;
-
-import java.util.Date;
 
 /**
  * Utilities for conversion between the old and new JDK date types
@@ -33,38 +29,6 @@ import java.util.Date;
  * All methods are null-safe.
  */
 public class DateConvertUtils {
-
-    /**
-     * Calls {@link #asLocalDateTime(Instant, ZoneId)} with the system default time zone.
-     */
-    public static LocalDateTime asLocalDateTime(Date date) {
-        return asLocalDateTime(asInstant(date), ZoneId.systemDefault());
-    }
-
-    public static LocalDateTime asLocalDateTime(Instant instant) {
-        return asLocalDateTime(instant, ZoneId.systemDefault());
-    }
-
-    /**
-     * Creates {@link LocalDateTime} from {@code java.util.Date} or it's subclasses. Null-safe.
-     */
-    public static LocalDateTime asLocalDateTime(Instant date, ZoneId zone) {
-        if (date == null) {
-            return null;
-        }
-        return date.atZone(zone).toLocalDateTime();
-    }
-
-    /**
-     * Creates an {@link Instant} from {@code java.util.Date} or it's subclasses. Null-safe.
-     */
-    public static Instant asInstant(Date date) {
-        if (date == null) {
-            return null;
-        } else {
-            return DateTimeUtils.toInstant(date);
-        }
-    }
 
     /**
      * Calls {@link #asZonedDateTime(Instant, ZoneId)} with the system default time zone.

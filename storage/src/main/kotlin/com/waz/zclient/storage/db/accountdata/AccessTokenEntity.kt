@@ -1,0 +1,42 @@
+package com.waz.zclient.storage.db.accountdata
+
+import androidx.room.TypeConverter
+import org.json.JSONException
+import org.json.JSONObject
+
+data class AccessTokenEntity(
+    val token: String,
+    val tokenType: String,
+    val expiresInMillis: Long
+)
+
+class AccessTokenConverter {
+    @TypeConverter
+    fun fromStringToAccessToken(tokenString: String): AccessTokenEntity? =
+        try {
+            val json = JSONObject(tokenString)
+            AccessTokenEntity(
+                token = json.getString(KEY_TOKEN),
+                tokenType = json.getString(KEY_TOKEN_TYPE),
+                expiresInMillis = json.getLong(KEY_EXPIRY)
+            )
+        } catch (e: JSONException) {
+            null
+        }
+
+    @TypeConverter
+    fun accessTokenToString(entity: AccessTokenEntity): String =
+        """
+            {
+                "$KEY_TOKEN": "${entity.token}",
+                "$KEY_TOKEN_TYPE": "${entity.tokenType}",
+                "$KEY_EXPIRY": ${entity.expiresInMillis}
+            }
+        """.trimIndent()
+
+    companion object {
+        private const val KEY_TOKEN = "token"
+        private const val KEY_TOKEN_TYPE = "type"
+        private const val KEY_EXPIRY = "expires"
+    }
+}

@@ -1,6 +1,7 @@
 package com.waz.zclient.user.domain.usecase.handle
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.map
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,31 +28,37 @@ class ValidateHandleUseCaseTest : UnitTest() {
     }
 
     @Test
-    fun `Given run is executed, handle doesn't match regex, then return failure`() {
+    fun `Given run is executed, when handle doesn't match regex, then return failure`() {
         val handle = "----7_.handle"
         verifyValidateUseCase(handle)
     }
 
     @Test
-    fun `Given run is executed, handle matches regex, length is over max, then return failure`() {
+    fun `Given run is executed, when handle matches regex and length is over max, then return failure`() {
         val handle = "thisisalonghandlethatshouldnotbethislong"
         verifyValidateUseCase(handle)
     }
 
     @Test
-    fun `Given run is executed, handle matches regex, length is 1, then return failure`() {
+    fun `Given run is executed, when handle matches regex and length is 1, then return failure`() {
         val handle = "h"
         verifyValidateUseCase(handle)
     }
 
     @Test
-    fun `Given run is executed, handle matches regex, handle fits requirements, then return success`() {
+    fun `Given run is executed, when handle is empty then return failure`() {
+        val handle = String.empty()
+        verifyValidateUseCase(handle)
+    }
+
+    @Test
+    fun `Given run is executed, when handle matches regex and handle fits requirements then return success`() {
         val handle = "wire"
         verifyValidateUseCase(handle, isError = false)
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given run is executed, handle fits requirements, but request canceled, then return false`() {
+    fun `Given run is executed when handle fits requirements but request is canceled, then return false`() {
         val handle = "wire"
         verifyValidateUseCase(handle, isCancelable = true)
     }

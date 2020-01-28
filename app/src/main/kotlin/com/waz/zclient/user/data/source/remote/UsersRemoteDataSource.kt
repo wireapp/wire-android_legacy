@@ -5,11 +5,11 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
-import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
+import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
-import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
+import com.waz.zclient.user.domain.usecase.handle.UnknownError
 
 class UsersRemoteDataSource(
     private val usersNetworkService: UsersNetworkService,
@@ -33,10 +33,10 @@ class UsersRemoteDataSource(
 
     suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
         when (usersNetworkService.doesHandleExist(newHandle).code()) {
-            HANDLE_TAKEN -> Either.Left(HandleExistsAlreadyError)
-            HANDLE_INVALID -> Either.Left(HandleInvalidError)
+            HANDLE_TAKEN -> Either.Left(HandleAlreadyExists)
+            HANDLE_INVALID -> Either.Left(HandleInvalid)
             HANDLE_AVAILABLE -> Either.Right(HandleIsAvailable)
-            else -> Either.Left(HandleUnknownError)
+            else -> Either.Left(UnknownError)
         }
 
     companion object {

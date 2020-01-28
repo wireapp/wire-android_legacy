@@ -15,5 +15,4 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun userPreferencesDbService(): UserPreferenceDbService
     abstract fun userDbService(): UserDbService
     abstract fun clientsDbService(): ClientDbService
-
 }

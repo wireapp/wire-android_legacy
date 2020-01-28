@@ -2,19 +2,19 @@ package com.waz.zclient.user.data.source.remote
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.capture
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.eq
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.usecase.handle.HandleExistsAlreadyError
-import com.waz.zclient.user.domain.usecase.handle.HandleInvalidError
+import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
+import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
-import com.waz.zclient.user.domain.usecase.handle.HandleUnknownError
+import com.waz.zclient.user.domain.usecase.handle.UnknownError
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldBeInstanceOf
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor
@@ -239,14 +239,14 @@ class UserRemoteDataSourceTest : UnitTest() {
     @Test
     fun `Given doesHandleExist() is called, when response code is 200, then return a failure`() {
         `when`(emptyResponse.code()).thenReturn(HANDLE_TAKEN)
-        validateHandleExistsFailure(errorClass = HandleExistsAlreadyError::class.java)
+        validateHandleExistsFailure(failure = HandleAlreadyExists)
 
     }
 
     @Test
     fun `Given doesHandleExist() is called, when response code is 400, then return a failure`() {
         `when`(emptyResponse.code()).thenReturn(HANDLE_INVALID)
-        validateHandleExistsFailure(errorClass = HandleInvalidError::class.java)
+        validateHandleExistsFailure(failure = HandleInvalid)
 
     }
 
@@ -259,12 +259,12 @@ class UserRemoteDataSourceTest : UnitTest() {
     @Test
     fun `Given doesHandleExist() is called, when response code is not 200, 400 or 404, then return a failure`() {
         `when`(emptyResponse.code()).thenReturn(HANDLE_UNKNOWN)
-        validateHandleExistsFailure(errorClass = HandleUnknownError::class.java)
+        validateHandleExistsFailure(failure = UnknownError)
     }
 
     @Test(expected = CancellationException::class)
     fun `Given doesHandleExist() is called, and the request is cancelled, then return a failure`() {
-        validateHandleExistsFailure(cancelled = true, errorClass = HandleUnknownError::class.java)
+        validateHandleExistsFailure(cancelled = true, failure = UnknownError)
     }
 
     private fun validateHandleExistsSuccess() = runBlockingTest {
@@ -277,12 +277,12 @@ class UserRemoteDataSourceTest : UnitTest() {
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isRight shouldBe true
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).onSuccess {
-            it shouldBeInstanceOf HandleIsAvailable::class.java
+            it shouldBe HandleIsAvailable
         }
     }
 
 
-    private fun validateHandleExistsFailure(cancelled: Boolean = false, errorClass: Class<*>) = runBlockingTest {
+    private fun validateHandleExistsFailure(cancelled: Boolean = false, failure: Failure) = runBlockingTest {
         `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
@@ -297,7 +297,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isLeft shouldBe true
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).onFailure {
-            it shouldBeInstanceOf errorClass
+            it shouldBe failure
         }
     }
 

@@ -20,16 +20,6 @@ import org.mockito.Mockito.*
 @ExperimentalCoroutinesApi
 class UserLocalDataSourceTest : UnitTest() {
 
-    companion object {
-        private const val CANCELLATION_DELAY = 200L
-        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
-        private const val TEST_USER_ID = "userId"
-        private const val TEST_NAME = "name"
-        private const val TEST_HANDLE = "@handle"
-        private const val TEST_EMAIL = "email@wire.com"
-        private const val TEST_PHONE = "+497588838839"
-    }
-
     private lateinit var usersLocalDataSource: UsersLocalDataSource
 
     @Mock
@@ -190,5 +180,15 @@ class UserLocalDataSourceTest : UnitTest() {
 
             usersLocalDataSource.changePhone(TEST_PHONE).isRight shouldBe false
         }
+    }
+
+    companion object {
+        private const val CANCELLATION_DELAY = 200L
+        private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
+        private const val TEST_USER_ID = "userId"
+        private const val TEST_NAME = "name"
+        private const val TEST_HANDLE = "@handle"
+        private const val TEST_EMAIL = "email@wire.com"
+        private const val TEST_PHONE = "+497588838839"
     }
 }
