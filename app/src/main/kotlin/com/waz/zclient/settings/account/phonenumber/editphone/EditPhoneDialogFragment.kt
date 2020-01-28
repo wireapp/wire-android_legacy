@@ -9,21 +9,14 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.withArgs
-import com.waz.zclient.core.permissions.PermissionManagerFactory
-import com.waz.zclient.core.permissions.extension.strictRequestReadPhoneState
-import kotlinx.android.synthetic.main.dialog_edit_phone.editPhoneDialogPhoneNumberTextInputLayout
-import kotlinx.android.synthetic.main.dialog_edit_phone.view.editPhoneDialogCountryCodeTextInputEditText
-import kotlinx.android.synthetic.main.dialog_edit_phone.view.editPhoneDialogPhoneNumberTextInputEditText
+import kotlinx.android.synthetic.main.dialog_fragment_edit_phone.*
+import kotlinx.android.synthetic.main.dialog_fragment_edit_phone.view.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class EditPhoneDialogFragment : DialogFragment() {
 
-    private val permissionManager by lazy {
-        PermissionManagerFactory.getPermissionManager(this)
-    }
-
     private val rootView: View by lazy {
-        requireActivity().layoutInflater.inflate(R.layout.dialog_edit_phone, null)
+        requireActivity().layoutInflater.inflate(R.layout.dialog_fragment_edit_phone, null)
     }
 
     private val editPhoneNumberViewModel: EditPhoneNumberViewModel by viewModel()
@@ -75,21 +68,6 @@ class EditPhoneDialogFragment : DialogFragment() {
 
     private fun showConfirmationDialog(phoneNumber: String) {
         //Show confirmation dialog here
-    }
-
-    override fun onStart() {
-        super.onStart()
-        permissionManager.strictRequestReadPhoneState {
-            it.fold(
-                editPhoneNumberViewModel::onReadPhonePermissionDenied,
-                editPhoneNumberViewModel::onReadPhonePermissionGranted
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        permissionManager.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
     companion object {
