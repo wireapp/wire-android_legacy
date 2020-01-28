@@ -33,12 +33,12 @@ import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils._
 import com.waz.zclient.{Injectable, R}
 
-class BaseSingleParticipantAdapter(userId: UserId,
-                                   isGuest: Boolean,
-                                   isExternal: Boolean,
+class BaseSingleParticipantAdapter(userId:      UserId,
+                                   isGuest:     Boolean,
+                                   isExternal:  Boolean,
                                    isDarkTheme: Boolean,
-                                   isGroup: Boolean,
-                                   isWireless: Boolean
+                                   isGroup:     Boolean,
+                                   isWireless:  Boolean
                                   )(implicit context: Context)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import BaseSingleParticipantAdapter._
@@ -48,7 +48,7 @@ class BaseSingleParticipantAdapter(userId: UserId,
   protected var selfRole:        Option[ConversationRole] = None
 
   protected def isGroupAdminViewVisible: Boolean = isGroup && !isWireless && selfRole.exists(_.canModifyOtherMember)
-  protected def hasInformation: Boolean = false
+  protected def hasInformation: Boolean          = false
 
   val onParticipantRoleChange = EventStream[ConversationRole]
 
@@ -82,10 +82,11 @@ class BaseSingleParticipantAdapter(userId: UserId,
 }
 
 object BaseSingleParticipantAdapter {
-  val CustomField = 0
-  val Header = 1
-  val GroupAdmin = 2
+  val CustomField  = 0
+  val Header       = 1
+  val GroupAdmin   = 2
   val ReadReceipts = 3
+  val UserName     = 4
 
   case class ParticipantHeaderRowViewHolder(view: View) extends ViewHolder(view) {
     private lazy val imageView            = view.findViewById[ChatHeadView](R.id.chathead)
@@ -98,12 +99,12 @@ object BaseSingleParticipantAdapter {
 
     private var userId = Option.empty[UserId]
 
-    def bind(userId: UserId,
-             isGuest: Boolean,
-             isExternal: Boolean,
-             isGroupAdmin: Boolean,
-             timerText: Option[String],
-             isDarkTheme: Boolean,
+    def bind(userId:         UserId,
+             isGuest:        Boolean,
+             isExternal:     Boolean,
+             isGroupAdmin:   Boolean,
+             timerText:      Option[String],
+             isDarkTheme:    Boolean,
              hasInformation: Boolean
             )(implicit context: Context): Unit = {
       this.userId = Some(userId)
@@ -131,11 +132,9 @@ object BaseSingleParticipantAdapter {
   case class GroupAdminViewHolder(view: View) extends ViewHolder(view) with DerivedLogTag {
     private implicit val ctx = view.getContext
 
-    private val switch = view.findViewById[SwitchCompat](R.id.participant_group_admin_toggle)
-    private var groupAdmin = Option.empty[Boolean]
+    private val switch                   = view.findViewById[SwitchCompat](R.id.participant_group_admin_toggle)
+    private var groupAdmin               = Option.empty[Boolean]
     private var onParticipantRoleChanged = Option.empty[SourceStream[ConversationRole]]
-
-    view.setId(R.id.participant_group_admin_toggle)
 
     switch.setOnCheckedChangeListener(new OnCheckedChangeListener {
       override def onCheckedChanged(buttonView: CompoundButton, groupAdminEnabled: Boolean): Unit =
@@ -149,6 +148,7 @@ object BaseSingleParticipantAdapter {
       if (!this.onParticipantRoleChanged.contains(onParticipantRoleChanged))
         this.onParticipantRoleChanged = Some(onParticipantRoleChanged)
       if (!groupAdmin.contains(groupAdminEnabled)) switch.setChecked(groupAdminEnabled)
+      view.setContentDescription(s"Group Admin: $groupAdminEnabled")
     }
   }
 }
