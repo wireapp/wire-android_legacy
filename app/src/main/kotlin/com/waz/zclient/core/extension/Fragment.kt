@@ -17,3 +17,6 @@ inline fun <T : Fragment> T.withArgs(argsBuilder: Bundle.() -> Unit): T =
 
 fun Fragment.openUrl(url: String) =
     requireActivity().startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+
+fun Fragment.startActivityWithAction(intentAction: String) =
+    startActivity(Intent().apply { action = intentAction })

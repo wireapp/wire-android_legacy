@@ -1453,10 +1453,18 @@
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
 
+
+    <!-- SSO Login -->
+    <string name="sso_login_dialog_title">Enterprise log in</string>
+    <string name="sso_login_dialog_message">Enter your email or SSO access code here:</string>
+
+    <!-- Welcome -->
+    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_enterprise_log_in">Enterprise Log In</string>
+  
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">Already taken</string>
     <string name="edit_account_handle_error_too_short">Must be longer than 2 letters</string>
     <string name="edit_account_handle_error_invalid_characters">Invalid characters: a–z, 0–9, and _ only</string>
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
-
 </resources>
