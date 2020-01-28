@@ -12,8 +12,6 @@ import com.waz.zclient.user.domain.usecase.ChangeEmailParams
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameParams
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.ChangePhoneParams
-import com.waz.zclient.user.domain.usecase.ChangePhoneUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
@@ -27,7 +25,6 @@ data class ProfileDetail(val value: String) {
 class SettingsAccountViewModel(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val changeNameUseCase: ChangeNameUseCase,
-    private val changePhoneUseCase: ChangePhoneUseCase,
     private val changeEmailUseCase: ChangeEmailUseCase
 ) : ViewModel() {
 
@@ -60,12 +57,6 @@ class SettingsAccountViewModel(
 
     fun updateName(name: String) {
         changeNameUseCase(viewModelScope, ChangeNameParams(name)) {
-            it.fold(::handleError) {}
-        }
-    }
-
-    fun updatePhone(phoneNumber: String) {
-        changePhoneUseCase(viewModelScope, ChangePhoneParams(phoneNumber)) {
             it.fold(::handleError) {}
         }
     }

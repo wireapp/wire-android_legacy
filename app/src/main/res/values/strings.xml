@@ -1453,6 +1453,9 @@
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
 
+    <!-- Settings Account - Edit Phone -->
+    <string name="edit_phone_dialog_country_code_error">Invalid country code</string>
+    <string name="edit_phone_dialog_phone_number_error">Invalid phone number</string>
 
     <!-- SSO Login -->
     <string name="sso_login_dialog_title">Enterprise log in</string>
@@ -1461,7 +1464,7 @@
     <!-- Welcome -->
     <string name="welcome_to_wire">Welcome to Wire</string>
     <string name="welcome_enterprise_log_in">Enterprise Log In</string>
-  
+
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">Already taken</string>
     <string name="edit_account_handle_error_too_short">Must be longer than 2 letters</string>

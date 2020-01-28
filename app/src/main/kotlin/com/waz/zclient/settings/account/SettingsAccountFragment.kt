@@ -14,6 +14,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
+import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -42,13 +43,10 @@ class SettingsAccountFragment : Fragment() {
         loadProfile()
     }
 
-    //TODO Will need changing to a phone dialog
     private fun initAccountPhoneNumber() {
         settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
         settingsAccountPhoneContainerLinearLayout.setOnClickListener {
-            val title = getString(R.string.pref_account_add_phone_title)
-            val defaultValue = settingsAccountPhoneTitleTextView.text.toString()
-            showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updatePhone(it) }
+            showEditPhoneDialog()
         }
     }
 
@@ -117,18 +115,22 @@ class SettingsAccountFragment : Fragment() {
         }
     }
 
-    private fun showErrorMessage(errorMessage: String) {
+    private fun showErrorMessage(errorMessage: String) =
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
-    }
 
-    private fun showEditHandleDialog() {
-        settingsAccountViewModel.handleLiveData.value?.let {
-            EditHandleFragment.newInstance(it)
-                .show(requireActivity().supportFragmentManager, String.empty())
-        }
-    }
+    private fun showEditHandleDialog() =
+        EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
+            .show(requireActivity().supportFragmentManager, String.empty())
 
-    private fun showGenericEditDialog(title: String, defaultValue: String, updateFunc: (String) -> Unit) {
+    private fun showEditPhoneDialog() =
+        EditPhoneDialogFragment.newInstance(settingsAccountPhoneTitleTextView.text.toString())
+            .show(requireActivity().supportFragmentManager, String.empty())
+
+    private fun showGenericEditDialog(
+        title: String,
+        defaultValue: String,
+        updateFunc: (String) -> Unit
+    ) =
         EditTextDialogFragment.newInstance(title, defaultValue,
             object : EditTextDialogFragment.EditTextDialogFragmentListener {
                 override fun onTextEdited(newValue: String) {
@@ -136,7 +138,6 @@ class SettingsAccountFragment : Fragment() {
                 }
             }
         ).show(requireActivity().supportFragmentManager, String.empty())
-    }
 
     companion object {
         private const val Accounts = "|ACCOUNTS|"
