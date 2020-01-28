@@ -25,7 +25,7 @@ import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{AccountsService, BackendConfig}
 import com.waz.threading.Threading
-import com.waz.zclient.appentry.AppEntryActivity
+import com.waz.zclient.auth.AuthenticationActivity
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.BackendController
 
@@ -96,7 +96,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   }
 
   private def startSignUp() = {
-    startActivity(new Intent(this, classOf[AppEntryActivity]))
+    startActivity(AuthenticationActivity.newIntent(this))
     finish()
   }
 }

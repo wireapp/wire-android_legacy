@@ -51,10 +51,7 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-class SignInFragment
-  extends SSOFragment
-  with View.OnClickListener
-  with CountryController.Observer {
+class SignInFragment extends SSOFragment with View.OnClickListener with CountryController.Observer {
 
   implicit def context: Context = getActivity
 
@@ -85,7 +82,7 @@ class SignInFragment
   private val name     = Signal("")
   private val phone    = Signal("")
 
-  private lazy val countryController = activity.getCountryController //TODO rewrite && inject
+  private lazy val countryController = appEntryActivity().getCountryController //TODO rewrite && inject
   private lazy val phoneCountry = Signal[Country]()
 
   private lazy val nameValidator = new NameValidator()
@@ -154,8 +151,6 @@ class SignInFragment
     tabSelector.foreach(_.setVisible(!onlyLogin))
     emailButton.foreach(_.setVisible(!onlyLogin))
     phoneButton.foreach(_.setVisible(!onlyLogin))
-
-    companyLoginButton.foreach(_.setVisible(BuildConfig.ALLOW_SSO))
 
     emailField.foreach { field =>
       field.setValidator(emailValidator)
@@ -330,6 +325,8 @@ class SignInFragment
     countryController.removeObserver(this)
   }
 
+  def appEntryActivity() = getActivity.asInstanceOf[AppEntryActivity]
+
   override def onClick(v: View) = {
     v.getId match {
       case R.id.ttv_signin_sso =>
@@ -348,14 +345,14 @@ class SignInFragment
         }
 
       case R.id.ll__signup__country_code__button | R.id.tv__country_code =>
-        activity.openCountryBox()
+        appEntryActivity().openCountryBox()
 
       case R.id.pcb__signin__email => //TODO rename!
         implicit val ec = Threading.Ui
 
         def onResponse[A](req: Either[ErrorResponse, A], method: SignInMethod) = {
           tracking.onEnteredCredentials(req, method)
-          activity.enableProgress(false)
+          appEntryActivity().enableProgress(false)
           req match {
             case Left(error) =>
               showErrorDialog(if (method.inputType == Email) EmailError(error) else PhoneError(error))
@@ -366,7 +363,7 @@ class SignInFragment
 
         uiSignInState.head.flatMap {
           case m@SignInMethod(Login, Email, _) =>
-            activity.enableProgress(true)
+            appEntryActivity().enableProgress(true)
 
             for {
               email    <- email.head
@@ -374,7 +371,7 @@ class SignInFragment
               req      <- accountsService.loginEmail(email, password)
             } yield onResponse(req, m).right.foreach { id =>
               KeyboardUtils.closeKeyboardIfShown(getActivity)
-              activity.showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
+              appEntryActivity().showFragment(FirstLaunchAfterLoginFragment(id), FirstLaunchAfterLoginFragment.Tag)
             }
           case m@SignInMethod(Register, Email, false) =>
             for {
@@ -386,7 +383,8 @@ class SignInFragment
                 accountsService.requestEmailCode(EmailAddress(email)).foreach { req =>
                   onResponse(req, m).right.foreach { _ =>
                     KeyboardUtils.closeKeyboardIfShown(getActivity)
-                    activity.showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment.Tag)
+                    appEntryActivity().showFragment(VerifyEmailWithCodeFragment(email, name, password), VerifyEmailWithCodeFragment
+                      .Tag)
                   }
                 }
               } else { // Invalid password
@@ -396,7 +394,7 @@ class SignInFragment
 
           case m@SignInMethod(method, Phone, false) =>
             val isLogin = method == Login
-            activity.enableProgress(true)
+            appEntryActivity().enableProgress(true)
             for {
               country <- phoneCountry.head
               phoneStr <- phone.head
@@ -404,7 +402,7 @@ class SignInFragment
               req <- accountsService.requestPhoneCode(phone, login = isLogin)
             } yield onResponse(req, m).right.foreach { _ =>
               KeyboardUtils.closeKeyboardIfShown(getActivity)
-              activity.showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
+              appEntryActivity().showFragment(VerifyPhoneFragment(phone.str, login = isLogin), VerifyPhoneFragment.Tag)
             }
           case SignInMethod(_, _, true) =>
             error(l"Invalid sign in state")
@@ -415,7 +413,7 @@ class SignInFragment
       case R.id.ttv_signin_forgot_password =>
         browserController.openForgotPassword()
       case R.id.close_button =>
-        activity.abortAddAccount()
+        appEntryActivity().abortAddAccount()
       case _ =>
     }
   }
@@ -437,7 +435,6 @@ class SignInFragment
       false
     }
 
-  override protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 }
 
 object SignInFragment {

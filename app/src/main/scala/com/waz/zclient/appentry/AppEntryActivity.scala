@@ -34,6 +34,7 @@ import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -61,6 +62,8 @@ object AppEntryActivity {
   val LoginArgVal: Int = 0
   val CreateTeamArgVal: Int = 1
 
+  val loginAction = BuildConfig.APPLICATION_ID + ".LOGIN_ACTION"
+
   def getLoginArgs: Bundle =
     returning(new Bundle()) { b =>
       b.putInt(MethodArg, LoginArgVal)
@@ -72,7 +75,7 @@ object AppEntryActivity {
     }
 }
 
-class AppEntryActivity extends BaseActivity {
+class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   import Threading.Implicits.Ui
 
@@ -127,6 +130,8 @@ class AppEntryActivity extends BaseActivity {
   override def onCreate(savedInstanceState: Bundle): Unit = {
     if (getActionBar != null) getActionBar.hide()
     super.onCreate(savedInstanceState)
+
+
     ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     setContentView(R.layout.activity_signup)
     enableProgress(false)
@@ -134,7 +139,10 @@ class AppEntryActivity extends BaseActivity {
 
     closeButton.onClick(abortAddAccount())
 
-    showFragment()
+    getIntent.getAction() match {
+      case `loginAction` => showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
+      case _ => showFragment()
+    }
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
@@ -277,10 +285,10 @@ class AppEntryActivity extends BaseActivity {
   }
 
   def enableProgress(enabled: Boolean): Unit = {
-    if (enabled)
-      progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
-    else
-      progressView.hide()
+    Option(progressView).foreach { _ =>
+      if (enabled) progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
+      else progressView.hide()
+    }
   }
 
   def abortAddAccount(): Unit =
@@ -294,18 +302,10 @@ class AppEntryActivity extends BaseActivity {
   def onEnterApplication(openSettings: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
     getControllerFactory.getVerificationController.finishVerification()
     val intent = Intents.EnterAppIntent(openSettings)(this)
-    clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state)))
+    clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state))
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK))
     startActivity(intent)
     finish()
-  }
-
-  private def setDefaultAnimation(transaction: FragmentTransaction): FragmentTransaction = {
-    transaction.setCustomAnimations(
-      R.anim.fragment_animation_second_page_slide_in_from_right,
-      R.anim.fragment_animation_second_page_slide_out_to_left,
-      R.anim.fragment_animation_second_page_slide_in_from_left,
-      R.anim.fragment_animation_second_page_slide_out_to_right)
-    transaction
   }
 
   def openCountryBox(): Unit = {
@@ -325,13 +325,9 @@ class AppEntryActivity extends BaseActivity {
     KeyboardUtils.showKeyboard(this)
   }
 
-  def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
-    val transaction = getSupportFragmentManager.beginTransaction()
-    if (animated) setDefaultAnimation(transaction)
-    transaction
-      .replace(R.id.fl_main_content, f, tag)
-      .addToBackStack(tag)
-      .commit
+  override def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
+    new TransactionHandler().showFragment(this, f, tag, animated, R.id.fl_main_content)
     enableProgress(false)
   }
 }
+

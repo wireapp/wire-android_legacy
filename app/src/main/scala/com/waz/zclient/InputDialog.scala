@@ -33,8 +33,9 @@ import com.waz.zclient.utils.RichTextView
 object InputDialog {
 
   trait Event
-  case class OnPositiveBtn(input: String) extends Event
-  case object OnNegativeBtn               extends Event
+  case class  OnPositiveBtn(input: String) extends Event
+  case object OnNegativeBtn                extends Event
+  case object OnCancel                     extends Event
 
   trait ValidatorResult
   object ValidatorResult {
@@ -106,6 +107,7 @@ class InputDialog extends DialogFragment with FragmentHelper {
     new AlertDialog.Builder(getContext)
       .setView(view)
       .setTitle(getArguments.getInt(Title))
+      .setCancelable(false)
       .setPositiveButton(getArguments.getInt(PositiveBtn), new DialogInterface.OnClickListener {
         def onClick(dialog: DialogInterface, which: Int): Unit =
           listener.foreach(_.onDialogEvent(OnPositiveBtn(input.getText.toString)))
@@ -113,7 +115,11 @@ class InputDialog extends DialogFragment with FragmentHelper {
       .setNegativeButton(getArguments.getInt(NegativeBtn), new DialogInterface.OnClickListener {
         def onClick(dialog: DialogInterface, which: Int): Unit =
           listener.foreach(_.onDialogEvent(OnNegativeBtn))
-      })
+        })
+    .setOnDismissListener(new DialogInterface.OnDismissListener() {
+      override def onDismiss(dialogInterface: DialogInterface): Unit =
+        listener.foreach(_.onDialogEvent(OnCancel))
+    })
       .create()
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
