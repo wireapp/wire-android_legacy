@@ -12,7 +12,6 @@ import com.waz.zclient.core.extension.startActivityWithAction
 import com.waz.zclient.core.extension.visible
 import kotlinx.android.synthetic.main.fragment_welcome.*
 
-
 class WelcomeFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -27,15 +26,15 @@ class WelcomeFragment : Fragment() {
         configureEnterpriseLoginVisibility()
     }
 
-    private fun  initCreateAccountButtonListener() {
+    private fun initCreateAccountButtonListener() {
         welcomeCreateAccountButton.setOnClickListener { startCreateAccountFlow() }
     }
 
-    private fun  initLoginButtonListener() {
+    private fun initLoginButtonListener() {
         welcomeLoginButton.setOnClickListener { startLoginFlow() }
     }
 
-    private fun  initEnterpriseLoginButtonListener() {
+    private fun initEnterpriseLoginButtonListener() {
         welcomeEnterpriseLoginButton.setOnClickListener { startEnterpriseLoginFlow() }
     }
 
@@ -50,18 +49,16 @@ class WelcomeFragment : Fragment() {
     private fun startEnterpriseLoginFlow() {
         startActivityWithAction(ACTION_SSO_LOGIN)
     }
+
     private fun configureEnterpriseLoginVisibility() {
         if (Config.allowSso()) welcomeEnterpriseLoginButton.visible()
         else welcomeEnterpriseLoginButton.invisible()
     }
-
-
     companion object {
         fun newInstance() = WelcomeFragment()
-        
+
         private val ACTION_LOGIN = Config.applicationId() + ".LOGIN_ACTION"
         private val ACTION_CREATE_ACCOUNT = Config.applicationId() + ".CREATE_ACCOUNT_ACTION"
         private val ACTION_SSO_LOGIN = Config.applicationId() + ".SSO_LOGIN_ACTION"
-
     }
 }
