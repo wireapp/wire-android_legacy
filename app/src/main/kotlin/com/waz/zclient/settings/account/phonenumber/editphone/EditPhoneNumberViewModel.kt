@@ -17,9 +17,10 @@ import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberUseCas
 data class CountryCodeErrorMessage(@StringRes val errorMessage: Int)
 data class PhoneNumberErrorMessage(@StringRes val errorMessage: Int)
 
-class EditPhoneNumberViewModel(private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
-                               private val changePhoneNumberNumberUseCase: ChangePhoneNumberUseCase) :
-    ViewModel() {
+class EditPhoneNumberViewModel(
+    private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
+    private val changePhoneNumberNumberUseCase: ChangePhoneNumberUseCase
+) : ViewModel() {
 
     private var _countryCodeErrorLiveData = MutableLiveData<CountryCodeErrorMessage>()
     private var _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
@@ -49,15 +50,14 @@ class EditPhoneNumberViewModel(private val validatePhoneNumberUseCase: ValidateP
     }
 
     fun onCancelButtonClicked() {
-
+        //When the user cancels tbe dialog, we should dismiss it
     }
 
     fun onReadPhonePermissionDenied(failure: Failure) {
-
+        //When the user doesn't accept the permission error scenario should ensue
     }
 
     fun onReadPhonePermissionGranted(success: PermissionSuccess) {
-
+        //When the user accepts the permission, we can then read the phone number from the sim
     }
-
 }

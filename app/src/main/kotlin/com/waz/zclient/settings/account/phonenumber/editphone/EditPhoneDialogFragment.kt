@@ -73,7 +73,6 @@ class EditPhoneDialogFragment : DialogFragment() {
         editPhoneDialogPhoneNumberTextInputLayout.error = errorMessage
     }
 
-
     private fun showConfirmationDialog(phoneNumber: String) {
         //Show confirmation dialog here
     }
