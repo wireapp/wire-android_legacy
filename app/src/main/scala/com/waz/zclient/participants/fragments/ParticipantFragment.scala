@@ -39,7 +39,7 @@ import com.waz.zclient.ui.utils.KeyboardUtils
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.DefaultPageTransitionAnimation
 import com.waz.zclient.{FragmentHelper, ManagerFragment, R}
-import com.waz.api.User.ConnectionStatus._
+import com.waz.api.ConnectionStatus._
 
 import scala.concurrent.Future
 

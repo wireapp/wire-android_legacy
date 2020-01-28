@@ -57,9 +57,6 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
     private int minFlingVelocity;
     private int maxFlingVelocity;
 
-    // drawer goes to....
-    private float rightOffset = 0;
-
     // the listener that wants to be informed by the overscroll event
     OverScrollListener overScrollListener;
 
@@ -146,13 +143,6 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
         minFlingVelocity = vc.getScaledMinimumFlingVelocity();
         maxFlingVelocity = vc.getScaledMaximumFlingVelocity();
         listRowMenuIndicatorMaxSwipeOffset = getContext().getResources().getDimensionPixelSize(R.dimen.list__menu_indicator__max_swipe_offset);
-    }
-
-    /**
-     * Set offset on right after onMeasurement is called in PullToRefreshContainer.
-     */
-    public void setOffsetRight(float offsetRight) {
-        rightOffset = offsetRight;
     }
 
     /**
@@ -317,31 +307,6 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
             lastMotionX = x;
             lastMotionY = y;
         }
-    }
-
-    private MotionDirection getMotionDirection(float x, float y) {
-        MotionDirection direction = null;
-
-        final int distX = (int) (x - lastMotionX);
-        final int distY = (int) (y - lastMotionY);
-        boolean xMoved = Math.abs(distX) > this.touchSlop;
-        boolean yMoved = Math.abs(distY) > this.touchSlop && Math.abs(distY) > Math.abs(distX);
-
-        if (yMoved) {
-            if (distY < 0) {
-                direction = MotionDirection.UP;
-            } else {
-                direction = MotionDirection.DOWN;
-            }
-        } else if (xMoved) {
-            if (distX < 0) {
-                direction = MotionDirection.LEFT;
-            } else {
-                direction = MotionDirection.RIGHT;
-            }
-        }
-
-        return direction;
     }
 
     /**

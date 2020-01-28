@@ -44,37 +44,37 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initAccountPhoneNumber() {
-        settingsAccountViewModel.phone.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
-        preferences_account_phone.setOnClickListener {
+        settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
+        settingsAccountPhoneContainerLinearLayout.setOnClickListener {
             showEditPhoneDialog()
         }
     }
 
     private fun initAccountEmail() {
-        settingsAccountViewModel.email.observe(viewLifecycleOwner) { updateAccountEmail(it) }
-        preferences_account_email.setOnClickListener {
+        settingsAccountViewModel.emailLiveData.observe(viewLifecycleOwner) { updateAccountEmail(it) }
+        settingsAccountEmailContainerLinearLayout.setOnClickListener {
             val title = getString(R.string.pref_account_add_email_title)
-            val defaultValue = preferences_account_email_title.text.toString()
+            val defaultValue = settingsAccountEmailTitleTextView.text.toString()
             showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updateEmail(it) }
         }
     }
 
     private fun initAccountHandle() {
-        settingsAccountViewModel.handle.observe(viewLifecycleOwner) { updateAccountHandle(it) }
-        preferences_account_handle.setOnClickListener { showEditHandleDialog() }
+        settingsAccountViewModel.handleLiveData.observe(viewLifecycleOwner) { updateAccountHandle(it) }
+        settingsAccountHandleContainerLinearLayout.setOnClickListener { showEditHandleDialog() }
     }
 
     private fun initAccountName() {
-        settingsAccountViewModel.name.observe(viewLifecycleOwner) { updateAccountName(it) }
-        preferences_account_name.setOnClickListener {
+        settingsAccountViewModel.nameLiveData.observe(viewLifecycleOwner) { updateAccountName(it) }
+        settingsAccountNameContainerLinearLayout.setOnClickListener {
             val title = getString(R.string.pref_account_edit_name_title)
-            val defaultValue = preferences_account_name_title.text.toString()
+            val defaultValue = settingsAccountNameTitleTextView.text.toString()
             showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updateName(it) }
         }
     }
 
     private fun initResetPassword() {
-        preferences_account_reset_password.setOnClickListener {
+        settingsAccountResetPasswordButton.setOnClickListener {
             openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl()))
         }
     }
@@ -84,26 +84,26 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun initErrorHandling() {
-        settingsAccountViewModel.error.observe(viewLifecycleOwner) { showErrorMessage(it) }
+        settingsAccountViewModel.errorLiveData.observe(viewLifecycleOwner) { showErrorMessage(it) }
     }
 
     private fun updateAccountHandle(handle: String) {
-        preferences_account_handle_title.text = handle
+        settingsAccountHandleTitleTextView.text = handle
     }
 
     private fun updateAccountName(name: String) {
-        preferences_account_name_title.text = name
+        settingsAccountNameTitleTextView.text = name
     }
 
     private fun updateAccountPhoneNumber(phoneState: ProfileDetail) {
-        preferences_account_phone_title.text = when (phoneState) {
+        settingsAccountPhoneTitleTextView.text = when (phoneState) {
             ProfileDetail.EMPTY -> getString(R.string.pref_account_add_phone_title)
             else -> phoneState.value
         }
     }
 
     private fun updateAccountEmail(emailState: ProfileDetail) {
-        preferences_account_email_title.text = when (emailState) {
+        settingsAccountEmailTitleTextView.text = when (emailState) {
             ProfileDetail.EMPTY -> getString(R.string.pref_account_add_email_title)
             else -> emailState.value
         }
@@ -119,11 +119,11 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
 
     private fun showEditHandleDialog() =
-        EditHandleFragment.newInstance(preferences_account_handle_title.text.toString())
+        EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showEditPhoneDialog() =
-        EditPhoneDialogFragment.newInstance(preferences_account_phone_title.text.toString())
+        EditPhoneDialogFragment.newInstance(settingsAccountPhoneTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showGenericEditDialog(
