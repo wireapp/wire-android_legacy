@@ -50,16 +50,6 @@ public class OptionsLightTheme implements OptionsTheme {
     }
 
     @Override
-    public ColorStateList getTextColorPrimarySelector() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            //noinspection deprecation
-            return resource.getColorStateList(R.color.wire__text_color_primary_light_selector);
-        } else {
-            return resource.getColorStateList(R.color.wire__text_color_primary_light_selector, theme);
-        }
-    }
-
-    @Override
     public int getOverlayColor() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             //noinspection deprecation

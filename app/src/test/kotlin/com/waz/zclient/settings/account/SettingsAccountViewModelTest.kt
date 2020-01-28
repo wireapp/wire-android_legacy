@@ -5,7 +5,11 @@ import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.domain.model.User
-import com.waz.zclient.user.domain.usecase.*
+import com.waz.zclient.user.domain.usecase.ChangeEmailParams
+import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
+import com.waz.zclient.user.domain.usecase.ChangeNameParams
+import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
+import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -32,9 +36,6 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeNameUseCase: ChangeNameUseCase
 
     @Mock
-    private lateinit var changePhoneUseCase: ChangePhoneUseCase
-
-    @Mock
     private lateinit var changeEmailUseCase: ChangeEmailUseCase
 
     @Mock
@@ -47,7 +48,6 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel = SettingsAccountViewModel(
             getUserProfileUseCase,
             changeNameUseCase,
-            changePhoneUseCase,
             changeEmailUseCase)
         userFlow = flow { user }
     }
@@ -60,7 +60,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.name.observeOnce {
+            viewModel.nameLiveData.observeOnce {
                 it shouldBe TEST_NAME
             }
         }
@@ -74,7 +74,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.handle.observeOnce {
+            viewModel.handleLiveData.observeOnce {
                 it shouldBe TEST_HANDLE
             }
         }
@@ -88,7 +88,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.email.observeOnce {
+            viewModel.emailLiveData.observeOnce {
                 it shouldBe ProfileDetail(TEST_NAME)
             }
         }
@@ -102,7 +102,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.email.observeOnce {
+            viewModel.emailLiveData.observeOnce {
                 it shouldBe ProfileDetail.EMPTY
             }
         }
@@ -116,7 +116,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.phone.observeOnce {
+            viewModel.phoneNumberLiveData.observeOnce {
                 it shouldBe ProfileDetail(TEST_PHONE)
             }
         }
@@ -130,7 +130,7 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel.loadProfileDetails()
 
         userFlow.collect {
-            viewModel.phone.observeOnce {
+            viewModel.phoneNumberLiveData.observeOnce {
                 it shouldBe ProfileDetail.EMPTY
             }
         }
@@ -146,7 +146,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updateName(TEST_NAME)
 
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
 
@@ -162,22 +162,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
         viewModel.updateEmail(TEST_EMAIL)
 
-        viewModel.error.observeOnce {
-            it shouldBe "Failure: $ServerError"
-        }
-    }
-
-    @Test
-    fun `given account phone is updated and fails with HttpError, then error observer is notified`() {
-        val changePhoneParams = mock(ChangePhoneParams::class.java)
-
-        runBlockingTest {
-            lenient().`when`(changePhoneUseCase.run(changePhoneParams)).thenReturn(Either.Left(ServerError))
-        }
-
-        viewModel.updatePhone(TEST_PHONE)
-
-        viewModel.error.observeOnce {
+        viewModel.errorLiveData.observeOnce {
             it shouldBe "Failure: $ServerError"
         }
     }

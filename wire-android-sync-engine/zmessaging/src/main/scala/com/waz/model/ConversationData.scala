@@ -60,7 +60,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
                             access:               Set[Access]            = Set.empty,
                             accessRole:           Option[AccessRole]     = None, //option for migration purposes only - at some point we do a fetch and from that point it will always be defined
                             link:                 Option[Link]           = None,
-                            receiptMode:          Option[Int]            = None
+                            receiptMode:          Option[Int]            = None  //Some(1) if both users have RR enabled in a 1-to-1 convo
                            ) extends Identifiable[ConvId] {
 
   def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName

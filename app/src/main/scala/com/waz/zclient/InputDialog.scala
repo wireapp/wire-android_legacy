@@ -34,8 +34,8 @@ import com.waz.zclient.utils.RichTextView
 object InputDialog {
 
   trait Event
-  case class OnPositiveBtn(input: String) extends Event
-  case object OnNegativeBtn               extends Event
+  case class  OnPositiveBtn(input: String) extends Event
+  case object OnNegativeBtn                extends Event
 
   trait ValidatorResult
   object ValidatorResult {

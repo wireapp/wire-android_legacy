@@ -1,7 +1,7 @@
 package com.waz.zclient.participants.fragments
 
 import android.os.Bundle
-import com.waz.api.User.ConnectionStatus
+import com.waz.api.ConnectionStatus
 import com.waz.model.UserId
 import com.waz.threading.Threading
 import com.waz.utils.returning

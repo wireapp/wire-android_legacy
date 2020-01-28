@@ -106,7 +106,7 @@ case class InviteToTeamFragment() extends CreateTeamFragment {
   }
 
   override def onBackPressed(): Boolean = {
-    activity.onEnterApplication(false)
+    appEntryActivity().onEnterApplication(false)
     true
   }
 }

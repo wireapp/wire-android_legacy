@@ -17,14 +17,6 @@
  */
 package com.waz.zclient.ui.pullforaction;
 
-import android.view.MotionEvent;
-
 public interface PullForActionView {
-    void setOverScrollListener(OverScrollListener overScrollListener);
-
-    boolean dispatchTouchEvent(MotionEvent event);
-
     void setAlpha(float alpha);
-
-    void setTranslationY(float offset);
 }

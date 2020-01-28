@@ -18,6 +18,7 @@
 package com.waz.zclient.appentry
 
 import android.app.FragmentManager
+import androidx.fragment.app.Fragment
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -43,10 +44,13 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   private lazy val ssoService             = inject[SSOService]
   private lazy val userAccountsController = inject[UserAccountsController]
 
+  private def hasToken(): Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
+
   private lazy val inputValidator = EnterpriseLoginInputValidator(ssoService, "Error!!!") //TODO change error text
 
   private lazy val dialogStaff = new InputDialog.Listener {
     override def onDialogEvent(event: Event): Unit = event match {
+      case OnNegativeBtn => hasToken().map(activity.onSSODialogDismissed(_))
       case OnPositiveBtn(input) => verifyUserInput(input)
     }
   }
@@ -63,7 +67,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   override def onStart(): Unit = {
     super.onStart()
     findChildFragment[InputDialog](SSODialogTag).foreach(_.setListener(dialogStaff).setValidator(inputValidator))
-    extractTokenAndShowSSODialog()
+    extractTokenAndShowSSODialog(showSsoByDefault)
   }
 
   private def extractTokenFromClipboard: Future[Option[String]] = Future {
@@ -72,6 +76,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       token         <- ssoService.extractToken(clipboardText.toString)
     } yield token
   }
+
+  protected def showSsoByDefault = false
 
   protected def extractTokenAndShowSSODialog(showIfNoToken: Boolean = false): Unit =
     userAccountsController.ssoToken.head.foreach {
@@ -88,8 +94,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   protected def showSSODialog(token: Option[String]): Unit =
     if (getSsoDialog.isEmpty)
       InputDialog.newInstance(
-        title = R.string.app_entry_sso_dialog_title,
-        message = R.string.app_entry_sso_dialog_message,
+        title = R.string.sso_login_dialog_title,
+        message = R.string.sso_login_dialog_message,
         inputHint = Some(R.string.app_entry_sso_input_hint),
         inputValue = token,
         validateInput = true,
@@ -147,8 +153,13 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       }.map(_ => ())
   }
 
-  protected def activity: AppEntryActivity
+  protected def activity: SSOFragmentHandler = getActivity.asInstanceOf[SSOFragmentHandler]
 
   protected def onVerifyingToken(verifying: Boolean): Unit =
     inject[SpinnerController].showSpinner(verifying)
+}
+
+trait SSOFragmentHandler {
+  def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit
+  def onSSODialogDismissed(hasToken: Boolean): Unit = {}
 }

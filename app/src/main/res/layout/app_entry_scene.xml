@@ -219,7 +219,8 @@
         android:clickable="true"
         android:focusable="true"
         android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:visibility="invisible">
 
         <com.waz.zclient.ui.text.TypefaceTextView
             android:layout_width="wrap_content"

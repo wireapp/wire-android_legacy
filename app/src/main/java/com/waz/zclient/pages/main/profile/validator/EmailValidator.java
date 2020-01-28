@@ -31,13 +31,6 @@ public class EmailValidator implements Validator {
         return new EmailValidator(AcceptMode.STRICT);
     }
 
-    public static EmailValidator newInstanceAcceptingEmptyString() {
-        return new EmailValidator(AcceptMode.EMPTY_STRING);
-    }
-
-    public static EmailValidator newInstanceAcceptingEverything() {
-        return new EmailValidator(AcceptMode.ALL);
-    }
 
     public boolean validate(String email) {
         if (acceptMode == AcceptMode.ALL) {

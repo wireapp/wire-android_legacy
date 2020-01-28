@@ -29,7 +29,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.service.assets.GlobalRecordAndPlayService.{MediaPointer, PCMContent}
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.SizeOf
+import PCM.SizeOfShort
 import org.threeten.bp
 
 import scala.annotation.tailrec
@@ -41,7 +41,7 @@ class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: L
   import PCMPlayer._
 
   private implicit val dispatcher = new SerialDispatchQueue(Threading.IO)
-  private val buffer = ByteBuffer.allocateDirect(bufferSizeInShorts * SizeOf.SHORT).order(LITTLE_ENDIAN)
+  private val buffer = ByteBuffer.allocateDirect(bufferSizeInShorts * SizeOfShort).order(LITTLE_ENDIAN)
   private def channel = stream.getChannel
 
   @volatile private var scooping = Option.empty[ScoopThread]
@@ -70,10 +70,10 @@ class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: L
       track.pause()
     }
 
-    val newPlayhead = max(0, min(totalSamples - (playerBufferSize / SizeOf.SHORT), (pos.toMillis * PCM.sampleRate) / 1000))
+    val newPlayhead = max(0, min(totalSamples - (playerBufferSize / SizeOfShort), (pos.toMillis * PCM.sampleRate) / 1000))
     track.flush()
     playheadOffset = playheadInSamples - newPlayhead
-    channel.position(newPlayhead * SizeOf.SHORT)
+    channel.position(newPlayhead * SizeOfShort)
     track.setNotificationMarkerPosition((playheadInSamples + totalSamples - newPlayhead).toInt)
 
     if (pauseAndResume) {
@@ -135,7 +135,7 @@ class PCMPlayer private (content: PCMContent, track: AudioTrack, totalSamples: L
         buffer.rewind()
         val bytesRead = channel.read(buffer)
         buffer.flip()
-        currentBuffer = Array.ofDim(bytesRead / SizeOf.SHORT)
+        currentBuffer = Array.ofDim(bytesRead / SizeOfShort)
         currentOffsetInBuffer = 0
         buffer.asShortBuffer.get(currentBuffer)
       }
@@ -159,7 +159,7 @@ object PCMPlayer extends DerivedLogTag {
   def apply(content: PCMContent, observer: Player.Observer): Future[PCMPlayer] = Threading.BackgroundHandler.map { handler =>
     val track = new AudioTrack(STREAM_MUSIC, PCM.sampleRate, PCM.outputChannelConfig, PCM.sampleFormat, playerBufferSize, MODE_STREAM)
     verbose(l"created audio track; buffer size: $playerBufferSize")
-    val totalSamples = content.file.length / SizeOf.SHORT
+    val totalSamples = content.file.length / SizeOfShort
 
     track.setNotificationMarkerPosition(totalSamples.toInt)
 

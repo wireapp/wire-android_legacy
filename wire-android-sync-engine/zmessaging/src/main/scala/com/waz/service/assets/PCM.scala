@@ -18,7 +18,6 @@
 package com.waz.service.assets
 
 import android.media.AudioFormat._
-import com.waz.utils.SizeOf
 import org.threeten.bp.Duration
 
 object PCM {
@@ -26,7 +25,8 @@ object PCM {
   val inputChannelConfig = CHANNEL_IN_MONO
   val outputChannelConfig = CHANNEL_OUT_MONO
   val sampleFormat = ENCODING_PCM_16BIT
+  val SizeOfShort = 2
 
-  def durationFromByteCount(byteCount: Long): Duration = durationFromSampleCount(byteCount / SizeOf.SHORT)
+  def durationFromByteCount(byteCount: Long): Duration = durationFromSampleCount(byteCount / SizeOfShort)
   def durationFromSampleCount(sampleCount: Long): Duration = Duration.ofMillis(sampleCount * 1000L / sampleRate)
 }
