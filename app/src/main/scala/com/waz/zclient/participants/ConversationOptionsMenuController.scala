@@ -146,7 +146,7 @@ class ConversationOptionsMenuController(convId: ConvId, mode: Mode, fromDeepLink
           if (conv.isActive) builder += Leave
           if (mode.inConversationList || teamId.isEmpty) builder += notifications
           builder += Clear
-          if (!inConversationList && isCurrentUserCreator && selfRole.canDeleteGroup) builder += DeleteGroupConv
+          if (!inConversationList && isCurrentUserCreator && teamId.isDefined && selfRole.canDeleteGroup) builder += DeleteGroupConv
         } else {
           if (teamMember || connectStatus.contains(ACCEPTED) || isBot) {
             builder ++= Set(notifications, Clear)
