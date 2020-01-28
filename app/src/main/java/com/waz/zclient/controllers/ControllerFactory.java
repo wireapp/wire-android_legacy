@@ -24,8 +24,6 @@ import com.waz.zclient.controllers.camera.CameraController;
 import com.waz.zclient.controllers.camera.ICameraController;
 import com.waz.zclient.controllers.confirmation.ConfirmationController;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
-import com.waz.zclient.controllers.deviceuser.DeviceUserController;
-import com.waz.zclient.controllers.deviceuser.IDeviceUserController;
 import com.waz.zclient.controllers.globallayout.GlobalLayoutController;
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController;
 import com.waz.zclient.controllers.location.ILocationController;
@@ -50,8 +48,6 @@ public class ControllerFactory implements IControllerFactory {
   protected ICameraController cameraController;
 
   protected IConfirmationController confirmationController;
-
-  protected IDeviceUserController deviceUserController;
 
   protected IGlobalLayoutController globalLayoutController;
 
@@ -99,10 +95,6 @@ public class ControllerFactory implements IControllerFactory {
     if (confirmationController != null) {
       confirmationController.tearDown();
       confirmationController = null;
-    }
-    if (deviceUserController != null) {
-      deviceUserController.tearDown();
-      deviceUserController = null;
     }
     if (globalLayoutController != null) {
       globalLayoutController.tearDown();
@@ -243,15 +235,6 @@ public class ControllerFactory implements IControllerFactory {
   @Override
   public void setActivity(Activity activity) {
     getGlobalLayoutController().setActivity(activity);
-  }
-
-  @Override
-  public IDeviceUserController getDeviceUserController() {
-    verifyLifecycle();
-    if (deviceUserController == null) {
-      deviceUserController = new DeviceUserController(this.context);
-    }
-    return deviceUserController;
   }
 
   @Override

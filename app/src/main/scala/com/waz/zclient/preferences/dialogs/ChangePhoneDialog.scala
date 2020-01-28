@@ -17,7 +17,6 @@
  */
 package com.waz.zclient.preferences.dialogs
 
-import android.Manifest.permission.READ_PHONE_STATE
 import android.annotation.TargetApi
 import android.app.Dialog
 import android.content.DialogInterface
@@ -26,26 +25,24 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.{Drawable, DrawableContainer, InsetDrawable}
 import android.os.Build.VERSION_CODES._
 import android.os.{Build, Bundle}
-import androidx.fragment.app.DialogFragment
-import androidx.appcompat.app.AlertDialog
 import android.text.TextUtils
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, WindowManager}
 import android.widget.{EditText, TextView}
 import androidx.annotation.NonNull
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.graphics.drawable.DrawableWrapper
 import androidx.appcompat.widget.{AppCompatDrawableManager, DrawableUtils => AxDrawableUtils}
 import androidx.core.view.{ViewCompat, ViewPropertyAnimatorListenerAdapter}
+import androidx.fragment.app.DialogFragment
 import androidx.interpolator.view.animation.{FastOutLinearInInterpolator, LinearOutSlowInInterpolator}
 import com.waz.model.PhoneNumber
-import com.waz.permissions.PermissionsService
 import com.waz.service.ZMessaging
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventStream, Signal}
 import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.PhoneError
-import com.waz.zclient.controllers.deviceuser.IDeviceUserController
 import com.waz.zclient.newreg.fragments.country.{Country, CountryController}
 import com.waz.zclient.ui.utils.{DrawableUtils, MathUtils}
 import com.waz.zclient.utils.{DeprecationUtils, RichView, ViewUtils}
@@ -62,7 +59,6 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
 
   lazy val zms = inject[Signal[ZMessaging]]
   lazy val users = zms.map(_.users)
-  lazy val deviceUserController = inject[IDeviceUserController]
 
   private lazy val countryController = new CountryController(getActivity)
   private lazy val currentPhone      = Option(getArguments.getString(CurrentPhoneArg))
@@ -121,7 +117,6 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
 
   override def onStart() = {
     super.onStart()
-    if (currentPhone.isDefined && inject[PermissionsService].checkPermission(READ_PHONE_STATE)) setSimPhoneNumber()
     Try(getDialog.asInstanceOf[AlertDialog]).toOption.foreach { dialog =>
       dialog.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = handleInput()
@@ -138,18 +133,6 @@ class ChangePhoneDialog extends DialogFragment with FragmentHelper with CountryC
   override def onStop() = {
     countryController.removeObserver(this)
     super.onStop()
-  }
-
-  private def setSimPhoneNumber() = {
-    for {
-      iso <- Option(deviceUserController.getPhoneCountryISO)
-      cc <- Option(countryController.getCodeForAbbreviation(iso))
-      ph <- Option(deviceUserController.getPhoneNumber(cc))
-    } {
-      phoneEditText.setText(ph)
-      phoneEditText.setSelection(ph.length)
-      countryEditText.setText(String.format("+%s", cc.replace("+", "")))
-    }
   }
 
   private def clearPhoneNumber() = {

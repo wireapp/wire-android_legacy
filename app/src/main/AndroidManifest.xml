@@ -42,8 +42,6 @@
     <!-- Needed for taking photos when setting profile image or sending images -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
-    <!-- get phone number for contact matching -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- needed to switch between speaker/earpiece -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
