@@ -96,7 +96,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   }
 
   private def startSignUp() = {
-    startActivity(AuthenticationActivity.newIntent(this,false))
+    startActivity(AuthenticationActivity.newIntent(this, false))
     finish()
   }
 }

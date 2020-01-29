@@ -20,26 +20,25 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/athens_light_gray">
 
-    <androidx.appcompat.widget.AppCompatTextView
+    <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/authenticationCloseButton"
         android:layout_width="@dimen/authentication_close_button_width"
         android:layout_height="@dimen/authentication_close_button_height"
         android:layout_gravity="top|end"
         android:layout_marginTop="@dimen/authentication_close_button_margin"
         android:layout_marginEnd="@dimen/authentication_close_button_margin"
-        android:fontFamily="@font/wire_glyphs"
         android:gravity="center"
-        android:text="@string/glyph__close"
-        android:textColor="@color/graphite"
-        android:textSize="@dimen/authentication_close_button_text_size"
-        android:visibility="gone"
+        android:tint="@color/graphite"
+        android:src="@drawable/ic_close"
+        android:background="?android:attr/selectableItemBackground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <FrameLayout
-        android:id="@+id/layout_container"
+        android:id="@+id/authenticationFrameLayoutContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

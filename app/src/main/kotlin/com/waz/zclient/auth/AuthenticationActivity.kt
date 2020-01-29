@@ -14,7 +14,7 @@ class AuthenticationActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_authentication)
-        replaceFragment(R.id.layout_container, WelcomeFragment.newInstance(), false)
+        replaceFragment(R.id.authenticationFrameLayoutContainer, WelcomeFragment.newInstance(), false)
         configureCloseButtonVisibility(intent.extras.getBoolean(CLOSE_BUTTON_VISIBILITY_BUNDLE_KEY, false))
         initCloseButtonListener()
     }
