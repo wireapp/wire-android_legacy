@@ -228,14 +228,15 @@ object CallingNotificationsController {
       .setCategory(NotificationCompat.CATEGORY_CALL)
       .setPriority(priority)
       .setOnlyAlertOnce(true)
-      .setOngoing(true)
-
-
-    if (isAndroid10OrAbove) builder.setFullScreenIntent(OpenCallingScreen(), true)
+      .setAutoCancel(true)
 
     if (!not.isMainCall) {
       builder.setDefaults(NotificationCompat.DEFAULT_LIGHTS | NotificationCompat.DEFAULT_VIBRATE)
       builder.setSound(RingtoneUtils.getUriForRawId(cxt, R.raw.empty_sound))
+    } else {
+      if (isAndroid10OrAbove) {
+        builder.setFullScreenIntent(OpenCallingScreen(), true)
+      }
     }
 
     not.action match {

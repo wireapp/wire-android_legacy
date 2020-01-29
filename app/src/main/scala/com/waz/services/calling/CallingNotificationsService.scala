@@ -52,10 +52,10 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
 
   // Since Android 10 we can't start the calling activity from the background, so instead we
   // show a calling notification.
-  private def isUiActive: Boolean = ZMessaging.currentGlobal.lifecycle.uiActive.currentValue.getOrElse(true)
+  private def isUiActive: Boolean = ZMessaging.currentGlobal.lifecycle.uiActive.currentValue.getOrElse(false)
 
   private def shouldShowNotification(notification: CallNotification): Boolean = {
     val notificationHasAction = notification.action != NotificationAction.Nothing
-    notificationHasAction && !(isAndroid10OrAbove && isUiActive)
+    notificationHasAction && (isAndroid10OrAbove && !isUiActive)
   }
 }
