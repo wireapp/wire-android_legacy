@@ -24,16 +24,16 @@
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/authenticationCloseButton"
-        android:layout_width="@dimen/app_entry_close_button_size"
-        android:layout_height="@dimen/app_entry_close_button_size"
+        android:layout_width="@dimen/authentication_close_button_width"
+        android:layout_height="@dimen/authentication_close_button_height"
         android:layout_gravity="top|end"
-        android:layout_marginTop="@dimen/wire__padding__small"
-        android:layout_marginEnd="@dimen/wire__padding__small"
+        android:layout_marginTop="@dimen/authentication_close_button_margin"
+        android:layout_marginEnd="@dimen/authentication_close_button_margin"
         android:fontFamily="@font/wire_glyphs"
         android:gravity="center"
         android:text="@string/glyph__close"
         android:textColor="@color/graphite"
-        android:textSize="@dimen/wire__text_size__regular"
+        android:textSize="@dimen/authentication_close_button_text_size"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

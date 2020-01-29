@@ -23,4 +23,8 @@
     <dimen name="rounded_button_text_size">12sp</dimen>
     <dimen name="welcome_title_text_size">32sp</dimen>
     <dimen name="welcome_title_line_spacing_extra">8sp</dimen>
+    <dimen name="authentication_close_button_margin">8sp</dimen>
+    <dimen name="authentication_close_button_width">32dp</dimen>
+    <dimen name="authentication_close_button_height">32dp</dimen>
+    <dimen name="authentication_close_button_text_size">16sp</dimen>
 </resources>
