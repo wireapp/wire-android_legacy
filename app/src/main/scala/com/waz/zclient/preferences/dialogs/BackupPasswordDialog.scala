@@ -29,6 +29,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
 import com.waz.utils.PasswordValidator
+import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.{DialogMode, InputPasswordMode, SetPasswordMode}
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 
@@ -36,21 +37,20 @@ import scala.util.Try
 
 class BackupPasswordDialog(mode: DialogMode = SetPasswordMode) extends DialogFragment with FragmentHelper with DerivedLogTag {
 
-  val onPasswordEntered = EventStream[Option[Password]]()
+  val onPasswordEntered = EventStream[Password]()
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.backup_password_dialog, null)
+  private lazy val keyboard = inject[KeyboardController]
 
   val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
   private lazy val strongPasswordValidator =
     PasswordValidator.createStrongPasswordValidator(BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH, BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH)
 
-  private def providePassword(password: Option[Password]): Unit = {
-    onPasswordEntered ! password
+  private def providePassword(password: String): Unit = {
+    onPasswordEntered ! Password(password)
+    keyboard.hideKeyboardIfVisible()
     dismiss()
   }
-
-  private def isValidPassword(password: String): Boolean =
-    strongPasswordValidator.isValidPassword(password)
 
   private lazy val passwordEditText = findById[EditText](root, R.id.backup_password_field)
 
@@ -77,12 +77,12 @@ class BackupPasswordDialog(mode: DialogMode = SetPasswordMode) extends DialogFra
       d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = {
           val pass = passwordEditText.getText.toString
-          if (!BuildConfig.FORCE_APP_LOCK) {
-            providePassword(if(pass.isEmpty) None else Some(Password(pass)))
-          } else if(isValidPassword(pass)) {
-            providePassword(Some(Password(pass)))
-          } else {
-            textInputLayout.setError(getString(R.string.password_policy_hint, minPasswordLength))
+          mode match {
+            case SetPasswordMode if !BuildConfig.FORCE_APP_LOCK && !pass.isEmpty  => providePassword(pass)
+            case SetPasswordMode if strongPasswordValidator.isValidPassword(pass) => providePassword(pass)
+            case InputPasswordMode                                                => providePassword(pass)
+            case _ =>
+              textInputLayout.setError(getString(R.string.password_policy_hint, minPasswordLength))
           }
         }
       })

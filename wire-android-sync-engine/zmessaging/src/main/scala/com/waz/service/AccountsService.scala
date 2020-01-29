@@ -277,11 +277,13 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
                                     initialUser:    Option[UserInfo] = None,
                                     backupPassword: Option[Password] = None) = Serialized.future(AccountManagersKey) {
     async {
-      if (importDbFile.nonEmpty)
-        returning(backupManager.importDatabase(userId, importDbFile.get, context.getDatabasePath(userId.toString).getParentFile, backupPassword = backupPassword)) { restore =>
-          if (restore.isFailure) global.trackingService.historyRestored(false) // HistoryRestoreSucceeded is sent from the new AccountManager
-        }.get // if the import failed this will rethrow the exception
-
+      (importDbFile, backupPassword) match {
+        case (Some(file), Some(password)) =>
+          returning(backupManager.importDatabase(userId, file, context.getDatabasePath(userId.toString).getParentFile, backupPassword = password)) { restore =>
+            if (restore.isFailure) global.trackingService.historyRestored(false) // HistoryRestoreSucceeded is sent from the new AccountManager
+          }.get // if the import failed this will rethrow the exception
+        case _ =>
+      }
 
       val managers = await { accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head }
       val manager = managers.find(_.userId == userId)

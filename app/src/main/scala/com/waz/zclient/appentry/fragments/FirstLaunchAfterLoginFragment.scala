@@ -155,7 +155,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private def requestPassword(backup: Option[URI]): Future[Unit] = {
     backup match {
       case Some(_) =>
-        val fragment = returning(new BackupPasswordDialog(InputPasswordMode)) { _.onPasswordEntered(p => enter(backup, p))}
+        val fragment = returning(new BackupPasswordDialog(InputPasswordMode)) { _.onPasswordEntered(p => enter(backup, Some(p)))}
         getActivity.asInstanceOf[BaseActivity]
           .getSupportFragmentManager
           .beginTransaction

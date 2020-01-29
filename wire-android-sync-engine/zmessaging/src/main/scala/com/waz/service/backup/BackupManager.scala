@@ -45,12 +45,12 @@ trait BackupManager {
                      userHandle: String,
                      databaseDir: File,
                      targetDir: File,
-                     backupPassword: Option[Password]): Try[File]
+                     backupPassword: Password): Try[File]
   def importDatabase(userId: UserId,
                      exportFile: File,
                      targetDir: File,
                      currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                     backupPassword: Option[Password] = None): Try[File]
+                     backupPassword: Password): Try[File]
 }
 
 object BackupManager {
@@ -133,7 +133,7 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
                               userHandle:     String,
                               databaseDir:    File,
                               targetDir:      File,
-                              backupPassword: Option[Password]): Try[File] = {
+                              backupPassword: Password): Try[File] = {
     val backup = Try {
       returning(new File(targetDir, backupZipFileName(userHandle))) { zipFile =>
         zipFile.deleteOnExit()
@@ -161,7 +161,7 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
         verbose(l"database export finished: $zipFile . Data contains: ${zipFile.length} bytes")
       }
     }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
-    if (backup.isSuccess && backupPassword.isDefined) encryptDatabase(backup.get, backupPassword.get, userId)
+    if (backup.isSuccess) encryptDatabase(backup.get, backupPassword, userId)
     else backup
   }
 
@@ -194,11 +194,11 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
                               exportFile:       File,
                               targetDir:        File,
                               currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                              backupPassword:   Option[Password] = None): Try[File] =
-    backupPassword match {
-      case Some(p) => importEncryptedDatabase(userId, exportFile, targetDir, currentDbVersion, p)
-      case None => importUnencryptedDatabase(userId, exportFile, targetDir, currentDbVersion)
-    }
+                              backupPassword:   Password): Try[File] =
+    if (backupPassword.str.isEmpty)
+      importUnencryptedDatabase(userId, exportFile, targetDir, currentDbVersion)
+    else
+      importEncryptedDatabase(userId, exportFile, targetDir, currentDbVersion, backupPassword)
 
   private def importEncryptedDatabase(userId: UserId, exportFile: File, targetDir: File,
                                       currentDbVersion: Int = BackupMetadata.currentDbVersion,
