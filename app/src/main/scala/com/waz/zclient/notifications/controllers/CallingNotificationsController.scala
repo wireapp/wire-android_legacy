@@ -225,11 +225,13 @@ object CallingNotificationsController {
       .setContentText(message)
       .setContentIntent(OpenCallingScreen())
       .setStyle(style)
-      .setFullScreenIntent(OpenCallingScreen(), isAndroid10OrAbove)
       .setCategory(NotificationCompat.CATEGORY_CALL)
       .setPriority(priority)
       .setOnlyAlertOnce(true)
       .setOngoing(true)
+
+
+    if (isAndroid10OrAbove) builder.setFullScreenIntent(OpenCallingScreen(), true)
 
     if (!not.isMainCall) {
       builder.setDefaults(NotificationCompat.DEFAULT_LIGHTS | NotificationCompat.DEFAULT_VIBRATE)
