@@ -1298,6 +1298,7 @@
     <string name="backup_password_dialog_message">The backup will be compressed, and if you set a password, also encrypted. Make sure to store it in a secure place.</string>
     <string name="backup_password_dialog_ok">OK</string>
     <string name="backup_password_dialog_no_password">Cancel</string>
+    <string name="restore_password_dialog_title">This backup is password protected.</string>
 
     <string name="add_email_address">Add your email address</string>
     <string name="set_a_password">Set a password</string>

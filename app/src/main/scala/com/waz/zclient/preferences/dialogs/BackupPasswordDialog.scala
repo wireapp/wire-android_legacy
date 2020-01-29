@@ -29,11 +29,12 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
 import com.waz.utils.PasswordValidator
+import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.{DialogMode, InputPasswordMode, SetPasswordMode}
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 
 import scala.util.Try
 
-class BackupPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
+class BackupPasswordDialog(mode: DialogMode = SetPasswordMode) extends DialogFragment with FragmentHelper with DerivedLogTag {
 
   val onPasswordEntered = EventStream[Option[Password]]()
 
@@ -56,10 +57,15 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
   private lazy val textInputLayout = findById[TextInputLayout](root, R.id.backup_password_title)
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
+    val (title, message) = mode match {
+      case SetPasswordMode   => (R.string.backup_password_dialog_title, R.string.backup_password_dialog_message)
+      case InputPasswordMode => (R.string.restore_password_dialog_title, R.string.empty_string)
+    }
+
     new AlertDialog.Builder(getActivity)
       .setView(root)
-      .setTitle(getString(R.string.backup_password_dialog_title))
-      .setMessage(R.string.backup_password_dialog_message)
+      .setTitle(getString(title))
+      .setMessage(message)
       .setPositiveButton(android.R.string.ok, null)
       .setNegativeButton(android.R.string.cancel, null)
       .create
@@ -91,4 +97,8 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
 
 object BackupPasswordDialog {
   val FragmentTag = RemoveDeviceDialog.getClass.getSimpleName
+
+  sealed trait DialogMode
+  case object SetPasswordMode   extends DialogMode
+  case object InputPasswordMode extends DialogMode
 }
