@@ -28,7 +28,6 @@ import com.waz.zclient.InputDialog._
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -44,13 +43,15 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   private lazy val ssoService             = inject[SSOService]
   private lazy val userAccountsController = inject[UserAccountsController]
 
-  private def hasToken(): Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
+  private def hasToken: Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
 
   private lazy val inputValidator = EnterpriseLoginInputValidator(ssoService, "Error!!!") //TODO change error text
 
   private lazy val dialogStaff = new InputDialog.Listener {
     override def onDialogEvent(event: Event): Unit = event match {
-      case OnNegativeBtn => hasToken().map(activity.onSSODialogDismissed(_))
+      case OnNegativeBtn =>
+        dismissSsoDialog()
+        hasToken.map(activity.onSSODialogDismissed(_))
       case OnPositiveBtn(input) => verifyUserInput(input)
     }
   }
@@ -66,7 +67,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   override def onStart(): Unit = {
     super.onStart()
-    findChildFragment[InputDialog](SSODialogTag).foreach(_.setListener(dialogStaff).setValidator(inputValidator))
+    getSsoDialog.foreach(_.setListener(dialogStaff).setValidator(inputValidator))
     extractTokenAndShowSSODialog(showSsoByDefault)
   }
 
@@ -82,7 +83,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   protected def extractTokenAndShowSSODialog(showIfNoToken: Boolean = false): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
-      case None if findChildFragment[InputDialog](SSODialogTag).isEmpty =>
+      case None if getSsoDialog.isEmpty =>
         extractTokenFromClipboard
           .filter(_.nonEmpty || showIfNoToken)
           .foreach(showSSODialog)
@@ -113,13 +114,12 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       ssoService.verifyToken(token).flatMap { result =>
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
-        getSsoDialog.foreach(_.dismiss()) //TODO: might show some errors in the dialog
         result match {
           case Right(true) =>
+            dismissSsoDialog()
             getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
-          case Right(false) =>
-            showErrorDialog(R.string.sso_signin_wrong_code_title, R.string.sso_signin_wrong_code_message)
+          case Right(false) => showInlineSsoError(getString(R.string.sso_signin_wrong_code_message))
           case Left(errorResponse) => handleVerificationError(errorResponse)
         }
       }
@@ -129,29 +129,23 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     val domain = ssoService.extractDomain(email)
     ssoService.verifyDomain(domain).flatMap {
       case Right(DomainSuccessful(configFileUrl)) =>
-        getSsoDialog.foreach(_.dismiss())
+        dismissSsoDialog()
         Future.successful(()) //TODO: save config file and continue flow
-      case Right(_) => Future.successful(
-          getSsoDialog.foreach(_.setError(getString(R.string.enterprise_signin_domain_not_found_error)))
-      )
-      case Left(err) =>
-        getSsoDialog.foreach(_.dismiss())
-        handleVerificationError(err)
+      case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
+      case Left(err) => handleVerificationError(err)
     }
   }
 
   private def handleVerificationError(errorResponse: ErrorResponse) = errorResponse match {
     case ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _) =>
+      dismissSsoDialog()
       showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-    case error =>
-      inject[AccentColorController].accentColor.head.flatMap { color =>
-        showConfirmationDialog(
-          title = getString(R.string.sso_signin_error_title),
-          msg   = getString(R.string.sso_signin_error_try_again_message, error.code.toString),
-          color = color
-        )
-      }.map(_ => ())
+    case error => showInlineSsoError(getString(R.string.sso_signin_error_try_again_message, error.code.toString))
   }
+
+  private def dismissSsoDialog() = getSsoDialog.foreach(_.dismiss())
+
+  private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
 
   protected def activity: SSOFragmentHandler = getActivity.asInstanceOf[SSOFragmentHandler]
 
