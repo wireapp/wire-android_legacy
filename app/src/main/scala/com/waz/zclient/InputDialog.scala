@@ -36,19 +36,6 @@ object InputDialog {
   case class  OnPositiveBtn(input: String) extends Event
   case object OnNegativeBtn                extends Event
 
-  trait ValidatorResult
-  object ValidatorResult {
-    case object Valid extends ValidatorResult
-    case class Invalid(error: Option[String] = None) extends ValidatorResult
-  }
-
-  trait InputValidator {
-    /**
-      * @return Non empty option with error message if input is invalid.
-      */
-    def isInputInvalid(input: String): ValidatorResult
-  }
-
   private val Title                            = "TITLE"
   private val Message                          = "MESSAGE"
   private val Input                            = "INPUT"
@@ -83,17 +70,11 @@ class InputDialog extends DialogFragment with FragmentHelper {
   import InputDialog._
 
   private var listener : Option[Listener] = None
-  private var validator: Option[InputValidator] = None
   private var textWatcher: Option[TextWatcher] = None
 
   def setListener(listener: Listener): this.type = {
     this.listener = Some(listener)
     initTextWatcher()
-    this
-  }
-
-  def setValidator(validator: InputValidator): this.type = {
-    this.validator = Some(validator)
     this
   }
 
