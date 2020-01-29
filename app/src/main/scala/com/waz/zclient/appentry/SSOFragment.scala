@@ -17,8 +17,7 @@
  */
 package com.waz.zclient.appentry
 
-import android.app.FragmentManager
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -28,6 +27,7 @@ import com.waz.zclient.InputDialog._
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
+import com.waz.zclient.common.views.InputBox.EmailValidator
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -45,9 +45,9 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private def hasToken: Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
 
-  private lazy val inputValidator = EnterpriseLoginInputValidator(ssoService, "Error!!!") //TODO change error text
+  private lazy val dialogListener = new InputDialog.Listener {
+    override def onTextChanged(text: String): Unit = getSsoDialog.foreach(_.clearError())
 
-  private lazy val dialogStaff = new InputDialog.Listener {
     override def onDialogEvent(event: Event): Unit = event match {
       case OnNegativeBtn =>
         dismissSsoDialog()
@@ -57,17 +57,17 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   }
 
   private def verifyUserInput(input: String): Unit =
-    if (inputValidator.isSsoInput(input)) {
+    if (ssoService.isTokenValid(input)) {
       verifySsoCode(input)
-    } else if (inputValidator.isEmailInput(input)) {
+    } else if (EmailValidator.isValid(input)) {
       verifyEmail(input)
     } else {
-      throw new IllegalStateException("User should not be able to click the button without a valid input")
+      showInlineSsoError("Error!!!") //TODO: proper error message
     }
 
   override def onStart(): Unit = {
     super.onStart()
-    getSsoDialog.foreach(_.setListener(dialogStaff).setValidator(inputValidator))
+    getSsoDialog.foreach(_.setListener(dialogListener))
     extractTokenAndShowSSODialog(showSsoByDefault)
   }
 
@@ -99,13 +99,10 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         message = R.string.sso_login_dialog_message,
         inputHint = Some(R.string.app_entry_sso_input_hint),
         inputValue = token,
-        validateInput = true,
-        disablePositiveBtnOnInvalidInput = true,
         negativeBtn = R.string.app_entry_dialog_cancel,
         positiveBtn = R.string.app_entry_dialog_log_in
       )
-        .setListener(dialogStaff)
-        .setValidator(inputValidator)
+        .setListener(dialogListener)
         .show(getChildFragmentManager, SSODialogTag)
 
   private def verifySsoCode(input: String): Future[Unit] =

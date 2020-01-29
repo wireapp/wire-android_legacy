@@ -35,7 +35,7 @@
         tools:text="TextView" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_dialog_textinputlayout"
+        android:id="@+id/dialogWithInputTextInputLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" >
 
