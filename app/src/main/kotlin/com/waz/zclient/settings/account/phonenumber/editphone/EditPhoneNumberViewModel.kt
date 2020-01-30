@@ -11,6 +11,7 @@ import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeInvalid
+import com.waz.zclient.user.domain.usecase.phonenumber.DeletePhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumber
 import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumberInvalid
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberParams
@@ -22,22 +23,25 @@ data class PhoneNumberErrorMessage(@StringRes val errorMessage: Int)
 class EditPhoneNumberViewModel(
     private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
     private val changePhoneNumberNumberUseCase: ChangePhoneNumberUseCase,
-    private val countryCodeAndPhoneNumberUseCase: CountryCodeAndPhoneNumberUseCase
+    private val countryCodeAndPhoneNumberUseCase: CountryCodeAndPhoneNumberUseCase,
+    private val deletePhoneNumberUseCase: DeletePhoneNumberUseCase
 ) : ViewModel() {
 
     private var _countryCodeErrorLiveData = MutableLiveData<CountryCodeErrorMessage>()
     private var _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
     private var _phoneNumberLiveData = MutableLiveData<String>()
     private var _countryCodeLiveData = MutableLiveData<String>()
+    private var _deleteNumberLiveData = MutableLiveData<String>()
 
     val countryCodeErrorLiveData: LiveData<CountryCodeErrorMessage> = _countryCodeErrorLiveData
     val phoneNumberErrorLiveData: LiveData<PhoneNumberErrorMessage> = _phoneNumberErrorLiveData
+    val deleteNumberLiveData: LiveData<String> = _deleteNumberLiveData
     val phoneNumberLiveData: LiveData<String> = _phoneNumberLiveData
     val countryCodeLiveData: LiveData<String> = _countryCodeLiveData
 
     fun onNumberConfirmed(countryCode: String, phoneNumber: String) {
         validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
-            it.fold(::handleValidationError, ::handleValidationSuccess)
+            it.fold(::handleValidationError, ::handleConfirmationSuccess)
         }
     }
 
@@ -47,23 +51,51 @@ class EditPhoneNumberViewModel(
         }
     }
 
-    private fun handleValidationSuccess(phoneNumber: String) {
+    fun onDeleteNumberButtonClicked(countryCode: String, phoneNumber: String) {
+        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
+            it.fold(::handleValidationError, ::handleDeletionSuccess)
+        }
+    }
+
+    private fun handleDeletionSuccess(phoneNumber: String) {
+        _deleteNumberLiveData.value = phoneNumber
+    }
+
+    private fun validatePhoneNumbe(countryCode: String, phoneNumber: String) {
+        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
+            it.fold(::handleValidationError, ::handleConfirmationSuccess)
+        }
+    }
+
+    private fun handleConfirmationSuccess(phoneNumber: String) {
         _phoneNumberLiveData.value = phoneNumber
     }
 
     private fun handleFormattingSuccess(phoneNumber: PhoneNumber) {
-        _countryCodeLiveData.postValue(phoneNumber.countryCode)
-        _phoneNumberLiveData.postValue(phoneNumber.number)
+        _countryCodeLiveData.value = phoneNumber.countryCode
+        _phoneNumberLiveData.value = phoneNumber.number
     }
 
     private fun handleValidationError(failure: Failure) {
         when (failure) {
-            is CountryCodeInvalid -> _countryCodeErrorLiveData.postValue(
+            is CountryCodeInvalid -> _countryCodeErrorLiveData.value =
                 CountryCodeErrorMessage(R.string.edit_phone_dialog_country_code_error)
-            )
-            is PhoneNumberInvalid -> _phoneNumberErrorLiveData.postValue(
+            is PhoneNumberInvalid -> _phoneNumberErrorLiveData.value =
                 PhoneNumberErrorMessage(R.string.edit_phone_dialog_phone_number_error)
-            )
         }
+    }
+
+    fun onDeleteNumberButtonConfirmed() {
+        deletePhoneNumberUseCase(viewModelScope, Unit) {
+            it.fold(::handleDeletionFailure) {}
+        }
+    }
+
+    private fun handleDeletionFailure(failure: Failure) {
+        _phoneNumberErrorLiveData.value = PhoneNumberErrorMessage(R.string.pref__account_action__dialog__delete_phone__error)
+    }
+
+    fun onPhoneNumberConfirmed(phoneNumber: String) {
+
     }
 }

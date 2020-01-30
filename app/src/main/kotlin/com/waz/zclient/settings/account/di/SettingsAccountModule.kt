@@ -13,6 +13,7 @@ import com.waz.zclient.user.domain.usecase.handle.GetHandleUseCase
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberUseCase
+import com.waz.zclient.user.domain.usecase.phonenumber.DeletePhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -25,10 +26,11 @@ import org.koin.dsl.module
 val settingsAccountModule: Module = module {
     viewModel { SettingsAccountViewModel(get(), get(), get()) }
     viewModel { EditHandleViewModel(get(), get(), get(), get()) }
-    viewModel { EditPhoneNumberViewModel(get(), get(), get()) }
+    viewModel { EditPhoneNumberViewModel(get(), get(), get(), get()) }
 
     single { PhoneNumberUtil.getInstance() }
 
+    factory { DeletePhoneNumberUseCase(get()) }
     factory { CountryCodeAndPhoneNumberUseCase(get()) }
     factory { ValidatePhoneNumberUseCase() }
     factory { CheckHandleExistsUseCase(get()) }

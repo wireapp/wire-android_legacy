@@ -35,24 +35,57 @@ class EditPhoneDialogFragment : DialogFragment() {
     private val editPhoneNumberViewModel: EditPhoneNumberViewModel by viewModel()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return AlertDialog.Builder(requireActivity())
+        val builder = AlertDialog.Builder(requireActivity())
             .setTitle(getString(R.string.pref__account_action__dialog__edit_phone__title))
             .setView(rootView)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                onNumberConfirmed()
+                validatePhoneNumber()
             }
             .setNegativeButton(android.R.string.cancel, null)
-            .create()
+
+        if (hasEmail) {
+            builder.setNeutralButton(R.string.pref_account_delete) { _, _ ->
+                editPhoneNumberViewModel.onDeleteNumberButtonClicked(
+                    rootView.editPhoneDialogCountryCodeTextInputEditText.text.toString(),
+                    rootView.editPhoneDialogPhoneNumberTextInputEditText.text.toString()
+                )
+            }
+        }
+
+        return builder.create()
+    }
+
+    private fun showDeletePhoneNumberDialog() {
+        validatePhoneNumber()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         initPhoneInput()
         initCountryCodeInput()
+        initDeleteNumberButton()
 
         lifecycleScope.launchWhenResumed {
             editPhoneNumberViewModel.loadPhoneNumberData(phoneNumber)
         }
         return rootView
+    }
+
+    private fun initDeleteNumberButton() {
+        editPhoneNumberViewModel.deleteNumberLiveData.observe(viewLifecycleOwner) {
+            showDeleteNumberDialog(it)
+        }
+    }
+
+    private fun showDeleteNumberDialog(it: String) {
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title))
+            .setMessage(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message, phoneNumber))
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                editPhoneNumberViewModel.onDeleteNumberButtonConfirmed()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        dialog.show()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -73,7 +106,7 @@ class EditPhoneDialogFragment : DialogFragment() {
         rootView.editPhoneDialogPhoneNumberTextInputEditText.requestFocus()
         rootView.editPhoneDialogPhoneNumberTextInputEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                onNumberConfirmed()
+                validatePhoneNumber()
                 true
             } else false
         }
@@ -85,7 +118,7 @@ class EditPhoneDialogFragment : DialogFragment() {
         }
     }
 
-    private fun onNumberConfirmed() {
+    private fun validatePhoneNumber() {
         editPhoneNumberViewModel.onNumberConfirmed(
             rootView.editPhoneDialogCountryCodeTextInputEditText.text.toString(),
             rootView.editPhoneDialogPhoneNumberTextInputEditText.text.toString()
@@ -101,8 +134,15 @@ class EditPhoneDialogFragment : DialogFragment() {
     }
 
     private fun showConfirmationDialog(phoneNumber: String) {
-        //Show confirmation dialog
-    }
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
+            .setMessage(getString(R.string.pref__account_action__dialog__add_phone__confirm__message, phoneNumber))
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                editPhoneNumberViewModel.onPhoneNumberConfirmed(phoneNumber)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        dialog.show()    }
 
     companion object {
 
