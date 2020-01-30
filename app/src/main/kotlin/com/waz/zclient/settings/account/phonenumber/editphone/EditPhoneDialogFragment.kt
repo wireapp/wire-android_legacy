@@ -61,6 +61,10 @@ class EditPhoneDialogFragment : DialogFragment() {
 
     override fun onStart() {
         super.onStart()
+        initButtonActions()
+    }
+
+    private fun initButtonActions() {
         val alertDialog = dialog
         if (alertDialog is AlertDialog) {
             val confirmButton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE)
@@ -154,11 +158,11 @@ class EditPhoneDialogFragment : DialogFragment() {
 
         fun newInstance(
             phoneNumber: String,
-            hasEmail: Boolean) =
+            hasEmail: Boolean
+        ) =
             EditPhoneDialogFragment().withArgs {
                 putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
                 putBoolean(HAS_EMAIL_BUNDLE_KEY, hasEmail)
             }
     }
-
 }
