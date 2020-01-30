@@ -136,11 +136,13 @@ class EditPhoneDialogFragment : DialogFragment() {
     }
 
     private fun showDeleteNumberDialog(phoneNumber: String) {
+        dismiss()
         DeletePhoneDialogFragment.newInstance(phoneNumber)
             .show(requireActivity().supportFragmentManager, "DeletePhone")
     }
 
     private fun showConfirmationDialog(phoneNumber: String) {
+        dismiss()
         UpdatePhoneDialogFragment.newInstance(phoneNumber)
             .show(requireActivity().supportFragmentManager, "ConfirmPhone")
     }
