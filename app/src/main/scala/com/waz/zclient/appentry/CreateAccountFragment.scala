@@ -19,8 +19,8 @@ package com.waz.zclient.appentry
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.{LinearLayout}
-import com.waz.zclient.{R}
+import android.widget.LinearLayout
+import com.waz.zclient.R
 import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.fragments.{SignInFragment, TeamNameFragment}
 import com.waz.zclient.utils.{BackendController, LayoutSpec, RichView}
@@ -53,10 +53,18 @@ class CreateAccountFragment extends SSOFragment {
       }))
     }
   }
+
+  override def onBackPressed(): Boolean =
+    if (getFragmentManager.getBackStackEntryCount > 1) {
+      getFragmentManager.popBackStack()
+      true
+    } else {
+      false
+    }
 }
 
 object CreateAccountFragment {
-  val Tag: String =  "CreateAccountFragment"
+  val Tag: String = "CreateAccountFragment"
 
   def apply() = new CreateAccountFragment
 }
