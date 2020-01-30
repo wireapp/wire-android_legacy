@@ -62,7 +62,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     } else if (EmailValidator.isValid(input)) {
       verifyEmail(input)
     } else {
-      showInlineSsoError("Error!!!") //TODO: proper error message
+      showInlineSsoError(getString(R.string.enterprise_signin_invalid_input_error))
     }
 
   override def onStart(): Unit = {
