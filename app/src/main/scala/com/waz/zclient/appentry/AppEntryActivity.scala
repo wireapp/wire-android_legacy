@@ -36,6 +36,7 @@ import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.appentry.fragments._
+import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -53,8 +54,6 @@ import com.waz.zclient.views.LoadingIndicatorView
 import scala.collection.JavaConverters._
 
 object AppEntryActivity {
-  val loginAction = BuildConfig.APPLICATION_ID + ".LOGIN_ACTION"
-
   def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
@@ -122,10 +121,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
     closeButton.onClick(abortAddAccount())
 
-    getIntent.getAction() match {
-      case `loginAction` => showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
-      case _ => showFragment()
-    }
+    showFragment()
 
     skipButton.setVisibility(View.GONE)
     getSupportFragmentManager.addOnBackStackChangedListener(new OnBackStackChangedListener {
@@ -184,8 +180,8 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
                 inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
 
                 // re-present fragment for updated ui.
-                getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+                getSupportFragmentManager.popBackStackImmediate(WelcomeFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
             }
         }
 
@@ -222,13 +218,13 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     // if the SSO token is present we use it to log in the user
     userAccountsController.ssoToken.head.foreach {
       case Some(_) =>
-        getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+        getSupportFragmentManager.popBackStackImmediate(WelcomeFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
       case _ =>
     }(Threading.Ui)
   }
 
-  private def showFragment(): Unit = withFragmentOpt(AppLaunchFragment.Tag) {
+  private def showFragment(): Unit = withFragmentOpt(WelcomeFragment.Tag) {
     case Some(_) =>
     case None =>
       userAccountsController.ssoToken.head.foreach {
@@ -237,7 +233,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
         case _ => if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
             showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
           } else {
-            showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+            showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
           }
       }(Threading.Ui)
   }
@@ -276,8 +272,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
   def onEnterApplication(openSettings: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
     getControllerFactory.getVerificationController.finishVerification()
     val intent = Intents.EnterAppIntent(openSettings)(this)
-    clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state))
-      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK))
+    clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state)))
     startActivity(intent)
     finish()
   }
