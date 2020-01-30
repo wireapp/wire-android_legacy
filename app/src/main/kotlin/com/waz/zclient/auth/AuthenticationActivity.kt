@@ -31,11 +31,10 @@ class AuthenticationActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val CLOSE_BUTTON_VISIBILITY_BUNDLE_KEY = "isCloseButtonVisible"
         @JvmStatic
         fun newIntent(context: Context, isCloseButtonVisible: Boolean): Intent =
             Intent(context, AuthenticationActivity::class.java)
                 .putExtra(CLOSE_BUTTON_VISIBILITY_BUNDLE_KEY, isCloseButtonVisible)
-
-        private const val CLOSE_BUTTON_VISIBILITY_BUNDLE_KEY = "isCloseButtonVisible"
     }
 }
