@@ -123,8 +123,14 @@ class SettingsAccountFragment : Fragment() {
             .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showEditPhoneDialog() =
-        EditPhoneDialogFragment.newInstance(settingsAccountPhoneTitleTextView.text.toString())
-            .show(requireActivity().supportFragmentManager, String.empty())
+        EditPhoneDialogFragment.newInstance(
+            settingsAccountPhoneTitleTextView.text.toString(),
+            hasEmailAddress()
+        ).show(requireActivity().supportFragmentManager, String.empty())
+
+    private fun hasEmailAddress(): Boolean =
+        !settingsAccountEmailTitleTextView.text.toString()
+            .equals(getString(R.string.pref_account_add_email_title), false)
 
     private fun showGenericEditDialog(
         title: String,

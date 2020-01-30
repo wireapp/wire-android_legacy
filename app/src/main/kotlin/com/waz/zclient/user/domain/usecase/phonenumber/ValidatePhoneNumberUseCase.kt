@@ -1,14 +1,8 @@
 package com.waz.zclient.user.domain.usecase.phonenumber
 
 import androidx.core.text.isDigitsOnly
-import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
-
-object CountryCodeInvalid : ValidatePhoneNumberError()
-object PhoneNumberInvalid : ValidatePhoneNumberError()
-
-sealed class ValidatePhoneNumberError : FeatureFailure()
 
 class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() {
 
@@ -31,7 +25,7 @@ class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() 
 
     //TODO determine if this is enough to cover all supported countries?
     private fun isPhoneNumberValid(phoneNumber: String) =
-        phoneNumber.matches(PHONE_NUMBER_REGEX)
+        phoneNumber.matches(PHONE_NUMBER_REGEX) || phoneNumber.isEmpty()
 
     private fun isCountryCodeValid(countryCode: String) =
         countryCode.matches(COUNTRY_CODE_REGEX)
