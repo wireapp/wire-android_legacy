@@ -34,7 +34,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/settings_item_title"
-        style="@style/Settings.Glyphs.TextView" />
+        style="@style/TextView.Glyphs.Settings" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/settings_item_title"
@@ -44,5 +44,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/settings_item_icon"
         app:layout_constraintEnd_toEndOf="parent"
-        style="@style/Settings.Title.TextView" />
+        style="@style/TextView.Title.Settings" />
 </androidx.constraintlayout.widget.ConstraintLayout>
