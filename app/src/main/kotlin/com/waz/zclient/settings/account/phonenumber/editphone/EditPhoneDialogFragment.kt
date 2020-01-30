@@ -30,7 +30,7 @@ class EditPhoneDialogFragment : DialogFragment() {
     }
 
     private val hasEmail: Boolean by lazy {
-        arguments?.getBoolean(HAS_EMAIL_BUNDLE_KEY, true) ?: true
+        arguments?.getBoolean(HAS_EMAIL_BUNDLE_KEY, false) ?: false
     }
 
     private val settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
@@ -142,13 +142,13 @@ class EditPhoneDialogFragment : DialogFragment() {
     private fun showDeleteNumberDialog(phoneNumber: String) {
         dismiss()
         DeletePhoneDialogFragment.newInstance(phoneNumber)
-            .show(requireActivity().supportFragmentManager, "DeletePhone")
+            .show(requireActivity().supportFragmentManager, String.empty())
     }
 
     private fun showConfirmationDialog(phoneNumber: String) {
         dismiss()
         UpdatePhoneDialogFragment.newInstance(phoneNumber)
-            .show(requireActivity().supportFragmentManager, "ConfirmPhone")
+            .show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {
