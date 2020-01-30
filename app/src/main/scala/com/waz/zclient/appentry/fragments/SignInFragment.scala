@@ -33,7 +33,7 @@ import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
-import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment}
+import com.waz.zclient.appentry.{AppEntryActivity}
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.TabPages
@@ -51,7 +51,7 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-class SignInFragment extends SSOFragment with View.OnClickListener with CountryController.Observer {
+class SignInFragment extends FragmentHelper with View.OnClickListener with CountryController.Observer {
 
   implicit def context: Context = getActivity
 
