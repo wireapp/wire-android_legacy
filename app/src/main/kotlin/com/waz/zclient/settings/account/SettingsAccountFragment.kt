@@ -126,7 +126,7 @@ class SettingsAccountFragment : Fragment() {
         EditPhoneDialogFragment.newInstance(
             settingsAccountPhoneTitleTextView.text.toString(),
             hasEmailAddress()
-        ).show(requireActivity().supportFragmentManager, String.empty())
+        ).show(requireActivity().supportFragmentManager, "EditPhone")
 
     private fun hasEmailAddress(): Boolean =
         !settingsAccountEmailTitleTextView.text.toString()

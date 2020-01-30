@@ -1,6 +1,7 @@
 package com.waz.zclient.settings.account.phonenumber.editphone
 
 import android.app.Dialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -32,31 +33,19 @@ class EditPhoneDialogFragment : DialogFragment() {
         arguments?.getBoolean(HAS_EMAIL_BUNDLE_KEY, true) ?: true
     }
 
-    private val editPhoneNumberViewModel: EditPhoneNumberViewModel by viewModel()
+    private val settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder = AlertDialog.Builder(requireActivity())
             .setTitle(getString(R.string.pref__account_action__dialog__edit_phone__title))
             .setView(rootView)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                validatePhoneNumber()
-            }
+            .setPositiveButton(android.R.string.ok, null)
             .setNegativeButton(android.R.string.cancel, null)
-
         if (hasEmail) {
-            builder.setNeutralButton(R.string.pref_account_delete) { _, _ ->
-                editPhoneNumberViewModel.onDeleteNumberButtonClicked(
-                    rootView.editPhoneDialogCountryCodeTextInputEditText.text.toString(),
-                    rootView.editPhoneDialogPhoneNumberTextInputEditText.text.toString()
-                )
-            }
+            builder.setNeutralButton(R.string.pref_account_delete, null)
         }
 
         return builder.create()
-    }
-
-    private fun showDeletePhoneNumberDialog() {
-        validatePhoneNumber()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -65,30 +54,34 @@ class EditPhoneDialogFragment : DialogFragment() {
         initDeleteNumberButton()
 
         lifecycleScope.launchWhenResumed {
-            editPhoneNumberViewModel.loadPhoneNumberData(phoneNumber)
+            settingsAccountPhoneNumberViewModel.loadPhoneNumberData(phoneNumber)
         }
         return rootView
     }
 
-    private fun initDeleteNumberButton() {
-        editPhoneNumberViewModel.deleteNumberLiveData.observe(viewLifecycleOwner) {
-            showDeleteNumberDialog(it)
+    override fun onStart() {
+        super.onStart()
+        val alertDialog = dialog
+        if (alertDialog is AlertDialog) {
+            val confirmButton = alertDialog.getButton(DialogInterface.BUTTON_POSITIVE)
+            confirmButton.setOnClickListener {
+                confirmPhoneNumber()
+            }
+
+            val deleteButton = alertDialog.getButton(DialogInterface.BUTTON_NEUTRAL)
+            deleteButton.setOnClickListener {
+                settingsAccountPhoneNumberViewModel.onDeleteNumberButtonClicked(
+                    rootView.editPhoneDialogCountryCodeTextInputEditText.text.toString(),
+                    rootView.editPhoneDialogPhoneNumberTextInputEditText.text.toString()
+                )
+            }
         }
     }
 
-    private fun showDeleteNumberDialog(it: String) {
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title))
-            .setMessage(
-                getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message,
-                    phoneNumber)
-            )
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                editPhoneNumberViewModel.onDeleteNumberButtonConfirmed()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
-        dialog.show()
+    private fun initDeleteNumberButton() {
+        settingsAccountPhoneNumberViewModel.deleteNumberLiveData.observe(viewLifecycleOwner) {
+            showDeleteNumberDialog(it)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -97,10 +90,10 @@ class EditPhoneDialogFragment : DialogFragment() {
     }
 
     private fun initCountryCodeInput() {
-        editPhoneNumberViewModel.countryCodeLiveData.observe(viewLifecycleOwner) {
+        settingsAccountPhoneNumberViewModel.countryCodeLiveData.observe(viewLifecycleOwner) {
             rootView.editPhoneDialogCountryCodeTextInputEditText.setText(it)
         }
-        editPhoneNumberViewModel.countryCodeErrorLiveData.observe(viewLifecycleOwner) {
+        settingsAccountPhoneNumberViewModel.countryCodeErrorLiveData.observe(viewLifecycleOwner) {
             updateCountryCodeError(getString(it.errorMessage))
         }
     }
@@ -109,20 +102,26 @@ class EditPhoneDialogFragment : DialogFragment() {
         rootView.editPhoneDialogPhoneNumberTextInputEditText.requestFocus()
         rootView.editPhoneDialogPhoneNumberTextInputEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
-                validatePhoneNumber()
+                confirmPhoneNumber()
                 true
             } else false
         }
-        editPhoneNumberViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) {
-            rootView.editPhoneDialogPhoneNumberTextInputEditText.setText(it)
-        }
-        editPhoneNumberViewModel.phoneNumberErrorLiveData.observe(viewLifecycleOwner) {
-            updatePhoneNumberError(getString(it.errorMessage))
+
+        with(settingsAccountPhoneNumberViewModel) {
+            phoneNumberLiveData.observe(viewLifecycleOwner) {
+                rootView.editPhoneDialogPhoneNumberTextInputEditText.setText(it)
+            }
+            phoneNumberErrorLiveData.observe(viewLifecycleOwner) {
+                updatePhoneNumberError(getString(it.errorMessage))
+            }
+            confirmationLiveData.observe(viewLifecycleOwner) {
+                showConfirmationDialog(it)
+            }
         }
     }
 
-    private fun validatePhoneNumber() {
-        editPhoneNumberViewModel.onNumberConfirmed(
+    private fun confirmPhoneNumber() {
+        settingsAccountPhoneNumberViewModel.onNumberConfirmed(
             rootView.editPhoneDialogCountryCodeTextInputEditText.text.toString(),
             rootView.editPhoneDialogPhoneNumberTextInputEditText.text.toString()
         )
@@ -136,16 +135,14 @@ class EditPhoneDialogFragment : DialogFragment() {
         editPhoneDialogPhoneNumberTextInputLayout.error = errorMessage
     }
 
+    private fun showDeleteNumberDialog(phoneNumber: String) {
+        DeletePhoneDialogFragment.newInstance(phoneNumber)
+            .show(requireActivity().supportFragmentManager, "DeletePhone")
+    }
+
     private fun showConfirmationDialog(phoneNumber: String) {
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
-            .setMessage(getString(R.string.pref__account_action__dialog__add_phone__confirm__message, phoneNumber))
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                editPhoneNumberViewModel.onPhoneNumberConfirmed(phoneNumber)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
-        dialog.show()
+        UpdatePhoneDialogFragment.newInstance(phoneNumber)
+            .show(requireActivity().supportFragmentManager, "ConfirmPhone")
     }
 
     companion object {
@@ -153,10 +150,13 @@ class EditPhoneDialogFragment : DialogFragment() {
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
         private const val HAS_EMAIL_BUNDLE_KEY = "hasEmailBundleKey"
 
-        fun newInstance(phoneNumber: String, hasEmail: Boolean) =
+        fun newInstance(
+            phoneNumber: String,
+            hasEmail: Boolean) =
             EditPhoneDialogFragment().withArgs {
                 putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
                 putBoolean(HAS_EMAIL_BUNDLE_KEY, hasEmail)
             }
     }
+
 }

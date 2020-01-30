@@ -14,7 +14,7 @@ class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() 
                     true -> Either.Left(PhoneNumberInvalid)
                     else -> {
                         val phoneNumber = "${params.countryCode}${params.phoneNumber}"
-                        when (isPhoneNumberValid(phoneNumber)) {
+                        when (!isPhoneNumberValid(phoneNumber)) {
                             true -> Either.Left(PhoneNumberInvalid)
                             else -> Either.Right(phoneNumber)
                         }

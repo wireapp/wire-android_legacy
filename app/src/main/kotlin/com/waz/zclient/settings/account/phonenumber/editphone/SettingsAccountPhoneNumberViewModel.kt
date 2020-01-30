@@ -20,7 +20,7 @@ import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberUseCas
 data class CountryCodeErrorMessage(@StringRes val errorMessage: Int)
 data class PhoneNumberErrorMessage(@StringRes val errorMessage: Int)
 
-class EditPhoneNumberViewModel(
+class SettingsAccountPhoneNumberViewModel(
     private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
     private val changePhoneNumberNumberUseCase: ChangePhoneNumberUseCase,
     private val countryCodeAndPhoneNumberUseCase: CountryCodeAndPhoneNumberUseCase,
@@ -32,12 +32,14 @@ class EditPhoneNumberViewModel(
     private var _phoneNumberLiveData = MutableLiveData<String>()
     private var _countryCodeLiveData = MutableLiveData<String>()
     private var _deleteNumberLiveData = MutableLiveData<String>()
+    private var _confirmationLiveData = MutableLiveData<String>()
 
     val countryCodeErrorLiveData: LiveData<CountryCodeErrorMessage> = _countryCodeErrorLiveData
     val phoneNumberErrorLiveData: LiveData<PhoneNumberErrorMessage> = _phoneNumberErrorLiveData
     val deleteNumberLiveData: LiveData<String> = _deleteNumberLiveData
     val phoneNumberLiveData: LiveData<String> = _phoneNumberLiveData
     val countryCodeLiveData: LiveData<String> = _countryCodeLiveData
+    val confirmationLiveData: LiveData<String> = _confirmationLiveData
 
     fun onNumberConfirmed(countryCode: String, phoneNumber: String) {
         validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
@@ -61,14 +63,8 @@ class EditPhoneNumberViewModel(
         _deleteNumberLiveData.value = phoneNumber
     }
 
-    private fun validatePhoneNumbe(countryCode: String, phoneNumber: String) {
-        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
-            it.fold(::handleValidationError, ::handleConfirmationSuccess)
-        }
-    }
-
     private fun handleConfirmationSuccess(phoneNumber: String) {
-        _phoneNumberLiveData.value = phoneNumber
+        _confirmationLiveData.value = phoneNumber
     }
 
     private fun handleFormattingSuccess(phoneNumber: PhoneNumber) {
