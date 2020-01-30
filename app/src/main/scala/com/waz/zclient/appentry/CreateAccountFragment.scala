@@ -20,13 +20,13 @@ package com.waz.zclient.appentry
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.LinearLayout
-import com.waz.zclient.R
+import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.fragments.{SignInFragment, TeamNameFragment}
 import com.waz.zclient.utils.{BackendController, LayoutSpec, RichView}
 
 
-class CreateAccountFragment extends SSOFragment {
+class CreateAccountFragment extends FragmentHelper {
 
   private lazy val createTeamButton = view[LinearLayout](R.id.create_team_button)
   private lazy val createAccountButton = view[LinearLayout](R.id.create_account_button)
@@ -42,14 +42,14 @@ class CreateAccountFragment extends SSOFragment {
       v.setVisible(!hasCustomBackend)
       v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>
         val inputMethod = if (LayoutSpec.isPhone(getContext)) Phone else Email
-        activity.showFragment(SignInFragment(SignInMethod(Register, inputMethod)), SignInFragment.Tag)
+        parentActivity.showFragment(SignInFragment(SignInMethod(Register, inputMethod)), SignInFragment.Tag)
       }))
     }
 
     createTeamButton.foreach { v =>
       v.setVisible(!hasCustomBackend)
       v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>
-        activity.showFragment(TeamNameFragment(), TeamNameFragment.Tag)
+        parentActivity.showFragment(TeamNameFragment(), TeamNameFragment.Tag)
       }))
     }
   }
@@ -61,6 +61,8 @@ class CreateAccountFragment extends SSOFragment {
     } else {
       false
     }
+
+  def parentActivity() = getActivity.asInstanceOf[AppEntryActivity]
 }
 
 object CreateAccountFragment {
