@@ -184,6 +184,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
         }
 
         val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true), backupPassword = backupPassword))
+        accountManager.foreach(_.addUnsplashPicture())
         backupFile.foreach(_.delete())
         await { accountsService.setAccount(userId) }
         val registrationState = await { accountManager.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient()) }

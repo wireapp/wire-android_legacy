@@ -72,48 +72,39 @@ class AccountManager(val userId:   UserId,
       ShouldSyncInitial.str
     ))(userPrefs.remove).map(_ => ())
 
-  val storage   = global.factory.baseStorage(userId)
-  val db        = storage.db
-  val userPrefs = storage.userPrefs
+  lazy val storage   = global.factory.baseStorage(userId)
+  lazy val userPrefs = storage.userPrefs
 
-  val account     = global.accountsStorage.signal(userId)
-  val clientState = for {
+  lazy val clientState = for {
     _ <- if (startedJustAfterBackup) Signal.future(doAfterBackupCleanup()) else Signal.const(())
     state <- userPrefs(SelfClient).signal
   } yield state
 
-  val clientId    = clientState.map(_.clientId)
+  lazy val clientId = clientState.map(_.clientId)
 
-  val context        = global.context
-  val contextWrapper = Context.wrap(context)
+  private lazy val context = global.context
 
-  val cryptoBox         = global.factory.cryptobox(userId, storage)
-  val auth              = global.factory.auth(userId)
-  val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptorImpl(auth, global.httpClient)
-  val otrClient         = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
-  val credentialsClient = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)
+  private lazy val cryptoBox         = global.factory.cryptobox(userId, storage)
+  lazy val auth              = global.factory.auth(userId)
+  lazy val authRequestInterceptor: AuthRequestInterceptor = new AuthRequestInterceptorImpl(auth, global.httpClient)
+  lazy val otrClient         = new OtrClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
+  lazy val credentialsClient = global.factory.credentialsClient(global.urlCreator, global.httpClient, authRequestInterceptor)
 
-  val timeouts       = global.timeouts
-  val network        = global.network
-  val lifecycle      = global.lifecycle
-  val reporting      = global.reporting
-  val tracking       = global.trackingService
-  val clientsStorage = storage.otrClientsStorage
+  private lazy val clientsStorage = storage.otrClientsStorage
 
-  val invitationClient = new InvitationClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
+  lazy val invitationClient = new InvitationClientImpl()(global.urlCreator, global.httpClient, authRequestInterceptor)
   val invitedToTeam = Signal(ListMap.empty[TeamInvitation, Option[Either[ErrorResponse, ConfirmedTeamInvitation]]])
 
-  private val initSelf = for {
+  private lazy val initSelf = for {
     _ <- initialSelf.fold2(Future.successful({}), u =>
       for {
         _ <- storage.userPrefs(CrashesAndAnalyticsRequestShown) := false //new login/registration, we need to ask for permission to send analytics
         _ <- storage.usersStorage.updateOrCreate(u.id, _.updated(u, withSearchKey = false), UserData(u, withSearchKey = false)) //no search key to avoid transliteration loading
-        //_ <- storage.assetsStorage.saveAll(u.picture.getOrElse(Seq.empty)) //TODO https://github.com/wireapp/android-project/issues/58
       } yield {})
     _ <- isLogin.fold2(Future.successful({}), storage.userPrefs(IsLogin) := _)
   } yield {}
 
-  val zmessaging: Future[ZMessaging] = {
+  lazy val zmessaging: Future[ZMessaging] = {
     for {
       _       <- initSelf
       cId     <- clientId.collect { case Some(id) => id }.head
@@ -123,22 +114,17 @@ class AccountManager(val userId:   UserId,
     }
   }
 
-  if (isLogin.contains(false)) addUnsplashPicture()
-
-  if (startedJustAfterBackup) {
-    zmessaging.foreach(_.tracking.historyRestored(true))
-  }
-
-  private val otrClients =
+  private lazy val otrClients =
     storage.otrClientsStorage.signal(userId)
       .map(_.clients.values.toSet)
       .orElse(Signal.const(Set.empty[Client]))
 
   // listen to client changes, logout and delete cryptobox if current client is removed
-  private val otrCurrentClient = clientId.flatMap {
+  private lazy val otrCurrentClient = clientId.flatMap {
     case Some(cId) => otrClients.map(_.find(_.id == cId))
     case _ => Signal const Option.empty[Client]
   }
+
   private var hasClient = false
   otrCurrentClient.map(_.isDefined) { exists =>
     if (hasClient && !exists) {
@@ -197,7 +183,7 @@ class AccountManager(val userId:   UserId,
   //Note: this method should only be externally called from tests and debug preferences. User `registerClient` for all normal flows.
   def registerNewClient(password: Option[Password] = None): ErrorOr[ClientRegistrationState] = {
     for {
-      account <- account.head
+      account <- global.accountsStorage.signal(userId).head
       pwd     = password.orElse(if (account.ssoId.isEmpty) account.password else None)
       client  <- cryptoBox.createClient()
       resp    <- client match {
@@ -260,7 +246,7 @@ class AccountManager(val userId:   UserId,
   def exportDatabase(password: Password): Future[File] = for {
     zms     <- zmessaging
     user    <- zms.users.selfUser.head
-    _       <- db.flushWALToDatabase()
+    _       <- storage.db.flushWALToDatabase()
     backup  = backupManager.exportDatabase(
       userId,
       userHandle  = user.handle.map(_.string).getOrElse(""),
@@ -268,7 +254,7 @@ class AccountManager(val userId:   UserId,
       targetDir   = context.getExternalCacheDir,
       backupPassword    = password
     )
-    _       = tracking.historyBackedUp(backup.isSuccess)
+    _       = global.trackingService.historyBackedUp(backup.isSuccess)
   } yield backup.get
 
   private def checkCryptoBox() =

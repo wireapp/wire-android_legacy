@@ -276,36 +276,52 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
                                     isLogin:        Option[Boolean],
                                     initialUser:    Option[UserInfo] = None,
                                     backupPassword: Option[Password] = None) = Serialized.future(AccountManagersKey) {
-    async {
-      (importDbFile, backupPassword) match {
-        case (Some(file), Some(password)) =>
-          returning(backupManager.importDatabase(userId, file, context.getDatabasePath(userId.toString).getParentFile, backupPassword = password)) { restore =>
-            if (restore.isFailure) global.trackingService.historyRestored(false) // HistoryRestoreSucceeded is sent from the new AccountManager
-          }.get // if the import failed this will rethrow the exception
-        case _ =>
+    for {
+      managers <- accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head
+      manager <- managers.find(_.userId == userId).fold(createManager(userId, initialUser, isLogin, importDbFile.nonEmpty))(m => Future.successful(Some(m)))
+      _ = manager.foreach { mgr =>
+        (importDbFile, backupPassword) match {
+          case (Some(file), Some(password)) => restoreFromBackup(mgr, userId, file, password)
+          case _ =>
+        }
       }
+    } yield manager
+  }
 
-      val managers = await { accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head }
-      val manager = managers.find(_.userId == userId)
-      if (manager.nonEmpty) {
-        manager
-      } else {
-        val account = await(storage.flatMap(_.get(userId)))
-        val user = await {
-          for {
-            user <- prefs(LoggingInUser).apply().map(_.orElse(initialUser))
-            _    <- prefs(LoggingInUser) := None
-          } yield user
-        }
-        if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
-        account.map { acc =>
-          val newManager = new AccountManager(userId, acc.teamId, global, this, backupManager, startedJustAfterBackup = importDbFile.nonEmpty, user, isLogin)
-          if (isLogin.isDefined) {
-            accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
-          }
-          newManager
-        }
+  private def restoreFromBackup(accountManager: AccountManager, userId: UserId, importDbFile: File, password: Password) = {
+    verbose(l"BKP restore from backup")
+    val db = accountManager.storage.db2
+    db.beginTransactionNonExclusive()
+    try {
+      returning(backupManager.importDatabase(userId, importDbFile, context.getDatabasePath(userId.toString).getParentFile, backupPassword = password)) { restore =>
+        if (restore.isFailure) {
+          verbose(l"restore failed")
+          global.trackingService.historyRestored(false)
+        } // HistoryRestoreSucceeded is sent from the new AccountManager
+      }.get // if the import failed this will rethrow the exception
+      verbose(l"BKP restore successful")
+      db.setTransactionSuccessful()
+    } finally {
+      verbose(l"BKP end transaction...")
+      db.endTransaction()
+    }
+  }
+
+  private def createManager(userId: UserId, initialUser: Option[UserInfo], isLogin: Option[Boolean], fromBackup: Boolean): Future[Option[AccountManager]] = async {
+    val account = await(storage.flatMap(_.get(userId)))
+    val user = await {
+      for {
+        user <- prefs(LoggingInUser).apply().map(_.orElse(initialUser))
+        _    <- prefs(LoggingInUser) := None
+      } yield user
+    }
+    if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
+    account.map { acc =>
+      val newManager = new AccountManager(userId, acc.teamId, global, this, backupManager, startedJustAfterBackup = fromBackup, user, isLogin)
+      if (isLogin.isDefined) {
+        accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
       }
+      newManager
     }
   }
 
