@@ -92,10 +92,12 @@ class EditPhoneNumberViewModel(
     }
 
     private fun handleDeletionFailure(failure: Failure) {
-        _phoneNumberErrorLiveData.value = PhoneNumberErrorMessage(R.string.pref__account_action__dialog__delete_phone__error)
+        _phoneNumberErrorLiveData.value = PhoneNumberErrorMessage(
+            R.string.pref__account_action__dialog__delete_phone__error
+        )
     }
 
     fun onPhoneNumberConfirmed(phoneNumber: String) {
-
+        //Update phone number here
     }
 }

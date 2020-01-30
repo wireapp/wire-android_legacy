@@ -79,7 +79,10 @@ class EditPhoneDialogFragment : DialogFragment() {
     private fun showDeleteNumberDialog(it: String) {
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__title))
-            .setMessage(getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message, phoneNumber))
+            .setMessage(
+                getString(R.string.pref__account_action__dialog__delete_phone_or_email__confirm__message,
+                    phoneNumber)
+            )
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 editPhoneNumberViewModel.onDeleteNumberButtonConfirmed()
             }
@@ -142,7 +145,8 @@ class EditPhoneDialogFragment : DialogFragment() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .create()
-        dialog.show()    }
+        dialog.show()
+    }
 
     companion object {
 
