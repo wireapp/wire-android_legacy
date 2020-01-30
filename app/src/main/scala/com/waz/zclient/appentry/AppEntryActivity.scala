@@ -35,7 +35,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.appentry.fragments._
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -53,26 +53,9 @@ import com.waz.zclient.views.LoadingIndicatorView
 import scala.collection.JavaConverters._
 
 object AppEntryActivity {
-  val TAG: String = classOf[AppEntryActivity].getName
-  private val HTTPS_PREFIX: String = "https://"
-  private val HTTP_PREFIX: String = "http://"
-  val PREFETCH_IMAGE_WIDTH: Int = 4
-
-  val MethodArg: String = "method_arg"
-  val LoginArgVal: Int = 0
-  val CreateTeamArgVal: Int = 1
-
   val loginAction = BuildConfig.APPLICATION_ID + ".LOGIN_ACTION"
 
-  def getLoginArgs: Bundle =
-    returning(new Bundle()) { b =>
-      b.putInt(MethodArg, LoginArgVal)
-    }
-
-  def getCreateTeamArgs: Bundle =
-    returning(new Bundle()) { b =>
-      b.putInt(MethodArg, CreateTeamArgVal)
-    }
+  def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
 class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
@@ -251,13 +234,10 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
       userAccountsController.ssoToken.head.foreach {
         case Some(_) =>
         // if the SSO token is present we will handle it in onResume
-        case _ =>
-          Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
-            case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
-            case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
-            case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
-              showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
-            case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+        case _ => if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
+            showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
+          } else {
+            showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
           }
       }(Threading.Ui)
   }
@@ -291,13 +271,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     }
   }
 
-  def abortAddAccount(): Unit =
-    Option(getIntent.getExtras).map(_.getInt(MethodArg, -1)) match {
-      case Some(LoginArgVal | CreateTeamArgVal) =>
-        startActivity(Intents.OpenSettingsIntent(this))
-      case _ =>
-        onEnterApplication(false)
-    }
+  def abortAddAccount(): Unit = onEnterApplication(openSettings = false)
 
   def onEnterApplication(openSettings: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
     getControllerFactory.getVerificationController.finishVerification()
