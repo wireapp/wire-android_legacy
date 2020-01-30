@@ -59,7 +59,7 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun showAddPhoneDialog() {
-        //Sbow show add phone dialog here
+        //Show add phone dialog here
     }
 
     private fun initAccountEmail() {
