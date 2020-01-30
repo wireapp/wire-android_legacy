@@ -41,63 +41,6 @@
             android:tint="@color/teams_headline_text"
             android:layout_marginTop="40dp"/>
 
-        <!-- Wrapper with custom backend hints -->
-        <LinearLayout
-            android:id="@+id/app_entry_custom_backend_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <com.waz.zclient.ui.text.TypefaceTextView
-                android:id="@+id/app_entry_custom_backend_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="@dimen/wire__padding__small"
-                android:gravity="center"
-                android:textSize="@dimen/wire__text_size__regular"
-                android:textColor="@color/teams_headline_text"
-                app:w_font="@string/wire__typeface__medium"
-                android:text="@string/custom_backend_info_title"/>
-
-            <!-- Wrapper with backend server and "show more" -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="@dimen/wire__padding__8"
-                android:orientation="horizontal">
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/app_entry_custom_backend_subtitle"
-                    android:layout_width="200dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:lines="1"
-                    android:ellipsize="end"
-                    android:textSize="@dimen/wire__text_size__small"
-                    android:textColor="@color/teams_headline_text_pressed"
-                    app:w_font="@string/wire__typeface__medium"/>
-
-                <com.waz.zclient.ui.text.TypefaceTextView
-                    android:id="@+id/customBE_show_more_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:layout_marginStart="@dimen/wire__padding__small"
-                    android:gravity="center"
-                    android:lines="1"
-                    android:textSize="@dimen/wire__text_size__small"
-                    android:textColor="@color/accent_blue"
-                    app:w_font="@string/wire__typeface__medium"
-                    android:text="@string/custom_backend_info_show_more"/>
-            </LinearLayout>
-
-        </LinearLayout>
-
     </LinearLayout>
 
 

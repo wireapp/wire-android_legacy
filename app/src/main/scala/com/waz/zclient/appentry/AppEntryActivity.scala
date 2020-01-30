@@ -54,7 +54,9 @@ object AppEntryActivity {
   def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
-class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
+class AppEntryActivity extends BaseActivity
+  with SSOFragmentHandler
+  with CustomBackendLoginHandler {
 
   import Threading.Implicits.Ui
 
@@ -66,6 +68,8 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
   private lazy val spinnerController = inject[SpinnerController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val deepLinkService: DeepLinkService = inject[DeepLinkService]
+  private lazy val backendController = inject[BackendController]
+
   private var createdFromSavedInstance: Boolean = false
   private var isPaused: Boolean = false
 
@@ -174,11 +178,11 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
               case Right(config) =>
                 enableProgress(false)
 
-                inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
+                backendController.switchBackend(inject[GlobalModule], config, configUrl)
 
                 // re-present fragment for updated ui.
                 getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
+                showCustomBackendLoginScreen()
             }
         }
 
@@ -204,6 +208,12 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
         showLogoutWarningIfNeeded(reason).foreach(_ => userAccountsController.mostRecentLoggedOutAccount ! None)
       case None =>
     }
+  }
+
+  private def showCustomBackendLoginScreen(): Unit = {
+    val name = backendController.getStoredBackendConfig.map(_.environment)
+    val configUrl = backendController.customBackendConfigUrl
+    showFragment(CustomBackendLoginFragment.newInstance(name, configUrl), CustomBackendLoginFragment.TAG, animated = false)
   }
 
   // It is possible to open the app through intents with deep links. If that happens, we can't just
@@ -294,6 +304,10 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
   override def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
     new TransactionHandler().showFragment(this, f, tag, animated, R.id.fl_main_content)
     enableProgress(false)
+  }
+
+  override def showEmailSignInForCustomBackend(): Unit = {
+    showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
   }
 }
 
