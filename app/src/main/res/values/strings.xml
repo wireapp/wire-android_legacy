@@ -1477,7 +1477,7 @@
 
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">Already taken</string>
-    <string name="edit_account_handle_error_too_short">Must be longer than 2 letters</string>
-    <string name="edit_account_handle_error_invalid_characters">Invalid characters: a–z, 0–9, and _ only</string>
+    <string name="edit_account_handle_error_too_short">At least 2 characters</string>
+    <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
 </resources>
