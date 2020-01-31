@@ -72,4 +72,13 @@ class UsersDataSource(
 
     override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
         usersRemoteDataSource.doesHandleExist(newHandle)
+
+    override suspend fun deletePhone(): Either<Failure, Any> = deletePhoneRemotely()
+        .onSuccess { runBlocking { deletePhoneLocally() } }
+
+    private suspend fun deletePhoneLocally(): Either<Failure, Any> =
+        usersRemoteDataSource.deletePhone()
+
+    private suspend fun deletePhoneRemotely(): Either<Failure, Any> =
+        usersLocalDataSource.deletePhone()
 }
