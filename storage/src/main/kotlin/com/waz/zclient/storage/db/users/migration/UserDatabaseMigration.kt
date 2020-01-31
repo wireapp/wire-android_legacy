@@ -4,7 +4,33 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.BuildConfig
 
-class UserDatabaseMigration : Migration(START_VERSION, END_VERSION) {
+private const val START_VERSION = 125
+private const val END_VERSION = 126
+private const val USER_PREFERENCE_TABLE_NAME = "user_preference"
+private const val KEY_VALUES_TABLE_NAME = "KeyValues"
+
+private const val USER_TABLE_NAME = "user"
+private const val USERS_TABLE_NAME = "Users"
+
+//Shared keys
+private const val CLIENT_ID_KEY = "id"
+private const val CLIENT_LABEL_KEY = "label"
+private const val CLIENT_LOCATION_LAT_KEY = "lat"
+private const val CLIENT_LOCATION_LONG_KEY = "lon"
+private const val CLIENT_ENC_KEY = "encKey"
+private const val CLIENT_MAC_KEY = "macKey"
+private const val CLIENT_VERIFICATION_KEY = "verification"
+private const val CLIENT_MODEL_KEY = "model"
+private const val CLIENT_COOKIE_KEY = "cookie"
+private const val CLIENT_CLASS_KEY = "class"
+
+//New table keys
+private const val NEW_CLIENT_TABLE_NAME = "client"
+private const val NEW_CLIENT_LOCATION_NAME_KEY = "locationName"
+private const val NEW_CLIENT_TIME_KEY = "time"
+private const val NEW_CLIENT_TYPE_KEY = "type"
+
+val USER_DATABASE_MIGRATION = object : Migration(START_VERSION, END_VERSION) {
     override fun migrate(database: SupportSQLiteDatabase) {
         if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
             database.execSQL("""CREATE TABLE '$NEW_CLIENT_TABLE_NAME' (
@@ -43,33 +69,5 @@ class UserDatabaseMigration : Migration(START_VERSION, END_VERSION) {
             database.execSQL("INSERT INTO $USER_TABLE_NAME SELECT * FROM $USERS_TABLE_NAME")
             database.execSQL("DROP TABLE $USERS_TABLE_NAME")
         }
-    }
-
-    companion object {
-        private const val START_VERSION = 125
-        private const val END_VERSION = 126
-        private const val USER_PREFERENCE_TABLE_NAME = "user_preference"
-        private const val KEY_VALUES_TABLE_NAME = "KeyValues"
-
-        private const val USER_TABLE_NAME = "user"
-        private const val USERS_TABLE_NAME = "Users"
-
-        //Shared keys
-        private const val CLIENT_ID_KEY = "id"
-        private const val CLIENT_LABEL_KEY = "label"
-        private const val CLIENT_LOCATION_LAT_KEY = "lat"
-        private const val CLIENT_LOCATION_LONG_KEY = "lon"
-        private const val CLIENT_ENC_KEY = "encKey"
-        private const val CLIENT_MAC_KEY = "macKey"
-        private const val CLIENT_VERIFICATION_KEY = "verification"
-        private const val CLIENT_MODEL_KEY = "model"
-        private const val CLIENT_COOKIE_KEY = "cookie"
-        private const val CLIENT_CLASS_KEY = "class"
-
-        //New table keys
-        private const val NEW_CLIENT_TABLE_NAME = "client"
-        private const val NEW_CLIENT_LOCATION_NAME_KEY = "locationName"
-        private const val NEW_CLIENT_TIME_KEY = "time"
-        private const val NEW_CLIENT_TYPE_KEY = "type"
     }
 }

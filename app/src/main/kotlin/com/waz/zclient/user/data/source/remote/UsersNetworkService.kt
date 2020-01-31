@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -28,12 +29,14 @@ interface UsersNetworkService {
     @GET("$USERS$HANDLES/{handle}")
     suspend fun doesHandleExist(@Path("handle") handle: String): Response<Unit>
 
+    @DELETE("$SELF$PHONE")
+    fun deletePhone(): Response<Unit>
+
     companion object {
         private const val SELF = "/self"
         private const val PHONE = "/phone"
         private const val EMAIL = "/email"
         private const val HANDLE = "/handle"
-        private const val NAME = "/name"
         private const val USERS = "/users"
         private const val HANDLES = "/handles"
     }

@@ -45,9 +45,19 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initAccountPhoneNumber() {
         settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
-        settingsAccountPhoneContainerLinearLayout.setOnClickListener {
-            showEditPhoneDialog()
+        settingsAccountViewModel.phoneDialogLiveData.observe(viewLifecycleOwner) {
+            when (it) {
+                DialogDetail.EMPTY -> showAddPhoneDialog()
+                else -> showEditPhoneDialog(it.number, it.hasEmail)
+            }
         }
+        settingsAccountPhoneContainerLinearLayout.setOnClickListener {
+            settingsAccountViewModel.onPhoneContainerClicked()
+        }
+    }
+
+    private fun showAddPhoneDialog() {
+        //Show add phone dialog here
     }
 
     private fun initAccountEmail() {
@@ -122,9 +132,11 @@ class SettingsAccountFragment : Fragment() {
         EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
 
-    private fun showEditPhoneDialog() =
-        EditPhoneDialogFragment.newInstance(settingsAccountPhoneTitleTextView.text.toString())
-            .show(requireActivity().supportFragmentManager, String.empty())
+    private fun showEditPhoneDialog(phoneNumber: String, hasEmail: Boolean) =
+        EditPhoneDialogFragment.newInstance(
+            phoneNumber,
+            hasEmail
+        ).show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showGenericEditDialog(
         title: String,
