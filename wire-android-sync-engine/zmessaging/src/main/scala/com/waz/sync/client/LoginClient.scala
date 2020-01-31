@@ -26,7 +26,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Label
 import com.waz.model.{TeamId, UserInfo}
 import com.waz.model2.transport.Team
-import com.waz.model2.transport.responses.TeamsResponse
+import com.waz.model2.transport.responses.{DomainVerificationResponse, TeamsResponse}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
@@ -53,6 +53,7 @@ trait LoginClient {
   def findSelfTeam(accessToken: AccessToken, start: Option[TeamId] = None): ErrorOr[Option[Team]]
   def getTeams(accessToken: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse]
   def verifySSOToken(token: UUID): ErrorOr[Boolean]
+  def verifyDomain(domain: String): ErrorOr[DomainVerificationResponse]
 }
 
 class LoginClientImpl(tracking: TrackingService)
@@ -184,6 +185,15 @@ class LoginClientImpl(tracking: TrackingService)
       .executeSafe(r => ResponseCode.SuccessCodes.contains(r.code))
       .future
   }
+
+  override def verifyDomain(domain: String): ErrorOr[DomainVerificationResponse] = {
+    Request.Get(relativePath = verifyDomainPath(domain))
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[DomainVerificationResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
+  }
 }
 
 object LoginClient extends DerivedLogTag {
@@ -207,6 +217,8 @@ object LoginClient extends DerivedLogTag {
   val Throttling = new ExponentialBackoff(1000.millis, 10.seconds)
 
   def InitiateSSOLoginPath(code: String) = s"/sso/initiate-login/$code"
+
+  def verifyDomainPath(domain: String) = s"/custom-backend/by-domain/$domain"
 
   def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
     case CookieHeader(cookie) =>
