@@ -82,16 +82,16 @@ class SettingsAccountViewModel(
             _phoneDialogLiveData.value = DialogDetail.EMPTY
         }
     }
+}
 
-    data class ProfileDetail(val value: String) {
-        companion object {
-            val EMPTY = ProfileDetail(String.empty())
-        }
+data class ProfileDetail(val value: String) {
+    companion object {
+        val EMPTY = ProfileDetail(String.empty())
     }
+}
 
-    data class DialogDetail(val number: String, val hasEmail: Boolean) {
-        companion object {
-            val EMPTY = DialogDetail(String.empty(), false)
-        }
+data class DialogDetail(val number: String, val hasEmail: Boolean) {
+    companion object {
+        val EMPTY = DialogDetail(String.empty(), false)
     }
 }
