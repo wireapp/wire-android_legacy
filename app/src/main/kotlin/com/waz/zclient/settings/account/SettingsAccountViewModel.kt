@@ -15,18 +15,6 @@ import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-data class ProfileDetail(val value: String) {
-    companion object {
-        val EMPTY = ProfileDetail(String.empty())
-    }
-}
-
-data class DialogDetail(val number: String, val hasEmail: Boolean) {
-    companion object {
-        val EMPTY = DialogDetail(String.empty(), false)
-    }
-}
-
 @ExperimentalCoroutinesApi
 class SettingsAccountViewModel(
     private val getUserProfileUseCase: GetUserProfileUseCase,
@@ -92,6 +80,18 @@ class SettingsAccountViewModel(
                 ?: DialogDetail.EMPTY
         } else {
             _phoneDialogLiveData.value = DialogDetail.EMPTY
+        }
+    }
+
+    data class ProfileDetail(val value: String) {
+        companion object {
+            val EMPTY = ProfileDetail(String.empty())
+        }
+    }
+
+    data class DialogDetail(val number: String, val hasEmail: Boolean) {
+        companion object {
+            val EMPTY = DialogDetail(String.empty(), false)
         }
     }
 }
