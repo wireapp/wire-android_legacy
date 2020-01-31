@@ -256,6 +256,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".settings.account.phonenumber.editphone.EditPhoneNumberActivity"
+            android:hardwareAccelerated="true"
+            android:label="@string/empty_string"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
 
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
