@@ -443,8 +443,6 @@ object SignInFragment {
   val InputTypeArg = "INPUT_TYPE"
   val OnlyLoginArg = "ONLY_LOGIN"
 
-  def apply() = new SignInFragment
-
   def apply(signInMethod: SignInMethod): SignInFragment =
     returning(new SignInFragment()) {
       _.setArguments(returning(new Bundle) { b =>
