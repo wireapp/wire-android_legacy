@@ -152,7 +152,6 @@ class EditPhoneDialogFragment : DialogFragment() {
     }
 
     companion object {
-
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
         private const val HAS_EMAIL_BUNDLE_KEY = "hasEmailBundleKey"
 

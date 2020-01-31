@@ -39,7 +39,6 @@ class DeletePhoneDialogFragment : DialogFragment() {
     }
 
     companion object {
-
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
 
         fun newInstance(phoneNumber: String) =
