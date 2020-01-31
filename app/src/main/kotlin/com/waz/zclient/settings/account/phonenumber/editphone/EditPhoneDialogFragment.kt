@@ -155,10 +155,7 @@ class EditPhoneDialogFragment : DialogFragment() {
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
         private const val HAS_EMAIL_BUNDLE_KEY = "hasEmailBundleKey"
 
-        fun newInstance(
-            phoneNumber: String,
-            hasEmail: Boolean
-        ) =
+        fun newInstance(phoneNumber: String, hasEmail: Boolean) =
             EditPhoneDialogFragment().withArgs {
                 putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
                 putBoolean(HAS_EMAIL_BUNDLE_KEY, hasEmail)

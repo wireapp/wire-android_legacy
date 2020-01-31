@@ -16,8 +16,7 @@ class DeletePhoneDialogFragment : DialogFragment() {
     private val phoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
 
     private val phoneNumber: String by lazy {
-        arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty())
-            ?: String.empty()
+        arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =

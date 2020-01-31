@@ -47,10 +47,8 @@ class SettingsAccountFragment : Fragment() {
         settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
         settingsAccountViewModel.phoneDialogLiveData.observe(viewLifecycleOwner) {
             when (it) {
-                DialogDetail.EMPTY ->
-                    showAddPhoneDialog()
-                else ->
-                    showEditPhoneDialog(it.number, it.hasEmail)
+                DialogDetail.EMPTY -> showAddPhoneDialog()
+                else -> showEditPhoneDialog(it.number, it.hasEmail)
             }
         }
         settingsAccountPhoneContainerLinearLayout.setOnClickListener {
