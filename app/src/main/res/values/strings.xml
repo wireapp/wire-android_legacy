@@ -1350,8 +1350,7 @@
     <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
     <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
 
-    <string name="enterprise_signin_domain_not_found_error">Sorry, this domain is not registered as enterprise.
-        Enter SSO access code to log in.</string>
+    <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
     <string name="enterprise_signin_invalid_input_error">Please enter a valid email or SSO access code.</string>
 
     <string name="sso_signin_wrong_code_title">Invalid code</string>
@@ -1464,12 +1463,12 @@
     <string name="edit_phone_dialog_phone_number_error">Invalid phone number</string>
 
     <!-- SSO Login -->
-    <string name="sso_login_dialog_title">Enterprise log in</string>
-    <string name="sso_login_dialog_message">Enter your email or SSO access code here:</string>
+    <string name="sso_login_dialog_title">Enterprise Login</string>
+    <string name="sso_login_dialog_message">Please enter your email or SSO code:</string>
 
     <!-- Welcome -->
     <string name="welcome_to_wire">Welcome to Wire</string>
-    <string name="welcome_enterprise_log_in">Enterprise Log In</string>
+    <string name="welcome_enterprise_log_in">Enterprise Login</string>
 
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">Already taken</string>
