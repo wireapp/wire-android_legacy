@@ -25,7 +25,7 @@ class CustomBackendLoginFragment extends SSOFragment {
     initViews(view)
 
     val title = getArguments.getString(KEY_TITLE, UNDEFINED_TEXT)
-    titleTextView.setText(title)
+    titleTextView.setText(getString(R.string.custom_backend_info_title, title))
     welcomeTextView.setText(getString(R.string.custom_backend_welcome, title))
 
     val configUrl = getArguments.getString(KEY_CONFIG_URL, UNDEFINED_TEXT)
