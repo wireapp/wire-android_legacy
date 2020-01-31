@@ -19,56 +19,58 @@ package com.waz.zclient.appentry
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
+import android.widget.Button
+import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 
 class WelcomeFragment extends SSOFragment {
 
-  private lazy val welcomeLoginButton = view[View](R.id.welcomeLoginButton)
-  private lazy val welcomeCreateAccountButton = view[View](R.id.welcomeCreateAccountButton)
-  private lazy val welcomeEnterpriseLoginButton = view[View](R.id.welcomeEnterpriseLoginButton)
+  private lazy val welcomeLoginButton = returning(view[Button](R.id.welcomeLoginButton)) { view =>
+    view.onClick { _ =>
+      startLoginFlow()
+    }
+  }
+
+  private lazy val welcomeCreateAccountButton = returning(view[Button](R.id.welcomeCreateAccountButton)) { view =>
+    view.onClick { _ =>
+      startCreateAccountFlow()
+    }
+  }
+
+  private lazy val welcomeEnterpriseLoginButton = returning(view[Button](R.id.welcomeEnterpriseLoginButton)) { view =>
+    view.foreach(_.setVisibility(if (BuildConfig.ALLOW_SSO) View.VISIBLE else View.INVISIBLE))
+    view.onClick { _ =>
+      startEnterpriseLoginFlow()
+    }
+  }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_welcome, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
-    initCreateAccountButtonListener()
-    initLoginButtonListener()
-    initEnterpriseLoginButton()
+    initViews()
   }
 
-  private def initCreateAccountButtonListener() =
-    welcomeCreateAccountButton.foreach(_.setOnClickListener(new View.OnClickListener() {
-      def onClick(v: View) = startCreateAccountFlow()
-    }))
-
-  private def initLoginButtonListener() =
-    welcomeLoginButton.foreach(_.setOnClickListener(new View.OnClickListener() {
-      def onClick(v: View) = startLoginFlow()
-    }))
-
-  private def initEnterpriseLoginButton() = {
-    welcomeEnterpriseLoginButton.foreach(_.setVisibility(if (BuildConfig.ALLOW_SSO) View.VISIBLE else View.INVISIBLE))
-    welcomeEnterpriseLoginButton.foreach(_.setOnClickListener(new View.OnClickListener() {
-      def onClick(v: View) = startEnterpriseLoginFlow()
-    }))
+  private def initViews() = {
+    welcomeLoginButton
+    welcomeCreateAccountButton
+    welcomeEnterpriseLoginButton
   }
 
-  private def startCreateAccountFlow() =
+  private def startCreateAccountFlow(): Unit =
     activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
 
-  private def startLoginFlow() =
+  private def startLoginFlow(): Unit =
     activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
 
-  private def startEnterpriseLoginFlow() = extractTokenAndShowSSODialog(showIfNoToken = true)
-
-
+  private def startEnterpriseLoginFlow(): Unit = extractTokenAndShowSSODialog(showIfNoToken = true)
 }
 
 object WelcomeFragment {
-  val Tag: String =  "WelcomeFragment"
+  val Tag: String = "WelcomeFragment"
 
   def apply() = new WelcomeFragment
 }

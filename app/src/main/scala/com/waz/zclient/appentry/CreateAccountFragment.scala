@@ -19,7 +19,7 @@ package com.waz.zclient.appentry
 
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
-import android.widget.LinearLayout
+import com.waz.utils.returning
 import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.fragments.{SignInFragment, TeamNameFragment}
 import com.waz.zclient.utils.LayoutSpec
@@ -28,25 +28,30 @@ import com.waz.zclient.{FragmentHelper, R}
 
 class CreateAccountFragment extends FragmentHelper {
 
-  private lazy val createTeamButton = view[LinearLayout](R.id.create_team_button)
-  private lazy val createAccountButton = view[LinearLayout](R.id.create_account_button)
+  private lazy val createAccountButton = returning(view[View](R.id.create_account_button)) { view =>
+    view.onClick { _ =>
+      val inputMethod = if (LayoutSpec.isPhone(getContext)) Phone else Email
+      parentActivity.showFragment(SignInFragment(SignInMethod(Register, inputMethod)), SignInFragment.Tag)
+    }
+  }
+
+  private lazy val createTeamButton = returning(view[View](R.id.create_team_button)) { view =>
+    view.onClick { _ =>
+      parentActivity.showFragment(TeamNameFragment(), TeamNameFragment.Tag)
+    }
+  }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_create_account, container, false)
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    createAccountButton.foreach { v =>
-      v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>
-        val inputMethod = if (LayoutSpec.isPhone(getContext)) Phone else Email
-        parentActivity.showFragment(SignInFragment(SignInMethod(Register, inputMethod)), SignInFragment.Tag)
-      }))
-    }
+  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
+    super.onViewCreated(view, savedInstanceState)
+    initViews()
+  }
 
-    createTeamButton.foreach { v =>
-      v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>
-        parentActivity.showFragment(TeamNameFragment(), TeamNameFragment.Tag)
-      }))
-    }
+  private def initViews() = {
+    createAccountButton
+    createTeamButton
   }
 
   override def onBackPressed(): Boolean =
