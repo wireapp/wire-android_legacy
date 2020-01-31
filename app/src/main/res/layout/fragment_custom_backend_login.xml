@@ -10,11 +10,18 @@
         android:id="@+id/customBackendTitleTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="26dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Connected to “Orange”" />
+        android:textSize="16sp"
+        android:fontFamily="sans-serif"
+        android:textStyle="bold"
+        android:textColor="#323639"
+        android:letterSpacing="0.02"
+        android:gravity="center_horizontal"
+        tools:text="Connected to “Orange”"
+        />
 
     <LinearLayout
         android:id="@+id/customBackendSubtitleLayout"
@@ -31,18 +38,26 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:lines="1"
-            android:textColor="@color/teams_headline_text_pressed"
-            android:textSize="@dimen/wire__text_size__small" />
+            android:textSize="11sp"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="normal"
+            android:textColor="#a7a8a9"
+            android:gravity="center_horizontal"
+            tools:text="S3-EU-1.INTERNAL.PINEAPPLE.COM…" />
 
         <TextView
             android:id="@+id/customBackendShowMoreTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/wire__padding__small"
-            android:lines="1"
-            android:text="@string/custom_backend_info_show_more"
-            android:textColor="@color/accent_blue"
-            android:textSize="@dimen/wire__text_size__small" />
+            android:layout_marginStart="10.5dp"
+            android:textSize="11sp"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="normal"
+            android:textColor="#2391d2"
+            android:gravity="center_horizontal"
+            tools:text="@string/custom_backend_info_show_more"
+
+            />
 
     </LinearLayout>
 
@@ -50,28 +65,48 @@
         android:id="@+id/customBackendWelcomeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:lineHeight="40sp"
         android:textSize="32sp"
-        app:layout_constraintBottom_toTopOf="@id/customBackendEmailLoginButton"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        android:fontFamily="sans-serif-light"
+        android:textStyle="normal"
+        android:textColor="#323639"
+        android:lineSpacingExtra="8sp"
+        android:gravity="center_horizontal"
         app:layout_constraintTop_toBottomOf="@id/customBackendSubtitleLayout"
+        app:layout_constraintBottom_toTopOf="@id/customBackendEmailLoginButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintVertical_bias="0.6"
-        tools:text="Welcome to\nOrange workspace" />
-
+        tools:text="Welcome to\nOrange workspace"
+        />
     <Button
         android:id="@+id/customBackendEmailLoginButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/blue_rounded_button"
+        android:fontFamily="sans-serif"
+        android:textColor="@color/white"
+        android:textSize="@dimen/wire__text_size__small"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="5dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintTop_toTopOf="@id/customBackendSubtitleLayout" />
+        app:layout_constraintTop_toTopOf="@id/customBackendSubtitleLayout"
+        tools:text="LOG IN WITH EMAIL"/>
 
     <Button
         android:id="@+id/customBackendSsoLoginButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="@dimen/wire__text_size__small"
+        android:background="@drawable/light_gray_blue_rounded_button"
+        android:text="@string/app_entry_login"
+        android:textColor="@color/accent_blue"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="5dp"
+        tools:text="LOG IN WITH SSO"
         app:layout_constraintTop_toBottomOf="@id/customBackendEmailLoginButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
