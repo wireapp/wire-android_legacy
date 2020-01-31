@@ -30,7 +30,7 @@
         android:layout_height="@dimen/app_entry_logo_height"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="@dimen/wire__margin_top__big"
         android:src="@drawable/wire"
         android:tint="@color/teams_headline_text" />
 
