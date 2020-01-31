@@ -63,5 +63,4 @@ class EditTextDialogFragment : DialogFragment() {
                 it.listener = dialogListener
             }
     }
-
 }
