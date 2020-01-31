@@ -36,8 +36,7 @@ class WelcomeFragment extends SSOFragment {
     super.onViewCreated(view, savedInstanceState)
     initCreateAccountButtonListener()
     initLoginButtonListener()
-    initEnterpriseLoginButtonListener()
-    configureEnterpriseLoginVisibility()
+    initEnterpriseLoginButton()
   }
 
   private def initCreateAccountButtonListener() =
@@ -50,10 +49,12 @@ class WelcomeFragment extends SSOFragment {
       def onClick(v: View) = startLoginFlow()
     }))
 
-  private def initEnterpriseLoginButtonListener() =
+  private def initEnterpriseLoginButton() = {
+    welcomeEnterpriseLoginButton.foreach(_.setVisibility(if (BuildConfig.ALLOW_SSO) View.VISIBLE else View.INVISIBLE))
     welcomeEnterpriseLoginButton.foreach(_.setOnClickListener(new View.OnClickListener() {
       def onClick(v: View) = startEnterpriseLoginFlow()
     }))
+  }
 
   private def startCreateAccountFlow() =
     activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
@@ -63,9 +64,7 @@ class WelcomeFragment extends SSOFragment {
 
   private def startEnterpriseLoginFlow() = extractTokenAndShowSSODialog(showIfNoToken = true)
 
-  private def configureEnterpriseLoginVisibility() =
-    if (BuildConfig.ALLOW_SSO) welcomeEnterpriseLoginButton.foreach(_.setVisibility(View.VISIBLE))
-    else welcomeEnterpriseLoginButton.foreach(_.setVisibility(View.INVISIBLE))
+
 }
 
 object WelcomeFragment {

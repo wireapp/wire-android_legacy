@@ -96,7 +96,7 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
   }
 
   private def startSignUp() = {
-    startActivity(new Intent(this, classOf[AppEntryActivity]))
+    startActivity(AppEntryActivity.newIntent(this))
     finish()
   }
 }
@@ -104,5 +104,3 @@ class LaunchActivity extends AppCompatActivity with ActivityHelper with DerivedL
 object LaunchActivity {
   val Tag = classOf[LaunchActivity].getName
 }
-
-

@@ -32,11 +32,8 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
-import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
-import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.appentry.fragments._
-import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.appentry.fragments.{CountryDialogFragment, FirstLaunchAfterLoginFragment, InviteToTeamFragment, PhoneSetNameFragment, SignInFragment, VerifyEmailWithCodeFragment, VerifyPhoneFragment}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -180,8 +177,8 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
                 inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
 
                 // re-present fragment for updated ui.
-                getSupportFragmentManager.popBackStackImmediate(WelcomeFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
+                getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
             }
         }
 

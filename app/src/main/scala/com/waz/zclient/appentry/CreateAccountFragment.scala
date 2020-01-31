@@ -20,10 +20,10 @@ package com.waz.zclient.appentry
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.widget.LinearLayout
-import com.waz.zclient.{FragmentHelper, R}
 import com.waz.zclient.appentry.fragments.SignInFragment._
 import com.waz.zclient.appentry.fragments.{SignInFragment, TeamNameFragment}
-import com.waz.zclient.utils.{BackendController, LayoutSpec, RichView}
+import com.waz.zclient.utils.LayoutSpec
+import com.waz.zclient.{FragmentHelper, R}
 
 
 class CreateAccountFragment extends FragmentHelper {
@@ -35,11 +35,7 @@ class CreateAccountFragment extends FragmentHelper {
     inflater.inflate(R.layout.fragment_create_account, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-    val backendController = inject[BackendController]
-    val hasCustomBackend = backendController.hasCustomBackend
-
     createAccountButton.foreach { v =>
-      v.setVisible(!hasCustomBackend)
       v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>
         val inputMethod = if (LayoutSpec.isPhone(getContext)) Phone else Email
         parentActivity.showFragment(SignInFragment(SignInMethod(Register, inputMethod)), SignInFragment.Tag)
@@ -47,7 +43,6 @@ class CreateAccountFragment extends FragmentHelper {
     }
 
     createTeamButton.foreach { v =>
-      v.setVisible(!hasCustomBackend)
       v.setOnTouchListener(AppEntryButtonOnTouchListener({ () =>
         parentActivity.showFragment(TeamNameFragment(), TeamNameFragment.Tag)
       }))
@@ -58,9 +53,8 @@ class CreateAccountFragment extends FragmentHelper {
     if (getFragmentManager.getBackStackEntryCount > 1) {
       getFragmentManager.popBackStack()
       true
-    } else {
-      false
-    }
+    } else false
+
 
   def parentActivity() = getActivity.asInstanceOf[AppEntryActivity]
 }
