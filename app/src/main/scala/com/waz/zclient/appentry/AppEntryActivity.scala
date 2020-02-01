@@ -211,7 +211,7 @@ class AppEntryActivity extends BaseActivity
             backendController.switchBackend(inject[GlobalModule], config, configUrl)
 
             // re-present fragment for updated ui.
-            getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
             showCustomBackendLoginScreen()
         }
     }
@@ -223,35 +223,16 @@ class AppEntryActivity extends BaseActivity
     showFragment(CustomBackendLoginFragment.newInstance(name, configUrl), CustomBackendLoginFragment.TAG, animated = false)
   }
 
-  // It is possible to open the app through intents with deep links. If that happens, we can't just
-  // show the fragment that was opened previously - we have to take the user to the fragment specified
-  // by the intent (at this point the information about it should be already stored somewhere).
-  // If this is the case, in `onResume` we can pop back the stack and show the new fragment.
-  override def onResume(): Unit = {
-    super.onResume()
-    // if the SSO token is present we use it to log in the user
-    userAccountsController.ssoToken.head.foreach {
-      case Some(_) =>
-        getSupportFragmentManager.popBackStackImmediate(WelcomeFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
-      case _ =>
-    }(Threading.Ui)
-  }
-
-  private def showFragment(): Unit = withFragmentOpt(WelcomeFragment.Tag) {
-    case Some(_) =>
-    case None =>
-      userAccountsController.ssoToken.head.foreach {
-        case Some(_) =>
-        // if the SSO token is present we will handle it in onResume
-        case _ => if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
-            showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
-          } else {
-            showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
-          }
-      }(Threading.Ui)
-  }
-
+  private def showFragment(): Unit =
+    if (backendController.hasCustomBackend) {
+      getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+      showCustomBackendLoginScreen()
+    }
+    else if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
+      showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
+    } else {
+      showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
+    }
 
   override def onAttachFragment(fragment: Fragment): Unit = {
     super.onAttachFragment(fragment)
