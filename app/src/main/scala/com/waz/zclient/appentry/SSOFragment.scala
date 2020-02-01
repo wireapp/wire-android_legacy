@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.appentry
 
+import java.net.URL
+
 import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
@@ -127,7 +129,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     ssoService.verifyDomain(domain).flatMap {
       case Right(DomainSuccessful(configFileUrl)) =>
         dismissSsoDialog()
-        Future.successful(()) //TODO: save config file and continue flow
+        Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
       case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
       case Left(err) => handleVerificationError(err)
     }
@@ -144,7 +146,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
 
-  protected def activity: SSOFragmentHandler = getActivity.asInstanceOf[SSOFragmentHandler]
+  protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 
   protected def onVerifyingToken(verifying: Boolean): Unit =
     inject[SpinnerController].showSpinner(verifying)

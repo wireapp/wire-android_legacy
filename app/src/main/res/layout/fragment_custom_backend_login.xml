@@ -93,7 +93,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintTop_toTopOf="@id/customBackendSubtitleLayout"
-        tools:text="LOG IN WITH EMAIL"/>
+        android:text="LOG IN WITH EMAIL"/>
 
     <Button
         android:id="@+id/customBackendSsoLoginButton"
@@ -101,12 +101,11 @@
         android:layout_height="wrap_content"
         android:textSize="@dimen/wire__text_size__small"
         android:background="@drawable/light_gray_blue_rounded_button"
-        android:text="@string/app_entry_login"
         android:textColor="@color/accent_blue"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginTop="5dp"
-        tools:text="LOG IN WITH SSO"
+        android:text="LOG IN WITH SSO"
         app:layout_constraintTop_toBottomOf="@id/customBackendEmailLoginButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

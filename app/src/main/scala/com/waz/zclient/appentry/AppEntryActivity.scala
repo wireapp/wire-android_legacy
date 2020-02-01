@@ -17,6 +17,8 @@
   */
 package com.waz.zclient.appentry
 
+import java.net.URL
+
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.os.Bundle
@@ -34,7 +36,7 @@ import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.appentry.fragments.{CountryDialogFragment, FirstLaunchAfterLoginFragment, InviteToTeamFragment, PhoneSetNameFragment, SignInFragment, VerifyEmailWithCodeFragment, VerifyPhoneFragment}
+import com.waz.zclient.appentry.fragments._
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -155,37 +157,7 @@ class AppEntryActivity extends BaseActivity
         verbose(l"got custom backend url: $configUrl")
         deepLinkService.deepLink ! None
 
-        inject[AccentColorController].accentColor.head.flatMap { color =>
-          showConfirmationDialog(
-            title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
-            msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
-            positiveRes = R.string.custom_backend_dialog_connect,
-            negativeRes = android.R.string.cancel,
-            color = color
-          )
-        }.foreach {
-          case false =>
-          case true =>
-            enableProgress(true)
-            inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
-              case Left(errorResponse) =>
-                error(l"error trying to download backend config.", errorResponse)
-                enableProgress(false)
-
-                showErrorDialog(
-                  R.string.custom_backend_dialog_network_error_title,
-                  R.string.custom_backend_dialog_network_error_message)
-
-              case Right(config) =>
-                enableProgress(false)
-
-                backendController.switchBackend(inject[GlobalModule], config, configUrl)
-
-                // re-present fragment for updated ui.
-                getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                showCustomBackendLoginScreen()
-            }
-        }
+        showCustomBackendDialog(configUrl)
 
       case DoNotOpenDeepLink(Access, UserLoggedIn) =>
         verbose(l"do not open, Access, user logged in")
@@ -211,7 +183,41 @@ class AppEntryActivity extends BaseActivity
     }
   }
 
-  private def showCustomBackendLoginScreen(): Unit = {
+   def showCustomBackendDialog(configUrl: URL): Unit = {
+    inject[AccentColorController].accentColor.head.flatMap { color =>
+      showConfirmationDialog(
+        title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+        msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+        positiveRes = R.string.custom_backend_dialog_connect,
+        negativeRes = android.R.string.cancel,
+        color = color
+      )
+    }.foreach {
+      case false =>
+      case true =>
+        enableProgress(true)
+        inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+          case Left(errorResponse) =>
+            error(l"error trying to download backend config.", errorResponse)
+            enableProgress(false)
+
+            showErrorDialog(
+              R.string.custom_backend_dialog_network_error_title,
+              R.string.custom_backend_dialog_network_error_message)
+
+          case Right(config) =>
+            enableProgress(false)
+
+            backendController.switchBackend(inject[GlobalModule], config, configUrl)
+
+            // re-present fragment for updated ui.
+            getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            showCustomBackendLoginScreen()
+        }
+    }
+  }
+
+   private def showCustomBackendLoginScreen(): Unit = {
     val name = backendController.getStoredBackendConfig.map(_.environment)
     val configUrl = backendController.customBackendConfigUrl
     showFragment(CustomBackendLoginFragment.newInstance(name, configUrl), CustomBackendLoginFragment.TAG, animated = false)
