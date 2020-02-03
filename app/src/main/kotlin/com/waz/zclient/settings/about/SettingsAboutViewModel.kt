@@ -47,7 +47,7 @@ class SettingsAboutViewModel(
 
     private fun generateUrl(urlSuffix: String): String =
         if (urlSuffix.isEmpty()) urlConfig.configUrl
-        else "${urlConfig.configUrl}${urlSuffix}"
+        else urlConfig.configUrl.plus(urlSuffix)
 
     companion object {
         private const val PERSONAL_TERMS_AND_CONDITIONS_SUFFIX = "/legal/terms/personal/"
