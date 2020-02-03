@@ -255,7 +255,7 @@
         </activity>
 
         <activity
-            android:name=".settings.account.phonenumber.editphone.EditPhoneNumberActivity"
+            android:name="com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity"
             android:hardwareAccelerated="true"
             android:label="@string/empty_string"
             android:launchMode="singleTask"

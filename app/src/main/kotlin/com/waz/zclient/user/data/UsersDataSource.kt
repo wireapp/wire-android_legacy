@@ -63,22 +63,6 @@ class UsersDataSource(
 
     private suspend fun changeEmailLocally(email: String) = usersLocalDataSource.changeEmail(email)
 
-    override suspend fun changePhone(phone: String) = changePhoneRemotely(phone)
-        .onSuccess { runBlocking { changePhoneLocally(phone) } }
-
-    private suspend fun changePhoneRemotely(phone: String) = usersRemoteDataSource.changePhone(phone)
-
-    private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
-
     override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
         usersRemoteDataSource.doesHandleExist(newHandle)
-
-    override suspend fun deletePhone(): Either<Failure, Any> = deletePhoneRemotely()
-        .onSuccess { runBlocking { deletePhoneLocally() } }
-
-    private suspend fun deletePhoneLocally(): Either<Failure, Any> =
-        usersRemoteDataSource.deletePhone()
-
-    private suspend fun deletePhoneRemotely(): Either<Failure, Any> =
-        usersLocalDataSource.deletePhone()
 }
