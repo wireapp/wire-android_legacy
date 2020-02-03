@@ -4,7 +4,7 @@ import androidx.room.Room
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.accountdata.ACTIVE_ACCOUNTS_MIGRATION
-import com.waz.zclient.storage.db.users.migration.UserDatabaseMigration
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION
 import com.waz.zclient.storage.pref.GlobalPreferences
 import com.waz.zclient.storage.pref.UserPreferences
 import org.koin.android.ext.koin.androidContext
@@ -16,7 +16,7 @@ val storageModule: Module = module {
     single {
         Room.databaseBuilder(androidContext(),
             UserDatabase::class.java, get<GlobalPreferences>().activeUserId)
-            .addMigrations(UserDatabaseMigration()).build()
+            .addMigrations(USER_DATABASE_MIGRATION).build()
     }
     single {
         Room.databaseBuilder(
