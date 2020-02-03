@@ -28,7 +28,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountInfoSectionHeaderTextView"
-            style="@style/Settings.Header.TextView"
+            style="@style/TextView.Header.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_details_category_title"
@@ -53,13 +53,13 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountNameTitleTextView"
-                style="@style/Settings.Title.TextView"
+                style="@style/TextView.Title.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountNameSubtitleTextView"
-                style="@style/Settings.Subtitle.TextView"
+                style="@style/TextView.Subtitle.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/pref_account_name_title" />
@@ -81,13 +81,13 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountHandleTitleTextView"
-                style="@style/Settings.Title.TextView"
+                style="@style/TextView.Title.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountHandleSubtitleTextView"
-                style="@style/Settings.Subtitle.TextView"
+                style="@style/TextView.Subtitle.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/pref_account_username_title" />
@@ -109,13 +109,13 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountEmailTitleTextView"
-                style="@style/Settings.Title.TextView"
+                style="@style/TextView.Title.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountEmailSubtitleTextView"
-                style="@style/Settings.Subtitle.TextView"
+                style="@style/TextView.Subtitle.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/pref_account_email_title" />
@@ -137,13 +137,13 @@
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountPhoneTitleTextView"
-                style="@style/Settings.Title.TextView"
+                style="@style/TextView.Title.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/settingsAccountPhoneSubtitleTextView"
-                style="@style/Settings.Subtitle.TextView"
+                style="@style/TextView.Subtitle.Settings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/pref_account_phone_title" />
@@ -151,7 +151,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountAppearanceSectionHeaderTextView"
-            style="@style/Settings.Header.TextView"
+            style="@style/TextView.Header.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_appearance_category_title"
@@ -162,7 +162,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountProfilePictureButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_picture_title"
@@ -174,7 +174,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountAccentColorButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_color_title"
@@ -186,7 +186,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountPrivacySectionHeaderTextView"
-            style="@style/Settings.Header.TextView"
+            style="@style/TextView.Header.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref__account_privacy"
@@ -197,7 +197,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountReadReceiptsTitleTextView"
-            style="@style/Settings.Title.TextView"
+            style="@style/TextView.Title.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref__account_send_read_receipts_title"
@@ -208,7 +208,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountReadReceiptsSubtitleTextView"
-            style="@style/Settings.Subtitle.TextView"
+            style="@style/TextView.Subtitle.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref__account_send_read_receipts_summary"
@@ -219,7 +219,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingAccountPersonalInfoSectionHeaderTextView"
-            style="@style/Settings.Header.TextView"
+            style="@style/TextView.Header.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_personal_information_category_title"
@@ -230,7 +230,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountDataUsagePermissionsButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_data_usage_permissions"
@@ -241,7 +241,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountHistorySectionHeaderTextView"
-            style="@style/Settings.Header.TextView"
+            style="@style/TextView.Header.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_conversations_category_title"
@@ -252,7 +252,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountBackupButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_backup_title"
@@ -263,7 +263,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAccountActionsSectionHeaderTextView"
-            style="@style/Settings.Header.TextView"
+            style="@style/TextView.Header.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_actions_category_title"
@@ -274,7 +274,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountResetPasswordButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_password_title"
@@ -285,7 +285,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountLogoutButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_sign_out_title"
@@ -296,7 +296,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountDeleteAccountButton"
-            style="@style/Settings.Button"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_delete_title"
