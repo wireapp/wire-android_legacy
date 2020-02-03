@@ -6,10 +6,14 @@ import com.waz.threading.Threading
 import com.waz.utils.returning
 import com.waz.zclient.R
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.pages.main.conversation.controller.IConversationScreenController
+import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.UserRequester
 import com.waz.zclient.views.menus.{FooterMenu, FooterMenuCallback}
+
+import scala.concurrent.Future
 
 class SendConnectRequestFragment extends UntabbedRequestFragment {
   import Threading.Implicits.Ui
@@ -17,16 +21,30 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
   override protected val Tag: String = SendConnectRequestFragment.Tag
 
   override protected lazy val footerCallback = new FooterMenuCallback {
+    import ConversationChangeRequester.START_CONVERSATION
+
+    private lazy val usersCtrl      = inject[UsersController]
+    private lazy val pickUserCtrl   = inject[IPickUserController]
+    private lazy val convCtrl       = inject[ConversationController]
+    private lazy val convScreenCtrl = inject[IConversationScreenController]
+
     override def onLeftActionClicked(): Unit =
-      inject[UsersController].connectToUser(userToConnectId).foreach(_.foreach { _ => getActivity.onBackPressed() })
+      for {
+        conv <- usersCtrl.connectToUser(userToConnectId)
+        _    <- conv.fold(
+                  Future.successful(pickUserCtrl.hideUserProfile())
+                ) (c =>
+                  convCtrl.selectConv(c.id, START_CONVERSATION)
+                )
+      } yield onBackPressed()
 
     override def onRightActionClicked(): Unit =
       for {
-        conv    <- inject[ConversationController].currentConv.head
+        conv    <- convCtrl.currentConv.head
         remPerm <- removeMemberPermission.head
       } yield
         if (conv.isActive && remPerm)
-          inject[IConversationScreenController].showConversationMenu(false, conv.id)
+          convScreenCtrl.showConversationMenu(false, conv.id)
   }
 
   override protected lazy val footerMenu = returning( view[FooterMenu](R.id.not_tabbed_footer) ) { vh =>
@@ -45,13 +63,15 @@ class SendConnectRequestFragment extends UntabbedRequestFragment {
 }
 
 object SendConnectRequestFragment {
+  import UntabbedRequestFragment._
+
   val Tag: String = classOf[SendConnectRequestFragment].getName
 
   def newInstance(userId: UserId, userRequester: UserRequester): SendConnectRequestFragment =
     returning(new SendConnectRequestFragment)(fragment =>
       fragment.setArguments(returning(new Bundle) { args =>
-        args.putString(UntabbedRequestFragment.ArgumentUserId, userId.str)
-        args.putString(UntabbedRequestFragment.ArgumentUserRequester, userRequester.toString)
+        args.putString(ArgumentUserId, userId.str)
+        args.putString(ArgumentUserRequester, userRequester.toString)
       })
     )
 }
