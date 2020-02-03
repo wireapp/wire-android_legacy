@@ -58,8 +58,4 @@ class SettingsAboutViewModel(
 }
 
 data class UrlConfig(val configUrl: String)
-data class UrlDetail(val url: String) {
-    companion object {
-        val EMPTY = UrlDetail(String.empty())
-    }
-}
+data class UrlDetail(val url: String)

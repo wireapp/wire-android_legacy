@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
+import org.mockito.Mockito.lenient
 
 @ExperimentalCoroutinesApi
 class SettingsAboutViewModelTest : UnitTest() {
@@ -42,8 +43,8 @@ class SettingsAboutViewModelTest : UnitTest() {
 
     @Test
     fun `given terms button is clicked, when team id exists, then provide team terms and conditions url`() = runBlockingTest {
-        Mockito.`when`(user.teamId).thenReturn(TEST_TEAM_ID)
-        Mockito.`when`(profileUseCase.run(Unit)).thenReturn(userFlow)
+        lenient().`when`(user.teamId).thenReturn(TEST_TEAM_ID)
+        lenient().`when`(profileUseCase.run(Unit)).thenReturn(userFlow)
 
         settingsAboutViewModel.onTermsButtonClicked()
 
@@ -56,8 +57,8 @@ class SettingsAboutViewModelTest : UnitTest() {
 
     @Test
     fun `given terms button is clicked, when team id is empty, then open personal terms and conditions url`() = runBlockingTest {
-        Mockito.`when`(user.teamId).thenReturn(String.empty())
-        Mockito.`when`(profileUseCase.run(Unit)).thenReturn(userFlow)
+        lenient().`when`(user.teamId).thenReturn(String.empty())
+        lenient().`when`(profileUseCase.run(Unit)).thenReturn(userFlow)
 
         settingsAboutViewModel.onTermsButtonClicked()
 
@@ -72,7 +73,7 @@ class SettingsAboutViewModelTest : UnitTest() {
     fun `given about button is clicked, then open config url`() {
         settingsAboutViewModel.onAboutButtonClicked()
 
-        settingsAboutViewModel.urlLiveData.observeForever {
+        settingsAboutViewModel.urlLiveData.observeOnce {
             it.url shouldBe CONFIG_URL
         }
     }
@@ -81,8 +82,8 @@ class SettingsAboutViewModelTest : UnitTest() {
     fun `given privacy button is clicked, then open privacy url`() {
         settingsAboutViewModel.onPrivacyButtonClicked()
 
-        settingsAboutViewModel.urlLiveData.observeForever {
-            it.url shouldBe PRIVACY_POLICY_TEST_URL
+        settingsAboutViewModel.urlLiveData.observeOnce {
+            assert(it.url == PRIVACY_POLICY_TEST_URL)
         }
     }
 
@@ -90,8 +91,8 @@ class SettingsAboutViewModelTest : UnitTest() {
     fun `given third party licenses button is clicked, then third party licenses url`() {
         settingsAboutViewModel.onThirdPartyLicenseButtonClicked()
 
-        settingsAboutViewModel.urlLiveData.observeForever {
-            it.url shouldBe THIRD_PARTY_LICENSES_TEST_URL
+        settingsAboutViewModel.urlLiveData.observeOnce {
+            assert(it.url == THIRD_PARTY_LICENSES_TEST_URL)
         }
     }
 
