@@ -30,6 +30,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.views.InputBox.EmailValidator
+import com.waz.zclient.utils.BackendController
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -46,6 +47,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   private lazy val userAccountsController = inject[UserAccountsController]
 
   private def hasToken: Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
+
+  private lazy val backendController = inject[BackendController]
 
   private lazy val dialogListener = new InputDialog.Listener {
     override def onTextChanged(text: String): Unit = getSsoDialog.foreach(_.clearError())
@@ -64,7 +67,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     } else if (EmailValidator.isValid(input)) {
       verifyEmail(input)
     } else {
-      showInlineSsoError(getString(R.string.enterprise_signin_invalid_input_error))
+      if (backendController.hasCustomBackend) showInlineSsoError(getString(R.string.enterprise_signin_sso_invalid_input_error))
+      else showInlineSsoError(getString(R.string.enterprise_signin_email_sso_invalid_input_error))
     }
 
   override def onStart(): Unit = {
@@ -88,17 +92,17 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       case None if getSsoDialog.isEmpty =>
         extractTokenFromClipboard
           .filter(_.nonEmpty || showIfNoToken)
-          .foreach(showSSODialog)
+          .foreach(showLoginViaSSOAndEmailDialog)
       case _ =>
     }
 
   private def getSsoDialog: Option[InputDialog] = findChildFragment[InputDialog](SSODialogTag)
 
-  protected def showSSODialog(token: Option[String]): Unit =
+  protected def showLoginViaSSOAndEmailDialog(token: Option[String]): Unit =
     if (getSsoDialog.isEmpty)
       InputDialog.newInstance(
         title = R.string.sso_login_dialog_title,
-        message = R.string.sso_login_dialog_message,
+        message = if (backendController.hasCustomBackend) R.string.sso_login_dialog_message else R.string.email_sso_login_dialog_message ,
         inputHint = Some(R.string.app_entry_sso_input_hint),
         inputValue = token,
         negativeBtn = R.string.app_entry_dialog_cancel,
