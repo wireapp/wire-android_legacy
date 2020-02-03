@@ -41,7 +41,7 @@
         app:titleMarginStart="@dimen/wire__padding__regular" />
 
     <FrameLayout
-        android:id="@+id/layout_container"
+        android:id="@+id/activitySettingsMainLayoutContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

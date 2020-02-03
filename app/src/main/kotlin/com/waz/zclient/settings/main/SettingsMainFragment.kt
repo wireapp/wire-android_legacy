@@ -54,7 +54,7 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
     }
 
     private fun replaceFragment(fragment: Fragment) {
-        replaceFragment(R.id.layout_container, fragment, true)
+        replaceFragment(R.id.activitySettingsMainLayoutContainer, fragment, true)
     }
 
     companion object {
