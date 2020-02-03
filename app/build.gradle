@@ -367,6 +367,8 @@ dependencies {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
 
+    implementation BuildDependencies.androidX.navigationFragment
+    implementation BuildDependencies.androidX.navigationUi
     annotationProcessor BuildDependencies.androidX.annotation
 
     // Play services

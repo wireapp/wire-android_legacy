@@ -16,6 +16,7 @@ object Versions {
     //build
     const val COROUTINES = "1.3.2"
     const val WORK_MANAGER = "2.0.1"
+    const val ANDROIDX_NAVIGATION = "2.2.0"
     const val ANDROIDX_MATERIAL = "1.0.0"
     const val ANDROIDX_MULTIDEX = "2.0.0"
     const val ANDROIDX_APP_COMPAT = "1.0.0"
@@ -95,7 +96,10 @@ object BuildDependencies {
         "roomCompiler" to "androidx.room:room-compiler:${Versions.ANDROIDX_ROOM}",
         "biometric" to "androidx.biometric:biometric:${Versions.ANDROIDX_BIOMETRIC}",
         "workManager" to "androidx.work:work-runtime:${Versions.WORK_MANAGER}",
-        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
+        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}",
+        "navigationFragment" to "androidx.navigation:navigation-fragment-ktx:${Versions.ANDROIDX_NAVIGATION}",
+        "navigationUi" to "androidx.navigation:navigation-ui-ktx:${Versions.ANDROIDX_NAVIGATION}"
+
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
         "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES}",
@@ -129,7 +133,7 @@ object BuildDependencies {
     val threetenbpJava = "org.threeten:threetenbp:${Versions.THREE_TEN_BP_JAVA}"
     val rebound = "com.facebook.rebound:rebound:${Versions.REBOUND}"
     val commonMark = "com.atlassian.commonmark:commonmark:${Versions.COMMON_MARK}"
-    val jna= "net.java.dev.jna:jna:${Versions.JNA}"
+    val jna = "net.java.dev.jna:jna:${Versions.JNA}"
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
 }
 
@@ -148,7 +152,7 @@ object TestDependencies {
         "core" to "org.mockito:mockito-core:${Versions.MOCKITO}",
         "inline" to "org.mockito:mockito-inline:${Versions.MOCKITO}"
     ))
-    val androidX =  AndroidXTestDependencyMap(mapOf(
+    val androidX = AndroidXTestDependencyMap(mapOf(
         "testCore" to "androidx.arch.core:core-testing:${Versions.ANDROIDX_TEST_CORE}",
         "testJunit" to "androidx.test.ext:junit:${Versions.ANDROIDX_TEST_JUNIT}",
         "testRules" to "androidx.test:rules:${Versions.ANDROIDX_TEST_JUNIT}",

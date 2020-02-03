@@ -1,4 +1,3 @@
-
 //TODO: Remove and refactor when gradle version > 5
 //This is a solution to make more friendly managing dependencies
 //There is a bug with the version of Kotlin DSL we are using:
@@ -42,6 +41,8 @@ class AndroidXDependencyMap(map: Map<String, String>) {
     val biometric: String by map
     val workManager: String by map
     val annotation: String by map
+    val navigationUi: String by map
+    val navigationFragment: String by map
 }
 
 class PlayServicesDependencyMap(map: Map<String, String>) {
