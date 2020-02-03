@@ -134,6 +134,10 @@ class AccountManager(val userId:   UserId,
     hasClient = exists
   }
 
+  def initZMessaging(): Unit = {
+    zmessaging
+  }
+
   def addUnsplashPicture(): Future[Unit] = zmessaging.flatMap(_.users.updateSelfPicture(Content.Uri(URI.toJava(UnsplashUrl))))
 
   def fingerprintSignal(uId: UserId, cId: ClientId): Signal[Option[Array[Byte]]] =
