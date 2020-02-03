@@ -1353,6 +1353,7 @@
     <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
     <string name="enterprise_signin_email_sso_invalid_input_error">Please enter a valid email or SSO access code.</string>
     <string name="enterprise_signin_sso_invalid_input_error">Please enter a valid SSO access code.</string>
+    <string name="enterprise_signin_email_multiple_servers_not_supported">This email is linked to a different server, but the app can only be connected to one server at a time. Please log out of all Wire accounts on this device and try to log in again.</string>
 
     <string name="sso_signin_wrong_code_title">Invalid code</string>
     <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
