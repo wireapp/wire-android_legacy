@@ -46,11 +46,7 @@ trait BackupManager {
                      databaseDir: File,
                      targetDir: File,
                      backupPassword: Password): Try[File]
-  def importDatabase(userId: UserId,
-                     exportFile: File,
-                     targetDir: File,
-                     currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                     backupPassword: Password): Try[File]
+  def importDatabase(userId: UserId, exportFile: File, targetDir: File, backupPassword: Password, currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File]
 }
 
 object BackupManager {
@@ -200,9 +196,9 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
   override def importDatabase(userId:           UserId,
                               exportFile:       File,
                               targetDir:        File,
-                              currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                              backupPassword:   Password): Try[File] = {
-    verbose(l"importDatabase($userId, ${exportFile.getAbsolutePath}, ${targetDir.getAbsolutePath}, $currentDbVersion, $backupPassword)")
+                              backupPassword:   Password,
+                              currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File] = {
+    verbose(l"importDatabase($userId, ${exportFile.getAbsolutePath}, ${targetDir.getAbsolutePath}, $backupPassword, $currentDbVersion)")
     if (backupPassword.str.isEmpty)
       importUnencryptedDatabase(userId, exportFile, targetDir, currentDbVersion)
     else
