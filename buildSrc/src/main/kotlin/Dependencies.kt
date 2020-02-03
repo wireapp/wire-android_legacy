@@ -96,9 +96,7 @@ object BuildDependencies {
         "roomCompiler" to "androidx.room:room-compiler:${Versions.ANDROIDX_ROOM}",
         "biometric" to "androidx.biometric:biometric:${Versions.ANDROIDX_BIOMETRIC}",
         "workManager" to "androidx.work:work-runtime:${Versions.WORK_MANAGER}",
-        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}",
-        "navigationFragment" to "androidx.navigation:navigation-fragment-ktx:${Versions.ANDROIDX_NAVIGATION}",
-        "navigationUi" to "androidx.navigation:navigation-ui-ktx:${Versions.ANDROIDX_NAVIGATION}"
+        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
         "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES}",

@@ -363,8 +363,6 @@ dependencies {
     implementation BuildDependencies.androidX.roomKtx
     implementation BuildDependencies.androidX.coreKtx
     implementation BuildDependencies.androidX.biometric
-    implementation BuildDependencies.androidX.navigationFragment
-    implementation BuildDependencies.androidX.navigationUi
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'
     }

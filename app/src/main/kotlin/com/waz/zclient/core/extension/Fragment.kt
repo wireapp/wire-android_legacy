@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
-import androidx.navigation.fragment.NavHostFragment.findNavController
 
 inline fun FragmentManager.doTransaction(func: FragmentTransaction.() -> FragmentTransaction) =
     beginTransaction().func().commit()
@@ -18,7 +17,7 @@ inline fun <T : Fragment> T.withArgs(argsBuilder: Bundle.() -> Unit): T =
     }
 
 fun Fragment.openUrl(url: String) =
-    findNavController(this).navigate(Uri.parse(url))
+    requireActivity().startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
 fun Fragment.startActivityWithAction(intentAction: String) =
     startActivity(Intent().apply { action = intentAction })

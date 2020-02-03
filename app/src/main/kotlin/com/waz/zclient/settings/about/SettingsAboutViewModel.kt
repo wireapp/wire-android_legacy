@@ -46,11 +46,11 @@ class SettingsAboutViewModel(
     }
 
     private fun generateUrl(urlSuffix: String): String =
-        if (urlSuffix.isNullOrEmpty()) urlConfig.configUrl
+        if (urlSuffix.isEmpty()) urlConfig.configUrl
         else "${urlConfig.configUrl}${urlSuffix}"
 
     companion object {
-        private const val PERSONAL_TERMS_AND_CONDITIONS_SUFFIX = "$/legal/terms/personal/"
+        private const val PERSONAL_TERMS_AND_CONDITIONS_SUFFIX = "/legal/terms/personal/"
         private const val TEAM_TERMS_AND_CONDITIONS_SUFFIX = "/legal/terms/teams/"
         private const val PRIVACY_POLICY_URL_SUFFIX = "/legal/privacy/embed/"
         private const val THIRD_PARTY_LICENSES_URL_SUFFIX = "/legal/#licenses"
