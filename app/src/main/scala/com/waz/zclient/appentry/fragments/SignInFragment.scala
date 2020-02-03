@@ -33,7 +33,7 @@ import com.waz.utils.{returning, PasswordValidator => StrongValidator}
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.{EmailError, PhoneError}
 import com.waz.zclient.appentry.fragments.SignInFragment._
-import com.waz.zclient.appentry.{AppEntryActivity, SSOFragment}
+import com.waz.zclient.appentry.{AppEntryActivity}
 import com.waz.zclient.common.controllers.BrowserController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.newreg.fragments.TabPages
@@ -51,7 +51,7 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-class SignInFragment extends SSOFragment with View.OnClickListener with CountryController.Observer {
+class SignInFragment extends FragmentHelper with View.OnClickListener with CountryController.Observer {
 
   implicit def context: Context = getActivity
 
@@ -144,7 +144,6 @@ class SignInFragment extends SSOFragment with View.OnClickListener with CountryC
   def termsOfService = Option(findById[TypefaceTextView](R.id.terms_of_service_text))
 
   def forgotPasswordButton = Option(findById[View](getView, R.id.ttv_signin_forgot_password))
-  def companyLoginButton = Option(findById[View](getView, R.id.ttv_signin_sso))
 
   def setupViews(onlyLogin: Boolean): Unit = {
 
@@ -200,7 +199,6 @@ class SignInFragment extends SSOFragment with View.OnClickListener with CountryC
     confirmationButton.foreach(_.setAccentColor(Color.WHITE))
     setConfirmationButtonActive(isValid.currentValue.getOrElse(false))
     forgotPasswordButton.foreach(_.setOnClickListener(this))
-    companyLoginButton.foreach(_.setOnClickListener(this))
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
@@ -329,9 +327,6 @@ class SignInFragment extends SSOFragment with View.OnClickListener with CountryC
 
   override def onClick(v: View) = {
     v.getId match {
-      case R.id.ttv_signin_sso =>
-        extractTokenAndShowSSODialog(showIfNoToken = true)
-
       case R.id.ttv__new_reg__sign_in__go_to__email =>
         uiSignInState.mutate {
           case SignInMethod(x, Phone, _) => SignInMethod(x, Email)

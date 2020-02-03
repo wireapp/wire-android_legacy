@@ -47,7 +47,7 @@ import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, String
 import com.waz.zclient.views.AvailabilityView
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
-import com.waz.zclient.auth.AuthenticationActivity
+import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.settings.main.SettingsMainActivity
 
 trait ProfileView {
@@ -99,8 +99,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     newTeamButton.setVisible(true)
     newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
       // We want to go directly to the landing page.
-      val intent = new Intent(getContext, classOf[AuthenticationActivity])
-      getContext.startActivity(intent)
+      getContext.startActivity(AppEntryActivity.newIntent(getContext))
     }
   } else {
     newTeamButton.setVisible(false)
