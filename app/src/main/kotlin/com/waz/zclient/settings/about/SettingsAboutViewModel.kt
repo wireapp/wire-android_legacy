@@ -38,11 +38,9 @@ class SettingsAboutViewModel(
     }
 
     private fun updateProfileData(user: User) {
-        if (user.teamId.isNullOrEmpty()) {
-            _urlLiveData.value = UrlDetail(generateUrl(PERSONAL_TERMS_AND_CONDITIONS_SUFFIX))
-        } else {
-            _urlLiveData.value = UrlDetail(generateUrl(TEAM_TERMS_AND_CONDITIONS_SUFFIX))
-        }
+        _urlLiveData.value = if (user.teamId.isNullOrEmpty()) {
+            UrlDetail(generateUrl(PERSONAL_TERMS_AND_CONDITIONS_SUFFIX))
+        } else UrlDetail(generateUrl(TEAM_TERMS_AND_CONDITIONS_SUFFIX))
     }
 
     private fun generateUrl(urlSuffix: String): String =
