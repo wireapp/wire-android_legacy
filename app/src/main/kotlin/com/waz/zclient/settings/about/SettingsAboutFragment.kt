@@ -35,12 +35,8 @@ class SettingsAboutFragment : Fragment() {
 
     private fun initViewModel() {
         settingsAboutViewModel.urlLiveData.observe(viewLifecycleOwner) {
-            startUrl(it.url)
+            openUrl(it.url)
         }
-    }
-
-    private fun startUrl(url: String) {
-        openUrl(url)
     }
 
     companion object {
