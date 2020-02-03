@@ -56,7 +56,7 @@ class EditPhoneNumberFragment : Fragment() {
 
     private fun initToolbar() {
         activity?.title = getString(R.string.pref__account_action__dialog__edit_phone__title)
-        showBackArrow()
+        (activity as AppCompatActivity).supportActionBar.setDisplayHomeAsUpEnabled(true)
     }
 
     private fun initDeleteNumberButton() {
