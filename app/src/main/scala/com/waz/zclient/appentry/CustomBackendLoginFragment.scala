@@ -1,6 +1,6 @@
 package com.waz.zclient.appentry
 import android.os.Bundle
-import android.view.{LayoutInflater, View, ViewGroup}
+import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import android.widget.{Button, TextView}
 import com.waz.utils.returning
 import com.waz.zclient.R
@@ -43,6 +43,16 @@ class CustomBackendLoginFragment extends SSOFragment {
     ssoLoginButton.setOnClickListener(new View.OnClickListener {
       override def onClick(v: View): Unit = extractTokenAndShowSSODialog(showIfNoToken = true)
     })
+  }
+
+  override def onResume(): Unit = {
+    super.onResume()
+    activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+  }
+
+  override def onPause(): Unit = {
+    super.onPause()
+    activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
 
   private def initViews(rootView: View): Unit = {
