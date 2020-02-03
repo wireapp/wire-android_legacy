@@ -1469,6 +1469,8 @@
     <!-- Welcome -->
     <string name="welcome_to_wire">Welcome to Wire</string>
     <string name="welcome_enterprise_log_in">Enterprise Login</string>
+    <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
+    <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
 
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">Already taken</string>
