@@ -35,10 +35,7 @@ class SettingsAboutFragment : Fragment() {
 
     private fun initViewModel() {
         settingsAboutViewModel.urlLiveData.observe(viewLifecycleOwner) {
-            when (it) {
-                UrlDetail.EMPTY -> startUrl(Config.websiteUrl())
-                else -> startUrl("${Config.websiteUrl()}${it.urlSuffix}")
-            }
+            startUrl(it.url)
         }
     }
 

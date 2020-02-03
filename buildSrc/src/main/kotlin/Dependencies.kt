@@ -99,7 +99,6 @@ object BuildDependencies {
         "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}",
         "navigationFragment" to "androidx.navigation:navigation-fragment-ktx:${Versions.ANDROIDX_NAVIGATION}",
         "navigationUi" to "androidx.navigation:navigation-ui-ktx:${Versions.ANDROIDX_NAVIGATION}"
-
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
         "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES}",

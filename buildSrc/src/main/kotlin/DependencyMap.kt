@@ -41,8 +41,8 @@ class AndroidXDependencyMap(map: Map<String, String>) {
     val biometric: String by map
     val workManager: String by map
     val annotation: String by map
-    val navigationUi: String by map
     val navigationFragment: String by map
+    val navigationUi: String by map
 }
 
 class PlayServicesDependencyMap(map: Map<String, String>) {
