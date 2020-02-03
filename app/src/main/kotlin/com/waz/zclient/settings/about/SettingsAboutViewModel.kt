@@ -10,8 +10,7 @@ import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
-class SettingsAboutViewModel(private val getUserProfileUseCase: GetUserProfileUseCase)
-    : ViewModel() {
+class SettingsAboutViewModel(private val getUserProfileUseCase: GetUserProfileUseCase) : ViewModel() {
 
     private var _urlLiveData = MutableLiveData<UrlDetail>()
 
