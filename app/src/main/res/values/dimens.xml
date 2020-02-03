@@ -974,4 +974,10 @@
     <dimen name="empty_likes_reads_icon_size">140dp</dimen>
     <dimen name="empty_likes_reads_text_width">224dp</dimen>
     <dimen name="create_conv_options_height">64dp</dimen>
+
+
+    <!-- Settings account screen -->
+    <dimen name="settings_account_edit_phone_margin_top">20dp</dimen>
+    <dimen name="settings_account_edit_phone_padding">20dp</dimen>
+
 </resources>

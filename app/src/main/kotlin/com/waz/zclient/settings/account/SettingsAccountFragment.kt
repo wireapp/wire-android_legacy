@@ -14,7 +14,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
-import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneDialogFragment
+import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneNumberActivity
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -48,7 +48,7 @@ class SettingsAccountFragment : Fragment() {
         settingsAccountViewModel.phoneDialogLiveData.observe(viewLifecycleOwner) {
             when (it) {
                 DialogDetail.EMPTY -> showAddPhoneDialog()
-                else -> showEditPhoneDialog(it.number, it.hasEmail)
+                else -> launchEditPhoneScreen(it.number, it.hasEmail)
             }
         }
         settingsAccountPhoneContainerLinearLayout.setOnClickListener {
@@ -132,11 +132,8 @@ class SettingsAccountFragment : Fragment() {
         EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
 
-    private fun showEditPhoneDialog(phoneNumber: String, hasEmail: Boolean) =
-        EditPhoneDialogFragment.newInstance(
-            phoneNumber,
-            hasEmail
-        ).show(requireActivity().supportFragmentManager, String.empty())
+    private fun launchEditPhoneScreen(phoneNumber: String, hasEmail: Boolean) =
+        startActivity(EditPhoneNumberActivity.newIntent(requireContext(), phoneNumber, hasEmail))
 
     private fun showGenericEditDialog(
         title: String,
