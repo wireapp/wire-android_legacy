@@ -134,14 +134,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     val domain = ssoService.extractDomain(email)
     ssoService.verifyDomain(domain).flatMap {
       case Right(DomainSuccessful(configFileUrl)) =>
-        ///  userAccountsController.currentUser.map(_.isDefined).head.flatMap { isUserConnected =>
-        //  if (!backendController.hasCustomBackend && isUserConnected)
-        //  showInlineSsoError(getString(R.string.enterprise_signin_email_multiple_servers_not_supported))
-        //else {
         dismissSsoDialog()
         Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
-      // }
-      // }
       case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
       case Left(err) => handleVerificationError(err)
     }
