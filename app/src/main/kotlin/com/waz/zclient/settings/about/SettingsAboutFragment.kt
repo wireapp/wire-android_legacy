@@ -26,11 +26,11 @@ class SettingsAboutFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.pref_about_screen_title)
         initViewModel()
-        preferences_about_website.setOnClickListener { settingsAboutViewModel.onAboutButtonClicked() }
-        preferences_about_terms.setOnClickListener { settingsAboutViewModel.onTermsButtonClicked() }
-        preferences_about_privacy.setOnClickListener { settingsAboutViewModel.onPrivacyButtonClicked() }
-        preferences_about_license.setOnClickListener { settingsAboutViewModel.onThirdPartyLicenseButtonClicked() }
-        preferences_about_version.text = getString(R.string.pref_about_version_title, Config.versionName())
+        settingsAboutAboutWebsiteButton.setOnClickListener { settingsAboutViewModel.onAboutButtonClicked() }
+        settingsAboutTermsAndConditionsButton.setOnClickListener { settingsAboutViewModel.onTermsButtonClicked() }
+        settingsAboutPrivacyButton.setOnClickListener { settingsAboutViewModel.onPrivacyButtonClicked() }
+        settingsAboutThirdPartyLicensesButton.setOnClickListener { settingsAboutViewModel.onThirdPartyLicenseButtonClicked() }
+        settingsAboutAppVersionDetailsButton.text = getString(R.string.pref_about_version_title, Config.versionName())
     }
 
     private fun initViewModel() {
