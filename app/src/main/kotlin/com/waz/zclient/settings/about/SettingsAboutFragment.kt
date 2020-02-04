@@ -4,10 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
+import com.waz.zclient.core.extension.getDeviceLocale
 import com.waz.zclient.core.extension.openUrl
 import kotlinx.android.synthetic.main.fragment_settings_about.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,6 +43,9 @@ class SettingsAboutFragment : Fragment() {
         }
 
         settingsAboutAppVersionDetailsButton.text = getVersionName()
+        settingsAboutAppVersionDetailsButton.setOnClickListener {
+            settingsAboutViewModel.onVersionButtonClicked()
+        }
     }
 
     private fun initToolbar() {
@@ -50,6 +55,23 @@ class SettingsAboutFragment : Fragment() {
     private fun initViewModel() {
         settingsAboutViewModel.urlLiveData.observe(viewLifecycleOwner) {
             openUrl(it.url)
+        }
+
+        settingsAboutViewModel.versionDetailsLiveData.observe(viewLifecycleOwner) {
+            val translationId = resources.getIdentifier(it.translationsVersionId, "string", requireContext().packageName)
+            val translationLibVersion = if (translationId == 0) "n/a" else getString(translationId)
+            val avsVersion = getString(it.avsVersionRes)
+            val audioNotificationVersion = getString(it.audioNotificationVersionRes)
+
+            val versionToast = """
+                Version: ${it.appVersionDetails}
+                AVS: $avsVersion
+                Audio-notifications: $audioNotificationVersion
+                Translations: $translationLibVersion
+                Locale: ${requireActivity().getDeviceLocale()}
+            """.trimIndent()
+
+            Toast.makeText(requireContext(), versionToast, Toast.LENGTH_LONG).show()
         }
     }
 

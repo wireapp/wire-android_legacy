@@ -1,5 +1,6 @@
 package com.waz.zclient.settings.about
 
+import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.framework.livedata.observeOnce
@@ -26,19 +27,21 @@ class SettingsAboutViewModelTest : UnitTest() {
     private lateinit var urlConfig: UrlConfig
 
     @Mock
-    private lateinit var profileUseCase: GetUserProfileUseCase
+    private lateinit var versionDetailsConfig: AppDetailsConfig
 
-    private lateinit var userFlow: Flow<User>
+    @Mock
+    private lateinit var profileUseCase: GetUserProfileUseCase
 
     @Mock
     private lateinit var user: User
 
+    private lateinit var userFlow: Flow<User>
+
     @Before
     fun setup() {
-        settingsAboutViewModel = SettingsAboutViewModel(urlConfig, profileUseCase)
+        settingsAboutViewModel = SettingsAboutViewModel(versionDetailsConfig, urlConfig, profileUseCase)
         Mockito.`when`(urlConfig.configUrl).thenReturn(CONFIG_URL)
         userFlow = flow { user }
-
     }
 
     @Test
@@ -96,7 +99,24 @@ class SettingsAboutViewModelTest : UnitTest() {
         }
     }
 
+    @Test
+    fun `given version button is clicked over 10 times, then show version details`() {
+        Mockito.`when`(versionDetailsConfig.version).thenReturn(TEST_VERSION)
+
+        for (i in 1..11) {
+            settingsAboutViewModel.onVersionButtonClicked()
+        }
+        settingsAboutViewModel.versionDetailsLiveData.observeOnce {
+            it.appVersionDetails shouldBe TEST_VERSION
+            assert(it.audioNotificationVersionRes == R.string.audio_notifications_version)
+            assert(it.avsVersionRes == R.string.avs_version)
+            it.translationsVersionId shouldBe WIRE_TRANSLATION_VERSION_ID
+        }
+    }
+
     companion object {
+        private const val TEST_VERSION = "version"
+        private const val WIRE_TRANSLATION_VERSION_ID = "wiretranslations_version"
         private const val TEST_TEAM_ID = "teamId"
         private const val CONFIG_URL = "http://wire.com"
         private const val PERSONAL_TERMS_AND_CONDITIONS_TEST_URL = "${CONFIG_URL}/legal/terms/personal/"
