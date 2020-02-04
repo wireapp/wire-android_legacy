@@ -135,25 +135,6 @@ class UserRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `Given changePhone() is called and remote request fails then don't update database`() = runBlockingTest {
-        `when`(usersRemoteDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Left(ServerError))
-
-        usersRepository.changePhone(TEST_PHONE)
-
-        verify(usersRemoteDataSource).changePhone(eq(TEST_PHONE))
-        verifyNoInteractions(usersLocalDataSource)
-    }
-
-    @Test
-    fun `Given changePhone() is called and remote request is success, then update database`() = runBlockingTest {
-        `when`(usersRemoteDataSource.changePhone(TEST_PHONE)).thenReturn(Either.Right(Unit))
-
-        usersRepository.changePhone(TEST_PHONE)
-
-        verify(usersLocalDataSource).changePhone(eq(TEST_PHONE))
-    }
-
-    @Test
     fun `Given checkHandleExists() is called, then call api to check`() = runBlockingTest {
         usersRepository.doesHandleExist(TEST_HANDLE)
 
@@ -164,7 +145,6 @@ class UserRepositoryTest : UnitTest() {
         private const val TEST_NAME = "testName"
         private const val TEST_EMAIL = "email@wire.com"
         private const val TEST_HANDLE = "@Handle"
-        private const val TEST_PHONE = "+49766378499"
         private const val TEST_EXCEPTION_MESSAGE = "Something went wrong, please try again."
     }
 

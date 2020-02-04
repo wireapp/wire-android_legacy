@@ -235,7 +235,7 @@ class ConnectionServiceImpl(selfUserId:      UserId,
     users.updateUserData(userId, { user =>
       if (user.connection == ConnectionStatus.PendingFromUser) user.copy(connection = ConnectionStatus.Cancelled)
       else {
-        warn(l"can't cancel connection for user in wrong state: $user")
+        warn(l"can't cancel connection for user in wrong state: ${user.connection}")
         user
       }
     }).flatMap {

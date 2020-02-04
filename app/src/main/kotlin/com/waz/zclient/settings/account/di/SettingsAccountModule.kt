@@ -3,7 +3,7 @@ package com.waz.zclient.settings.account.di
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.settings.account.SettingsAccountViewModel
 import com.waz.zclient.settings.account.edithandle.EditHandleViewModel
-import com.waz.zclient.settings.account.phonenumber.editphone.SettingsAccountPhoneNumberViewModel
+import com.waz.zclient.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase

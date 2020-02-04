@@ -284,9 +284,9 @@ class ConversationListManagerFragment extends Fragment
       }
 
       (for {
-        usersStorage <- inject[Signal[UsersStorage]].head
-        user <- usersStorage.get(userId)
-        userRequester = if (fromDeepLink) UserRequester.DEEP_LINK else UserRequester.SEARCH
+        usersStorage  <- inject[Signal[UsersStorage]].head
+        user          <- usersStorage.get(userId)
+        userRequester =  if (fromDeepLink) UserRequester.DEEP_LINK else UserRequester.SEARCH
       } yield (user, userRequester)).foreach { case (Some(userData), userRequester) =>
         import com.waz.api.ConnectionStatus._
         userData.connection match {

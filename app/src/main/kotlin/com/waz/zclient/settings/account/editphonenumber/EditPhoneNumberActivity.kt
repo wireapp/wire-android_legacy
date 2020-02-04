@@ -1,4 +1,4 @@
-package com.waz.zclient.settings.account.phonenumber.editphone
+package com.waz.zclient.settings.account.editphonenumber
 
 import android.content.Context
 import android.content.Intent
