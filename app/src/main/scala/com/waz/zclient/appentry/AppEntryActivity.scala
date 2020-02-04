@@ -85,7 +85,9 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomB
       VerifyPhoneFragment.Tag,
       CountryDialogFragment.TAG,
       PhoneSetNameFragment.Tag,
-      InviteToTeamFragment.Tag
+      InviteToTeamFragment.Tag,
+      WelcomeFragment.Tag,
+      CustomBackendLoginFragment.TAG
     )
 
     Signal(accountsService.zmsInstances.map(_.nonEmpty), attachedFragment).map {
@@ -225,8 +227,6 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomB
     if (backendController.hasCustomBackend) {
       getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       showCustomBackendLoginScreen()
-    } else if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
-      showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
     } else {
       showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
     }
