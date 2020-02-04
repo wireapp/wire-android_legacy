@@ -19,7 +19,7 @@ class SettingsSupportViewModel : ViewModel() {
 
     companion object {
         private const val SUPPORT_WEBSITE_URL = "https://support.wire.com"
-        private const val SUPPORT_CONTACT_URL = "${SUPPORT_WEBSITE_URL}/hc/requests/new"
+        private const val SUPPORT_CONTACT_URL = SUPPORT_WEBSITE_URL.plus("/hc/requests/new")
     }
 }
 
