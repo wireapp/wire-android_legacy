@@ -42,7 +42,7 @@ class SettingsAboutViewModel(
         }
     }
 
-    private var versionClickCount = 0;
+    private var versionClickCount = 0
     fun onVersionButtonClicked() {
         versionClickCount++
         if (versionClickCount >= VERSION_INFO_CLICK_LIMIT) {

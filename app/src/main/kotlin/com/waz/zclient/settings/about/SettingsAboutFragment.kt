@@ -58,7 +58,11 @@ class SettingsAboutFragment : Fragment() {
         }
 
         settingsAboutViewModel.versionDetailsLiveData.observe(viewLifecycleOwner) {
-            val translationId = resources.getIdentifier(it.translationsVersionId, "string", requireContext().packageName)
+            val translationId = resources.getIdentifier(
+                it.translationsVersionId,
+                "string",
+                requireContext().packageName
+            )
             val translationLibVersion = if (translationId == 0) "n/a" else getString(translationId)
             val avsVersion = getString(it.avsVersionRes)
             val audioNotificationVersion = getString(it.audioNotificationVersionRes)
