@@ -245,6 +245,7 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
   private def importUnencryptedDatabase(userId: UserId, exportFile: File, targetDir: File,
                                         currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File] =
     Try {
+      verbose(l"exportFile: ${exportFile.getAbsolutePath}, size: ${exportFile.length()}")
       withResource(new ZipFile(exportFile)) { zip =>
         val metadataEntry = Option(zip.getEntry(backupMetadataFileName)).getOrElse { throw MetadataEntryNotFound }
         val metadataStr   = withResource(zip.getInputStream(metadataEntry))(Source.fromInputStream(_).mkString)
@@ -258,10 +259,17 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
         val dbEntry = Option(zip.getEntry(dbFileName)).getOrElse { throw DbEntryNotFound }
         val walFileName = getDbWalFileName(userId)
         Option(zip.getEntry(walFileName)).foreach { walEntry =>
-          IoUtils.copy(zip.getInputStream(walEntry), new File(targetDir, walFileName))
+          val walFile = new File(targetDir, walFileName)
+          if (walFile.exists()) walFile.delete()
+          walFile.createNewFile()
+          IoUtils.copy(zip.getInputStream(walEntry), walFile)
+          verbose(l"WAL file: ${walFile.getAbsolutePath}, length: ${walFile.length()}")
         }
         returning(new File(targetDir, dbFileName)) { dbFile =>
+          if (dbFile.exists()) dbFile.delete()
+          dbFile.createNewFile()
           IoUtils.copy(zip.getInputStream(dbEntry), dbFile)
+          verbose(l"DB file: ${dbFile.getAbsolutePath}, length: ${dbFile.length()}")
         }
       }
     }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
