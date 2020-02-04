@@ -25,5 +25,4 @@ class PhoneNumberDataSource(
     private suspend fun deletePhoneLocally() = usersLocalDataSource.deletePhone()
 
     private suspend fun deletePhoneRemotely() = usersRemoteDataSource.deletePhone()
-
 }

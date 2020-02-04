@@ -105,4 +105,3 @@ class SettingsAccountPhoneNumberViewModel(
 }
 
 data class PhoneNumberErrorMessage(@StringRes val errorMessage: Int)
-

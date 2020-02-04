@@ -227,14 +227,10 @@
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
             android:screenOrientation="portrait" />
         <activity android:name=".settings.devices.detail.SettingsDeviceDetailActivity" />
-
-        <activity
-            android:name="com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity"
-            android:hardwareAccelerated="true"
-            android:label="@string/empty_string"
+        <activity android:name=".settings.account.editphonenumber.EditPhoneNumberActivity"            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.Dark.Preferences"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.Dark.Preferences" />
-
+            android:label="@string/empty_string"/>
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
