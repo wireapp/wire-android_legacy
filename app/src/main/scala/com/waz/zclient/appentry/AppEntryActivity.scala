@@ -35,6 +35,7 @@ import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.controllers.InvitationsController
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
 import com.waz.zclient.appentry.fragments.{CountryDialogFragment, FirstLaunchAfterLoginFragment, InviteToTeamFragment, PhoneSetNameFragment, SignInFragment, VerifyEmailWithCodeFragment, VerifyPhoneFragment}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -224,8 +225,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomB
     if (backendController.hasCustomBackend) {
       getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       showCustomBackendLoginScreen()
-    }
-    else if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
+    } else if (!BuildConfig.ACCOUNT_CREATION_ENABLED) {
       showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
     } else {
       showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
