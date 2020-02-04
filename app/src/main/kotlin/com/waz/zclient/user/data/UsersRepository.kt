@@ -13,4 +13,5 @@ interface UsersRepository {
     suspend fun changeEmail(email: String): Either<Failure, Any>
     suspend fun changePhone(phone: String): Either<Failure, Any>
     suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess>
+    suspend fun deletePhone(): Either<Failure, Any>
 }

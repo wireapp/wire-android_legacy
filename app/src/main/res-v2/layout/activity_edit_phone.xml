@@ -23,16 +23,17 @@
     android:id="@+id/screen_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
     android:orientation="vertical">
 
+    <!-- We should really build a reusable toolbar component we can customise and then
+         use composition over inheritance to take shape of that for the owner activity. -->
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/editPhoneActivityToolbar"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         android:background="@color/transparent"
         android:theme="?actionBarTheme"
-        app:layout_constraintBottom_toTopOf="@id/layout_container"
+        app:layout_constraintBottom_toTopOf="@id/editPhoneActivityFragmentContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -41,13 +42,14 @@
         app:titleMarginStart="@dimen/wire__padding__regular" />
 
     <FrameLayout
-        android:id="@+id/activitySettingsMainLayoutContainer"
+        android:id="@+id/editPhoneActivityFragmentContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+        app:layout_constraintTop_toBottomOf="@id/editPhoneActivityToolbar" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 
 

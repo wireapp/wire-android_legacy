@@ -35,8 +35,7 @@ import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.controllers.InvitationsController
-import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.appentry.fragments._
+import com.waz.zclient.appentry.fragments.{CountryDialogFragment, FirstLaunchAfterLoginFragment, InviteToTeamFragment, PhoneSetNameFragment, SignInFragment, VerifyEmailWithCodeFragment, VerifyPhoneFragment}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -57,9 +56,7 @@ object AppEntryActivity {
   def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
-class AppEntryActivity extends BaseActivity
-  with SSOFragmentHandler
-  with CustomBackendLoginHandler {
+class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomBackendLoginHandler {
 
   import Threading.Implicits.Ui
 

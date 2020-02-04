@@ -159,7 +159,6 @@ class MainPhoneFragment extends FragmentHelper
 
     deepLinkService.deepLink.collect { case Some(result) => result } onUi {
       case OpenDeepLink(UserToken(userId), UserTokenInfo(connected, currentTeamMember, self)) =>
-        pickUserController.hideUserProfile()
         participantsController.onLeaveParticipants ! true
 
         if (self) {
