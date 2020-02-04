@@ -98,11 +98,6 @@
             android:label="@string/empty_string"/>
 
         <activity
-            android:name=".auth.AuthenticationActivity"
-            android:theme="@style/Theme.Light"
-            />
-
-        <activity
             android:name=".LaunchActivity"
             android:label="@string/app_name"
             android:noHistory="true"
@@ -219,16 +214,7 @@
             android:theme="@style/Theme.Dark"
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:exported="false"
-            >
-            <intent-filter>
-                <action android:name="${applicationId}.CREATE_ACCOUNT_ACTION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="${applicationId}.LOGIN_ACTION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+            />
 
         <activity
             android:name=".ForceUpdateActivity"
@@ -241,18 +227,6 @@
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
             android:screenOrientation="portrait" />
         <activity android:name=".settings.devices.detail.SettingsDeviceDetailActivity" />
-
-
-        <activity
-            android:name=".appentry.TransparentSSOActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:exported="false"
-            >
-            <intent-filter>
-                <action android:name="${applicationId}.SSO_LOGIN_ACTION" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
 
         <activity
             android:name="com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity"

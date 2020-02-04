@@ -19,7 +19,6 @@ package com.waz.zclient
 
 import android.app.Activity
 import android.content.Intent
-import android.content.Intent._
 import android.content.res.Configuration
 import android.graphics.drawable.ColorDrawable
 import android.graphics.{Color, Paint, PixelFormat}
@@ -144,8 +143,8 @@ class MainActivity extends BaseActivity
       case true =>
         getControllerFactory.getPickUserController.hideUserProfile()
         getControllerFactory.getNavigationController.resetPagerPositionToDefault()
-        finish()
-        startActivity(AppEntryActivity.newIntent(this).setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))
+        startActivity(AppEntryActivity.newIntent(this))
+        finishAffinity()
       case false =>
     }
 

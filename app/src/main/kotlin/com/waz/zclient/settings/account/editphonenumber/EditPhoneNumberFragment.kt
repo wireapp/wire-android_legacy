@@ -13,7 +13,6 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.removeFragment
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.core.extension.showBackArrow
 import com.waz.zclient.core.extension.withArgs
 import kotlinx.android.synthetic.main.fragment_edit_phone.*
 import kotlinx.android.synthetic.main.fragment_edit_phone.view.*
@@ -56,7 +55,7 @@ class EditPhoneNumberFragment : Fragment() {
 
     private fun initToolbar() {
         activity?.title = getString(R.string.pref__account_action__dialog__edit_phone__title)
-        (activity as AppCompatActivity).supportActionBar.setDisplayHomeAsUpEnabled(true)
+        (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
     private fun initDeleteNumberButton() {
