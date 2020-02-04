@@ -24,13 +24,27 @@ class SettingsAboutFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        activity?.title = getString(R.string.pref_about_screen_title)
+        initToolbar()
         initViewModel()
-        settingsAboutAboutWebsiteButton.setOnClickListener { settingsAboutViewModel.onAboutButtonClicked() }
-        settingsAboutTermsAndConditionsButton.setOnClickListener { settingsAboutViewModel.onTermsButtonClicked() }
-        settingsAboutPrivacyButton.setOnClickListener { settingsAboutViewModel.onPrivacyButtonClicked() }
-        settingsAboutThirdPartyLicensesButton.setOnClickListener { settingsAboutViewModel.onThirdPartyLicenseButtonClicked() }
-        settingsAboutAppVersionDetailsButton.text = getString(R.string.pref_about_version_title, Config.versionName())
+
+        settingsAboutAboutWebsiteButton.setOnClickListener {
+            settingsAboutViewModel.onAboutButtonClicked()
+        }
+        settingsAboutTermsAndConditionsButton.setOnClickListener {
+            settingsAboutViewModel.onTermsButtonClicked()
+        }
+        settingsAboutPrivacyButton.setOnClickListener {
+            settingsAboutViewModel.onPrivacyButtonClicked()
+        }
+        settingsAboutThirdPartyLicensesButton.setOnClickListener {
+            settingsAboutViewModel.onThirdPartyLicenseButtonClicked()
+        }
+
+        settingsAboutAppVersionDetailsButton.text = getVersionName()
+    }
+
+    private fun initToolbar() {
+        activity?.title = getString(R.string.pref_about_screen_title)
     }
 
     private fun initViewModel() {
@@ -38,6 +52,8 @@ class SettingsAboutFragment : Fragment() {
             openUrl(it.url)
         }
     }
+
+    private fun getVersionName() = getString(R.string.pref_about_version_title, Config.versionName())
 
     companion object {
         fun newInstance() = SettingsAboutFragment()
