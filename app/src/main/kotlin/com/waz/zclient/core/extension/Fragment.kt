@@ -24,6 +24,3 @@ fun Fragment.startActivityWithAction(intentAction: String) =
 
 fun Fragment.replaceFragment(frameId: Int, fragment: Fragment, addToBackStack: Boolean) =
     (activity as AppCompatActivity).replaceFragment(frameId, fragment, addToBackStack)
-
-fun Fragment.showBackArrow() =
-    (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
