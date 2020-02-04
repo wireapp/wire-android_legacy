@@ -13,5 +13,5 @@ import org.koin.dsl.module
 val settingsAboutModule: Module = module {
     viewModel { SettingsAboutViewModel(get(), get(), get()) }
     factory { UrlConfig(Config.websiteUrl()) }
-    factory { AppDetailsConfig(Config.versionCode().toString().plus(Config.versionName())) }
+    factory { AppDetailsConfig("${Config.versionCode()} ${Config.versionName()}") }
 }
