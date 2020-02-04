@@ -290,7 +290,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   private def restoreFromBackup(accountManager: AccountManager, userId: UserId, importDbFile: File, password: Password) = {
     verbose(l"restore from backup")
     val db = accountManager.storage.db2
-    db.beginTransactionNonExclusive()
+    db.beginTransaction()
     try {
       returning(backupManager.importDatabase(userId, importDbFile, context.getDatabasePath(userId.toString).getParentFile, backupPassword = password)) { restore =>
         if (restore.isFailure) {

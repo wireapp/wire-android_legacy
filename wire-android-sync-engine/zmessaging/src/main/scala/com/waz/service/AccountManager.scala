@@ -47,7 +47,7 @@ import com.waz.znet2.{AuthRequestInterceptor, AuthRequestInterceptorImpl}
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Right
+import scala.util.{Failure, Right, Success}
 
 class AccountManager(val userId:   UserId,
                      val teamId:   Option[TeamId],
@@ -247,19 +247,33 @@ class AccountManager(val userId:   UserId,
     }
   }
 
-  def exportDatabase(password: Password): Future[File] = for {
-    zms     <- zmessaging
-    user    <- zms.users.selfUser.head
-    _       <- storage.db.flushWALToDatabase()
-    backup  = backupManager.exportDatabase(
-      userId,
-      userHandle  = user.handle.map(_.string).getOrElse(""),
-      databaseDir = context.getDatabasePath(userId.str).getParentFile,
-      targetDir   = context.getExternalCacheDir,
-      backupPassword    = password
-    )
-    _       = global.trackingService.historyBackedUp(backup.isSuccess)
-  } yield backup.get
+  def exportDatabase(password: Password): Future[File] = {
+    verbose(l"exportDatabase")
+    val backup = for {
+      zms    <- zmessaging
+      user   <- zms.users.selfUser.head
+      _      <- storage.db.flushWALToDatabase()
+      _      =  storage.db2.beginTransaction()
+      backup =  backupManager.exportDatabase(
+        userId,
+        userHandle     = user.handle.map(_.string).getOrElse(""),
+        databaseDir    = context.getDatabasePath(userId.str).getParentFile,
+        targetDir      = context.getExternalCacheDir,
+        backupPassword = password
+      )
+      _      =  global.trackingService.historyBackedUp(backup.isSuccess)
+    } yield backup.get
+
+    backup.onComplete {
+      case Success(_) =>
+        storage.db2.setTransactionSuccessful()
+        storage.db2.endTransaction()
+      case Failure(ex) =>
+        if (storage.db2.inTransaction) storage.db2.endTransaction()
+    }
+
+    backup
+  }
 
   private def checkCryptoBox() =
     cryptoBox.cryptoBox.flatMap {
