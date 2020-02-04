@@ -22,8 +22,5 @@ fun Fragment.openUrl(url: String) =
 fun Fragment.startActivityWithAction(intentAction: String) =
     startActivity(Intent().apply { action = intentAction })
 
-fun Fragment.replaceFragment(frameId: Int, fragment: Fragment, addToBackStack: Boolean) =
-    (activity as AppCompatActivity).replaceFragment(frameId, fragment, addToBackStack)
-
 fun Fragment.showBackArrow() =
     (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
