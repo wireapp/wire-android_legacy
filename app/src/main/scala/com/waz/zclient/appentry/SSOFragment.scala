@@ -24,7 +24,7 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model2.transport.responses.DomainSuccessful
-import com.waz.service.{SSOService}
+import com.waz.service.SSOService
 import com.waz.zclient.InputDialog._
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
@@ -129,18 +129,17 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     }
 
 
-
   private def verifyEmail(email: String): Future[Unit] = {
     val domain = ssoService.extractDomain(email)
     ssoService.verifyDomain(domain).flatMap {
       case Right(DomainSuccessful(configFileUrl)) =>
         val isUserLoggedIn = userAccountsController.currentUser.map(_.isDefined).head.isCompleted
-          if (!backendController.hasCustomBackend && isUserLoggedIn)
-            showInlineSsoError(getString(R.string.enterprise_signin_email_multiple_servers_not_supported))
-          else {
-            dismissSsoDialog()
-            Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
-          }
+        if (!backendController.hasCustomBackend && isUserLoggedIn)
+          showInlineSsoError(getString(R.string.enterprise_signin_email_multiple_servers_not_supported))
+        else {
+          dismissSsoDialog()
+          Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
+        }
       case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
       case Left(err) => handleVerificationError(err)
     }
