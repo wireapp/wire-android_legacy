@@ -94,13 +94,12 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                                                                                           OnBackPressedListener,
                                                                                           View.OnClickListener {
 
-    public static final String TAG = LocationFragment.class.getName();
-
     private static final int LOCATION_PERMISSION_REQUEST_ID = 532;
     private static final float DEFAULT_MAP_ZOOM_LEVEL = 15F;
     private static final float DEFAULT_MIMIMUM_CAMERA_MOVEMENT = 2F;
     private static final int LOCATION_REQUEST_TIMEOUT_MS = 1500;
     private static final String MAP_VIEW_SAVE_STATE = "mapViewSaveState";
+    private static final String TAG = "LocationFragment";
 
     private Toolbar toolbar;
     private MapView mapView;
@@ -179,7 +178,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                 currentLocationCountryName = "";
                 currentLocationLocality = "";
                 currentLocationSubLocality = "";
-                Logger.info("LocationFragment", "Unable to retrieve location name" + e.toString());
+                Logger.info(TAG, "Unable to retrieve location name" + e.toString());
             }
             mainHandler.removeCallbacksAndMessages(null);
             mainHandler.post(updateCurrentLocationBubbleRunnable);
@@ -386,14 +385,14 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     @SuppressWarnings("ResourceType")
     @SuppressLint("MissingPermission")
     private void startLocationManagerListeningForCurrentLocation() {
-        Logger.info("LocationFragment","startLocationManagerListeningForCurrentLocation");
+        Logger.info(TAG,"startLocationManagerListeningForCurrentLocation");
         if (locationManager != null && hasLocationPermission()) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         }
     }
 
     private void startPlayServicesListeningForCurrentLocation() {
-        Logger.info("LocationFragment","startPlayServicesListeningForCurrentLocation");
+        Logger.info(TAG,"startPlayServicesListeningForCurrentLocation");
         if (locationRequest != null) {
             return;
         }
@@ -407,14 +406,14 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     @SuppressWarnings("ResourceType")
     @SuppressLint("MissingPermission")
     private void stopLocationManagerListeningForCurrentLocation() {
-        Logger.info("LocationFragment","stopLocationManagerListeningForCurrentLocation");
+        Logger.info(TAG,"stopLocationManagerListeningForCurrentLocation");
         if (locationManager != null && hasLocationPermission()) {
             locationManager.removeUpdates(this);
         }
     }
 
     private void stopPlayServicesListeningForCurrentLocation() {
-        Logger.info("LocationFragment","stopPlayServicesListeningForCurrentLocation");
+        Logger.info(TAG,"stopPlayServicesListeningForCurrentLocation");
         if (locationRequest == null) {
             return;
         }
@@ -543,7 +542,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onCameraChange(CameraPosition cameraPosition) {
-        Logger.info("LocationFragment","onCameraChange");
+        Logger.info(TAG,"onCameraChange");
         animating = false;
         currentLatLng = cameraPosition.target;
         currentLocationName = "";
@@ -560,7 +559,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Logger.info("LocationFragment","onMapReady");
+        Logger.info(TAG,"onMapReady");
         map = googleMap;
         map.getUiSettings().setMyLocationButtonEnabled(false);
         try {
@@ -579,7 +578,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     @Override
     public void onLocationChanged(Location location) {
         Float distanceToCurrent = (currentLocation == null) ? 0 : location.distanceTo(currentLocation);
-        Logger.info("LocationFragment","onLocationChanged, lat" + location.getLatitude() + ", lon=" + location.getLongitude() + ", accuracy=" + location.getAccuracy() + ", distanceToCurrent=" + distanceToCurrent);
+        Logger.info(TAG,"onLocationChanged, lat" + location.getLatitude() + ", lon=" + location.getLongitude() + ", accuracy=" + location.getAccuracy() + ", distanceToCurrent=" + distanceToCurrent);
 
         float distanceFromCenterOfScreen = Float.MAX_VALUE;
         if (currentLatLng != null) {
@@ -590,7 +589,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
                                      location.getLongitude(),
                                      distance);
             distanceFromCenterOfScreen = distance[0];
-            Logger.info("LocationFragment","current location distance from map center" + distance[0]);
+            Logger.info(TAG,"current location distance from map center" + distance[0]);
         }
 
         currentLocation = location;
@@ -668,7 +667,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onConnected(Bundle bundle) {
-        Logger.info("LocationFragment","onConnected");
+        Logger.info(TAG,"onConnected");
 
         if (hasLocationPermission()) {
             animateTocurrentLocation = true;
@@ -680,14 +679,14 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
 
     @Override
     public void onConnectionSuspended(int i) {
-        Logger.info("LocationFragment","onConnectionSuspended");
+        Logger.info(TAG,"onConnectionSuspended");
         // goodbye
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // fallback to LocationManager
-        Logger.error("LocationFragment","Google API Client connection failed");
+        Logger.error(TAG,"Google API Client connection failed");
         googleApiClient.unregisterConnectionFailedListener(this);
         googleApiClient.unregisterConnectionCallbacks(this);
         googleApiClient = null;

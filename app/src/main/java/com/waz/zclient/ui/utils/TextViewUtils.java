@@ -43,6 +43,8 @@ import java.util.List;
 
 
 public class TextViewUtils {
+    
+    private static final String TAG = "TextViewUtils";
 
     private TextViewUtils() { }
 
@@ -63,13 +65,13 @@ public class TextViewUtils {
         final int highlightStart = string.indexOf('_');
 
         if (highlightStart < 0) {
-            Logger.error("TextViewUtils", "Failed to highlight text - could not find _ marker in string.");
+            Logger.error(TAG, "Failed to highlight text - could not find _ marker in string.");
             return string;
         }
 
         final int highlightEnd = string.lastIndexOf('_');
         if (highlightStart >= highlightEnd) {
-            Logger.error("TextViewUtils", "Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
+            Logger.error(TAG, "Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
             return string;
         }
 
@@ -198,13 +200,13 @@ public class TextViewUtils {
         final int highlightStart = string.indexOf('_');
 
         if (highlightStart < 0) {
-            Logger.error("TextViewUtils", "Failed to highlight text - could not find _ marker in string.");
+            Logger.error(TAG, "Failed to highlight text - could not find _ marker in string.");
             return;
         }
 
         final int highlightEnd = string.lastIndexOf('_') - 1;
         if (highlightStart >= highlightEnd) {
-            Logger.error("TextViewUtils", "Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
+            Logger.error(TAG, "Failed to highlight text - make sure you have 2 _ markers to denote start and end of highlight region");
             return;
         }
 

@@ -17,6 +17,7 @@
  */
 package com.waz.zclient.pages.main.conversation;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ClipData;
@@ -47,6 +48,8 @@ public class AssetIntentsManager {
     private final Context context;
     private final Callback callback;
 
+    private static final String TAG = "AssetIntentManager";
+
     @TargetApi(Build.VERSION_CODES.KITKAT)
     private static String openDocumentAction() {
         return Intent.ACTION_OPEN_DOCUMENT;
@@ -57,6 +60,7 @@ public class AssetIntentsManager {
         this.callback = callback;
     }
 
+    @SuppressLint("WrongConstant")
     private void openDocument(String mimeType, IntentType tpe, boolean allowMultiple) {
         if (BuildConfig.DEVELOPER_FEATURES_ENABLED) {
             // trying to load file from testing gallery,
@@ -66,7 +70,7 @@ public class AssetIntentsManager {
                 callback.openIntent(intent, tpe);
                 return;
             }
-            Logger.info("AssetsIntentManager", "Did not resolve testing gallery for intent:" + intent.toString());
+            Logger.info(TAG, "Did not resolve testing gallery for intent:" + intent.toString());
         }
         Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
         if (allowMultiple) {
@@ -117,7 +121,7 @@ public class AssetIntentsManager {
             return true;
         }
 
-        Logger.debug("AssetsIntentManager", "onActivityResult - data:" + Intents.RichIntent(data).toString());
+        Logger.debug(TAG, "onActivityResult - data:" + Intents.RichIntent(data).toString());
 
         if(data.getClipData() != null) {
             ClipData clipData = data.getClipData();
@@ -133,7 +137,7 @@ public class AssetIntentsManager {
         }
 
         URI uri = new AndroidURI(data.getData());
-        Logger.debug("AssetsIntentManager", "uri is" + uri.toString());
+        Logger.debug(TAG, "uri is" + uri.toString());
         if (type == IntentType.VIDEO) {
             uri = copyVideoToCache(uri);
         }
@@ -165,18 +169,18 @@ public class AssetIntentsManager {
             if (inputStream != null) {
                 IoUtils.copy(inputStream, targetFile);
             } else {
-                Logger.error("AssetsIntentManager", "Input stream is null for" + uri.toString());
+                Logger.error(TAG, "Input stream is null for" + uri.toString());
             }
         } catch (IOException e) {
-            Logger.error("AssetsIntentManager", "Unable to save the file!" + targetFile.getAbsolutePath());
-            Logger.error("AssetsIntentManager", "", e);
+            Logger.error(TAG, "Unable to save the file!" + targetFile.getAbsolutePath());
+            Logger.error(TAG, "", e);
             return null;
         } finally {
             try {
                 context.getContentResolver().delete(AndroidURIUtil.unwrap(uri), null, null);
             } catch (SecurityException | IllegalArgumentException exception) {
-                Logger.error("AssetsIntentManager", "Unable to delete the file!" +  uri.getPath());
-                Logger.error("AssetsIntentManager", "", exception);
+                Logger.error(TAG, "Unable to delete the file!" +  uri.getPath());
+                Logger.error(TAG, "", exception);
             }
         }
 
