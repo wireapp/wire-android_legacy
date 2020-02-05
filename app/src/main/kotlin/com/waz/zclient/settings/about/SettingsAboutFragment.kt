@@ -28,23 +28,41 @@ class SettingsAboutFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
         initViewModel()
+        initAboutWebsiteButton()
+        initTermsAndConditionsButton()
+        initPrivacyButton()
+        initLicensesButton()
+        initAppVersionDetailsButton()
+    }
 
-        settingsAboutAboutWebsiteButton.setOnClickListener {
-            settingsAboutViewModel.onAboutButtonClicked()
-        }
-        settingsAboutTermsAndConditionsButton.setOnClickListener {
-            settingsAboutViewModel.onTermsButtonClicked()
-        }
-        settingsAboutPrivacyButton.setOnClickListener {
-            settingsAboutViewModel.onPrivacyButtonClicked()
-        }
-        settingsAboutThirdPartyLicensesButton.setOnClickListener {
-            settingsAboutViewModel.onThirdPartyLicenseButtonClicked()
-        }
-
+    private fun initAppVersionDetailsButton() {
         settingsAboutAppVersionDetailsButton.text = getVersionName()
         settingsAboutAppVersionDetailsButton.setOnClickListener {
             settingsAboutViewModel.onVersionButtonClicked()
+        }
+    }
+
+    private fun initLicensesButton() {
+        settingsAboutThirdPartyLicensesButton.setOnClickListener {
+            settingsAboutViewModel.onThirdPartyLicenseButtonClicked()
+        }
+    }
+
+    private fun initPrivacyButton() {
+        settingsAboutPrivacyButton.setOnClickListener {
+            settingsAboutViewModel.onPrivacyButtonClicked()
+        }
+    }
+
+    private fun initTermsAndConditionsButton() {
+        settingsAboutTermsAndConditionsButton.setOnClickListener {
+            settingsAboutViewModel.onTermsButtonClicked()
+        }
+    }
+
+    private fun initAboutWebsiteButton() {
+        settingsAboutAboutWebsiteButton.setOnClickListener {
+            settingsAboutViewModel.onAboutButtonClicked()
         }
     }
 
