@@ -34,14 +34,13 @@ import com.waz.utils.wrappers.AndroidURIUtil;
 import com.waz.utils.wrappers.URI;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.Intents;
+import com.waz.zclient.core.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-
-import timber.log.Timber;
 
 public class AssetIntentsManager {
     private static final String INTENT_GALLERY_TYPE = "image/*";
@@ -67,7 +66,7 @@ public class AssetIntentsManager {
                 callback.openIntent(intent, tpe);
                 return;
             }
-            Timber.i("Did not resolve testing gallery for intent: %s", intent.toString());
+            Logger.info("AssetsIntentManager", "Did not resolve testing gallery for intent:" + intent.toString());
         }
         Intent documentIntent = new Intent(openDocumentAction()).setType(mimeType).addCategory(Intent.CATEGORY_OPENABLE);
         if (allowMultiple) {
@@ -118,7 +117,7 @@ public class AssetIntentsManager {
             return true;
         }
 
-        Timber.d("onActivityResult - data: %s", Intents.RichIntent(data).toString());
+        Logger.debug("AssetsIntentManager", "onActivityResult - data:" + Intents.RichIntent(data).toString());
 
         if(data.getClipData() != null) {
             ClipData clipData = data.getClipData();
@@ -134,7 +133,7 @@ public class AssetIntentsManager {
         }
 
         URI uri = new AndroidURI(data.getData());
-        Timber.d("uri is %s", uri);
+        Logger.debug("AssetsIntentManager", "uri is" + uri.toString());
         if (type == IntentType.VIDEO) {
             uri = copyVideoToCache(uri);
         }
@@ -155,7 +154,7 @@ public class AssetIntentsManager {
         java.util.Date date = new java.util.Date();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(date.getTime());
         File targetFile = new File(mediaStorageDir.getPath() + File.separator + "VID_" + timeStamp + ".mp4");
-        Timber.d("target file is %s", targetFile.getAbsolutePath());
+        Logger.debug("AssetIntentsManager", "target file is" + targetFile.getAbsolutePath());
 
         if (targetFile.exists()) {
             targetFile.delete();
@@ -166,18 +165,18 @@ public class AssetIntentsManager {
             if (inputStream != null) {
                 IoUtils.copy(inputStream, targetFile);
             } else {
-                Timber.e("Input stream is null for %s", uri);
+                Logger.error("AssetsIntentManager", "Input stream is null for" + uri.toString());
             }
         } catch (IOException e) {
-            Timber.e("Unable to save the file! %s", targetFile.getAbsolutePath());
-            Timber.e(e);
+            Logger.error("AssetsIntentManager", "Unable to save the file!" + targetFile.getAbsolutePath());
+            Logger.error("AssetsIntentManager", "", e);
             return null;
         } finally {
             try {
                 context.getContentResolver().delete(AndroidURIUtil.unwrap(uri), null, null);
             } catch (SecurityException | IllegalArgumentException exception) {
-                Timber.e("Unable to delete the file! %s", uri.getPath());
-                Timber.e(exception);
+                Logger.error("AssetsIntentManager", "Unable to delete the file!" +  uri.getPath());
+                Logger.error("AssetsIntentManager", "", exception);
             }
         }
 

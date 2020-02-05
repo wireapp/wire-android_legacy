@@ -29,11 +29,10 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import com.waz.zclient.R;
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.pullforaction.OverScrollListener;
 import com.waz.zclient.ui.pullforaction.OverScrollMode;
 import com.waz.zclient.ui.pullforaction.PullForActionView;
-import timber.log.Timber;
-
 
 /**
  * ListView subclass that provides the swipe functionality
@@ -337,7 +336,7 @@ public class SwipeListView extends RecyclerView implements PullForActionView {
                         targetView = (SwipeListRow) child;
                         targetView.setMaxOffset(allowSwipeAway ? viewWidth / 2 : listRowMenuIndicatorMaxSwipeOffset);
                     } catch (ClassCastException e) {
-                        Timber.e(e, "ClassCastException when swiping");
+                        Logger.error("SwipeListView","ClassCastException when swiping", e);
                     }
                     downX = motionEvent.getRawX();
                 } else {

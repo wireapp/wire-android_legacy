@@ -26,12 +26,11 @@ import android.util.AttributeSet;
 
 import androidx.appcompat.widget.AppCompatEditText;
 
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.utils.ReflectionUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.lang.reflect.Field;
-
-import timber.log.Timber;
 
 public class AccentColorEditText extends AppCompatEditText {
 
@@ -101,7 +100,7 @@ public class AccentColorEditText extends AppCompatEditText {
             }
 
         } catch (IllegalAccessException | IllegalArgumentException ex) {
-            Timber.e(ex, "Error accessing private field");
+            Logger.error("AccentColorEditText","Error accessing private field", ex);
         }
     }
 }

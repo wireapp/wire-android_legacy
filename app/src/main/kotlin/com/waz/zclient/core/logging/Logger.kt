@@ -1,10 +1,10 @@
 package com.waz.zclient.core.logging
 
 import android.util.Log
+import com.waz.zclient.core.extension.empty
 
 class Logger {
     companion object {
-
         @JvmStatic
         fun warn(tag: String, log: String) = Log.w(tag, log)
 
@@ -24,6 +24,6 @@ class Logger {
         fun error(tag: String, log: String) = Log.e(tag, log)
 
         @JvmStatic
-        fun error(tag: String, log: String, throwable: Throwable) = Log.e(tag, log, throwable)
+        fun error(tag: String, log: String = String.empty(), throwable: Throwable) = Log.e(tag, log, throwable)
     }
 }
