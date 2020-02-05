@@ -3,7 +3,7 @@ package com.waz.zclient.core.logging
 import android.util.Log
 import com.waz.zclient.core.extension.empty
 
-class Logger {
+class Logger private constructor() {
     companion object {
         @JvmStatic
         fun warn(tag: String, log: String) = Log.w(tag, log)
