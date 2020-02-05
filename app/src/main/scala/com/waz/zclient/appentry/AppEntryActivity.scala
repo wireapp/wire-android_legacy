@@ -36,7 +36,7 @@ import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
 import com.waz.zclient.appentry.controllers.InvitationsController
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.appentry.fragments.{CountryDialogFragment, FirstLaunchAfterLoginFragment, InviteToTeamFragment, PhoneSetNameFragment, SignInFragment, VerifyEmailWithCodeFragment, VerifyPhoneFragment}
+import com.waz.zclient.appentry.fragments._
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -57,7 +57,7 @@ object AppEntryActivity {
   def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
-class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomBackendLoginHandler {
+class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   import Threading.Implicits.Ui
 
@@ -218,9 +218,9 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomB
   }
 
    private def showCustomBackendLoginScreen(): Unit = {
-    val name = backendController.getStoredBackendConfig.map(_.environment)
-    val configUrl = backendController.customBackendConfigUrl
-    showFragment(CustomBackendLoginFragment.newInstance(name, configUrl), CustomBackendLoginFragment.TAG, animated = false)
+     val customBackendLoginFragment = new CustomBackendLoginFragment
+     customBackendLoginFragment.onEmailLoginClick.onUi { _ => showEmailSignInForCustomBackend() }
+     showFragment(customBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)
   }
 
   private def showFragment(): Unit =
@@ -287,12 +287,11 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler with CustomB
   }
 
   override def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
-    new TransactionHandler().showFragment(this, f, tag, animated, R.id.fl_main_content)
+    TransactionHandler.showFragment(this, f, tag, animated, R.id.fl_main_content)
     enableProgress(false)
   }
 
-  override def showEmailSignInForCustomBackend(): Unit = {
+  def showEmailSignInForCustomBackend(): Unit =
     showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
-  }
 }
 

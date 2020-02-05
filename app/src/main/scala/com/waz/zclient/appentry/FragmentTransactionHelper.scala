@@ -3,7 +3,7 @@ package com.waz.zclient.appentry
 import androidx.fragment.app.{Fragment, FragmentActivity, FragmentTransaction}
 import com.waz.zclient.R
 
-class TransactionHandler() {
+object TransactionHandler {
   def showFragment(activity: FragmentActivity, f: => Fragment, tag: String, animated: Boolean = true, layoutId: Int): Unit = {
     val transaction = activity.getSupportFragmentManager.beginTransaction()
     if (animated) setDefaultAnimation(transaction)
