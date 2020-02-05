@@ -34,9 +34,9 @@ import com.waz.utils.RichFuture
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.WireContext
 import com.waz.zclient.camera.{CameraFacing, FlashMode}
+import com.waz.zclient.core.logging.Logger
 import com.waz.zclient.utils.DeprecationUtils.CameraWrap
 import com.waz.zclient.utils.{AutoFocusCallbackDeprecation, Callback, CameraParamsWrapper, CameraSizeWrapper, CameraWrapper, DeprecationUtils, PictureCallbackDeprecated, ShutterCallbackDeprecated}
-import timber.log.Timber
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -50,7 +50,7 @@ class GlobalCameraController(cameraFactory: CameraFactory)(implicit cxt: WireCon
     })
 
 
-    override def reportFailure(cause: Throwable): Unit = Timber.e(cause, "Problem executing on Camera Thread.")
+    override def reportFailure(cause: Throwable): Unit = Logger.error("GlobalCameraController", "Problem executing on Camera Thread.", cause)
 
     override def execute(runnable: Runnable): Unit = executor.submit(runnable)
   }
@@ -141,7 +141,7 @@ class AndroidCameraFactory extends CameraFactory {
     }
   } catch {
     case e: Throwable =>
-      Timber.w(e, "Failed to retrieve camera info - camera is likely unavailable")
+      Logger.warn("GlobalCameraController", "Failed to retrieve camera info - camera is likely unavailable", e)
       Seq.empty
   }
 }
@@ -306,7 +306,7 @@ class AndroidCamera(info: CameraInfo, texture: SurfaceTexture, w: Int, h: Int, c
 
             DeprecationUtils.setAutoFocusCallback(c, new AutoFocusCallbackDeprecation {
               def onAutoFocus(s: java.lang.Boolean, cam: CameraWrapper): Unit = {
-                if (!s) Timber.w("Focus was unsuccessful - ignoring")
+                if (!s) Logger.warn("GlobalCameraController", "Focus was unsuccessful - ignoring")
                 promise.trySuccess(())
                 settingFocus = false
               }
@@ -401,7 +401,7 @@ object Orientation {
       case r if r > 135 && r <= 225 => Portrait_180
       case r if r > 225 && r <= 315 => Landscape_270
       case _ =>
-        Timber.w(s"Unexpected orientation value: $rot")
+        Logger.warn("GlobalCameraController", "Unexpected orientation value: $rot")
         Portrait_0
     }
 }

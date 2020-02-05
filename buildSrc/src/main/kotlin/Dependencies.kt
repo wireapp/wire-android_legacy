@@ -42,7 +42,6 @@ object Versions {
     const val RX_KOTLIN = "2.3.0"
     const val RX_ANDROID = "2.1.1"
     const val ANDROID_JOB = "1.2.6"
-    const val TIMBER = "4.7.0"
     const val THREE_TEN_BP_ANDROID = "1.1.0"
     const val THREE_TEN_BP_JAVA = "1.3.8"
     const val REBOUND = "0.3.8"
@@ -124,12 +123,11 @@ object BuildDependencies {
         "rxAndroid" to "io.reactivex.rxjava2:rxandroid:${Versions.RX_ANDROID}"
     ))
     val androidJob = "com.evernote:android-job:${Versions.ANDROID_JOB}"
-    val timber = "com.jakewharton.timber:timber:${Versions.TIMBER}"
     val threetenbpAndroid = "com.jakewharton.threetenabp:threetenabp:${Versions.THREE_TEN_BP_ANDROID}"
     val threetenbpJava = "org.threeten:threetenbp:${Versions.THREE_TEN_BP_JAVA}"
     val rebound = "com.facebook.rebound:rebound:${Versions.REBOUND}"
     val commonMark = "com.atlassian.commonmark:commonmark:${Versions.COMMON_MARK}"
-    val jna= "net.java.dev.jna:jna:${Versions.JNA}"
+    val jna = "net.java.dev.jna:jna:${Versions.JNA}"
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
 }
 
@@ -148,7 +146,7 @@ object TestDependencies {
         "core" to "org.mockito:mockito-core:${Versions.MOCKITO}",
         "inline" to "org.mockito:mockito-inline:${Versions.MOCKITO}"
     ))
-    val androidX =  AndroidXTestDependencyMap(mapOf(
+    val androidX = AndroidXTestDependencyMap(mapOf(
         "testCore" to "androidx.arch.core:core-testing:${Versions.ANDROIDX_TEST_CORE}",
         "testJunit" to "androidx.test.ext:junit:${Versions.ANDROIDX_TEST_JUNIT}",
         "testRules" to "androidx.test:rules:${Versions.ANDROIDX_TEST_JUNIT}",

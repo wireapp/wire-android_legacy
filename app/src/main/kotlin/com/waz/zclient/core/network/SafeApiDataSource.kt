@@ -4,14 +4,16 @@ import android.database.sqlite.SQLiteException
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.DatabaseFailure
 import com.waz.zclient.core.exception.DatabaseStateError
-import com.waz.zclient.core.exception.SQLError
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.NetworkFailure
+import com.waz.zclient.core.exception.SQLError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
+import com.waz.zclient.core.logging.Logger
 import kotlinx.coroutines.runBlocking
-import timber.log.Timber
+
+const val TAG = "SafeApiDataSource"
 
 @Suppress("TooGenericExceptionCaught")
 suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseFailure, R> =
@@ -36,7 +38,7 @@ suspend fun <R> accessData(
         onFailure {
             when (it) {
                 is DatabaseError -> performFallback(fallbackRequest, saveToDatabase)
-                else -> Timber.e("Database request failed with unknown error ")
+                else -> Logger.error(TAG, "Database request failed with unknown error ")
             }
         }
     }
@@ -51,8 +53,8 @@ private fun <R> performFallback(
             onSuccess { runBlocking { saveToDatabase(it) } }
             onFailure {
                 when (it) {
-                    is NetworkFailure -> Timber.e("Network request failed with generic error ")
-                    else -> Timber.e("Network request failed with unknown error ")
+                    is NetworkFailure -> Logger.error(TAG, "Network request failed with generic error ")
+                    else -> Logger.error(TAG, "Network request failed with unknown error ")
                 }
             }
         }

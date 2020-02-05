@@ -407,7 +407,6 @@ dependencies {
 
     //third party libraries
     implementation BuildDependencies.androidJob
-    implementation BuildDependencies.timber
     implementation(BuildDependencies.threetenbpAndroid) {
         exclude group: 'org.threeten', module: 'threetenbp'
     }
