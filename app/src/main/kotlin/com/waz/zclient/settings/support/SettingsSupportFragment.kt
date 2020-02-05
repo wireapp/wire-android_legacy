@@ -23,12 +23,19 @@ class SettingsSupportFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
         initViewModel()
+        initSupportWebsiteButton()
+        initSupportContactButton()
+    }
 
-        settingsSupportSupportWebsiteButton.setOnClickListener {
-            settingsSupportViewModel.onSupportWebsiteClicked()
-        }
+    private fun initSupportContactButton() {
         settingsSupportContactButton.setOnClickListener {
             settingsSupportViewModel.onSupportContactClicked()
+        }
+    }
+
+    private fun initSupportWebsiteButton() {
+        settingsSupportWebsiteButton.setOnClickListener {
+            settingsSupportViewModel.onSupportWebsiteClicked()
         }
     }
 

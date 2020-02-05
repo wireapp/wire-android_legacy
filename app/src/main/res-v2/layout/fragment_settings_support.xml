@@ -23,7 +23,7 @@
     android:layout_height="wrap_content">
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/settingsSupportSupportWebsiteButton"
+        android:id="@+id/settingsSupportWebsiteButton"
         style="@style/Button.Settings"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -42,5 +42,5 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/settingsSupportSupportWebsiteButton" />
+        app:layout_constraintTop_toBottomOf="@+id/settingsSupportWebsiteButton" />
 </androidx.constraintlayout.widget.ConstraintLayout>
