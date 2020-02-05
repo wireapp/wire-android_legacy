@@ -99,7 +99,7 @@ public class LocationFragment extends BaseFragment<LocationFragment.Container> i
     private static final float DEFAULT_MIMIMUM_CAMERA_MOVEMENT = 2F;
     private static final int LOCATION_REQUEST_TIMEOUT_MS = 1500;
     private static final String MAP_VIEW_SAVE_STATE = "mapViewSaveState";
-    private static final String TAG = "LocationFragment";
+    public static final String TAG = "LocationFragment";
 
     private Toolbar toolbar;
     private MapView mapView;
