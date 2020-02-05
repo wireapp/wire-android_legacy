@@ -58,7 +58,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, END_V
     }
 
     private fun migrateKeyValuesTable(database: SupportSQLiteDatabase) {
-        // "KeyValues" to "user_preference" Migration
         val createTempKeyValues = """
                 CREATE TABLE IF NOT EXISTS `$USER_PREFERENCE_TABLE_NAME` (
                 `key` TEXT PRIMARY KEY NOT NULL ,
