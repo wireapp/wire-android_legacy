@@ -14,7 +14,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
-import com.waz.zclient.settings.account.phonenumber.editphone.EditPhoneNumberActivity
+import com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi

@@ -227,7 +227,10 @@
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
             android:screenOrientation="portrait" />
         <activity android:name=".settings.devices.detail.SettingsDeviceDetailActivity" />
-      
+        <activity android:name=".settings.account.editphonenumber.EditPhoneNumberActivity"
+            android:theme="@style/Theme.Dark.Preferences"
+            android:launchMode="singleTask"
+            android:label="@string/empty_string"/>
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"

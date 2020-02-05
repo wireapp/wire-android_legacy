@@ -1,16 +1,18 @@
-package com.waz.zclient.settings.account.phonenumber.editphone
+package com.waz.zclient.settings.account.editphonenumber
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.core.extension.showBackArrow
+import com.waz.zclient.core.extension.removeFragment
+import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.withArgs
 import kotlinx.android.synthetic.main.fragment_edit_phone.*
 import kotlinx.android.synthetic.main.fragment_edit_phone.view.*
@@ -53,7 +55,7 @@ class EditPhoneNumberFragment : Fragment() {
 
     private fun initToolbar() {
         activity?.title = getString(R.string.pref__account_action__dialog__edit_phone__title)
-        showBackArrow()
+        (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
     private fun initDeleteNumberButton() {
@@ -98,11 +100,22 @@ class EditPhoneNumberFragment : Fragment() {
             confirmationLiveData.observe(viewLifecycleOwner) {
                 showConfirmationDialog(it)
             }
+            confirmedLiveData.observe(viewLifecycleOwner) {
+                showVerificationScreen(it)
+            }
         }
     }
 
+    private fun showVerificationScreen(phoneNumber: String) {
+        replaceFragment(
+            R.id.editPhoneActivityFragmentContainer,
+            VerifyPhoneFragment.newInstance(phoneNumber),
+            true)
+        (activity as AppCompatActivity).removeFragment(this)
+    }
+
     private fun confirmPhoneNumber() {
-        settingsAccountPhoneNumberViewModel.onNumberConfirmed(
+        settingsAccountPhoneNumberViewModel.afterNumberEntered(
             rootView.editPhoneCountryCodeTextInputEditText.text.toString(),
             rootView.editPhonePhoneNumberTextInputEditText.text.toString()
         )

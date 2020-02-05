@@ -1,4 +1,4 @@
-package com.waz.zclient.settings.account.phonenumber.editphone
+package com.waz.zclient.settings.account.editphonenumber
 
 import androidx.annotation.StringRes
 import androidx.lifecycle.LiveData
@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberUseCase
@@ -17,9 +18,6 @@ import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumberInvalid
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberUseCase
 
-data class CountryCodeErrorMessage(@StringRes val errorMessage: Int)
-data class PhoneNumberErrorMessage(@StringRes val errorMessage: Int)
-
 class SettingsAccountPhoneNumberViewModel(
     private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
     private val changePhoneNumberNumberUseCase: ChangePhoneNumberUseCase,
@@ -27,21 +25,23 @@ class SettingsAccountPhoneNumberViewModel(
     private val deletePhoneNumberUseCase: DeletePhoneNumberUseCase
 ) : ViewModel() {
 
-    private var _countryCodeErrorLiveData = MutableLiveData<CountryCodeErrorMessage>()
+    private var _countryCodeErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
     private var _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
     private var _phoneNumberLiveData = MutableLiveData<String>()
     private var _countryCodeLiveData = MutableLiveData<String>()
     private var _deleteNumberLiveData = MutableLiveData<String>()
     private var _confirmationLiveData = MutableLiveData<String>()
+    private var _confirmedLiveData = MutableLiveData<String>()
 
-    val countryCodeErrorLiveData: LiveData<CountryCodeErrorMessage> = _countryCodeErrorLiveData
+    val countryCodeErrorLiveData: LiveData<PhoneNumberErrorMessage> = _countryCodeErrorLiveData
     val phoneNumberErrorLiveData: LiveData<PhoneNumberErrorMessage> = _phoneNumberErrorLiveData
     val deleteNumberLiveData: LiveData<String> = _deleteNumberLiveData
     val phoneNumberLiveData: LiveData<String> = _phoneNumberLiveData
     val countryCodeLiveData: LiveData<String> = _countryCodeLiveData
     val confirmationLiveData: LiveData<String> = _confirmationLiveData
+    val confirmedLiveData: LiveData<String> = _confirmedLiveData
 
-    fun onNumberConfirmed(countryCode: String, phoneNumber: String) {
+    fun afterNumberEntered(countryCode: String, phoneNumber: String) {
         validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
             it.fold(::handleValidationError, ::handleConfirmationSuccess)
         }
@@ -75,7 +75,7 @@ class SettingsAccountPhoneNumberViewModel(
     private fun handleValidationError(failure: Failure) {
         when (failure) {
             is CountryCodeInvalid -> _countryCodeErrorLiveData.value =
-                CountryCodeErrorMessage(R.string.edit_phone_dialog_country_code_error)
+                PhoneNumberErrorMessage(R.string.edit_phone_dialog_country_code_error)
             is PhoneNumberInvalid -> _phoneNumberErrorLiveData.value =
                 PhoneNumberErrorMessage(R.string.edit_phone_dialog_phone_number_error)
         }
@@ -94,6 +94,14 @@ class SettingsAccountPhoneNumberViewModel(
     }
 
     fun onPhoneNumberConfirmed(phoneNumber: String) {
-        //Update phone number here
+        changePhoneNumberNumberUseCase(viewModelScope, ChangePhoneNumberParams(phoneNumber)) {
+            it.fold({}, { onUpdateSuccess(phoneNumber) })
+        }
+    }
+
+    private fun onUpdateSuccess(phoneNumber: String) {
+        _confirmedLiveData.postValue(phoneNumber)
     }
 }
+
+data class PhoneNumberErrorMessage(@StringRes val errorMessage: Int)
