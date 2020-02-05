@@ -5,6 +5,7 @@ import com.waz.zclient.core.di.networkModule
 import com.waz.zclient.devices.di.clientsModule
 import com.waz.zclient.settings.account.di.settingsAccountModule
 import com.waz.zclient.settings.devices.di.settingsDeviceModule
+import com.waz.zclient.settings.support.di.settingsSupportModule
 import com.waz.zclient.storage.di.storageModule
 import com.waz.zclient.user.di.usersModule
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -22,6 +23,7 @@ object Injector {
             modules(listOf(
                 settingsAccountModule,
                 settingsDeviceModule,
+                settingsSupportModule,
                 usersModule,
                 clientsModule,
                 storageModule,
