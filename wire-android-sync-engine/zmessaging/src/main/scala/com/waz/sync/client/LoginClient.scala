@@ -197,7 +197,7 @@ class LoginClientImpl(tracking: TrackingService)
 
 
   override def fetchSSO(): ErrorOr[FetchSsoResponse]  =
-    Request.Get(relativePath = fetchSSO())
+    Request.Get(relativePath = fetchSsoPath())
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
       .withResultType[FetchSsoResponse]
       .withErrorType[ErrorResponse]
@@ -229,7 +229,7 @@ object LoginClient extends DerivedLogTag {
 
   def verifyDomainPath(domain: String) = s"/custom-backend/by-domain/$domain"
 
-  def fetchSso() = s"/sso/settings"
+  def fetchSsoPath() = s"/sso/settings"
 
   def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
     case CookieHeader(cookie) =>
