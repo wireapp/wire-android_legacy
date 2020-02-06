@@ -26,7 +26,7 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Label
 import com.waz.model.{TeamId, UserInfo}
 import com.waz.model2.transport.Team
-import com.waz.model2.transport.responses.{DomainVerificationResponse, TeamsResponse}
+import com.waz.model2.transport.responses.{DomainVerificationResponse, FetchSsoResponse, TeamsResponse}
 import com.waz.service.ZMessaging.clock
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
@@ -54,6 +54,7 @@ trait LoginClient {
   def getTeams(accessToken: AccessToken, start: Option[TeamId]): ErrorOr[TeamsResponse]
   def verifySSOToken(token: UUID): ErrorOr[Boolean]
   def verifyDomain(domain: String): ErrorOr[DomainVerificationResponse]
+  def fetchSSO(): ErrorOr[FetchSsoResponse]
 }
 
 class LoginClientImpl(tracking: TrackingService)
@@ -186,14 +187,22 @@ class LoginClientImpl(tracking: TrackingService)
       .future
   }
 
-  override def verifyDomain(domain: String): ErrorOr[DomainVerificationResponse] = {
+  override def verifyDomain(domain: String): ErrorOr[DomainVerificationResponse] =
     Request.Get(relativePath = verifyDomainPath(domain))
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
       .withResultType[DomainVerificationResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
       .future
-  }
+
+
+  override def fetchSSO(): ErrorOr[FetchSsoResponse]  =
+    Request.Get(relativePath = fetchSSO())
+      .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.NotFound)
+      .withResultType[FetchSsoResponse]
+      .withErrorType[ErrorResponse]
+      .executeSafe
+      .future
 }
 
 object LoginClient extends DerivedLogTag {
@@ -219,6 +228,8 @@ object LoginClient extends DerivedLogTag {
   def InitiateSSOLoginPath(code: String) = s"/sso/initiate-login/$code"
 
   def verifyDomainPath(domain: String) = s"/custom-backend/by-domain/$domain"
+
+  def fetchSso() = s"/sso/settings"
 
   def getCookieFromHeaders(headers: Headers): Option[Cookie] = headers.get(SetCookie) flatMap {
     case CookieHeader(cookie) =>
