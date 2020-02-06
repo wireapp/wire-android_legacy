@@ -86,6 +86,7 @@
 
     <Button
         android:id="@+id/customBackendEmailLoginButton"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/wire__padding__16"
@@ -106,6 +107,7 @@
 
     <Button
         android:id="@+id/customBackendSsoLoginButton"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/wire__padding__16"
