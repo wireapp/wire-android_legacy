@@ -25,10 +25,12 @@ import com.bumptech.glide.load.data.DataFetcher
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.errors.NotSupportedError
 import com.waz.service.ZMessaging
+import com.waz.service.assets.AssetInput
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
 import com.waz.zclient.log.LogUI._
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -38,7 +40,7 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   import com.waz.threading.Threading.Implicits.Background
 
   @volatile
-  private var currentData: Option[CancellableFuture[InputStream]] = None
+  private var currentData: Option[CancellableFuture[AssetInput]] = None
 
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
     verbose(l"Load asset $request")
@@ -49,7 +51,7 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
         case ImageAssetRequest(asset)            => zms.assetService.loadContent(asset)
         case PublicAssetIdRequest(assetId)       => zms.assetService.loadPublicContentById(assetId, None, None)
         case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
-        case GoogleMapRequest(location)          => zms.googleMapsMediaService.loadMapPreview(location)
+        case GoogleMapRequest(location)          => zms.googleMapsMediaService.loadMapPreview2(location)
         case _ =>
           CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
@@ -58,7 +60,7 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
     currentData.foreach(_.cancel())
     currentData = Some(data)
 
-    data.onComplete {
+    data.future.flatMap(input => Future.fromTry(input.toInputStream)).onComplete {
       case Failure(err) =>
         verbose(l"Asset loading failed $request, $err")
         callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: $err"))

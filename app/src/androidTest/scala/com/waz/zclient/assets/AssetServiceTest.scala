@@ -63,7 +63,6 @@ class AssetServiceTest {
   val detailsService = new AssetDetailsServiceImpl(uriHelperImpl)(getContext, global)
   val contentCache = new AssetContentCacheImpl(cacheDirectory = lruCacheDirectory, directorySizeThreshold = 1024 * 1024 * 200L, sizeCheckingInterval = 30.seconds)(Threading.BlockingIO, EventContext.Global)
   val uploadContentCache = new UploadAssetContentCacheImpl(rawCacheDirectory)(Threading.IO)
-  val transformationsService = new AssetTransformationsServiceImpl(List(new ImageDownscalingCompressing(new AndroidImageRecoder)))
   val restrictionsService = new AssetRestrictionsServiceImpl(uriHelperImpl, None)
   val previewService = new AssetPreviewServiceImpl()(getContext, global)
 
@@ -73,7 +72,6 @@ class AssetServiceTest {
     downloadAssetStorage,
     detailsService,
     previewService,
-    transformationsService,
     restrictionsService,
     uriHelper,
     contentCache,

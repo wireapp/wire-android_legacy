@@ -18,7 +18,6 @@
 package com.waz.zclient.glide.loaders
 
 import java.io.InputStream
-
 import android.content.Context
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiModelLoaderFactory}

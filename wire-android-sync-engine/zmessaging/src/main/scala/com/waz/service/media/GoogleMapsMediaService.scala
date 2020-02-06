@@ -21,6 +21,7 @@ import java.io.InputStream
 
 import com.waz.api.MessageContent.Location
 import com.waz.model._
+import com.waz.service.assets.AssetInput
 import com.waz.service.media.RichMediaContentParser.GoogleMapsLocation
 import com.waz.sync.client.GoogleMapsClient
 import com.waz.threading.CancellableFuture
@@ -45,6 +46,9 @@ class GoogleMapsMediaServiceImpl(googleMapsClient: GoogleMapsClient)(implicit ex
       case Right(result) => CancellableFuture.successful(result)
     }
   }
+
+  def loadMapPreview2(location: Location, dimensions: Dim2 = ImageDimensions): CancellableFuture[AssetInput] =
+    loadMapPreview(location, dimensions).map(AssetInput(_))
 }
 
 object GoogleMapsMediaService {

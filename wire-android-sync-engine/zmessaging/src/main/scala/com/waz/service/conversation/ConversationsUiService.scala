@@ -162,7 +162,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                 content: ContentForUpload,
                                 confirmation: WifiWarningConfirmation = DefaultConfirmation,
                                 exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]] = {
-    verbose(l"sendAssetMessage($convId, $content)")
     val messageId = MessageId()
     for {
       retention  <- messages.retentionPolicy2ById(convId)

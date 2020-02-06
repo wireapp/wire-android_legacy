@@ -31,11 +31,10 @@ import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.AccountManager
-import com.waz.service.assets.{Content, ContentForUpload, UriHelper}
+import com.waz.service.assets.{Content, ContentForUpload, UriHelper, AssetInput}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
-import com.waz.zclient.assets.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
@@ -44,13 +43,13 @@ import com.waz.zclient.conversationlist.{ConversationListController, FolderState
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{Callback, currentRotation, rotate}
+import com.waz.zclient.utils.Callback
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Try}
+import scala.util.Success
 
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
@@ -247,20 +246,12 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   // NOTE: Rotating makes sense only for images, but at this point we accept any content. If it's
   // not an image, `currentRotation` will return 0 and the method will return the original content.
-  def rotateImageIfNeeded(image: Content): Future[Content] = {
-    def rotateIfNeeded(image: Content, path: String): Future[Try[Content]] = {
-      val rotation = currentRotation(path)
-      if (rotation == 0) Future.successful(Success(image))
-      // rotation and compression is time-consuming - better not to do it on the Ui thread
-      else Future { rotate(path, rotation).map(ImageCompressUtils.toJpg) }(Threading.ImageDispatcher)
-    }
-
+  def rotateImageIfNeeded(image: Content): Future[Content] =
     (image match {
-      case Content.Uri(uri)      => rotateIfNeeded(image, uri.getPath)
-      case Content.File(_, file) => rotateIfNeeded(image, file.getPath)
+      case Content.Uri(uri)      => AssetInput.rotateIfNeeded(image, uri.getPath)
+      case Content.File(_, file) => AssetInput.rotateIfNeeded(image, file.getPath)
       case _                     => Future.successful(Success(image))
     }).map(_.getOrElse(image))
-  }
 
   private def sendAssetMessage(convs:    Seq[ConvId],
                                content:  ContentForUpload,
@@ -276,7 +267,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] =
     for {
-      img     <- Future { ImageCompressUtils.toJpg(bitmap) }(Threading.Background)
+      img     <- Future { AssetInput.toJpg(bitmap) }(Threading.Background)
       content =  ContentForUpload(assetName, img)
       data    <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
     } yield data
