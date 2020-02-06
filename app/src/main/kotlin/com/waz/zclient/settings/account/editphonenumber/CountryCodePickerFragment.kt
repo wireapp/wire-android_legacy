@@ -47,11 +47,13 @@ class CountryCodePickerFragment : DialogFragment() {
 
     private fun initRecyclerView() {
         rootView.countryCodePickDialogRecyclerView.adapter = countryAdapter
-        countryAdapter.setOnItemClickListener(object : CountryCodesRecyclerAdapter.CountryCodeRecyclerItemClickListener {
-            override fun onCountryCodeClicked(country: Country) {
-                countryCodePickerViewModel.onCountryCodeChanged(country, countryDisplayName)
+        countryAdapter.setOnItemClickListener(
+            object : CountryCodesRecyclerAdapter.CountryCodeRecyclerItemClickListener {
+                override fun onCountryCodeClicked(country: Country) {
+                    countryCodePickerViewModel.onCountryCodeChanged(country, countryDisplayName)
+                }
             }
-        })
+        )
         countryCodePickerViewModel.countriesLiveData.observe(viewLifecycleOwner) {
             countryAdapter.updateList(it as MutableList<Country>)
         }

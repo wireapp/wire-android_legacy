@@ -22,7 +22,7 @@ class GetCountryCodesUseCase(
 
             val locale = Locale(params.deviceLanguage, it)
             val countryCode = phoneNumberUtils.getCountryCodeForRegion(it)
-            val country = Country(locale.country, locale.displayCountry, "+${countryCode}")
+            val country = Country(locale.country, locale.displayCountry, "+$countryCode")
             countries.add(country)
         }
         return Either.Right(countries)

@@ -20,6 +20,7 @@ import kotlinx.android.synthetic.main.fragment_edit_phone.*
 import kotlinx.android.synthetic.main.fragment_edit_phone.view.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
+@SuppressWarnings("TooManyFunctions")
 class EditPhoneNumberFragment : Fragment() {
 
     private lateinit var rootView: View
@@ -156,13 +157,14 @@ class EditPhoneNumberFragment : Fragment() {
     }
 
     private fun showCountryCodePickerDialog(countryDisplayName: String) {
-        CountryCodePickerFragment.newInstance(countryDisplayName, object : CountryCodePickerFragment.CountryCodePickerListener {
-            override fun onCountryCodeSelected(countryCode: Country) {
-                settingsAccountPhoneNumberViewModel.onCountryCodeUpdated(countryCode)
-            }
-        }).show(requireActivity().supportFragmentManager, String.empty())
+        CountryCodePickerFragment.newInstance(
+            countryDisplayName,
+            object : CountryCodePickerFragment.CountryCodePickerListener {
+                override fun onCountryCodeSelected(countryCode: Country) {
+                    settingsAccountPhoneNumberViewModel.onCountryCodeUpdated(countryCode)
+                }
+            }).show(requireActivity().supportFragmentManager, String.empty())
     }
-
 
     companion object {
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
