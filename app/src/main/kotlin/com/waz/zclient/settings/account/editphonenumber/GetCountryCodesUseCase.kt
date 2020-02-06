@@ -15,15 +15,15 @@ class GetCountryCodesUseCase(
     override suspend fun run(params: GetCountryCodesParams): Either<Failure, List<Country>> {
         val countries = mutableListOf<Country>()
         phoneNumberUtils.supportedRegions.forEach {
-            if (developerOptionsEnabled) {
-                val qaCountry = Country(QA_COUNTRY, QA_DISPLAY_COUNTRY, QA_COUNTRY_CODE)
-                countries.add(0, qaCountry)
-            }
-
             val locale = Locale(params.deviceLanguage, it)
             val countryCode = phoneNumberUtils.getCountryCodeForRegion(it)
             val country = Country(locale.country, locale.displayCountry, "+$countryCode")
             countries.add(country)
+        }
+        countries.sortBy { it.countryDisplayName }
+        if (developerOptionsEnabled) {
+            val qaCountry = Country(QA_COUNTRY, QA_DISPLAY_COUNTRY, QA_COUNTRY_CODE)
+            countries.add(0, qaCountry)
         }
         return Either.Right(countries)
     }

@@ -10,7 +10,7 @@ import kotlinx.android.synthetic.main.item_view_country_code.view.*
 
 class CountryCodesRecyclerAdapter : RecyclerView.Adapter<CountryCodesRecyclerAdapter.CountryCodeViewHolder>() {
 
-    private var countries: MutableList<Country> = mutableListOf()
+    private var countries: List<Country> = listOf()
 
     private var listener: CountryCodeRecyclerItemClickListener? = null
 
@@ -28,8 +28,7 @@ class CountryCodesRecyclerAdapter : RecyclerView.Adapter<CountryCodesRecyclerAda
         this.listener = listener
     }
 
-    fun updateList(newCountries: MutableList<Country>) {
-        newCountries.sortBy { it.countryDisplayName }
+    fun updateList(newCountries: List<Country>) {
         countries = newCountries
         notifyDataSetChanged()
     }

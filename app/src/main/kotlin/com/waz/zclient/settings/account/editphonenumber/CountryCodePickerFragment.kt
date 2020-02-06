@@ -55,7 +55,7 @@ class CountryCodePickerFragment : DialogFragment() {
             }
         )
         countryCodePickerViewModel.countriesLiveData.observe(viewLifecycleOwner) {
-            countryAdapter.updateList(it as MutableList<Country>)
+            countryAdapter.updateList(it)
         }
 
         countryCodePickerViewModel.countryLiveData.observe(viewLifecycleOwner) {
