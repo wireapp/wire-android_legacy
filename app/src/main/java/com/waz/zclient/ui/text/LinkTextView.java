@@ -30,12 +30,11 @@ import android.util.AttributeSet;
 
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.R;
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.markdown.MarkdownTextView;
 
-import timber.log.Timber;
-
 /**
- * This view will automatically linkify the text passed to {@link LinkTextView#setTextLink(String)}, but will not steal
+ * This view will automatically linkify the text passed to {@link LinkTextView#setTextLink()}}, but will not steal
  * touch events that are not inside a URLSpan
  */
 public class LinkTextView extends MarkdownTextView {
@@ -87,7 +86,7 @@ public class LinkTextView extends MarkdownTextView {
         try {
             refreshLinks();
         } catch(ArrayIndexOutOfBoundsException ex) {
-            Timber.i("Error while refreshing links. text: %s", getText());
+            Logger.info("LinkTextView", "Error while refreshing links. text:" + getText());
             if (BuildConfig.FLAVOR.equals("internal")) {
                 throw ex;
             }

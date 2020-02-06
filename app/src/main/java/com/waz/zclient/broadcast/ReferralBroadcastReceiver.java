@@ -22,7 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController;
-import timber.log.Timber;
+import com.waz.zclient.core.logging.Logger;
 
 public class ReferralBroadcastReceiver extends BroadcastReceiver {
 
@@ -44,7 +44,7 @@ public class ReferralBroadcastReceiver extends BroadcastReceiver {
                 }
             }
         } catch (Exception e) {
-            Timber.e(e, "Unable to get referral token");
+            Logger.error("ReferralBroadcastReciever", "Unable to get referral token", e);
         }
     }
 }
