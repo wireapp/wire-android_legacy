@@ -1,4 +1,3 @@
-
 //TODO: Remove and refactor when gradle version > 5
 //This is a solution to make more friendly managing dependencies
 //There is a bug with the version of Kotlin DSL we are using:

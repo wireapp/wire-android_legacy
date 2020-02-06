@@ -17,6 +17,8 @@
  */
 package com.waz.zclient.appentry
 
+import java.net.URL
+
 import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
@@ -28,6 +30,7 @@ import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.views.InputBox.EmailValidator
+import com.waz.zclient.utils.BackendController
 import com.waz.zclient.utils.ContextUtils._
 
 import scala.concurrent.Future
@@ -44,6 +47,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   private lazy val userAccountsController = inject[UserAccountsController]
 
   private def hasToken: Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
+
+  private lazy val backendController = inject[BackendController]
 
   private lazy val dialogListener = new InputDialog.Listener {
     override def onTextChanged(text: String): Unit = getSsoDialog.foreach(_.clearError())
@@ -62,7 +67,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     } else if (EmailValidator.isValid(input)) {
       verifyEmail(input)
     } else {
-      showInlineSsoError(getString(R.string.enterprise_signin_invalid_input_error))
+      if (backendController.hasCustomBackend) showInlineSsoError(getString(R.string.enterprise_signin_sso_invalid_input_error))
+      else showInlineSsoError(getString(R.string.enterprise_signin_email_sso_invalid_input_error))
     }
 
   override def onStart(): Unit = {
@@ -86,17 +92,17 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       case None if getSsoDialog.isEmpty =>
         extractTokenFromClipboard
           .filter(_.nonEmpty || showIfNoToken)
-          .foreach(showSSODialog)
+          .foreach(showLoginViaSSOAndEmailDialog)
       case _ =>
     }
 
   private def getSsoDialog: Option[InputDialog] = findChildFragment[InputDialog](SSODialogTag)
 
-  protected def showSSODialog(token: Option[String]): Unit =
+  protected def showLoginViaSSOAndEmailDialog(token: Option[String]): Unit =
     if (getSsoDialog.isEmpty)
       InputDialog.newInstance(
         title = R.string.sso_login_dialog_title,
-        message = R.string.sso_login_dialog_message,
+        message = if (backendController.hasCustomBackend) R.string.sso_login_dialog_message else R.string.email_sso_login_dialog_message ,
         inputHint = Some(R.string.app_entry_sso_input_hint),
         inputValue = token,
         negativeBtn = R.string.app_entry_dialog_cancel,
@@ -122,12 +128,14 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
       }
     }
 
+
+
   private def verifyEmail(email: String): Future[Unit] = {
     val domain = ssoService.extractDomain(email)
     ssoService.verifyDomain(domain).flatMap {
       case Right(DomainSuccessful(configFileUrl)) =>
         dismissSsoDialog()
-        Future.successful(()) //TODO: save config file and continue flow
+        Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
       case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
       case Left(err) => handleVerificationError(err)
     }
@@ -144,7 +152,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
 
-  protected def activity: SSOFragmentHandler = getActivity.asInstanceOf[SSOFragmentHandler]
+  protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 
   protected def onVerifyingToken(verifying: Boolean): Unit =
     inject[SpinnerController].showSpinner(verifying)
