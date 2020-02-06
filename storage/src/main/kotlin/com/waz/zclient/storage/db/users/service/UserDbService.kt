@@ -12,18 +12,18 @@ interface UserDbService {
     @Insert
     suspend fun insert(user: UserDao)
 
-    @Query("SELECT * from user WHERE _id = :userId")
+    @Query("SELECT * from Users WHERE _id = :userId")
     fun byId(userId: String): Flow<UserDao>
 
-    @Query("UPDATE user SET name=:name WHERE _id = :userId")
+    @Query("UPDATE Users SET name=:name WHERE _id = :userId")
     suspend fun updateName(userId: String, name: String)
 
-    @Query("UPDATE user SET handle=:handle WHERE _id = :userId")
+    @Query("UPDATE Users SET handle=:handle WHERE _id = :userId")
     suspend fun updateHandle(userId: String, handle: String)
 
-    @Query("UPDATE user SET email=:email WHERE _id = :userId")
+    @Query("UPDATE Users SET email=:email WHERE _id = :userId")
     suspend fun updateEmail(userId: String, email: String)
 
-    @Query("UPDATE user SET phone=:phone WHERE _id = :userId")
+    @Query("UPDATE Users SET phone=:phone WHERE _id = :userId")
     suspend fun updatePhone(userId: String, phone: String)
 }
