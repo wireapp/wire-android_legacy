@@ -18,7 +18,7 @@
 package com.waz.zclient.appentry
 
 import android.os.Bundle
-import android.view.{LayoutInflater, View, ViewGroup}
+import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import android.widget.Button
 import com.waz.utils.returning
 import com.waz.zclient._
@@ -52,6 +52,16 @@ class WelcomeFragment extends SSOFragment {
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
     initViews()
+  }
+
+  override def onResume(): Unit = {
+    super.onResume()
+    activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+  }
+
+  override def onPause(): Unit = {
+    super.onPause()
+    activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
 
   private def initViews() = {

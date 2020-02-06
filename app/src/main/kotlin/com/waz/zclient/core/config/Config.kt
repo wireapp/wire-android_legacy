@@ -7,6 +7,7 @@ object Config {
     fun appLockForced() = BuildConfig.FORCE_APP_LOCK
     fun hideScreenContentForced() = BuildConfig.FORCE_HIDE_SCREEN_CONTENT
     fun versionName() = BuildConfig.VERSION_NAME
+    fun versionCode() = BuildConfig.VERSION_CODE
     fun websiteUrl() = BuildConfig.WEBSITE_URL
     fun accountsUrl() = BuildConfig.ACCOUNTS_URL
     fun allowSso() = BuildConfig.ALLOW_SSO
