@@ -1,6 +1,6 @@
 package com.waz.zclient.user.data.mapper
 
-import com.waz.zclient.storage.db.users.model.UserDao
+import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import com.waz.zclient.user.domain.model.User
 
@@ -20,7 +20,7 @@ class UserMapper {
         )
     }
 
-    fun toUser(userDao: UserDao) = with(userDao) {
+    fun toUser(userEntity: UserEntity) = with(userEntity) {
         User(id = id, teamId = teamId, name = name,
             handle = handle, email = email, phone = phone,
             trackingId = trackingId, picture = picture,
@@ -36,7 +36,7 @@ class UserMapper {
     }
 
     fun toUserDao(user: User) = with(user) {
-        UserDao(id = id.toString(), teamId = teamId, name = name.toString(),
+        UserEntity(id = id.toString(), teamId = teamId, name = name.toString(),
             handle = handle, email = email, phone = phone,
             trackingId = trackingId, picture = picture,
             accentId = accentId, sKey = sKey,

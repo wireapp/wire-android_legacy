@@ -3,8 +3,8 @@ package com.waz.zclient.user.data.source.local
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
 import com.waz.zclient.storage.db.UserDatabase
-import com.waz.zclient.storage.db.users.model.UserDao
-import com.waz.zclient.storage.db.users.service.UserDbService
+import com.waz.zclient.storage.db.users.model.UserEntity
+import com.waz.zclient.storage.db.users.service.UserDao
 import com.waz.zclient.storage.pref.GlobalPreferences
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,23 +29,23 @@ class UserLocalDataSourceTest : UnitTest() {
     private lateinit var globalPreferences: GlobalPreferences
 
     @Mock
-    private lateinit var userDbService: UserDbService
+    private lateinit var userDao: UserDao
 
     @Mock
-    private lateinit var user: UserDao
+    private lateinit var user: UserEntity
 
     @Before
     fun setup() {
-        lenient().`when`(userDatabase.userDbService()).thenReturn(userDbService)
+        lenient().`when`(userDatabase.userDbService()).thenReturn(userDao)
         `when`(globalPreferences.activeUserId).thenReturn(TEST_USER_ID)
-        usersLocalDataSource = UsersLocalDataSource(userDbService, globalPreferences)
+        usersLocalDataSource = UsersLocalDataSource(userDao, globalPreferences)
     }
 
     @Test
     fun `Given profile() is called, when dao result is successful, then return the data`() = runBlockingTest {
         usersLocalDataSource.profileDetails()
 
-        verify(userDbService).byId(eq(TEST_USER_ID))
+        verify(userDao).byId(eq(TEST_USER_ID))
     }
 
     @Test
@@ -53,7 +53,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.insertUser(user)
 
-            verify(userDbService).insert(eq(user))
+            verify(userDao).insert(eq(user))
 
             usersLocalDataSource.insertUser(user).isRight shouldBe true
         }
@@ -64,7 +64,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.insertUser(user)
 
-            verify(userDbService).insert(eq(user))
+            verify(userDao).insert(eq(user))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -80,7 +80,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.changeName(TEST_NAME)
 
-            verify(userDbService).updateName(eq(TEST_USER_ID), eq(TEST_NAME))
+            verify(userDao).updateName(eq(TEST_USER_ID), eq(TEST_NAME))
 
             usersLocalDataSource.changeName(TEST_NAME).isRight shouldBe true
         }
@@ -92,7 +92,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             usersLocalDataSource.changeName(TEST_NAME)
 
-            verify(userDbService).updateName(eq(TEST_USER_ID), eq(TEST_NAME))
+            verify(userDao).updateName(eq(TEST_USER_ID), eq(TEST_NAME))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -108,7 +108,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.changeHandle(TEST_HANDLE)
 
-            verify(userDbService).updateHandle(eq(TEST_USER_ID), eq(TEST_HANDLE))
+            verify(userDao).updateHandle(eq(TEST_USER_ID), eq(TEST_HANDLE))
 
             usersLocalDataSource.changeHandle(TEST_HANDLE).isRight shouldBe true
         }
@@ -120,7 +120,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
             usersLocalDataSource.changeHandle(TEST_HANDLE)
 
-            verify(userDbService).updateHandle(eq(TEST_USER_ID), eq(TEST_HANDLE))
+            verify(userDao).updateHandle(eq(TEST_USER_ID), eq(TEST_HANDLE))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -135,7 +135,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.changeEmail(TEST_EMAIL)
 
-            verify(userDbService).updateEmail(eq(TEST_USER_ID), eq(TEST_EMAIL))
+            verify(userDao).updateEmail(eq(TEST_USER_ID), eq(TEST_EMAIL))
 
             usersLocalDataSource.changeEmail(TEST_EMAIL).isRight shouldBe true
         }
@@ -146,7 +146,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.changeEmail(TEST_EMAIL)
 
-            verify(userDbService).updateEmail(eq(TEST_USER_ID), eq(TEST_EMAIL))
+            verify(userDao).updateEmail(eq(TEST_USER_ID), eq(TEST_EMAIL))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -161,7 +161,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.changePhone(TEST_PHONE)
 
-            verify(userDbService).updatePhone(eq(TEST_USER_ID), eq(TEST_PHONE))
+            verify(userDao).updatePhone(eq(TEST_USER_ID), eq(TEST_PHONE))
 
             usersLocalDataSource.changePhone(TEST_PHONE).isRight shouldBe true
         }
@@ -172,7 +172,7 @@ class UserLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             usersLocalDataSource.changePhone(TEST_PHONE)
 
-            verify(userDbService).updatePhone(eq(TEST_USER_ID), eq(TEST_PHONE))
+            verify(userDao).updatePhone(eq(TEST_USER_ID), eq(TEST_PHONE))
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 

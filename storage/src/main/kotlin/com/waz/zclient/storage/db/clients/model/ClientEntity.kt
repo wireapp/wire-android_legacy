@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "client")
-data class ClientDao(
+data class ClientEntity(
     @ColumnInfo(name = "id")
     @PrimaryKey
     val id: String,
