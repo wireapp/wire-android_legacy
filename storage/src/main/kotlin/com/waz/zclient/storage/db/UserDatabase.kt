@@ -9,7 +9,11 @@ import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 import com.waz.zclient.storage.db.users.service.UserPreferenceDao
 
-@Database(entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class], version = 126, exportSchema = false)
+@Database(
+    entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class],
+    version = 126,
+    exportSchema = false
+)
 abstract class UserDatabase : RoomDatabase() {
 
     abstract fun userPreferencesDbService(): UserPreferenceDao
