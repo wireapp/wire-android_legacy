@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
-    Copyright (C) 2019 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/athens_light_gray">
+    android:background="@color/athens_gray_light">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/welcomeLogoGuideline"
@@ -64,11 +64,11 @@
         android:layout_height="0dp"
         android:src="@drawable/wire"
         android:tint="@color/teams_headline_text"
-        app:layout_constraintWidth_percent="0.225"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcomeLogoGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeLogoGuideline"
+        app:layout_constraintWidth_percent="0.225" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/welcomeTitleTextView"
@@ -81,14 +81,15 @@
         android:textColor="@color/outer_space"
         android:textSize="@dimen/welcome_title_text_size"
         android:textStyle="normal"
-        app:layout_constraintWidth_percent="0.661"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.070"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcomeTitleGuideline"  />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeTitleGuideline"
+        app:layout_constraintWidth_percent="0.661" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/welcomeCreateAccountButton"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/blue_rounded_button"
@@ -97,39 +98,41 @@
         android:textColor="@color/white"
         android:textSize="@dimen/rounded_button_text_size"
         android:textStyle="bold"
-        app:layout_constraintWidth_percent="0.908"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcomeCreateAccountGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeCreateAccountGuideline"
+        app:layout_constraintWidth_percent="0.908" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/welcomeLoginButton"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/light_gray_blue_rounded_button"
         android:text="@string/app_entry_login"
-        android:textSize="@dimen/rounded_button_text_size"
         android:textColor="@color/curious_blue"
-        app:layout_constraintWidth_percent="0.908"
+        android:textSize="@dimen/rounded_button_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcomeLoginGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeLoginGuideline"
+        app:layout_constraintWidth_percent="0.908" />
 
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/welcomeEnterpriseLoginButton"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@drawable/dark_gray_rounded_button"
         android:text="@string/welcome_enterprise_log_in"
-        android:textSize="@dimen/rounded_button_text_size"
         android:textColor="@color/outer_space"
-        app:layout_constraintWidth_percent="0.908"
+        android:textSize="@dimen/rounded_button_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.084"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/welcomeEnterpriseLoginGuideline" />
+        app:layout_constraintTop_toBottomOf="@+id/welcomeEnterpriseLoginGuideline"
+        app:layout_constraintWidth_percent="0.908" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

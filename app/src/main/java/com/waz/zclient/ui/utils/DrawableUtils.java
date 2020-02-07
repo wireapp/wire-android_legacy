@@ -20,9 +20,9 @@ package com.waz.zclient.ui.utils;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.DrawableContainer;
 
-import java.lang.reflect.Method;
+import com.waz.zclient.core.logging.Logger;
 
-import timber.log.Timber;
+import java.lang.reflect.Method;
 
 // From support design Lib
 public class DrawableUtils {
@@ -45,7 +45,7 @@ public class DrawableUtils {
                     "setConstantState", DrawableContainer.DrawableContainerState.class);
                 setConstantStateMethod.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                Timber.e(e, "Could not fetch setConstantState(). Oh well.");
+                Logger.error("DrawableUtils", "Could not fetch setConstantState(). Oh well.", e);
             }
             setConstantStateMethodFetched = true;
         }
@@ -54,7 +54,7 @@ public class DrawableUtils {
                 setConstantStateMethod.invoke(drawable, constantState);
                 return true;
             } catch (Exception e) {
-                Timber.e(e, "Could not invoke setConstantState(). Oh well.");
+                Logger.error("DrawableUtils" , "Could not invoke setConstantState(). Oh well.", e);
             }
         }
         return false;

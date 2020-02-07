@@ -17,10 +17,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="@color/curious_blue" />
-    <corners android:radius="@dimen/rounded_button_radius" />
-</shape>
-
-
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/curious_blue" />
+            <corners android:radius="@dimen/rounded_button_radius" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/chathams_blue" />
+            <corners android:radius="@dimen/rounded_button_radius" />
+        </shape>
+    </item>
+</selector>
