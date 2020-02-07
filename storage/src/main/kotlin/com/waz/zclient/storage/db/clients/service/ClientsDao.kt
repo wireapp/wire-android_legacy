@@ -6,29 +6,29 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.waz.zclient.storage.db.clients.model.ClientDao
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 
 @Dao
-interface ClientDbService {
+interface ClientsDao {
 
     @Query("SELECT * from client WHERE id = :clientId")
-    suspend fun clientById(clientId: String): ClientDao
+    suspend fun clientById(clientId: String): ClientEntity
 
     @Query("SELECT * from client")
-    suspend fun allClients(): List<ClientDao>
+    suspend fun allClients(): List<ClientEntity>
 
     @Transaction
-    suspend fun updateClients(clients: List<ClientDao>) {
+    suspend fun updateClients(clients: List<ClientEntity>) {
         deleteAllClients()
         insertAll(clients)
     }
 
     @Insert
-    suspend fun insertAll(clients: List<ClientDao>)
+    suspend fun insertAll(clients: List<ClientEntity>)
 
     @Query("DELETE FROM client")
     suspend fun deleteAllClients()
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun updateClient(client: ClientDao)
+    suspend fun updateClient(client: ClientEntity)
 }

@@ -1,8 +1,8 @@
 package com.waz.zclient.devices.data.source.local
 
 import com.waz.zclient.eq
-import com.waz.zclient.storage.db.clients.model.ClientDao
-import com.waz.zclient.storage.db.clients.service.ClientDbService
+import com.waz.zclient.storage.db.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.service.ClientsDao
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -18,26 +18,26 @@ class ClientsLocalDataSourceTest {
     private lateinit var localDataSource: ClientsLocalDataSource
 
     @Mock
-    private lateinit var clientDao: ClientDao
+    private lateinit var clientEntity: ClientEntity
 
     @Mock
-    private lateinit var clientDbService: ClientDbService
+    private lateinit var clientsDao: ClientsDao
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        localDataSource = ClientsLocalDataSource(clientDbService)
+        localDataSource = ClientsLocalDataSource(clientsDao)
     }
 
     @Test
     fun `Given clientById() is called, when dao result is successful, then return the data`() {
         runBlocking {
 
-            Mockito.`when`(clientDbService.clientById(TEST_CLIENT_ID)).thenReturn(clientDao)
+            Mockito.`when`(clientsDao.clientById(TEST_CLIENT_ID)).thenReturn(clientEntity)
 
             localDataSource.clientById(TEST_CLIENT_ID)
 
-            Mockito.verify(clientDbService).clientById(eq(TEST_CLIENT_ID))
+            Mockito.verify(clientsDao).clientById(eq(TEST_CLIENT_ID))
 
             assert(localDataSource.clientById(TEST_CLIENT_ID).isRight)
         }
@@ -47,11 +47,11 @@ class ClientsLocalDataSourceTest {
     fun `Given clientById() is called, when dao result is canceled, then return an error`() {
         runBlocking {
 
-            Mockito.`when`(clientDbService.clientById(TEST_CLIENT_ID)).thenReturn(clientDao)
+            Mockito.`when`(clientsDao.clientById(TEST_CLIENT_ID)).thenReturn(clientEntity)
 
             localDataSource.clientById(TEST_CLIENT_ID)
 
-            Mockito.verify(clientDbService).clientById(TEST_CLIENT_ID)
+            Mockito.verify(clientsDao).clientById(TEST_CLIENT_ID)
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -66,11 +66,11 @@ class ClientsLocalDataSourceTest {
     fun `Given allClients() is called, when dao result is successful, then return the data`() {
         runBlocking {
 
-            Mockito.`when`(clientDbService.allClients()).thenReturn(listOf(clientDao))
+            Mockito.`when`(clientsDao.allClients()).thenReturn(listOf(clientEntity))
 
             localDataSource.allClients()
 
-            Mockito.verify(clientDbService).allClients()
+            Mockito.verify(clientsDao).allClients()
 
             assert(localDataSource.allClients().isRight)
         }
@@ -80,11 +80,11 @@ class ClientsLocalDataSourceTest {
     fun `Given allClients() is called, when dao result is canceled, then return an error`() {
         runBlocking {
 
-            Mockito.`when`(clientDbService.allClients()).thenReturn(listOf(clientDao))
+            Mockito.`when`(clientsDao.allClients()).thenReturn(listOf(clientEntity))
 
             localDataSource.allClients()
 
-            Mockito.verify(clientDbService).allClients()
+            Mockito.verify(clientsDao).allClients()
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -98,9 +98,9 @@ class ClientsLocalDataSourceTest {
     fun `Given updateClients() is called, then update the dao with result`() {
         runBlocking {
 
-            localDataSource.updateClients(listOf(clientDao))
+            localDataSource.updateClients(listOf(clientEntity))
 
-            Mockito.verify(clientDbService).updateClients(eq(listOf(clientDao)))
+            Mockito.verify(clientsDao).updateClients(eq(listOf(clientEntity)))
         }
     }
 
@@ -108,9 +108,9 @@ class ClientsLocalDataSourceTest {
     fun `Given updateClient() is called, then update the dao with result`() {
         runBlocking {
 
-            localDataSource.updateClient(clientDao)
+            localDataSource.updateClient(clientEntity)
 
-            Mockito.verify(clientDbService).updateClient(eq(clientDao))
+            Mockito.verify(clientsDao).updateClient(eq(clientEntity))
         }
     }
 

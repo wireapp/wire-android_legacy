@@ -1,6 +1,6 @@
 package com.waz.zclient
 
-import com.waz.zclient.storage.db.users.model.UserDao
+import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.user.data.source.remote.model.UserApi
 import com.waz.zclient.user.domain.model.User
 
@@ -15,7 +15,7 @@ val userApi = UserApi(
     deleted = 0,
     managedBy = "test")
 
-val userDao = UserDao(
+val userDao = UserEntity(
     id = "id",
     teamId = "teamId",
     name = "name",

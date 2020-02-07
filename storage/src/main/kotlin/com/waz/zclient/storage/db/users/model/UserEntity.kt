@@ -4,8 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "user")
-data class UserDao(
+@Entity(tableName = "Users")
+data class UserEntity(
 
     @ColumnInfo(name = "_id")
     @PrimaryKey
