@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldNotBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -22,9 +21,9 @@ import org.mockito.Mockito.verifyNoInteractions
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class EditHandleViewModelTest : UnitTest() {
+class SettingsAccountEditHandleViewModelTest : UnitTest() {
 
-    private lateinit var editHandleViewModel: EditHandleViewModel
+    private lateinit var editHandleViewModel: SettingsAccountEditHandleViewModel
 
     @Mock
     private lateinit var checkHandleExistsUseCase: CheckHandleExistsUseCase
@@ -40,14 +39,14 @@ class EditHandleViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        editHandleViewModel = EditHandleViewModel(checkHandleExistsUseCase, changeHandleUseCase, getHandleUseCase, validateHandleUseCase)
+        editHandleViewModel = SettingsAccountEditHandleViewModel(checkHandleExistsUseCase, changeHandleUseCase, getHandleUseCase, validateHandleUseCase)
     }
 
     @Test
     fun `given afterHandleTextChanged is called, when input contains capital letters then update handle with lowercase values`() {
         editHandleViewModel.afterHandleTextChanged(TEST_HANDLE.toUpperCase())
 
-        editHandleViewModel.handle.observeOnce {
+        editHandleViewModel.handleLiveData.observeOnce {
             assert(it == TEST_HANDLE.toLowerCase())
         }
     }
@@ -62,11 +61,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe true
             }
 
-            editHandleViewModel.success.observeOnce {
+            editHandleViewModel.successLiveData.observeOnce {
                 it shouldBe HandleIsAvailable
             }
         }
@@ -79,7 +78,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe HandleSameAsCurrent
             }
 
@@ -96,11 +95,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe UnknownError
             }
         }
@@ -115,10 +114,10 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe HandleAlreadyExists
             }
         }
@@ -134,7 +133,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -149,7 +148,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -164,10 +163,10 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe UnknownError
             }
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -182,11 +181,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.afterHandleTextChanged(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe HandleInvalid
             }
         }
@@ -198,7 +197,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.dismiss.observeOnce {
+            editHandleViewModel.dismissLiveData.observeOnce {
                 it shouldBe Unit
             }
         }
@@ -211,7 +210,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -224,7 +223,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -237,11 +236,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe HandleInvalid
             }
         }
@@ -254,11 +253,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe UnknownError
             }
         }
@@ -272,11 +271,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onOkButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
 
-            editHandleViewModel.error.observeOnce {
+            editHandleViewModel.errorLiveData.observeOnce {
                 it shouldBe UnknownError
             }
         }
@@ -288,11 +287,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onBackButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe true
             }
 
-            editHandleViewModel.dismiss.observeOnce {
+            editHandleViewModel.dismissLiveData.observeOnce {
                 it shouldBe Unit
             }
         }
@@ -304,11 +303,11 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onBackButtonClicked(TEST_HANDLE)
 
-            editHandleViewModel.okEnabled.observeOnce {
+            editHandleViewModel.okEnabledLiveData.observeOnce {
                 it shouldBe false
             }
 
-            editHandleViewModel.dismiss.observeOnce {
+            editHandleViewModel.dismissLiveData.observeOnce {
                 it shouldBe Unit
             }
         }
@@ -320,7 +319,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onBackButtonClicked(null)
 
-            editHandleViewModel.dismiss.observeOnce {
+            editHandleViewModel.dismissLiveData.observeOnce {
                 it shouldBe Unit
             }
         }
@@ -332,7 +331,7 @@ class EditHandleViewModelTest : UnitTest() {
 
             editHandleViewModel.onBackButtonClicked(String.empty())
 
-            editHandleViewModel.dismiss.observeOnce {
+            editHandleViewModel.dismissLiveData.observeOnce {
                 it shouldBe Unit
             }
         }

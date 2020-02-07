@@ -20,6 +20,7 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.lenient
 import org.mockito.Mockito.mock
 
@@ -39,6 +40,9 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var changeEmailUseCase: ChangeEmailUseCase
 
     @Mock
+    private lateinit var accountsUrlConfig: AccountUrlConfig
+
+    @Mock
     private lateinit var user: User
 
     private lateinit var userFlow: Flow<User>
@@ -48,7 +52,8 @@ class SettingsAccountViewModelTest : UnitTest() {
         viewModel = SettingsAccountViewModel(
             getUserProfileUseCase,
             changeNameUseCase,
-            changeEmailUseCase)
+            changeEmailUseCase,
+            accountsUrlConfig)
         userFlow = flow { user }
     }
 
@@ -167,7 +172,21 @@ class SettingsAccountViewModelTest : UnitTest() {
         }
     }
 
+    @Test
+    fun `given reset password is clicked, then url observer is notified`() {
+        `when`(accountsUrlConfig.configUrl).thenReturn(TEST_ACCOUNT_CONFIG_URL)
+
+        viewModel.onResetPasswordClicked()
+
+
+        viewModel.resetPasswordUrlLiveData.observeOnce {
+            assert(it == "$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORLD_URL_SUFFIX")
+        }
+    }
+
     companion object {
+        private const val TEST_ACCOUNT_CONFIG_URL = "http://www.wire.com"
+        private const val TEST_RESET_PASSWORLD_URL_SUFFIX = "/forgot/"
         private const val TEST_NAME = "testName"
         private const val TEST_HANDLE = "@Wire"
         private const val TEST_EMAIL = "email@wire.com"
