@@ -1,6 +1,7 @@
 package com.waz.zclient.settings.account
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
@@ -174,7 +175,7 @@ class SettingsAccountViewModelTest : UnitTest() {
 
     @Test
     fun `given reset password is clicked, then url observer is notified`() {
-        `when`(accountsUrlConfig.configUrl).thenReturn(TEST_ACCOUNT_CONFIG_URL)
+        `when`(accountsUrlConfig.url).thenReturn(TEST_ACCOUNT_CONFIG_URL)
 
         viewModel.onResetPasswordClicked()
 

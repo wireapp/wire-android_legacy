@@ -1,5 +1,6 @@
 package com.waz.zclient.user.data.handle
 
+import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
@@ -15,7 +16,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 
 @ExperimentalCoroutinesApi
-class UserHandleRepositoryTest {
+class UserHandleRepositoryTest : UnitTest() {
 
     private lateinit var handleRepository: UserHandleRepository
 

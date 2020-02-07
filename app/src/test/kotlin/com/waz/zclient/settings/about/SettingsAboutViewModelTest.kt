@@ -2,6 +2,8 @@ package com.waz.zclient.settings.about
 
 import com.waz.zclient.R
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.config.AppDetailsConfig
+import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.domain.model.User
@@ -24,7 +26,7 @@ class SettingsAboutViewModelTest : UnitTest() {
     private lateinit var settingsAboutViewModel: SettingsAboutViewModel
 
     @Mock
-    private lateinit var urlConfig: UrlConfig
+    private lateinit var hostUrl: HostUrlConfig
 
     @Mock
     private lateinit var versionDetailsConfig: AppDetailsConfig
@@ -39,8 +41,8 @@ class SettingsAboutViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        settingsAboutViewModel = SettingsAboutViewModel(versionDetailsConfig, urlConfig, profileUseCase)
-        Mockito.`when`(urlConfig.configUrl).thenReturn(CONFIG_URL)
+        settingsAboutViewModel = SettingsAboutViewModel(versionDetailsConfig, hostUrl, profileUseCase)
+        Mockito.`when`(hostUrl.url).thenReturn(CONFIG_URL)
         userFlow = flow { user }
     }
 
@@ -101,7 +103,7 @@ class SettingsAboutViewModelTest : UnitTest() {
 
     @Test
     fun `given version button is clicked over 10 times, then show version details`() {
-        Mockito.`when`(versionDetailsConfig.version).thenReturn(TEST_VERSION)
+        Mockito.`when`(versionDetailsConfig.versionDetails).thenReturn(TEST_VERSION)
 
         for (i in 1..11) {
             settingsAboutViewModel.onVersionButtonClicked()
