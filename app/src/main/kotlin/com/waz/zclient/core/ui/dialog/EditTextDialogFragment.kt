@@ -24,7 +24,7 @@ class EditTextDialogFragment : DialogFragment() {
         val inflater = requireActivity().layoutInflater
         val view = inflater.inflate(R.layout.dialog_fragment_edit_text, null)
 
-        with(view.edit_text) {
+        with(view.editTextDialogInputEditText) {
             initialValue?.let {
                 setText(it)
                 setSelection(it.length)
@@ -35,9 +35,11 @@ class EditTextDialogFragment : DialogFragment() {
             .setTitle(title)
             .setView(view)
             .setPositiveButton(getString(android.R.string.ok)) { _, _ ->
-                positiveButtonAction(view.edit_text.text.toString().trim())
+                positiveButtonAction(view.editTextDialogInputEditText.text.toString().trim())
             }
-            .setNegativeButton(getString(android.R.string.cancel)) { _, _ -> negativeButtonAction() }
+            .setNegativeButton(getString(android.R.string.cancel)) { _, _ ->
+                negativeButtonAction()
+            }
             .create()
     }
 
@@ -59,8 +61,6 @@ class EditTextDialogFragment : DialogFragment() {
             .withArgs {
                 putString(TITLE_BUNDLE_KEY, title)
                 putString(DEFAULT_TEXT_BUNDLE_KEY, defaultValue)
-            }.also {
-                it.listener = dialogListener
-            }
+            }.also { it.listener = dialogListener }
     }
 }

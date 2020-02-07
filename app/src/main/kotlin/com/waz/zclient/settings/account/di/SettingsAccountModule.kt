@@ -30,15 +30,17 @@ val settingsAccountModule: Module = module {
 
     single { PhoneNumberUtil.getInstance() }
 
+    factory { ChangePhoneNumberUseCase(get()) }
     factory { DeletePhoneNumberUseCase(get()) }
     factory { CountryCodeAndPhoneNumberUseCase(get()) }
     factory { ValidatePhoneNumberUseCase() }
+
     factory { CheckHandleExistsUseCase(get()) }
     factory { GetHandleUseCase(get()) }
     factory { ValidateHandleUseCase() }
+    factory { ChangeHandleUseCase(get()) }
+
     factory { GetUserProfileUseCase(get()) }
     factory { ChangeNameUseCase(get()) }
-    factory { ChangePhoneNumberUseCase(get()) }
-    factory { ChangeHandleUseCase(get()) }
     factory { ChangeEmailUseCase(get()) }
 }

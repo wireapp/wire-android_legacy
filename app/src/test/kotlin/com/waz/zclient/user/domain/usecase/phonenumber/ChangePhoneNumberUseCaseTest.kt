@@ -2,7 +2,7 @@ package com.waz.zclient.user.domain.usecase.phonenumber
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
-import com.waz.zclient.user.data.phone.PhoneNumberRepository
+import com.waz.zclient.user.data.phone.UserPhoneNumberRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -17,7 +17,7 @@ class ChangePhoneNumberUseCaseTest : UnitTest() {
     private lateinit var changePhoneNumberUseCase: ChangePhoneNumberUseCase
 
     @Mock
-    private lateinit var phoneNumberRepository: PhoneNumberRepository
+    private lateinit var phoneNumberRepository: UserPhoneNumberRepository
 
     @Mock
     private lateinit var changePhoneParams: ChangePhoneNumberParams

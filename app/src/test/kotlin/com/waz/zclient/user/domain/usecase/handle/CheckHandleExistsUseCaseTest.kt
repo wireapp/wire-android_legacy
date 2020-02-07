@@ -2,7 +2,7 @@ package com.waz.zclient.user.domain.usecase.handle
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
-import com.waz.zclient.user.data.UsersRepository
+import com.waz.zclient.user.data.handle.UserHandleRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -17,14 +17,14 @@ class CheckHandleExistsUseCaseTest : UnitTest() {
     private lateinit var checkHandleExistsUseCase: CheckHandleExistsUseCase
 
     @Mock
-    private lateinit var userRepository: UsersRepository
+    private lateinit var handleRepository: UserHandleRepository
 
     @Mock
     private lateinit var checkHandleExistsParams: CheckHandleExistsParams
 
     @Before
     fun setup() {
-        checkHandleExistsUseCase = CheckHandleExistsUseCase(userRepository)
+        checkHandleExistsUseCase = CheckHandleExistsUseCase(handleRepository)
     }
 
     @Test
@@ -33,7 +33,7 @@ class CheckHandleExistsUseCaseTest : UnitTest() {
 
         checkHandleExistsUseCase.run(checkHandleExistsParams)
 
-        verify(userRepository).doesHandleExist(eq(TEST_HANDLE))
+        verify(handleRepository).doesHandleExist(eq(TEST_HANDLE))
     }
 
     companion object {

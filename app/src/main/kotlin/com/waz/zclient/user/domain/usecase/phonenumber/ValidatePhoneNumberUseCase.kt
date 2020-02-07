@@ -23,7 +23,6 @@ class ValidatePhoneNumberUseCase : UseCase<String, ValidatePhoneNumberParams>() 
             }
         }
 
-    //TODO determine if this is enough to cover all supported countries?
     private fun isPhoneNumberValid(phoneNumber: String) =
         phoneNumber.matches(PHONE_NUMBER_REGEX) || phoneNumber.isEmpty()
 

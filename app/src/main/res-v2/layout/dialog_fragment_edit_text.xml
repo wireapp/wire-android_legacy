@@ -24,7 +24,7 @@
     android:padding="@dimen/prefs__dialog__padding">
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/edit_text"
+        android:id="@+id/editTextDialogInputEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:singleLine="true" />

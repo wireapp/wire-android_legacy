@@ -88,7 +88,7 @@ class SettingsAccountViewModel(
     }
 
     fun onResetPasswordClicked() {
-        _resetPasswordUrlLiveData.value = "${accountUrlConfig.configUrl}$RESET_PASSWORD_URL_SUFFIX"
+        _resetPasswordUrlLiveData.value = "${accountUrlConfig.url}$RESET_PASSWORD_URL_SUFFIX"
     }
 
     companion object {
