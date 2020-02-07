@@ -9,10 +9,10 @@ import com.waz.zclient.user.domain.usecase.phonenumber.Country
 class CountryCodePickerViewModel(private val getCountryCodesUseCase: GetCountryCodesUseCase) : ViewModel() {
 
     private var _countriesLiveData = MutableLiveData<List<Country>>()
-    private var _countryCodeUpdated = MutableLiveData<Country>()
+    private var _countryLiveData = MutableLiveData<Country>()
 
     val countriesLiveData: LiveData<List<Country>> = _countriesLiveData
-    val countryLiveData: LiveData<Country> = _countryCodeUpdated
+    val countryLiveData: LiveData<Country> = _countryLiveData
 
     fun loadCountries(deviceLanguage: String) {
         getCountryCodesUseCase(viewModelScope, GetCountryCodesParams(deviceLanguage)) {
@@ -25,7 +25,7 @@ class CountryCodePickerViewModel(private val getCountryCodesUseCase: GetCountryC
     }
 
     fun onCountryCodeChanged(country: Country, countryDisplayName: String) {
-        _countryCodeUpdated.value =
+        _countryLiveData.value =
             if (!countryDisplayName.equals(country.countryDisplayName, false)) {
                 country
             } else Country.EMPTY
