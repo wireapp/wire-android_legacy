@@ -7,10 +7,10 @@ import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import kotlinx.coroutines.runBlocking
 
-class UserPhoneNumberDataSource(
+class PhoneNumberDataSource(
     private val usersRemoteDataSource: UsersRemoteDataSource,
     private val usersLocalDataSource: UsersLocalDataSource
-) : UserPhoneNumberRepository {
+) : PhoneNumberRepository {
 
     override suspend fun changePhone(phone: String) = changePhoneRemotely(phone)
         .onSuccess { runBlocking { changePhoneLocally(phone) } }

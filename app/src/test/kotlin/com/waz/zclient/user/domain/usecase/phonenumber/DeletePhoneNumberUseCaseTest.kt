@@ -1,7 +1,7 @@
 package com.waz.zclient.user.domain.usecase.phonenumber
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.user.data.phone.UserPhoneNumberRepository
+import com.waz.zclient.user.data.phone.PhoneNumberRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -15,7 +15,7 @@ class DeletePhoneNumberUseCaseTest : UnitTest() {
     private lateinit var deletePhoneNumberUseCase: DeletePhoneNumberUseCase
 
     @Mock
-    private lateinit var phoneNumberRepository: UserPhoneNumberRepository
+    private lateinit var phoneNumberRepository: PhoneNumberRepository
 
     @Before
     fun setup() {

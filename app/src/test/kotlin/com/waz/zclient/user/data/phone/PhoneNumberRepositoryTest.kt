@@ -16,7 +16,7 @@ import org.mockito.Mockito
 @ExperimentalCoroutinesApi
 class PhoneNumberRepositoryTest : UnitTest() {
 
-    private lateinit var phoneNumberRepository: UserPhoneNumberRepository
+    private lateinit var phoneNumberRepository: PhoneNumberRepository
 
     @Mock
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
@@ -26,7 +26,7 @@ class PhoneNumberRepositoryTest : UnitTest() {
 
     @Before
     fun setup() {
-        phoneNumberRepository = UserPhoneNumberDataSource(usersRemoteDataSource, usersLocalDataSource)
+        phoneNumberRepository = PhoneNumberDataSource(usersRemoteDataSource, usersLocalDataSource)
     }
 
     @Test
