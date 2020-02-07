@@ -14,10 +14,10 @@ class SettingsMainListItemsFactory private constructor() {
                 context.stringArrayFromResource(R.array.settings_titles)
                     .zip(context.stringArrayFromResource(R.array.settings_icons))
             val devTitles =
-                if (Config.developerSettingsEnabled())
+                if (Config.developerSettingsEnabled()) {
                     context.stringArrayFromResource(R.array.settings_developer_titles)
                         .zip(context.stringArrayFromResource(R.array.settings_developer_icons))
-                else emptyList()
+                } else emptyList()
             return listOf(titles, devTitles).flatten().map { SettingsMainItem(it.first, it.second) }
         }
     }
