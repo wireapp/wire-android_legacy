@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.appentry
 
-import android.app.FragmentManager
+import androidx.fragment.app.{FragmentManager}
 import android.content.DialogInterface
 import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
