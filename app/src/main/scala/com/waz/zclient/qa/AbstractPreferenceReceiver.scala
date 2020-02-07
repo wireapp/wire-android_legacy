@@ -100,6 +100,12 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
         implicit val injector = wireApplication.module
         wireApplication.inject[BackendController].setStoredBackendConfig(Backend.StagingBackend)
         setResultCode(Activity.RESULT_OK)
+      case SELECT_QA_BE =>
+        // Note, the app must be terminated for this to work.
+        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+        implicit val injector = wireApplication.module
+        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.QaBackend)
+        setResultCode(Activity.RESULT_OK)
       case SELECT_PROD_BE =>
         // Note, the app must be terminated for this to work.
         val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
@@ -130,6 +136,7 @@ object AbstractPreferenceReceiver {
   private val FULL_CONVERSATION_INTENT = packageName + ".intent.action.FULL_CONVERSATION_INTENT"
   private val HIDE_GDPR_POPUPS         = packageName + ".intent.action.HIDE_GDPR_POPUPS"
   private val SELECT_STAGING_BE        = packageName + ".intent.action.SELECT_STAGING_BE"
+  private val SELECT_QA_BE             = packageName + ".intent.action.SELECT_QA_BE"
   private val SELECT_PROD_BE           = packageName + ".intent.action.SELECT_PROD_BE"
 
   private lazy val DeveloperAnalyticsEnabled = PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")

@@ -51,6 +51,18 @@ object Backend {
     StagingFirebaseOptions,
     certPin)
 
+  //These are only here so that we can compile tests, the UI sets the backendConfig
+  val QaBackend = BackendConfig(
+    environment = "qa-demo",
+    baseUrl = "https://nginz-https.qa-demo.wire.link",
+    websocketUrl = "https://nginz-ssl.qa-demo.wire.link",
+    blacklistHost = "https://assets.qa-demo.wire.link/public/blacklist/android.json",
+    teamsUrl = "https://teams.qa-demo.wire.link",
+    accountsUrl = "https://account.qa-demo.wire.link",
+    websiteUrl = "https://webapp.qa-demo.wire.link",
+    StagingFirebaseOptions,
+    certPin)
+
   val ProdBackend = BackendConfig(
     environment = "prod",
     BuildConfig.BACKEND_URL,
