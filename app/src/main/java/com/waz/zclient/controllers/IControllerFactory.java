@@ -21,7 +21,6 @@ import android.app.Activity;
 import android.view.View;
 import com.waz.zclient.controllers.camera.ICameraController;
 import com.waz.zclient.controllers.confirmation.IConfirmationController;
-import com.waz.zclient.controllers.deviceuser.IDeviceUserController;
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController;
 import com.waz.zclient.controllers.location.ILocationController;
 import com.waz.zclient.controllers.navigation.INavigationController;
@@ -58,8 +57,6 @@ public interface IControllerFactory {
   ISlidingPaneController getSlidingPaneController();
 
   void setActivity(Activity activity);
-
-  IDeviceUserController getDeviceUserController();
 
   void tearDown();
 

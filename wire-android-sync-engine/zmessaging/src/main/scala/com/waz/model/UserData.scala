@@ -20,7 +20,7 @@ package com.waz.model
 import com.waz.api.Verification
 import com.waz.db.Col._
 import com.waz.db.Dao
-import com.waz.model
+import com.waz.{api, model}
 import com.waz.model.AssetMetaData.Image.Tag.Medium
 import com.waz.model.ManagedBy.ManagedBy
 import com.waz.model.UserData.ConnectionStatus
@@ -144,9 +144,9 @@ object UserData {
 
   lazy val Empty = UserData(UserId("EMPTY"), "")
 
-  type ConnectionStatus = com.waz.api.User.ConnectionStatus
+  type ConnectionStatus = api.ConnectionStatus
   object ConnectionStatus {
-    import com.waz.api.User.ConnectionStatus._
+    import com.waz.api.ConnectionStatus._
 
     val Unconnected = UNCONNECTED
     val PendingFromUser = PENDING_FROM_USER

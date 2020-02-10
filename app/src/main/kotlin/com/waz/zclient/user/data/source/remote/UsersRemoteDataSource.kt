@@ -8,8 +8,8 @@ import com.waz.zclient.user.data.source.remote.model.UserApi
 import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
 import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
-import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
 import com.waz.zclient.user.domain.usecase.handle.UnknownError
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
 
 class UsersRemoteDataSource(
     private val usersNetworkService: UsersNetworkService,
@@ -38,6 +38,9 @@ class UsersRemoteDataSource(
             HANDLE_AVAILABLE -> Either.Right(HandleIsAvailable)
             else -> Either.Left(UnknownError)
         }
+
+    suspend fun deletePhone(): Either<Failure, Any> =
+        request { usersNetworkService.deletePhone() }
 
     companion object {
         private const val HANDLE_TAKEN = 200

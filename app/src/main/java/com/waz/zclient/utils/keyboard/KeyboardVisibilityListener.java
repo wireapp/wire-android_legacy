@@ -18,9 +18,10 @@
 package com.waz.zclient.utils.keyboard;
 
 import android.view.View;
+
+import com.waz.zclient.core.logging.Logger;
 import com.waz.zclient.ui.utils.KeyboardUtils;
 import com.waz.zclient.utils.ContextUtils;
-import timber.log.Timber;
 
 public class KeyboardVisibilityListener {
     private final View contentView;
@@ -54,7 +55,7 @@ public class KeyboardVisibilityListener {
         int newKeyboardHeight = Math.max(0, KeyboardUtils.getKeyboardHeight(contentView) - statusAndNavigationBarHeight);
 
         if (newKeyboardHeight != keyboardHeight) {
-            Timber.i("keyboard height changes from %s to %s", keyboardHeight, newKeyboardHeight);
+            Logger.info("KeyboardVisibilityListener", "keyboard height changes from" + keyboardHeight + "to" + newKeyboardHeight);
             boolean visibilityChanged = keyboardHeight == 0 || newKeyboardHeight == 0;
             keyboardHeight = newKeyboardHeight;
 

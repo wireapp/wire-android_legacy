@@ -32,7 +32,7 @@ import com.waz.model.Mime
 import com.waz.threading.CancellableFuture.{CancelException, DefaultCancelException}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.wrappers.URI
-import com.waz.utils.{Cleanup, ContentURIs, Managed, RichFuture, SizeOf, returning}
+import com.waz.utils.{Cleanup, ContentURIs, Managed, RichFuture, returning}
 
 import scala.concurrent.duration._
 import scala.math._
@@ -52,7 +52,7 @@ case class AudioLevels(context: Context) extends DerivedLogTag {
         warn(l"cannot generate preview: no length available for $content")
         CancellableFuture.successful(None)
       case Some(length) =>
-        val samples = length / SizeOf.SHORT
+        val samples = length / PCM.SizeOfShort
         val cancelRequested = new AtomicBoolean
         returning(CancellableFuture {
           val overview = Managed(context.getContentResolver.openInputStream(URI.unwrap(content))) map { stream =>

@@ -17,6 +17,8 @@ import kotlinx.coroutines.runBlocking
 
 @ExperimentalCoroutinesApi
 @Suppress("TooManyFunctions")
+//TODO get rid of this class eventually as it's too broad,
+//It should be broken down into smaller Repositories
 class UsersDataSource(
     private val usersRemoteDataSource: UsersRemoteDataSource,
     private val usersLocalDataSource: UsersLocalDataSource,
@@ -62,13 +64,6 @@ class UsersDataSource(
     private suspend fun changeEmailRemotely(email: String) = usersRemoteDataSource.changeEmail(email)
 
     private suspend fun changeEmailLocally(email: String) = usersLocalDataSource.changeEmail(email)
-
-    override suspend fun changePhone(phone: String) = changePhoneRemotely(phone)
-        .onSuccess { runBlocking { changePhoneLocally(phone) } }
-
-    private suspend fun changePhoneRemotely(phone: String) = usersRemoteDataSource.changePhone(phone)
-
-    private suspend fun changePhoneLocally(phone: String) = usersLocalDataSource.changePhone(phone)
 
     override suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
         usersRemoteDataSource.doesHandleExist(newHandle)

@@ -9,7 +9,7 @@ import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
 import com.waz.zclient.devices.data.source.remote.model.ClientResponse
 import com.waz.zclient.eq
-import com.waz.zclient.storage.db.clients.model.ClientDao
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -131,7 +131,7 @@ class ClientsRepositoryTest {
 
     private fun generateMockApi(): ClientResponse = mock(ClientResponse::class.java)
 
-    private fun generateMockDao(): ClientDao = mock(ClientDao::class.java)
+    private fun generateMockDao(): ClientEntity = mock(ClientEntity::class.java)
 
 
     companion object {

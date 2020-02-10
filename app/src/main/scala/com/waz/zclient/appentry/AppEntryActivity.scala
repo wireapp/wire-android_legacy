@@ -17,6 +17,8 @@
   */
 package com.waz.zclient.appentry
 
+import java.net.URL
+
 import android.content.res.Configuration
 import android.content.{Context, Intent}
 import android.os.Bundle
@@ -32,9 +34,9 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.SpinnerController.{Hide, Show}
 import com.waz.zclient._
-import com.waz.zclient.appentry.AppEntryActivity._
 import com.waz.zclient.appentry.controllers.InvitationsController
-import com.waz.zclient.appentry.fragments.{TeamNameFragment, _}
+import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
+import com.waz.zclient.appentry.fragments._
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.deeplinks.DeepLink.{Access, ConversationToken, CustomBackendToken, UserToken}
@@ -52,27 +54,10 @@ import com.waz.zclient.views.LoadingIndicatorView
 import scala.collection.JavaConverters._
 
 object AppEntryActivity {
-  val TAG: String = classOf[AppEntryActivity].getName
-  private val HTTPS_PREFIX: String = "https://"
-  private val HTTP_PREFIX: String = "http://"
-  val PREFETCH_IMAGE_WIDTH: Int = 4
-
-  val MethodArg: String = "method_arg"
-  val LoginArgVal: Int = 0
-  val CreateTeamArgVal: Int = 1
-
-  def getLoginArgs: Bundle =
-    returning(new Bundle()) { b =>
-      b.putInt(MethodArg, LoginArgVal)
-    }
-
-  def getCreateTeamArgs: Bundle =
-    returning(new Bundle()) { b =>
-      b.putInt(MethodArg, CreateTeamArgVal)
-    }
+  def newIntent(context: Context) = new Intent(context, classOf[AppEntryActivity])
 }
 
-class AppEntryActivity extends BaseActivity {
+class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
 
   import Threading.Implicits.Ui
 
@@ -84,6 +69,8 @@ class AppEntryActivity extends BaseActivity {
   private lazy val spinnerController = inject[SpinnerController]
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val deepLinkService: DeepLinkService = inject[DeepLinkService]
+  private lazy val backendController = inject[BackendController]
+
   private var createdFromSavedInstance: Boolean = false
   private var isPaused: Boolean = false
 
@@ -98,7 +85,9 @@ class AppEntryActivity extends BaseActivity {
       VerifyPhoneFragment.Tag,
       CountryDialogFragment.TAG,
       PhoneSetNameFragment.Tag,
-      InviteToTeamFragment.Tag
+      InviteToTeamFragment.Tag,
+      WelcomeFragment.Tag,
+      CustomBackendLoginFragment.TAG
     )
 
     Signal(accountsService.zmsInstances.map(_.nonEmpty), attachedFragment).map {
@@ -127,6 +116,8 @@ class AppEntryActivity extends BaseActivity {
   override def onCreate(savedInstanceState: Bundle): Unit = {
     if (getActionBar != null) getActionBar.hide()
     super.onCreate(savedInstanceState)
+
+
     ViewUtils.lockScreenOrientation(Configuration.ORIENTATION_PORTRAIT, this)
     setContentView(R.layout.activity_signup)
     enableProgress(false)
@@ -166,37 +157,7 @@ class AppEntryActivity extends BaseActivity {
         verbose(l"got custom backend url: $configUrl")
         deepLinkService.deepLink ! None
 
-        inject[AccentColorController].accentColor.head.flatMap { color =>
-          showConfirmationDialog(
-            title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
-            msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
-            positiveRes = R.string.custom_backend_dialog_connect,
-            negativeRes = android.R.string.cancel,
-            color = color
-          )
-        }.foreach {
-          case false =>
-          case true =>
-            enableProgress(true)
-            inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
-              case Left(errorResponse) =>
-                error(l"error trying to download backend config.", errorResponse)
-                enableProgress(false)
-
-                showErrorDialog(
-                  R.string.custom_backend_dialog_network_error_title,
-                  R.string.custom_backend_dialog_network_error_message)
-
-              case Right(config) =>
-                enableProgress(false)
-
-                inject[BackendController].switchBackend(inject[GlobalModule], config, configUrl)
-
-                // re-present fragment for updated ui.
-                getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-            }
-        }
+        showCustomBackendDialog(configUrl)
 
       case DoNotOpenDeepLink(Access, UserLoggedIn) =>
         verbose(l"do not open, Access, user logged in")
@@ -222,38 +183,53 @@ class AppEntryActivity extends BaseActivity {
     }
   }
 
-  // It is possible to open the app through intents with deep links. If that happens, we can't just
-  // show the fragment that was opened previously - we have to take the user to the fragment specified
-  // by the intent (at this point the information about it should be already stored somewhere).
-  // If this is the case, in `onResume` we can pop back the stack and show the new fragment.
-  override def onResume(): Unit = {
-    super.onResume()
-    // if the SSO token is present we use it to log in the user
-    userAccountsController.ssoToken.head.foreach {
-      case Some(_) =>
-        getSupportFragmentManager.popBackStackImmediate(AppLaunchFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-      case _ =>
-    }(Threading.Ui)
+   def showCustomBackendDialog(configUrl: URL): Unit = {
+    inject[AccentColorController].accentColor.head.flatMap { color =>
+      showConfirmationDialog(
+        title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
+        msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+        positiveRes = R.string.custom_backend_dialog_connect,
+        negativeRes = android.R.string.cancel,
+        color = color
+      )
+    }.foreach {
+      case false =>
+      case true =>
+        enableProgress(true)
+        inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+          case Left(errorResponse) =>
+            error(l"error trying to download backend config.", errorResponse)
+            enableProgress(false)
+
+            showErrorDialog(
+              R.string.custom_backend_dialog_network_error_title,
+              R.string.custom_backend_dialog_network_error_message)
+
+          case Right(config) =>
+            enableProgress(false)
+
+            backendController.switchBackend(inject[GlobalModule], config, configUrl)
+
+            // re-present fragment for updated ui.
+            getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            showCustomBackendLoginScreen()
+        }
+    }
   }
 
-  private def showFragment(): Unit = withFragmentOpt(AppLaunchFragment.Tag) {
-    case Some(_) =>
-    case None =>
-      userAccountsController.ssoToken.head.foreach {
-        case Some(_) =>
-        // if the SSO token is present we will handle it in onResume
-        case _ =>
-          Option(getIntent.getExtras).map(_.getInt(MethodArg)) match {
-            case Some(LoginArgVal) => showFragment(SignInFragment(), SignInFragment.Tag, animated = false)
-            case Some(CreateTeamArgVal) => showFragment(TeamNameFragment(), TeamNameFragment.Tag, animated = false)
-            case _ if !BuildConfig.ACCOUNT_CREATION_ENABLED =>
-              showFragment(SignInFragment(SignInFragment.SignInOnlyLogin), SignInFragment.Tag, animated = false)
-            case _ => showFragment(AppLaunchFragment(), AppLaunchFragment.Tag, animated = false)
-          }
-      }(Threading.Ui)
+   private def showCustomBackendLoginScreen(): Unit = {
+     val customBackendLoginFragment = new CustomBackendLoginFragment
+     customBackendLoginFragment.onEmailLoginClick.onUi { _ => showEmailSignInForCustomBackend() }
+     showFragment(customBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)
   }
 
+  private def showFragment(): Unit =
+    if (backendController.hasCustomBackend) {
+      getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+      showCustomBackendLoginScreen()
+    } else {
+      showFragment(WelcomeFragment(), WelcomeFragment.Tag, animated = false)
+    }
 
   override def onAttachFragment(fragment: Fragment): Unit = {
     super.onAttachFragment(fragment)
@@ -277,19 +253,13 @@ class AppEntryActivity extends BaseActivity {
   }
 
   def enableProgress(enabled: Boolean): Unit = {
-    if (enabled)
-      progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
-    else
-      progressView.hide()
+    Option(progressView).foreach { _ =>
+      if (enabled) progressView.show(LoadingIndicatorView.SpinnerWithDimmedBackground(), darkTheme = true)
+      else progressView.hide()
+    }
   }
 
-  def abortAddAccount(): Unit =
-    Option(getIntent.getExtras).map(_.getInt(MethodArg, -1)) match {
-      case Some(LoginArgVal | CreateTeamArgVal) =>
-        startActivity(Intents.OpenSettingsIntent(this))
-      case _ =>
-        onEnterApplication(false)
-    }
+  def abortAddAccount(): Unit = onEnterApplication(openSettings = false)
 
   def onEnterApplication(openSettings: Boolean, clientRegState: Option[ClientRegistrationState] = None): Unit = {
     getControllerFactory.getVerificationController.finishVerification()
@@ -297,15 +267,6 @@ class AppEntryActivity extends BaseActivity {
     clientRegState.foreach(state => intent.putExtra(MainActivity.ClientRegStateArg, PrefCodec.SelfClientIdCodec.encode(state)))
     startActivity(intent)
     finish()
-  }
-
-  private def setDefaultAnimation(transaction: FragmentTransaction): FragmentTransaction = {
-    transaction.setCustomAnimations(
-      R.anim.fragment_animation_second_page_slide_in_from_right,
-      R.anim.fragment_animation_second_page_slide_out_to_left,
-      R.anim.fragment_animation_second_page_slide_in_from_left,
-      R.anim.fragment_animation_second_page_slide_out_to_right)
-    transaction
   }
 
   def openCountryBox(): Unit = {
@@ -325,13 +286,12 @@ class AppEntryActivity extends BaseActivity {
     KeyboardUtils.showKeyboard(this)
   }
 
-  def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
-    val transaction = getSupportFragmentManager.beginTransaction()
-    if (animated) setDefaultAnimation(transaction)
-    transaction
-      .replace(R.id.fl_main_content, f, tag)
-      .addToBackStack(tag)
-      .commit
+  override def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = {
+    TransactionHandler.showFragment(this, f, tag, animated, R.id.fl_main_content)
     enableProgress(false)
   }
+
+  def showEmailSignInForCustomBackend(): Unit =
+    showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
 }
+

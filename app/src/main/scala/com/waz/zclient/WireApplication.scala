@@ -67,7 +67,6 @@ import com.waz.zclient.common.controllers.global.{AccentColorController, Clients
 import com.waz.zclient.controllers._
 import com.waz.zclient.controllers.camera.ICameraController
 import com.waz.zclient.controllers.confirmation.IConfirmationController
-import com.waz.zclient.controllers.deviceuser.IDeviceUserController
 import com.waz.zclient.controllers.globallayout.IGlobalLayoutController
 import com.waz.zclient.controllers.location.ILocationController
 import com.waz.zclient.controllers.navigation.INavigationController
@@ -210,7 +209,6 @@ object WireApplication extends DerivedLogTag {
     bind [IUserPreferencesController]    toProvider controllerFactory.getUserPreferencesController
     bind [ISingleImageController]        toProvider controllerFactory.getSingleImageController
     bind [ISlidingPaneController]        toProvider controllerFactory.getSlidingPaneController
-    bind [IDeviceUserController]         toProvider controllerFactory.getDeviceUserController
     bind [IGlobalLayoutController]       toProvider controllerFactory.getGlobalLayoutController
     bind [ILocationController]           toProvider controllerFactory.getLocationController
     bind [ICameraController]             toProvider controllerFactory.getCameraController

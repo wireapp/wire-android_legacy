@@ -1350,11 +1350,18 @@
     <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
     <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
 
+    <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
+    <string name="enterprise_signin_email_sso_invalid_input_error">Please enter a valid email or SSO access code.</string>
+    <string name="enterprise_signin_sso_invalid_input_error">Please enter a valid SSO access code.</string>
+    <string name="enterprise_signin_email_multiple_servers_not_supported">This email is linked to a different server, but the app can only be connected to one server at a time. Please log out of all Wire accounts on this device and try to log in again.</string>
+
     <string name="sso_signin_wrong_code_title">Invalid code</string>
     <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
 
     <string name="sso_signin_max_accounts_title">Two accounts active</string>
     <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
+
+    <string name="custom_backend_welcome">Welcome to\n%1$s workspace</string>
 
     <string name="participant_search_hint">SEARCH FOR NAMES</string>
     <string name="participant_search_title">PARTICIPANTS</string>
@@ -1453,10 +1460,26 @@
     <string name="shortcut_share_a_photo_label">Share Photo</string>
     <string name="shortcut_new_message_label">New Message</string>
 
+    <!-- Settings Account - Edit Phone -->
+    <string name="edit_phone_dialog_country_code_error">Invalid country code</string>
+    <string name="edit_phone_dialog_phone_number_error">Invalid phone number</string>
+
+    <!-- SSO Login -->
+    <string name="sso_login_dialog_title">Enterprise Login</string>
+    <string name="sso_login_dialog_message">Please enter your SSO code:</string>
+    <string name="email_sso_login_dialog_message">Please enter your email or SSO code:</string>
+
+    <!-- Welcome -->
+    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_enterprise_log_in">Enterprise Login</string>
+    <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
+    <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
+
     <!-- Updated edit handle screen -->
     <string name="edit_account_handle_error_already_taken">Already taken</string>
-    <string name="edit_account_handle_error_too_short">Must be longer than 2 letters</string>
-    <string name="edit_account_handle_error_invalid_characters">Invalid characters: a–z, 0–9, and _ only</string>
+    <string name="edit_account_handle_error_too_short">At least 2 characters</string>
+    <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
-
+    <string name="edit_phone_remove_phone_number">Remove phone number</string>
+    <string name="edit_phone_save_phone_number">Save</string>
 </resources>

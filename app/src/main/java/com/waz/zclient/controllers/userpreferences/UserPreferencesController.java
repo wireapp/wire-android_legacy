@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 public class UserPreferencesController implements IUserPreferencesController {
 
@@ -38,7 +37,6 @@ public class UserPreferencesController implements IUserPreferencesController {
     //TODO Move these preferences to the UserPreferences service in SE, since a lot of them are user-scoped anyway.
     public static final String USER_PREFS_LAST_ACCENT_COLOR = "USER_PREFS_LAST_ACCENT_COLOR";
     public static final String USER_PREFS_REFERRAL_TOKEN = "USER_PREFS_REFERRAL_TOKEN";
-    public static final String USER_PREFS_GENERIC_INVITATION_TOKEN = "USER_PREFS_GENERIC_INVITATION_TOKEN";
     public static final String USER_PREFS_PERSONAL_INVITATION_TOKEN = "USER_PREFS_PERSONAL_INVITATION_TOKEN";
     private static final String USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG = "USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG ";
     private static final String USER_PREF_PHONE_VERIFICATION_CODE = "PREF_PHONE_VERIFICATION_CODE";
@@ -47,19 +45,14 @@ public class UserPreferencesController implements IUserPreferencesController {
     private static final String USER_PREF_UNSUPPORTED_EMOJIS = "USER_PREF_UNSUPPORTED_EMOJIS";
     private static final String USER_PREF_UNSUPPORTED_EMOJIS_CHECKED = "USER_PREF_UNSUPPORTED_EMOJIS_CHECKED";
 
-    private static final String PREFS_DEVICE_ID = "com.waz.device.id";
-
     private final SharedPreferences userPreferences;
-    private Context context;
 
     public UserPreferencesController(Context context) {
         userPreferences = context.getSharedPreferences(USER_PREFS_TAG, Context.MODE_PRIVATE);
-        this.context = context;
     }
 
     @Override
     public void tearDown() {
-        context = null;
     }
 
     @SuppressLint("CommitPrefEdits")
@@ -79,26 +72,6 @@ public class UserPreferencesController implements IUserPreferencesController {
     @Override
     public boolean showContactsDialog() {
         return userPreferences.getBoolean(USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG, true);
-    }
-
-    @Override
-    public String getDeviceId() {
-        String id = userPreferences.getString(PREFS_DEVICE_ID, null);
-        if (id == null) {
-            id = getLegacyDeviceId();
-            if (id == null) {
-                id = UUID.randomUUID().toString();
-            }
-            userPreferences.edit()
-                           .putString(PREFS_DEVICE_ID, id)
-                           .apply();
-        }
-        return id;
-    }
-
-    private String getLegacyDeviceId() {
-        SharedPreferences prefs = context.getSharedPreferences("zprefs", Context.MODE_PRIVATE);
-        return prefs.getString(PREFS_DEVICE_ID, null);
     }
 
     @Override

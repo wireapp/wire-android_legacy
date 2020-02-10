@@ -63,30 +63,14 @@
             android:id="@+id/ttv_signin_forgot_password"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="start"
             android:paddingTop="@dimen/wire__padding__small"
             android:paddingBottom="@dimen/wire__padding__small"
-            android:layout_gravity="start"
             android:text="@string/new_reg__password__forgot"
             android:textAllCaps="true"
             android:textColor="@drawable/selector__simple_text_button"
             android:textSize="@dimen/wire__text_size__small"
-            app:w_font="@string/wire__typeface__medium"
-            />
-
-        <com.waz.zclient.ui.text.TypefaceTextView
-            android:id="@+id/ttv_signin_sso"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="@dimen/wire__padding__small"
-            android:paddingBottom="@dimen/wire__padding__small"
-            android:layout_gravity="end"
-            android:text="@string/sso_signin_button"
-            android:textAllCaps="true"
-            android:textColor="@drawable/selector__simple_text_button"
-            android:textSize="@dimen/wire__text_size__small"
-            app:w_font="@string/wire__typeface__medium"
-            />
-
+            app:w_font="@string/wire__typeface__medium" />
     </FrameLayout>
 
 </LinearLayout>

@@ -14,6 +14,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleFragment
+import com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity
 import com.waz.zclient.settings.account.logout.LogoutDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,11 +54,19 @@ class SettingsAccountFragment : Fragment() {
     //TODO Will need changing to a phone dialog
     private fun initAccountPhoneNumber() {
         settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
-        settingsAccountPhoneContainerLinearLayout.setOnClickListener {
-            val title = getString(R.string.pref_account_add_phone_title)
-            val defaultValue = settingsAccountPhoneTitleTextView.text.toString()
-            showGenericEditDialog(title, defaultValue) { settingsAccountViewModel.updatePhone(it) }
+        settingsAccountViewModel.phoneDialogLiveData.observe(viewLifecycleOwner) {
+            when (it) {
+                DialogDetail.EMPTY -> showAddPhoneDialog()
+                else -> launchEditPhoneScreen(it.number, it.hasEmail)
+            }
         }
+        settingsAccountPhoneContainerLinearLayout.setOnClickListener {
+            settingsAccountViewModel.onPhoneContainerClicked()
+        }
+    }
+
+    private fun showAddPhoneDialog() {
+        //Show add phone dialog here
     }
 
     private fun initAccountEmail() {
@@ -125,23 +134,26 @@ class SettingsAccountFragment : Fragment() {
         }
     }
 
-    private fun showErrorMessage(errorMessage: String) {
+    private fun showErrorMessage(errorMessage: String) =
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
-    }
 
     private fun showLogoutDialog() {
         LogoutDialogFragment.newInstance()
             .show(requireActivity().supportFragmentManager, String.empty())
     }
 
-    private fun showEditHandleDialog() {
-        settingsAccountViewModel.handleLiveData.value?.let {
-            EditHandleFragment.newInstance(it)
-                .show(requireActivity().supportFragmentManager, String.empty())
-        }
-    }
+    private fun showEditHandleDialog() =
+        EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
+            .show(requireActivity().supportFragmentManager, String.empty())
 
-    private fun showGenericEditDialog(title: String, defaultValue: String, updateFunc: (String) -> Unit) {
+    private fun launchEditPhoneScreen(phoneNumber: String, hasEmail: Boolean) =
+        startActivity(EditPhoneNumberActivity.newIntent(requireContext(), phoneNumber, hasEmail))
+
+    private fun showGenericEditDialog(
+        title: String,
+        defaultValue: String,
+        updateFunc: (String) -> Unit
+    ) =
         EditTextDialogFragment.newInstance(title, defaultValue,
             object : EditTextDialogFragment.EditTextDialogFragmentListener {
                 override fun onTextEdited(newValue: String) {
@@ -149,7 +161,6 @@ class SettingsAccountFragment : Fragment() {
                 }
             }
         ).show(requireActivity().supportFragmentManager, String.empty())
-    }
 
     companion object {
         private const val Accounts = "|ACCOUNTS|"

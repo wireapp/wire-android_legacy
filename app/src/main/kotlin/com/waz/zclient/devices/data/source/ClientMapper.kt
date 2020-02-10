@@ -3,11 +3,11 @@ package com.waz.zclient.devices.data.source
 import com.waz.zclient.devices.data.source.remote.model.ClientResponse
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
-import com.waz.zclient.storage.db.clients.model.ClientDao
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 
 class ClientMapper {
 
-    fun toClient(clientDao: ClientDao) = with(clientDao) {
+    fun toClient(clientEntity: ClientEntity) = with(clientEntity) {
         Client(
             time = time,
             label = label,
@@ -34,7 +34,7 @@ class ClientMapper {
     }
 
     fun toClientDao(client: Client) = with(client) {
-        ClientDao(
+        ClientEntity(
             id = id,
             time = time,
             label = label,
@@ -50,12 +50,12 @@ class ClientMapper {
         )
     }
 
-    fun toListOfClientDao(list: List<Client>): List<ClientDao> = list.map {
+    fun toListOfClientDao(list: List<Client>): List<ClientEntity> = list.map {
         toClientDao(it)
     }
 
     @JvmName("clientDaoToClients")
-    fun toListOfClients(list: List<ClientDao>): List<Client> = list.map {
+    fun toListOfClients(list: List<ClientEntity>): List<Client> = list.map {
         toClient(it)
     }
 

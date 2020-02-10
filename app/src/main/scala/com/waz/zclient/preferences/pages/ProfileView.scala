@@ -99,8 +99,7 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     newTeamButton.setVisible(true)
     newTeamButton.onClickEvent.on(Threading.Ui) { _ =>
       // We want to go directly to the landing page.
-      val intent = new Intent(getContext, classOf[AppEntryActivity])
-      getContext.startActivity(intent)
+      getContext.startActivity(AppEntryActivity.newIntent(getContext))
     }
   } else {
     newTeamButton.setVisible(false)

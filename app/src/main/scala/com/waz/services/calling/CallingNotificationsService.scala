@@ -56,6 +56,6 @@ class CallingNotificationsService extends ServiceHelper with DerivedLogTag {
 
   private def shouldShowNotification(notification: CallNotification): Boolean = {
     val notificationHasAction = notification.action != NotificationAction.Nothing
-    notificationHasAction && !(isAndroid10OrAbove && isUiActive)
+    notificationHasAction && (isAndroid10OrAbove && !isUiActive)
   }
 }

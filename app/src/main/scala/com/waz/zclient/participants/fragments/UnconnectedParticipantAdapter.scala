@@ -74,8 +74,6 @@ class UnconnectedParticipantAdapter(userId:      UserId,
 }
 
 object UnconnectedParticipantAdapter {
-  val UserName = 4
-
   case class UserNameViewHolder(view: View) extends ViewHolder(view) {
     private lazy val userName   = view.findViewById[TypefaceTextView](R.id.user_name)
     private lazy val userHandle = view.findViewById[TypefaceTextView](R.id.user_handle)
@@ -83,6 +81,7 @@ object UnconnectedParticipantAdapter {
     def bind(userName: String, userHandle: String): Unit = {
       this.userName.setText(userName)
       this.userHandle.setText(userHandle)
+      view.setContentDescription(s"User: $userName")
     }
   }
 }

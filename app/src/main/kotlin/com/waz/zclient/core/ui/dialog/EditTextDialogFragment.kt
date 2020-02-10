@@ -11,20 +11,6 @@ import kotlinx.android.synthetic.main.dialog_fragment_edit_text.view.*
 
 class EditTextDialogFragment : DialogFragment() {
 
-    companion object {
-        private const val TITLE_BUNDLE_KEY = "titleBundleKey"
-        private const val DEFAULT_TEXT_BUNDLE_KEY = "defaultTextBundleKey"
-
-        fun newInstance(title: String, defaultValue: String, dialogListener: EditTextDialogFragmentListener):
-            EditTextDialogFragment = EditTextDialogFragment()
-            .withArgs {
-                putString(TITLE_BUNDLE_KEY, title)
-                putString(DEFAULT_TEXT_BUNDLE_KEY, defaultValue)
-            }.also {
-                it.listener = dialogListener
-            }
-    }
-
     private var listener: EditTextDialogFragmentListener? = null
 
     interface EditTextDialogFragmentListener {
@@ -62,5 +48,19 @@ class EditTextDialogFragment : DialogFragment() {
 
     private fun negativeButtonAction() {
         dismiss()
+    }
+
+    companion object {
+        private const val TITLE_BUNDLE_KEY = "titleBundleKey"
+        private const val DEFAULT_TEXT_BUNDLE_KEY = "defaultTextBundleKey"
+
+        fun newInstance(title: String, defaultValue: String, dialogListener: EditTextDialogFragmentListener):
+            EditTextDialogFragment = EditTextDialogFragment()
+            .withArgs {
+                putString(TITLE_BUNDLE_KEY, title)
+                putString(DEFAULT_TEXT_BUNDLE_KEY, defaultValue)
+            }.also {
+                it.listener = dialogListener
+            }
     }
 }

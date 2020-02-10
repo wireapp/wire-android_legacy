@@ -41,4 +41,15 @@ class SSOServiceSpec extends ZSpec {
 
   }
 
+  feature("login by domain") {
+
+    scenario("given a valid email address, when extractDomain called, returns the part after @ sign") {
+      val email = "somebody@team-22.gmail.com"
+
+      val domain = service.extractDomain(email)
+
+      domain shouldBe "team-22.gmail.com"
+    }
+  }
+
 }
