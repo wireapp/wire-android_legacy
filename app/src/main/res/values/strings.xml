@@ -1401,7 +1401,7 @@
     <string name="custom_backend_dialog_connect">Connect</string>
 
     <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
-    <string name="custom_backend_dialog_confirmation_message">This configuration will connect the app to a third-party server: %1$s</string>
+    <string name="custom_backend_dialog_confirmation_message">This action will connect the app to a custom server: %1$s</string>
 
     <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
 
