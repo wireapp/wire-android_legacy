@@ -95,7 +95,9 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        Injector.start(this);
+        if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+            Injector.start(this);
+        }
 
         AndroidThreeTen.init(this);
         TypefaceFactory.getInstance().init(typefaceloader);
