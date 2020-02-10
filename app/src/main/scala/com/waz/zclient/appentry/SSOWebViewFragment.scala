@@ -41,22 +41,13 @@ import scala.concurrent.Future
 class SSOWebViewFragment extends FragmentHelper {
   import Threading.Implicits.Ui
 
-  private lazy val webView = view[WebView](R.id.web_view)
+  private val webView = view[WebView](R.id.web_view)
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     inflater.inflate(R.layout.fragment_sso_webview, container, false)
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
-
-    webView.foreach { webView =>
-      val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
-      webViewWrapper.onUrlChanged.onUi { url =>
-        webView.findViewById[TextView](R.id.title).setText(Option(URI.parse(url).getHost).getOrElse(""))
-      }
-
-      getStringArg(SSOWebViewFragment.SSOCode).foreach(code => webViewWrapper.loginWithCode(code).foreach(ssoResponse))
-    }
 
     val toolbar = view.findViewById[Toolbar](R.id.toolbar)
     toolbar.setNavigationIcon(R.drawable.action_back_dark)
@@ -100,11 +91,36 @@ class SSOWebViewFragment extends FragmentHelper {
     true
   }
 
+  override def onResume(): Unit = {
+    super.onResume()
+    loadWebView()
+  }
+
   override def onPause(): Unit = {
     super.onPause()
-    onBackPressed()
+    clearWebView()
   }
-  
+
+  private def loadWebView(): Unit = {
+    webView.foreach { webView =>
+      val webViewWrapper = new SSOWebViewWrapper(webView, ZMessaging.currentGlobal.backend.baseUrl.toString)
+      webViewWrapper.onUrlChanged.onUi { url =>
+        webView.findViewById[TextView](R.id.title).setText(Option(URI.parse(url).getHost).getOrElse(""))
+      }
+
+      getStringArg(SSOWebViewFragment.SSOCode).foreach(code => webViewWrapper.loginWithCode(code).foreach(ssoResponse))
+    }
+  }
+
+  private def clearWebView(): Unit = {
+    webView.foreach { webView =>
+      webView.clearCache(true)
+      webView.clearFormData
+      webView.clearHistory
+
+    }
+  }
+
   def activity = getActivity.asInstanceOf[AppEntryActivity]
 
 }
