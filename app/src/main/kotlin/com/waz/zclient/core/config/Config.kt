@@ -1,5 +1,8 @@
 package com.waz.zclient.core.config
+
 import com.waz.zclient.BuildConfig
+import org.koin.core.module.Module
+import org.koin.dsl.module
 
 object Config {
     fun applicationId() = BuildConfig.APPLICATION_ID
@@ -12,3 +15,16 @@ object Config {
     fun accountsUrl() = BuildConfig.ACCOUNTS_URL
     fun allowSso() = BuildConfig.ALLOW_SSO
 }
+
+val configModule: Module = module {
+    factory { HostUrlConfig(Config.websiteUrl()) }
+    factory { AppDetailsConfig("${Config.versionCode()} ${Config.versionName()}") }
+    factory { AccountUrlConfig(Config.accountsUrl()) }
+    factory { DeveloperOptionsConfig(Config.developerSettingsEnabled()) }
+}
+
+data class DeveloperOptionsConfig(val isDeveloperSettingsEnabled: Boolean) : ConfigItem()
+data class AppDetailsConfig(val versionDetails: String) : ConfigItem()
+data class AccountUrlConfig(val url: String) : ConfigItem()
+data class HostUrlConfig(val url: String) : ConfigItem()
+sealed class ConfigItem

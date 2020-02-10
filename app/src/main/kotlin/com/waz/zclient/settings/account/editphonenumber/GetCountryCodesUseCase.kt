@@ -1,6 +1,7 @@
 package com.waz.zclient.settings.account.editphonenumber
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
+import com.waz.zclient.core.config.DeveloperOptionsConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
@@ -9,7 +10,7 @@ import java.util.Locale
 
 class GetCountryCodesUseCase(
     private val phoneNumberUtils: PhoneNumberUtil,
-    private val developerOptionsEnabled: Boolean
+    private val developerOptionsConfig: DeveloperOptionsConfig
 ) : UseCase<List<Country>, GetCountryCodesParams>() {
 
     override suspend fun run(params: GetCountryCodesParams): Either<Failure, List<Country>> {
@@ -21,7 +22,7 @@ class GetCountryCodesUseCase(
             countries.add(country)
         }
         countries.sortBy { it.countryDisplayName }
-        if (developerOptionsEnabled) {
+        if (developerOptionsConfig.isDeveloperSettingsEnabled) {
             val qaCountry = Country(QA_COUNTRY, QA_DISPLAY_COUNTRY, QA_COUNTRY_CODE)
             countries.add(0, qaCountry)
         }

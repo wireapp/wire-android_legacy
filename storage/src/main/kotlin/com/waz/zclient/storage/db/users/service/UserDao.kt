@@ -3,17 +3,17 @@ package com.waz.zclient.storage.db.users.service
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.waz.zclient.storage.db.users.model.UserDao
+import com.waz.zclient.storage.db.users.model.UserEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface UserDbService {
+interface UserDao {
 
     @Insert
-    suspend fun insert(user: UserDao)
+    suspend fun insert(user: UserEntity)
 
     @Query("SELECT * from Users WHERE _id = :userId")
-    fun byId(userId: String): Flow<UserDao>
+    fun byId(userId: String): Flow<UserEntity>
 
     @Query("UPDATE Users SET name=:name WHERE _id = :userId")
     suspend fun updateName(userId: String, name: String)

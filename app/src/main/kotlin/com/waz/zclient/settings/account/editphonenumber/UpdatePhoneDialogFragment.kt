@@ -16,14 +16,13 @@ class UpdatePhoneDialogFragment : DialogFragment() {
     private val phoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
 
     private val phoneNumber: String by lazy {
-        arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty())
-            ?: String.empty()
+        arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireActivity())
             .setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
-            .setMessage(getString(R.string.pref__account_action__dialog__add_phone__confirm__message, phoneNumber))
+            .setMessage(getString(R.string.edit_phone_dialog_delete_phone_confirmation, phoneNumber))
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 phoneNumberViewModel.onPhoneNumberConfirmed(phoneNumber)
             }
@@ -39,8 +38,7 @@ class UpdatePhoneDialogFragment : DialogFragment() {
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
 
         fun newInstance(phoneNumber: String) =
-            UpdatePhoneDialogFragment().withArgs {
-                putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
-            }
+            UpdatePhoneDialogFragment()
+                .withArgs { putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber) }
     }
 }

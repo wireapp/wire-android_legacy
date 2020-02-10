@@ -38,14 +38,14 @@ class CountryCodePickerFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initRecyclerView()
+        initCountriesList()
 
         lifecycleScope.launchWhenResumed {
             countryCodePickerViewModel.loadCountries(requireActivity().getDeviceLocale().language)
         }
     }
 
-    private fun initRecyclerView() {
+    private fun initCountriesList() {
         rootView.countryCodePickDialogRecyclerView.adapter = countryAdapter
         countryAdapter.setOnItemClickListener(
             object : CountryCodesRecyclerAdapter.CountryCodeRecyclerItemClickListener {

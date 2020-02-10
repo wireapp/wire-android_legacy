@@ -20,9 +20,12 @@
 <resources>
     <!-- Color names are Inspired from here is http://chir.ag/projects/name-that-color/#566433 -->
     <color name="outer_space">#323639</color>
-    <color name="athens_light_gray">#f7f8fa</color>
-    <color name="athens_dark_gray">#e8ecf0</color>
+    <color name="athens_gray_light">#f7f8fa</color>
+    <color name="athens_gray_normal">#e8ecf0</color>
+    <color name="athens_gray_dark">#e8e9eb</color>
     <color name="curious_blue">#2391d3</color>
     <color name="gray_chateau">#a7a8a9</color>
+    <color name="chathams_blue">#134a71</color>
+    <color name="iron">#cecfd1</color>
 
 </resources>

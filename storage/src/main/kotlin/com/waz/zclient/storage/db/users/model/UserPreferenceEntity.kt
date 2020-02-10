@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "KeyValues")
-data class UserPreferenceDao(
+data class UserPreferenceEntity(
 
     @ColumnInfo(name = "key")
     @PrimaryKey

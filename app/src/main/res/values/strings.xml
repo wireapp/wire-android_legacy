@@ -1401,7 +1401,7 @@
     <string name="custom_backend_dialog_connect">Connect</string>
 
     <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
-    <string name="custom_backend_dialog_confirmation_message">This configuration will connect the app to a third-party server: %1$s</string>
+    <string name="custom_backend_dialog_confirmation_message">This action will connect the app to a custom server: %1$s</string>
 
     <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
 
@@ -1481,5 +1481,6 @@
     <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
     <string name="edit_phone_remove_phone_number">Remove phone number</string>
+    <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
     <string name="edit_phone_save_phone_number">Save</string>
 </resources>

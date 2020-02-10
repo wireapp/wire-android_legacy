@@ -2,6 +2,7 @@ package com.waz.zclient.settings.account.editphonenumber
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.config.DeveloperOptionsConfig
 import com.waz.zclient.core.functional.onSuccess
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -21,17 +22,21 @@ class GetCountryCodesUseCaseTest : UnitTest() {
     private lateinit var phoneNumberUtil: PhoneNumberUtil
 
     @Mock
+    private lateinit var developerOptionsConfig: DeveloperOptionsConfig
+
+    @Mock
     private lateinit var getCountryCodeParams: GetCountryCodesParams
 
     @Before
     fun setup() {
         Mockito.`when`(phoneNumberUtil.supportedRegions).thenReturn(mockListOfRegsions())
         Mockito.`when`(getCountryCodeParams.deviceLanguage).thenReturn(TEST_LANGUAGE)
+        getCountriesCodesUseCase = GetCountryCodesUseCase(phoneNumberUtil, developerOptionsConfig)
     }
 
     @Test
     fun `given loaded countries is executed, when developer options is off, then return list of countries without QA`() = runBlockingTest {
-        getCountriesCodesUseCase = GetCountryCodesUseCase(phoneNumberUtil, false)
+        Mockito.`when`(developerOptionsConfig.isDeveloperSettingsEnabled).thenReturn(false)
 
         getCountriesCodesUseCase.run(getCountryCodeParams).onSuccess {
             it.size shouldBe 5
@@ -41,7 +46,7 @@ class GetCountryCodesUseCaseTest : UnitTest() {
 
     @Test
     fun `given loaded countries is executed, when developer options is on, then return list of countries with QA`() = runBlockingTest {
-        getCountriesCodesUseCase = GetCountryCodesUseCase(phoneNumberUtil, true)
+        Mockito.`when`(developerOptionsConfig.isDeveloperSettingsEnabled).thenReturn(true)
 
         getCountriesCodesUseCase.run(getCountryCodeParams).onSuccess {
             it.size shouldBe 6

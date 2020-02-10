@@ -126,8 +126,7 @@ class EditPhoneNumberFragment : Fragment() {
     private fun showVerificationScreen(phoneNumber: String) {
         (activity as AppCompatActivity).replaceFragment(
             R.id.editPhoneActivityFragmentContainer,
-            VerifyPhoneFragment.newInstance(phoneNumber),
-            true)
+            VerifyPhoneFragment.newInstance(phoneNumber))
         (activity as AppCompatActivity).removeFragment(this)
     }
 
