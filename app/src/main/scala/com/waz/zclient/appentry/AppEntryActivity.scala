@@ -25,6 +25,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.FragmentManager.OnBackStackChangedListener
 import androidx.fragment.app.{Fragment, FragmentManager, FragmentTransaction}
+import com.waz.api.impl.ErrorResponse
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.service.{AccountsService, GlobalModule}
@@ -187,7 +188,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     inject[AccentColorController].accentColor.head.flatMap { color =>
       showConfirmationDialog(
         title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
-        msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.toString),
+        msg = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_message, configUrl.getHost),
         positiveRes = R.string.custom_backend_dialog_connect,
         negativeRes = android.R.string.cancel,
         color = color
@@ -197,6 +198,12 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
       case true =>
         enableProgress(true)
         inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+          case Left(ErrorResponse(ErrorResponse.NotFound, _, _)) =>
+            enableProgress(false)
+            showErrorDialog(
+              getString(R.string.custom_backend_not_found_error_title),
+              getString(R.string.custom_backend_not_found_error_message, configUrl.getHost))
+
           case Left(errorResponse) =>
             error(l"error trying to download backend config.", errorResponse)
             enableProgress(false)
