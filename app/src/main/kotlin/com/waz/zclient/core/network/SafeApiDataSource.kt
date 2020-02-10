@@ -13,7 +13,7 @@ import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.logging.Logger
 import kotlinx.coroutines.runBlocking
 
-const val TAG = "SafeApiDataSource"
+private const val TAG = "SafeApiDataSource"
 
 @Suppress("TooGenericExceptionCaught")
 suspend fun <R> requestDatabase(localRequest: suspend () -> R): Either<DatabaseFailure, R> =
