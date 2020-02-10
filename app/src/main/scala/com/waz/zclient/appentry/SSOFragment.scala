@@ -86,15 +86,31 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   protected def showSsoByDefault = false
 
+  private lazy val showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
+
   protected def fetchTokenAndStartSsoFlow(): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
       case None =>
         ssoService.fetchSSO().flatMap {
-          case Right(SSOFound(ssoCode)) =>
-            verifySsoCode(ssoCode)
-          case Right(_) => Future.successful(extractTokenAndShowSSODialog(true))
-          case Left(_) => Future.successful(extractTokenAndShowSSODialog(true))
+          case Right(SSOFound(ssoCode)) => {
+            ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
+              onVerifyingToken(true)
+              ssoService.verifyToken(token).flatMap { result =>
+                onVerifyingToken(false)
+                userAccountsController.ssoToken ! None
+                result match {
+                  case Right(true) =>
+                    getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                    Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
+                  case Right(false) => showSsoDialogFuture
+                  case Left(_) => showSsoDialogFuture
+                }
+              }
+            }
+          }
+          case Right(_) => showSsoDialogFuture
+          case Left(_) => showSsoDialogFuture
         }
     }
 
@@ -139,7 +155,6 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         }
       }
     }
-
 
   private def verifyEmail(email: String): Future[Unit] = {
     val domain = ssoService.extractDomain(email)
