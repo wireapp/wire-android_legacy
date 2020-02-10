@@ -100,7 +100,7 @@ class SSOWebViewFragment extends FragmentHelper {
     true
   }
 
-  override def onPause(): Unit ={
+  override def onPause(): Unit = {
     super.onPause()
     onBackPressed()
   }
