@@ -22,7 +22,6 @@ import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.api.Message
 import com.waz.api.NetworkMode.{OFFLINE, WIFI}
 import com.waz.api.impl._
-import com.waz.service.assets2._
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -34,7 +33,8 @@ import com.waz.model.sync.ReceiptType
 import com.waz.service.AccountsService.InForeground
 import com.waz.service.ZMessaging.currentBeDrift
 import com.waz.service._
-import com.waz.service.assets2.Asset.Video
+import com.waz.service.assets.{AES_CBC_Encryption, AssetService, ContentForUpload, UploadAsset}
+import com.waz.service.assets.Asset.Video
 import com.waz.service.conversation.ConversationsService.generateTempConversationId
 import com.waz.service.messages.{MessagesContentUpdater, MessagesService}
 import com.waz.service.tracking.TrackingService
@@ -437,19 +437,26 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     _   <- sync.postMessage(msg.id, id, msg.editTime)
   } yield Some(msg)
 
+  def shouldSendReadReceipts(convId: ConvId, readReceiptSettings: ReadReceiptSettings): Future[Boolean] =
+    convs.isGroupConversation(convId).map {
+      case true  => readReceiptSettings.convSetting.contains(1)
+      case false => readReceiptSettings.selfSettings
+    }
+
   override def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]] = {
+
     def sendReadReceipts(from: RemoteInstant, to: RemoteInstant, readReceiptSettings: ReadReceiptSettings): Future[Seq[SyncId]] = {
-      if (!readReceiptSettings.selfSettings && readReceiptSettings.convSetting.isEmpty) {
-        Future.successful(Seq())
-      } else {
-        messagesStorage.findMessagesBetween(convId, from, to).flatMap { messages =>
-          val msgs = messages.filter { m =>
-            m.userId != selfUserId && m.expectsRead.contains(true)
+      shouldSendReadReceipts(convId, readReceiptSettings).flatMap {
+        case true =>
+          messagesStorage.findMessagesBetween(convId, from, to).flatMap { messages =>
+            val msgs = messages.filter { m =>
+              m.userId != selfUserId && m.expectsRead.contains(true)
+            }
+            RichFuture.traverseSequential(msgs.groupBy(_.userId).toSeq)({ case (u, ms) if ms.nonEmpty =>
+              sync.postReceipt(convId, ms.map(_.id), u, ReceiptType.Read)
+            })
           }
-          RichFuture.traverseSequential(msgs.groupBy(_.userId).toSeq)( { case (u, ms) if ms.nonEmpty =>
-            sync.postReceipt(convId, ms.map(_.id), u, ReceiptType.Read)
-          })
-        }
+        case false => Future.successful(Seq())
       }
     }
 

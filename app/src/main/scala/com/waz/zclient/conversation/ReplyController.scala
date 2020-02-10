@@ -24,8 +24,8 @@ import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.{Injectable, Injector}
 import com.waz.content.MessagesStorage
-import com.waz.service.assets2.GeneralAsset
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.service.assets.GeneralAsset
 import com.waz.service.messages.MessagesService
 
 import scala.concurrent.Future
@@ -50,7 +50,7 @@ class ReplyController(implicit injector: Injector, context: Context, ec: EventCo
     msg         <- messagesController.getMessage(msgId)
     sender      <- usersController.user(msg.userId)
     asset       <- assetsController.assetSignal(msg.assetId)
-  } yield Option(ReplyContent(msg, asset, sender.getDisplayName))).orElse(Signal.const(None))
+  } yield Option(ReplyContent(msg, asset, sender.name))).orElse(Signal.const(None))
 
   messagesService.flatMap(ms => Signal.wrap(ms.msgEdited)) { case (from, to) =>
     replyData.mutate { data =>

@@ -23,24 +23,24 @@
     android:layout_height="wrap_content">
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/settings_support_website"
-        style="@style/Settings.Button"
+        android:id="@+id/settingsSupportWebsiteButton"
+        style="@style/Button.Settings"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/pref_support_website_title"
-        app:layout_constraintBottom_toTopOf="@+id/settings_support_contact"
+        app:layout_constraintBottom_toTopOf="@+id/settingsSupportContactButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/settings_support_contact"
-        style="@style/Settings.Button"
+        android:id="@+id/settingsSupportContactButton"
+        style="@style/Button.Settings"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/pref_support_contact_title"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/settings_support_website" />
+        app:layout_constraintTop_toBottomOf="@+id/settingsSupportWebsiteButton" />
 </androidx.constraintlayout.widget.ConstraintLayout>

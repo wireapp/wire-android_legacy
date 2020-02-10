@@ -61,11 +61,6 @@ public class SingleImageController implements ISingleImageController {
     }
 
     @Override
-    public View getImageContainer() {
-        return imageContainer;
-    }
-
-    @Override
     public void tearDown() {
         observerList.clear();
         observerList = null;

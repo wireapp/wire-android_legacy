@@ -34,18 +34,16 @@ import com.waz.service.ZMessaging
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{Signal, Subscription}
 import com.waz.utils.returning
-import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.connect.{PendingConnectRequestManagerFragment, SendConnectRequestFragment}
 import com.waz.zclient.controllers.navigation.{INavigationController, NavigationControllerObserver, Page}
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.folders.moveto.MoveToFolderActivity
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.pages.main.connect.BlockedUserProfileFragment
 import com.waz.zclient.pages.main.conversation.controller.{ConversationScreenControllerObserver, IConversationScreenController}
 import com.waz.zclient.pages.main.pickuser.controller.{IPickUserController, PickUserControllerScreenObserver}
 import com.waz.zclient.participants.ConversationOptionsMenuController.Mode
+import com.waz.zclient.participants.fragments.{BlockedUserFragment, ConnectRequestFragment, PendingConnectRequestFragment, SendConnectRequestFragment}
 import com.waz.zclient.participants.{ConversationOptionsMenuController, OptionsMenu, UserRequester}
 import com.waz.zclient.ui.animation.interpolators.penner.{Expo, Quart}
 import com.waz.zclient.ui.utils.KeyboardUtils
@@ -69,9 +67,6 @@ class ConversationListManagerFragment extends Fragment
   with NavigationControllerObserver
   with ConversationListFragment.Container
   with ConversationScreenControllerObserver
-  with SendConnectRequestFragment.Container
-  with BlockedUserProfileFragment.Container
-  with PendingConnectRequestManagerFragment.Container
   with BottomNavigationView.OnNavigationItemSelectedListener {
 
   import ConversationListManagerFragment._
@@ -289,29 +284,36 @@ class ConversationListManagerFragment extends Fragment
       }
 
       (for {
-        usersStorage <- inject[Signal[UsersStorage]].head
-        user <- usersStorage.get(userId)
-        userRequester = if (fromDeepLink) UserRequester.DEEP_LINK else UserRequester.SEARCH
+        usersStorage  <- inject[Signal[UsersStorage]].head
+        user          <- usersStorage.get(userId)
+        userRequester =  if (fromDeepLink) UserRequester.DEEP_LINK else UserRequester.SEARCH
       } yield (user, userRequester)).foreach { case (Some(userData), userRequester) =>
-        import com.waz.api.User.ConnectionStatus._
+        import com.waz.api.ConnectionStatus._
         userData.connection match {
           case CANCELLED | UNCONNECTED =>
             if (!userData.isConnected) {
-              show(SendConnectRequestFragment.newInstance(userId.str, userRequester), SendConnectRequestFragment.Tag)
+              show(SendConnectRequestFragment.newInstance(userId, userRequester), SendConnectRequestFragment.Tag)
               navController.setLeftPage(Page.SEND_CONNECT_REQUEST, Tag)
             }
 
-          case PENDING_FROM_OTHER | PENDING_FROM_USER | IGNORED =>
+          case PENDING_FROM_OTHER  =>
             show(
-              PendingConnectRequestManagerFragment.newInstance(userId, userRequester),
-              PendingConnectRequestManagerFragment.Tag
+              ConnectRequestFragment.newInstance(userId, userRequester),
+              ConnectRequestFragment.Tag
+            )
+            navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
+
+          case PENDING_FROM_USER | IGNORED =>
+            show(
+              PendingConnectRequestFragment.newInstance(userId, userRequester),
+              PendingConnectRequestFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
 
           case BLOCKED =>
             show(
-              BlockedUserProfileFragment.newInstance(userId.str, userRequester),
-              BlockedUserProfileFragment.Tag
+              BlockedUserFragment.newInstance(userId, userRequester),
+              BlockedUserFragment.Tag
             )
             navController.setLeftPage(Page.PENDING_CONNECT_REQUEST, Tag)
           case _ => //
@@ -440,38 +442,14 @@ class ConversationListManagerFragment extends Fragment
     }
   }
 
-  override def onAcceptedConnectRequest(userId: UserId) = {
-    verbose(l"onAcceptedConnectRequest $userId")
-    inject[UserAccountsController].getConversationId(userId).flatMap { convId =>
-      convController.selectConv(convId, ConversationChangeRequester.START_CONVERSATION)
-    }
-  }
-
-  override def onUnblockedUser(restoredConversationWithUser: ConvId) = {
-    pickUserController.hideUserProfile()
-    verbose(l"onUnblockedUser $restoredConversationWithUser")
-    convController.selectConv(restoredConversationWithUser, ConversationChangeRequester.START_CONVERSATION)
-  }
-
   override def onShowConversationMenu(inConvList: Boolean, convId: ConvId): Unit =
     if (inConvList) {
       OptionsMenu(getContext, new ConversationOptionsMenuController(convId, Mode.Normal(inConvList))).show()
     }
 
-  override def dismissUserProfile() =
-    pickUserController.hideUserProfile()
-
-  override def onConnectRequestWasSentToUser() =
-    pickUserController.hideUserProfile()
-
-  override def dismissSingleUserProfile() =
-    dismissUserProfile()
-
   override def onHideUser() = {}
 
   override def onHideOtrClient() = {}
-
-  override def showRemoveConfirmation(userId: UserId) = {}
 
   override def onNavigationItemSelected(item: MenuItem): Boolean = {
     item.getItemId match {

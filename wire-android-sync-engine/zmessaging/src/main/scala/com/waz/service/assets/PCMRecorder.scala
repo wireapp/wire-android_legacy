@@ -80,7 +80,7 @@ object PCMRecorder extends DerivedLogTag {
             if (numberOfShortsReadOrError < 0) throw new RuntimeException(s"audio recorder indicated error: $numberOfShortsReadOrError")
             else if (totalSamples + numberOfShortsReadOrError > limit) LengthLimitReached
             else {
-              val bytes = ByteBuffer.allocateDirect(numberOfShortsReadOrError * SizeOf.SHORT).order(LITTLE_ENDIAN)
+              val bytes = ByteBuffer.allocateDirect(numberOfShortsReadOrError * PCM.SizeOfShort).order(LITTLE_ENDIAN)
               val shorts = bytes.asShortBuffer.put(buffer, 0, numberOfShortsReadOrError)
               shorts.flip()
               updateMaxAmplitude(shorts)

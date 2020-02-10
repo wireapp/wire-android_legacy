@@ -17,10 +17,10 @@
  */
 package com.waz.service.connections
 
-import com.waz.api.Message
+import com.waz.api.{ConnectionStatus, Message}
 import com.waz.content._
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.ConversationData.ConversationType.WaitForConnection
+import com.waz.model.ConversationData.ConversationType._
 import com.waz.model.UserData.ConnectionStatus._
 import com.waz.model._
 import com.waz.service._
@@ -95,42 +95,154 @@ class ConnectionServiceSpec extends AndroidFreeSpec with Inside {
 
   feature ("connect to user") {
 
-    scenario("connect to user") {
-
-      val userToConnectId = UserId("user-id")
-      val userToConnect = UserData(userToConnectId, name = Name("name"), searchKey = SearchKey.simple("name"))
-
-      (users.getOrCreateUser _).expects(userToConnectId).returning(Future.successful(userToConnect))
-      (users.updateConnectionStatus _).expects(userToConnectId, PendingFromUser, None, None).returning(Future.successful(Some(userToConnect.copy(connection = PendingFromUser))))
-      (sync.postConnection _).expects(userToConnect.id, *, *).returning(Future.successful(SyncId()))
+    def setup(user: UserData, expectedNewStatus: ConnectionStatus) = {
+      (users.getOrCreateUser _).expects(user.id).anyNumberOfTimes().returning(Future.successful(user))
+      (users.updateConnectionStatus _).expects(user.id, expectedNewStatus, None, None).anyNumberOfTimes().returning(
+        Future.successful(Some(user.copy(connection = expectedNewStatus)))
+      )
+      (sync.postConnection _).expects(user.id, *, *).anyNumberOfTimes().returning(Future.successful(SyncId()))
+      (sync.postConnectionStatus _).expects(user.id, expectedNewStatus).anyNumberOfTimes().returning(Future.successful(SyncId()))
 
       (usersStorage.listAll _).expects(*).anyNumberOfTimes().onCall { ids: Traversable[UserId] =>
         Future.successful(
           ids.collect {
-            case id if id == userToConnectId => userToConnect
+            case id if id == user.id => user
           }.toVector
         )
       }
 
-      (convsStorage.getByRemoteIds2 _).expects(*).twice().returning(Future.successful(Map.empty))
-      (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).returning(Future.successful(Set.empty))
-      (convsStorage.updateOrCreateAll2 _).expects(*, *).onCall { (keys: Iterable[ConvId], updater: ((ConvId, Option[ConversationData]) => ConversationData)) =>
+      (convsStorage.getByRemoteIds2 _).expects(*).anyNumberOfTimes().returning(Future.successful(Map.empty))
+      (convsStorage.updateLocalIds _).expects(Map.empty[ConvId, ConvId]).anyNumberOfTimes().returning(Future.successful(Set.empty))
+      (convsStorage.updateOrCreateAll2 _).expects(*, *).anyNumberOfTimes().onCall { (keys: Iterable[ConvId], updater: (ConvId, Option[ConversationData]) => ConversationData) =>
         Future.successful(keys.map(id => updater(id, None)).toSet)
       }
       (messagesService.addConnectRequestMessage _)
-        .expects(ConvId(userToConnectId.str), selfUserId, userToConnectId, "", userToConnect.name, false)
+        .expects(ConvId(user.id.str), selfUserId, user.id, "", user.name, false)
+        .anyNumberOfTimes()
         .returning(Future.successful(MessageData()))
 
-      val service = createBlankService()
+      (convs.updateConversation _).expects(ConvId(user.id.str), *, *).anyNumberOfTimes().returning(Future.successful(None))
+      // MessagesService.addMemberJoinMessage(user-id, selfUserId, Set(selfUserId), true, false)
+      (messagesService.addMemberJoinMessage _).expects(ConvId(user.id.str), selfUserId, Set(selfUserId), *, *).anyNumberOfTimes().returning(Future.successful(None))
 
-      inside(result(service.connectToUser(userToConnectId, "", userToConnect.name))) {
+      createBlankService()
+    }
+
+    scenario("connect to user") {
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+
+      val service = setup(user, PendingFromUser)
+
+      inside(result(service.connectToUser(user.id, "", user.name))) {
         case Some(conv) =>
-          conv.id shouldEqual ConvId(userToConnectId.str)
-          conv.remoteId shouldEqual RConvId(userToConnectId.str)
+          conv.id shouldEqual ConvId(user.id.str)
+          conv.remoteId shouldEqual RConvId(user.id.str)
           conv.creator shouldEqual selfUserId
           conv.convType shouldEqual WaitForConnection
           conv.hidden shouldEqual false
         case None => fail("No conversation was created")
+      }
+    }
+
+    scenario("accept the connection") {
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+
+      val service = setup(user, Accepted)
+
+      inside(result(service.acceptConnection(user.id))) { case conv =>
+          conv.id shouldEqual ConvId(user.id.str)
+          conv.remoteId shouldEqual RConvId(user.id.str)
+          conv.creator shouldEqual selfUserId
+          conv.convType shouldEqual OneToOne
+          conv.hidden shouldEqual false
+      }
+    }
+
+    scenario("cancel the connection") {
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val pendingFromUser = user.copy(connection = PendingFromUser)
+      (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
+        Future.successful(Some((pendingFromUser, updater(pendingFromUser))))
+      }
+
+      val service = setup(user, PendingFromUser)
+      (sync.postConnectionStatus _).expects(user.id, Cancelled).once().returning(Future.successful(SyncId()))
+      (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
+      val combined = for {
+        _         <- service.connectToUser(user.id, "", user.name)
+        Some(res) <- service.cancelConnection(user.id)
+      } yield res
+
+      inside(result(combined)) { case resUser =>
+        resUser.id shouldEqual user.id
+        resUser.connection shouldEqual Cancelled
+      }
+    }
+
+    scenario("ignore the connection") {
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val pendingFromUser = user.copy(connection = PendingFromUser)
+      (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
+        Future.successful(Some((pendingFromUser, updater(pendingFromUser))))
+      }
+
+      val service = setup(user, PendingFromUser)
+      (users.updateConnectionStatus _).expects(user.id, Ignored, *, *).once().returning(Future.successful(Some(user.copy(connection = Ignored))))
+      (sync.postConnectionStatus _).expects(user.id, Ignored).once().returning(Future.successful(SyncId()))
+      (convs.hideIncomingConversation _).expects(user.id).once().returning(Future.successful(None))
+
+      inside(result(service.ignoreConnection(user.id))) { case Some(resUser) =>
+        resUser.id shouldEqual user.id
+        resUser.connection shouldEqual Ignored
+      }
+    }
+
+    scenario("block the connection") {
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val blockedUser = user.copy(connection = Blocked)
+      (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
+        Future.successful(Some((blockedUser, updater(blockedUser))))
+      }
+
+      val service = setup(user, Accepted)
+      (users.updateConnectionStatus _).expects(user.id, Blocked, *, *).once().returning(Future.successful(Some(blockedUser)))
+      (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
+      (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
+      val combined = for {
+        _         <- service.acceptConnection(user.id)
+        Some(res) <- service.blockConnection(user.id)
+      } yield res
+
+      inside(result(combined)) { case resUser =>
+        resUser.id shouldEqual user.id
+        resUser.connection shouldEqual Blocked
+      }
+    }
+
+    scenario("unblock the connection") {
+      val user = UserData(UserId("user-id"), name = Name("name"), searchKey = SearchKey.simple("name"))
+      val blockedUser = user.copy(connection = Blocked)
+      (users.updateUserData _).expects(user.id, *).anyNumberOfTimes().onCall { (userId: UserId, updater: UserData => UserData) =>
+        Future.successful(Some((blockedUser, updater(blockedUser))))
+      }
+
+      val service = setup(user, Accepted)
+      (users.updateConnectionStatus _).expects(user.id, Blocked, *, *).once().returning(Future.successful(Some(blockedUser)))
+      (convs.setConversationHidden _).expects(ConvId(user.id.str), true).once().returning(Future.successful(None))
+      (sync.postConnectionStatus _).expects(user.id, Blocked).once().returning(Future.successful(SyncId()))
+      (sync.syncConversations _).expects(Set(ConvId(user.id.str)), *).anyNumberOfTimes().returning(Future.successful(SyncId()))
+      val combined = for {
+        _    <- service.acceptConnection(user.id)
+        _    <- service.blockConnection(user.id)
+        conv <- service.unblockConnection(user.id)
+      } yield conv
+
+      inside(result(combined)) { case conv =>
+        conv.id shouldEqual ConvId(user.id.str)
+        conv.remoteId shouldEqual RConvId(user.id.str)
+        conv.creator shouldEqual selfUserId
+        conv.convType shouldEqual OneToOne
+        conv.hidden shouldEqual false
       }
     }
 

@@ -1,20 +1,22 @@
 package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.exception.DatabaseError
-import com.waz.zclient.core.exception.HttpError
+import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.devices.data.source.ClientMapper
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
-import com.waz.zclient.devices.data.source.remote.model.ClientApi
+import com.waz.zclient.devices.data.source.remote.model.ClientResponse
 import com.waz.zclient.eq
-import com.waz.zclient.storage.db.clients.model.ClientDao
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
 class ClientsRepositoryTest {
@@ -71,7 +73,7 @@ class ClientsRepositoryTest {
     @Test
     fun `Given allClients() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
-            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_MESSAGE)))
+            `when`(remoteDataSource.allClients()).thenReturn(Either.Left(ServerError))
             `when`(localDataSource.allClients()).thenReturn(Either.Left(DatabaseError))
 
             repository.allClients()
@@ -116,7 +118,7 @@ class ClientsRepositoryTest {
     @Test
     fun `Given getClientById() is called, when the local data source failed, remote data source is called and failed, then return error`() {
         runBlocking {
-            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_MESSAGE)))
+            `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(ServerError))
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(DatabaseError))
 
             repository.clientById(TEST_ID)
@@ -127,14 +129,12 @@ class ClientsRepositoryTest {
         }
     }
 
-    private fun generateMockApi(): ClientApi = mock(ClientApi::class.java)
+    private fun generateMockApi(): ClientResponse = mock(ClientResponse::class.java)
 
-    private fun generateMockDao(): ClientDao = mock(ClientDao::class.java)
+    private fun generateMockDao(): ClientEntity = mock(ClientEntity::class.java)
 
 
     companion object {
-        private const val TEST_CODE = 401
         private const val TEST_ID = "4555f7b2"
-        private const val TEST_MESSAGE = "testMessage"
     }
 }

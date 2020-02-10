@@ -81,11 +81,11 @@ abstract class ConversationListTopToolbar(val context: Context, val attrs: Attri
 
   def setTitle(mode: ListMode, currentUser: Option[UserData]): Unit = (mode, currentUser) match {
     case (Normal | Folders, Some(user)) if user.teamId.nonEmpty =>
-      title.setText(user.displayName)
+      title.setText(user.name)
       AvailabilityView.displayStartOfText(title, user.availability, title.getCurrentTextColor, pushDown = true)
       title.onClick { AvailabilityView.showAvailabilityMenu(AvailabilityChanged.ListHeader) }
     case (Normal | Folders, Some(user)) =>
-      title.setText(user.displayName)
+      title.setText(user.name)
       AvailabilityView.displayStartOfText(title, Availability.None, title.getCurrentTextColor)
       title.setOnClickListener(null)
     case (mode, userOpt) =>
@@ -122,7 +122,7 @@ class NormalTopToolbar(override val context: Context, override val attrs: Attrib
       drawable.setInfo(NameParts.maybeInitial(team.name).getOrElse(""), TeamIconDrawable.TeamShape, selected = false)
     case (user, _) =>
       drawable.setPicture(user.picture)
-      drawable.setInfo(NameParts.maybeInitial(user.displayName).getOrElse(""), TeamIconDrawable.UserShape, selected = false)
+      drawable.setInfo(NameParts.maybeInitial(user.name).getOrElse(""), TeamIconDrawable.UserShape, selected = false)
   }
   profileButton.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
   profileButton.setImageDrawable(drawable)

@@ -1,8 +1,8 @@
 package com.waz.zclient.settings.devices.list
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.devices.domain.GetAllClientsUseCase
 import com.waz.zclient.devices.domain.model.Client
@@ -37,7 +37,7 @@ class SettingsDeviceListViewModelTest {
     fun `given data is loaded successfully, when list is populated, then assert data is mapped correctly`() {
 
         val location = mock<ClientLocation>(ClientLocation::class.java)
-        val client = Client(time = TEST_TIME, label = TEST_LABEL, type = TEST_TYPE, id = TEST_ID, _class = TEST_CLASS, model = TEST_MODEL, location = location)
+        val client = Client(time = TEST_TIME, label = TEST_LABEL, type = TEST_TYPE, id = TEST_ID, clazz = TEST_CLASS, model = TEST_MODEL, location = location)
 
         runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Right(listOf(client))) }
 
@@ -76,7 +76,7 @@ class SettingsDeviceListViewModelTest {
 
     @Test
     fun `given data source returns ServerError, then update error live data`() {
-        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getAllClientsUseCase.run(Unit)).thenReturn(Either.Left(ServerError)) }
 
 
         viewModel.loading.observeOnce { isLoading ->
@@ -106,8 +106,6 @@ class SettingsDeviceListViewModelTest {
     }
 
     companion object {
-        private const val TEST_CODE = 401
-        private const val TEST_ERROR_MESSAGE = "Something went wrong, please try again."
         private const val TEST_TIME = "2019-11-14T11:00:42.482Z"
         private const val TEST_LABEL = "Tester's phone"
         private const val TEST_CLASS = "phone"

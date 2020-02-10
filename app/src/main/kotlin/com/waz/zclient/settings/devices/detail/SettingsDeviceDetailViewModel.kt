@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.devices.domain.GetClientUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientParams
 import com.waz.zclient.devices.domain.model.Client
@@ -36,12 +35,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
 
     private fun handleGetDeviceError(failure: Failure) {
         handleLoading(false)
-        when (failure) {
-            is HttpError ->
-                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
-            else ->
-                Log.e(javaClass.simpleName, "Misc error scenario")
-        }
+        Log.e(LOG_TAG, "Failure: $failure")
     }
 
     private fun handleGetDeviceSuccess(client: Client) {
@@ -61,4 +55,7 @@ class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientU
         mutableLoading.postValue(isLoading)
     }
 
+    companion object {
+        private const val LOG_TAG = "SettingsDeviceDetailVM"
+    }
 }

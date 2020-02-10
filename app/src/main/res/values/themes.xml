@@ -405,5 +405,4 @@
     <style name="Theme.Calling" parent="Theme.Dark">
         <item name="android:windowBackground">@color/background_graphite</item>
     </style>
-
 </resources>

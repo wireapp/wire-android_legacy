@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -19,7 +18,7 @@
 
 -->
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
-           android:fromXDelta="0"
-           android:toXDelta="10"
-           android:duration="100"
-           android:interpolator="@anim/shake_cycle" />
+    android:duration="100"
+    android:fromXDelta="0"
+    android:interpolator="@anim/shake_cycle"
+    android:toXDelta="10" />

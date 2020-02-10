@@ -24,7 +24,7 @@ import com.waz.log.LogSE._
 import com.waz.model.GenericContent.{Asset, Calling, Cleared, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
 import com.waz.service.EventScheduler
-import com.waz.service.assets2.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
+import com.waz.service.assets.{AssetService, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2, AssetStatus}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
@@ -73,7 +73,6 @@ class MessageEventProcessor(selfUserId:           UserId,
       eventData     <- Future.traverse(toProcess)(localDataForEvent)
       modifications =  createModifications(eventData, conv, isGroup)
       msgs          <- checkReplyHashes(modifications.collect { case m if m.message != MessageData.Empty => m.message })
-      _             =  verbose(l"SYNC messages from events: ${msgs.map(m => m.id -> m.msgType)}")
       _             <- addUnexpectedMembers(conv.id, events)
       res           <- contentUpdater.addMessages(conv.id, msgs)
       _             <- Future.traverse(modifications.flatMap(_.assets))(assets.save)
@@ -81,7 +80,6 @@ class MessageEventProcessor(selfUserId:           UserId,
       _             <- deleteCancelled(modifications)
       _             <- applyRecalls(conv.id, toProcess)
       _             <- applyEdits(conv.id, toProcess)
-      _             =  verbose(l"SYNC processing events finished")
     } yield res
   }
 

@@ -27,7 +27,7 @@ import androidx.recyclerview.widget.{DefaultItemAnimator, LinearLayoutManager, R
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{ConvId, Dim2, MessageData}
-import com.waz.service.assets2.AssetStatus
+import com.waz.service.assets.AssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}

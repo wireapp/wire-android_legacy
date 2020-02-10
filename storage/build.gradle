@@ -29,18 +29,29 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
-
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.0.2'
-    implementation "androidx.room:room-runtime:$rootProject.ext.versions.room"
-    implementation "androidx.room:room-ktx:$rootProject.ext.versions.room"
-    kapt "androidx.room:room-compiler:$rootProject.ext.versions.room"
-    implementation "org.koin:koin-android:$rootProject.ext.versions.koin"
-    implementation "org.koin:koin-android-scope:$rootProject.ext.versions.koin"
-    implementation "org.koin:koin-android-viewmodel:$rootProject.ext.versions.koin"
+    //Core Dependencies
+    implementation BuildDependencies.kotlin.standardLibrary
+
+    // Room Data Storage
+    implementation BuildDependencies.androidX.coreKtx
+    implementation BuildDependencies.androidX.roomRuntime
+    implementation BuildDependencies.androidX.roomKtx
+    kapt BuildDependencies.androidX.roomCompiler
+
+    // DI - Koin
+    implementation BuildDependencies.koin.androidCore
+    implementation BuildDependencies.koin.androidScope
+    implementation BuildDependencies.koin.androidViewModel
+
+    testImplementation TestDependencies.jUnit
+    testImplementation TestDependencies.mockito.core
+    testImplementation TestDependencies.mockito.inline
+    testImplementation TestDependencies.kluent
+    //noinspection GradleDynamicVersion
+    testImplementation "org.json:json:+"
 }

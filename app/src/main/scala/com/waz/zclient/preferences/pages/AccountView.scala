@@ -18,7 +18,7 @@
 package com.waz.zclient.preferences.pages
 
 import android.app.Activity
-import android.content.{Context, DialogInterface, Intent}
+import android.content.{Context, DialogInterface}
 import android.graphics.drawable.Drawable
 import android.graphics.{Canvas, ColorFilter, Paint, PixelFormat}
 import android.os.{Bundle, Parcel, Parcelable}
@@ -31,16 +31,16 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.Picture
-import com.waz.model.{AccentColor, EmailAddress, PhoneNumber}
+import com.waz.model.{AccentColor, EmailAddress, PhoneNumber, Picture}
 import com.waz.service.AccountsService.UserInitiated
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.returning
-import com.waz.zclient._
+import com.waz.zclient.{BuildConfig, _}
 import com.waz.zclient.appentry.{AppEntryActivity, DialogErrorMessage}
 import com.waz.zclient.common.controllers.global.PasswordController
+import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.preferences.dialogs._
 import com.waz.zclient.preferences.views.{EditNameDialog, PictureTextButton, SwitchPreference, TextButton}
@@ -49,8 +49,6 @@ import com.waz.zclient.ui.utils.TextViewUtils._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ViewUtils._
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, RichView, StringUtils, UiStorage}
-import com.waz.zclient.BuildConfig
-import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
 
 trait AccountView {
   val onNameClick:          EventStream[Unit]
@@ -333,7 +331,7 @@ class AccountViewController(view: AccountView)(implicit inj: Injector, ec: Event
           zms.map(_.selfUserId).head.flatMap { id => accounts.logout(id, reason = UserInitiated) }
             .flatMap(_ => accounts.accountsWithManagers.head.map(_.isEmpty)).map {
             case true =>
-              context.startActivity(new Intent(context, classOf[AppEntryActivity]))
+              context.startActivity(AppEntryActivity.newIntent(context))
               Option(context.asInstanceOf[Activity]).foreach(_.finish())
             case false =>
               navigator.back()

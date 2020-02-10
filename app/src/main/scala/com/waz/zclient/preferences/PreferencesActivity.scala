@@ -30,7 +30,7 @@ import androidx.appcompat.widget.Toolbar
 import android.view.{MenuItem, View, ViewGroup}
 import android.widget.{FrameLayout, Toast}
 import com.waz.content.UserPreferences
-import com.waz.service.assets2.Content
+import com.waz.service.assets.Content
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal

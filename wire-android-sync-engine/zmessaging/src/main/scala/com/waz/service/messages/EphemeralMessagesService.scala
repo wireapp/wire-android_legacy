@@ -34,7 +34,6 @@ import com.waz.threading.CancellableFuture
 import com.waz.utils.crypto.ZSecureRandom
 import com.waz.utils.events.Signal
 import com.waz.utils._
-import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -126,8 +125,8 @@ class EphemeralMessagesService(selfUserId: UserId,
     }
   }
 
-  private def removeSource(msg: MessageData): Unit = assets.getAssetData(AssetId(msg.id.str)).collect {
-    case Some(asset) if selfUserId == msg.userId => assets.removeSource(asset.id) // only on the sender side - the receiver side is handled in removeExpired
+  private def removeSource(msg: MessageData): Unit = assets.getAsset(AssetId(msg.id.str)).collect {
+    case asset if selfUserId == msg.userId => assets.delete(asset.id) // only on the sender side - the receiver side is handled in removeExpired
   }
 
   // start expiration timer for ephemeral message

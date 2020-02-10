@@ -1,9 +1,9 @@
 package com.waz.zclient.user.domain.model
 
 data class User(
-    val id: String,
+    val id: String? = null,
     val teamId: String? = null,
-    val name: String,
+    val name: String? = null,
     val handle: String?,
     val email: String?,
     val phone: String?,
@@ -20,7 +20,7 @@ data class User(
     val timestamp: Long? = null,
     val displayName: String? = null,
     val verified: String? = null,
-    val deleted: Int,
+    val deleted: Int? = null,
     val availability: Int? = null,
     val providerId: String? = null,
     val integrationId: String? = null,
@@ -28,4 +28,5 @@ data class User(
     val managedBy: String?,
     val selfPermission: Int? = null,
     val copyPermission: Int? = null,
-    val createdBy: String? = null)
+    val createdBy: String? = null
+)

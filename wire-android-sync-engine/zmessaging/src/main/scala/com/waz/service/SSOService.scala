@@ -43,4 +43,8 @@ class SSOService(val loginClient: LoginClient) {
 
   def verifyToken(token: UUID): ErrorOr[Boolean] = loginClient.verifySSOToken(token)
 
+  def extractDomain(email: String) = email.split("@").last
+
+  def verifyDomain(domain: String) = loginClient.verifyDomain(domain)
+
 }

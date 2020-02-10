@@ -397,8 +397,6 @@
 
     <!-- Rich media -->
     <string name="content__youtube__error__text">video not found</string>
-    <string name="mediaplayer__message__onsoundcloud">on SoundCloud</string>
-    <string name="mediaplayer__message__onspotify">on Spotify</string>
 
     <!-- Invite banner -->
 
@@ -682,7 +680,7 @@
 
     <!-- System notifications -->
     <string name="system_notification__silence_call">Decline</string>
-    <string name="system_notification__join_call">Accept</string>
+    <string name="system_notification__join_call">Open Call</string>
     <string name="system_notification__leave_call">End call</string>
     <string name="system_notification__calling_one">Calling…</string>
     <string name="system_notification__calling_group">%1$s is calling…</string>
@@ -1037,6 +1035,7 @@
 
     <string name="multi_share_toast_sending">@string/message_footer__status__sending</string>
     <string name="multi_share_search_hint">SEND TO…</string>
+    <string name="single_selector_search_hint">"SELECT CONVERSATION…"</string>
 
     <string name="search__box__hint_text">SEARCH TEXT MESSAGES</string>
     <string name="search__no_results">No results.</string>
@@ -1351,11 +1350,18 @@
     <string name="sso_signin_error_message">Please contact your team administrator for details (Error %1$s).</string>
     <string name="sso_signin_error_try_again_message">Please try again later (Error %1$s).</string>
 
+    <string name="enterprise_signin_domain_not_found_error">This email cannot be used for enterprise login. Please enter the SSO code to proceed.</string>
+    <string name="enterprise_signin_email_sso_invalid_input_error">Please enter a valid email or SSO access code.</string>
+    <string name="enterprise_signin_sso_invalid_input_error">Please enter a valid SSO access code.</string>
+    <string name="enterprise_signin_email_multiple_servers_not_supported">This email is linked to a different server, but the app can only be connected to one server at a time. Please log out of all Wire accounts on this device and try to log in again.</string>
+
     <string name="sso_signin_wrong_code_title">Invalid code</string>
     <string name="sso_signin_wrong_code_message">Please verify your company SSO access code and try again.</string>
 
     <string name="sso_signin_max_accounts_title">Two accounts active</string>
     <string name="sso_signin_max_accounts_message">You can only be logged in with two accounts at once. Log out from one to add another.</string>
+
+    <string name="custom_backend_welcome">Welcome to\n%1$s workspace</string>
 
     <string name="participant_search_hint">SEARCH FOR NAMES</string>
     <string name="participant_search_title">PARTICIPANTS</string>
@@ -1395,12 +1401,16 @@
     <string name="custom_backend_dialog_connect">Connect</string>
 
     <string name="custom_backend_dialog_confirmation_title">Connect to server</string>
-    <string name="custom_backend_dialog_confirmation_message">This configuration will connect the app to a third-party server: %1$s</string>
+    <string name="custom_backend_dialog_confirmation_message">This action will connect the app to a custom server: %1$s</string>
 
     <string name="custom_backend_dialog_info_title">You are connected to a third-party server: \"%1$s\"</string>
 
     <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
     <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
+
+    <string name="custom_backend_not_found_error_title">This server can\'t be reached</string>
+    <string name="custom_backend_not_found_error_message">We can\'t connect to the server at %1$s.\nLet your server
+        administrator know about this issue.</string>
 
     <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
     <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
@@ -1415,7 +1425,7 @@
     <string name="read_receipts_remotely_enabled_title">You have enabled read receipts</string>
     <string name="read_receipts_remotely_disabled_title">You have disabled read receipts</string>
     <string name="read_receipts_remotely_changed_message">You can change this option in your account settings.</string>
-    
+
     <string name="app_lock_locked_title">Wire is locked due to inactivity</string>
     <string name="app_lock_locked_message">Please enter your account password.</string>
     <string name="app_lock_setup_dialog_messsage">To unlock Wire, set up a passphrase in your device settings.</string>
@@ -1443,8 +1453,38 @@
     <string name="folders_folder_name_hint">FOLDER NAME</string>
     <string name="folders_folder_name_error_text">Maximum %s characters</string>
     <string name="folders_move_to_folder_close">Close</string>
-    
+
     <string name="delete_group_conversation_error_title">Group not deleted</string>
     <string name="delete_group_conversation_error_message">An error occurred while trying to delete the group. Please try again.</string>
     <string name="delete_group_conversation_error_message_with_group_name">An error occurred while trying to delete the group %1$s. Please try again.</string>
+
+
+    <!-- Shortcuts -->
+    <string name="shortcut_create_group_label">Create Group</string>
+    <string name="shortcut_share_a_photo_label">Share Photo</string>
+    <string name="shortcut_new_message_label">New Message</string>
+
+    <!-- Settings Account - Edit Phone -->
+    <string name="edit_phone_dialog_country_code_error">Invalid country code</string>
+    <string name="edit_phone_dialog_phone_number_error">Invalid phone number</string>
+
+    <!-- SSO Login -->
+    <string name="sso_login_dialog_title">Enterprise Login</string>
+    <string name="sso_login_dialog_message">Please enter your SSO code:</string>
+    <string name="email_sso_login_dialog_message">Please enter your email or SSO code:</string>
+
+    <!-- Welcome -->
+    <string name="welcome_to_wire">Welcome to Wire</string>
+    <string name="welcome_enterprise_log_in">Enterprise Login</string>
+    <string name="welcome_custom_backend_log_in_email">LOG IN WITH EMAIL</string>
+    <string name="welcome_custom_backend_log_in_sso">LOG IN WITH SSO</string>
+
+    <!-- Updated edit handle screen -->
+    <string name="edit_account_handle_error_already_taken">Already taken</string>
+    <string name="edit_account_handle_error_too_short">At least 2 characters</string>
+    <string name="edit_account_handle_error_invalid_characters">Please only use: a–z, 0–9, and _ </string>
+    <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
+    <string name="edit_phone_remove_phone_number">Remove phone number</string>
+    <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
+    <string name="edit_phone_save_phone_number">Save</string>
 </resources>

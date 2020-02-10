@@ -1,8 +1,8 @@
 package com.waz.zclient.settings.devices.detail
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.waz.zclient.core.exception.HttpError
 import com.waz.zclient.core.exception.NetworkConnection
+import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.devices.domain.GetClientUseCase
 import com.waz.zclient.devices.domain.GetSpecificClientParams
@@ -38,7 +38,7 @@ class SettingsDeviceDetailViewModelTest {
     fun `given data is loaded successfully, then assert data is mapped correctly`() {
         val params = GetSpecificClientParams(TEST_ID)
         val location = Mockito.mock<ClientLocation>(ClientLocation::class.java)
-        val client = Client(time = TEST_TIME, label = TEST_LABEL, _class = TEST_CLASS, type = TEST_TYPE, id = TEST_ID, model = TEST_MODEL, location = location)
+        val client = Client(time = TEST_TIME, label = TEST_LABEL, clazz = TEST_CLASS, type = TEST_TYPE, id = TEST_ID, model = TEST_MODEL, location = location)
 
         runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Right(client)) }
 
@@ -78,7 +78,7 @@ class SettingsDeviceDetailViewModelTest {
     @Test
     fun `given data source returns ServerError, then update error live data`() {
         val params = GetSpecificClientParams(TEST_ID)
-        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(HttpError(TEST_CODE, TEST_ERROR_MESSAGE))) }
+        runBlocking { `when`(getClientUseCase.run(params)).thenReturn(Either.Left(ServerError)) }
 
         viewModel.loadData(TEST_ID)
 
@@ -110,8 +110,6 @@ class SettingsDeviceDetailViewModelTest {
     }
 
     companion object {
-        private const val TEST_CODE = 401
-        private const val TEST_ERROR_MESSAGE = "Something went wrong, please try again."
         private const val TEST_TIME = "2019-11-14T11:00:42.482Z"
         private const val TEST_LABEL = "Tester's phone"
         private const val TEST_CLASS = "phone"

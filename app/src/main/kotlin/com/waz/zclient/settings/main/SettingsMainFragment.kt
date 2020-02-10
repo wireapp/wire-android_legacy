@@ -8,17 +8,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.core.lists.OnItemClickListener
+import com.waz.zclient.core.ui.list.OnItemClickListener
 import com.waz.zclient.settings.about.SettingsAboutFragment
 import com.waz.zclient.settings.account.SettingsAccountFragment
 import com.waz.zclient.settings.advanced.SettingsAdvancedFragment
 import com.waz.zclient.settings.devices.list.SettingsDeviceListFragment
 import com.waz.zclient.settings.main.list.SettingsMainListAdapter
-import com.waz.zclient.settings.main.list.SettingsMainListFactory
+import com.waz.zclient.settings.main.list.SettingsMainListItemsFactory
 import com.waz.zclient.settings.options.SettingsOptionsFragment
 import com.waz.zclient.settings.support.SettingsSupportFragment
 import kotlinx.android.synthetic.main.fragment_settings_main.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@ExperimentalCoroutinesApi
+@InternalCoroutinesApi
 class SettingsMainFragment : Fragment(), OnItemClickListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -28,8 +32,9 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.settings_title)
-        settings_recycler_view.adapter = SettingsMainListAdapter(SettingsMainListFactory.generateList(requireContext()), this)
-
+        settingsMainRecyclerView.adapter = SettingsMainListAdapter(
+            SettingsMainListItemsFactory.generateList(requireContext()), this
+        )
     }
 
     override fun onItemClicked(position: Int) {
@@ -44,7 +49,7 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
     }
 
     private fun replaceFragment(fragment: Fragment) {
-        (activity as AppCompatActivity).replaceFragment(R.id.layout_container, fragment, true)
+        (activity as AppCompatActivity).replaceFragment(R.id.activitySettingsMainLayoutContainer, fragment)
     }
 
     companion object {
@@ -58,7 +63,4 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
         private const val DEVELOPER_SETTINGS = 6
         private const val AVS_SETTINGS = 7
     }
-
 }
-
-

@@ -33,8 +33,8 @@ import com.waz.model.messages.media._
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncRequest._
 import com.waz.model.sync.{SyncJob, SyncRequest}
+import com.waz.service.assets.UploadAssetStatus
 import com.waz.service.{SearchKey, SearchQuery}
-import com.waz.service.assets2.UploadAssetStatus
 import com.waz.service.messages.MessageAndLikes
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
@@ -100,9 +100,8 @@ object Generators {
     conversation          <- arbitrary[Option[RConvId]]
     relation              <- arbitrary[Relation]
     syncTimestamp         <- arbitrary[Option[LocalInstant]]
-    displayName           <- arbitrary[Name]
     handle                <- arbitrary[Option[Handle]]
-  } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, displayName, handle = handle))
+  } yield UserData(id, teamId, name, email, phone, trackingId, picture, accent, searchKey, connection, connectionLastUpdated, connectionMessage, conversation, relation, syncTimestamp, handle = handle))
 
   implicit lazy val arbOpenGraphDataImage: Arbitrary[OpenGraphImage] = Arbitrary(
     for {

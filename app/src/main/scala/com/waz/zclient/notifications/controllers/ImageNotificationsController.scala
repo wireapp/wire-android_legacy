@@ -65,8 +65,9 @@ class ImageNotificationsController(implicit cxt: WireContext, eventContext: Even
       }
     case _ => Signal.empty[BitmapResult]
   }.zip(savedImageUri).on(Threading.IO) {
-    case (BitmapResult.BitmapLoaded(bitmap, _), uri) => showBitmap(bitmap, uri)
-    case (_, uri) => showBitmap(null, uri)
+    //case (BitmapResult.BitmapLoaded(bitmap, _), uri) => showBitmap(bitmap, uri)
+    //case (_, uri) => showBitmap(null, uri)
+    _ =>
   }
 
   private def showBitmap(bitmap: Bitmap, uri: URI): Unit = {

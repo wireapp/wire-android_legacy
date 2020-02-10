@@ -1,20 +1,20 @@
 /**
- * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2018 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
 
 package com.waz.services.websocket
 
@@ -32,29 +32,28 @@ import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
-import com.waz.zclient._
 import com.waz.zclient.Intents.RichIntent
+import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 
 class WebSocketController(implicit inj: Injector) extends Injectable with DerivedLogTag {
-  private lazy val global   = inject[GlobalModule]
+  private lazy val global = inject[GlobalModule]
   private lazy val accounts = inject[AccountsService]
 
   private lazy val cloudPushAvailable =
     for {
-      gpsAvailable   <- global.googleApi.isGooglePlayServicesAvailable
+      gpsAvailable <- global.googleApi.isGooglePlayServicesAvailable
       devPrefEnabled <- global.prefs(PushEnabledKey).signal
     } yield gpsAvailable && devPrefEnabled
 
   lazy val accountWebsocketStates: Signal[(Set[ZMessaging], Set[ZMessaging])] =
     for {
-      cloudPushAvailable  <- cloudPushAvailable
+      cloudPushAvailable <- cloudPushAvailable
       wsForegroundEnabled <- global.prefs(WsForegroundKey).signal
-      _ = verbose(l"wsForeground enabled: $wsForegroundEnabled")
-      accs                <- accounts.zmsInstances
-      accsInFG            <- Signal.sequence(accs.map(_.selfUserId).map(id => accounts.accountState(id).map(st => id -> st)).toSeq : _*).map(_.toMap)
+      accs <- accounts.zmsInstances
+      accsInFG <- Signal.sequence(accs.map(_.selfUserId).map(id => accounts.accountState(id).map(st => id -> st)).toSeq: _*).map(_.toMap)
       (zmsWithWSActive, zmsWithWSInactive) =
-        accs.partition(zms => accsInFG(zms.selfUserId) == InForeground || wsForegroundEnabled || !cloudPushAvailable)
+      accs.partition(zms => accsInFG(zms.selfUserId) == InForeground || wsForegroundEnabled || !cloudPushAvailable)
     } yield (zmsWithWSActive, zmsWithWSInactive)
 
   lazy val serviceInForeground: Signal[Boolean] =
@@ -66,19 +65,16 @@ class WebSocketController(implicit inj: Injector) extends Injectable with Derive
   lazy val notificationTitleRes: Signal[Option[Int]] =
     serviceInForeground.flatMap {
       case true =>
-        verbose(l"Service in foreground")
         global.network.isOnline.flatMap {
-        //checks to see if there are any accounts that haven't yet established a web socket
-        case true => accounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.wsPushService.connected).toSeq: _ *).map(_.exists(!identity(_)))).map {
-          case true => verbose(l"connecting");Option(R.string.ws_foreground_notification_connecting_title)
-          case _    => verbose(l"connected");Option(R.string.ws_foreground_notification_connected_title)
+          //checks to see if there are any accounts that haven't yet established a web socket
+          case true => accounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.wsPushService.connected).toSeq: _ *).map(_.exists(!identity(_)))).map {
+            case true =>  Option(R.string.ws_foreground_notification_connecting_title)
+            case _ => Option(R.string.ws_foreground_notification_connected_title)
+          }
+          case _ =>
+            Signal.const(Option(R.string.ws_foreground_notification_no_internet_title))
         }
-        case _ =>
-          verbose(l"Returning no notification titles despite service in foreground")
-          Signal.const(Option(R.string.ws_foreground_notification_no_internet_title))
-      }
       case _ =>
-        verbose(l"Returning no notification titles")
         Signal.const(Option.empty[Int])
     }
 }
@@ -149,23 +145,18 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
   private lazy val webSocketActiveSubscription =
     controller.accountWebsocketStates {
       case (zmsWithWSActive, zmsWithWSInactive) =>
-        verbose(l"zmsWithWSActive: ${zmsWithWSActive.map(_.selfUserId)}, zmsWithWSInactive: ${zmsWithWSInactive.map(_.selfUserId)}")
         zmsWithWSActive.foreach(_.wsPushService.activate())
         zmsWithWSInactive.foreach(_.wsPushService.deactivate())
-        if (zmsWithWSActive.isEmpty) {
-          verbose(l"stopping")
-          stopSelf()
-        }
+        if (zmsWithWSActive.isEmpty) stopSelf()
+
     }
 
   private lazy val appInForegroundSubscription =
     controller.notificationTitleRes {
       case None =>
-        verbose(l"stopForeground")
         stopForeground(true)
 
       case Some(title) =>
-        verbose(l"startForeground")
         createNotificationChannel()
         startForeground(WebSocketService.ForegroundId,
           new NotificationCompat.Builder(this, ForegroundNotificationChannelId)

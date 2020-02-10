@@ -20,11 +20,9 @@ class DateAndTimeUtils private constructor() {
             val isLastSixtyMinutes = now.minusMinutes(SIXTY_MINUTES).isBefore(localTime)
 
             return when {
-                isLastTwoMins -> return "Just now"
-                isLastSixtyMinutes -> return "${Duration.between(localTime, now).toMinutes().toInt()} minutes ago"
-                else -> {
-                    time
-                }
+                isLastTwoMins -> "Just now"
+                isLastSixtyMinutes -> "${Duration.between(localTime, now).toMinutes().toInt()} minutes ago"
+                else -> time
             }
         }
     }

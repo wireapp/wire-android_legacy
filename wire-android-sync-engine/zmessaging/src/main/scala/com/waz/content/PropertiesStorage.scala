@@ -19,7 +19,7 @@ package com.waz.content
 import android.content.Context
 import com.waz.db.{ColumnBuilders, Dao, Table}
 import com.waz.service.PropertyKey
-import com.waz.service.assets2.StorageCodecs
+import com.waz.service.assets.StorageCodecs
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.wrappers.{DB, DBCursor}
 import com.waz.utils.{CachedStorage2, DbStorage2, Identifiable, InMemoryStorage2, ReactiveStorage2, ReactiveStorageImpl2, TrimmingLruCache}

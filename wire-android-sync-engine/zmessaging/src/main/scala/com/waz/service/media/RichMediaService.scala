@@ -24,7 +24,6 @@ import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.model.messages.media.MediaAssetData
-import com.waz.service.assets.AssetService
 import com.waz.service.messages.MessagesContentUpdater
 import com.waz.sync.SyncServiceHandle
 import com.waz.threading.Threading
@@ -34,12 +33,10 @@ import com.waz.sync.client.ErrorOr
 
 import scala.concurrent.Future
 
-class RichMediaService(assets:      AssetService,
-                       msgsStorage: MessagesStorage,
+class RichMediaService(msgsStorage: MessagesStorage,
                        messages:    MessagesContentUpdater,
                        sync:        SyncServiceHandle,
-                       youTube:     YouTubeMediaService,
-                       soundCloud:  SoundCloudMediaService) extends DerivedLogTag {
+                       youTube:     YouTubeMediaService) extends DerivedLogTag {
   import com.waz.api.Message.Part.Type._
   import Threading.Implicits.Background
 
@@ -48,7 +45,7 @@ class RichMediaService(assets:      AssetService,
   private def isSyncableMsg(msg: MessageData) = msg.msgType == Message.Type.RICH_MEDIA && msg.content.exists(isSyncable)
 
   private def isSyncable(c: MessageContent) = c.tpe match {
-    case YOUTUBE | GOOGLE_MAPS | SOUNDCLOUD => true
+    case YOUTUBE | GOOGLE_MAPS => true
     case _ => false
   }
 
@@ -80,8 +77,8 @@ class RichMediaService(assets:      AssetService,
         for {
           results <- Future.traverse(data.content) { updateRichMediaContent(data, _) }
           newContent = data.content.zip(results) map {
-            case (prev, Right(updated)) => updated.copy(syncNeeded = false)
-            case (prev, Left(_)) => prev.copy(syncNeeded = false)
+            case (_, Right(updated)) => updated.copy(syncNeeded = false)
+            case (prev, Left(_))     => prev.copy(syncNeeded = false)
           }
           _ <- messages.updateMessage(id)(_.copy(content = newContent))
         } yield {
@@ -95,13 +92,11 @@ class RichMediaService(assets:      AssetService,
 
   private def updateRichMediaContent(msg: MessageData, content: MessageContent): Future[Either[ErrorResponse, MessageContent]] = content.tpe match {
     case YOUTUBE     => youTube.updateMedia(msg, content)
-    case SOUNDCLOUD  => soundCloud.updateMedia(msg, content)
     case _           => Future.successful(Right(content))
   }
 
   def prepareStreaming(media: MediaAssetData): ErrorOr[Vector[URI]] = media.provider match {
     case MediaProvider.YOUTUBE    => youTube.prepareStreaming(media)
-    case MediaProvider.SOUNDCLOUD => soundCloud.prepareStreaming(media)
     case other =>
       warn(l"Unable to prepare streaming for rich media from $other.")
       Future.successful(Right(Vector.empty))

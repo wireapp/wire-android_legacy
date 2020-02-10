@@ -25,8 +25,6 @@ public interface OptionsTheme {
 
     int getTextColorPrimary();
 
-    ColorStateList getTextColorPrimarySelector();
-
     int getOverlayColor();
 
     void tearDown();

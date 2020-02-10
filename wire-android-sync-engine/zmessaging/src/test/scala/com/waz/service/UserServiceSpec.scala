@@ -20,7 +20,7 @@ package com.waz.service
 import com.waz.content._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.{Availability, _}
-import com.waz.service.assets2.{AssetService, AssetStorage}
+import com.waz.service.assets.{AssetService, AssetStorage}
 import com.waz.service.conversation.SelectedConversationService
 import com.waz.service.push.PushService
 import com.waz.specs.AndroidFreeSpec

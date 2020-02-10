@@ -11,5 +11,7 @@ enum class ClientVerification {
 data class ClientItem(val client: Client) {
 
     val verified = ClientVerification.UNVERIFIED
-    fun verificationIcon() = if (verified == ClientVerification.VERIFIED) R.drawable.shield_full else R.drawable.shield_half
+
+    fun verificationIcon() =
+        if (verified == ClientVerification.VERIFIED) R.drawable.shield_full else R.drawable.shield_half
 }

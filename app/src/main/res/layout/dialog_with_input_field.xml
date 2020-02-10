@@ -34,12 +34,19 @@
         android:paddingBottom="@dimen/dialog_with_input_message_bottom_padding"
         tools:text="TextView" />
 
-    <EditText
-        android:id="@+id/input"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/dialogWithInputTextInputLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textMultiLine"
-        tools:text="Name" />
+        android:layout_height="wrap_content" >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            tools:text="Name" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

@@ -17,9 +17,9 @@
  */
 package com.waz.zclient.glide
 
-import com.waz.model.{AssetId, GeneralAssetId, PictureNotUploaded, Picture, UploadAssetId, PictureUploaded}
+import com.waz.model.{AssetId, GeneralAssetId, Picture, PictureNotUploaded, PictureUploaded, UploadAssetId}
 import com.waz.api.MessageContent.Location
-import com.waz.service.assets2.Asset
+import com.waz.service.assets.Asset
 
 sealed trait AssetRequest {
   val key: String

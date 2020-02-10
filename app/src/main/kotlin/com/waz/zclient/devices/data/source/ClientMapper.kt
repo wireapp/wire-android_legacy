@@ -1,17 +1,17 @@
 package com.waz.zclient.devices.data.source
 
-import com.waz.zclient.devices.data.source.remote.model.ClientApi
+import com.waz.zclient.devices.data.source.remote.model.ClientResponse
 import com.waz.zclient.devices.domain.model.Client
 import com.waz.zclient.devices.domain.model.ClientLocation
-import com.waz.zclient.storage.db.clients.model.ClientDao
+import com.waz.zclient.storage.db.clients.model.ClientEntity
 
 class ClientMapper {
 
-    fun toClient(clientDao: ClientDao) = with(clientDao) {
+    fun toClient(clientEntity: ClientEntity) = with(clientEntity) {
         Client(
             time = time,
             label = label,
-            _class = _class,
+            clazz = clazz,
             type = type,
             id = id,
             model = model,
@@ -21,12 +21,12 @@ class ClientMapper {
             location = ClientLocation(long = lon, lat = lat, name = locationName))
     }
 
-    fun toClient(clientApi: ClientApi) = with(clientApi) {
+    fun toClient(clientResponse: ClientResponse) = with(clientResponse) {
         Client(
             cookie = cookie,
             time = time,
             label = label,
-            _class = _class,
+            clazz = clazz,
             type = type,
             id = id,
             model = model,
@@ -34,12 +34,12 @@ class ClientMapper {
     }
 
     fun toClientDao(client: Client) = with(client) {
-        ClientDao(
+        ClientEntity(
             id = id,
             time = time,
             label = label,
             type = type,
-            _class = _class,
+            clazz = clazz,
             model = model,
             lat = location.lat,
             lon = location.long,
@@ -50,17 +50,17 @@ class ClientMapper {
         )
     }
 
-    fun toListOfClientDao(list: List<Client>): List<ClientDao> = list.map {
+    fun toListOfClientDao(list: List<Client>): List<ClientEntity> = list.map {
         toClientDao(it)
     }
 
     @JvmName("clientDaoToClients")
-    fun toListOfClients(list: List<ClientDao>): List<Client> = list.map {
+    fun toListOfClients(list: List<ClientEntity>): List<Client> = list.map {
         toClient(it)
     }
 
     @JvmName("clientApiToClients")
-    fun toListOfClients(list: List<ClientApi>): List<Client> = list.map {
+    fun toListOfClients(list: List<ClientResponse>): List<Client> = list.map {
         toClient(it)
     }
 }

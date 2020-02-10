@@ -1,6 +1,7 @@
 package com.waz.zclient.devices.data.source.remote
 
-import com.waz.zclient.devices.data.source.remote.model.ClientApi
+import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.devices.data.source.remote.model.ClientResponse
 import com.waz.zclient.eq
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.cancel
@@ -8,7 +9,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 import retrofit2.Response
 
@@ -17,18 +20,22 @@ class ClientsRemoteDataSourceTest {
     private lateinit var remoteDataSource: ClientsRemoteDataSource
 
     @Mock
-    private lateinit var clientsApi: ClientsNetworkService
+    private lateinit var clientsApi: ClientsApi
 
     @Mock
-    private lateinit var allClientsResponse: Response<List<ClientApi>>
+    private lateinit var networkHandler: NetworkHandler
 
     @Mock
-    private lateinit var clientByIdResponse: Response<ClientApi>
+    private lateinit var allClientsResponse: Response<List<ClientResponse>>
+
+    @Mock
+    private lateinit var clientByIdResponse: Response<ClientResponse>
 
     @Before
     fun setup() {
         MockitoAnnotations.initMocks(this)
-        remoteDataSource = ClientsRemoteDataSource(clientsApi)
+        remoteDataSource = ClientsRemoteDataSource(networkHandler, clientsApi)
+        `when`(networkHandler.isConnected).thenReturn(true)
         `when`(allClientsResponse.code()).thenReturn(TEST_NETWORK_ERROR_CODE)
         `when`(clientByIdResponse.code()).thenReturn(TEST_NETWORK_ERROR_CODE)
         `when`(clientByIdResponse.message()).thenReturn(TEST_NETWORK_ERROR_MESSAGE)
@@ -37,10 +44,10 @@ class ClientsRemoteDataSourceTest {
     }
 
     @Test
-    fun `Given getAllClients() is called, when api response success, then return a successful response`() {
+    fun `Given allClients() is called, when api response success, then return a successful response`() {
         runBlocking {
-            val clientEntity = mock(ClientApi::class.java)
-            `when`(allClientsResponse.body()).thenReturn(listOf(clientEntity))
+            val clientResponse = mock(ClientResponse::class.java)
+            `when`(allClientsResponse.body()).thenReturn(listOf(clientResponse))
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.allClients()).thenReturn(allClientsResponse)
 
@@ -53,7 +60,7 @@ class ClientsRemoteDataSourceTest {
     }
 
     @Test
-    fun `Given getAllClients() is called, when api response success and response body is null, then return an error response`() {
+    fun `Given allClients() is called, when api response is success and body is null, then return an error response`() {
         runBlocking {
             `when`(allClientsResponse.body()).thenReturn(null)
             `when`(allClientsResponse.isSuccessful).thenReturn(true)
@@ -69,7 +76,7 @@ class ClientsRemoteDataSourceTest {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given getAllClients() is called, when api response is an error, then return an error response`() {
+    fun `Given allClients() is called, when api response is an error, then return an error response`() {
         runBlocking {
             `when`(clientsApi.allClients()).thenReturn(allClientsResponse)
 
@@ -84,9 +91,9 @@ class ClientsRemoteDataSourceTest {
     }
 
     @Test
-    fun `Given getClientById() is called, when api response success, then return a successful response`() {
+    fun `Given clientById() is called, when api response success, then return a successful response`() {
         runBlocking {
-            val clientEntity = mock(ClientApi::class.java)
+            val clientEntity = mock(ClientResponse::class.java)
             `when`(clientByIdResponse.body()).thenReturn(clientEntity)
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
             `when`(clientsApi.clientById(TEST_ID)).thenReturn(clientByIdResponse)
@@ -100,7 +107,7 @@ class ClientsRemoteDataSourceTest {
     }
 
     @Test
-    fun `Given getClientById() is called, when api response success and response body is null, then return an error response`() {
+    fun `Given clientById() is called, when api response is success and body is null, then return an error response`() {
         runBlocking {
             `when`(clientByIdResponse.body()).thenReturn(null)
             `when`(clientByIdResponse.isSuccessful).thenReturn(true)
@@ -116,7 +123,7 @@ class ClientsRemoteDataSourceTest {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given getClientById() is called, when api response is an error, then return an error response`() {
+    fun `Given clientById() is called, when api response is an error, then return an error response`() {
         runBlocking {
             `when`(clientsApi.clientById(TEST_ID)).thenReturn(clientByIdResponse)
 

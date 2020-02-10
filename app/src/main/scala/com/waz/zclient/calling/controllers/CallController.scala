@@ -17,12 +17,11 @@
  */
 package com.waz.zclient.calling.controllers
 
-import android.os.PowerManager
+import android.os.{Build, PowerManager}
 import android.telephony.{PhoneStateListener, TelephonyManager}
 import com.waz.api.Verification
 import com.waz.avs.VideoPreview
 import com.waz.content.GlobalPreferences
-import com.waz.model.Picture
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging.clock
@@ -138,7 +137,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       CallParticipantInfo(
         userId         = user.id,
         picture        = user.picture,
-        displayName    = user.getDisplayName,
+        displayName    = user.name,
         isGuest        = user.isGuest(cZms.teamId),
         isVerified     = user.isVerified,
         isExternal     = user.isExternal(cZms.teamId),
@@ -283,12 +282,13 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
     active
   }
 
-  onCallStarted.on(Threading.Ui) { _ =>
+  onCallStarted.on(Threading.Ui) { activeUi =>
     (for {
       incoming <- isCallIncoming.head
       allowed  <- allowedByStatus.head
-    } yield !incoming || allowed).foreach {
-      case true  => CallingActivity.start(cxt)
+      shouldDisplayOverlay = activeUi || Build.VERSION.SDK_INT < 29
+    } yield (!incoming || allowed) && shouldDisplayOverlay).foreach {
+      case true => CallingActivity.start(cxt)
       case false =>
     }
   }(EventContext.Global)
@@ -373,7 +373,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       users <- userStorage
       userId <- callerId
       data <- users.signal(userId)
-    } yield data.getDisplayName.toUpperCase(getLocale) + " "
+    } yield data.name.toUpperCase(getLocale) + " "
 
   val callBannerText: Signal[String] =
     (for {
@@ -384,7 +384,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       duration <- duration
       callee <- otherUser
     } yield (state, isGroupCall, userName, convName, duration, callee)).map {
-      case (SelfCalling, false, _, _, _, Some(callee))  => getString(R.string.call_banner_outgoing, callee.getDisplayName)
+      case (SelfCalling, false, _, _, _, Some(callee))  => getString(R.string.call_banner_outgoing, callee.name)
       case (SelfCalling, true, _, convName, _, _)       => getString(R.string.call_banner_outgoing, convName)
       case (OtherCalling, true, caller, convName, _, _) => getString(R.string.call_banner_incoming_group, convName, caller)
       case (OtherCalling, false, caller, _, _, _)       => getString(R.string.call_banner_incoming, caller)
@@ -400,7 +400,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       dur        <- duration
       group      <- isGroupCall
       callerId   <- callerId
-      callerName <- callingZms.flatMap(_.usersStorage.signal(callerId).map(_.getDisplayName).map(Option(_))).orElse(Signal.const(None))
+      callerName <- callingZms.flatMap(_.usersStorage.signal(callerId).map(_.name).map(Option(_))).orElse(Signal.const(None))
     } yield (video, state, dur, callerName.filter(_ => group))).map {
       case (true,  SelfCalling,  _, _)  => cxt.getString(R.string.calling__header__outgoing_video_subtitle)
       case (false, SelfCalling,  _, _)  => cxt.getString(R.string.calling__header__outgoing_subtitle)

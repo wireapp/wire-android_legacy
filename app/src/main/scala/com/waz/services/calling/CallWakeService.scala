@@ -33,19 +33,18 @@ import scala.concurrent.Future
   * Background service waking up the calling service if a user performs an action via call notifications.
   */
 class CallWakeService extends FutureService with ZMessagingService with DerivedLogTag {
+
   import CallWakeService._
   import com.waz.zclient.Intents.RichIntent
-  implicit val ec = EventContext.Global
+  implicit val ec: EventContext.Global.type = EventContext.Global
 
   override protected def onIntent(intent: AIntent, id: Int): Future[Any] = onZmsIntent(intent) { implicit zms =>
     debug(l"onIntent ${RichIntent(intent)}")
     if (intent != null && intent.hasExtra(ConvIdExtra)) {
-      implicit val convId = ConvId(intent.getStringExtra(ConvIdExtra))
+      implicit val convId: ConvId = ConvId(intent.getStringExtra(ConvIdExtra))
       debug(l"convId: $convId")
 
       intent.getAction match {
-        case ActionJoin          => join(withVideo = false)
-        case ActionJoinWithVideo => join(withVideo = true)
         case ActionEnd           => end()
         case _                   => Future.successful({})
       }
@@ -55,9 +54,6 @@ class CallWakeService extends FutureService with ZMessagingService with DerivedL
     }
   }
 
-  private def join(withVideo: Boolean)(implicit zms: ZMessaging, conv: ConvId) =
-    zms.calling.startCall(conv, withVideo)
-
   private def end()(implicit zms: ZMessaging, conv: ConvId) =
     zms.calling.endCall(conv, skipTerminating = true)
 }
@@ -65,8 +61,6 @@ class CallWakeService extends FutureService with ZMessagingService with DerivedL
 object CallWakeService {
   val ConvIdExtra = "conv_id"
 
-  val ActionJoin           = "com.waz.zclient.call.ACTION_JOIN"
-  val ActionJoinWithVideo  = "com.waz.zclient.call.ACTION_JOIN_WITH_VIDEO"
   val ActionEnd            = "com.waz.zclient.call.ACTION_END"
 
   def intent(context: Context, user: UserId, conv: ConvId, action: String): Intent = {
@@ -76,12 +70,6 @@ object CallWakeService {
       i.putExtra(ZMessagingService.ZmsUserIdExtra, user.str)
     }
   }
-
-  def joinIntent(context: Context, user: UserId, conv: ConvId): Intent =
-    intent(context, user, conv, ActionJoin)
-
-  def joinWithVideoIntent(context: Context, user: UserId, conv: ConvId): Intent =
-    intent(context, user, conv, ActionJoinWithVideo)
 
   def endIntent(context: Context, user: UserId, conv: ConvId): Intent =
     intent(context, user, conv, ActionEnd)

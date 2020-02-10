@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
 
 @SuppressWarnings("deprecation")
 public class Deprecated {
-    public static final int MODE_WORLD_READABLE = Context.MODE_WORLD_READABLE;
     public static final int INFO_OUTPUT_BUFFERS_CHANGED = MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED;
 
     public static ByteBuffer[] inputBuffersOf(MediaCodec codec) {

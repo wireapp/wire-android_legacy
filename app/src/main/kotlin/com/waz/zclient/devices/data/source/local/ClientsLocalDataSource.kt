@@ -1,16 +1,16 @@
 package com.waz.zclient.devices.data.source.local
 
 import com.waz.zclient.core.network.requestDatabase
-import com.waz.zclient.storage.db.clients.model.ClientDao
-import com.waz.zclient.storage.db.clients.service.ClientDbService
+import com.waz.zclient.storage.db.clients.model.ClientEntity
+import com.waz.zclient.storage.db.clients.service.ClientsDao
 
-class ClientsLocalDataSource(private val clientDbService: ClientDbService) {
+class ClientsLocalDataSource(private val clientsDao: ClientsDao) {
 
-    suspend fun clientById(clientId: String) = requestDatabase { clientDbService.clientById(clientId) }
+    suspend fun clientById(clientId: String) = requestDatabase { clientsDao.clientById(clientId) }
 
-    suspend fun allClients() = requestDatabase { clientDbService.allClients().toList() }
+    suspend fun allClients() = requestDatabase { clientsDao.allClients().toList() }
 
-    suspend fun updateClients(clients: List<ClientDao>) = clientDbService.updateClients(clients)
+    suspend fun updateClients(clients: List<ClientEntity>) = clientsDao.updateClients(clients)
 
-    suspend fun updateClient(client: ClientDao) = clientDbService.updateClient(client)
+    suspend fun updateClient(client: ClientEntity) = clientsDao.updateClient(client)
 }

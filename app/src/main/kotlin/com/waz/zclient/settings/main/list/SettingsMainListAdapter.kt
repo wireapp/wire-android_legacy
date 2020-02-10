@@ -5,11 +5,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.core.lists.OnItemClickListener
+import com.waz.zclient.core.ui.list.OnItemClickListener
 import com.waz.zclient.settings.main.model.SettingsMainItem
 import kotlinx.android.synthetic.main.item_settings.view.*
 
-class SettingsMainListAdapter(private val settingsItems: List<SettingsMainItem>, private val listener: OnItemClickListener) : RecyclerView.Adapter<SettingsMainListAdapter.SettingsViewHolder>() {
+class SettingsMainListAdapter(
+    private val settingsItems: List<SettingsMainItem>,
+    private val listener: OnItemClickListener
+) : RecyclerView.Adapter<SettingsMainListAdapter.SettingsViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SettingsViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_settings, parent, false)

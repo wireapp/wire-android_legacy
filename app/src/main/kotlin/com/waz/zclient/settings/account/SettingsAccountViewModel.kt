@@ -1,61 +1,109 @@
 package com.waz.zclient.settings.account
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.HttpError
-import com.waz.zclient.settings.account.model.UserProfileItem
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
+import com.waz.zclient.user.domain.usecase.ChangeEmailParams
+import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
+import com.waz.zclient.user.domain.usecase.ChangeNameParams
+import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-class SettingsAccountViewModel constructor(private val getUserProfileUseCase: GetUserProfileUseCase)
-    : ViewModel() {
+@ExperimentalCoroutinesApi
+class SettingsAccountViewModel(
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val changeNameUseCase: ChangeNameUseCase,
+    private val changeEmailUseCase: ChangeEmailUseCase,
+    private val accountUrlConfig: AccountUrlConfig
+) : ViewModel() {
 
-    private val mutableLoading = MutableLiveData<Boolean>()
-    private val mutableError = MutableLiveData<String>()
-    private val mutableProfile = MutableLiveData<UserProfileItem>()
+    private val profileLiveData = MutableLiveData<User>()
+    private val _errorLiveData = MutableLiveData<String>()
+    private val _resetPasswordUrlLiveData = MutableLiveData<String>()
+    private val _phoneDialogLiveData = MutableLiveData<DialogDetail>()
 
-    val loading: LiveData<Boolean>
-        get() = mutableLoading
+    val nameLiveData: LiveData<String> = Transformations.map(profileLiveData) {
+        it.name
+    }
 
-    val error: LiveData<String>
-        get() = mutableError
+    val handleLiveData: LiveData<String> = Transformations.map(profileLiveData) {
+        it.handle
+    }
 
-    val profile: LiveData<UserProfileItem>
-        get() = mutableProfile
+    val emailLiveData: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
+        if (it.email.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.email)
+    }
 
-    fun loadData() {
-        handleLoading(true)
-        getUserProfileUseCase(viewModelScope, Unit) { response ->
-            response.fold(::handleProfileError, ::handleProfileSuccess)
+    val phoneNumberLiveData: LiveData<ProfileDetail> = Transformations.map(profileLiveData) {
+        if (it.phone.isNullOrEmpty()) ProfileDetail.EMPTY else ProfileDetail(it.phone)
+    }
+
+    val errorLiveData: LiveData<String> = _errorLiveData
+    val phoneDialogLiveData: LiveData<DialogDetail> = _phoneDialogLiveData
+    val resetPasswordUrlLiveData: LiveData<String> = _resetPasswordUrlLiveData
+
+    fun loadProfileDetails() {
+        getUserProfileUseCase(viewModelScope, Unit) {
+            it.fold(::handleError, ::handleProfileSuccess)
         }
     }
 
-    private fun handleProfileError(failure: Failure) {
-        handleLoading(false)
-        when (failure) {
-            is HttpError ->
-                Log.e(javaClass.simpleName, "failed with errorCode: ${failure.errorCode} and errorMessage {${failure.errorMessage}")
-            else ->
-                Log.e(javaClass.simpleName, "Misc error scenario")
+    fun updateName(name: String) {
+        changeNameUseCase(viewModelScope, ChangeNameParams(name)) {
+            it.fold(::handleError) {}
+        }
+    }
+
+    fun updateEmail(email: String) {
+        changeEmailUseCase(viewModelScope, ChangeEmailParams(email)) {
+            it.fold(::handleError) {}
         }
     }
 
     private fun handleProfileSuccess(user: User) {
-        handleLoading(false)
-        mutableProfile.postValue(UserProfileItem(user))
+        profileLiveData.postValue(user)
     }
 
-    private fun handleLoading(isLoading: Boolean) {
-        mutableLoading.postValue(isLoading)
+    //TODO valid error scenarios once the networking has been integrated
+    private fun handleError(failure: Failure) {
+        _errorLiveData.postValue("Failure: $failure")
     }
 
-    private fun handleFailure(message: String) {
-        mutableError.value = message
+    fun onPhoneContainerClicked() {
+        val hasEmail = emailLiveData.value != ProfileDetail.EMPTY
+        val hasPhoneNumber = phoneNumberLiveData.value != ProfileDetail.EMPTY
+        if (hasPhoneNumber) {
+            _phoneDialogLiveData.value = phoneNumberLiveData.value?.value?.let { DialogDetail(it, hasEmail) }
+                ?: DialogDetail.EMPTY
+        } else {
+            _phoneDialogLiveData.value = DialogDetail.EMPTY
+        }
+    }
+
+    fun onResetPasswordClicked() {
+        _resetPasswordUrlLiveData.value = "${accountUrlConfig.url}$RESET_PASSWORD_URL_SUFFIX"
+    }
+
+    companion object {
+        private const val RESET_PASSWORD_URL_SUFFIX = "/forgot/"
     }
 }
 
+data class ProfileDetail(val value: String) {
+    companion object {
+        val EMPTY = ProfileDetail(String.empty())
+    }
+}
 
+data class DialogDetail(val number: String, val hasEmail: Boolean) {
+    companion object {
+        val EMPTY = DialogDetail(String.empty(), false)
+    }
+}

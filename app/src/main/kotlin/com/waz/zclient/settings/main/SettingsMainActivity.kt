@@ -7,15 +7,20 @@ import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.activity_settings_new.*
-
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.InternalCoroutinesApi
 
 class SettingsMainActivity : AppCompatActivity() {
+
+    @ExperimentalCoroutinesApi
+    @InternalCoroutinesApi
+    //TODO Method level annotations as this is the top of the chain
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings_new)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        replaceFragment(R.id.layout_container, SettingsMainFragment.newInstance(), false)
+        replaceFragment(R.id.activitySettingsMainLayoutContainer, SettingsMainFragment.newInstance(), false)
     }
 
     override fun onSupportNavigateUp(): Boolean {

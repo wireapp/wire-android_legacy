@@ -100,7 +100,6 @@ class SyncSchedulerImpl(accountId:   UserId,
   override def report(pw: PrintWriter) = reportString.map(pw.println)
 
   private def execute(job: SyncJob): Unit = {
-    verbose(l"SYNC execute($job)")
     val t = System.currentTimeMillis()
     val future = executor(job)
     executions += job.id -> future
@@ -108,7 +107,6 @@ class SyncSchedulerImpl(accountId:   UserId,
     future onComplete { res =>
       executions -= job.id
       executionsCount.mutate(_ - 1)
-      verbose(l"SYNC job completed: $job, res: $res, time: ${System.currentTimeMillis() - t}ms")
       res.failed.foreach(t => t.printStackTrace())
     }
   }
@@ -123,17 +121,12 @@ class SyncSchedulerImpl(accountId:   UserId,
     future
   }
 
-  override def withConv[A](job: SyncJob, conv: ConvId)(f: ConvLock => Future[A]) = {
-    verbose(l"withConv($job, $conv)")
+  override def withConv[A](job: SyncJob, conv: ConvId)(f: ConvLock => Future[A]) =
     countWaiting(job.id, getStartTime(job)) { queue.acquire(conv) } flatMap { lock =>
       Try(f(lock)).recover { case t => Future.failed[A](t) }.get.andThen { case _ => lock.release() }
     }
-  }
 
   override def awaitPreconditions[A](job: SyncJob)(f: => Future[A]) = {
-    verbose(l"SYNC awaitPreconditions($job)")
-    val t = System.currentTimeMillis()
-
     val entry = new WaitEntry(job)
     waitEntries.put(job.id, entry)
 
@@ -144,13 +137,9 @@ class SyncSchedulerImpl(accountId:   UserId,
 
     jobReady.onComplete(_ => waitEntries -= job.id)
 
-    val res = countWaiting(job.id, getStartTime(job))(jobReady) flatMap { _ =>
+   countWaiting(job.id, getStartTime(job))(jobReady) flatMap { _ =>
       returning(f)(_.onComplete(_ => queue.release()))
     }
-
-    verbose(l"SYNC awaitPreconditions($job) - completed, time: ${System.currentTimeMillis() -t}ms")
-
-    res
   }
 
   private def getStartTime(job: SyncJob): Long =
@@ -167,7 +156,6 @@ class SyncSchedulerImpl(accountId:   UserId,
       val t = System.currentTimeMillis()
       val startJob = getStartTime(job)
       val d = math.max(0, startJob - t).millis
-      verbose(l"SYNC setup($job), delay: $d, startJob: $startJob, current time: $t, job offline: ${job.offline}, network online: ${network.isOnlineMode} ")
       val delay = CancellableFuture.delay(d)
       for {
         _ <- delay.recover { case _: CancelException => () } .future
@@ -185,7 +173,6 @@ class SyncSchedulerImpl(accountId:   UserId,
     def onOnline() = if (job.offline) delayFuture.cancel()
     def onUpdated(updated: SyncJob): Unit = {
       job = updated
-      verbose(l"SYNC job updated: $job, should update delay and/or priority")
       delayFuture = setup(updated)
     }
 

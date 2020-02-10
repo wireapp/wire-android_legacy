@@ -30,7 +30,7 @@ import com.waz.zclient.utils._
 
 import scala.concurrent.Future
 
-case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
+class TeamNameFragment extends CreateTeamFragment with SSOFragment {
 
   override val layoutId: Int = R.layout.create_team_name_scene
 
@@ -56,5 +56,7 @@ case class TeamNameFragment() extends CreateTeamFragment with SSOFragment {
 }
 
 object TeamNameFragment {
-  val Tag: String = getClass.getSimpleName
+  val Tag: String = "TeamNameFragment"
+
+  def apply() = new TeamNameFragment()
 }
