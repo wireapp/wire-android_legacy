@@ -17,14 +17,14 @@
  */
 package com.waz.zclient.appentry
 
-import android.app.FragmentManager
 import android.content.DialogInterface
 import android.os.Bundle
-import androidx.appcompat.widget.Toolbar
 import android.view.View.OnClickListener
 import android.view.{LayoutInflater, View, ViewGroup}
 import android.webkit.WebView
 import android.widget.TextView
+import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.FragmentManager
 import com.waz.service.{AccountsService, ZMessaging}
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -100,6 +100,11 @@ class SSOWebViewFragment extends FragmentHelper {
     true
   }
 
+  override def onPause(): Unit ={
+    super.onPause()
+    onBackPressed()
+  }
+  
   def activity = getActivity.asInstanceOf[AppEntryActivity]
 
 }
