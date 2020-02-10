@@ -2,7 +2,7 @@ package com.waz.zclient.settings.account.di
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.settings.account.SettingsAccountViewModel
-import com.waz.zclient.settings.account.edithandle.EditHandleViewModel
+import com.waz.zclient.settings.account.edithandle.SettingsAccountEditHandleViewModel
 import com.waz.zclient.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
@@ -24,21 +24,23 @@ import org.koin.dsl.module
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 val settingsAccountModule: Module = module {
-    viewModel { SettingsAccountViewModel(get(), get(), get()) }
-    viewModel { EditHandleViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsAccountViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsAccountEditHandleViewModel(get(), get(), get(), get()) }
     viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
 
     single { PhoneNumberUtil.getInstance() }
 
+    factory { ChangePhoneNumberUseCase(get()) }
     factory { DeletePhoneNumberUseCase(get()) }
     factory { CountryCodeAndPhoneNumberUseCase(get()) }
     factory { ValidatePhoneNumberUseCase() }
+
     factory { CheckHandleExistsUseCase(get()) }
     factory { GetHandleUseCase(get()) }
     factory { ValidateHandleUseCase() }
+    factory { ChangeHandleUseCase(get()) }
+
     factory { GetUserProfileUseCase(get()) }
     factory { ChangeNameUseCase(get()) }
-    factory { ChangePhoneNumberUseCase(get()) }
-    factory { ChangeHandleUseCase(get()) }
     factory { ChangeEmailUseCase(get()) }
 }

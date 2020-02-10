@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
-import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
@@ -85,7 +84,10 @@ class SettingsAccountFragment : Fragment() {
 
     private fun initResetPassword() {
         settingsAccountResetPasswordButton.setOnClickListener {
-            openUrl(getString(R.string.url_password_forgot).replaceFirst(Accounts, Config.accountsUrl()))
+            settingsAccountViewModel.onResetPasswordClicked()
+        }
+        settingsAccountViewModel.resetPasswordUrlLiveData.observe(viewLifecycleOwner) {
+            openUrl(it)
         }
     }
 
@@ -149,8 +151,6 @@ class SettingsAccountFragment : Fragment() {
         ).show(requireActivity().supportFragmentManager, String.empty())
 
     companion object {
-        private const val Accounts = "|ACCOUNTS|"
-
         fun newInstance() = SettingsAccountFragment()
     }
 }

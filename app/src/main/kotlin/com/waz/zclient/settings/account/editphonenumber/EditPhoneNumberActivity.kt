@@ -25,8 +25,7 @@ class EditPhoneNumberActivity : AppCompatActivity() {
 
         replaceFragment(
             R.id.editPhoneActivityFragmentContainer,
-            EditPhoneNumberFragment.newInstance(phoneNumber, hasEmail),
-            false
+            EditPhoneNumberFragment.newInstance(phoneNumber, hasEmail)
         )
     }
 

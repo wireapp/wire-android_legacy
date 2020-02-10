@@ -5,16 +5,16 @@ import androidx.lifecycle.ViewModel
 
 class SettingsSupportViewModel : ViewModel() {
 
-    private var _urlLiveData = MutableLiveData<UrlDetail>()
+    private var _urlLiveData = MutableLiveData<SupportUrl>()
 
     val urlLiveData = _urlLiveData
 
     fun onSupportWebsiteClicked() {
-        _urlLiveData.value = UrlDetail(SUPPORT_WEBSITE_URL)
+        _urlLiveData.value = SupportUrl(SUPPORT_WEBSITE_URL)
     }
 
     fun onSupportContactClicked() {
-        _urlLiveData.value = UrlDetail(SUPPORT_CONTACT_URL)
+        _urlLiveData.value = SupportUrl(SUPPORT_CONTACT_URL)
     }
 
     companion object {
@@ -23,4 +23,4 @@ class SettingsSupportViewModel : ViewModel() {
     }
 }
 
-data class UrlDetail(val url: String)
+data class SupportUrl(val url: String)

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
@@ -19,11 +20,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 class SettingsAccountViewModel(
     private val getUserProfileUseCase: GetUserProfileUseCase,
     private val changeNameUseCase: ChangeNameUseCase,
-    private val changeEmailUseCase: ChangeEmailUseCase
+    private val changeEmailUseCase: ChangeEmailUseCase,
+    private val accountUrlConfig: AccountUrlConfig
 ) : ViewModel() {
 
     private val profileLiveData = MutableLiveData<User>()
     private val _errorLiveData = MutableLiveData<String>()
+    private val _resetPasswordUrlLiveData = MutableLiveData<String>()
     private val _phoneDialogLiveData = MutableLiveData<DialogDetail>()
 
     val nameLiveData: LiveData<String> = Transformations.map(profileLiveData) {
@@ -44,6 +47,7 @@ class SettingsAccountViewModel(
 
     val errorLiveData: LiveData<String> = _errorLiveData
     val phoneDialogLiveData: LiveData<DialogDetail> = _phoneDialogLiveData
+    val resetPasswordUrlLiveData: LiveData<String> = _resetPasswordUrlLiveData
 
     fun loadProfileDetails() {
         getUserProfileUseCase(viewModelScope, Unit) {
@@ -81,6 +85,14 @@ class SettingsAccountViewModel(
         } else {
             _phoneDialogLiveData.value = DialogDetail.EMPTY
         }
+    }
+
+    fun onResetPasswordClicked() {
+        _resetPasswordUrlLiveData.value = "${accountUrlConfig.url}$RESET_PASSWORD_URL_SUFFIX"
+    }
+
+    companion object {
+        private const val RESET_PASSWORD_URL_SUFFIX = "/forgot/"
     }
 }
 
