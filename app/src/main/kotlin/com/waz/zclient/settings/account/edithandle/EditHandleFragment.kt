@@ -14,12 +14,9 @@ import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
 import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleTooShort
-import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
 import com.waz.zclient.user.domain.usecase.handle.UnknownError
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_ok_button
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_back_button
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_edit_text
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.edit_handle_edit_text_container
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
+import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.ext.android.viewModel
@@ -28,7 +25,7 @@ import org.koin.android.viewmodel.ext.android.viewModel
 @InternalCoroutinesApi
 class EditHandleFragment : DialogFragment() {
 
-    private val editHandleViewModel: EditHandleViewModel by viewModel()
+    private val editHandleViewModel: SettingsAccountEditHandleViewModel by viewModel()
 
     private val suggestedHandle: String by lazy {
         arguments?.getString(CURRENT_HANDLE_BUNDLE_KEY, String.empty()) ?: String.empty()
@@ -53,42 +50,42 @@ class EditHandleFragment : DialogFragment() {
 
     private fun initHandleInput() {
         updateHandleText(suggestedHandle)
-        editHandleViewModel.handle.observe(viewLifecycleOwner) {
+        editHandleViewModel.handleLiveData.observe(viewLifecycleOwner) {
             updateHandleText(it)
         }
 
-        edit_handle_edit_text.doAfterTextChanged {
+        editHandleDialogHandleEditText.doAfterTextChanged {
             editHandleViewModel.afterHandleTextChanged(it.toString())
         }
     }
 
     private fun initOkButton() {
-        edit_handle_ok_button.setOnClickListener {
-            editHandleViewModel.onOkButtonClicked(edit_handle_edit_text.text.toString())
+        editHandleDialogOkButton.setOnClickListener {
+            editHandleViewModel.onOkButtonClicked(editHandleDialogHandleEditText.text.toString())
         }
     }
 
     private fun initBackButton() {
-        edit_handle_back_button.setOnClickListener {
+        editHandleDialogBackButton.setOnClickListener {
             editHandleViewModel.onBackButtonClicked(suggestedHandle)
         }
     }
 
     private fun initViewModel() {
         with(editHandleViewModel) {
-            success.observe(viewLifecycleOwner) { updateSuccessMessage() }
-            error.observe(viewLifecycleOwner) { updateErrorMessage(it) }
-            okEnabled.observe(viewLifecycleOwner) { edit_handle_ok_button.isEnabled = it }
-            dismiss.observe(viewLifecycleOwner) { dismiss() }
+            successLiveData.observe(viewLifecycleOwner) { updateSuccessMessage() }
+            errorLiveData.observe(viewLifecycleOwner) { updateErrorMessage(it) }
+            okEnabledLiveData.observe(viewLifecycleOwner) { editHandleDialogOkButton.isEnabled = it }
+            dismissLiveData.observe(viewLifecycleOwner) { dismiss() }
         }
     }
 
     private fun updateSuccessMessage() {
-        edit_handle_edit_text_container.error = String.empty()
+        editHandleDialogHandleTextInputLayout.error = String.empty()
     }
 
     private fun updateErrorMessage(error: ValidateHandleError) {
-        edit_handle_edit_text_container.error = when (error) {
+        editHandleDialogHandleTextInputLayout.error = when (error) {
             is HandleAlreadyExists -> getString(R.string.edit_account_handle_error_already_taken)
             is HandleTooShort -> getString(R.string.edit_account_handle_error_too_short)
             is HandleInvalid -> getString(R.string.edit_account_handle_error_invalid_characters)
@@ -102,12 +99,12 @@ class EditHandleFragment : DialogFragment() {
     }
 
     private fun shakeInputField() {
-        edit_handle_edit_text.startAnimation(AnimationUtils.loadAnimation(context, R.anim.shake_animation))
+        editHandleDialogHandleEditText.startAnimation(AnimationUtils.loadAnimation(context, R.anim.shake_animation))
     }
 
     private fun updateHandleText(handle: String) {
-        edit_handle_edit_text.setText(handle)
-        edit_handle_edit_text.setSelection(edit_handle_edit_text.length())
+        editHandleDialogHandleEditText.setText(handle)
+        editHandleDialogHandleEditText.setSelection(editHandleDialogHandleEditText.length())
     }
 
     companion object {
@@ -115,8 +112,6 @@ class EditHandleFragment : DialogFragment() {
 
         fun newInstance(currentHandle: String):
             EditHandleFragment = EditHandleFragment()
-            .withArgs {
-                putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle)
-            }
+            .withArgs { putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle) }
     }
 }

@@ -14,7 +14,7 @@ import com.waz.zclient.settings.account.SettingsAccountFragment
 import com.waz.zclient.settings.advanced.SettingsAdvancedFragment
 import com.waz.zclient.settings.devices.list.SettingsDeviceListFragment
 import com.waz.zclient.settings.main.list.SettingsMainListAdapter
-import com.waz.zclient.settings.main.list.SettingsMainListFactory
+import com.waz.zclient.settings.main.list.SettingsMainListItemsFactory
 import com.waz.zclient.settings.options.SettingsOptionsFragment
 import com.waz.zclient.settings.support.SettingsSupportFragment
 import kotlinx.android.synthetic.main.fragment_settings_main.*
@@ -32,15 +32,9 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.title = getString(R.string.settings_title)
-        settings_recycler_view.adapter = SettingsMainListAdapter(
-            SettingsMainListFactory.generateList(requireContext()), this
+        settingsMainRecyclerView.adapter = SettingsMainListAdapter(
+            SettingsMainListItemsFactory.generateList(requireContext()), this
         )
-//        TODO: code for temporarily testing the network/authentication layer.
-//        TODO: DELETE WHEN NETWORK LAYER IS FINALIZED
-//        Thread(Runnable {
-//            val clientSampleRepo : ClientsRepository = get()
-//            clientSampleRepo.allClients()
-//        }).start()
     }
 
     override fun onItemClicked(position: Int) {
@@ -55,7 +49,7 @@ class SettingsMainFragment : Fragment(), OnItemClickListener {
     }
 
     private fun replaceFragment(fragment: Fragment) {
-        (activity as AppCompatActivity).replaceFragment(R.id.activitySettingsMainLayoutContainer, fragment, true)
+        (activity as AppCompatActivity).replaceFragment(R.id.activitySettingsMainLayoutContainer, fragment)
     }
 
     companion object {
