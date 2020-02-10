@@ -43,6 +43,7 @@ case class ErrorResponse(code: Int, message: String, label: String) extends Thro
 object ErrorResponse {
 
   val Forbidden = 403
+  val NotFound = 404
   val InternalErrorCode = 499
   val CancelledCode = 498
   val UnverifiedCode = 497
