@@ -1408,6 +1408,10 @@
     <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
     <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
 
+    <string name="custom_backend_not_found_error_title">This server can\'t be reached</string>
+    <string name="custom_backend_not_found_error_message">We can\'t connect to the server at %1$s.\nLet your server
+        administrator know about this issue.</string>
+
     <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
     <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
 
