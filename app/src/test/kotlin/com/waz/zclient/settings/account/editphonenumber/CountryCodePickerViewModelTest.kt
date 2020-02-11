@@ -49,7 +49,7 @@ class CountryCodePickerViewModelTest : UnitTest() {
         runBlockingTest {
             countryCodePickerViewModel.onCountryCodeChanged(TEST_COUNTRY, FRANCE_DISPLAY_NAME)
 
-            countryCodePickerViewModel.countryLiveData.observeOnce {
+            countryCodePickerViewModel.selectedCountryLiveData.observeOnce {
                 it shouldBe TEST_COUNTRY
             }
         }
@@ -59,7 +59,7 @@ class CountryCodePickerViewModelTest : UnitTest() {
         runBlockingTest {
             countryCodePickerViewModel.onCountryCodeChanged(TEST_COUNTRY, GERMANY_DISPLAY_NAME)
 
-            countryCodePickerViewModel.countryLiveData.observeOnce {
+            countryCodePickerViewModel.selectedCountryLiveData.observeOnce {
                 it shouldBe Country.EMPTY
             }
         }

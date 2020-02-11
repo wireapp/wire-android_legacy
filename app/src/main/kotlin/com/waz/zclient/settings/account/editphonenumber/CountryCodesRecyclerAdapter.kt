@@ -8,11 +8,10 @@ import com.waz.zclient.R
 import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import kotlinx.android.synthetic.main.item_view_country_code.view.*
 
-class CountryCodesRecyclerAdapter : RecyclerView.Adapter<CountryCodesRecyclerAdapter.CountryCodeViewHolder>() {
+class CountryCodesRecyclerAdapter(val countryClickAction: (Country) -> Unit)
+    : RecyclerView.Adapter<CountryCodesRecyclerAdapter.CountryCodeViewHolder>() {
 
     private var countries: List<Country> = listOf()
-
-    private var listener: CountryCodeRecyclerItemClickListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CountryCodeViewHolder =
         CountryCodeViewHolder(LayoutInflater.from(parent.context)
@@ -22,10 +21,6 @@ class CountryCodesRecyclerAdapter : RecyclerView.Adapter<CountryCodesRecyclerAda
 
     override fun onBindViewHolder(holder: CountryCodeViewHolder, position: Int) {
         holder.bind(countries[position])
-    }
-
-    fun setOnItemClickListener(listener: CountryCodeRecyclerItemClickListener) {
-        this.listener = listener
     }
 
     fun updateList(newCountries: List<Country>) {
@@ -40,13 +35,9 @@ class CountryCodesRecyclerAdapter : RecyclerView.Adapter<CountryCodesRecyclerAda
                 itemViewCountryCodeDisplayName.text = country.countryDisplayName
                 itemViewCountryCodeCode.text = country.countryCode
                 setOnClickListener {
-                    listener?.onCountryCodeClicked(country)
+                    countryClickAction(country)
                 }
             }
         }
-    }
-
-    interface CountryCodeRecyclerItemClickListener {
-        fun onCountryCodeClicked(country: Country)
     }
 }

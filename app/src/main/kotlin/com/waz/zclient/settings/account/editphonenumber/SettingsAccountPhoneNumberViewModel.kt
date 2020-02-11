@@ -19,6 +19,7 @@ import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumber
 import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumberInvalid
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberUseCase
+import kotlinx.coroutines.Dispatchers
 
 class SettingsAccountPhoneNumberViewModel(
     private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
@@ -42,19 +43,31 @@ class SettingsAccountPhoneNumberViewModel(
     val confirmedLiveData: LiveData<String> = _confirmedLiveData
 
     fun afterNumberEntered(countryCode: String, phoneNumber: String) {
-        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
+        validatePhoneNumberUseCase(
+            viewModelScope,
+            ValidatePhoneNumberParams(countryCode, phoneNumber),
+            Dispatchers.Default
+        ) {
             it.fold(::handleValidationError, ::handleConfirmationSuccess)
         }
     }
 
     fun loadPhoneNumberData(phoneNumber: String, deviceLanguage: String) {
-        countryCodeAndPhoneNumberUseCase(viewModelScope, CountryCodeAndPhoneNumberParams(phoneNumber, deviceLanguage)) {
+        countryCodeAndPhoneNumberUseCase(
+            viewModelScope,
+            CountryCodeAndPhoneNumberParams(phoneNumber, deviceLanguage),
+            Dispatchers.Default
+        ) {
             it.fold(::handleValidationError, ::handleFormattingSuccess)
         }
     }
 
     fun onDeleteNumberButtonClicked(countryCode: String, phoneNumber: String) {
-        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
+        validatePhoneNumberUseCase(
+            viewModelScope,
+            ValidatePhoneNumberParams(countryCode, phoneNumber),
+            Dispatchers.Default
+        ) {
             it.fold(::handleValidationError, ::handleDeletionSuccess)
         }
     }
@@ -82,11 +95,11 @@ class SettingsAccountPhoneNumberViewModel(
 
     fun onDeleteNumberButtonConfirmed() {
         deletePhoneNumberUseCase(viewModelScope, Unit) {
-            it.fold(::handleDeletionFailure) {}
+            it.fold({ handleDeletionFailure() }) {}
         }
     }
 
-    private fun handleDeletionFailure(failure: Failure) {
+    private fun handleDeletionFailure() {
         _phoneNumberErrorLiveData.value = PhoneNumberErrorMessage(
             R.string.pref__account_action__dialog__delete_phone__error
         )

@@ -29,7 +29,7 @@ class GetCountryCodesUseCaseTest : UnitTest() {
 
     @Before
     fun setup() {
-        Mockito.`when`(phoneNumberUtil.supportedRegions).thenReturn(mockListOfRegsions())
+        Mockito.`when`(phoneNumberUtil.supportedRegions).thenReturn(mockListOfRegions())
         Mockito.`when`(getCountryCodeParams.deviceLanguage).thenReturn(TEST_LANGUAGE)
         getCountriesCodesUseCase = GetCountryCodesUseCase(phoneNumberUtil, developerOptionsConfig)
     }
@@ -56,9 +56,8 @@ class GetCountryCodesUseCaseTest : UnitTest() {
         }
     }
 
-    private fun mockListOfRegsions(): MutableSet<String>? {
-        return mutableSetOf("GER", "GB", "FR", "IT", "SP")
-    }
+    private fun mockListOfRegions(): MutableSet<String>? =
+        mutableSetOf("GER", "GB", "FR", "IT", "SP")
 
     companion object {
         private const val TEST_LANGUAGE = "en-gb"

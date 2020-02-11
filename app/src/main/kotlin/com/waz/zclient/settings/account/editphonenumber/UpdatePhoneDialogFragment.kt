@@ -22,7 +22,7 @@ class UpdatePhoneDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireActivity())
             .setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
-            .setMessage(getString(R.string.edit_phone_dialog_delete_phone_confirmation, phoneNumber))
+            .setMessage(getString(R.string.edit_phone_dialog_confirm_phone_confirmation, phoneNumber))
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 phoneNumberViewModel.onPhoneNumberConfirmed(phoneNumber)
             }

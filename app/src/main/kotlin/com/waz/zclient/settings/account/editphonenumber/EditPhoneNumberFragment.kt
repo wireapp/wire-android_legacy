@@ -17,13 +17,10 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_edit_phone.*
-import kotlinx.android.synthetic.main.fragment_edit_phone.view.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 @SuppressWarnings("TooManyFunctions")
 class EditPhoneNumberFragment : Fragment() {
-
-    private lateinit var rootView: View
 
     private val phoneNumber: String by lazy {
         arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
@@ -35,9 +32,11 @@ class EditPhoneNumberFragment : Fragment() {
 
     private val settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        rootView = inflater.inflate(R.layout.fragment_edit_phone, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+        inflater.inflate(R.layout.fragment_edit_phone, container, false)
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         initToolbar()
         initCountryCodePicker()
         initPhoneInput()
@@ -51,21 +50,20 @@ class EditPhoneNumberFragment : Fragment() {
                 requireActivity().getDeviceLocale().language
             )
         }
-        return rootView
     }
 
     private fun initCountryCodePicker() {
         settingsAccountPhoneNumberViewModel.phoneNumberDetailsLiveData.observe(viewLifecycleOwner) {
-            rootView.editPhoneFragmentCountryCodePicker.text = it.country
+            editPhoneFragmentCountryCodePicker.text = it.country
         }
 
-        rootView.editPhoneFragmentCountryCodePicker.setOnClickListener {
+        editPhoneFragmentCountryCodePicker.setOnClickListener {
             showCountryCodePickerDialog(editPhoneFragmentCountryCodePicker.text.toString())
         }
     }
 
     private fun initSaveButton() {
-        rootView.editPhoneSavePhoneNumberTextView.setOnClickListener {
+        editPhoneSavePhoneNumberTextView.setOnClickListener {
             confirmPhoneNumber()
         }
     }
@@ -76,11 +74,11 @@ class EditPhoneNumberFragment : Fragment() {
     }
 
     private fun initDeleteNumberButton() {
-        rootView.editPhoneDeletePhoneNumberTextView.visibility = (if (hasEmail) View.VISIBLE else View.INVISIBLE)
-        rootView.editPhoneDeletePhoneNumberTextView.setOnClickListener {
+        editPhoneDeletePhoneNumberTextView.visibility = (if (hasEmail) View.VISIBLE else View.INVISIBLE)
+        editPhoneDeletePhoneNumberTextView.setOnClickListener {
             settingsAccountPhoneNumberViewModel.onDeleteNumberButtonClicked(
-                rootView.editPhoneCountryCodeTextInputEditText.text.toString(),
-                rootView.editPhonePhoneNumberTextInputEditText.text.toString()
+                editPhoneCountryCodeTextInputEditText.text.toString(),
+                editPhonePhoneNumberTextInputEditText.text.toString()
             )
         }
 
@@ -91,7 +89,7 @@ class EditPhoneNumberFragment : Fragment() {
 
     private fun initCountryCodeInput() {
         settingsAccountPhoneNumberViewModel.phoneNumberDetailsLiveData.observe(viewLifecycleOwner) {
-            rootView.editPhoneCountryCodeTextInputEditText.setText(it.countryCode)
+            editPhoneCountryCodeTextInputEditText.setText(it.countryCode)
         }
         settingsAccountPhoneNumberViewModel.countryCodeErrorLiveData.observe(viewLifecycleOwner) {
             updateCountryCodeError(getString(it.errorMessage))
@@ -99,8 +97,8 @@ class EditPhoneNumberFragment : Fragment() {
     }
 
     private fun initPhoneInput() {
-        rootView.editPhonePhoneNumberTextInputEditText.requestFocus()
-        rootView.editPhonePhoneNumberTextInputEditText.setOnEditorActionListener { _, actionId, _ ->
+        editPhonePhoneNumberTextInputEditText.requestFocus()
+        editPhonePhoneNumberTextInputEditText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 confirmPhoneNumber()
                 true
@@ -109,7 +107,7 @@ class EditPhoneNumberFragment : Fragment() {
 
         with(settingsAccountPhoneNumberViewModel) {
             phoneNumberDetailsLiveData.observe(viewLifecycleOwner) {
-                rootView.editPhonePhoneNumberTextInputEditText.setText(it.number)
+                editPhonePhoneNumberTextInputEditText.setText(it.number)
             }
             phoneNumberErrorLiveData.observe(viewLifecycleOwner) {
                 updatePhoneNumberError(getString(it.errorMessage))
@@ -132,8 +130,8 @@ class EditPhoneNumberFragment : Fragment() {
 
     private fun confirmPhoneNumber() {
         settingsAccountPhoneNumberViewModel.afterNumberEntered(
-            rootView.editPhoneCountryCodeTextInputEditText.text.toString(),
-            rootView.editPhonePhoneNumberTextInputEditText.text.toString()
+            editPhoneCountryCodeTextInputEditText.text.toString(),
+            editPhonePhoneNumberTextInputEditText.text.toString()
         )
     }
 
@@ -162,7 +160,8 @@ class EditPhoneNumberFragment : Fragment() {
                 override fun onCountryCodeSelected(countryCode: Country) {
                     settingsAccountPhoneNumberViewModel.onCountryCodeUpdated(countryCode)
                 }
-            }).show(requireActivity().supportFragmentManager, String.empty())
+            }
+        ).show(requireActivity().supportFragmentManager, String.empty())
     }
 
     companion object {

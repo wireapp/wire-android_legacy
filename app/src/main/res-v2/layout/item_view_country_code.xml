@@ -54,13 +54,4 @@
         app:w_font="@string/wire__typeface__light"
         tools:text="+49" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/item_view_country_code_divider_height"
-        android:background="@color/country_divider"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
