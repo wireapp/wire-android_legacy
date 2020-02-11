@@ -88,30 +88,30 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private lazy val showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
 
-  protected def fetchTokenAndStartSsoFlow(): Unit =
+  protected def fetchSsoToken(): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
       case None =>
         ssoService.fetchSSO().flatMap {
-          case Right(SSOFound(ssoCode)) => {
-            ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
-              onVerifyingToken(true)
-              ssoService.verifyToken(token).flatMap { result =>
-                onVerifyingToken(false)
-                userAccountsController.ssoToken ! None
-                result match {
-                  case Right(true) =>
-                    getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                    Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
-                  case Right(false) => showSsoDialogFuture
-                  case Left(_) => showSsoDialogFuture
-                }
-              }
-            }
-          }
+          case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode)
           case Right(_) => showSsoDialogFuture
           case Left(_) => showSsoDialogFuture
         }
+    }
+
+  private def startSsoFlow(ssoCode: String) =
+    ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
+      onVerifyingToken(true)
+      ssoService.verifyToken(token).flatMap { result =>
+        onVerifyingToken(false)
+        userAccountsController.ssoToken ! None
+        result match {
+          case Right(true) =>
+            showSsoWebView(token.toString)
+          case Right(false) => showSsoDialogFuture
+          case Left(_) => showSsoDialogFuture
+        }
+      }
     }
 
   protected def extractTokenAndShowSSODialog(showIfNoToken: Boolean = false): Unit =
@@ -148,8 +148,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         result match {
           case Right(true) =>
             dismissSsoDialog()
-            getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
+            showSsoWebView(token.toString)
           case Right(false) => showInlineSsoError(getString(R.string.sso_signin_wrong_code_message))
           case Left(errorResponse) => handleVerificationError(errorResponse)
         }
@@ -179,9 +178,14 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     case error => showInlineSsoError(getString(R.string.sso_signin_error_try_again_message, error.code.toString))
   }
 
-  private def dismissSsoDialog() =    if (getSsoDialog.isDefined) getSsoDialog.foreach(_.dismiss())
+  private def dismissSsoDialog() = if (getSsoDialog.isDefined) getSsoDialog.foreach(_.dismiss())
 
   private def showInlineSsoError(errorText: String) = Future.successful(if (getSsoDialog.isDefined) getSsoDialog.foreach(_.setError(errorText)))
+
+  private def showSsoWebView(token: String) = {
+    getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
+  }
 
   protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 
