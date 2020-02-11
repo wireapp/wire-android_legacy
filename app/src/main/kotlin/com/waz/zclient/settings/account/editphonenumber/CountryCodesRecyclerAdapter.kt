@@ -8,8 +8,8 @@ import com.waz.zclient.R
 import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import kotlinx.android.synthetic.main.item_view_country_code.view.*
 
-class CountryCodesRecyclerAdapter(val countryClickAction: (Country) -> Unit)
-    : RecyclerView.Adapter<CountryCodesRecyclerAdapter.CountryCodeViewHolder>() {
+class CountryCodesRecyclerAdapter(val countryClickAction: (Country) -> Unit) :
+    RecyclerView.Adapter<CountryCodesRecyclerAdapter.CountryCodeViewHolder>() {
 
     private var countries: List<Country> = listOf()
 

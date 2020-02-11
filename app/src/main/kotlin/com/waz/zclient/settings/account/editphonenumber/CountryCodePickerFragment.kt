@@ -16,7 +16,6 @@ import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_dialog_country_code_picker.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
-
 class CountryCodePickerFragment : DialogFragment() {
 
     private val countryCodePickerViewModel: CountryCodePickerViewModel by viewModel()
