@@ -86,9 +86,6 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   protected def showSsoByDefault = false
 
-  protected lazy val showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
-
-
   protected def extractTokenAndShowSSODialog(showIfNoToken: Boolean = false): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)

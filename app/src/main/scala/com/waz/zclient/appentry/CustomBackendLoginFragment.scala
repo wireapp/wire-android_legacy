@@ -20,6 +20,8 @@ class CustomBackendLoginFragment extends SSOFragment {
 
   private lazy val backendController = inject[BackendController]
 
+  protected lazy val showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
+
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_custom_backend_login, container, false)
 
@@ -63,6 +65,7 @@ class CustomBackendLoginFragment extends SSOFragment {
     super.onPause()
     activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
+  
   private def fetchSsoToken(): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
@@ -75,7 +78,6 @@ class CustomBackendLoginFragment extends SSOFragment {
           case Left(_) => showSsoDialogFuture
         }(Threading.Ui)
     } (Threading.Ui)
-
 
   private def startSsoFlow(ssoCode: String) =
     ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
