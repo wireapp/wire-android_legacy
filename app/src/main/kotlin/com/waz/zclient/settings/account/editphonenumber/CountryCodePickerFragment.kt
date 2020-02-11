@@ -32,6 +32,11 @@ class CountryCodePickerFragment : DialogFragment() {
 
     private var countryCodeListener: CountryCodePickerListener? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
         inflater.inflate(R.layout.fragment_dialog_country_code_picker, container, false)
 
@@ -42,7 +47,6 @@ class CountryCodePickerFragment : DialogFragment() {
         lifecycleScope.launchWhenResumed {
             countryCodePickerViewModel.loadCountries(requireActivity().getDeviceLocale().language)
         }
-        setStyle(STYLE_NO_FRAME, R.style.Theme_Dark_Preferences)
     }
 
     private fun initDismiss() {
@@ -55,6 +59,7 @@ class CountryCodePickerFragment : DialogFragment() {
         countryCodePickerDialogRecyclerView.adapter = countryAdapter
         val divider = DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
         countryCodePickerDialogRecyclerView.addItemDecoration(divider)
+        countryCodePickerDialogRecyclerView.setHasFixedSize(true)
         countryCodePickerViewModel.countriesLiveData.observe(viewLifecycleOwner) {
             countryAdapter.updateList(it)
         }
