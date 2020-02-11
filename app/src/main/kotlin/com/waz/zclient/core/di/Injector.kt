@@ -1,6 +1,7 @@
 package com.waz.zclient.core.di
 
 import android.content.Context
+import com.waz.zclient.accounts.di.accountsModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.devices.di.clientsModule
 import com.waz.zclient.settings.account.di.settingsAccountModule
@@ -26,6 +27,7 @@ object Injector {
                 settingsAccountModule,
                 settingsDeviceModule,
                 usersModule,
+                accountsModule,
                 clientsModule,
                 storageModule,
                 networkModule,
