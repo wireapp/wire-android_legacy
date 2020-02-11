@@ -2,10 +2,17 @@ package com.waz.zclient.appentry
 import android.os.Bundle
 import android.view.{LayoutInflater, View, ViewGroup, WindowManager}
 import android.widget.{Button, TextView}
+import com.waz.api.impl.ErrorResponse
+import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
+import com.waz.model2.transport.responses.SSOFound
+import com.waz.threading.Threading
 import com.waz.utils.events.EventStream
 import com.waz.zclient.R
+import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.utils.BackendController
-import com.waz.zclient.utils.ContextUtils.showInfoDialog
+import com.waz.zclient.utils.ContextUtils.{showErrorDialog, showInfoDialog}
+
+import scala.concurrent.Future
 
 class CustomBackendLoginFragment extends SSOFragment {
 
@@ -56,6 +63,36 @@ class CustomBackendLoginFragment extends SSOFragment {
     super.onPause()
     activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
+  protected def fetchSsoToken(): Unit =
+    userAccountsController.ssoToken.head.foreach {
+      case Some(token) => verifySsoCode(token)
+      case None =>
+        ssoService.fetchSSO().flatMap {
+          case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode)
+          case Right(_) => showSsoDialogFuture
+          case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
+            showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
+          case Left(_) => showSsoDialogFuture
+        }(Threading.Ui)
+    } (Threading.Ui)
+
+
+  private def startSsoFlow(ssoCode: String) =
+    ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
+      onVerifyingToken(true)
+      ssoService.verifyToken(token).flatMap { result =>
+        onVerifyingToken(false)
+        userAccountsController.ssoToken ! None
+        result match {
+          case Right(true) =>
+            showSsoWebView(token.toString)
+          case Right(false) => showSsoDialogFuture
+          case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
+            showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
+          case Left(_) => showSsoDialogFuture
+        }
+      }(Threading.Ui)
+    }
 }
 
 object CustomBackendLoginFragment {
