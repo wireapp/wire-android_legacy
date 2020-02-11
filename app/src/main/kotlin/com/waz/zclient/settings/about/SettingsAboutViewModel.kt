@@ -6,6 +6,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
+import com.waz.zclient.core.config.AppDetailsConfig
+import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.model.User
 import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
@@ -14,26 +16,26 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @ExperimentalCoroutinesApi
 class SettingsAboutViewModel(
     private val appDetailsConfig: AppDetailsConfig,
-    private val urlConfig: UrlConfig,
+    private val hostUrlConfig: HostUrlConfig,
     private val getUserProfileUseCase: GetUserProfileUseCase
 ) : ViewModel() {
 
-    private var _urlLiveData = MutableLiveData<UrlDetail>()
+    private var _urlLiveData = MutableLiveData<AboutUrl>()
     private var _versionDetailsLiveData = MutableLiveData<VersionDetails>()
 
-    val urlLiveData: LiveData<UrlDetail> = _urlLiveData
+    val urlLiveData: LiveData<AboutUrl> = _urlLiveData
     val versionDetailsLiveData: LiveData<VersionDetails> = _versionDetailsLiveData
 
     fun onAboutButtonClicked() {
-        _urlLiveData.value = UrlDetail(generateUrl(String.empty()))
+        _urlLiveData.value = AboutUrl(generateUrl(String.empty()))
     }
 
     fun onPrivacyButtonClicked() {
-        _urlLiveData.value = UrlDetail(generateUrl(PRIVACY_POLICY_URL_SUFFIX))
+        _urlLiveData.value = AboutUrl(generateUrl(PRIVACY_POLICY_URL_SUFFIX))
     }
 
     fun onThirdPartyLicenseButtonClicked() {
-        _urlLiveData.value = UrlDetail(generateUrl(THIRD_PARTY_LICENSES_URL_SUFFIX))
+        _urlLiveData.value = AboutUrl(generateUrl(THIRD_PARTY_LICENSES_URL_SUFFIX))
     }
 
     fun onTermsButtonClicked() {
@@ -50,20 +52,20 @@ class SettingsAboutViewModel(
                 R.string.avs_version,
                 R.string.audio_notifications_version,
                 WIRE_TRANSLATION_VERSION_ID,
-                appDetailsConfig.version
+                appDetailsConfig.versionDetails
             )
         }
     }
 
     private fun updateProfileData(user: User) {
         _urlLiveData.value = if (user.teamId.isNullOrEmpty()) {
-            UrlDetail(generateUrl(PERSONAL_TERMS_AND_CONDITIONS_SUFFIX))
-        } else UrlDetail(generateUrl(TEAM_TERMS_AND_CONDITIONS_SUFFIX))
+            AboutUrl(generateUrl(PERSONAL_TERMS_AND_CONDITIONS_SUFFIX))
+        } else AboutUrl(generateUrl(TEAM_TERMS_AND_CONDITIONS_SUFFIX))
     }
 
     private fun generateUrl(urlSuffix: String): String =
-        if (urlSuffix.isEmpty()) urlConfig.configUrl
-        else urlConfig.configUrl.plus(urlSuffix)
+        if (urlSuffix.isEmpty()) hostUrlConfig.url
+        else hostUrlConfig.url.plus(urlSuffix)
 
     companion object {
         private const val VERSION_INFO_CLICK_LIMIT = 10
@@ -82,6 +84,4 @@ data class VersionDetails(
     val appVersionDetails: String
 )
 
-data class AppDetailsConfig(val version: String)
-data class UrlConfig(val configUrl: String)
-data class UrlDetail(val url: String)
+data class AboutUrl(val url: String)

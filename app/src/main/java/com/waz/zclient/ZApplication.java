@@ -26,7 +26,7 @@ import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.waz.model.AccentColor;
 import com.waz.zclient.controllers.IControllerFactory;
 import com.waz.zclient.core.logging.Logger;
-import com.waz.zclient.di.Injector;
+import com.waz.zclient.core.di.Injector;
 import com.waz.zclient.ui.text.TypefaceFactory;
 import com.waz.zclient.ui.text.TypefaceLoader;
 
@@ -95,7 +95,9 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        Injector.start(this);
+        if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+            Injector.start(this);
+        }
 
         AndroidThreeTen.init(this);
         TypefaceFactory.getInstance().init(typefaceloader);
