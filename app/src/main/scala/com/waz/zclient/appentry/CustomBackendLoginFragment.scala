@@ -63,7 +63,7 @@ class CustomBackendLoginFragment extends SSOFragment {
     super.onPause()
     activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
-  protected def fetchSsoToken(): Unit =
+  private def fetchSsoToken(): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
       case None =>
