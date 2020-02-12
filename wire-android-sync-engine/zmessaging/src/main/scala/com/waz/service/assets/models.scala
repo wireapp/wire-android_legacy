@@ -211,8 +211,8 @@ object Asset {
   type Video         = VideoDetails
 
   def extractEncryption(remote: RemoteData): Encryption = remote.encryption match {
-    case Messages.AES_GCM => AES_CBC_Encryption(AESKey2(remote.otrKey))
-    case Messages.AES_CBC => AES_CBC_Encryption(AESKey2(remote.otrKey))
+    case Messages.AES_GCM => AES_CBC_Encryption(AESKeyBytes(remote.otrKey))
+    case Messages.AES_CBC => AES_CBC_Encryption(AESKeyBytes(remote.otrKey))
     case _                => NoEncryption
   }
 

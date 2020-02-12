@@ -253,7 +253,6 @@ class MessagesSyncHandler(selfUserId: UserId,
       }
 
     def sendWithV3(uploadAssetOriginal: UploadAsset): CancellableFuture[RemoteInstant] = {
-      verbose(l"sendWithV3($uploadAssetOriginal)")
       for {
         rawAssetWithMetadata <- uploadAssetOriginal.details match {
           case details: General => CancellableFuture.successful(uploadAssetOriginal.copy(details = details))
@@ -315,7 +314,6 @@ class MessagesSyncHandler(selfUserId: UserId,
   }
 
   private[waz] def messageSent(convId: ConvId, msg: MessageData, time: RemoteInstant) = {
-    debug(l"otrMessageSent($convId. $msg, $time)")
 
     def updateLocalTimes(conv: ConvId, prevTime: RemoteInstant, time: RemoteInstant) =
       msgContent.updateLocalMessageTimes(conv, prevTime, time) flatMap { updated =>
@@ -334,7 +332,6 @@ class MessagesSyncHandler(selfUserId: UserId,
   }
 
   def postAssetStatus(cid: ConvId, mid: MessageId, expiration: Option[FiniteDuration], statusToPost: UploadAssetStatus): Future[SyncResult] = {
-    verbose(l"postAssetStatus($mid)")
     val result = for {
       //TODO Use new storage to avoid explicit 'Option.get'
       (conv, msg) <- convs.storage.get(cid).map(_.get) zip storage.get(mid).map(_.get)

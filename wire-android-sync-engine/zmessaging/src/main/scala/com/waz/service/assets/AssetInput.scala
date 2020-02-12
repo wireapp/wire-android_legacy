@@ -10,9 +10,6 @@ import com.waz.model.errors.ValidationError
 import com.waz.utils.{IoUtils, returning}
 import com.waz.utils.wrappers.Bitmap
 import android.graphics.{Bitmap => ABitmap}
-import com.waz.threading.Threading
-
-import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 sealed trait AssetInput {
@@ -60,13 +57,10 @@ case class AssetFile(file: File) extends AssetInput {
 
   override def toInputStream: Try[InputStream] = Try { new BufferedInputStream(new FileInputStream(file)) }
 
-  override def toBitmap(opts: BitmapFactory.Options): Try[Bitmap] =
-    Try {
-      val path            = file.getAbsolutePath
-      val bitmap          = BitmapFactory.decodeFile(path, opts)
-      val currentRotation = AssetInput.currentRotation(path)
-      if (currentRotation != 0) AssetInput.rotate(bitmap, currentRotation) else bitmap
-    }
+  override def toBitmap(opts: BitmapFactory.Options): Try[Bitmap] = {
+    val path = file.getAbsolutePath
+    AssetInput.rotateIfNeeded(BitmapFactory.decodeFile(path, opts), path).map(Bitmap(_))
+  }
 
   override def toByteArray: Try[Array[Byte]] = Try { IoUtils.readFileBytes(file) }
 }
@@ -87,6 +81,7 @@ object AssetInput {
   }
 
   private val MaxImageDimension = 1448
+  private val DefaultCompressionQuality = 75
 
   // set of mime types that should be recoded to Jpeg before uploading
   private val DefaultRecodeMimes = Set(
@@ -100,8 +95,6 @@ object AssetInput {
   def apply(file: File): AssetInput           = AssetFile(file)
   def apply(throwable: Throwable): AssetInput = AssetFailure(throwable)
 
-  def currentRotation(path: String) = Try(rotation(new ExifInterface(path))).getOrElse(0)
-
   private def rotation(exif: ExifInterface): Int = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL) match {
     case ExifInterface.ORIENTATION_ROTATE_90  => 90
     case ExifInterface.ORIENTATION_ROTATE_180 => 180
@@ -109,8 +102,11 @@ object AssetInput {
     case _                                    => 0
   }
 
-  def rotate(path: String, rotation: Int): Try[ABitmap] =
-    Try(BitmapFactory.decodeFile(path, BitmapOptions)).map(rotate(_, rotation))
+  private def compress(in: ABitmap): Array[Byte] = {
+    val out = new ByteArrayOutputStream()
+    in.compress(CompressFormat.JPEG, DefaultCompressionQuality, out)
+    out.toByteArray
+  }
 
   def rotate(bitmap: ABitmap, rotation: Int): ABitmap = {
     val matrix = new Matrix()
@@ -118,30 +114,14 @@ object AssetInput {
     ABitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth, bitmap.getHeight, matrix, true)
   }
 
+  def currentRotation(path: String): Int = Try(rotation(new ExifInterface(path))).getOrElse(0)
+
   def rotateIfNeeded(bitmap: ABitmap, path: String): Try[ABitmap] = Try {
     val cr = currentRotation(path)
     if (cr == 0) bitmap else rotate(bitmap, cr)
   }
 
-  def rotateIfNeeded(image: Content, path: String): Future[Try[Content]] = {
-    val rotation = currentRotation(path)
-    if (rotation == 0) Future.successful(Success(image))
-    // rotation and compression is time-consuming - better not to do it on the Ui thread
-    else Future { rotate(path, rotation).map(toJpg) }(Threading.ImageDispatcher)
-  }
-
-  private def defaultCompressionQuality(format: CompressFormat): Int = format match {
-    case CompressFormat.JPEG => 75
-    case _ => 50
-  }
-
-  private def compress(in: ABitmap, toFormat: CompressFormat, quality: Option[Int] = None): Array[Byte] = {
-    val out = new ByteArrayOutputStream()
-    in.compress(toFormat, quality.getOrElse(defaultCompressionQuality(toFormat)), out)
-    out.toByteArray
-  }
-
-  def toJpg(bitmap: ABitmap): Content.Bytes = Content.Bytes(Mime.Image.Jpg, compress(bitmap, CompressFormat.JPEG))
+  def toJpg(bitmap: ABitmap): Content.Bytes = Content.Bytes(Mime.Image.Jpg, compress(bitmap))
 
   def bitmapOptions(scaleFactor: Int) = returning(new BitmapFactory.Options()) { opts =>
     opts.inJustDecodeBounds = false

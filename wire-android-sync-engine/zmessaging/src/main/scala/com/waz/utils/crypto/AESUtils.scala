@@ -23,7 +23,7 @@ import java.security.{DigestInputStream, DigestOutputStream, MessageDigest}
 import javax.crypto.{BadPaddingException, Cipher, CipherInputStream, CipherOutputStream}
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 import com.waz.model.{AESKey, Sha256}
-import com.waz.service.assets.AESKey2
+import com.waz.service.assets.AESKeyBytes
 import com.waz.utils.{IoUtils, SafeBase64, returning}
 
 /**
@@ -50,7 +50,7 @@ object AESUtils {
   def decrypt(key: AESKey, input: Array[Byte]): Array[Byte] =
     cipher(key, input.take(16), Cipher.DECRYPT_MODE).doFinal(input.drop(16))
 
-  def decrypt(key: AESKey2, input: Array[Byte]): Array[Byte] =
+  def decrypt(key: AESKeyBytes, input: Array[Byte]): Array[Byte] =
     cipher(key.bytes, input.take(16), Cipher.DECRYPT_MODE).doFinal(input.drop(16))
 
   def encrypt(key: AESKey, bytes: Array[Byte]): (Sha256, Array[Byte]) = {

@@ -28,7 +28,6 @@ import com.waz.service.ZMessaging
 import com.waz.service.assets.AssetInput
 import com.waz.threading.CancellableFuture
 import com.waz.utils.events.Signal
-import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -43,7 +42,6 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
   private var currentData: Option[CancellableFuture[AssetInput]] = None
 
   override def loadData(priority: Priority, callback: DataFetcher.DataCallback[_ >: InputStream]): Unit = {
-    verbose(l"Load asset $request")
 
     val data = CancellableFuture.lift(zms.head).flatMap { zms =>
       request match {
@@ -51,7 +49,7 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
         case ImageAssetRequest(asset)            => zms.assetService.loadContent(asset)
         case PublicAssetIdRequest(assetId)       => zms.assetService.loadPublicContentById(assetId, None, None)
         case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
-        case GoogleMapRequest(location)          => zms.googleMapsMediaService.loadMapPreview2(location)
+        case GoogleMapRequest(location)          => zms.googleMapsMediaService.loadMapPreview(location)
         case _ =>
           CancellableFuture.failed(NotSupportedError("Unsupported image request"))
       }
@@ -62,10 +60,8 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
 
     data.future.flatMap(input => Future.fromTry(input.toInputStream)).onComplete {
       case Failure(err) =>
-        verbose(l"Asset loading failed $request, $err")
         callback.onLoadFailed(new RuntimeException(s"Fetcher. Asset loading failed: $err"))
       case Success(is) =>
-        verbose(l"Asset loaded $request")
         callback.onDataReady(is)
     }
   }

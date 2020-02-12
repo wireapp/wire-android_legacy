@@ -39,7 +39,7 @@ case object NoEncryption extends Encryption {
   override def randomSalt: Option[Salt] = None
 }
 
-case class AES_CBC_Encryption(key: AESKey2) extends Encryption with DerivedLogTag {
+case class AES_CBC_Encryption(key: AESKeyBytes) extends Encryption with DerivedLogTag {
   override def decrypt(is: InputStream, salt: Option[Salt] = None): InputStream =
     AESUtils.decryptInputStream(key.bytes, is)
 
@@ -55,7 +55,7 @@ case class AES_CBC_Encryption(key: AESKey2) extends Encryption with DerivedLogTa
 }
 
 object AES_CBC_Encryption {
-  def random: AES_CBC_Encryption = AES_CBC_Encryption(AESKey2.random)
+  def random: AES_CBC_Encryption = AES_CBC_Encryption(AESKeyBytes.random)
 }
 
 case class EncryptedFile(file: File, encryption: Encryption) {
@@ -63,17 +63,17 @@ case class EncryptedFile(file: File, encryption: Encryption) {
 }
 
 //TODO Can be removed when we will remove android Base64 from project
-case class AESKey2(bytes: Array[Byte]) extends AnyVal
+case class AESKeyBytes(bytes: Array[Byte]) extends AnyVal
 
 case class Salt(bytes: Array[Byte]) extends AnyVal
 
-object AESKey2 {
+object AESKeyBytes {
 
-  def random: AESKey2 = {
+  def random: AESKeyBytes = {
     val keyGen = KeyGenerator.getInstance("AES")
     keyGen.init(256)
     val secretKey = keyGen.generateKey
-    AESKey2(secretKey.getEncoded)
+    AESKeyBytes(secretKey.getEncoded)
   }
 
 }

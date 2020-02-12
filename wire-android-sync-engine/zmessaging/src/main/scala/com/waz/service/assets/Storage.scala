@@ -73,7 +73,7 @@ trait StorageCodecs {
     override def deserialize(value: String): Encryption = value match {
       case Unencrypted => NoEncryption
       case str if str.startsWith(AES_CBC_Prefix) =>
-        AES_CBC_Encryption(AESKey2(asBytes(str.substring(AES_CBC_Prefix.length))))
+        AES_CBC_Encryption(AESKeyBytes(asBytes(str.substring(AES_CBC_Prefix.length))))
     }
   }
 

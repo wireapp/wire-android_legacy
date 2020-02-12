@@ -21,7 +21,7 @@ import java.net.URI
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Bitmap
+import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
 import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
@@ -31,7 +31,7 @@ import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.AccountManager
-import com.waz.service.assets.{Content, ContentForUpload, UriHelper, AssetInput}
+import com.waz.service.assets.{AssetInput, Content, ContentForUpload, UriHelper}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
@@ -49,7 +49,7 @@ import org.threeten.bp.Instant
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Success
+import scala.util.{Success, Try}
 
 class ConversationController(implicit injector: Injector, context: Context, ec: EventContext)
   extends Injectable with DerivedLogTag {
@@ -248,10 +248,20 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   // not an image, `currentRotation` will return 0 and the method will return the original content.
   def rotateImageIfNeeded(image: Content): Future[Content] =
     (image match {
-      case Content.Uri(uri)      => AssetInput.rotateIfNeeded(image, uri.getPath)
-      case Content.File(_, file) => AssetInput.rotateIfNeeded(image, file.getPath)
+      case Content.Uri(uri)      => rotateIfNeeded(image, uri.getPath)
+      case Content.File(_, file) => rotateIfNeeded(image, file.getPath)
       case _                     => Future.successful(Success(image))
     }).map(_.getOrElse(image))
+
+  // rotation and compression are time-consuming - better not to do it on the Ui thread
+  private def rotateIfNeeded(image: Content, path: String): Future[Try[Content]] = Future {
+    import AssetInput._
+    val cr = currentRotation(path)
+    if (cr == 0)
+      Success(image)
+    else
+      Try(BitmapFactory.decodeFile(path, BitmapOptions)).map { bmp => toJpg(rotate(bmp, cr)) }
+  }(Threading.ImageDispatcher)
 
   private def sendAssetMessage(convs:    Seq[ConvId],
                                content:  ContentForUpload,
