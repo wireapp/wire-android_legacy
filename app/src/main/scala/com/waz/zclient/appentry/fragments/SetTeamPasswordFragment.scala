@@ -92,11 +92,14 @@ case class SetTeamPasswordFragment() extends CreateTeamFragment {
               accountsService.register(credentials, createTeamController.teamUserName, Some(createTeamController.teamName)).flatMap {
                 case Left(error) =>
                   Future.successful(Some(getString(EmailError(error).bodyResource)))
-                case Right(am) =>
-                  am.fold(Future.successful({}))(_.setMarketingConsent(createTeamController.receiveNewsAndOffers).map(_ => {})).map { _ =>
+                case Right(Some(am)) =>
+                  am.initZMessaging()
+                  am.addUnsplashPicture()
+                  am.setMarketingConsent(createTeamController.receiveNewsAndOffers).map { _ =>
                     showFragment(InviteToTeamFragment(), InviteToTeamFragment.Tag)
                     None
                   }
+                case _ => Future.successful(None)
               }
             case false =>
               Future.successful(None)
