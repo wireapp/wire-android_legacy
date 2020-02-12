@@ -232,7 +232,12 @@
             android:theme="@style/Theme.Dark.Preferences"
             android:launchMode="singleTask"
             android:label="@string/empty_string"/>
-      
+        <activity
+            android:name=".settings.account.SettingsAccountActivity"
+            android:label="@string/empty_string"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
