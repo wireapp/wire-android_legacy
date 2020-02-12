@@ -11,7 +11,7 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
 
 @Database(
     entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class],
-    version = 126,
+    version = 127,
     exportSchema = false
 )
 abstract class UserDatabase : RoomDatabase() {
