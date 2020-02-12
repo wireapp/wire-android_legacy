@@ -18,7 +18,7 @@
 package com.waz.zclient.preferences.pages
 
 import android.app.AlertDialog
-import android.content.{Context, DialogInterface}
+import android.content.{Context, DialogInterface, Intent}
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.View
@@ -41,6 +41,7 @@ import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.preferences.pages.ProfileViewController.MaxAccountsCount
 import com.waz.zclient.preferences.views.TextButton
+import com.waz.zclient.settings.main.SettingsMainActivity
 import com.waz.zclient.tracking.OpenedManageTeam
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.ContextUtils._
@@ -104,7 +105,12 @@ class ProfileViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   }
 
   settingsButton.onClickEvent.on(Threading.Ui) { _ =>
-    navigator.goTo(SettingsBackStackKey())
+    if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+      getContext.startActivity(SettingsMainActivity.newIntent(getContext)
+        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
+    } else {
+        navigator.goTo(SettingsBackStackKey())
+    }
   }
 
   userPicture.setOnClickListener(new OnClickListener {

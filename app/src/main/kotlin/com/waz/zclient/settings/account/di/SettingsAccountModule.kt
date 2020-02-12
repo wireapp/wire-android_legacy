@@ -40,7 +40,6 @@ val settingsAccountModule: Module = module {
     factory { ValidateHandleUseCase() }
     factory { ChangeHandleUseCase(get()) }
 
-    factory { GetUserProfileUseCase(get()) }
     factory { ChangeNameUseCase(get()) }
     factory { ChangeEmailUseCase(get()) }
 }
