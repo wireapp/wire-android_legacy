@@ -1,9 +1,7 @@
 package com.waz.zclient.settings.account.editphonenumber
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -20,7 +18,7 @@ import kotlinx.android.synthetic.main.fragment_edit_phone.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 @SuppressWarnings("TooManyFunctions")
-class EditPhoneNumberFragment : Fragment() {
+class EditPhoneNumberFragment : Fragment(R.layout.fragment_edit_phone) {
 
     private val phoneNumber: String by lazy {
         arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
@@ -31,9 +29,6 @@ class EditPhoneNumberFragment : Fragment() {
     }
 
     private val settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
-        inflater.inflate(R.layout.fragment_edit_phone, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

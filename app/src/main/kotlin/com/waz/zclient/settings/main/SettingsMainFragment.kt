@@ -1,9 +1,7 @@
 package com.waz.zclient.settings.main
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
@@ -23,11 +21,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class SettingsMainFragment : Fragment(), OnItemClickListener {
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_settings_main, container, false)
-    }
+class SettingsMainFragment : Fragment(R.layout.fragment_settings_main), OnItemClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

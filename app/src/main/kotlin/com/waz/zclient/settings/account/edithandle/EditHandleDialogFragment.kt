@@ -23,7 +23,7 @@ import org.koin.android.viewmodel.ext.android.viewModel
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class EditHandleFragment : DialogFragment() {
+class EditHandleDialogFragment : DialogFragment() {
 
     private val editHandleViewModel: SettingsAccountEditHandleViewModel by viewModel()
 
@@ -111,7 +111,7 @@ class EditHandleFragment : DialogFragment() {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
 
         fun newInstance(currentHandle: String):
-            EditHandleFragment = EditHandleFragment()
+            EditHandleDialogFragment = EditHandleDialogFragment()
             .withArgs { putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle) }
     }
 }
