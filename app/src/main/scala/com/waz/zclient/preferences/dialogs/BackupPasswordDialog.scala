@@ -28,14 +28,19 @@ import com.google.android.material.textfield.TextInputLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
-import com.waz.utils.PasswordValidator
+import com.waz.utils.{PasswordValidator, returning}
 import com.waz.zclient.common.controllers.global.KeyboardController
-import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.{DialogMode, InputPasswordMode, SetPasswordMode}
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 
 import scala.util.Try
 
-class BackupPasswordDialog(mode: DialogMode = SetPasswordMode) extends DialogFragment with FragmentHelper with DerivedLogTag {
+class BackupPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
+  import BackupPasswordDialog._
+
+  private def mode: DialogMode = getStringArg(MODE_ARG) match {
+    case Some(str) if str == InputPasswordMode.str => InputPasswordMode
+    case _ => SetPasswordMode
+  }
 
   val onPasswordEntered = EventStream[Password]()
 
@@ -98,7 +103,13 @@ class BackupPasswordDialog(mode: DialogMode = SetPasswordMode) extends DialogFra
 object BackupPasswordDialog {
   val FragmentTag = RemoveDeviceDialog.getClass.getSimpleName
 
-  sealed trait DialogMode
-  case object SetPasswordMode   extends DialogMode
-  case object InputPasswordMode extends DialogMode
+  val MODE_ARG: String = "mode"
+
+  sealed trait DialogMode { val str: String }
+  case object SetPasswordMode extends DialogMode { override val str = "set_password" }
+  case object InputPasswordMode extends DialogMode { override val str = "input_password" }
+
+  def newInstance(mode: DialogMode): BackupPasswordDialog = returning(new BackupPasswordDialog){
+    _.setArguments(returning(new Bundle()) { _.putString(MODE_ARG, mode.str) })
+  }
 }

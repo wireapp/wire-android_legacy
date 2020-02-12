@@ -40,11 +40,6 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
   private val testMetadata = BackupMetadata(testUserId, version = 20)
   private val testFakeBackupFilename = "fake_backup.zip"
 
-  private val salt = Array.fill[Byte](EncryptedBackupHeader.saltLength)(1)
-  private val uuidHash = Array.fill[Byte](EncryptedBackupHeader.uuidHashLength)(2)
-
-  private val emptyPassword = Password("")
-
   private def createFakeDatabase(targetDirectory: File = testDirectory): File =
     returning(new File(targetDirectory, getDbFileName(testUserId))) { file =>
       withResource(new PrintWriter(file)) { _.write("some content") }
@@ -82,26 +77,6 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
             IoUtils.writeZipEntry(_, zip, getDbWalFileName(testUserId))
           }
         }
-      }
-    }
-  }
-
-  private def createFakeEncryptedBackup(file: File = new File(testFakeBackupFilename),
-                                        targetDirectory: File = testDirectoryEncrypted): File = {
-    import EncryptedBackupHeader._
-    val unencryptedFakeBackup = createFakeBackup(targetDirectory = targetDirectory)
-    val encryptedHeader = EncryptedBackupHeader(currentVersion, salt, uuidHash, 3 ,3)
-    returning(new File(targetDirectory, "fake_backup_encrypted.wbu")) { encryptedBackupFile =>
-      encryptedBackupFile.deleteOnExit()
-
-      val unencryptedBackupBytes = Array.ofDim[Byte](unencryptedFakeBackup.length().toInt)
-      withResource(new BufferedInputStream(new FileInputStream(unencryptedFakeBackup))) { unenc =>
-        IoUtils.readFully(unenc, unencryptedBackupBytes)
-      }
-
-      withResource(new BufferedOutputStream(new FileOutputStream(encryptedBackupFile))) { encryptedBackupStream =>
-        encryptedBackupStream.write(EncryptedBackupHeader.serializeHeader(encryptedHeader))
-        encryptedBackupStream.write(unencryptedBackupBytes)
       }
     }
   }
@@ -169,6 +144,8 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
   }
 
   feature("Importing database") {
+
+    val emptyPassword = Password("")
 
     scenario("unzip backup file and fail if metadata file and db file not found.") {
       val fakeBackup = createFakeBackup(metadata = None, database = None)
@@ -248,6 +225,32 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
   }
 
   feature("Importing database") {
+
+    val salt = Array.fill[Byte](EncryptedBackupHeader.saltLength)(1)
+    val uuidHash = Array.fill[Byte](EncryptedBackupHeader.uuidHashLength)(2)
+    val file = new File(testFakeBackupFilename)
+
+    def createFakeEncryptedBackup(
+                                  targetDirectory: File = testDirectoryEncrypted): File = {
+      import EncryptedBackupHeader._
+      val unencryptedFakeBackup = createFakeBackup(targetDirectory = targetDirectory)
+
+      val encryptedHeader = EncryptedBackupHeader(currentVersion, salt, uuidHash, 3 ,3)
+      returning(new File(targetDirectory, "fake_backup_encrypted.wbu")) { encryptedBackupFile =>
+        encryptedBackupFile.deleteOnExit()
+
+        val unencryptedBackupBytes = Array.ofDim[Byte](unencryptedFakeBackup.length().toInt)
+        withResource(new BufferedInputStream(new FileInputStream(unencryptedFakeBackup))) { unenc =>
+          IoUtils.readFully(unenc, unencryptedBackupBytes)
+        }
+
+        withResource(new BufferedOutputStream(new FileOutputStream(encryptedBackupFile))) { encryptedBackupStream =>
+          encryptedBackupStream.write(EncryptedBackupHeader.serializeHeader(encryptedHeader))
+          encryptedBackupStream.write(unencryptedBackupBytes)
+        }
+      }
+    }
+
     scenario("unzip encrypted backup file successfully if all needed files are present and metadata is valid (when current db version greater then from metadata).") {
       val targetDirectory = new File(testDirectoryEncrypted, "test_target_dir")
       if (!testDirectoryEncrypted.mkdir()) throw new RuntimeException("Cannot create target directory for test.")

@@ -218,18 +218,14 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
                 IoUtils.writeBytesToFile(decryptedDbExport, decryptedDbBytes)
                 Success(decryptedDbExport)
               case None =>
-                error(l"backup decryption failed")
                 Failure(new Throwable("backup decryption failed"))
             }
           case Some(_) =>
-            error(l" Uuid hashes don't match")
             Failure(new Throwable("Uuid hashes don't match"))
           case None =>
-            error(l"Uuid hashing failed")
             Failure(new Throwable("Uuid hashing failed"))
         }
       case None =>
-        error(l"metadata could not be read")
         Failure(new Throwable("metadata could not be read"))
     }
   }
@@ -245,7 +241,6 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
   private def importUnencryptedDatabase(userId: UserId, exportFile: File, targetDir: File,
                                         currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File] =
     Try {
-      verbose(l"exportFile: ${exportFile.getAbsolutePath}, size: ${exportFile.length()}")
       withResource(new ZipFile(exportFile)) { zip =>
         val metadataEntry = Option(zip.getEntry(backupMetadataFileName)).getOrElse { throw MetadataEntryNotFound }
         val metadataStr   = withResource(zip.getInputStream(metadataEntry))(Source.fromInputStream(_).mkString)
