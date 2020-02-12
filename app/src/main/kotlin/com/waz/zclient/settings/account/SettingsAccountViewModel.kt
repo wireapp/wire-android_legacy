@@ -144,7 +144,7 @@ data class ProfileDetail(val value: String) {
     }
 }
 
-data class DeleteAccountDialogDetail(val number: String, val email: String) {
+data class DeleteAccountDialogDetail(val email: String, val number: String) {
     companion object {
         val EMPTY = DeleteAccountDialogDetail(String.empty(), String.empty())
     }

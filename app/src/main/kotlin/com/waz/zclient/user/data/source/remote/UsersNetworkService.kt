@@ -14,6 +14,9 @@ interface UsersNetworkService {
     @GET(SELF)
     suspend fun profileDetails(): Response<UserApi>
 
+    @DELETE(SELF)
+    fun deleteAccount(): Response<Unit>
+
     @PUT(SELF)
     suspend fun changeName(@Body name: ChangeNameRequest): Response<Unit>
 

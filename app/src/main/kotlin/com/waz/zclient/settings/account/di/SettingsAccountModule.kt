@@ -2,6 +2,8 @@ package com.waz.zclient.settings.account.di
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.settings.account.SettingsAccountViewModel
+import com.waz.zclient.settings.account.deleteaccount.DeleteAccountUseCase
+import com.waz.zclient.settings.account.deleteaccount.SettingsAccountDeleteAccountViewModel
 import com.waz.zclient.settings.account.edithandle.SettingsAccountEditHandleViewModel
 import com.waz.zclient.settings.account.editphonenumber.CountryCodePickerViewModel
 import com.waz.zclient.settings.account.editphonenumber.GetCountryCodesUseCase
@@ -26,9 +28,10 @@ import org.koin.dsl.module
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 val settingsAccountModule: Module = module {
-    viewModel { SettingsAccountViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsAccountViewModel(get(), get(), get(), get(), get()) }
     viewModel { SettingsAccountEditHandleViewModel(get(), get(), get(), get()) }
     viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsAccountDeleteAccountViewModel(get()) }
     viewModel { CountryCodePickerViewModel(get()) }
 
     single { PhoneNumberUtil.getInstance() }
@@ -46,4 +49,6 @@ val settingsAccountModule: Module = module {
     factory { GetUserProfileUseCase(get()) }
     factory { ChangeNameUseCase(get()) }
     factory { ChangeEmailUseCase(get()) }
+
+    factory { DeleteAccountUseCase(get()) }
 }

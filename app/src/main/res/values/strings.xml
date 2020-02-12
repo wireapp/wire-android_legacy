@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -751,8 +750,8 @@
     <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, yyyy, %1$s</string>
     <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
     <!-- MONDAY -->
-     <!-- MARCH 2 -->
-     <!-- MARCH 2, 2015 -->
+    <!-- MARCH 2 -->
+    <!-- MARCH 2, 2015 -->
     <!-- 23:15 -->
     <string name="timestamp_pattern__24h_format">HH:mm</string>
     <string name="timestamp_pattern__12h_format">hh:mm a</string>
@@ -1488,4 +1487,8 @@
     <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
     <string name="edit_phone_dialog_confirm_phone_confirmation">We will send a notification code to:\n%s</string>
     <string name="edit_phone_save_phone_number">Save</string>
+
+    <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
+
 </resources>
+

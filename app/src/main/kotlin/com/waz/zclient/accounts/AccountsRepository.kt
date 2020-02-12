@@ -6,5 +6,6 @@ import com.waz.zclient.core.functional.Either
 
 interface AccountsRepository {
     suspend fun activeAccounts(): Either<Failure, List<ActiveAccount>>
-    suspend fun removeAccount(account: ActiveAccount): Either<Failure, Unit>
+    suspend fun deleteAccountFromDevice(account: ActiveAccount): Either<Failure, Unit>
+    suspend fun deleteAccountPermanently(): Either<Failure, Unit>
 }

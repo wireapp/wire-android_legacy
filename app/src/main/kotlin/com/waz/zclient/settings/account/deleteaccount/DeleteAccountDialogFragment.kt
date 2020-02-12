@@ -2,13 +2,19 @@ package com.waz.zclient.settings.account.deleteaccount
 
 import android.app.Dialog
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
+import org.koin.android.viewmodel.ext.android.viewModel
 
 class DeleteAccountDialogFragment : DialogFragment() {
+
+    private val settingsAccountDeleteAccountViewModel: SettingsAccountDeleteAccountViewModel by viewModel()
 
     private val emailAddress: String by lazy {
         arguments?.getString(EMAIL_BUNDLE_KEY, String.empty()) ?: String.empty()
@@ -19,9 +25,33 @@ class DeleteAccountDialogFragment : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val message = when {
+            emailAddress.isNotEmpty() -> {
+                getString(R.string.pref_account_delete_warning_message_email, emailAddress)
+            }
+            emailAddress.isEmpty() && phoneNumber.isNotEmpty() -> {
+                getString(R.string.pref_account_delete_warning_message_sms, phoneNumber)
+            }
+            else -> String.empty()
+        }
+
         return AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.pref_account_delete_warning_title))
+            .setMessage(message)
+            .setPositiveButton(getString(R.string.pref_account_delete_warning_verify)) { _, _ ->
+                settingsAccountDeleteAccountViewModel.onDeleteAccountConfirmed()
+            }
+            .setNegativeButton(getString(R.string.pref_account_delete_warning_cancel), null)
             .create()
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        settingsAccountDeleteAccountViewModel.deletionConfirmedLiveData.observe(viewLifecycleOwner) {
+            val message = getString(R.string.pref_account_delete_confirmed)
+            Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+        }
     }
 
     companion object {
