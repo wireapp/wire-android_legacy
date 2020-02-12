@@ -6,7 +6,6 @@ import com.waz.zclient.settings.account.edithandle.SettingsAccountEditHandleView
 import com.waz.zclient.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import com.waz.zclient.user.domain.usecase.handle.CheckHandleExistsUseCase
 import com.waz.zclient.user.domain.usecase.handle.GetHandleUseCase

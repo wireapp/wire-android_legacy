@@ -17,7 +17,6 @@ import org.koin.core.context.startKoin
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 object Injector {
-
     @JvmStatic
     fun start(context: Context) {
         startKoin {
@@ -44,6 +43,4 @@ object Injector {
             }
         }
     }
-
-
 }

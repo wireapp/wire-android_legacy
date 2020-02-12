@@ -32,5 +32,4 @@ val usersModule: Module = module {
     factory { get<UserDatabase>().userPreferencesDbService() }
 
     factory { GetUserProfileUseCase(get()) }
-
 }
