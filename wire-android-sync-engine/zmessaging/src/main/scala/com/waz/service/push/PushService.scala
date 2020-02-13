@@ -194,7 +194,7 @@ class PushServiceImpl(selfUserId:           UserId,
     syncNotifications(StoreNotifications(nots))
   }
 
-  wsPushService.connected().onChanged.map(WebSocketChange).on(dispatcher){
+  wsPushService.connected.onChanged.map(WebSocketChange).on(dispatcher){
     case source@WebSocketChange(true) =>
       verbose(l"sync history due to web socket change")
       syncNotifications(SyncHistory(source))
@@ -265,7 +265,7 @@ class PushServiceImpl(selfUserId:           UserId,
           val retry = Promise[Unit]()
 
           network.networkMode.onChanged.filter(!NetworkOff.contains(_)).next.map(_ => retry.trySuccess({}))
-          wsPushService.connected().onChanged.next.map(_ => retry.trySuccess({}))
+          wsPushService.connected.onChanged.next.map(_ => retry.trySuccess({}))
 
           for {
             _ <- CancellableFuture.delay(syncHistoryBackoff.delay(attempts))

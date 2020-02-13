@@ -29,6 +29,8 @@ import okio.ByteString
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
+import okhttp3.OkHttpClient
+
 import scala.util.Try
 
 object WebSocketFactory {
@@ -49,25 +51,17 @@ trait WebSocketFactory {
 
 class OkHttpWebSocketFactory(proxy: Option[Proxy]) extends WebSocketFactory with DerivedLogTag {
   import okhttp3.{
-    OkHttpClient,
     WebSocketListener,
-    Headers => OkHeaders,
-    Request => OkRequest,
     Response => OkResponse,
     WebSocket => OkWebSocket
   }
   import HttpClientOkHttpImpl.convertHttpRequest
 
-  //TODO Should be created somewhere outside
-  private lazy val builder = new OkHttpClient.Builder()
-    .pingInterval(30000, TimeUnit.MILLISECONDS)
-
   private lazy val okHttpClient =
     if(proxy.isDefined)
-      builder
-        .proxy(proxy.get)
-        .build()
-    else builder.build()
+      OkHttpWebSocketFactory.builder.proxy(proxy.get).build()
+    else
+      OkHttpWebSocketFactory.builder.build()
 
   override def openWebSocket(request: Request[Body]): EventStream[SocketEvent] = {
     new EventStream[SocketEvent] {
@@ -120,4 +114,8 @@ class OkHttpWebSocketFactory(proxy: Option[Proxy]) extends WebSocketFactory with
     }
   }
 
+}
+
+object OkHttpWebSocketFactory {
+  private lazy val builder = new OkHttpClient.Builder().pingInterval(30000, TimeUnit.MILLISECONDS)
 }
