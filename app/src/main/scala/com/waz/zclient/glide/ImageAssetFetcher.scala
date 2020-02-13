@@ -46,7 +46,6 @@ class ImageAssetFetcher(request: AssetRequest, zms: Signal[ZMessaging])
     val data = CancellableFuture.lift(zms.head).flatMap { zms =>
       request match {
         case AssetIdRequest(assetId)             => zms.assetService.loadContentById(assetId)
-        case ImageAssetRequest(asset)            => zms.assetService.loadContent(asset)
         case PublicAssetIdRequest(assetId)       => zms.assetService.loadPublicContentById(assetId, None, None)
         case UploadAssetIdRequest(uploadAssetId) => zms.assetService.loadUploadContentById(uploadAssetId, None)
         case GoogleMapRequest(location)          => zms.googleMapsMediaService.loadMapPreview(location)
