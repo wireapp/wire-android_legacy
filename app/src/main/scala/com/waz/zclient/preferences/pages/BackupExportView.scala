@@ -74,7 +74,7 @@ class BackupExportView(context: Context, attrs: AttributeSet, style: Int)
     Future.successful(())
   }
 
-  private def backupData(password: Option[Password]): Unit = {
+  private def backupData(password: Password): Unit = {
     spinnerController.showDimmedSpinner(show = true, ContextUtils.getString(R.string.back_up_progress))
     import Threading.Implicits.Ui
 

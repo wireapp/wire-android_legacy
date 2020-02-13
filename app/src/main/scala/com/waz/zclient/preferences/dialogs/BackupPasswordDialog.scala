@@ -28,38 +28,49 @@ import com.google.android.material.textfield.TextInputLayout
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.AccountData.Password
 import com.waz.utils.events.EventStream
-import com.waz.utils.PasswordValidator
+import com.waz.utils.{PasswordValidator, returning}
+import com.waz.zclient.common.controllers.global.KeyboardController
 import com.waz.zclient.{BuildConfig, FragmentHelper, R}
 
 import scala.util.Try
 
 class BackupPasswordDialog extends DialogFragment with FragmentHelper with DerivedLogTag {
+  import BackupPasswordDialog._
 
-  val onPasswordEntered = EventStream[Option[Password]]()
+  private def mode: DialogMode = getStringArg(MODE_ARG) match {
+    case Some(str) if str == InputPasswordMode.str => InputPasswordMode
+    case _ => SetPasswordMode
+  }
+
+  val onPasswordEntered = EventStream[Password]()
 
   private lazy val root = LayoutInflater.from(getActivity).inflate(R.layout.backup_password_dialog, null)
+  private lazy val keyboard = inject[KeyboardController]
 
   val minPasswordLength = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
   private lazy val strongPasswordValidator =
     PasswordValidator.createStrongPasswordValidator(BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH, BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH)
 
-  private def providePassword(password: Option[Password]): Unit = {
-    onPasswordEntered ! password
+  private def providePassword(password: String): Unit = {
+    onPasswordEntered ! Password(password)
+    keyboard.hideKeyboardIfVisible()
     dismiss()
   }
-
-  private def isValidPassword(password: String): Boolean =
-    strongPasswordValidator.isValidPassword(password)
 
   private lazy val passwordEditText = findById[EditText](root, R.id.backup_password_field)
 
   private lazy val textInputLayout = findById[TextInputLayout](root, R.id.backup_password_title)
 
   override def onCreateDialog(savedInstanceState: Bundle): Dialog = {
+    val (title, message) = mode match {
+      case SetPasswordMode   => (R.string.backup_password_dialog_title, R.string.backup_password_dialog_message)
+      case InputPasswordMode => (R.string.restore_password_dialog_title, R.string.empty_string)
+    }
+
     new AlertDialog.Builder(getActivity)
       .setView(root)
-      .setTitle(getString(R.string.backup_password_dialog_title))
-      .setMessage(R.string.backup_password_dialog_message)
+      .setTitle(getString(title))
+      .setMessage(message)
       .setPositiveButton(android.R.string.ok, null)
       .setNegativeButton(android.R.string.cancel, null)
       .create
@@ -71,12 +82,12 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
       d.getButton(BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
         def onClick(v: View) = {
           val pass = passwordEditText.getText.toString
-          if (!BuildConfig.FORCE_APP_LOCK) {
-            providePassword(if(pass.isEmpty) None else Some(Password(pass)))
-          } else if(isValidPassword(pass)) {
-            providePassword(Some(Password(pass)))
-          } else {
-            textInputLayout.setError(getString(R.string.password_policy_hint, minPasswordLength))
+          mode match {
+            case SetPasswordMode if !BuildConfig.FORCE_APP_LOCK && !pass.isEmpty  => providePassword(pass)
+            case SetPasswordMode if strongPasswordValidator.isValidPassword(pass) => providePassword(pass)
+            case InputPasswordMode                                                => providePassword(pass)
+            case _ =>
+              textInputLayout.setError(getString(R.string.password_policy_hint, minPasswordLength))
           }
         }
       })
@@ -91,4 +102,14 @@ class BackupPasswordDialog extends DialogFragment with FragmentHelper with Deriv
 
 object BackupPasswordDialog {
   val FragmentTag = RemoveDeviceDialog.getClass.getSimpleName
+
+  val MODE_ARG: String = "mode"
+
+  sealed trait DialogMode { val str: String }
+  case object SetPasswordMode extends DialogMode { override val str = "set_password" }
+  case object InputPasswordMode extends DialogMode { override val str = "input_password" }
+
+  def newInstance(mode: DialogMode): BackupPasswordDialog = returning(new BackupPasswordDialog){
+    _.setArguments(returning(new Bundle()) { _.putString(MODE_ARG, mode.str) })
+  }
 }

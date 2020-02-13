@@ -122,9 +122,13 @@ class PhoneSetNameFragment extends FragmentHelper with TextWatcher with View.OnC
           editTextName.foreach(_.requestFocus)
           nameConfirmationButton.foreach(_.setState(PhoneConfirmationButton.State.INVALID))
         }
-      case _ =>
+      case Right(accountManager) =>
         activity.enableProgress(false)
         activity.onEnterApplication(false)
+        accountManager.foreach { am =>
+          am.initZMessaging()
+          am.addUnsplashPicture()
+        }
     }
   }
 
