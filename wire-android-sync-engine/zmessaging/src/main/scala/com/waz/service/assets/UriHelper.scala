@@ -12,4 +12,6 @@ trait UriHelper {
   def extractMime(uri: URI): Try[Mime]
   def extractSize(uri: URI): Try[Long]
   def extractFileName(uri: URI): Try[String]
+
+  def assetInput(uri: URI): AssetInput
 }

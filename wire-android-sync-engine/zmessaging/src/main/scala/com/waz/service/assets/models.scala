@@ -32,25 +32,28 @@ import scala.util.{Success, Try}
 
 sealed trait Content {
 
+  def assetInput(uriHelper: UriHelper): AssetInput = this match {
+    case Content.Bytes(_, bytes) => AssetInput(new ByteArrayInputStream(bytes))
+    case Content.Uri(uri)        => uriHelper.assetInput(uri)
+    case Content.File(_, file)   => AssetInput(file)
+  }
+
   def openInputStream(uriHelper: UriHelper): Try[InputStream] = this match {
     case Content.Bytes(_, bytes) => Try { new ByteArrayInputStream(bytes) }
     case Content.Uri(uri)        => uriHelper.openInputStream(uri)
     case Content.File(_, file)   => Try { new FileInputStream(file) }
-    case Content.AsBlob(content) => content.openInputStream(uriHelper)
   }
 
   def getSize(uriHelper: UriHelper): Try[Long] = this match {
     case Content.Bytes(_, bytes) => Success(bytes.length)
     case Content.Uri(uri)        => uriHelper.extractSize(uri)
     case Content.File(_, file)   => Try { file.length() }
-    case Content.AsBlob(content) => content.getSize(uriHelper)
   }
 
   def getMime(uriHelper: UriHelper): Try[Mime] = this match {
     case Content.Bytes(mime, _)  => Success(mime)
     case Content.Uri(uri)        => uriHelper.extractMime(uri)
     case Content.File(mime, _)   => Success(mime)
-    case Content.AsBlob(content) => content.getMime(uriHelper)
   }
 
 }
@@ -62,7 +65,6 @@ sealed trait PreparedContent extends Content
 
 object Content {
   case class Bytes(mime: Mime, bytes: Array[Byte]) extends Content
-  case class AsBlob(content: Content)              extends Content
   case class Uri(uri: URI)                         extends PreparedContent
   case class File(mime: Mime, file: java.io.File)  extends PreparedContent
 }
@@ -209,8 +211,8 @@ object Asset {
   type Video         = VideoDetails
 
   def extractEncryption(remote: RemoteData): Encryption = remote.encryption match {
-    case Messages.AES_GCM => AES_CBC_Encryption(AESKey2(remote.otrKey))
-    case Messages.AES_CBC => AES_CBC_Encryption(AESKey2(remote.otrKey))
+    case Messages.AES_GCM => AES_CBC_Encryption(AESKeyBytes(remote.otrKey))
+    case Messages.AES_CBC => AES_CBC_Encryption(AESKeyBytes(remote.otrKey))
     case _                => NoEncryption
   }
 
