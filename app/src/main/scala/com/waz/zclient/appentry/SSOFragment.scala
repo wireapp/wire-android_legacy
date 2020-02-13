@@ -23,7 +23,7 @@ import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model2.transport.responses.DomainSuccessful
+import com.waz.model2.transport.responses.{DomainSuccessful}
 import com.waz.service.SSOService
 import com.waz.zclient.InputDialog._
 import com.waz.zclient._
@@ -43,8 +43,8 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   import SSOFragment._
   import com.waz.threading.Threading.Implicits.Ui
 
-  private lazy val ssoService             = inject[SSOService]
-  private lazy val userAccountsController = inject[UserAccountsController]
+  protected lazy val ssoService             = inject[SSOService]
+  protected lazy val userAccountsController = inject[UserAccountsController]
 
   private def hasToken: Future[Boolean] = userAccountsController.ssoToken.head.map(_.isDefined)
 
@@ -111,7 +111,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         .setListener(dialogListener)
         .show(getChildFragmentManager, SSODialogTag)
 
-  private def verifySsoCode(input: String): Future[Unit] =
+  protected def verifySsoCode(input: String): Future[Unit] =
     ssoService.extractUUID(input).fold(Future.successful(())) { token =>
       onVerifyingToken(true)
       ssoService.verifyToken(token).flatMap { result =>
@@ -120,14 +120,12 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         result match {
           case Right(true) =>
             dismissSsoDialog()
-            getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
+            showSsoWebView(token.toString)
           case Right(false) => showInlineSsoError(getString(R.string.sso_signin_wrong_code_message))
           case Left(errorResponse) => handleVerificationError(errorResponse)
         }
       }
     }
-
 
   private def verifyEmail(email: String): Future[Unit] = {
     val domain = ssoService.extractDomain(email)
@@ -155,6 +153,11 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   private def dismissSsoDialog() = getSsoDialog.foreach(_.dismiss())
 
   private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
+
+  protected def showSsoWebView(token: String) = {
+    getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
+  }
 
   protected def activity: AppEntryActivity = getActivity.asInstanceOf[AppEntryActivity]
 
