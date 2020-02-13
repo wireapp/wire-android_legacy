@@ -111,6 +111,7 @@ dependencies {
         exclude(group: "org.scalatest", module: "scalatest")
     }
     testImplementation TestDependencies.robolectric
+    testImplementation BuildDependencies.androidX.roomRuntime
     testImplementation TestDependencies.jUnit   //to override version included in robolectric
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okHttp"
     //should match okhttp version.
