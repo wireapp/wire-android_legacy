@@ -15,7 +15,7 @@ data class UserEntity(
     var teamId: String?,
 
     @ColumnInfo(name = "name")
-    var name: String,
+    var name: String?,
 
     @ColumnInfo(name = "email")
     var email: String?,
@@ -57,7 +57,7 @@ data class UserEntity(
     var verified: String?,
 
     @ColumnInfo(name = "deleted")
-    var deleted: Int,
+    var deleted: Int?,
 
     @ColumnInfo(name = "availability")
     var availability: Int?,

@@ -15,7 +15,7 @@ interface UsersNetworkService {
     suspend fun profileDetails(): Response<UserApi>
 
     @DELETE(SELF)
-    fun deleteAccount(): Response<Unit>
+    fun deleteAccount(@Body deleteAccount: DeleteAccountRequest): Response<Unit>
 
     @PUT(SELF)
     suspend fun changeName(@Body name: ChangeNameRequest): Response<Unit>
@@ -44,6 +44,8 @@ interface UsersNetworkService {
         private const val HANDLES = "/handles"
     }
 }
+
+object DeleteAccountRequest
 
 data class ChangeNameRequest(
     @SerializedName("name") val name: String

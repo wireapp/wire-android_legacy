@@ -18,7 +18,7 @@ val ACTIVE_ACCOUNTS_MIGRATION = object : Migration(START_VERSION, END_VERSION) {
             `cookie` TEXT NOT NULL, 
             `access_token` TEXT, 
             `registered_push` TEXT,
-            `sso_id` TEXT)
+            `sso_id` TEXT DEFAULT NULL)
             """.trimIndent()
             val deleteNullValues = "DELETE FROM ActiveAccounts WHERE _id IS NULL"
             val copyAll = "INSERT INTO $tempTableName SELECT * FROM ActiveAccounts"

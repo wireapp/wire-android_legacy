@@ -9,6 +9,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.extension.toSpanned
 import com.waz.zclient.core.extension.withArgs
 import org.koin.android.viewmodel.ext.android.viewModel
 
@@ -27,13 +28,13 @@ class DeleteAccountDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val message = when {
             emailAddress.isNotEmpty() -> {
-                getString(R.string.pref_account_delete_warning_message_email, emailAddress)
+                getString(R.string.delete_account_permanently_email_confirmation, emailAddress)
             }
             emailAddress.isEmpty() && phoneNumber.isNotEmpty() -> {
-                getString(R.string.pref_account_delete_warning_message_sms, phoneNumber)
+                getString(R.string.delete_account_permanently_sms_confirmation, phoneNumber)
             }
             else -> String.empty()
-        }
+        }.toSpanned()
 
         return AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.pref_account_delete_warning_title))
@@ -47,7 +48,6 @@ class DeleteAccountDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         settingsAccountDeleteAccountViewModel.deletionConfirmedLiveData.observe(viewLifecycleOwner) {
             val message = getString(R.string.pref_account_delete_confirmed)
             Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()

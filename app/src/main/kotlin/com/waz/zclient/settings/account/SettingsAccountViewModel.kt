@@ -94,7 +94,6 @@ class SettingsAccountViewModel(
         activeAccountLiveData.postValue(activeAccount)
     }
 
-
     //TODO valid error scenarios once the networking has been integrated
     private fun handleError(failure: Failure) {
         _errorLiveData.postValue("Failure: $failure")
@@ -130,7 +129,6 @@ class SettingsAccountViewModel(
                 } ?: DeleteAccountDialogDetail.EMPTY
             }
         }
-
     }
 
     companion object {

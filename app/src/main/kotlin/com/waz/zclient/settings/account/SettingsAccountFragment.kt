@@ -106,11 +106,9 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         }
     }
 
-
     private fun initDeleteAccountButton() {
         settingsAccountViewModel.deleteAccountDialogLiveData.observe(viewLifecycleOwner) {
             showDeleteAccountDialog(it.email, it.number)
-
         }
         settingsAccountDeleteAccountButton.setOnClickListener {
             settingsAccountViewModel.onDeleteAccountButtonClicked()

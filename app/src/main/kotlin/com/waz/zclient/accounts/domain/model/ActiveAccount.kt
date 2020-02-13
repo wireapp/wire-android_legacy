@@ -11,7 +11,8 @@ data class ActiveAccount(
     val accessToken: AccessToken?,
     val refreshToken: String,
     val pushToken: String?,
-    val ssoId: SsoId?)
+    val ssoId: SsoId?
+)
 
 data class SsoId(
     val subject: String,

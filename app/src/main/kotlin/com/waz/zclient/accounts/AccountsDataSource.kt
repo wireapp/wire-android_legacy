@@ -10,8 +10,8 @@ import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 class AccountsDataSource(
     private val accountMapper: AccountMapper,
     private val usersRemoteDataSource: UsersRemoteDataSource,
-    private val accountsLocalDataSource: AccountsLocalDataSource)
-    : AccountsRepository {
+    private val accountsLocalDataSource: AccountsLocalDataSource
+) : AccountsRepository {
 
     override suspend fun activeAccounts() = accountsLocalDataSource.activeAccounts()
         .map { entityList -> entityList.map { accountMapper.from(it) } }
