@@ -20,8 +20,6 @@ class CustomBackendLoginFragment extends SSOFragment {
 
   private lazy val backendController = inject[BackendController]
 
-  protected lazy val showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
-
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_custom_backend_login, container, false)
 
@@ -95,6 +93,8 @@ class CustomBackendLoginFragment extends SSOFragment {
         }
       }(Threading.Ui)
     }
+
+  protected def showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
 }
 
 object CustomBackendLoginFragment {
