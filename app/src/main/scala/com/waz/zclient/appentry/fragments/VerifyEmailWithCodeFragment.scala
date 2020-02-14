@@ -179,6 +179,8 @@ class VerifyEmailWithCodeFragment extends FragmentHelper with View.OnClickListen
       color               <- inject[AccentColorController].accentColor.head
       _                   <- resp match {
         case Right(Some(am)) =>
+          am.initZMessaging()
+          am.addUnsplashPicture()
           (if (!askMarketingConsent) Future.successful(Some(false)) else
             showConfirmationDialog(
               getString(R.string.receive_news_and_offers_request_title),

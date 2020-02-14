@@ -38,19 +38,15 @@ import org.json.JSONObject
 import org.threeten.bp.Instant
 
 import scala.io.Source
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 trait BackupManager {
   def exportDatabase(userId: UserId,
                      userHandle: String,
                      databaseDir: File,
                      targetDir: File,
-                     backupPassword: Option[Password]): Try[File]
-  def importDatabase(userId: UserId,
-                     exportFile: File,
-                     targetDir: File,
-                     currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                     backupPassword: Option[Password] = None): Try[File]
+                     backupPassword: Password): Try[File]
+  def importDatabase(userId: UserId, exportFile: File, targetDir: File, backupPassword: Password, currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File]
 }
 
 object BackupManager {
@@ -76,6 +72,7 @@ object BackupManager {
 
     def currentPlatform: String = "android"
     def currentDbVersion: Int = ZMessagingDB.DbVersion
+
 
     implicit def backupMetadataEncoder: JsonEncoder[BackupMetadata] = new JsonEncoder[BackupMetadata] {
       override def apply(data: BackupMetadata): JSONObject = JsonEncoder { o =>
@@ -133,7 +130,8 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
                               userHandle:     String,
                               databaseDir:    File,
                               targetDir:      File,
-                              backupPassword: Option[Password]): Try[File] = {
+                              backupPassword: Password): Try[File] = {
+    verbose(l"exportDatabase($userId, $userHandle, ${databaseDir.getAbsolutePath}, $backupPassword)")
     val backup = Try {
       returning(new File(targetDir, backupZipFileName(userHandle))) { zipFile =>
         zipFile.deleteOnExit()
@@ -145,9 +143,11 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
           }
 
           val dbFileName = getDbFileName(userId)
-          withResource(new BufferedInputStream(new FileInputStream(new File(databaseDir, dbFileName)))) {
+          val dbFile = new File(databaseDir, dbFileName)
+          withResource(new BufferedInputStream(new FileInputStream(dbFile))) {
             IoUtils.writeZipEntry(_, zip, dbFileName)
           }
+          verbose(l"file: $dbFile exists: ${dbFile.exists}, length: ${if (dbFile.exists) dbFile.length else 0}")
 
           val walFileName = getDbWalFileName(userId)
           val walFile = new File(databaseDir, walFileName)
@@ -158,15 +158,18 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
           }
         }
 
-        verbose(l"database export finished: $zipFile . Data contains: ${zipFile.length} bytes")
+        verbose(l"database export finished: $zipFile. Data contains: ${zipFile.length} bytes")
       }
     }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
-    if (backup.isSuccess && backupPassword.isDefined) encryptDatabase(backup.get, backupPassword.get, userId)
-    else backup
+
+    for {
+      unencryptedFile <- backup
+      encryptedFile   <- encryptDatabase(unencryptedFile, backupPassword, userId)
+    } yield encryptedFile
   }
 
   private def encryptDatabase(backup: File, password: Password, userId: UserId): Try[File] = {
-    val salt = libSodiumUtils.generateSalt()
+    val salt        = libSodiumUtils.generateSalt()
     val backupBytes = IoUtils.readFileBytes(backup)
 
     (libSodiumUtils.encrypt(backupBytes, password, salt), getMetaDataBytes(password, salt, userId)) match {
@@ -182,73 +185,86 @@ class BackupManagerImpl(libSodiumUtils: LibSodiumUtils) extends BackupManager wi
           new File(backup.getPath)
         }.mapFailureIfNot[BackupError](UnknownBackupError.apply)
       case (_, None) =>
+        error(l"Failed to create metadata")
         Failure(new Throwable("Failed to create metadata"))
       case (None, _) =>
-        val msg = "Failed to encrypt backup"
-        error(l"$msg")
-        Failure(new Exception(msg))
+        error(l"Failed to encrypt backup")
+        Failure(new Exception("Failed to encrypt backup"))
     }
   }
 
   override def importDatabase(userId:           UserId,
                               exportFile:       File,
                               targetDir:        File,
-                              currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                              backupPassword:   Option[Password] = None): Try[File] =
-    backupPassword match {
-      case Some(p) => importEncryptedDatabase(userId, exportFile, targetDir, currentDbVersion, p)
-      case None => importUnencryptedDatabase(userId, exportFile, targetDir, currentDbVersion)
-    }
+                              backupPassword:   Password,
+                              currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File] = {
+    verbose(l"importDatabase($userId, ${exportFile.getAbsolutePath}, ${targetDir.getAbsolutePath}, $backupPassword, $currentDbVersion)")
+    if (backupPassword.str.isEmpty)
+      importUnencryptedDatabase(userId, exportFile, targetDir, currentDbVersion)
+    else
+      importEncryptedDatabase(userId, exportFile, targetDir, currentDbVersion, backupPassword)
+  }
 
-  private def importEncryptedDatabase(userId: UserId, exportFile: File, targetDir: File,
-                                      currentDbVersion: Int = BackupMetadata.currentDbVersion,
-                                      password: Password): Try[File] =
-    EncryptedBackupHeader.readEncryptedMetadata(exportFile) match {
+  private def decryptDatabase(file: File, password: Password, userId: UserId): Try[File] = {
+    EncryptedBackupHeader.readEncryptedMetadata(file) match {
       case Some(metadata) =>
         libSodiumUtils.hash(userId.str, metadata.salt) match {
           case Some(hash) if hash.sameElements(metadata.uuidHash) =>
-            val encryptedBackupBytes = IoUtils.readFileBytes(exportFile, EncryptedBackupHeader.totalHeaderLength)
+            val encryptedBackupBytes = IoUtils.readFileBytes(file, EncryptedBackupHeader.totalHeaderLength)
             libSodiumUtils.decrypt(encryptedBackupBytes, password, metadata.salt) match {
               case Some(decryptedDbBytes) =>
                 val decryptedDbExport = File.createTempFile("wire_backup", ".zip")
                 decryptedDbExport.deleteOnExit()
                 IoUtils.writeBytesToFile(decryptedDbExport, decryptedDbBytes)
-                importUnencryptedDatabase(userId, decryptedDbExport, targetDir)
+                Success(decryptedDbExport)
               case None =>
                 Failure(new Throwable("backup decryption failed"))
             }
-          case Some(_) => Failure(new Throwable("Uuid hashes don't match"))
-          case None => Failure(new Throwable("Uuid hashing failed"))
+          case Some(_) =>
+            Failure(new Throwable("Uuid hashes don't match"))
+          case None =>
+            Failure(new Throwable("Uuid hashing failed"))
         }
       case None =>
         Failure(new Throwable("metadata could not be read"))
     }
+  }
+
+  private def importEncryptedDatabase(userId: UserId, exportFile: File, targetDir: File,
+                                      currentDbVersion: Int = BackupMetadata.currentDbVersion,
+                                      password: Password): Try[File] =
+    for {
+      decryptedFile <- decryptDatabase(exportFile, password, userId)
+      importedFile  <- importUnencryptedDatabase(userId, decryptedFile, targetDir, currentDbVersion)
+    } yield importedFile
 
   private def importUnencryptedDatabase(userId: UserId, exportFile: File, targetDir: File,
                                         currentDbVersion: Int = BackupMetadata.currentDbVersion): Try[File] =
     Try {
       withResource(new ZipFile(exportFile)) { zip =>
         val metadataEntry = Option(zip.getEntry(backupMetadataFileName)).getOrElse { throw MetadataEntryNotFound }
-
-        val metadataStr = withResource(zip.getInputStream(metadataEntry))(Source.fromInputStream(_).mkString)
-        val metadata = decode[BackupMetadata](metadataStr).recoverWith {
+        val metadataStr   = withResource(zip.getInputStream(metadataEntry))(Source.fromInputStream(_).mkString)
+        val metadata      = decode[BackupMetadata](metadataStr).recoverWith {
           case err => Failure(InvalidMetadata.WrongFormat(err))
         }.get
-
         if (userId != metadata.userId) throw InvalidMetadata.UserId
         if (BackupMetadata.currentPlatform != metadata.platform) throw InvalidMetadata.Platform
         if (currentDbVersion < metadata.version) throw InvalidMetadata.DbVersion
-
         val dbFileName = getDbFileName(userId)
         val dbEntry = Option(zip.getEntry(dbFileName)).getOrElse { throw DbEntryNotFound }
-
         val walFileName = getDbWalFileName(userId)
         Option(zip.getEntry(walFileName)).foreach { walEntry =>
-          IoUtils.copy(zip.getInputStream(walEntry), new File(targetDir, walFileName))
+          val walFile = new File(targetDir, walFileName)
+          if (walFile.exists()) walFile.delete()
+          walFile.createNewFile()
+          IoUtils.copy(zip.getInputStream(walEntry), walFile)
+          verbose(l"WAL file: ${walFile.getAbsolutePath}, length: ${walFile.length()}")
         }
-
         returning(new File(targetDir, dbFileName)) { dbFile =>
+          if (dbFile.exists()) dbFile.delete()
+          dbFile.createNewFile()
           IoUtils.copy(zip.getInputStream(dbEntry), dbFile)
+          verbose(l"DB file: ${dbFile.getAbsolutePath}, length: ${dbFile.length()}")
         }
       }
     }.mapFailureIfNot[BackupError](UnknownBackupError.apply)

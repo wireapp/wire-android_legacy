@@ -2,10 +2,12 @@ package com.waz.zclient.settings.account.editphonenumber
 
 import com.waz.zclient.R
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
+import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeInvalid
@@ -87,10 +89,10 @@ class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
 
     @Test
     fun `given phone number is loading, when country code is wrong, then update country code error`() = runBlockingTest {
-        val params = CountryCodeAndPhoneNumberParams(TEST_COMPLETE_NUMBER)
+        val params = CountryCodeAndPhoneNumberParams(TEST_COMPLETE_NUMBER, TEST_LANGUAGE)
         lenient().`when`(countryCodeAndPhoneNumberUseCase.run(params)).thenReturn(Either.Left(CountryCodeInvalid))
 
-        settingsAccountPhoneNumberViewModel.loadPhoneNumberData(TEST_COMPLETE_NUMBER)
+        settingsAccountPhoneNumberViewModel.loadPhoneNumberData(TEST_COMPLETE_NUMBER, TEST_LANGUAGE)
 
         settingsAccountPhoneNumberViewModel.countryCodeErrorLiveData.observeOnce {
             it.errorMessage shouldBe R.string.edit_phone_dialog_country_code_error
@@ -99,10 +101,10 @@ class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
 
     @Test
     fun `given phone number is loading, when phone number without country code is wrong, then update phone number error`() = runBlockingTest {
-        val params = CountryCodeAndPhoneNumberParams(TEST_COMPLETE_NUMBER)
+        val params = CountryCodeAndPhoneNumberParams(TEST_COMPLETE_NUMBER, TEST_LANGUAGE)
         lenient().`when`(countryCodeAndPhoneNumberUseCase.run(params)).thenReturn(Either.Left(PhoneNumberInvalid))
 
-        settingsAccountPhoneNumberViewModel.loadPhoneNumberData(TEST_COMPLETE_NUMBER)
+        settingsAccountPhoneNumberViewModel.loadPhoneNumberData(TEST_COMPLETE_NUMBER, TEST_LANGUAGE)
 
         settingsAccountPhoneNumberViewModel.phoneNumberErrorLiveData.observeOnce {
             it.errorMessage shouldBe R.string.edit_phone_dialog_country_code_error
@@ -111,18 +113,28 @@ class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
 
     @Test
     fun `given phone number is loading, country code and phone is parsed correctly, then update confirmation data`() = runBlockingTest {
-        val params = CountryCodeAndPhoneNumberParams(TEST_COMPLETE_NUMBER)
-        val phoneNumber = PhoneNumber(TEST_COUNTRY_CODE, TEST_PHONE_NUMBER)
+        val params = CountryCodeAndPhoneNumberParams(TEST_COMPLETE_NUMBER, TEST_LANGUAGE)
+        val phoneNumber = PhoneNumber(TEST_COUNTRY_CODE, TEST_PHONE_NUMBER, TEST_COUNTRY)
         lenient().`when`(countryCodeAndPhoneNumberUseCase.run(params)).thenReturn(Either.Right(phoneNumber))
 
-        settingsAccountPhoneNumberViewModel.loadPhoneNumberData(TEST_COMPLETE_NUMBER)
+        settingsAccountPhoneNumberViewModel.loadPhoneNumberData(TEST_COMPLETE_NUMBER, TEST_LANGUAGE)
 
-        settingsAccountPhoneNumberViewModel.countryCodeLiveData.observeOnce {
-            it shouldBe TEST_COUNTRY_CODE
+        settingsAccountPhoneNumberViewModel.phoneNumberDetailsLiveData.observeOnce {
+            it.number shouldBe TEST_PHONE_NUMBER
+            it.countryCode shouldBe TEST_COUNTRY_CODE
+            it.country shouldBe TEST_COUNTRY
         }
+    }
 
-        settingsAccountPhoneNumberViewModel.phoneNumberLiveData.observeOnce {
-            it shouldBe TEST_PHONE_NUMBER
+    @Test
+    fun `given country code is updated, then update confirmation data`() = runBlockingTest {
+        val country = Country(TEST_COUNTRY, TEST_COUNTRY, TEST_COUNTRY_CODE)
+        settingsAccountPhoneNumberViewModel.onCountryCodeUpdated(country)
+
+        settingsAccountPhoneNumberViewModel.phoneNumberDetailsLiveData.observeOnce {
+            it.number shouldBe String.empty()
+            it.countryCode shouldBe TEST_COUNTRY_CODE
+            it.country shouldBe TEST_COUNTRY
         }
     }
 
@@ -139,7 +151,7 @@ class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given delete number clicked,  when number fails validation, then update phone number error`() = runBlockingTest {
+    fun `given delete number clicked, when number fails validation, then update phone number error`() = runBlockingTest {
         val params = ValidatePhoneNumberParams(TEST_COUNTRY_CODE, TEST_PHONE_NUMBER)
         lenient().`when`(validatePhoneNumberUseCase.run(params)).thenReturn(Either.Left(PhoneNumberInvalid))
 
@@ -151,7 +163,7 @@ class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
     }
 
     @Test
-    fun `given delete number clicked,  when both are valid, then update confirmation data`() = runBlockingTest {
+    fun `given delete number clicked, when both are valid, then update confirmation data`() = runBlockingTest {
         val params = ValidatePhoneNumberParams(TEST_COUNTRY_CODE, TEST_PHONE_NUMBER)
         lenient().`when`(validatePhoneNumberUseCase.run(params)).thenReturn(Either.Right(TEST_COMPLETE_NUMBER))
 
@@ -185,8 +197,9 @@ class SettingsAccountPhoneNumberViewModelTest : UnitTest() {
         }
     }
 
-
     companion object {
+        private const val TEST_COUNTRY = "Germany"
+        private const val TEST_LANGUAGE = "en-gb"
         private const val TEST_COUNTRY_CODE = "+49"
         private const val TEST_PHONE_NUMBER = "88844477744"
         private const val TEST_COMPLETE_NUMBER = "${TEST_COUNTRY_CODE}${TEST_PHONE_NUMBER}"

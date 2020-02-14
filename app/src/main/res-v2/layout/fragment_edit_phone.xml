@@ -26,6 +26,16 @@
     android:paddingStart="@dimen/settings_account_edit_phone_padding"
     android:paddingEnd="@dimen/settings_account_edit_phone_padding">
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/editPhoneFragmentCountryCodePicker"
+        style="@style/Button.Settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/editPhoneCountryCodeTextInputLayout"
         android:layout_width="0dp"
@@ -34,7 +44,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_weight="0.15"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/editPhoneFragmentCountryCodePicker">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editPhoneCountryCodeTextInputEditText"
@@ -54,7 +64,7 @@
         app:layout_constraintHorizontal_bias="0.85"
         app:layout_constraintHorizontal_weight="0.9"
         app:layout_constraintStart_toEndOf="@+id/editPhoneCountryCodeTextInputLayout"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/editPhoneFragmentCountryCodePicker">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editPhonePhoneNumberTextInputEditText"

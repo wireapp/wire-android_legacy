@@ -51,7 +51,7 @@ import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.repository.FCMNotificationStatsRepository.FCMNotificationStatsDao
 import com.waz.repository.FCMNotificationsRepository.FCMNotificationsDao
 import com.waz.service.assets
-import com.waz.service.assets.{AESKey2, AES_CBC_Encryption, Asset, AudioDetails, BlobDetails, ImageDetails, Loudness, NoEncryption, VideoDetails}
+import com.waz.service.assets.{AESKeyBytes, AES_CBC_Encryption, Asset, AudioDetails, BlobDetails, ImageDetails, Loudness, NoEncryption, VideoDetails}
 import com.waz.service.tracking.TrackingService
 
 import scala.util.{Success, Try}
@@ -328,7 +328,7 @@ object ZMessagingDB {
 
       //Convert old assets to new assets (public assets won't be converted)
       def convertAsset(old: AssetData): Try[Asset] = Try {
-        val encryption = old.otrKey.map(k => AES_CBC_Encryption(AESKey2(k.bytes)))
+        val encryption = old.otrKey.map(k => AES_CBC_Encryption(AESKeyBytes(k.bytes)))
 
         assets.Asset(
           id = old.remoteId.map(rid => AssetId(rid.str)).getOrElse(old.id),

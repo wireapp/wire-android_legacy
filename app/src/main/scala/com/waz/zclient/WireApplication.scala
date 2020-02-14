@@ -42,7 +42,7 @@ import com.waz.log._
 import com.waz.model._
 import com.waz.permissions.PermissionsService
 import com.waz.service._
-import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, AssetTransformationsService, AssetTransformationsServiceImpl, ImageDownscalingCompressing, UriHelper}
+import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, UriHelper}
 import com.waz.service.call.GlobalCallingService
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
 import com.waz.service.messages.MessagesService
@@ -58,7 +58,7 @@ import com.waz.utils.SafeBase64
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.utils.wrappers.GoogleApi
 import com.waz.zclient.appentry.controllers.{CreateTeamController, InvitationsController}
-import com.waz.zclient.assets.{AndroidImageRecoder, AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
+import com.waz.zclient.assets.{AndroidUriHelper, AssetDetailsServiceImpl, AssetPreviewServiceImpl}
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.camera.controllers.{AndroidCameraFactory, GlobalCameraController}
 import com.waz.zclient.collection.controllers.CollectionController
@@ -427,13 +427,6 @@ class WireApplication extends MultiDexApplication with WireContext with Injectab
         new AssetDetailsServiceImpl(uriHelper)(getApplicationContext, Threading.IO)
       override def assetPreviewService: AssetPreviewService =
         new AssetPreviewServiceImpl()(getApplicationContext, Threading.IO)
-
-      override def assetsTransformationsService: AssetTransformationsService =
-        new AssetTransformationsServiceImpl(
-          List(
-            new ImageDownscalingCompressing(new AndroidImageRecoder)
-          )
-        )
     }
 
     ZMessaging.onCreate(

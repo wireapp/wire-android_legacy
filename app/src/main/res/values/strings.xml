@@ -1298,6 +1298,7 @@
     <string name="backup_password_dialog_message">The backup will be compressed, and if you set a password, also encrypted. Make sure to store it in a secure place.</string>
     <string name="backup_password_dialog_ok">OK</string>
     <string name="backup_password_dialog_no_password">Cancel</string>
+    <string name="restore_password_dialog_title">This backup is password protected.</string>
 
     <string name="add_email_address">Add your email address</string>
     <string name="set_a_password">Set a password</string>
@@ -1486,5 +1487,6 @@
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
     <string name="edit_phone_remove_phone_number">Remove phone number</string>
     <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
+    <string name="edit_phone_dialog_confirm_phone_confirmation">We will send a notification code to:\n%s</string>
     <string name="edit_phone_save_phone_number">Save</string>
 </resources>

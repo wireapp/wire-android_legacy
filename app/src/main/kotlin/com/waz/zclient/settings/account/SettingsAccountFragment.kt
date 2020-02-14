@@ -1,9 +1,7 @@
 package com.waz.zclient.settings.account
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -12,7 +10,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
-import com.waz.zclient.settings.account.edithandle.EditHandleFragment
+import com.waz.zclient.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,13 +20,9 @@ import org.koin.android.viewmodel.ext.android.viewModel
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Suppress("TooManyFunctions")
-class SettingsAccountFragment : Fragment() {
+class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
 
     private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_settings_account, container, false)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -131,7 +125,7 @@ class SettingsAccountFragment : Fragment() {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
 
     private fun showEditHandleDialog() =
-        EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
+        EditHandleDialogFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun launchEditPhoneScreen(phoneNumber: String, hasEmail: Boolean) =

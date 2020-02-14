@@ -26,15 +26,20 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.Mime
-import com.waz.service.assets.UriHelper
+import com.waz.service.assets.{AssetFailure, AssetFile, AssetInput, AssetStream, UriHelper}
 import com.waz.utils.Managed
 import com.waz.zclient.log.LogUI._
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 class AndroidUriHelper(context: Context) extends UriHelper with DerivedLogTag {
 
   private def androidUri(uri: URI): Uri = Uri.parse(uri.toString)
+
+  private def cursor(uri: URI): Managed[Cursor] =
+    Managed.create(
+      context.getContentResolver.query(androidUri(uri), null, null, null, null)
+    )(_.close())
 
   override def openInputStream(uri: URI): Try[InputStream] = Try {
     context.getContentResolver.openInputStream(androidUri(uri))
@@ -77,9 +82,11 @@ class AndroidUriHelper(context: Context) extends UriHelper with DerivedLogTag {
     }
   }
 
-  private def cursor(uri: URI): Managed[Cursor] =
-    Managed.create(
-      context.getContentResolver.query(androidUri(uri), null, null, null, null)
-    )(_.close())
-
+  override def assetInput(uri: URI): AssetInput =
+    if (uri.getScheme == ContentResolver.SCHEME_FILE) {
+      AssetFile(new File(uri.getPath))
+    } else openInputStream(uri) match {
+      case Success(stream)    => AssetStream(stream)
+      case Failure(throwable) => AssetFailure(throwable)
+    }
 }

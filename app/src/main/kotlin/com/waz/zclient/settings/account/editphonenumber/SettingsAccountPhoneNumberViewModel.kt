@@ -7,8 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.ChangePhoneNumberUseCase
+import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeAndPhoneNumberUseCase
 import com.waz.zclient.user.domain.usecase.phonenumber.CountryCodeInvalid
@@ -17,6 +19,7 @@ import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumber
 import com.waz.zclient.user.domain.usecase.phonenumber.PhoneNumberInvalid
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberParams
 import com.waz.zclient.user.domain.usecase.phonenumber.ValidatePhoneNumberUseCase
+import kotlinx.coroutines.Dispatchers
 
 class SettingsAccountPhoneNumberViewModel(
     private val validatePhoneNumberUseCase: ValidatePhoneNumberUseCase,
@@ -27,34 +30,44 @@ class SettingsAccountPhoneNumberViewModel(
 
     private var _countryCodeErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
     private var _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
-    private var _phoneNumberLiveData = MutableLiveData<String>()
-    private var _countryCodeLiveData = MutableLiveData<String>()
     private var _deleteNumberLiveData = MutableLiveData<String>()
     private var _confirmationLiveData = MutableLiveData<String>()
     private var _confirmedLiveData = MutableLiveData<String>()
+    private var _phoneNumberDetailsLiveData = MutableLiveData<PhoneNumber>()
 
     val countryCodeErrorLiveData: LiveData<PhoneNumberErrorMessage> = _countryCodeErrorLiveData
     val phoneNumberErrorLiveData: LiveData<PhoneNumberErrorMessage> = _phoneNumberErrorLiveData
+    val phoneNumberDetailsLiveData: LiveData<PhoneNumber> = _phoneNumberDetailsLiveData
     val deleteNumberLiveData: LiveData<String> = _deleteNumberLiveData
-    val phoneNumberLiveData: LiveData<String> = _phoneNumberLiveData
-    val countryCodeLiveData: LiveData<String> = _countryCodeLiveData
     val confirmationLiveData: LiveData<String> = _confirmationLiveData
     val confirmedLiveData: LiveData<String> = _confirmedLiveData
 
     fun afterNumberEntered(countryCode: String, phoneNumber: String) {
-        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
+        validatePhoneNumberUseCase(
+            viewModelScope,
+            ValidatePhoneNumberParams(countryCode, phoneNumber),
+            Dispatchers.Default
+        ) {
             it.fold(::handleValidationError, ::handleConfirmationSuccess)
         }
     }
 
-    fun loadPhoneNumberData(phoneNumber: String) {
-        countryCodeAndPhoneNumberUseCase(viewModelScope, CountryCodeAndPhoneNumberParams(phoneNumber)) {
+    fun loadPhoneNumberData(phoneNumber: String, deviceLanguage: String) {
+        countryCodeAndPhoneNumberUseCase(
+            viewModelScope,
+            CountryCodeAndPhoneNumberParams(phoneNumber, deviceLanguage),
+            Dispatchers.Default
+        ) {
             it.fold(::handleValidationError, ::handleFormattingSuccess)
         }
     }
 
     fun onDeleteNumberButtonClicked(countryCode: String, phoneNumber: String) {
-        validatePhoneNumberUseCase(viewModelScope, ValidatePhoneNumberParams(countryCode, phoneNumber)) {
+        validatePhoneNumberUseCase(
+            viewModelScope,
+            ValidatePhoneNumberParams(countryCode, phoneNumber),
+            Dispatchers.Default
+        ) {
             it.fold(::handleValidationError, ::handleDeletionSuccess)
         }
     }
@@ -68,8 +81,7 @@ class SettingsAccountPhoneNumberViewModel(
     }
 
     private fun handleFormattingSuccess(phoneNumber: PhoneNumber) {
-        _countryCodeLiveData.value = phoneNumber.countryCode
-        _phoneNumberLiveData.value = phoneNumber.number
+        _phoneNumberDetailsLiveData.value = phoneNumber
     }
 
     private fun handleValidationError(failure: Failure) {
@@ -83,11 +95,11 @@ class SettingsAccountPhoneNumberViewModel(
 
     fun onDeleteNumberButtonConfirmed() {
         deletePhoneNumberUseCase(viewModelScope, Unit) {
-            it.fold(::handleDeletionFailure) {}
+            it.fold({ handleDeletionFailure() }) {}
         }
     }
 
-    private fun handleDeletionFailure(failure: Failure) {
+    private fun handleDeletionFailure() {
         _phoneNumberErrorLiveData.value = PhoneNumberErrorMessage(
             R.string.pref__account_action__dialog__delete_phone__error
         )
@@ -101,6 +113,14 @@ class SettingsAccountPhoneNumberViewModel(
 
     private fun onUpdateSuccess(phoneNumber: String) {
         _confirmedLiveData.postValue(phoneNumber)
+    }
+
+    fun onCountryCodeUpdated(countryCode: Country) {
+        _phoneNumberDetailsLiveData.value = PhoneNumber(
+            countryCode.countryCode,
+            String.empty(),
+            countryCode.countryDisplayName
+        )
     }
 }
 

@@ -276,36 +276,46 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
                                     isLogin:        Option[Boolean],
                                     initialUser:    Option[UserInfo] = None,
                                     backupPassword: Option[Password] = None) = Serialized.future(AccountManagersKey) {
-    async {
-      if (importDbFile.nonEmpty)
-        returning(backupManager.importDatabase(userId, importDbFile.get, context.getDatabasePath(userId.toString).getParentFile, backupPassword = backupPassword)) { restore =>
-          if (restore.isFailure) global.trackingService.historyRestored(false) // HistoryRestoreSucceeded is sent from the new AccountManager
-        }.get // if the import failed this will rethrow the exception
+    for {
+      managers <- accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head
+      manager  <- managers.find(_.userId == userId)
+                          .fold(createManager(userId, initialUser, isLogin, importDbFile.nonEmpty))(m => Future.successful(Some(m)))
+      _        = (manager, importDbFile, backupPassword) match {
+                   case (Some(mgr), Some(file), Some(password)) => restoreFromBackup(mgr, userId, file, password)
+                   case _ =>
+                 }
+    } yield manager
+  }
 
-
-      val managers = await { accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head }
-      val manager = managers.find(_.userId == userId)
-      if (manager.nonEmpty) {
-        manager
-      } else {
-        val account = await(storage.flatMap(_.get(userId)))
-        val user = await {
-          for {
-            user <- prefs(LoggingInUser).apply().map(_.orElse(initialUser))
-            _    <- prefs(LoggingInUser) := None
-          } yield user
-        }
-        if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
-        account.map { acc =>
-          val newManager = new AccountManager(userId, acc.teamId, global, this, backupManager, startedJustAfterBackup = importDbFile.nonEmpty, user, isLogin)
-          if (isLogin.isDefined) {
-            accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
-          }
-          newManager
-        }
-      }
+  private def restoreFromBackup(accountManager: AccountManager, userId: UserId, importDbFile: File, password: Password) = {
+    verbose(l"restore from backup")
+    val db = accountManager.storage.db2
+    db.beginTransaction()
+    try {
+      returning(backupManager.importDatabase(userId, importDbFile, context.getDatabasePath(userId.toString).getParentFile, backupPassword = password)) { restore =>
+        if (restore.isFailure) {
+          error(l"restore failed")
+          global.trackingService.historyRestored(false)
+        } // HistoryRestoreSucceeded is sent from the new AccountManager
+      }.get // if the import failed this will rethrow the exception
+      verbose(l"restore successful")
+      db.setTransactionSuccessful()
+    } finally {
+      db.endTransaction()
     }
   }
+
+  private def createManager(userId: UserId, initialUser: Option[UserInfo], isLogin: Option[Boolean], fromBackup: Boolean): Future[Option[AccountManager]] =
+    for {
+      account <- storage.flatMap(_.get(userId))
+      _       =  if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
+      user    <- if (account.isDefined) prefs(LoggingInUser).apply().map(_.orElse(initialUser)) else Future.successful(None)
+      _       <- if (account.isDefined) prefs(LoggingInUser) := None else Future.successful(())
+    } yield account.map { acc =>
+      val newManager = new AccountManager(userId, acc.teamId, global, this, backupManager, startedJustAfterBackup = fromBackup, user, isLogin)
+      if (isLogin.isDefined) accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
+      newManager
+    }
 
   @volatile private var accountStateSignals = Map.empty[UserId, Signal[AccountState]]
   override def accountState(userId: UserId) = {
