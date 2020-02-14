@@ -27,6 +27,7 @@ import com.waz.zclient.R
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
+import com.waz.zclient.log.LogUI._
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart with HighlightViewPart {
@@ -50,11 +51,11 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   assetActionButton.onClick {
     assetStatus.map(_._1).currentValue.foreach {
-      case UploadAssetStatus.Failed => message.currentValue.foreach(retr => {println(retr);  controller.retry(retr)})
-      case UploadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
+      case UploadAssetStatus.Failed       => message.currentValue.foreach(retr => { println(retr);  controller.retry(retr)})
+      case UploadAssetStatus.InProgress   => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
       case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
-      case AssetStatus.Done => asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
-      case _ =>
+      case AssetStatus.Done               => asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+      case status                         => error(l"Unhandled asset status: $status")
     }
   }
 

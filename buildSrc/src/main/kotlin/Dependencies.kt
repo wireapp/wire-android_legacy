@@ -35,7 +35,7 @@ object Versions {
     const val ANDROIDX_ANNOTATION = "1.0.0"
     const val PLAY_SERVICES = "17.0.0"
     const val FIREBASE_MESSAGING = "19.0.0"
-    const val GLIDE = "4.10.0"
+    const val GLIDE = "4.11.0"
     const val RETROFIT = "2.6.2"
     const val OKHTTP = "3.12.0"
     const val KOIN = "2.0.1"

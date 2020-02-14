@@ -21,7 +21,7 @@ import android.content.Context
 import android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC
 import com.waz.model.errors.{NotFoundLocal, NotSupportedError}
 import com.waz.service.assets.Asset.Video
-import com.waz.service.assets.{AssetPreviewService, Content, PreparedContent, UploadAsset}
+import com.waz.service.assets.{AssetInput, AssetPreviewService, Content, PreparedContent, UploadAsset}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,7 +38,7 @@ class AssetPreviewServiceImpl(implicit context: Context, ec: ExecutionContext) e
     Future(asSource(content)).flatMap { source =>
       createMetadataRetriever(source).acquire { retriever =>
         Option(retriever.getFrameAtTime(-1L, OPTION_CLOSEST_SYNC)) match {
-          case Some(frame) => Future.successful(ImageCompressUtils.toJpg(frame))
+          case Some(frame) => Future.successful(AssetInput.toJpg(frame))
           case None =>        Future.failed(NotFoundLocal(s"Can not extract video preview for $uploadAsset"))
         }
       }

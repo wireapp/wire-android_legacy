@@ -41,7 +41,7 @@ import scala.concurrent.Future
 class SSOWebViewFragment extends FragmentHelper {
   import Threading.Implicits.Ui
 
-  private val webView = view[WebView](R.id.web_view)
+  private lazy val webView = view[WebView](R.id.web_view)
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     inflater.inflate(R.layout.fragment_sso_webview, container, false)
