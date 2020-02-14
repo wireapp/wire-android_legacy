@@ -12,12 +12,14 @@ import org.koin.dsl.module
 val storageModule: Module = module {
     single { GlobalPreferences(androidContext()) }
     single {
+        @Suppress("SpreadOperator")
         Room.databaseBuilder(androidContext(),
             UserDatabase::class.java,
             get<GlobalPreferences>().activeUserId
         ).addMigrations(*UserDatabase.migrations).build()
     }
     single {
+        @Suppress("SpreadOperator")
         Room.databaseBuilder(
             androidContext(),
             GlobalDatabase::class.java,
