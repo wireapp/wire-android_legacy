@@ -43,7 +43,6 @@ repositories {
     mavenCentral()
     jcenter()
     google()
-    maven { url "http://repo1.maven.org/maven2" }
     maven {
         url "https://oss.sonatype.org/content/repositories/releases"
     }
