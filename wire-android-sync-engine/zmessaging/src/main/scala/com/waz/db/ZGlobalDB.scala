@@ -36,7 +36,7 @@ import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
-  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context), tracking)
+  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, DbVersion, daos, Migrations.migrations(context), tracking)
     with DerivedLogTag {
 
   override def onUpgrade(db: SupportSQLiteDatabase, from: Int, to: Int): Unit = {

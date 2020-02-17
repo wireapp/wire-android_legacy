@@ -80,8 +80,6 @@ trait DB extends Closeable {
 
   def disableWriteAheadLogging(): Unit
 
-  def getThreadSession: DBSession
-
   def insertOrIgnore(tableName: String, values: DBContentValues): Unit
 
   def insertOrReplace(tableName: String, values: DBContentValues): Unit
@@ -111,7 +109,7 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB {
                      limit: String = null) = {
     val supportQuery = SupportSQLiteQueryBuilder.builder(table)
       .columns(columns)
-      .selection(selection, selectionArgs.toArray)
+      .selection(selection, selectionArgs.asInstanceOf[Array[AnyRef]])
       .groupBy(groupBy)
       .having(having)
       .orderBy(orderBy)
@@ -122,10 +120,10 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB {
 
   override def rawQuery(sql: String) = db.query(sql)
 
-  override def delete(table: String, whereClause: String, whereArgs: Array[String]) = db.delete(table, whereClause, whereArgs.toArray)
+  override def delete(table: String, whereClause: String, whereArgs: Array[String]) = db.delete(table, whereClause, whereArgs.asInstanceOf[Array[AnyRef]])
 
   override def update(table: String, values: DBContentValues, whereClause: String, whereArgs: Array[String]) =
-    db.update(table, SQLiteDatabase.CONFLICT_REPLACE, values, whereClause, whereArgs.toArray)
+    db.update(table, SQLiteDatabase.CONFLICT_REPLACE, values, whereClause, whereArgs.asInstanceOf[Array[AnyRef]])
 
   override def execSQL(sql: String) = db.execSQL(sql)
 

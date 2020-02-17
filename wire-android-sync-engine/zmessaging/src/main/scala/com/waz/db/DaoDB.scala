@@ -18,7 +18,6 @@
 package com.waz.db
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase.CursorFactory
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.sqlite.db.{SupportSQLiteDatabase, SupportSQLiteOpenHelper}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -29,7 +28,6 @@ import scala.util.Try
 
 class DaoDB(context:    Context,
             name:       String,
-            factory:    CursorFactory,
             version:    Int,
             daos:       Seq[BaseDao[_]],
             migrations: Seq[Migration],
@@ -37,7 +35,7 @@ class DaoDB(context:    Context,
   extends SupportSQLiteOpenHelper.Callback(version)
     with DerivedLogTag {
 
-  private lazy val config = SupportSQLiteOpenHelper.Configuration.builder(context)
+  private val config = SupportSQLiteOpenHelper.Configuration.builder(context)
     .name(name)
     .callback(this)
     .build()

@@ -130,7 +130,7 @@ package db {
         case _: Exception => db.beginTransactionNonExclusive()
       }
 
-      private def reflectiveBegin(db: DB): Unit = db.beginTransactionNonExclusive()
+      private def reflectiveBegin(db: DB): Unit = db.beginTransaction()
     }
 
     object FallbackReadTransactionSupport extends DerivedLogTag {
