@@ -119,6 +119,10 @@
         <attr name="iconEnd" format="reference" />
     </declare-styleable>
 
+    <declare-styleable name="SwitchPreference">
+        <attr name="key" format="string"/>
+    </declare-styleable>
+
     <declare-styleable name="InputBox">
         <attr name="hint" format="string" />
         <attr name="hasButton" format="boolean" />
