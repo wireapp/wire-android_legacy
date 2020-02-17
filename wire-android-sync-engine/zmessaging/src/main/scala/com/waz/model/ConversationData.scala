@@ -311,10 +311,10 @@ object ConversationData {
          | WHERE (${ConvType.name} = ${ConvType(ConversationType.OneToOne)} OR ${ConvType.name} = ${ConvType(ConversationType.Group)})
          |   AND ${IsActive.name} = ${IsActive(true)}
          |   AND ${Hidden.name} = 0
-      """.stripMargin, null))
+      """.stripMargin))
 
     def allConversations(implicit db: DB) =
-      db.rawQuery(s"SELECT *, ${ConvType.name} = ${Self.id} as is_self, ${ConvType.name} = ${Incoming.id} as is_incoming, ${Archived.name} = 1 as is_archived FROM ${table.name} WHERE ${Hidden.name} = 0 ORDER BY is_self DESC, is_archived ASC, is_incoming DESC, ${LastEventTime.name} DESC", null)
+      db.rawQuery(s"SELECT *, ${ConvType.name} = ${Self.id} as is_self, ${ConvType.name} = ${Incoming.id} as is_incoming, ${Archived.name} = 1 as is_archived FROM ${table.name} WHERE ${Hidden.name} = 0 ORDER BY is_self DESC, is_archived ASC, is_incoming DESC, ${LastEventTime.name} DESC")
 
     import ConversationMemberData.{ConversationMemberDataDao => CM}
     import UserData.{UserDataDao => U}
@@ -345,7 +345,7 @@ object ConversationData {
            | HAVING COUNT(*) > 2
          """.stripMargin)
 
-      list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""), null))
+      list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse("")))
     }
 
     def findByTeams(teams: Set[TeamId])(implicit db: DB) = iteratingMultiple(findInSet(Team, teams.map(Option(_))))

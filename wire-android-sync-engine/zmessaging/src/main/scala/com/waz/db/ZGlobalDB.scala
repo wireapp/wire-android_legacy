@@ -18,7 +18,7 @@
 package com.waz.db
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.ZmsDatabase
 import com.waz.db.Col._
@@ -39,12 +39,12 @@ class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingS
   extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, null, DbVersion, daos, Migrations.migrations(context), tracking)
     with DerivedLogTag {
 
-  override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit = {
+  override def onUpgrade(db: SupportSQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 5) clearAllData(db)
     else super.onUpgrade(db, from, to)
   }
 
-  def clearAllData(db: SQLiteDatabase) = {
+  def clearAllData(db: SupportSQLiteDatabase) = {
     debug(l"wiping global db...")
     dropAllTables(db)
     onCreate(db)

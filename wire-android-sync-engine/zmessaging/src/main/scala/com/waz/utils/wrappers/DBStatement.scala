@@ -17,7 +17,7 @@
  */
 package com.waz.utils.wrappers
 
-import android.database.sqlite.SQLiteStatement
+import androidx.sqlite.db.SupportSQLiteStatement
 
 import scala.language.implicitConversions
 
@@ -31,7 +31,7 @@ trait DBStatement extends DBProgram {
   def close(): Unit
 }
 
-class SQLiteStatementWrapper(val statement: SQLiteStatement) extends SQLiteProgramWrapper(statement) with DBStatement {
+class SQLiteStatementWrapper(val statement: SupportSQLiteStatement) extends SQLiteProgramWrapper(statement) with DBStatement {
   def clearBindings() = statement.clearBindings()
   def execute() = statement.execute()
   def executeUpdateDelete = statement.executeUpdateDelete()
@@ -42,7 +42,7 @@ class SQLiteStatementWrapper(val statement: SQLiteStatement) extends SQLiteProgr
 }
 
 object DBStatement {
-  def apply(statement: SQLiteStatement): DBStatement = new SQLiteStatementWrapper(statement)
+  def apply(statement: SupportSQLiteStatement): DBStatement = new SQLiteStatementWrapper(statement)
 
-  implicit def fromAndroid(statement: SQLiteStatement): DBStatement = apply(statement)
+  implicit def fromAndroid(statement: SupportSQLiteStatement): DBStatement = apply(statement)
 }

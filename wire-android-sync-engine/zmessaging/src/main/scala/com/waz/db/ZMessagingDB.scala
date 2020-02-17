@@ -18,7 +18,7 @@
 package com.waz.db
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.api.Message
 import com.waz.content.PropertiesDao
 import com.waz.db.ZMessagingDB.{DbVersion, daos, migrations}
@@ -58,7 +58,7 @@ import scala.util.{Success, Try}
 
 class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) extends DaoDB(context.getApplicationContext, dbName, null, DbVersion, daos, migrations, tracking) {
 
-  override def onUpgrade(db: SQLiteDatabase, from: Int, to: Int): Unit = {
+  override def onUpgrade(db: SupportSQLiteDatabase, from: Int, to: Int): Unit = {
     if (from < 60) {
       dropAllTables(db)
       onCreate(db)

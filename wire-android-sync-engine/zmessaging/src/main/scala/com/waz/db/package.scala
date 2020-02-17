@@ -109,6 +109,8 @@ package object db {
 }
 
 package db {
+  import android.database.sqlite.SQLiteTransactionListener
+  import com.waz.db.DeferredModeReadTransactionSupport.FallbackReadTransactionSupport
   import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
 /** See https://www.sqlite.org/isolation.html - "Isolation And Concurrency", par. 4 and following.
@@ -126,22 +128,19 @@ package db {
     def create: ReadTransactionSupport = new ReadTransactionSupport {
       verbose(l"using deferred mode read transactions")
 
-      override def beginReadTransaction(db: DB): Unit = try reflectiveBegin(db) catch { case _: Exception => db.beginTransactionNonExclusive() }
-
-      private def reflectiveBegin(db: DB): Unit = {
-        db.acquireReference()
-        try {
-          db.getThreadSession.beginTransaction()
-        }
-        finally db.releaseReference()
+      override def beginReadTransaction(db: DB): Unit = try reflectiveBegin(db) catch {
+        case _: Exception => db.beginTransactionNonExclusive()
       }
-    }
-  }
 
-  object FallbackReadTransactionSupport extends DerivedLogTag {
-    def create: ReadTransactionSupport = new ReadTransactionSupport {
-      verbose(l"using fallback support for read transactions")
-      override def beginReadTransaction(db: DB): Unit = db.beginTransactionNonExclusive()
+      private def reflectiveBegin(db: DB): Unit = db.getThreadSession.beginTransaction()
+    }
+
+    object FallbackReadTransactionSupport extends DerivedLogTag {
+      def create: ReadTransactionSupport = new ReadTransactionSupport {
+        verbose(l"using fallback support for read transactions")
+
+        override def beginReadTransaction(db: DB): Unit = db.beginTransactionNonExclusive()
+      }
     }
   }
 }
