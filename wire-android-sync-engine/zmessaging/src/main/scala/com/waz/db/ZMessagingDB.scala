@@ -52,6 +52,7 @@ import com.waz.service.assets.DownloadAssetStorage.DownloadAssetDao
 import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.service.tracking.TrackingService
 import com.waz.zclient.storage.db.UserDatabase
+import com.waz.zms.BuildConfig
 
 import scala.util.{Success, Try}
 
@@ -66,7 +67,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 126
+  val DbVersion = if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) UserDatabase.VERSION else 126
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
