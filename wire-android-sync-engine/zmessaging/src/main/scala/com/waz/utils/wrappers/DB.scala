@@ -145,12 +145,6 @@ class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB {
 
   override def disableWriteAheadLogging() = db.disableWriteAheadLogging()
 
-  override def getThreadSession = {
-    val method = classOf[SQLiteDatabase].getDeclaredMethod("getThreadSession")
-    method.setAccessible(true)
-    method.invoke(db).asInstanceOf[SQLiteSession]
-  }
-
   override def insertOrIgnore(tableName: String, values: DBContentValues): Unit = db.insert(tableName, SQLiteDatabase.CONFLICT_IGNORE, values)
 
   override def insertOrReplace(tableName: String, values: DBContentValues): Unit = db.insert(tableName, SQLiteDatabase.CONFLICT_REPLACE, values)

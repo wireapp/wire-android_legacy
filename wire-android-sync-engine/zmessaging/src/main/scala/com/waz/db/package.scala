@@ -17,10 +17,9 @@
  */
 package com.waz
 
-import com.waz.utils._
 import com.waz.log.LogSE._
-import com.waz.utils.wrappers._
-import com.waz.utils.wrappers.DB
+import com.waz.utils._
+import com.waz.utils.wrappers.{DB, _}
 
 import scala.language.implicitConversions
 import scala.util.Try
@@ -109,7 +108,6 @@ package object db {
 }
 
 package db {
-  import android.database.sqlite.SQLiteTransactionListener
   import com.waz.db.DeferredModeReadTransactionSupport.FallbackReadTransactionSupport
   import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
@@ -132,7 +130,7 @@ package db {
         case _: Exception => db.beginTransactionNonExclusive()
       }
 
-      private def reflectiveBegin(db: DB): Unit = db.getThreadSession.beginTransaction()
+      private def reflectiveBegin(db: DB): Unit = db.beginTransactionNonExclusive()
     }
 
     object FallbackReadTransactionSupport extends DerivedLogTag {
