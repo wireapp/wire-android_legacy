@@ -34,7 +34,7 @@ import com.waz.model.otr.ClientId
 import com.waz.service.ZMessaging.{accountTag, clock}
 import com.waz.service._
 import com.waz.service.otr.OtrService
-import com.waz.service.push.PushService.{Results, SyncMode, SyncSource}
+import com.waz.service.push.PushService.SyncMode
 import com.waz.service.tracking.TrackingService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.PushNotificationsClient.LoadNotificationsResult
@@ -116,14 +116,13 @@ class PushServiceImpl(selfUserId:           UserId,
 
   notificationStorage.registerEventHandler { () =>
     Serialized.future(PipelineKey) {
-      verbose(l"events processing started")
-      val t = System.currentTimeMillis()
       for {
         _ <- Future.successful(processing ! true)
+        t =  System.currentTimeMillis()
         _ <- processEncryptedRows()
         _ <- processDecryptedRows()
-        _ <- Future.successful(processing ! false)
         _ = verbose(l"events processing finished, time: ${System.currentTimeMillis() - t}ms")
+        _ <- Future.successful(processing ! false)
       } yield {}
     }.recover {
       case ex =>

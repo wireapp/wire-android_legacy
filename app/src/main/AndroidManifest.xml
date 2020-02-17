@@ -271,6 +271,15 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
 
+        <!--
+        We initialize Firebase dynamically.
+        https://firebase.googleblog.com/2017/03/take-control-of-your-firebase-init-on.html
+        -->
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider"
+            tools:node="remove"/>
+
         <!--Disable tracking in the FCM core-->
         <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />
         <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />

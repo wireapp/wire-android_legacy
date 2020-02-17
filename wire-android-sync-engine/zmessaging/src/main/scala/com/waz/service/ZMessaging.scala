@@ -326,14 +326,16 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         convOrder.conversationOrderEventsStage,
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
+        notifications.messageNotificationEventsStage,
+        notifications.connectionNotificationEventStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
-        propertiesService.eventProcessor,
-        notifications.messageNotificationEventsStage,
-        notifications.connectionNotificationEventStage
+        propertiesService.eventProcessor
       )
     )
   }
+
+  private lazy val blockStreamsWhenProcessing = push.processing(messagesStorage.blockStreams)
 
   // force loading of services which should run on start
   {
@@ -344,6 +346,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     push // connect on start
     notifications
+    blockStreamsWhenProcessing
 
     // services listening on lifecycle verified login events
     contacts
