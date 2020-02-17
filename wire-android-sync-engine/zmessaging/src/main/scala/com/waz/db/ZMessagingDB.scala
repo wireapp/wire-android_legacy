@@ -51,6 +51,7 @@ import com.waz.service.assets.AssetStorageImpl.AssetDao
 import com.waz.service.assets.DownloadAssetStorage.DownloadAssetDao
 import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.service.tracking.TrackingService
+import com.waz.zclient.storage.db.UserDatabase
 
 import scala.util.{Success, Try}
 
@@ -65,7 +66,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = 126
+  val DbVersion = UserDatabase.VERSION
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
