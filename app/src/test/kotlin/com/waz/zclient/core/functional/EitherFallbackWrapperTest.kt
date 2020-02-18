@@ -42,8 +42,8 @@ class EitherFallbackWrapperTest : UnitTest() {
     }
 
     @Test
-    fun `given a suspend function, when withFallback called with a fallbackAction, returns EitherFallbackWrapper`() {
-        val eitherFallbackWrapper = primaryAction.withFallback(fallbackAction)
+    fun `given a suspend function, when fallback method called with a fallbackAction, returns EitherFallbackWrapper`() {
+        val eitherFallbackWrapper = primaryAction.fallback(fallbackAction)
 
         eitherFallbackWrapper shouldEqual EitherFallbackWrapper(primaryAction, fallbackAction)
     }
