@@ -30,7 +30,7 @@ class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: Trac
   override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "GlobalDatabase")
   override val dbHelper: BaseDaoDB =
     if (BuildConfig.KOTLIN_SETTINGS_MIGRATION)
-      new RoomDaoDB(StorageModule.createGlobalDatabase(
+      new RoomDaoDB(StorageModule.getGlobalDatabase(
         context,
         ZGlobalDB.Migrations.migrations(context).map(_.toRoomMigration).toArray ++ RoomGlobalDatabase.getMigrations)
       )
