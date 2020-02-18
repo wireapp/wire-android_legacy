@@ -42,6 +42,6 @@ data class EitherFallbackWrapper<R>(
  * Creates an [EitherFallbackWrapper] from the given suspend function, with its [EitherFallbackWrapper.primaryAction]
  * being the function itself, and [EitherFallbackWrapper.fallbackAction] as the given parameter.
  */
-fun <R> (suspend () -> Either<Failure, R>).withFallback(
+fun <R> (suspend () -> Either<Failure, R>).fallback(
     fallback: suspend () -> Either<Failure, R>
 ): EitherFallbackWrapper<R> = EitherFallbackWrapper(this, fallback)

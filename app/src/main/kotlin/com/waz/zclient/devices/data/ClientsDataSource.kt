@@ -2,8 +2,8 @@ package com.waz.zclient.devices.data
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.fallback
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.core.functional.withFallback
 import com.waz.zclient.devices.data.source.ClientMapper
 import com.waz.zclient.devices.data.source.local.ClientsLocalDataSource
 import com.waz.zclient.devices.data.source.remote.ClientsRemoteDataSource
@@ -17,13 +17,13 @@ class ClientsDataSource constructor(
 
     override suspend fun clientById(clientId: String): Either<Failure, Client> =
         clientByIdLocal(clientId)
-            .withFallback { clientByIdRemote(clientId) }
+            .fallback { clientByIdRemote(clientId) }
             .finally { saveClient() }
             .execute()
 
     override suspend fun allClients() =
         allClientsLocal()
-            .withFallback { allClientsRemote() }
+            .fallback { allClientsRemote() }
             .finally { saveAllClients() }
             .execute()
 
