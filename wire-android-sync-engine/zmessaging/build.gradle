@@ -100,6 +100,7 @@ dependencies {
     compileOnly BuildDependencies.threetenbpJava
     compileOnly "net.java.dev.jna:jna:4.4.0@aar"
     compileOnly TestDependencies.robolectric
+    compileOnly BuildDependencies.androidX.roomRuntime
 
     //Test dependencies
     testImplementation(LegacyDependencies.scalaTest) {

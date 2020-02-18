@@ -23,6 +23,7 @@ import com.waz.log.LogSE._
 import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingService
 import com.waz.utils.wrappers.DB
+import androidx.room.migration.{Migration => RoomMigration}
 
 import scala.util.control.NonFatal
 
@@ -31,6 +32,10 @@ trait Migration { self =>
   val toVersion: Int
   
   def apply(db: DB): Unit
+
+  def toRoomMigration: RoomMigration = new RoomMigration(fromVersion, toVersion) {
+    override def migrate(database: SupportSQLiteDatabase): Unit = apply(DB(database))
+  }
 }
 
 object Migration {

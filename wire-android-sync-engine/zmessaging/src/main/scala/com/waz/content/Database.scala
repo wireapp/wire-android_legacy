@@ -17,7 +17,7 @@
  */
 package com.waz.content
 
-import com.waz.db.{DaoDB, inReadTransaction, inTransaction}
+import com.waz.db.{BaseDaoDB, inReadTransaction, inTransaction}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.threading._
 import com.waz.utils.wrappers.DB
@@ -27,7 +27,7 @@ import scala.concurrent.Future
 trait Database {
   implicit val dispatcher: SerialDispatchQueue
 
-  val dbHelper: DaoDB
+  val dbHelper: BaseDaoDB
 
   lazy val readExecutionContext: DispatchQueue = new UnlimitedDispatchQueue(Threading.IO, name = "Database_readQueue_" + hashCode().toHexString)
 
