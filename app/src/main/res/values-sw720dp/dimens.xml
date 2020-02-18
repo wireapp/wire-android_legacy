@@ -18,11 +18,7 @@
 
 -->
 <resources>
-
     <dimen name="framework__sidebar_width">360dp</dimen>
-    <dimen name="participant_dialog__min_height">348dp</dimen>
-    <dimen name="participants__chathead__width">80dp</dimen>
-
 </resources>
 
 
