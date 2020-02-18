@@ -13,7 +13,7 @@ import org.koin.dsl.module
 
 val storageModule: Module = module {
     single { GlobalPreferences(androidContext()) }
-    single { StorageModule.getUserDatabase(androidContext(), get<GlobalPreferences>().activeUserId, UserDatabase.migrations) }
+    factory { StorageModule.getUserDatabase(androidContext(), get<GlobalPreferences>().activeUserId, UserDatabase.migrations) }
     single { StorageModule.getGlobalDatabase(androidContext(), GlobalDatabase.migrations) }
     single { UserPreferences(androidContext(), get()) }
 }
