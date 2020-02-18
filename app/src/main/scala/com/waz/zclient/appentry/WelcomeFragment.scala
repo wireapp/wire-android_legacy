@@ -24,6 +24,7 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
+import com.waz.zclient.auth.signup.CreateAccountActivity
 
 class WelcomeFragment extends SSOFragment {
 
@@ -71,7 +72,9 @@ class WelcomeFragment extends SSOFragment {
   }
 
   private def startCreateAccountFlow(): Unit =
+  //TODO Replace this line with the commented code once create account feature is ready
     activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
+    //startActivity(CreateAccountActivity.newIntent(getActivity))
 
   private def startLoginFlow(): Unit =
     activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
