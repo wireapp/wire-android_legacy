@@ -272,7 +272,7 @@ android {
     sourceSets {
 
         main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
-        main.res.srcDirs += 'src/main/res-v2'
+        main.res.srcDirs += 'src/main/res-migration'
 
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
