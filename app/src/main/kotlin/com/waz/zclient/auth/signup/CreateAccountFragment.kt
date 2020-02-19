@@ -11,19 +11,18 @@ class CreateAccountFragment : Fragment(R.layout.fragment_create_account) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initCreatePersonalAccount()
-        initCreateTeamAccount()
+        initCreateProAccount()
     }
 
     private fun initCreatePersonalAccount() {
         createPersonalAccountLayoutContainer.setOnClickListener {
-            //val inputMethod = if (LayoutSpec.isPhone(getContext)) Phone else Email
-            //parentActivity.showFragment(SignInFragment(SignInMethod(Register, inputMethod)), SignInFragment.Tag)
+            //TODO call CreatePersonalAccountFragment once ready
         }
     }
 
-    private fun initCreateTeamAccount() {
+    private fun initCreateProAccount() {
         createProAccountLayoutContainer.setOnClickListener {
-           // parentActivity.showFragment(TeamNameFragment(), TeamNameFragment.Tag)
+            //TODO call CreateProAccountFragment once ready
         }
     }
 

@@ -28,7 +28,7 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/editPhoneFragmentCountryCodePicker"
-        style="@style/Button.Settings"
+        style="@style/Button.RobotoLight.Settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/white"
@@ -79,7 +79,7 @@
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/editPhoneSavePhoneNumberTextView"
-        style="@style/Button.Settings"
+        style="@style/Button.RobotoLight.Settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/edit_phone_save_phone_number"
@@ -92,7 +92,7 @@
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/editPhoneDeletePhoneNumberTextView"
-        style="@style/Button.Settings"
+        style="@style/Button.RobotoLight.Settings"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/edit_phone_remove_phone_number"

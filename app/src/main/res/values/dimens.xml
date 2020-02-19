@@ -574,4 +574,15 @@
     <dimen name="item_view_country_code_text_size">18sp</dimen>
     <dimen name="item_view_country_code_padding">24dp</dimen>
 
+
+    <!-- Create Account screen -->
+    <dimen name="create_account_layout_container_width">260dp</dimen>
+    <dimen name="create_account_layout_container_padding_start">16dp</dimen>
+    <dimen name="create_account_layout_container_padding_end">16dp</dimen>
+    <dimen name="create_account_image_view_width">64dp</dimen>
+    <dimen name="create_account_image_view_height">64dp</dimen>
+    <dimen name="create_account_title_margin_top">8dp</dimen>
+    <dimen name="create_account_title_text_size">24sp</dimen>
+    <dimen name="create_account_description_text_size">16sp</dimen>
+
 </resources>
