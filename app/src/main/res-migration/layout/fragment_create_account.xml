@@ -23,14 +23,12 @@
     android:layout_height="match_parent"
     android:background="@color/teams_background">
 
-
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/centerGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.5" />
-
 
     <LinearLayout
         android:id="@+id/createPersonalAccountLayoutContainer"
@@ -58,8 +56,7 @@
             android:gravity="center"
             android:text="@string/glyph__profile"
             android:textColor="@color/white"
-            android:textSize="@dimen/app_entry_button_glyph_size"
-            />
+            android:textSize="@dimen/app_entry_button_glyph_size" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/createPersonalAccountTitleTextView"
@@ -71,8 +68,7 @@
             android:gravity="center"
             android:text="@string/app_entry_create_account"
             android:textColor="@color/teams_headline_text"
-            android:textSize="@dimen/create_account_title_text_size"
-            />
+            android:textSize="@dimen/create_account_title_text_size" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/createPersonalAccountDescriptionTextView"
@@ -83,9 +79,7 @@
             android:gravity="center"
             android:text="@string/app_entry_create_account_sub"
             android:textColor="@color/teams_headline_text"
-            android:textSize="@dimen/create_account_description_text_size"
-            />
-
+            android:textSize="@dimen/create_account_description_text_size" />
     </LinearLayout>
 
     <LinearLayout
@@ -140,6 +134,4 @@
             android:textSize="@dimen/create_account_description_text_size" />
 
     </LinearLayout>
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
