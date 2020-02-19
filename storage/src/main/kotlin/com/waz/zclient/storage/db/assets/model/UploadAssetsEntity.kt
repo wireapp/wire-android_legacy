@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "")
+@Entity(tableName = "UploadAssets")
 data class UploadAssetsEntity(
     @PrimaryKey
     @ColumnInfo(name = "_id")
