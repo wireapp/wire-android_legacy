@@ -43,7 +43,7 @@ class BaseDaoSpec extends FeatureSpec with Matchers with RobolectricTests {
   def dummyData(size: Int): Seq[TestModel] = (0 until size).map(_ => TestModel(Uid()))
 
   def withDB(f: DB => Unit): Unit = {
-    val dbHelper = new DaoDB(Robolectric.application, s"testDB-$randomUUID", null, 1, List(TestDao), List.empty, DisabledTrackingService)
+    val dbHelper = new DaoDB(Robolectric.application, s"testDB-$randomUUID", 1, List(TestDao), List.empty, DisabledTrackingService)
     try f(dbHelper.getWritableDatabase) finally dbHelper.close()
   }
 

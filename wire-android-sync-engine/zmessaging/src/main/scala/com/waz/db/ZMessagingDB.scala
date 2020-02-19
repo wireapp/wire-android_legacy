@@ -66,7 +66,7 @@ class ZMessagingDB(context: Context, dbName: String, tracking: TrackingService) 
 }
 
 object ZMessagingDB {
-  val DbVersion = UserDatabase.VERSION
+  val DbVersion = 126
 
   lazy val daos = Seq (
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
