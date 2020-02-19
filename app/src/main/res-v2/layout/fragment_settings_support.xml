@@ -24,7 +24,7 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/settingsSupportWebsiteButton"
-        style="@style/Button.Settings"
+        style="@style/Button.RobotoLight.Settings"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/pref_support_website_title"
@@ -35,7 +35,7 @@
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/settingsSupportContactButton"
-        style="@style/Button.Settings"
+        style="@style/Button.RobotoLight.Settings"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/pref_support_contact_title"
