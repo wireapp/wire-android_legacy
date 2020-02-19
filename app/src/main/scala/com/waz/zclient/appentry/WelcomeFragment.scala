@@ -72,9 +72,11 @@ class WelcomeFragment extends SSOFragment {
   }
 
   private def startCreateAccountFlow(): Unit =
-  //TODO Replace this line with the commented code once create account feature is ready
-    activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
-    //startActivity(CreateAccountActivity.newIntent(getActivity))
+    if (BuildConfig.KOTLIN_CREATE_ACCOUNT_MIGRATION) {
+      startActivity(CreateAccountActivity.newIntent(getActivity))
+    } else {
+      activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
+    }
 
   private def startLoginFlow(): Unit =
     activity.showFragment(SignInFragment(SignInMethod(Login, Email)), SignInFragment.Tag)
