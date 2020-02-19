@@ -59,9 +59,9 @@ class OkHttpWebSocketFactory(proxy: Option[Proxy]) extends WebSocketFactory with
 
   private lazy val okHttpClient =
     if(proxy.isDefined)
-      OkHttpWebSocketFactory.builder.proxy(proxy.get).build()
+      new OkHttpClient.Builder().pingInterval(30000, TimeUnit.MILLISECONDS).proxy(proxy.get).build()
     else
-      OkHttpWebSocketFactory.builder.build()
+      new OkHttpClient.Builder().pingInterval(30000, TimeUnit.MILLISECONDS).build()
 
   override def openWebSocket(request: Request[Body]): EventStream[SocketEvent] = {
     new EventStream[SocketEvent] {
@@ -116,6 +116,3 @@ class OkHttpWebSocketFactory(proxy: Option[Proxy]) extends WebSocketFactory with
 
 }
 
-object OkHttpWebSocketFactory {
-  private lazy val builder = new OkHttpClient.Builder().pingInterval(30000, TimeUnit.MILLISECONDS)
-}
