@@ -11,4 +11,3 @@ data class ConversationFoldersEntity(
     @ColumnInfo(name = "folder_id")
     val folderId: String
 )
-

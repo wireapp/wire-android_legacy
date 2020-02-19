@@ -3,6 +3,8 @@ package com.waz.zclient.storage.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.waz.zclient.storage.db.assets.model.AssetsEntity
+import com.waz.zclient.storage.db.assets.model.DownloadAssetsEntity
+import com.waz.zclient.storage.db.assets.model.UploadAssetsEntity
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.conversations.model.ConversationFoldersEntity
@@ -19,7 +21,8 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
 @Database(
     entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class,
         ConversationRoleActionEntity::class, ConversationFoldersEntity::class, FoldersEntity::class,
-        CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class],
+        CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class,
+        DownloadAssetsEntity::class, UploadAssetsEntity::class],
     version = UserDatabase.VERSION,
     exportSchema = false
 )

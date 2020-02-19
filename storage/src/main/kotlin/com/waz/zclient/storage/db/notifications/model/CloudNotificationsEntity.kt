@@ -3,7 +3,6 @@ package com.waz.zclient.storage.db.notifications.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
-
 @Entity(tableName = "FCMNotifications", primaryKeys = ["_id", "stage"])
 data class CloudNotificationsEntity(
     @ColumnInfo(name = "_id")
