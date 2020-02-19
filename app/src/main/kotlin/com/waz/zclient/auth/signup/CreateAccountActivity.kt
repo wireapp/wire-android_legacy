@@ -12,7 +12,7 @@ class CreateAccountActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_account)
-        replaceFragment(R.id.activityCreateAccountLayoutContainer, CreateAccountFragment.newInstance(),false)
+        replaceFragment(R.id.activityCreateAccountLayoutContainer, CreateAccountFragment.newInstance(), false)
     }
 
     companion object {
