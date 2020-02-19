@@ -101,7 +101,7 @@
         <ImageView
             android:layout_width="@dimen/quick_reply__icon_size"
             android:layout_height="@dimen/quick_reply__icon_size"
-            android:src="@drawable/ic_launcher_wire"
+            android:src="@mipmap/ic_launcher_wire"
             />
 
         <com.waz.zclient.ui.text.TypefaceTextView
