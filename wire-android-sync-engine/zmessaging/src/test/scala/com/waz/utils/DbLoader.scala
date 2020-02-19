@@ -26,15 +26,12 @@ import org.scalatest.Matchers
 
 trait DbLoader {
   self: Matchers =>
-
-  lazy val testDaoDb = new DaoDB(Robolectric.application, "test", 1, Seq.empty[BaseDao[_]], Seq.empty[Migration], null)
-
   def loadDb(path: String): DB = {
     val input = new File(getClass.getResource(path).getFile)
     input should exist
     val file = File.createTempFile("temp", ".db")
     file.deleteOnExit()
     IoUtils.copy(input, file)
-    testDaoDb.getWritableDatabase
+    new DaoDB(Robolectric.application, file.getName, 1, Seq.empty[BaseDao[_]], Seq.empty[Migration], null).getWritableDatabase
   }
 }
