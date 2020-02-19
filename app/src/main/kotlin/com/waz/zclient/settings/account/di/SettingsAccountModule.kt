@@ -3,6 +3,8 @@ package com.waz.zclient.settings.account.di
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import com.waz.zclient.settings.account.SettingsAccountViewModel
 import com.waz.zclient.settings.account.edithandle.SettingsAccountEditHandleViewModel
+import com.waz.zclient.settings.account.editphonenumber.CountryCodePickerViewModel
+import com.waz.zclient.settings.account.editphonenumber.GetCountryCodesUseCase
 import com.waz.zclient.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
@@ -26,13 +28,14 @@ val settingsAccountModule: Module = module {
     viewModel { SettingsAccountViewModel(get(), get(), get(), get()) }
     viewModel { SettingsAccountEditHandleViewModel(get(), get(), get(), get()) }
     viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
+    viewModel { CountryCodePickerViewModel(get()) }
 
     single { PhoneNumberUtil.getInstance() }
-
     factory { ChangePhoneNumberUseCase(get()) }
     factory { DeletePhoneNumberUseCase(get()) }
     factory { CountryCodeAndPhoneNumberUseCase(get()) }
     factory { ValidatePhoneNumberUseCase() }
+    factory { GetCountryCodesUseCase(get(), get()) }
 
     factory { CheckHandleExistsUseCase(get()) }
     factory { GetHandleUseCase(get()) }

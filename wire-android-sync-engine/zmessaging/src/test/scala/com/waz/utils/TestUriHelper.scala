@@ -21,13 +21,18 @@ import java.io.InputStream
 import java.net.URI
 
 import com.waz.model.Mime
-import com.waz.service.assets.UriHelper
+import com.waz.service.assets.{AssetFailure, AssetInput, AssetStream, UriHelper}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 class TestUriHelper extends UriHelper {
   override def openInputStream(uri: URI): Try[InputStream] = Try { uri.toURL.openStream() }
   override def extractSize(uri: URI): Try[Long] = ???
   override def extractMime(uri: URI): Try[Mime] = ???
   override def extractFileName(uri: URI): Try[String] = ???
+
+  override def assetInput(uri: URI): AssetInput = openInputStream(uri) match {
+    case Success(stream)    => AssetStream(stream)
+    case Failure(throwable) => AssetFailure(throwable)
+  }
 }

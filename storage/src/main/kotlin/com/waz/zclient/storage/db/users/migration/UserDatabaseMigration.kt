@@ -4,8 +4,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.BuildConfig
 
-private const val START_VERSION = 125
-private const val END_VERSION = 126
+private const val START_VERSION = 126
+private const val END_VERSION = 127
 private const val USER_PREFERENCE_TABLE_NAME = "KeyValuesTemp"
 private const val KEY_VALUES_TABLE_NAME = "KeyValues"
 

@@ -20,7 +20,7 @@ class SettingsMainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings_new)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        replaceFragment(R.id.activitySettingsMainLayoutContainer, SettingsMainFragment.newInstance(), false)
+        replaceFragment(R.id.activitySettingsMainLayoutContainer, SettingsMainFragment.newInstance())
     }
 
     override fun onSupportNavigateUp(): Boolean {

@@ -20,7 +20,4 @@
 -->
 <resources>
     <dimen name="cursor_toolbar_padding_horizontal_edge">20dp</dimen>
-    <dimen name="cursor_toolbar_padding_item">44dp</dimen>
-    <dimen name="new_cursor_button_horizontal_margin">16dp</dimen>
-    <dimen name="cursor_typing_left_margin">20dp</dimen>
 </resources>

@@ -18,7 +18,7 @@
 package com.waz.service.backup
 
 import java.io._
-import java.util.zip.{ZipFile, ZipOutputStream}
+import java.util.zip.ZipOutputStream
 
 import com.waz.model.AccountData.Password
 import com.waz.model.UserId
@@ -28,8 +28,6 @@ import com.waz.utils.Json.syntax._
 import com.waz.utils.crypto.LibSodiumUtils
 import com.waz.utils.{IoUtils, returning}
 import org.scalatest._
-
-import scala.util.Try
 
 class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with BeforeAndAfterEach {
 
@@ -41,9 +39,6 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
   private val testDirectoryEncrypted = new File(s"${testDirectory.getPath}/encrypted")
   private val testMetadata = BackupMetadata(testUserId, version = 20)
   private val testFakeBackupFilename = "fake_backup.zip"
-
-  private val salt = Array.fill[Byte](EncryptedBackupHeader.saltLength)(1)
-  private val uuidHash = Array.fill[Byte](EncryptedBackupHeader.uuidHashLength)(2)
 
   private def createFakeDatabase(targetDirectory: File = testDirectory): File =
     returning(new File(targetDirectory, getDbFileName(testUserId))) { file =>
@@ -59,7 +54,11 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
                                database: Option[File] = Some(createFakeDatabase()),
                                databaseWal: Option[File] = Some(createFakeDatabaseWal()),
                                targetDirectory: File = testDirectory): File = {
+    if (!targetDirectory.exists()) IoUtils.createDirectory(targetDirectory)
+    println(s"target dir: ${targetDirectory.getAbsolutePath}, exists: ${targetDirectory.exists()}, readable: ${targetDirectory.canRead}, writable: ${targetDirectory.canWrite}, executable: ${targetDirectory.canExecute}")
     returning(new File(targetDirectory, testFakeBackupFilename)) { zipFile =>
+      if (!zipFile.exists()) zipFile.createNewFile()
+      println(s"file: ${zipFile.getAbsolutePath}, exists: ${zipFile.exists()}, readable: ${zipFile.canRead}, writable: ${zipFile.canWrite}, executable: ${zipFile.canExecute}")
       withResource(new ZipOutputStream(new FileOutputStream(zipFile))) { zip =>
         metadata foreach { md =>
           withResource(new ByteArrayInputStream(md)) {
@@ -82,26 +81,6 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
     }
   }
 
-  private def createFakeEncryptedBackup(file: File = new File(testFakeBackupFilename),
-                                        targetDirectory: File = testDirectoryEncrypted): File = {
-    import EncryptedBackupHeader._
-    val unencryptedFakeBackup = createFakeBackup(targetDirectory = targetDirectory)
-    val encryptedHeader = EncryptedBackupHeader(currentVersion, salt, uuidHash, 3 ,3)
-    returning(new File(targetDirectory, "fake_backup_encrypted.wbu")) { encryptedBackupFile =>
-      encryptedBackupFile.deleteOnExit()
-
-      val unencryptedBackupBytes = Array.ofDim[Byte](unencryptedFakeBackup.length().toInt)
-      withResource(new BufferedInputStream(new FileInputStream(unencryptedFakeBackup))) { unenc =>
-        IoUtils.readFully(unenc, unencryptedBackupBytes)
-      }
-
-      withResource(new BufferedOutputStream(new FileOutputStream(encryptedBackupFile))) { encryptedBackupStream =>
-        encryptedBackupStream.write(EncryptedBackupHeader.serializeHeader(encryptedHeader))
-        encryptedBackupStream.write(unencryptedBackupBytes)
-      }
-    }
-  }
-
   override protected def beforeEach(): Unit = {
     if (!testDirectory.mkdir()) throw new RuntimeException("Cannot create directory for tests.")
   }
@@ -110,38 +89,12 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
     IoUtils.deleteRecursively(testDirectory)
   }
 
-  private def getZipFileEntryNames(zipFile: ZipFile): Set[String] = {
-    val iterator = zipFile.entries()
-    Stream.continually(Try(iterator.nextElement())).takeWhile(_.isSuccess).map(_.get.getName).toSet
-  }
-
   private def getAllFileNames(directory: File): Set[String] = {
     directory.listFiles().map(_.getName).toSet
   }
 
   private val libSodiumUtils = mock[LibSodiumUtils]
   private def getService() = new BackupManagerImpl(libSodiumUtils)
-
-  feature("Exporting database unencrypted") {
-
-    scenario("create an export zip file with metadata and all database related files.") {
-      val fakeDatabase = createFakeDatabase()
-      createFakeDatabaseWal()
-      val zipFile = getService().exportDatabase(testUserId, userHandle = "TEST", databaseDir = fakeDatabase.getParentFile, targetDir = testDirectory, None).get
-
-      withClue("Zip file should exist.") { zipFile.exists() shouldEqual true }
-      withResource(new ZipFile(zipFile)) { zip =>
-        withClue("Files inside test directory: " + getAllFileNames(testDirectory)) {
-          getZipFileEntryNames(zip) shouldEqual Set(
-            backupMetadataFileName,
-            getDbFileName(testUserId),
-            getDbWalFileName(testUserId)
-          )
-        }
-      }
-    }
-
-  }
 
   feature("Exporting database encrypted") {
 
@@ -157,7 +110,7 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
       (libSodiumUtils.getOpsLimit _).expects().anyNumberOfTimes().returning(3)
       (libSodiumUtils.getMemLimit _).expects().anyNumberOfTimes().returning(3)
 
-      val backup = getService().exportDatabase(testUserId, userHandle = "TEST", databaseDir = fakeDatabase.getParentFile, targetDir = testDirectory, backupPassword = Some(password)).get
+      val backup = getService().exportDatabase(testUserId, userHandle = "TEST", databaseDir = fakeDatabase.getParentFile, targetDir = testDirectory, backupPassword = password).get
 
       withClue("Zip file should exist.") { backup.exists() shouldEqual true }
       withResource(new FileInputStream(backup)) { b =>
@@ -192,39 +145,41 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
 
   feature("Importing database") {
 
+    val emptyPassword = Password("")
+
     scenario("unzip backup file and fail if metadata file and db file not found.") {
       val fakeBackup = createFakeBackup(metadata = None, database = None)
 
-      an [InvalidBackup] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory).get
+      an [InvalidBackup] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory, emptyPassword).get
     }
 
     scenario("unzip backup file and fail if metadata file not found.") {
       val fakeBackup = createFakeBackup(metadata = None)
-      an [InvalidBackup.MetadataEntryNotFound.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory).get
+      an [InvalidBackup.MetadataEntryNotFound.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory, emptyPassword).get
     }
 
     scenario("unzip backup file and fail if db file not found.") {
       val fakeBackup = createFakeBackup(database = None)
-      an [InvalidBackup.DbEntryNotFound.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory).get
+      an [InvalidBackup.DbEntryNotFound.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory, emptyPassword).get
     }
 
     scenario("unzip backup file and fail if metadata format is invalid.") {
       val fakeBackup = createFakeBackup(metadata = Some(Array(1,2,3,4,5)))
-      an [InvalidMetadata.WrongFormat] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory).get
+      an [InvalidMetadata.WrongFormat] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory, emptyPassword).get
     }
 
     scenario("unzip backup file and fail if user ids are not the same.") {
       val metadataWithRandomUserId = BackupMetadata(UserId())
       val fakeBackup = createFakeBackup(metadata = Some(metadataWithRandomUserId.toJsonString.getBytes("utf-8")))
 
-      an [InvalidMetadata.UserId.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory).get
+      an [InvalidMetadata.UserId.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory, emptyPassword).get
     }
 
     scenario("unzip backup file and fail if current database version is less then from metadata.") {
       val metadataWithDbVersionGreaterThenCurrent = BackupMetadata(testUserId, version = BackupMetadata.currentDbVersion + 1)
       val fakeBackup = createFakeBackup(metadata = Some(metadataWithDbVersionGreaterThenCurrent.toJsonString.getBytes("utf-8")))
 
-      an [InvalidMetadata.DbVersion.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory).get
+      an [InvalidMetadata.DbVersion.type] should be thrownBy getService().importDatabase(testUserId, fakeBackup, testDirectory, emptyPassword).get
     }
 
     scenario("unzip backup file successfully if all needed files are present and metadata is valid.") {
@@ -232,7 +187,8 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
       val targetDirectory = new File(testDirectory, "test_target_dir")
       if (!targetDirectory.mkdir()) throw new RuntimeException("Cannot create target directory for test.")
 
-      getService().importDatabase(testUserId, fakeBackup, targetDirectory).get
+      getService().importDatabase(testUserId, fakeBackup, targetDirectory, emptyPassword).get
+      println(s"Files inside target directory: ${getAllFileNames(targetDirectory)}")
       withClue("Files inside target directory: " + getAllFileNames(targetDirectory)) {
         getAllFileNames(targetDirectory) shouldEqual Set(
           getDbFileName(testUserId),
@@ -246,7 +202,7 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
       val targetDirectory = new File(testDirectory, "test_target_dir")
       if (!targetDirectory.mkdir()) throw new RuntimeException("Cannot create target directory for test.")
 
-      getService().importDatabase(testUserId, fakeBackup, targetDirectory).get
+      getService().importDatabase(testUserId, fakeBackup, targetDirectory, emptyPassword).get
       withClue("Files inside target directory: " + getAllFileNames(targetDirectory)) {
         getAllFileNames(targetDirectory) shouldEqual Set(getDbFileName(testUserId))
       }
@@ -258,7 +214,7 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
       val targetDirectory = new File(testDirectory, "test_target_dir")
       if (!targetDirectory.mkdir()) throw new RuntimeException("Cannot create target directory for test.")
 
-      getService().importDatabase(testUserId, fakeBackup, targetDirectory).get
+      getService().importDatabase(testUserId, fakeBackup, targetDirectory, emptyPassword).get
       withClue("Files inside target directory: " + getAllFileNames(targetDirectory)) {
         getAllFileNames(targetDirectory) shouldEqual Set(
           getDbFileName(testUserId),
@@ -266,10 +222,35 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
         )
       }
     }
-
   }
 
   feature("Importing database") {
+
+    val salt = Array.fill[Byte](EncryptedBackupHeader.saltLength)(1)
+    val uuidHash = Array.fill[Byte](EncryptedBackupHeader.uuidHashLength)(2)
+    val file = new File(testFakeBackupFilename)
+
+    def createFakeEncryptedBackup(
+                                  targetDirectory: File = testDirectoryEncrypted): File = {
+      import EncryptedBackupHeader._
+      val unencryptedFakeBackup = createFakeBackup(targetDirectory = targetDirectory)
+
+      val encryptedHeader = EncryptedBackupHeader(currentVersion, salt, uuidHash, 3 ,3)
+      returning(new File(targetDirectory, "fake_backup_encrypted.wbu")) { encryptedBackupFile =>
+        encryptedBackupFile.deleteOnExit()
+
+        val unencryptedBackupBytes = Array.ofDim[Byte](unencryptedFakeBackup.length().toInt)
+        withResource(new BufferedInputStream(new FileInputStream(unencryptedFakeBackup))) { unenc =>
+          IoUtils.readFully(unenc, unencryptedBackupBytes)
+        }
+
+        withResource(new BufferedOutputStream(new FileOutputStream(encryptedBackupFile))) { encryptedBackupStream =>
+          encryptedBackupStream.write(EncryptedBackupHeader.serializeHeader(encryptedHeader))
+          encryptedBackupStream.write(unencryptedBackupBytes)
+        }
+      }
+    }
+
     scenario("unzip encrypted backup file successfully if all needed files are present and metadata is valid (when current db version greater then from metadata).") {
       val targetDirectory = new File(testDirectoryEncrypted, "test_target_dir")
       if (!testDirectoryEncrypted.mkdir()) throw new RuntimeException("Cannot create target directory for test.")
@@ -282,7 +263,7 @@ class BackupManagerSpec extends AndroidFreeSpec with BeforeAndAfterAll with Befo
       (libSodiumUtils.getOpsLimit _).expects().anyNumberOfTimes().returning(3)
       (libSodiumUtils.getMemLimit _).expects().anyNumberOfTimes().returning(3)
 
-      getService().importDatabase(testUserId, fakeBackup, targetDirectory, BackupMetadata.currentDbVersion, Some(Password("test"))).get
+      getService().importDatabase(testUserId, fakeBackup, targetDirectory, Password("test"), BackupMetadata.currentDbVersion).get
       withClue("Files inside target directory: " + getAllFileNames(targetDirectory)) {
         getAllFileNames(targetDirectory) shouldEqual Set(
           getDbFileName(testUserId),

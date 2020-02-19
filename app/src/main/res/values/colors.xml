@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -178,8 +178,6 @@
     <color name="calling_video_overlay">@color/black_58</color>
 
     <!-- Cursor-->
-    <color name="cursor__top_border">@color/light_graphite_40</color>
-
     <color name="cursor_edit_buttons">@color/graphite</color>
     <color name="cursor_edit_buttons_disabled">@color/light_graphite</color>
     <color name="cursor_edit_buttons_dark">@color/white</color>
@@ -197,24 +195,16 @@
     <color name="wire__otr__not_verified_secondary_light">@color/light_graphite</color>
 
     <!-- From the app module-->
-    <color name="chathead__glyph__overlay">@color/black_48</color>
     <color name="chathead__user_initials">@color/white</color>
-    <color name="chathead__non_connected">@color/graphite</color>
 
     <color name="country_divider">@color/white_16</color>
     <color name="new_reg__country_code__text">@color/white_40</color>
-    <color name="mentioning__popover__background">@color/black_80</color>
 
     <color name="content__system_message">@color/black</color>
-    <color name="content__system_message__added_multi__member_counter__circle">@color/white_40</color>
-    <color name="content__youtube__background">@color/black_48</color>
     <color name="content__youtube__text">@color/white</color>
     <color name="content__youtube__error_indicator">@color/white_16</color>
 
-    <color name="list_menu_icon">@color/white</color>
-
     <color name="framework_confirmation_menu_background">@color/transparent</color>
-    <color name="framework_confirmation_menu_text_disabled">@color/graphite</color>
     <color name="framework_confirmation_menu_button">@color/graphite</color>
 
     <color name="first_time__welcome__tos">@color/white_80</color>
@@ -244,8 +234,6 @@
     <color name="network_indicator__font__color">@color/white</color>
 
     <color name="new_reg__phone_number_text_color_hint">@color/white_40</color>
-
-    <color name="participants__header__background_color">@color/transparent</color>
 
     <color name="people_picker__loading__color">@color/white</color>
     <color name="people_picker__input_person_token__background_color">@color/white</color>
