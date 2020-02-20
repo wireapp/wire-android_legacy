@@ -20,7 +20,7 @@ package com.waz.sync
 import java.io.PrintWriter
 
 import com.waz.api.NetworkMode
-import com.waz.api.NetworkMode.UNKNOWN
+import com.waz.api.NetworkMode.{UNKNOWN, WIFI}
 import com.waz.content.{Database, UserPreferences, UsersStorage}
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -41,20 +41,20 @@ class SyncRequestServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   import com.waz.threading.Threading.Implicits.Background
 
-  val context         = mock[Context]
-  val db              = mock[Database]
-  val network         = mock[NetworkModeService]
-  val sync            = mock[SyncHandler]
-  val reporting       = mock[ReportingService]
-  val usersStorage    = mock[UsersStorage]
-  lazy val prefs           = new TestUserPreferences {
+  val context      = mock[Context]
+  val db           = mock[Database]
+  val network      = mock[NetworkModeService]
+  val sync         = mock[SyncHandler]
+  val reporting    = mock[ReportingService]
+  val usersStorage = mock[UsersStorage]
+  lazy val prefs   = new TestUserPreferences {
     result(this.preference(UserPreferences.ShouldSyncInitial) := false)
     result(this.preference(UserPreferences.ShouldSyncConversations) := false)
   }
 
   val timeouts = new Timeouts
 
-  val networkMode = Signal[NetworkMode]().disableAutowiring()
+  val networkMode = Signal[NetworkMode](UNKNOWN).disableAutowiring()
 
   override protected def afterEach() = {
     super.afterEach()
@@ -65,6 +65,7 @@ class SyncRequestServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     (sync.apply (_: UserId, _:SyncRequest)(_: RequestInfo)).expects(*, *, *).anyNumberOfTimes().returning(Future.successful(SyncResult.Success))
 
     val (handle, service) = getSyncServiceHandle
+    networkMode ! WIFI
 
     result(for {
       id   <- handle.syncSelfUser()
@@ -80,7 +81,6 @@ class SyncRequestServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     (db.apply[Vector[SyncJob]](_: (DB) => Vector[SyncJob])(_: LogTag)).expects(*, *).anyNumberOfTimes().returning(CancellableFuture.successful(Vector.empty))
     (network.networkMode _).expects().anyNumberOfTimes().returning(networkMode)
-    (network.isOnlineMode _).expects().anyNumberOfTimes().returning(false)
     (reporting.addStateReporter(_: (PrintWriter) => Future[Unit])(_: LogTag)).expects(*, *)
 
     val content = new SyncContentUpdaterImpl(db)

@@ -69,17 +69,20 @@ class SyncExecutor(account:     UserId,
   private def execute(job: SyncJob): Future[SyncResult] = {
     verbose(l"executeJob: $job")
     val future =
-      content.updateSyncJob(job.id)(job => job.copy(attempts = job.attempts + 1, state = SyncState.SYNCING, error = None, offline = !network.isOnlineMode))
-      .flatMap {
-        case None => Future.successful(SyncResult(ErrorResponse.internalError(s"Could not update job: $job")))
-        case Some(updated) =>
-          handler(account, updated.request)(RequestInfo(updated.attempts, Instant.ofEpochMilli(updated.startTime), network.networkMode.currentValue))
-            .recover {
-              case e: Throwable =>
-                SyncResult(ErrorResponse.internalError(s"syncHandler($updated) failed with unexpected error: ${e.getMessage}"))
-            }
-            .flatMap(res => processSyncResult(updated, res))
-      }
+      for {
+        online     <- network.isOnline.head
+        syncJob    <- content.updateSyncJob(job.id)(job => job.copy(attempts = job.attempts + 1, state = SyncState.SYNCING, error = None, offline = !online))
+        syncResult <- syncJob match {
+          case None => Future.successful(SyncResult(ErrorResponse.internalError(s"Could not update job: $job")))
+          case Some(updated) =>
+            handler(account, updated.request)(RequestInfo(updated.attempts, Instant.ofEpochMilli(updated.startTime), network.networkMode.currentValue))
+              .recover {
+                case e: Throwable =>
+                  SyncResult(ErrorResponse.internalError(s"syncHandler($updated) failed with unexpected error: ${e.getMessage}"))
+              }
+              .flatMap(res => processSyncResult(updated, res))
+        }
+      } yield syncResult
 
     // this is only to check for any long running sync requests, which could mean very serious problem
     CancellableFuture.lift(future).withTimeout(10.minutes).onComplete {
@@ -111,9 +114,10 @@ class SyncExecutor(account:     UserId,
         } else {
           verbose(l"will schedule retry for: $job")
           val nextTryTime = System.currentTimeMillis() + SyncExecutor.failureDelay(job)
-          content
-            .updateSyncJob(job.id)(job => job.copy(state = SyncState.FAILED, startTime = nextTryTime, error = Some(error), offline = job.offline || !network.isOnlineMode))
-            .map(_ => result)
+          for {
+            online  <- network.isOnline.head
+            _       <- content.updateSyncJob(job.id)(job => job.copy(state = SyncState.FAILED, startTime = nextTryTime, error = Some(error), offline = job.offline || !online))
+          } yield result
         }
     }
   }

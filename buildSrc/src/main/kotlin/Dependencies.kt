@@ -34,7 +34,8 @@ object Versions {
     const val ANDROIDX_BIOMETRIC = "1.0.1"
     const val ANDROIDX_ANNOTATION = "1.0.0"
     const val PLAY_SERVICES = "17.0.0"
-    const val FIREBASE_MESSAGING = "19.0.0"
+    const val PLAY_SERVICES_BASE = "17.1.0"
+    const val FIREBASE_MESSAGING = "20.1.0"
     const val GLIDE = "4.11.0"
     const val RETROFIT = "2.6.2"
     const val OKHTTP = "3.14.6"
@@ -97,7 +98,7 @@ object BuildDependencies {
         "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
-        "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES}",
+        "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES_BASE}",
         "maps" to "com.google.android.gms:play-services-maps:${Versions.PLAY_SERVICES}",
         "location" to "com.google.android.gms:play-services-location:${Versions.PLAY_SERVICES}",
         "gcm" to "com.google.android.gms:play-services-gcm:${Versions.PLAY_SERVICES}"
