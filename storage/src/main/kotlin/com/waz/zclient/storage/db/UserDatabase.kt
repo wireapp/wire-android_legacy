@@ -28,7 +28,8 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
         ConversationRoleActionEntity::class, ConversationFoldersEntity::class, FoldersEntity::class,
         CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class,
         DownloadAssetsEntity::class, UploadAssetsEntity::class, PropertiesEntity::class,
-        ReadReceiptsEntity::class, PushNotificationEventEntity::class, MessageContentIndexEntity::class, EditHistoryEntity::class],
+        ReadReceiptsEntity::class, PushNotificationEventEntity::class, MessageContentIndexEntity::class,
+        EditHistoryEntity::class],
     version = UserDatabase.VERSION,
     exportSchema = false
 )

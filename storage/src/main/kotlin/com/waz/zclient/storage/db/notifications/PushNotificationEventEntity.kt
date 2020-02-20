@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-
 @Entity(tableName = "PushNotificationEvents")
 data class PushNotificationEventEntity(
     @PrimaryKey
