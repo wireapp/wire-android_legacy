@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.notifications.model
+package com.waz.zclient.storage.db.notifications
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.folders.model
+package com.waz.zclient.storage.db.folders
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

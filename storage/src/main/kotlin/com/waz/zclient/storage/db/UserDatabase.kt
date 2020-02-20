@@ -7,12 +7,13 @@ import com.waz.zclient.storage.db.assets.model.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.model.UploadAssetsEntity
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
-import com.waz.zclient.storage.db.conversations.model.ConversationFoldersEntity
-import com.waz.zclient.storage.db.conversations.model.ConversationRoleActionEntity
-import com.waz.zclient.storage.db.conversations.model.ReadReceiptsEntity
-import com.waz.zclient.storage.db.folders.model.FoldersEntity
-import com.waz.zclient.storage.db.notifications.model.CloudNotificationStatsEntity
-import com.waz.zclient.storage.db.notifications.model.CloudNotificationsEntity
+import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
+import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
+import com.waz.zclient.storage.db.conversations.ReadReceiptsEntity
+import com.waz.zclient.storage.db.folders.FoldersEntity
+import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
+import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
+import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.properties.PropertiesEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.model.UserEntity
@@ -25,7 +26,7 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
         ConversationRoleActionEntity::class, ConversationFoldersEntity::class, FoldersEntity::class,
         CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class,
         DownloadAssetsEntity::class, UploadAssetsEntity::class, PropertiesEntity::class,
-        ReadReceiptsEntity::class],
+        ReadReceiptsEntity::class, PushNotificationEventEntity::class],
     version = UserDatabase.VERSION,
     exportSchema = false
 )
