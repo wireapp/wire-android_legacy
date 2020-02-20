@@ -1,10 +1,11 @@
-package com.waz.zclient.auth.signup
+package com.waz.zclient.auth.registration
 
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
+import com.waz.zclient.auth.registration.personal.CreatePersonalAccountFragment
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.fragment_create_account.*
 

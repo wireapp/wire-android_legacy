@@ -1,4 +1,4 @@
-package com.waz.zclient.auth.signup
+package com.waz.zclient.auth.registration
 
 import android.content.Context
 import android.content.Intent

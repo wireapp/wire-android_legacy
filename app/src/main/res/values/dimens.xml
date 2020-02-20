@@ -567,13 +567,11 @@
     <dimen name="empty_likes_reads_text_width">224dp</dimen>
     <dimen name="create_conv_options_height">64dp</dimen>
 
-
     <!-- Settings account screen -->
     <dimen name="settings_account_edit_phone_margin_top">20dp</dimen>
     <dimen name="settings_account_edit_phone_padding">20dp</dimen>
     <dimen name="item_view_country_code_text_size">18sp</dimen>
     <dimen name="item_view_country_code_padding">24dp</dimen>
-
 
     <!-- Create Account screen -->
     <dimen name="create_account_layout_container_margin">16dp</dimen>
@@ -582,8 +580,8 @@
     <dimen name="create_account_description_text_size">16sp</dimen>
     <dimen name="create_account_description_padding">32dp</dimen>
 
-
     <!-- Create Personal Account screen -->
     <dimen name="create_personal_account_title_text_view_size">32sp</dimen>
+    <dimen name="create_personal_account_view_pager_margin">16dp</dimen>
 
 </resources>

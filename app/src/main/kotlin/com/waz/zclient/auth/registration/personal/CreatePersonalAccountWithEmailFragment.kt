@@ -1,11 +1,11 @@
-package com.waz.zclient.auth.signup
+package com.waz.zclient.auth.registration.personal
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 
-class CreatePersonalAccountFragment : Fragment(R.layout.fragment_create_personal_account) {
+class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create_personal_account) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -13,6 +13,6 @@ class CreatePersonalAccountFragment : Fragment(R.layout.fragment_create_personal
     }
 
     companion object {
-        fun newInstance() = CreatePersonalAccountFragment()
+        fun newInstance() = CreatePersonalAccountWithEmailFragment()
     }
 }
