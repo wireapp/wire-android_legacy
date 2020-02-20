@@ -51,10 +51,8 @@ class MessageEventProcessor(selfUserId:           UserId,
       verbose(l"processing events for conv: $conv, events: $events")
 
       convsService.isGroupConversation(conv.id).flatMap { isGroup =>
-        storage.blockStreams(true)
 
         returning(processEvents(conv, isGroup, events)){ result =>
-          storage.blockStreams(false)
           result.onFailure { case e: Exception => error(l"Message event processing failed.", e) }
         }
       }
