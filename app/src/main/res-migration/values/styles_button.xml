@@ -24,7 +24,7 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="Button.RobotoLight.Settings">
+    <style name="Button.Settings" parent="@style/Button.RobotoLight">
         <item name="android:textAllCaps">false</item>
         <item name="android:ellipsize">end</item>
         <item name="android:textSize">@dimen/wire__text_size__regular</item>

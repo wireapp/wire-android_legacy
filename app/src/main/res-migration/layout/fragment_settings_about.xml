@@ -28,7 +28,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAboutAboutWebsiteButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref_about_website_title"
@@ -39,7 +39,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAboutTermsAndConditionsButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref_about_tos_title"
@@ -50,7 +50,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAboutPrivacyButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref_about_privacy_policy_title"
@@ -61,7 +61,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAboutThirdPartyLicensesButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref_about_licenses_title"
@@ -72,7 +72,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAboutAppVersionDetailsButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref_about_version_title"
@@ -83,7 +83,7 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/settingsAboutCopyrightTextView"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/pref_about_copyright_title"

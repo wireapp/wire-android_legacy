@@ -162,7 +162,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountProfilePictureButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_picture_title"
@@ -174,7 +174,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountAccentColorButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_color_title"
@@ -230,7 +230,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountDataUsagePermissionsButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_data_usage_permissions"
@@ -252,7 +252,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountBackupButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_backup_title"
@@ -274,7 +274,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountResetPasswordButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_password_title"
@@ -285,7 +285,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountLogoutButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_sign_out_title"
@@ -296,7 +296,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/settingsAccountDeleteAccountButton"
-            style="@style/Button.RobotoLight.Settings"
+            style="@style/Button.Settings"
             android:layout_width="0dp"
             android:layout_height="@dimen/preference_button_height"
             android:text="@string/pref_account_delete_title"
