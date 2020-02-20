@@ -38,7 +38,7 @@ data class UploadAssetsEntity(
     var retention: Int?,
 
     @ColumnInfo(name = "public")
-    var public: Boolean?,
+    var isPublic: Boolean,
 
     @ColumnInfo(name = "encryption")
     var encryption: String?,
