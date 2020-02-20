@@ -2,13 +2,14 @@ package com.waz.zclient.storage.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.waz.zclient.storage.db.assets.model.AssetsEntity
-import com.waz.zclient.storage.db.assets.model.DownloadAssetsEntity
-import com.waz.zclient.storage.db.assets.model.UploadAssetsEntity
+import com.waz.zclient.storage.db.assets.AssetsEntity
+import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
+import com.waz.zclient.storage.db.assets.UploadAssetsEntity
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
+import com.waz.zclient.storage.db.conversations.MessageContentIndexEntity
 import com.waz.zclient.storage.db.conversations.ReadReceiptsEntity
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
@@ -26,7 +27,7 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
         ConversationRoleActionEntity::class, ConversationFoldersEntity::class, FoldersEntity::class,
         CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class,
         DownloadAssetsEntity::class, UploadAssetsEntity::class, PropertiesEntity::class,
-        ReadReceiptsEntity::class, PushNotificationEventEntity::class],
+        ReadReceiptsEntity::class, PushNotificationEventEntity::class, MessageContentIndexEntity::class],
     version = UserDatabase.VERSION,
     exportSchema = false
 )
