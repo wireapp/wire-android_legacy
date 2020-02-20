@@ -18,6 +18,7 @@
 package com.waz.db
 
 import android.content.Context
+import androidx.room.RoomDatabase
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.sqlite.db.{SupportSQLiteDatabase, SupportSQLiteOpenHelper}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -26,6 +27,27 @@ import com.waz.service.tracking.TrackingService
 
 import scala.util.Try
 
+trait BaseDaoDB extends DerivedLogTag {
+  def flushWALFile(db: Option[SupportSQLiteDatabase] = None): Unit = {
+    val c = db.getOrElse(getWritableDatabase).query("PRAGMA wal_checkpoint(TRUNCATE)", null)
+    Try {
+      c.moveToNext()
+      verbose(l"PRAGMA wal_checkpoint performed. Busy?: ${c.getInt(0) == 1}. WAL pages modified: ${c.getInt(1)}. WAL pages moved back: ${c.getInt(2)}")
+    }
+    c.close()
+  }
+
+  def dropAllTables(db: SupportSQLiteDatabase): Unit
+
+  def getDatabaseName: String
+
+  def getWritableDatabase: SupportSQLiteDatabase
+
+  def getReadableDatabase: SupportSQLiteDatabase
+
+  def close(): Unit
+}
+
 class DaoDB(context:    Context,
             name:       String,
             version:    Int,
@@ -33,7 +55,7 @@ class DaoDB(context:    Context,
             migrations: Seq[Migration],
             tracking:   TrackingService)
   extends SupportSQLiteOpenHelper.Callback(version)
-    with DerivedLogTag {
+    with BaseDaoDB {
 
   private val config = SupportSQLiteOpenHelper.Configuration.builder(context)
     .name(name)
@@ -69,26 +91,31 @@ class DaoDB(context:    Context,
   private val supportHelper: SupportSQLiteOpenHelper = new FrameworkSQLiteOpenHelperFactory()
     .create(config)
 
-  def flushWALFile(db: Option[SupportSQLiteDatabase] = None): Unit = {
-    val c = db.getOrElse(getWritableDatabase).query("PRAGMA wal_checkpoint(TRUNCATE)", null)
-    Try {
-      c.moveToNext()
-      verbose(l"PRAGMA wal_checkpoint performed. Busy?: ${c.getInt(0) == 1}. WAL pages modified: ${c.getInt(1)}. WAL pages moved back: ${c.getInt(2)}")
-    }
-    c.close()
-  }
-
-  def dropAllTables(db: SupportSQLiteDatabase): Unit =
+  override def dropAllTables(db: SupportSQLiteDatabase): Unit =
     daos.foreach { dao =>
       db.execSQL(s"DROP TABLE IF EXISTS ${dao.table.name};")
     }
 
-  def getDatabaseName: String = supportHelper.getDatabaseName
+  override def getDatabaseName: String = supportHelper.getDatabaseName
 
-  def getWritableDatabase: SupportSQLiteDatabase = supportHelper.getWritableDatabase
+  override def getWritableDatabase: SupportSQLiteDatabase = supportHelper.getWritableDatabase
 
-  def getReadableDatabase: SupportSQLiteDatabase = supportHelper.getReadableDatabase
+  override def getReadableDatabase: SupportSQLiteDatabase = supportHelper.getReadableDatabase
 
-  def close(): Unit = supportHelper.close()
+  override def close(): Unit = supportHelper.close()
 }
 
+class RoomDaoDB(roomDb: RoomDatabase) extends BaseDaoDB {
+
+  override def flushWALFile(db: Option[SupportSQLiteDatabase] = None): Unit = super.flushWALFile(Some(getWritableDatabase))
+
+  override def dropAllTables(db: SupportSQLiteDatabase): Unit = roomDb.clearAllTables()
+
+  override def getDatabaseName: String = roomDb.getOpenHelper.getDatabaseName
+
+  override def getWritableDatabase: SupportSQLiteDatabase = roomDb.getOpenHelper.getWritableDatabase
+
+  override def getReadableDatabase: SupportSQLiteDatabase = roomDb.getOpenHelper.getReadableDatabase
+
+  override def close(): Unit = roomDb.getOpenHelper.close()
+}

@@ -22,6 +22,7 @@ import android.content.{Context, SharedPreferences}
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.log.BasicLogging.LogTag
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.media.manager.context.IntensityLevel
 import com.waz.model.KeyValueData.KeyValueDataDao
@@ -29,7 +30,6 @@ import com.waz.model._
 import com.waz.model.otr.ClientId
 import com.waz.service.AccountManager.ClientRegistrationState
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.sync.client.OAuth2Client.RefreshToken
 import com.waz.threading.{DispatchQueue, SerialDispatchQueue, Threading}
 import com.waz.utils.TrimmingLruCache.Fixed
 import com.waz.utils.events.{Signal, SourceSignal}
@@ -65,14 +65,14 @@ trait Preferences {
 
 object Preferences {
 
-  case class Preference[A: PrefCodec](private val prefs: Preferences, key: PrefKey[A]) {
+  case class Preference[A: PrefCodec](private val prefs: Preferences, key: PrefKey[A]) extends DerivedLogTag {
 
     import Threading.Implicits.Background
 
     def apply(): Future[A] = prefs.getValue(key)
 
     def update(value: A): Future[Unit] = prefs.setValue(key, value).map { _ => signal.publish(value, Threading.Background) }
-    
+
     def :=(value: A): Future[Unit] = update(value)
 
     def mutate(f: A => A): Future[Unit] = apply().flatMap(cur => update(f(cur)))
@@ -81,7 +81,12 @@ object Preferences {
 
     lazy val signal: SourceSignal[A] = {
       returning(Signal[A]()) { s =>
-        apply().onSuccess { case v => s.publish(v, Threading.Background) }
+        apply().map { v =>
+          s.publish(v, Threading.Background)
+        }.recoverWith { case exception =>
+          error(l"Error while getting signal with preference key $key. Exception is: $exception")
+          throw exception
+        }
       }
     }
   }

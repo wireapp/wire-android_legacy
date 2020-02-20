@@ -51,7 +51,6 @@ import com.waz.service.assets.AssetStorageImpl.AssetDao
 import com.waz.service.assets.DownloadAssetStorage.DownloadAssetDao
 import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.service.tracking.TrackingService
-import com.waz.zclient.storage.db.UserDatabase
 
 import scala.util.{Success, Try}
 

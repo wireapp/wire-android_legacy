@@ -18,15 +18,24 @@
 package com.waz.content
 
 import android.content.Context
-import com.waz.db.{DaoDB, ZMessagingDB}
+import com.waz.db.{BaseDaoDB, RoomDaoDB, ZMessagingDB}
 import com.waz.model.UserId
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.waz.zclient.storage.db.UserDatabase
+import com.waz.zclient.storage.di.StorageModule
+import com.waz.zms.BuildConfig
 
 /**
  * Single user storage. Keeps data specific to used user account.
   */
 class ZmsDatabase(user: UserId, context: Context, tracking: TrackingService) extends Database {
   override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "ZmsDatabase_" + user.str.substring(24))
-  override          val dbHelper  : DaoDB = new ZMessagingDB(context, user.str, tracking)
+  override val dbHelper: BaseDaoDB =
+    if (BuildConfig.KOTLIN_SETTINGS_MIGRATION)
+      new RoomDaoDB(StorageModule.getUserDatabase(
+        context, user.str,
+        ZMessagingDB.migrations.map(_.toRoomMigration).toArray ++ UserDatabase.getMigrations)
+      )
+    else new ZMessagingDB(context, user.str, tracking)
 }
