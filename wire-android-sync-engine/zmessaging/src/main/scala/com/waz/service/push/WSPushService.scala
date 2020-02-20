@@ -32,7 +32,6 @@ import com.waz.sync.client.{AccessTokenProvider, PushNotificationEncoded}
 import com.waz.sync.client.PushNotificationsClient.NotificationsResponseEncoded
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.events._
-import com.waz.utils.wrappers.URI
 import com.waz.utils.{Backoff, ExponentialBackoff}
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.sync.client
@@ -44,10 +43,10 @@ import scala.concurrent.duration._
 import scala.util.Left
 
 trait WSPushService {
-  def activate(): Unit
+  def activate(initialDelay: FiniteDuration = 0.seconds): Unit
   def deactivate(): Unit
   val notifications: EventStream[Seq[PushNotificationEncoded]]
-  def connected(): Signal[Boolean]
+  val connected: Signal[Boolean]
 }
 
 object WSPushServiceImpl {
@@ -103,74 +102,56 @@ class WSPushServiceImpl(userId:              UserId,
   override val notifications: SourceStream[Seq[PushNotificationEncoded]] = EventStream()
   override val connected: SourceSignal[Boolean] = Signal(false)
 
-  private val activated: SourceSignal[Boolean] = Signal(false)
-  override def activate(): Unit = activated ! true
-  override def deactivate(): Unit = activated ! false
-
-  private var currentWebSocketSubscription: Subscription = _
-
-  activated.on(dispatcher) {
-    case false  =>
-      debug(l"WebSocket will be deactivated")
-      finishWebSocketProcess()
-    case true   =>
-      debug(l"WebSocket will be activated")
-      restartWebSocketProcess()
+  override def activate(initialDelay: FiniteDuration = 0.seconds): Unit = {
+    verbose(l"(Re-)activate websocket process.")
+    deactivate()
+    currentWebSocketSubscription = Option(webSocketProcessEngine(initialDelay))
   }
+
+  override def deactivate(): Unit = {
+    verbose(l"Deactivate websocket process.")
+    currentWebSocketSubscription.foreach(_.destroy())
+    currentWebSocketSubscription = None
+    connected ! false
+  }
+
+  private var currentWebSocketSubscription = Option.empty[Subscription]
 
   private val retryCount = new AtomicInteger(0)
-
-  private def finishWebSocketProcess(): Unit = {
-    verbose(l"Finishing websocket process.")
-    if (currentWebSocketSubscription != null) {
-      verbose(l"Current websocket subscription will be destroyed.")
-      currentWebSocketSubscription.destroy()
-      currentWebSocketSubscription = null
-      connected ! false
-    }
-  }
-
-  private def restartWebSocketProcess(initialDelay: FiniteDuration = 0.seconds): Unit = {
-    verbose(l"Restarting websocket process.")
-    finishWebSocketProcess()
-    currentWebSocketSubscription = webSocketProcessEngine(initialDelay)
-  }
 
   private def webSocketProcessEngine(initialDelay: FiniteDuration): Subscription = {
     verbose(l"Constructing websocket engine subscription.")
     val events: EventStream[Either[ErrorResponse, SocketEvent]] = for {
-      _ <- EventStream.wrap(Signal.future(CancellableFuture.delay(initialDelay)))
-      _ = info(l"Opening WebSocket... ${showString({if (retryCount.get() == 0) "" else s"Retry count: ${retryCount.get()}"})}")
+      _                 <- EventStream.wrap(Signal.future(CancellableFuture.delay(initialDelay)))
+      _                 =  info(l"Opening WebSocket... ${showString({if (retryCount.get() == 0) "" else s"Retry count: ${retryCount.get()}"})}")
       accessTokenResult <- EventStream.wrap(Signal.future(accessTokenProvider.currentToken()))
-      event <- accessTokenResult match {
-        case Right(token) =>
-          webSocketFactory.openWebSocket(requestCreator(token)).map(Right.apply)
-        case Left(errorResponse) =>
-          EventStream.wrap(Signal.const(Left(errorResponse)))
+      event             <- accessTokenResult match {
+        case Right(token)        => webSocketFactory.openWebSocket(requestCreator(token)).map(Right.apply)
+        case Left(errorResponse) => EventStream.wrap(Signal.const(Left(errorResponse)))
       }
     } yield event
 
     events.on(dispatcher) {
       case Left(errorResponse) =>
-        info(l"Error while access token receiving: $errorResponse")
-        restartWebSocketProcess(initialDelay = backoff.delay(retryCount.incrementAndGet()))
+        error(l"Error while access token receiving: $errorResponse")
+        connected ! false
+        activate(initialDelay = backoff.delay(retryCount.incrementAndGet()))
       case Right(SocketEvent.Opened(_)) =>
-        info(l"WebSocket opened")
         connected ! true
         retryCount.set(0)
       case Right(SocketEvent.Closing(socket, _, _)) =>
         //ignore close code and reason. just close socket with normal code
         socket.close(WebSocket.CloseCodes.NormalClosure)
-      case Right(SocketEvent.Closed(_, Some(error))) =>
-        info(l"WebSocket closed with error: $error")
+        retryCount.set(0)
         connected ! false
-        restartWebSocketProcess(initialDelay = backoff.delay(retryCount.incrementAndGet()))
+      case Right(SocketEvent.Closed(_, Some(errorResponse))) =>
+        error(l"WebSocket closed with error: $errorResponse")
+        connected ! false
+        activate(initialDelay = backoff.delay(retryCount.incrementAndGet()))
       case Right(SocketEvent.Closed(_, _)) =>
-        info(l"WebSocket closed")
         connected ! false
-        restartWebSocketProcess(initialDelay = backoff.delay(retryCount.incrementAndGet()))
+        activate(initialDelay = backoff.delay(retryCount.incrementAndGet()))
       case Right(SocketEvent.Message(_, NotificationsResponseEncoded(notifs @ _*))) =>
-        info(l"Push notifications received")
         notifications ! notifs
       case Right(SocketEvent.Message(_, _)) =>
         error(l"Unknown message received")
