@@ -33,13 +33,13 @@ task copyCustomResources(type: Copy) {
 
     def iconFolder = (buildtimeConfiguration.configuration.iconFolder ?: 'icons')
     def targetResFolder = "$rootDir/app/src/main/res"
-    def iconSubfolders = [
-            'ldpi': 'drawable-ldpi',
-            'mdpi': 'drawable-mdpi',
-            'hdpi': 'drawable-hdpi',
-            'xhdpi': 'drawable-xhdpi',
-            'xxhdpi': 'drawable-xxhdpi',
-            'xxxhdpi': 'drawable-xxxhdpi'
+    def iconSubFolders = [
+            'ldpi': 'mipmap-ldpi',
+            'mdpi': 'mipmap-mdpi',
+            'hdpi': 'mipmap-hdpi',
+            'xhdpi': 'mipmap-xhdpi',
+            'xxhdpi': 'mipmap-xxhdpi',
+            'xxxhdpi': 'mipmap-xxxhdpi'
     ]
 
     def resources = [
@@ -48,7 +48,7 @@ task copyCustomResources(type: Copy) {
     def customDir = buildtimeConfiguration.customResourcesPath
     resources.findAll { targetFileName, sourceFileName -> !sourceFileName.empty }
             .collectEntries { targetFileName, sourceFileName ->
-                iconSubfolders.collectEntries { sourceSub, targetSub ->
+                iconSubFolders.collectEntries { sourceSub, targetSub ->
                     [(customDir + '/' + iconFolder + '/' + sourceSub + '/' + sourceFileName) : [(targetResFolder + '/' + targetSub),  targetFileName]]
                 }
             }
@@ -208,7 +208,7 @@ android {
             applicationId "com.waz.zclient.dev"
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_dev",
+                                    applicationIcon        : "@mipmap/ic_launcher_wire_dev",
                                     sharedUserId           : "",
                                     internal_features      : "true"]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
@@ -220,7 +220,7 @@ android {
             applicationId "com.wire.candidate"
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_candidate",
+                                    applicationIcon        : "@mipmap/ic_launcher_wire_candidate",
                                     sharedUserId           : "",
                                     internal_features      : "false"]
 
@@ -232,7 +232,7 @@ android {
         prod {
             applicationId buildtimeConfiguration.configuration.applicationId
             manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
-                                    applicationIcon        : "@drawable/ic_launcher_wire",
+                                    applicationIcon        : "@mipmap/ic_launcher_wire",
                                     sharedUserId           : buildtimeConfiguration.configuration.userId,
                                     internal_features      : "false"]
 
@@ -245,7 +245,7 @@ android {
             applicationId "com.wire.internal"
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
-                                    applicationIcon  : "@drawable/ic_launcher_wire_internal",
+                                    applicationIcon  : "@mipmap/ic_launcher_wire_internal",
                                     sharedUserId     : "",
                                     internal_features: "true"]
 
@@ -258,7 +258,7 @@ android {
             applicationId "com.wire.x"
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
-                                    applicationIcon        : "@drawable/ic_launcher_wire_playground",
+                                    applicationIcon        : "@mipmap/ic_launcher_wire_playground",
                                     sharedUserId           : "",
                                     internal_features      : "true"]
 
@@ -272,7 +272,7 @@ android {
     sourceSets {
 
         main.java.srcDirs += ['src/main/java', 'src/main/kotlin']
-        main.res.srcDirs += 'src/main/res-v2'
+        main.res.srcDirs += 'src/main/res-migration'
 
         androidTest {
             java.srcDirs += ['build/generated/source/apt/androidTest/dev/debug']
