@@ -9,7 +9,7 @@ data class UserEntity(
 
     @ColumnInfo(name = "_id")
     @PrimaryKey
-    var id: String,
+    val id: String,
 
     @ColumnInfo(name = "teamId")
     var teamId: String?,
@@ -57,7 +57,7 @@ data class UserEntity(
     var verified: String?,
 
     @ColumnInfo(name = "deleted")
-    var deleted: Int,
+    val deleted: Int,
 
     @ColumnInfo(name = "availability")
     var availability: Int?,
