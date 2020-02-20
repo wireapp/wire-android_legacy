@@ -9,6 +9,7 @@ import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.conversations.model.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.model.ConversationRoleActionEntity
+import com.waz.zclient.storage.db.conversations.model.ReadReceiptsEntity
 import com.waz.zclient.storage.db.folders.model.FoldersEntity
 import com.waz.zclient.storage.db.notifications.model.CloudNotificationStatsEntity
 import com.waz.zclient.storage.db.notifications.model.CloudNotificationsEntity
@@ -23,7 +24,8 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
     entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class,
         ConversationRoleActionEntity::class, ConversationFoldersEntity::class, FoldersEntity::class,
         CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class,
-        DownloadAssetsEntity::class, UploadAssetsEntity::class, PropertiesEntity::class],
+        DownloadAssetsEntity::class, UploadAssetsEntity::class, PropertiesEntity::class,
+        ReadReceiptsEntity::class],
     version = UserDatabase.VERSION,
     exportSchema = false
 )
