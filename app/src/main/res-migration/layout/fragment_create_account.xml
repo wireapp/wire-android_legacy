@@ -43,7 +43,7 @@
         app:layout_constraintBottom_toTopOf="@+id/centerGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/createPersonalAccountImageView"
+        app:layout_constraintTop_toTopOf="@id/createPersonalAccountTitleTextView"
         app:layout_constraintVertical_bias="0.9"
         app:layout_constraintWidth_percent="0.71" />
 
@@ -64,21 +64,6 @@
         app:layout_constraintVertical_bias="0.1"
         app:layout_constraintWidth_percent="0.71" />
 
-    <com.waz.zclient.ui.text.GlyphTextView
-        android:id="@+id/createPersonalAccountImageView"
-        android:layout_width="@dimen/create_account_image_view_width"
-        android:layout_height="@dimen/create_account_image_view_height"
-        android:layout_gravity="center"
-        android:layout_marginBottom="@dimen/create_account_title_margin_top"
-        android:background="@drawable/create_account_personal_image_background"
-        android:gravity="center"
-        android:text="@string/glyph__profile"
-        android:textColor="@color/white"
-        android:textSize="@dimen/app_entry_button_glyph_size"
-        app:layout_constraintBottom_toTopOf="@id/createPersonalAccountTitleTextView"
-        app:layout_constraintEnd_toEndOf="@id/createPersonalAccountLayoutContainer"
-        app:layout_constraintStart_toStartOf="@id/createPersonalAccountLayoutContainer" />
-
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/createPersonalAccountTitleTextView"
         style="@style/TextView.RobotoBold"
@@ -89,6 +74,8 @@
         android:text="@string/app_entry_create_account"
         android:textColor="@color/teams_headline_text"
         android:textSize="@dimen/create_account_title_text_size"
+        android:drawableTop="@mipmap/ic_launcher_wire"
+        android:drawablePadding="@dimen/create_account_title_drawable_padding"
         app:layout_constraintBottom_toTopOf="@id/createPersonalAccountDescriptionTextView"
         app:layout_constraintEnd_toEndOf="@id/createPersonalAccountLayoutContainer"
         app:layout_constraintStart_toStartOf="@id/createPersonalAccountLayoutContainer" />
@@ -109,19 +96,6 @@
         app:layout_constraintEnd_toEndOf="@id/createPersonalAccountLayoutContainer"
         app:layout_constraintStart_toStartOf="@id/createPersonalAccountLayoutContainer" />
 
-    <com.waz.zclient.ui.text.GlyphTextView
-        android:id="@+id/createProAccountImageView"
-        android:layout_width="@dimen/create_account_image_view_width"
-        android:layout_height="@dimen/create_account_image_view_height"
-        android:layout_gravity="center"
-        android:background="@drawable/create_account_pro_image_background"
-        android:gravity="center"
-        android:text="@string/glyph__manage_team"
-        android:textColor="@color/white"
-        android:textSize="@dimen/app_entry_button_glyph_size"
-        app:layout_constraintEnd_toEndOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintStart_toStartOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintTop_toTopOf="@id/createProAccountLayoutContainer" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/createProAccountTitleTextView"
@@ -129,14 +103,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="@dimen/create_account_title_margin_top"
         android:gravity="center"
         android:text="@string/app_entry_create_team"
         android:textColor="@color/teams_headline_text"
         android:textSize="@dimen/create_account_title_text_size"
+        android:drawableTop="@mipmap/ic_launcher_wire"
+        android:drawablePadding="@dimen/create_account_title_drawable_padding"
         app:layout_constraintEnd_toEndOf="@id/createProAccountLayoutContainer"
         app:layout_constraintStart_toStartOf="@id/createProAccountLayoutContainer"
-        app:layout_constraintTop_toBottomOf="@id/createProAccountImageView" />
+        app:layout_constraintTop_toTopOf="@id/createProAccountLayoutContainer" />
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/createProAccountDescriptionTextView"

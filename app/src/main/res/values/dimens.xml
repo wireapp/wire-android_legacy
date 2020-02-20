@@ -577,9 +577,7 @@
 
     <!-- Create Account screen -->
     <dimen name="create_account_layout_container_margin">16dp</dimen>
-    <dimen name="create_account_image_view_width">64dp</dimen>
-    <dimen name="create_account_image_view_height">64dp</dimen>
-    <dimen name="create_account_title_margin_top">8dp</dimen>
+    <dimen name="create_account_title_drawable_padding">8dp</dimen>
     <dimen name="create_account_title_text_size">24sp</dimen>
     <dimen name="create_account_description_text_size">16sp</dimen>
     <dimen name="create_account_description_padding">32dp</dimen>
