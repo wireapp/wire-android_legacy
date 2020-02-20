@@ -11,7 +11,7 @@ import kotlinx.coroutines.runBlocking
  *
  * If a [fallbackSuccessAction] is provided, it also invokes the action upon successful [fallbackAction].
  */
-data class EitherFallbackWrapper<R>(
+data class FallbackOnFailure<R>(
     private val primaryAction: suspend () -> Either<Failure, R>,
     private val fallbackAction: suspend () -> Either<Failure, R>,
     private var fallbackSuccessAction: (suspend () -> Any)? = null
@@ -21,7 +21,7 @@ data class EitherFallbackWrapper<R>(
      * Adds an optional [action] to be performed upon a successful [fallbackAction]. If [primaryAction] is
      * successful, and [fallbackAction] is never called, this [action] won't be called too.
      */
-    fun finally(action: suspend () -> Any): EitherFallbackWrapper<R> = apply {
+    fun finally(action: suspend () -> Any): FallbackOnFailure<R> = apply {
         fallbackSuccessAction = action
     }
 
@@ -39,9 +39,9 @@ data class EitherFallbackWrapper<R>(
 }
 
 /**
- * Creates an [EitherFallbackWrapper] from the given suspend function, with its [EitherFallbackWrapper.primaryAction]
- * being the function itself, and [EitherFallbackWrapper.fallbackAction] as the given parameter.
+ * Creates an [FallbackOnFailure] from the given suspend function, with its [FallbackOnFailure.primaryAction]
+ * being the function itself, and [FallbackOnFailure.fallbackAction] as the given parameter.
  */
 fun <R> (suspend () -> Either<Failure, R>).fallback(
     fallback: suspend () -> Either<Failure, R>
-): EitherFallbackWrapper<R> = EitherFallbackWrapper(this, fallback)
+): FallbackOnFailure<R> = FallbackOnFailure(this, fallback)

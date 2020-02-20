@@ -15,7 +15,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 
 @ExperimentalCoroutinesApi
-class EitherFallbackWrapperTest : UnitTest() {
+class FallbackOnFailureTest : UnitTest() {
 
     private interface SuspendHelper {
         suspend fun primaryAction(): Either<Failure, Unit>
@@ -45,7 +45,7 @@ class EitherFallbackWrapperTest : UnitTest() {
     fun `given a suspend function, when fallback method called with a fallbackAction, returns EitherFallbackWrapper`() {
         val eitherFallbackWrapper = primaryAction.fallback(fallbackAction)
 
-        eitherFallbackWrapper shouldEqual EitherFallbackWrapper(primaryAction, fallbackAction)
+        eitherFallbackWrapper shouldEqual FallbackOnFailure(primaryAction, fallbackAction)
     }
 
     @Test
@@ -53,7 +53,7 @@ class EitherFallbackWrapperTest : UnitTest() {
         runBlockingTest {
             `when`(suspendHelper.primaryAction()).thenReturn(Either.Right(Unit))
 
-            EitherFallbackWrapper(primaryAction, fallbackAction).execute()
+            FallbackOnFailure(primaryAction, fallbackAction).execute()
 
             verify(suspendHelper).primaryAction()
             verifyNoMoreInteractions(suspendHelper)
@@ -68,7 +68,7 @@ class EitherFallbackWrapperTest : UnitTest() {
             val fallbackResponse = mock(Either.Left::class.java) as Either.Left<Failure>
             `when`(suspendHelper.fallbackAction()).thenReturn(fallbackResponse)
 
-            EitherFallbackWrapper(primaryAction, fallbackAction).execute()
+            FallbackOnFailure(primaryAction, fallbackAction).execute()
 
             verify(suspendHelper).primaryAction()
             verify(suspendHelper).fallbackAction()
@@ -81,7 +81,7 @@ class EitherFallbackWrapperTest : UnitTest() {
             `when`(suspendHelper.primaryAction()).thenReturn(Either.Left(ServerError))
             `when`(suspendHelper.fallbackAction()).thenReturn(Either.Right(Unit))
 
-            EitherFallbackWrapper(primaryAction, fallbackAction)
+            FallbackOnFailure(primaryAction, fallbackAction)
                 .finally(fallbackSuccessAction)
                 .execute()
 
@@ -97,7 +97,7 @@ class EitherFallbackWrapperTest : UnitTest() {
             `when`(suspendHelper.primaryAction()).thenReturn(Either.Left(ServerError))
             `when`(suspendHelper.fallbackAction()).thenReturn(Either.Left(ServerError))
 
-            EitherFallbackWrapper(primaryAction, fallbackAction)
+            FallbackOnFailure(primaryAction, fallbackAction)
                 .finally(fallbackSuccessAction)
                 .execute()
 
