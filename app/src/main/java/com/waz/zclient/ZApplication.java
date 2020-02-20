@@ -95,7 +95,7 @@ public class ZApplication extends WireApplication implements ServiceContainer {
     public void onCreate() {
         super.onCreate();
 
-        if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+        if (BuildConfig.KOTLIN_CORE) {
             Injector.start(this);
         }
 

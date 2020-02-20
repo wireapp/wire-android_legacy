@@ -31,7 +31,7 @@ private const val NEW_CLIENT_TYPE_KEY = "type"
 
 val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, END_VERSION) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+        if (BuildConfig.KOTLIN_CORE) {
             migrateClientTable(database)
             migrateKeyValuesTable(database)
             migrateUserTable(database)
