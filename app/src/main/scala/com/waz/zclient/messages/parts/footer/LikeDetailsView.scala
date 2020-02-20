@@ -21,12 +21,14 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.{LinearLayout, TextView}
 import com.waz.content.{ReactionsStorage, UsersStorage}
+import com.waz.model.MessageId
 import com.waz.service.messages.MessageAndLikes
 import com.waz.utils.events.Signal
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.{R, ViewHelper}
 
 class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends LinearLayout(context, attrs, style) with ViewHelper {
+  import LikeDetailsView.MaxLikesSize
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
 
@@ -35,19 +37,25 @@ class LikeDetailsView(context: Context, attrs: AttributeSet, style: Int) extends
 
   private val description: TextView = findById(R.id.like__description)
 
+  private def likersString(msgId: MessageId) =
+    for {
+      reactionsStorage <- inject[Signal[ReactionsStorage]]
+      likers           <- reactionsStorage.likes(msgId).map(_.likers)
+      usersStorage     <- inject[Signal[UsersStorage]]
+      users            <- usersStorage.listSignal(likers.keys)
+    } yield users.sortBy(u => likers(u.id)).map(_.name).mkString(", ")
+
   def init(controller: FooterViewController): Unit =
     controller.messageAndLikes.flatMap {
         case MessageAndLikes(_, likes, _, _) if likes.isEmpty =>
           Signal.const(getString(R.string.message_footer__tap_to_like))
-        case MessageAndLikes(_, likes, _, _) if likes.size > 3 =>
+        case MessageAndLikes(_, likes, _, _) if likes.size > MaxLikesSize =>
           Signal.const(getQuantityString(R.plurals.message_footer__number_of_likes, likes.size, Integer.valueOf(likes.size)))
-        case MessageAndLikes(msg, _, _, _) =>
-          for {
-            reactionsStorage <- inject[Signal[ReactionsStorage]]
-            likers           <- reactionsStorage.likes(msg.id).map(_.likers)
-            usersStorage     <- inject[Signal[UsersStorage]]
-            users            <- usersStorage.listSignal(likers.keys)
-          } yield users.sortBy(u => likers(u.id)).map(_.name).mkString(", ")
+        case MessageAndLikes(msg, _, _, _) => likersString(msg.id)
     }.onUi(description.setText)
+}
+
+object LikeDetailsView {
+  val MaxLikesSize = 2
 }
 
