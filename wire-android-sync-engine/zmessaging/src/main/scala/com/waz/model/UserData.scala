@@ -278,7 +278,7 @@ object UserData {
         }
       val teamCondition = teamId.map(tId => s"AND u.${TeamId.name} = '$tId'")
 
-      list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""), null)).toSet
+      list(db.rawQuery(select + " " + handleCondition + teamCondition.map(qu => s" $qu").getOrElse(""))).toSet
     }
 
     def findForTeams(teams: Set[TeamId])(implicit db: DB) = iteratingMultiple(findInSet(TeamId, teams.map(Option(_))))

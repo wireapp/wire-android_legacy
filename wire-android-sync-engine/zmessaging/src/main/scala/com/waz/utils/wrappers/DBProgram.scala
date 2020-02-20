@@ -17,7 +17,7 @@
  */
 package com.waz.utils.wrappers
 
-import android.database.sqlite.SQLiteProgram
+import androidx.sqlite.db.SupportSQLiteProgram
 
 import scala.language.implicitConversions
 
@@ -30,7 +30,7 @@ trait DBProgram {
   def bindString(index: Int, value: String): Unit
 }
 
-class SQLiteProgramWrapper(val program: SQLiteProgram) extends DBProgram {
+class SQLiteProgramWrapper(val program: SupportSQLiteProgram) extends DBProgram {
   override def bindBlob(index: Int, value: Array[Byte]): Unit = program.bindBlob(index, value)
   override def bindNull(index: Int): Unit = program.bindNull(index)
   override def bindDouble(index: Int, value: Double): Unit = program.bindDouble(index, value)
@@ -40,7 +40,7 @@ class SQLiteProgramWrapper(val program: SQLiteProgram) extends DBProgram {
 }
 
 object DBProgram {
-  def apply(program: SQLiteProgram): DBProgram = new SQLiteProgramWrapper(program)
+  def apply(program: SupportSQLiteProgram): DBProgram = new SQLiteProgramWrapper(program)
 
-  implicit def fromAndroid(program: SQLiteProgram): DBProgram = apply(program)
+  implicit def fromAndroid(program: SupportSQLiteProgram): DBProgram = apply(program)
 }

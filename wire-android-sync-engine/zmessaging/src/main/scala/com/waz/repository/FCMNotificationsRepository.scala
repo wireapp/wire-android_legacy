@@ -25,7 +25,6 @@ import com.waz.model.{FCMNotification, Uid}
 import com.waz.threading.Threading
 import com.waz.utils.wrappers.DBCursor
 import org.threeten.bp.Instant
-import com.waz.log.LogSE._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -67,7 +66,7 @@ class FCMNotificationsRepositoryImpl(implicit db: Database) extends FCMNotificat
       if (c.getCount > maxRows) {
         c.moveToPosition(maxRows - 1)
         val maxTime = c.getLong(c.getColumnIndex(StageStartTime.name))
-        single(db.rawQuery(s"DELETE FROM ${table.name} WHERE ${StageStartTime.name} < $maxTime", null))
+        single(db.rawQuery(s"DELETE FROM ${table.name} WHERE ${StageStartTime.name} < $maxTime"))
       }
       c.close()
     }

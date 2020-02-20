@@ -21,14 +21,13 @@ import java.io.Closeable
 
 import android.content.ContentValues
 import android.database.sqlite.{SQLiteDatabase, SQLiteSession}
+import androidx.sqlite.db.{SupportSQLiteDatabase, SupportSQLiteQueryBuilder}
 
 import scala.language.implicitConversions
 
 trait DB extends Closeable {
 
   // see SQLLiteClosable for comments how these should be used
-
-  def acquireReference(): Unit
 
   def releaseReference(): Unit
 
@@ -57,7 +56,7 @@ trait DB extends Closeable {
             orderBy: String,
             limit: String = null): DBCursor
 
-  def rawQuery(sql: String, selectionArgs: Array[String]): DBCursor
+  def rawQuery(sql: String): DBCursor
 
   def delete(table: String, whereClause: String, whereArgs: Array[String]): Int
 
@@ -81,17 +80,12 @@ trait DB extends Closeable {
 
   def disableWriteAheadLogging(): Unit
 
-  def getThreadSession: DBSession
-
   def insertOrIgnore(tableName: String, values: DBContentValues): Unit
 
   def insertOrReplace(tableName: String, values: DBContentValues): Unit
 }
 
-class SQLiteDBWrapper(val db: SQLiteDatabase) extends DB {
-  override def acquireReference() = db.acquireReference()
-
-  override def releaseReference() = db.releaseReference()
+class SQLiteDBWrapper(val db: SupportSQLiteDatabase) extends DB {
 
   override def beginTransaction() = db.beginTransaction()
 
@@ -112,14 +106,24 @@ class SQLiteDBWrapper(val db: SQLiteDatabase) extends DB {
                      groupBy: String,
                      having: String,
                      orderBy: String,
-                     limit: String = null) = db.query(table, columns, selection, selectionArgs, groupBy, having, orderBy, limit)
+                     limit: String = null) = {
+    val supportQuery = SupportSQLiteQueryBuilder.builder(table)
+      .columns(columns)
+      .selection(selection, selectionArgs.asInstanceOf[Array[AnyRef]])
+      .groupBy(groupBy)
+      .having(having)
+      .orderBy(orderBy)
+      .limit(limit)
+      .create()
+    db.query(supportQuery)
+  }
 
-  override def rawQuery(sql: String, selectionArgs: Array[String]) = db.rawQuery(sql, selectionArgs)
+  override def rawQuery(sql: String) = db.query(sql)
 
-  override def delete(table: String, whereClause: String, whereArgs: Array[String]) = db.delete(table, whereClause, whereArgs)
+  override def delete(table: String, whereClause: String, whereArgs: Array[String]) = db.delete(table, whereClause, whereArgs.asInstanceOf[Array[AnyRef]])
 
   override def update(table: String, values: DBContentValues, whereClause: String, whereArgs: Array[String]) =
-    db.update(table, values, whereClause, whereArgs)
+    db.update(table, SQLiteDatabase.CONFLICT_REPLACE, values, whereClause, whereArgs.asInstanceOf[Array[AnyRef]])
 
   override def execSQL(sql: String) = db.execSQL(sql)
 
@@ -139,15 +143,11 @@ class SQLiteDBWrapper(val db: SQLiteDatabase) extends DB {
 
   override def disableWriteAheadLogging() = db.disableWriteAheadLogging()
 
-  override def getThreadSession = {
-    val method = classOf[SQLiteDatabase].getDeclaredMethod("getThreadSession")
-    method.setAccessible(true)
-    method.invoke(db).asInstanceOf[SQLiteSession]
-  }
+  override def insertOrIgnore(tableName: String, values: DBContentValues): Unit = db.insert(tableName, SQLiteDatabase.CONFLICT_IGNORE, values)
 
-  override def insertOrIgnore(tableName: String, values: DBContentValues): Unit = db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+  override def insertOrReplace(tableName: String, values: DBContentValues): Unit = db.insert(tableName, SQLiteDatabase.CONFLICT_REPLACE, values)
 
-  override def insertOrReplace(tableName: String, values: DBContentValues): Unit = db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+  override def releaseReference(): Unit = db.close()
 }
 
 trait DBUtil {
@@ -165,12 +165,12 @@ object DB {
 
   def ContentValues(): DBContentValues = util.ContentValues()
 
-  def apply(db: SQLiteDatabase): DB = new SQLiteDBWrapper(db)
+  def apply(db: SupportSQLiteDatabase): DB = new SQLiteDBWrapper(db)
 
-  implicit def fromAndroid(db: SQLiteDatabase): DB = apply(db)
+  implicit def fromAndroid(db: SupportSQLiteDatabase): DB = apply(db)
 
-  implicit def toAndroid(db: DB): SQLiteDatabase = db match {
+  implicit def toAndroid(db: DB): SupportSQLiteDatabase = db match {
     case wrapper: SQLiteDBWrapper => wrapper.db
-    case _ => throw new IllegalArgumentException(s"Expected Android DB, but tried to unwrap: ${db.getClass.getName}")
+    case _                        => throw new IllegalArgumentException(s"Expected Android DB, but tried to unwrap: ${db.getClass.getName}")
   }
 }

@@ -19,18 +19,19 @@ package com.waz.utils
 
 import java.io.File
 
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteDatabase._
+import com.waz.db.{BaseDao, DaoDB, Migration}
 import com.waz.utils.wrappers.DB
+import org.robolectric.Robolectric
 import org.scalatest.Matchers
 
-trait DbLoader { self: Matchers =>
+trait DbLoader {
+  self: Matchers =>
   def loadDb(path: String): DB = {
     val input = new File(getClass.getResource(path).getFile)
     input should exist
     val file = File.createTempFile("temp", ".db")
     file.deleteOnExit()
     IoUtils.copy(input, file)
-    SQLiteDatabase.openDatabase(file.getAbsolutePath, null, OPEN_READWRITE)
+    new DaoDB(Robolectric.application, file.getName, 1, Seq.empty[BaseDao[_]], Seq.empty[Migration], null).getWritableDatabase
   }
 }

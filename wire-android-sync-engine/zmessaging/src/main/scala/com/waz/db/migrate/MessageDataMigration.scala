@@ -121,7 +121,7 @@ object MessageDataMigration {
       "SELECT _id, conv_id, msg_type, content, protos, time FROM Messages WHERE msg_type IN ('Text', 'TextEmojiOnly', 'RichMedia') AND _id NOT IN (SELECT message_id FROM MessageContentIndex)"
 
     withStatement("INSERT OR REPLACE INTO MessageContentIndex (message_id, conv_id, content, time) VALUES (?, ?, ?, ?)") { stmt =>
-      forEachRow(db.rawQuery(queryString, null)) { c =>
+      forEachRow(db.rawQuery(queryString)) { c =>
         stmt.clearBindings()
         val id = c.getString(0)
         val convId = c.getString(1)
