@@ -8,7 +8,6 @@ import com.waz.zclient.settings.account.editphonenumber.GetCountryCodesUseCase
 import com.waz.zclient.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.user.domain.usecase.ChangeEmailUseCase
 import com.waz.zclient.user.domain.usecase.ChangeNameUseCase
-import com.waz.zclient.user.domain.usecase.GetUserProfileUseCase
 import com.waz.zclient.user.domain.usecase.handle.ChangeHandleUseCase
 import com.waz.zclient.user.domain.usecase.handle.CheckHandleExistsUseCase
 import com.waz.zclient.user.domain.usecase.handle.GetHandleUseCase
@@ -43,7 +42,6 @@ val settingsAccountModule: Module = module {
     factory { ValidateHandleUseCase() }
     factory { ChangeHandleUseCase(get()) }
 
-    factory { GetUserProfileUseCase(get()) }
     factory { ChangeNameUseCase(get()) }
     factory { ChangeEmailUseCase(get()) }
 }
