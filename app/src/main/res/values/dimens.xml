@@ -581,4 +581,9 @@
     <dimen name="create_account_title_text_size">24sp</dimen>
     <dimen name="create_account_description_text_size">16sp</dimen>
     <dimen name="create_account_description_padding">32dp</dimen>
+
+
+    <!-- Create Personal Account screen -->
+    <dimen name="create_personal_account_title_text_view_size">32sp</dimen>
+
 </resources>
