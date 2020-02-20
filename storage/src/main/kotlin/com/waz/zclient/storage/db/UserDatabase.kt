@@ -12,6 +12,7 @@ import com.waz.zclient.storage.db.conversations.model.ConversationRoleActionEnti
 import com.waz.zclient.storage.db.folders.model.FoldersEntity
 import com.waz.zclient.storage.db.notifications.model.CloudNotificationStatsEntity
 import com.waz.zclient.storage.db.notifications.model.CloudNotificationsEntity
+import com.waz.zclient.storage.db.properties.PropertiesEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
@@ -22,7 +23,7 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
     entities = [UserPreferenceEntity::class, UserEntity::class, ClientEntity::class,
         ConversationRoleActionEntity::class, ConversationFoldersEntity::class, FoldersEntity::class,
         CloudNotificationStatsEntity::class, CloudNotificationsEntity::class, AssetsEntity::class,
-        DownloadAssetsEntity::class, UploadAssetsEntity::class],
+        DownloadAssetsEntity::class, UploadAssetsEntity::class, PropertiesEntity::class],
     version = UserDatabase.VERSION,
     exportSchema = false
 )
