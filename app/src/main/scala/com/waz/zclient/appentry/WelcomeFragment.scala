@@ -72,7 +72,7 @@ class WelcomeFragment extends SSOFragment {
   }
 
   private def startCreateAccountFlow(): Unit =
-    if (BuildConfig.KOTLIN_CREATE_ACCOUNT_MIGRATION) {
+    if (BuildConfig.KOTLIN_REGISTRATION) {
       startActivity(CreateAccountActivity.newIntent(getActivity))
     } else {
       activity.showFragment(CreateAccountFragment(), CreateAccountFragment.Tag)
