@@ -237,8 +237,9 @@
             android:name=".auth.signup.CreateAccountActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Light"
+            android:screenOrientation="portrait"
             />
-      
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
