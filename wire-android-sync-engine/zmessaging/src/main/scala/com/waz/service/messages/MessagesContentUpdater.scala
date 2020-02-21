@@ -194,9 +194,7 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
   // updates server timestamp for local messages, this should make sure that local messages are ordered correctly after one of them is sent
   def updateLocalMessageTimes(conv: ConvId, prevTime: RemoteInstant, time: RemoteInstant) =
     messagesStorage.findLocalFrom(conv, prevTime) flatMap { local =>
-      verbose(l"local messages from $prevTime: $local")
       messagesStorage updateAll2(local.map(_.id), { m =>
-        verbose(l"try updating local message time, msg: $m, time: $time")
         if (m.isLocal) m.copy(time = time + (m.time.toEpochMilli - prevTime.toEpochMilli).millis) else m
       })
     }
@@ -220,8 +218,6 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
         msgs.head
       else {
         msgs.reduce { (prev, msg) =>
-          verbose(l"msgs reduce from $prev to $msg")
-
           if (prev.isLocal && prev.userId == msg.userId)
             mergeLocal(localMessage = prev, msg)
           else if (prev.userId == msg.userId)
