@@ -22,7 +22,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.cache.CacheEntryData.CacheEntryDao
 import com.waz.content.ZmsDatabase
 import com.waz.db.Col._
-import com.waz.db.ZGlobalDB.{DbName, DbVersion, Migrations, daos}
+import com.waz.db.ZGlobalDB.{DbName, DbVersion, daos}
 import com.waz.db.migrate.AccountDataMigration
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -36,7 +36,7 @@ import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
-  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, DbVersion, daos, Migrations.migrations(context), tracking)
+  extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, DbVersion, daos, ZGlobalDB.migrations, tracking)
     with DerivedLogTag {
 
   override def onUpgrade(db: SupportSQLiteDatabase, from: Int, to: Int): Unit = {
@@ -57,9 +57,7 @@ object ZGlobalDB {
 
   lazy val daos = Seq(AccountDataDao, CacheEntryDao, TeamDataDao)
 
-  object Migrations {
-
-    def migrations(context: Context) = Seq(
+    lazy val migrations = Seq(
       Migration(13, 14) {
         implicit db => AccountDataMigration.v14(db)
       },
@@ -117,7 +115,7 @@ object ZGlobalDB {
     implicit object DbRes extends Resource[DB] {
       override def close(r: DB): Unit = r.close()
     }
-  }
+
 
   object Columns {
 

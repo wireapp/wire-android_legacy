@@ -32,7 +32,7 @@ class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: Trac
     if (BuildConfig.KOTLIN_CORE)
       new RoomDaoDB(StorageModule.getGlobalDatabase(
         context,
-        ZGlobalDB.Migrations.migrations(context).map(_.toRoomMigration).toArray ++ RoomGlobalDatabase.getMigrations)
+        ZGlobalDB.migrations.map(_.toRoomMigration).toArray ++ RoomGlobalDatabase.getMigrations)
       )
     else new ZGlobalDB(context, dbNameSuffix, tracking)
 }
