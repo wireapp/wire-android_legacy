@@ -11,11 +11,11 @@ data class CloudNotificationStatsEntity(
     val stage: String,
 
     @ColumnInfo(name = "bucket1")
-    var firstBucket: Int,
+    val firstBucket: Int,
 
     @ColumnInfo(name = "bucket2")
-    var secondBucket: Int,
+    val secondBucket: Int,
 
     @ColumnInfo(name = "bucket3")
-    var thirdBucket: Int
+    val thirdBucket: Int
 )

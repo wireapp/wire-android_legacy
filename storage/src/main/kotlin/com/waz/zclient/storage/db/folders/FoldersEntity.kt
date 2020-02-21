@@ -11,8 +11,8 @@ data class FoldersEntity(
     val id: String,
 
     @ColumnInfo(name = "name")
-    var name: String,
+    val name: String,
 
     @ColumnInfo(name = "type")
-    var type: Int
+    val type: Int
 )

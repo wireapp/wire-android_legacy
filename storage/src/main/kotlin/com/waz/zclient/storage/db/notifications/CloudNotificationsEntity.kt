@@ -12,5 +12,5 @@ data class CloudNotificationsEntity(
     val stage: String,
 
     @ColumnInfo(name = "stage_start_time")
-    var stageStartTime: Int
+    val stageStartTime: Int
 )
