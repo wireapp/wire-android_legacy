@@ -2,9 +2,13 @@ package com.waz.zclient.storage.db.messages
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "Messages")
+@Entity(
+    tableName = "Messages",
+    indices = [Index(value = ["conv_id", "time"])]
+)
 data class MessagesEntity(
     @PrimaryKey
     @ColumnInfo(name = "_id")

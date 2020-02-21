@@ -2,9 +2,13 @@ package com.waz.zclient.storage.db.conversations
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "Conversations")
+@Entity(
+    tableName = "Conversations",
+    indices = [Index(value = ["search_key"])]
+)
 data class ConversationsEntity(
     @PrimaryKey
     @ColumnInfo(name = "_id")
