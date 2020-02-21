@@ -20,7 +20,6 @@ package com.waz.service
 import android.annotation.TargetApi
 import android.content.{BroadcastReceiver, Context, Intent, IntentFilter}
 import android.net.{ConnectivityManager, NetworkInfo}
-import android.os.Build
 import android.telephony.TelephonyManager
 import com.waz.api.NetworkMode
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -30,11 +29,10 @@ import com.waz.utils.returning
 
 trait NetworkModeService {
   def networkMode: Signal[NetworkMode]
-  def isOnline: Signal[Boolean]
-  def isOfflineMode: Boolean
-  def isOnlineMode: Boolean
   def getNetworkOperatorName: String
   def isDeviceIdleMode: Boolean
+
+  lazy val isOnline: Signal[Boolean] = networkMode.map(NetworkModeService.isOnlineMode)
 }
 
 class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extends NetworkModeService with DerivedLogTag {
@@ -46,8 +44,6 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
   private lazy val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE).asInstanceOf[TelephonyManager]
 
   override val networkMode = returning(Signal[NetworkMode](NetworkMode.UNKNOWN)) { _.disableAutowiring() }
-
-  val isOnline: Signal[Boolean] = networkMode.map(_ => isOnlineMode)
 
   lifeCycle.uiActive {
     case true => updateNetworkMode()
@@ -62,8 +58,8 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
 
   def updateNetworkMode(): Unit = {
     val mode = Option(connectivityManager.getActiveNetworkInfo) match {
-      case None => NetworkMode.OFFLINE
-      case Some(info) => if (info.isConnected) computeMode(info, telephonyManager) else NetworkMode.OFFLINE
+      case Some(info) if info.isConnected => computeMode(info, telephonyManager)
+      case _                              => NetworkMode.OFFLINE
     }
     verbose(l"updateNetworkMode: $mode")
 
@@ -79,28 +75,12 @@ class DefaultNetworkModeService(context: Context, lifeCycle: UiLifeCycle) extend
   //    if (android.os.Build.VERSION.SDK_INT >= M)
   //      Option(context.getSystemService(Context.POWER_SERVICE)).map(_.asInstanceOf[PowerManager]).exists(_.isDeviceIdleMode)
   //    else false
-
-
-  def isOfflineMode =
-    networkMode.currentValue.exists(NetworkModeService.isOfflineMode)
-
-  def isUnknown =
-    networkMode.currentValue.exists(NetworkModeService.isUnknown)
-
-  def isOnlineMode =
-    !isOfflineMode && !isUnknown
 }
 
 object NetworkModeService extends DerivedLogTag {
 
-  def isOfflineMode(mode: NetworkMode): Boolean =
-    mode == NetworkMode.OFFLINE
-
-  def isUnknown(mode: NetworkMode): Boolean =
-    mode == NetworkMode.UNKNOWN
-
   def isOnlineMode(mode: NetworkMode): Boolean =
-    !isOfflineMode(mode) && !isUnknown(mode)
+    mode != NetworkMode.OFFLINE && mode != NetworkMode.UNKNOWN
 
   /*
    * This part (the mapping of mobile data network types to the networkMode enum) of the Wire software

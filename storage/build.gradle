@@ -17,7 +17,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
 
-        buildConfigField 'boolean', 'KOTLIN_SETTINGS_MIGRATION', rootProject.ext.kotlinSettingsMigration
+        buildConfigField 'boolean', 'KOTLIN_CORE', rootProject.ext.kotlinCore
     }
 
     buildTypes {

@@ -32,7 +32,7 @@ import com.waz.zms.BuildConfig
 class ZmsDatabase(user: UserId, context: Context, tracking: TrackingService) extends Database {
   override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "ZmsDatabase_" + user.str.substring(24))
   override val dbHelper: BaseDaoDB =
-    if (BuildConfig.KOTLIN_SETTINGS_MIGRATION)
+    if (BuildConfig.KOTLIN_CORE)
       new RoomDaoDB(StorageModule.getUserDatabase(
         context, user.str,
         ZMessagingDB.migrations.map(_.toRoomMigration).toArray ++ UserDatabase.getMigrations)

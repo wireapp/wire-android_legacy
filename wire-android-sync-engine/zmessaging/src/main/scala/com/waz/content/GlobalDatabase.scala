@@ -21,15 +21,15 @@ import android.content.Context
 import com.waz.db.{BaseDaoDB, RoomDaoDB, ZGlobalDB}
 import com.waz.service.tracking.TrackingService
 import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.waz.zclient.storage.db.{GlobalDatabase => RoomGlobalDatabase}
 import com.waz.zclient.storage.di.StorageModule
 import com.waz.zms.BuildConfig
-import com.waz.zclient.storage.db.{GlobalDatabase => RoomGlobalDatabase}
 
 class GlobalDatabase(context: Context, dbNameSuffix: String = "", tracking: TrackingService) extends Database {
 
   override implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(executor = Threading.IOThreadPool, name = "GlobalDatabase")
-  override val dbHelper: BaseDaoDB =
-    if (BuildConfig.KOTLIN_SETTINGS_MIGRATION)
+  override          val dbHelper  : BaseDaoDB           =
+    if (BuildConfig.KOTLIN_CORE)
       new RoomDaoDB(StorageModule.getGlobalDatabase(
         context,
         ZGlobalDB.Migrations.migrations(context).map(_.toRoomMigration).toArray ++ RoomGlobalDatabase.getMigrations)

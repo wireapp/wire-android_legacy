@@ -218,7 +218,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val errors                                     = wire[ErrorsServiceImpl]
   lazy val reporting                                  = new ZmsReportingService(selfUserId, global.reporting)
   lazy val wsFactory                                  = new OkHttpWebSocketFactory(account.global.httpProxy)
-  lazy val wsPushService                              = wireWith(WSPushServiceImpl.apply _)
+  lazy val wsPushService: WSPushService               = wireWith(WSPushServiceImpl.apply _)
   lazy val userSearch                                 = wire[UserSearchService]
   lazy val users: UserService                         = wire[UserServiceImpl]
   lazy val teamSize: TeamSizeThreshold                = wire[TeamSizeThresholdImpl]
@@ -326,14 +326,16 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         convOrder.conversationOrderEventsStage,
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
+        notifications.messageNotificationEventsStage,
+        notifications.connectionNotificationEventStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
-        propertiesService.eventProcessor,
-        notifications.messageNotificationEventsStage,
-        notifications.connectionNotificationEventStage
+        propertiesService.eventProcessor
       )
     )
   }
+
+  private lazy val blockStreamsWhenProcessing = push.processing(messagesStorage.blockStreams)
 
   // force loading of services which should run on start
   {
@@ -344,6 +346,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     push // connect on start
     notifications
+    blockStreamsWhenProcessing
 
     // services listening on lifecycle verified login events
     contacts
