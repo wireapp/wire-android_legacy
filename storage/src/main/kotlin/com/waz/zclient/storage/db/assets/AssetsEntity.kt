@@ -11,32 +11,32 @@ data class AssetsEntity(
     val id: String,
 
     @ColumnInfo(name = "token")
-    var token: String?,
+    val token: String?,
 
     @ColumnInfo(name = "name")
-    var name: String?,
+    val name: String,
 
     @ColumnInfo(name = "encryption")
-    var encryption: String?,
+    val encryption: String,
 
     @ColumnInfo(name = "mime")
-    var mime: String?,
+    val mime: String,
 
     @ColumnInfo(name = "sha", typeAffinity = ColumnInfo.BLOB)
-    var sha: ByteArray?,
+    val sha: ByteArray,
 
     @ColumnInfo(name = "size")
-    var size: Int?,
+    val size: Int,
 
     @ColumnInfo(name = "source")
-    var source: String?,
+    val source: String?,
 
     @ColumnInfo(name = "preview")
-    var preview: String?,
+    val preview: String?,
 
     @ColumnInfo(name = "details")
-    var details: String?,
+    val details: String,
 
     @ColumnInfo(name = "conversation_id")
-    var conversationId: String?
+    val conversationId: String?
 )

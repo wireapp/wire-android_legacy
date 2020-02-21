@@ -11,23 +11,23 @@ data class DownloadAssetsEntity(
     val id: String,
 
     @ColumnInfo(name = "mime")
-    var mime: String?,
+    val mime: String,
 
     @ColumnInfo(name = "downloaded")
-    var downloaded: Long?,
+    val downloaded: Long,
 
     @ColumnInfo(name = "size")
-    var size: Long?,
+    val size: Long,
 
     @ColumnInfo(name = "name")
-    var name: String?,
+    val name: String,
 
     @ColumnInfo(name = "preview")
-    var preview: String?,
+    val preview: String,
 
     @ColumnInfo(name = "details")
-    var details: String?,
+    val details: String,
 
     @ColumnInfo(name = "status")
-    var status: Int
+    val status: Int
 )

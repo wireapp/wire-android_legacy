@@ -24,7 +24,7 @@ data class MessagesEntity(
     val userId: String,
 
     @ColumnInfo(name = "content")
-    val content: String,
+    val content: String?,
 
     //TODO: override equals/hashcode?
     @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB) val protos: ByteArray?,
@@ -39,16 +39,16 @@ data class MessagesEntity(
     val firstMessage: Int,
 
     @ColumnInfo(name = "members")
-    val members: String,
+    val members: String?,
 
     @ColumnInfo(name = "recipient")
-    val recipient: String,
+    val recipient: String?,
 
     @ColumnInfo(name = "email")
-    val email: String,
+    val email: String?,
 
     @ColumnInfo(name = "name")
-    val name: String,
+    val name: String?,
 
     @ColumnInfo(name = "msg_state")
     val messageState: String,
@@ -60,26 +60,26 @@ data class MessagesEntity(
     val editTime: String,
 
     @ColumnInfo(name = "ephemeral")
-    val ephemeral: Int,
+    val ephemeral: Int?,
 
     @ColumnInfo(name = "expiry_time")
-    val expiryTime: Int,
+    val expiryTime: Int?,
 
     @ColumnInfo(name = "expired")
     val expired: Int,
 
     @ColumnInfo(name = "duration")
-    val duration: Int,
+    val duration: Int?,
 
     @ColumnInfo(name = "quote")
-    val quote: String,
+    val quote: String?,
 
     @ColumnInfo(name = "quote_validity")
-    val quoteValidity: Int,
+    val quoteValidity: Int?,
 
     @ColumnInfo(name = "force_read_receipts")
-    val forceReadReceipts: Int,
+    val forceReadReceipts: Int?,
 
     @ColumnInfo(name = "asset_id")
-    val assetId: String
+    val assetId: String?
 )

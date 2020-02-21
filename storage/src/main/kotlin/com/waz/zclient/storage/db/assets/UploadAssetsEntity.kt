@@ -11,47 +11,47 @@ data class UploadAssetsEntity(
     val id: String,
 
     @ColumnInfo(name = "source")
-    var source: String?,
+    val source: String,
 
     @ColumnInfo(name = "name")
-    var name: String?,
+    val name: String,
 
     @ColumnInfo(name = "sha", typeAffinity = ColumnInfo.BLOB)
-    var sha: ByteArray?,
+    val sha: ByteArray,
 
     @ColumnInfo(name = "md5", typeAffinity = ColumnInfo.BLOB)
-    var md5: ByteArray?,
+    val md5: ByteArray,
 
     @ColumnInfo(name = "mime")
-    var mime: String?,
+    val mime: String,
 
     @ColumnInfo(name = "preview")
-    var preview: String?,
+    val preview: String,
 
     @ColumnInfo(name = "uploaded")
-    var uploaded: Long?,
+    val uploaded: Long,
 
     @ColumnInfo(name = "size")
-    var size: Long?,
+    val size: Long,
 
     @ColumnInfo(name = "retention")
-    var retention: Int?,
+    val retention: Int,
 
     @ColumnInfo(name = "public")
-    var isPublic: Boolean,
+    val isPublic: Boolean,
 
     @ColumnInfo(name = "encryption")
-    var encryption: String?,
+    val encryption: String,
 
     @ColumnInfo(name = "encryption_salt")
-    var encryptionSalt: String?,
+    val encryptionSalt: String?,
 
     @ColumnInfo(name = "details")
-    var details: String?,
+    val details: String,
 
     @ColumnInfo(name = "status")
-    var uploadStatus: Int?,
+    val uploadStatus: Int,
 
     @ColumnInfo(name = "asset_id")
-    var assetId: String?
+    val assetId: String?
 )
