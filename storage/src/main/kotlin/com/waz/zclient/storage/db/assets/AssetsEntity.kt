@@ -14,19 +14,19 @@ data class AssetsEntity(
     var token: String?,
 
     @ColumnInfo(name = "name")
-    var name: String?,
+    var name: String,
 
     @ColumnInfo(name = "encryption")
-    var encryption: String?,
+    var encryption: String,
 
     @ColumnInfo(name = "mime")
-    var mime: String?,
+    var mime: String,
 
     @ColumnInfo(name = "sha", typeAffinity = ColumnInfo.BLOB)
-    var sha: ByteArray?,
+    var sha: ByteArray,
 
     @ColumnInfo(name = "size")
-    var size: Int?,
+    var size: Int,
 
     @ColumnInfo(name = "source")
     var source: String?,
@@ -35,7 +35,7 @@ data class AssetsEntity(
     var preview: String?,
 
     @ColumnInfo(name = "details")
-    var details: String?,
+    var details: String,
 
     @ColumnInfo(name = "conversation_id")
     var conversationId: String?

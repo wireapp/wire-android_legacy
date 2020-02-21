@@ -11,8 +11,8 @@ class EditHistoryEntity(
     val originalId: String,
 
     @ColumnInfo(name = "updated_id")
-    var updatedId: String?,
+    val updatedId: String,
 
     @ColumnInfo(name = "timestamp")
-    var timestamp: Int?
+    val timestamp: Int
 )

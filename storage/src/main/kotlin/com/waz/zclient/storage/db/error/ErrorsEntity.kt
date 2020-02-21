@@ -20,7 +20,7 @@ data class ErrorsEntity(
     val messages: String,
 
     @ColumnInfo(name = "conv_id")
-    val conversationId: String,
+    val conversationId: String?,
 
     @ColumnInfo(name = "res_code")
     val responseCode: String,

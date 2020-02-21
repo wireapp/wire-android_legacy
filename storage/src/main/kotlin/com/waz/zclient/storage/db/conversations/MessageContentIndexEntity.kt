@@ -11,11 +11,11 @@ data class MessageContentIndexEntity(
     val messageId: String,
 
     @ColumnInfo(name = "conv_id")
-    var convId: String?,
+    val convId: String,
 
     @ColumnInfo(name = "content")
-    var content: String?,
+    val content: String,
 
     @ColumnInfo(name = "time")
-    var timestamp: Int?
+    val timestamp: Int
 )
