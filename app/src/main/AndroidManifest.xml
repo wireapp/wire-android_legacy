@@ -237,6 +237,7 @@
             android:name=".auth.registration.CreateAccountActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Light"
+            android:screenOrientation="portrait"
             />
 
         <receiver
