@@ -24,6 +24,11 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="TextView.TabLayoutTitle" parent="TextView.RobotoBold">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textSize">@dimen/tab_layout_title_text_size</item>
+    </style>
+
     <style name="TextView.Title">
         <item name="android:ellipsize">end</item>
         <item name="android:textSize">@dimen/wire__text_size__regular</item>

@@ -1,9 +1,9 @@
 package com.waz.zclient.auth.registration.personal
 
+import android.annotation.SuppressLint
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-
 
 class CreatePersonalAccountViewPagerAdapter(fragmentManager: FragmentManager)
     : FragmentPagerAdapter(fragmentManager) {

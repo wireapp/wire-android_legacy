@@ -2,7 +2,7 @@
 <!--
 
     Wire
-    Copyright (C) 2018 Wire Swiss GmbH
+    Copyright (C) 2020 Wire Swiss GmbH
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,9 @@
         android:id="@+id/createPersonalAccountViewPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="@dimen/create_personal_account_view_pager_margin"
+        android:layout_marginStart="@dimen/create_personal_account_view_pager_margin_start"
+        android:layout_marginEnd="@dimen/create_personal_account_view_pager_margin_end"
+        android:layout_marginTop="@dimen/create_personal_account_view_pager_margin_top"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -60,7 +62,9 @@
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/createPersonalAccountTabLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            style="@style/TabLayout"
+            />
 
     </androidx.viewpager.widget.ViewPager>
 

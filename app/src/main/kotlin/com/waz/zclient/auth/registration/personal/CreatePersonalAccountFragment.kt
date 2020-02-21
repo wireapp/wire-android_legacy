@@ -10,7 +10,6 @@ class CreatePersonalAccountFragment : Fragment(R.layout.fragment_create_personal
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         createPersonalAccountViewPager.adapter =
             CreatePersonalAccountViewPagerAdapter(requireActivity().supportFragmentManager)
     }
