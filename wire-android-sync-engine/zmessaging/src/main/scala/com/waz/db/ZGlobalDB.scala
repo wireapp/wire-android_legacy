@@ -57,56 +57,56 @@ object ZGlobalDB {
 
   lazy val daos = Seq(AccountDataDao, CacheEntryDao, TeamDataDao)
 
-    lazy val migrations = Seq(
-      Migration(13, 14) {
-        implicit db => AccountDataMigration.v14(db)
-      },
-      Migration(14, 15) { db =>
-//      no longer valid
-      },
-      Migration(15, 16) { db =>
-//      no longer valid
-      },
-      Migration(16, 17) { db =>
-        db.execSQL(s"ALTER TABLE Accounts ADD COLUMN registered_push TEXT")
-      },
-      Migration(17, 18) { db =>
-        db.execSQL("ALTER TABLE Accounts ADD COLUMN teamId TEXT")
-        db.execSQL("UPDATE Accounts SET teamId = ''")
-        db.execSQL("ALTER TABLE Accounts ADD COLUMN self_permissions INTEGER DEFAULT 0")
-        db.execSQL("ALTER TABLE Accounts ADD COLUMN copy_permissions INTEGER DEFAULT 0")
-      },
-      Migration(18, 19) { db =>
-        db.execSQL("CREATE TABLE IF NOT EXISTS Teams (_id TEXT PRIMARY KEY, name TEXT, creator TEXT, icon TEXT, icon_key TEXT)")
-      },
-      Migration(19, 20) { db =>
-        AccountDataMigration.v20(db)
-      },
-      Migration(20, 21) { db =>
-        db.execSQL("ALTER TABLE Accounts ADD COLUMN pending_team_name TEXT DEFAULT NULL")
-      },
-      Migration(21, 22) { db =>
-        db.execSQL("CREATE TABLE IF NOT EXISTS ActiveAccounts (_id TEXT PRIMARY KEY, team_id TEXT, cookie TEXT NOT NULL, access_token TEXT, registered_push TEXT)")
-      },
-      Migration(22, 23) { db =>
-        db.execSQL("ALTER TABLE ActiveAccounts ADD COLUMN sso_id TEXT DEFAULT NULL")
-      },
-      Migration(23, 24) { db =>
-        // Team icons are now public assets, so we no longer need icon_key. Sqlite doesn't support
-        // dropping columns, so we have to do it manually by renaming the table, recreating it,
-        // and finally restoring that data back into the table.
+  lazy val migrations = Seq(
+    Migration(13, 14) {
+      implicit db => AccountDataMigration.v14(db)
+    },
+    Migration(14, 15) { db =>
+      //      no longer valid
+    },
+    Migration(15, 16) { db =>
+      //      no longer valid
+    },
+    Migration(16, 17) { db =>
+      db.execSQL(s"ALTER TABLE Accounts ADD COLUMN registered_push TEXT")
+    },
+    Migration(17, 18) { db =>
+      db.execSQL("ALTER TABLE Accounts ADD COLUMN teamId TEXT")
+      db.execSQL("UPDATE Accounts SET teamId = ''")
+      db.execSQL("ALTER TABLE Accounts ADD COLUMN self_permissions INTEGER DEFAULT 0")
+      db.execSQL("ALTER TABLE Accounts ADD COLUMN copy_permissions INTEGER DEFAULT 0")
+    },
+    Migration(18, 19) { db =>
+      db.execSQL("CREATE TABLE IF NOT EXISTS Teams (_id TEXT PRIMARY KEY, name TEXT, creator TEXT, icon TEXT, icon_key TEXT)")
+    },
+    Migration(19, 20) { db =>
+      AccountDataMigration.v20(db)
+    },
+    Migration(20, 21) { db =>
+      db.execSQL("ALTER TABLE Accounts ADD COLUMN pending_team_name TEXT DEFAULT NULL")
+    },
+    Migration(21, 22) { db =>
+      db.execSQL("CREATE TABLE IF NOT EXISTS ActiveAccounts (_id TEXT PRIMARY KEY, team_id TEXT, cookie TEXT NOT NULL, access_token TEXT, registered_push TEXT)")
+    },
+    Migration(22, 23) { db =>
+      db.execSQL("ALTER TABLE ActiveAccounts ADD COLUMN sso_id TEXT DEFAULT NULL")
+    },
+    Migration(23, 24) { db =>
+      // Team icons are now public assets, so we no longer need icon_key. Sqlite doesn't support
+      // dropping columns, so we have to do it manually by renaming the table, recreating it,
+      // and finally restoring that data back into the table.
 
-        import TeamDataDao._
-        val TeamsTable = table.name
-        val BackupTable = "TeamsBackup"
-        val ColumnsToKeep = s"${Id.name}, ${Name.name}, ${Creator.name}, ${Icon.name}"
+      import TeamDataDao._
+      val TeamsTable = table.name
+      val BackupTable = "TeamsBackup"
+      val ColumnsToKeep = s"${Id.name}, ${Name.name}, ${Creator.name}, ${Icon.name}"
 
-        db.execSQL(s"ALTER TABLE $TeamsTable RENAME TO $BackupTable")
-        db.execSQL(s"${TeamDataDao.table.createSql}")
-        db.execSQL(s"INSERT INTO $TeamsTable SELECT $ColumnsToKeep FROM $BackupTable")
-        db.execSQL(s"DROP TABLE $BackupTable")
-      }
-    )
+      db.execSQL(s"ALTER TABLE $TeamsTable RENAME TO $BackupTable")
+      db.execSQL(s"${TeamDataDao.table.createSql}")
+      db.execSQL(s"INSERT INTO $TeamsTable SELECT $ColumnsToKeep FROM $BackupTable")
+      db.execSQL(s"DROP TABLE $BackupTable")
+    }
+  )
 
     implicit object ZmsDatabaseRes extends Resource[ZmsDatabase] {
       override def close(r: ZmsDatabase): Unit = r.close()
