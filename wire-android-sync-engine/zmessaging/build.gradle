@@ -15,7 +15,7 @@ android {
             abiFilters "armeabi-v7a", "x86", "arm64-v8a", "x86_64"
         }
 
-        buildConfigField 'boolean', 'KOTLIN_CORE', rootProject.ext.kotlinCore
+        buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
     }
 
     externalNativeBuild {
