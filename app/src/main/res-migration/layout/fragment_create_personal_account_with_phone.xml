@@ -42,7 +42,6 @@
             android:layout_height="56dp"
             android:inputType="textEmailAddress"
             android:hint="@string/pref_account_phone_title"
-            android:textAllCaps="true"
             android:background="@color/white"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
@@ -52,5 +51,17 @@
             />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/confirmationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/selector_confirm_button"
+        android:padding="8dp"
+        android:src="@drawable/ic_arrow_right"
+        app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithPhoneTextInputLayout"
+        app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithPhoneTextInputLayout"
+        app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithPhoneTextInputLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

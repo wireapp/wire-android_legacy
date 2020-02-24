@@ -28,30 +28,38 @@
         android:id="@+id/createPersonalAccountWithEmailTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:layout_marginTop="@dimen/create_personal_account_with_email_text_input_layout_margin_top"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/white"
         app:hintEnabled="false"
-        >
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/createPersonalAccountWithEmailEditText"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:inputType="textEmailAddress"
-            android:hint="@string/profile__email__placeholder"
-            android:textAllCaps="true"
             android:background="@color/white"
+            android:fontFamily="sans-serif"
+            android:hint="@string/profile__email__placeholder"
+            android:inputType="textEmailAddress"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:textColorHint="@color/light_graphite"
-            android:textSize="14sp"
-            android:fontFamily="sans-serif"
-            android:drawableEnd="@drawable/selector_confirm_button"
-            />
+            android:textSize="14sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/confirmationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/selector_confirm_button"
+        android:padding="8dp"
+        android:src="@drawable/ic_arrow_right"
+        app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithEmailTextInputLayout"
+        app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithEmailTextInputLayout"
+        app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithEmailTextInputLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
