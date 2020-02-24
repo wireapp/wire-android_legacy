@@ -75,6 +75,7 @@ trait MessagesService {
 
   def retryMessageSending(conv: ConvId, msgId: MessageId): Future[Option[SyncId]]
   def updateMessageState(convId: ConvId, messageId: MessageId, state: Message.Status): Future[Option[MessageData]]
+  def markMessageRead(convId: ConvId, id: MessageId): Future[Option[MessageData]]
 
   def recallMessage(convId: ConvId, msgId: MessageId, userId: UserId, systemMsgId: MessageId = MessageId(), time: RemoteInstant, state: Message.Status = Message.Status.PENDING): Future[Option[MessageData]]
   def applyMessageEdit(convId: ConvId, userId: UserId, time: RemoteInstant, gm: GenericMessage): Future[Option[MessageData]]
@@ -456,13 +457,15 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def updateMessageState(convId: ConvId, messageId: MessageId, state: Message.Status) =
     updater.updateMessage(messageId) { _.copy(state = state) }
 
-  def markMessageRead(convId: ConvId, id: MessageId) =
-    if (!network.isOnlineMode) CancellableFuture.successful(None)
-    else
-      updater.updateMessage(id) { msg =>
-        if (msg.state == Status.FAILED) msg.copy(state = Status.FAILED_READ)
-        else msg
-      }
+  override def markMessageRead(convId: ConvId, id: MessageId): Future[Option[MessageData]] =
+    network.isOnline.head.flatMap {
+      case false => Future.successful(None)
+      case true =>
+        updater.updateMessage(id) { msg =>
+          if (msg.state == Status.FAILED) msg.copy(state = Status.FAILED_READ)
+          else msg
+        }
+    }
 
   override def retentionPolicy2ById(convId: ConvId): Future[AssetClient.Retention] =
     convs.convById(convId).flatMap {

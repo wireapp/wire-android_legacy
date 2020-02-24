@@ -42,7 +42,7 @@ class CreateAccountFragment extends FragmentHelper {
   }
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
-    inflater.inflate(R.layout.fragment_create_account, container, false)
+    inflater.inflate(R.layout.fragment_create_account_legacy, container, false)
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)

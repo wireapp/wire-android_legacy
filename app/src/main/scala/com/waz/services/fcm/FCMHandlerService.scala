@@ -129,12 +129,11 @@ object FCMHandlerService {
 
   val UserKeyMissingMsg = "Notification did not contain user key - discarding"
 
-  class FCMHandler(userId: UserId,
-                   accounts: AccountsService,
-                   push: PushService,
-                   network: NetworkModeService,
-                   fcmPushes: FCMNotificationStatsService,
-                   sentTime: Instant) extends DerivedLogTag {
+  class FCMHandler(userId:    UserId,
+                   accounts:  AccountsService,
+                   push:      PushService,
+                   network:   NetworkModeService,
+                   fcmPushes: FCMNotificationStatsService) extends DerivedLogTag {
 
     import com.waz.model.FCMNotification.Pushed
     import com.waz.threading.Threading.Implicits.Background
@@ -175,9 +174,14 @@ object FCMHandlerService {
   }
 
   object FCMHandler {
-    def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Future[Unit] =
-      new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.fcmNotStatsService, sentTime)
-        .handleMessage(data)
+
+    private val handlers = scala.collection.mutable.HashMap[UserId, FCMHandler]()
+
+    def apply(zms: ZMessaging, data: Map[String, String], sentTime: Instant): Unit =
+      handlers.getOrElseUpdate(
+        zms.selfUserId,
+        new FCMHandler(zms.selfUserId, zms.accounts, zms.push, zms.network, zms.fcmNotStatsService)
+      ).handleMessage(data)
   }
 
   val DataKey = "data"
