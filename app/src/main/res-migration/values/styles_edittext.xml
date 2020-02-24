@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="EditText" parent="@android:style/Widget.EditText" />
+
+    <style name="EditText.RobotoThin">
+        <item name="android:fontFamily">sans-serif-thin</item>
+    </style>
+
+    <style name="EditText.RobotoLight">
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="EditText.RobotoRegular">
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="EditText.RobotoMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="EditText.RobotoBold">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="EditText.Authentication"  parent="@style/EditText.RobotoRegular">
+        <item name="android:padding">@dimen/authentication_edit_text_padding</item>
+        <item name="android:textColorHint">@color/light_graphite</item>
+        <item name="android:textSize">@dimen/authentication_edit_text_text_size</item>
+        <item name="android:background">@color/white</item>
+    </style>
+
+</resources>

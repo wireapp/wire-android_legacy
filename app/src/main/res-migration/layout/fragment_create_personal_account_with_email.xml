@@ -28,7 +28,7 @@
         android:id="@+id/createPersonalAccountWithEmailTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/create_personal_account_with_email_text_input_layout_margin_top"
+        android:layout_marginTop="@dimen/create_personal_account_text_input_layout_margin_top"
         android:background="@color/white"
         app:hintEnabled="false"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,15 +38,11 @@
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/createPersonalAccountWithEmailEditText"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="@color/white"
-            android:fontFamily="sans-serif"
+            android:layout_height="wrap_content"
             android:hint="@string/profile__email__placeholder"
             android:inputType="textEmailAddress"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:textColorHint="@color/light_graphite"
-            android:textSize="14sp" />
+            style="@style/EditText.Authentication"
+            />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -54,10 +50,7 @@
         android:id="@+id/confirmationButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/selector_confirm_button"
-        android:padding="8dp"
-        android:src="@drawable/ic_arrow_right"
+        style="@style/Button.Authentication"
         app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithEmailTextInputLayout"
         app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithEmailTextInputLayout"
         app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithEmailTextInputLayout" />

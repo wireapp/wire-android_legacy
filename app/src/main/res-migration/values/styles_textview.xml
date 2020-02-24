@@ -25,8 +25,7 @@
     </style>
 
     <style name="TextView.TabLayoutTitle" parent="TextView.RobotoBold">
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="android:textSize">@dimen/tab_layout_title_text_size</item>
+        <item name="android:textSize">@dimen/authentication_tab_layout_title_text_size</item>
     </style>
 
     <style name="TextView.Title">
