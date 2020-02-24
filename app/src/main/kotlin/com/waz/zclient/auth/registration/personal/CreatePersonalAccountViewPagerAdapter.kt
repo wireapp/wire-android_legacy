@@ -1,14 +1,13 @@
 package com.waz.zclient.auth.registration.personal
 
-import android.annotation.SuppressLint
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 
-class CreatePersonalAccountViewPagerAdapter(fragmentManager: FragmentManager)
-    : FragmentPagerAdapter(fragmentManager) {
+class CreatePersonalAccountViewPagerAdapter(fragmentManager: FragmentManager, private val titles: List<String>) :
+    FragmentPagerAdapter(fragmentManager) {
 
-    override fun getCount(): Int = TABS_COUNT
+    override fun getCount(): Int = titles.size
 
     override fun getItem(position: Int): Fragment {
         var fragment = Fragment()
@@ -19,18 +18,10 @@ class CreatePersonalAccountViewPagerAdapter(fragmentManager: FragmentManager)
         return fragment
     }
 
-    override fun getPageTitle(position: Int): CharSequence {
-        var title = ""
-        when (position) {
-            EMAIL_TAB_POSITION -> title = "EMAIL"
-            PHONE_TAB_POSITION -> title = "PHONE"
-        }
-        return title
-    }
+    override fun getPageTitle(position: Int): CharSequence = titles[position].toUpperCase()
 
     companion object {
         private const val EMAIL_TAB_POSITION = 0
         private const val PHONE_TAB_POSITION = 1
-        private const val TABS_COUNT = 2
     }
 }

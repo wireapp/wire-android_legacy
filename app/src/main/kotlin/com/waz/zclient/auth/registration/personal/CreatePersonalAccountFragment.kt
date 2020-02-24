@@ -10,8 +10,11 @@ class CreatePersonalAccountFragment : Fragment(R.layout.fragment_create_personal
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val tabTitles = listOf(getString(R.string.profile__email__placeholder),
+            getString(R.string.pref_account_phone_title))
+
         createPersonalAccountViewPager.adapter =
-            CreatePersonalAccountViewPagerAdapter(requireActivity().supportFragmentManager)
+            CreatePersonalAccountViewPagerAdapter(requireActivity().supportFragmentManager, tabTitles)
     }
 
     companion object {
