@@ -28,30 +28,28 @@
         android:id="@+id/createPersonalAccountWithPhoneTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/white"
         android:layout_marginTop="@dimen/create_personal_account_text_input_layout_margin_top"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@color/white"
         app:hintEnabled="false"
-        >
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/createPersonalAccountWithPhoneEditText"
+            style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="phone"
             android:hint="@string/pref_account_phone_title"
-            style="@style/EditText.Authentication"
-            />
+            android:inputType="phone" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/confirmationButton"
+        style="@style/Button.Authentication"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/Button.Authentication"
         app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithPhoneTextInputLayout"
         app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithPhoneTextInputLayout"
         app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithPhoneTextInputLayout" />

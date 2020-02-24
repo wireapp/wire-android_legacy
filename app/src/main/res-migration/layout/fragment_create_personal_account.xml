@@ -42,17 +42,15 @@
         android:textSize="@dimen/create_personal_account_title_text_view_size"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/topGuideline"
-        />
-
+        app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/createPersonalAccountViewPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="@dimen/create_personal_account_view_pager_margin_start"
-        android:layout_marginEnd="@dimen/create_personal_account_view_pager_margin_end"
         android:layout_marginTop="@dimen/create_personal_account_view_pager_margin_top"
+        android:layout_marginEnd="@dimen/create_personal_account_view_pager_margin_end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -61,10 +59,9 @@
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/createPersonalAccountTabLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             style="@style/TabLayout"
-            />
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
     </androidx.viewpager.widget.ViewPager>
 

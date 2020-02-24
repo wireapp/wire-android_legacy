@@ -37,20 +37,19 @@
 
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/createPersonalAccountWithEmailEditText"
+            style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/profile__email__placeholder"
-            android:inputType="textEmailAddress"
-            style="@style/EditText.Authentication"
-            />
+            android:inputType="textEmailAddress" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/confirmationButton"
+        style="@style/Button.Authentication"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="@style/Button.Authentication"
         app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithEmailTextInputLayout"
         app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithEmailTextInputLayout"
         app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithEmailTextInputLayout" />
