@@ -73,7 +73,7 @@ object BackupManager {
   object BackupMetadata {
 
     def currentPlatform: String = "android"
-    def currentDbVersion: Int = if (BuildConfig.KOTLIN_CORE) UserDatabase.VERSION else ZMessagingDB.DbVersion
+    def currentDbVersion: Int = UserDatabase.VERSION
 
 
     implicit def backupMetadataEncoder: JsonEncoder[BackupMetadata] = new JsonEncoder[BackupMetadata] {

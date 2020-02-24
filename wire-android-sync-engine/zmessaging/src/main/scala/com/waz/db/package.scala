@@ -1,6 +1,6 @@
 /*
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2020 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -126,11 +126,9 @@ package db {
     def create: ReadTransactionSupport = new ReadTransactionSupport {
       verbose(l"using deferred mode read transactions")
 
-      override def beginReadTransaction(db: DB): Unit = try reflectiveBegin(db) catch {
+      override def beginReadTransaction(db: DB): Unit = try db.beginTransaction() catch {
         case _: Exception => db.beginTransactionNonExclusive()
       }
-
-      private def reflectiveBegin(db: DB): Unit = db.beginTransaction()
     }
 
     object FallbackReadTransactionSupport extends DerivedLogTag {
