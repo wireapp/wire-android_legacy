@@ -34,7 +34,8 @@ object Injector {
     private fun developmentModules() =
         listOf(
             settingsAccountModule,
-            settingsDeviceModule
+            settingsDeviceModule,
+            clientsModule
         )
 
     private fun productionModules() =
@@ -42,7 +43,6 @@ object Injector {
             settingsAboutModule,
             settingsSupportModule,
             usersModule,
-            clientsModule,
             storageModule,
             networkModule,
             configModule
