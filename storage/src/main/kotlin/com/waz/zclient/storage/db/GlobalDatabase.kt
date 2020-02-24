@@ -8,8 +8,14 @@ import com.waz.zclient.storage.db.accountdata.AccessTokenConverter
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsDao
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import com.waz.zclient.storage.db.accountdata.SsoIdConverter
+import com.waz.zclient.storage.db.cache.CacheEntryEntity
+import com.waz.zclient.storage.db.teams.TeamsEntity
 
-@Database(entities = [ActiveAccountsEntity::class], version = GlobalDatabase.VERSION)
+@Database(entities = [
+    ActiveAccountsEntity::class,
+    CacheEntryEntity::class,
+    TeamsEntity::class
+], version = GlobalDatabase.VERSION)
 @TypeConverters(value = [AccessTokenConverter::class, SsoIdConverter::class])
 abstract class GlobalDatabase : RoomDatabase() {
 

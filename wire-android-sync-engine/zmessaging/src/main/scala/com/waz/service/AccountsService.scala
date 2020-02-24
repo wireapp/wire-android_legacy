@@ -262,14 +262,10 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   }
 
   private def markMigrationDone() =
-    (for {
+    for {
       _ <- firstTimeWithTeamsPref := false
       _ <- databasesRenamedPref   := true
-    } yield {}).recoverWith {
-      case e : Exception =>
-        error(l"error within markMigrationDone $e")
-        Future.failed(e)
-    }
+    } yield {}
 
   override val accountManagers = Signal[Set[AccountManager]]()
 
@@ -288,7 +284,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
                                     isLogin:        Option[Boolean],
                                     initialUser:    Option[UserInfo] = None,
                                     backupPassword: Option[Password] = None) = Serialized.future(AccountManagersKey) {
-    (for {
+    for {
       managers <- accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head
       manager  <- managers.find(_.userId == userId)
                           .fold(createManager(userId, initialUser, isLogin, importDbFile.nonEmpty))(m => Future.successful(Some(m)))
@@ -296,11 +292,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
                    case (Some(mgr), Some(file), Some(password)) => restoreFromBackup(mgr, userId, file, password)
                    case _ =>
                  }
-    } yield manager).recoverWith {
-      case e : Exception =>
-        error(l"error retrieving account managers $e")
-        Future.failed(e)
-    }
+    } yield manager
   }
 
   private def restoreFromBackup(accountManager: AccountManager, userId: UserId, importDbFile: File, password: Password) = {
@@ -322,7 +314,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   }
 
   private def createManager(userId: UserId, initialUser: Option[UserInfo], isLogin: Option[Boolean], fromBackup: Boolean): Future[Option[AccountManager]] =
-    (for {
+    for {
       account <- storage.flatMap(_.get(userId))
       _       =  if (account.isEmpty) warn(l"No logged in account for user: $userId, not creating account manager")
       user    <- if (account.isDefined) prefs(LoggingInUser).apply().map(_.orElse(initialUser)) else Future.successful(None)
@@ -331,10 +323,6 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
       val newManager = new AccountManager(userId, acc.teamId, global, this, backupManager, startedJustAfterBackup = fromBackup, user, isLogin)
       if (isLogin.isDefined) accountManagers.mutateOrDefault(_ + newManager, Set(newManager))
       newManager
-    }).recoverWith {
-      case e : Exception =>
-        error(l"error creating single account manager $e")
-        Future.failed(e)
     }
 
   @volatile private var accountStateSignals = Map.empty[UserId, Signal[AccountState]]

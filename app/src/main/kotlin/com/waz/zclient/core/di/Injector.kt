@@ -1,6 +1,7 @@
 package com.waz.zclient.core.di
 
 import android.content.Context
+import com.waz.zclient.BuildConfig
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.devices.di.clientsModule
 import com.waz.zclient.settings.account.di.settingsAccountModule
@@ -16,20 +17,32 @@ import org.koin.core.context.startKoin
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 object Injector {
+
     @JvmStatic
     fun start(context: Context) {
         startKoin {
             androidContext(context)
-            modules(listOf(
-                settingsMainModule,
-                settingsAccountModule,
-                settingsDeviceModule,
-                usersModule,
-                clientsModule,
-                storageModule,
-                networkModule,
-                configModule
-            ))
+            if (BuildConfig.KOTLIN_CORE) {
+                modules(listOf(productionModules(), developmentModules()).flatten())
+            } else {
+                modules(productionModules())
+            }
         }
     }
+
+    private fun developmentModules() =
+        listOf(
+            settingsAccountModule,
+            settingsDeviceModule
+        )
+
+    private fun productionModules() =
+        listOf(
+            settingsMainModule,
+            usersModule,
+            clientsModule,
+            storageModule,
+            networkModule,
+            configModule
+        )
 }
