@@ -8,8 +8,13 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account.*
 
 class CreatePersonalAccountFragment : Fragment(R.layout.fragment_create_personal_account) {
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        initViewPager()
+    }
+
+    private fun initViewPager() {
         val tabTitles = listOf(getString(R.string.profile__email__placeholder),
             getString(R.string.pref_account_phone_title))
 
