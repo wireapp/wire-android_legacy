@@ -1,15 +1,15 @@
 package com.waz.zclient.auth.registration.personal
 
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentPagerAdapter
+import androidx.fragment.app.FragmentActivity
+import androidx.viewpager2.adapter.FragmentStateAdapter
 
-class CreatePersonalAccountViewPagerAdapter(fragmentManager: FragmentManager, private val titles: List<String>) :
-    FragmentPagerAdapter(fragmentManager) {
+class CreatePersonalAccountViewPagerAdapter(fragmentActivity: FragmentActivity) :
+    FragmentStateAdapter(fragmentActivity) {
 
-    override fun getCount(): Int = titles.size
+    override fun getItemCount(): Int = TAB_SIZE
 
-    override fun getItem(position: Int): Fragment {
+    override fun createFragment(position: Int): Fragment {
         var fragment = Fragment()
         when (position) {
             EMAIL_TAB_POSITION -> fragment = CreatePersonalAccountWithEmailFragment.newInstance()
@@ -18,10 +18,9 @@ class CreatePersonalAccountViewPagerAdapter(fragmentManager: FragmentManager, pr
         return fragment
     }
 
-    override fun getPageTitle(position: Int): CharSequence = titles[position].toUpperCase()
-
     companion object {
         private const val EMAIL_TAB_POSITION = 0
         private const val PHONE_TAB_POSITION = 1
+        private const val TAB_SIZE = 2
     }
 }

@@ -26,7 +26,7 @@
 
     <style name="EditText.Authentication"  parent="@style/EditText.RobotoRegular">
         <item name="android:padding">@dimen/authentication_edit_text_padding</item>
-        <item name="android:textColorHint">@color/light_graphite</item>
+        <item name="android:textColorHint">@color/heather</item>
         <item name="android:textSize">@dimen/authentication_edit_text_text_size</item>
         <item name="android:background">@color/white</item>
     </style>

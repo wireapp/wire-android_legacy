@@ -1489,4 +1489,14 @@
     <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
     <string name="edit_phone_dialog_confirm_phone_confirmation">We will send a notification code to:\n%s</string>
     <string name="edit_phone_save_phone_number">Save</string>
+
+    <!-- Authentication (Shared strings between create account and login screens) -->
+    <string name="authentication_tab_layout_title_email">EMAIL</string>
+    <string name="authentication_tab_layout_title_phone">PHONE</string>
+
+    <!-- Create Personal Account screen -->
+    <string name="create_personal_account_title">Create an account</string>
+    <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
+    <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
+
 </resources>
