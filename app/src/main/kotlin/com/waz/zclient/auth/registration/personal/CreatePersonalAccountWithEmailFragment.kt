@@ -22,8 +22,7 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
 
     private fun initViewModel() {
         with(createPersonalAccountViewModel) {
-            successLiveData.observe(viewLifecycleOwner) { updateConfirmationButtonStatus(true) }
-            errorLiveData.observe(viewLifecycleOwner) { updateConfirmationButtonStatus(false) }
+            confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) { updateConfirmationButtonStatus(it) }
         }
     }
 

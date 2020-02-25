@@ -13,11 +13,9 @@ class CreatePersonalAccountViewModel(
 ) : ViewModel() {
 
 
-    private var _successLiveData = MutableLiveData<ValidateEmailSuccess>()
-    private var _errorLiveData = MutableLiveData<ValidateEmailError>()
+    private var _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
 
-    val successLiveData: LiveData<ValidateEmailSuccess> = _successLiveData
-    val errorLiveData: LiveData<ValidateEmailError> = _errorLiveData
+    val confirmationButtonEnabledLiveData: LiveData<Boolean> = _confirmationButtonEnabledLiveData
 
     fun validateEmail(email: String) {
         validateEmailUseCase(viewModelScope, ValidateEmailParams(email), Dispatchers.Default) {
@@ -26,12 +24,12 @@ class CreatePersonalAccountViewModel(
     }
 
     private fun handleSuccess(validatedEmail: String) {
-        _successLiveData.postValue(EmailValid)
+        _confirmationButtonEnabledLiveData.postValue(true)
     }
 
     private fun handleFailure(failure: Failure) {
         if (failure is ValidateEmailError) {
-            _errorLiveData.postValue(failure)
+            _confirmationButtonEnabledLiveData.postValue(false)
         }
     }
 }
