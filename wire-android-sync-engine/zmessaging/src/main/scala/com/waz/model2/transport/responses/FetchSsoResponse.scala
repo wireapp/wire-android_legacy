@@ -12,7 +12,12 @@ object FetchSsoResponse {
   implicit val fetchSsoResponseDecoder: JsonDecoder[FetchSsoResponse] = new JsonDecoder[FetchSsoResponse] {
     override def apply(implicit js: JSONObject): FetchSsoResponse = {
       import JsonDecoder._
-      decodeOptString('default_sso_code).fold[FetchSsoResponse](SSONotFound)(SSOFound(_))
+      val configUrl = decodeOptString('default_sso_code)
+      configUrl match {
+        case None => SSONotFound
+        case Some("") => SSONotFound
+        case Some(sso) => SSOFound(sso)
+      }
     }
   }
 }
