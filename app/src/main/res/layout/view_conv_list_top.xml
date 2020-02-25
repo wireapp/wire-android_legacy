@@ -78,15 +78,7 @@
             app:w_font="@string/wire__typeface__medium"
             android:textColor="@color/white"
             android:drawablePadding="@dimen/wire__padding__8"
-            />
-
-        <!-- Empty box on the right end of the layout used to center the title -->
-        <FrameLayout
-            android:id="@+id/button_container_end"
-            android:layout_width="?attr/actionBarSize"
-            android:layout_height="match_parent"
-            android:layout_gravity="end|center_vertical"
-            android:layout_weight="0"
+            android:paddingEnd="?attr/actionBarSize"
             />
 
     </LinearLayout>

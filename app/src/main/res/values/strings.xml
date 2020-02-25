@@ -1103,9 +1103,9 @@
     <string name="availability_available">Available</string>
     <string name="availability_away">Away</string>
     <string name="availability_busy">Busy</string>
-    <string name="availability_text_available">THIS PERSON IS AVAILABLE</string>
-    <string name="availability_text_away">THIS PERSON IS AWAY</string>
-    <string name="availability_text_busy">THIS PERSON IS BUSY</string>
+    <string name="availability_text_available">AVAILABLE</string>
+    <string name="availability_text_away">AWAY</string>
+    <string name="availability_text_busy">BUSY</string>
     <string name="availability_setstatus">SET A STATUS</string>
 
     <string name="availability_notification_warning_away_title">You are set to Away</string>
