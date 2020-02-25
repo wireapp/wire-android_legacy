@@ -40,7 +40,6 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   val sharableContent     = Signal(Option.empty[SharableContent])
   val targetConvs         = Signal(Seq.empty[ConvId])
   val ephemeralExpiration = Signal(Option.empty[FiniteDuration])
-  val conversationController = inject[ConversationController]
 
   def onContentShared(activity: Activity, convs: Seq[ConvId]): Unit = {
     targetConvs ! convs
@@ -50,14 +49,13 @@ class SharingController(implicit injector: Injector, wContext: WireContext, even
   def sendContent(activity: Activity): Future[Seq[ConvId]] = {
     def send(content: SharableContent, convs: Seq[ConvId], expiration: Option[FiniteDuration]) =
       content match {
-        case NewContent   =>
-          conversationController.switchConversation(convs.head)
+        case NewContent     =>
+          inject[ConversationController].switchConversation(convs.head)
         case TextContent(t) =>
-          conversationController.sendTextMessage(convs, t, Nil, None, Some(expiration))
+          inject[ConversationController].sendTextMessage(convs, t, Nil, None, Some(expiration))
         case uriContent     =>
-          Future.traverse(uriContent.uris) { uriWrapper =>
-            conversationController.sendAssetMessage(URIWrapper.toJava(uriWrapper), activity, Some(expiration), convs)
-          }
+          val uris = uriContent.uris.map(URIWrapper.toJava)
+          inject[ConversationController].sendAssetMessages(uris, activity, Some(expiration), convs)
       }
 
     for {
