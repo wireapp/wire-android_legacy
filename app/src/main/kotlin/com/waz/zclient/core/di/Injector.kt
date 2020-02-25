@@ -27,12 +27,13 @@ object Injector {
         }
     }
 
-    private fun developmentModules() = if (BuildConfig.KOTLIN_CORE)
+    private fun developmentModules() = if (BuildConfig.KOTLIN_CORE) {
         listOf(
             settingsAccountModule,
             settingsDeviceModule,
             clientsModule
-        ) else emptyList()
+        )
+    } else emptyList()
 
     private fun productionModules() =
         listOf(
