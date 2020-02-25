@@ -317,13 +317,13 @@ object NotificationManagerWrapper {
       addToExternalNotificationFolder(R.raw.new_message_gcm, getString(R.string.wire_notification_name))
         .recover {
           case ex: Exception =>
-            error(l"Failed to add ${(R.raw.new_message_gcm, getString(R.string.wire_notification_name))} to the external notification folder", ex)
+            error(l"Failed to add `new message GCM` (${getString(R.string.wire_notification_name)}) to the external notification folder", ex)
         }
 
       addToExternalNotificationFolder(R.raw.ping_from_them, getString(R.string.wire_ping_name))
         .recover {
           case ex: Exception =>
-            error(l"Failed to add ${(R.raw.ping_from_them, getString(R.string.wire_ping_name))} to the external notification folder", ex)
+            error(l"Failed to add `ping from them` (${getString(R.string.wire_ping_name)}) to the external notification folder", ex)
         }
 
       accountChannels { channels =>
