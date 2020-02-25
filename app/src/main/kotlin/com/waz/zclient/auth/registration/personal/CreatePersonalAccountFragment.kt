@@ -3,6 +3,7 @@ package com.waz.zclient.auth.registration.personal
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import com.google.android.material.tabs.TabLayoutMediator
 import com.waz.zclient.R
 import kotlinx.android.synthetic.main.fragment_create_personal_account.*
 
@@ -10,11 +11,21 @@ class CreatePersonalAccountFragment : Fragment(R.layout.fragment_create_personal
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val tabTitles = listOf(getString(R.string.profile__email__placeholder),
-            getString(R.string.pref_account_phone_title))
+        initViewPager()
+        initTabLayout()
+    }
 
+    private fun initViewPager() {
         createPersonalAccountViewPager.adapter =
-            CreatePersonalAccountViewPagerAdapter(childFragmentManager, tabTitles)
+            CreatePersonalAccountViewPagerAdapter(requireActivity())
+    }
+
+    private fun initTabLayout() {
+        val tabTitles = listOf(getString(R.string.authentication_tab_layout_title_email),
+            getString(R.string.authentication_tab_layout_title_phone))
+        TabLayoutMediator(createPersonalAccountTabLayout, createPersonalAccountViewPager) { tab, position ->
+            tab.text = tabTitles[position]
+        }.attach()
     }
 
     companion object {

@@ -40,7 +40,7 @@
             style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/pref_account_phone_title"
+            android:hint="@string/create_personal_account_with_phone_edit_text_hint"
             android:inputType="phone" />
 
     </com.google.android.material.textfield.TextInputLayout>

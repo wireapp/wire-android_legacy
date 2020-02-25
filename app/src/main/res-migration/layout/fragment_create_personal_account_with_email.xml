@@ -40,7 +40,7 @@
             style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/profile__email__placeholder"
+            android:hint="@string/create_personal_account_with_email_edit_text_hint"
             android:inputType="textEmailAddress" />
 
     </com.google.android.material.textfield.TextInputLayout>

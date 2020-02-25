@@ -19,50 +19,52 @@
 
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/athens_gray_light">
+xmlns:app="http://schemas.android.com/apk/res-auto"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="@color/athens_gray_light">
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/topGuideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.228" />
+<androidx.constraintlayout.widget.Guideline
+    android:id="@+id/topGuideline"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    app:layout_constraintGuide_percent="0.228" />
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/createPersonalAccountTitleTextView"
-        style="@style/TextView.RobotoLight"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="@string/new_reg__phone_signup__create_account"
-        android:textColor="@color/outer_space"
-        android:textSize="@dimen/create_personal_account_title_text_view_size"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
+<androidx.appcompat.widget.AppCompatTextView
+    android:id="@+id/createPersonalAccountTitleTextView"
+    style="@style/TextView.RobotoLight"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:text="@string/create_personal_account_title"
+    android:textColor="@color/outer_space"
+    android:textSize="@dimen/create_personal_account_title_text_view_size"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/createPersonalAccountViewPager"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="@dimen/create_personal_account_view_pager_margin_start"
-        android:layout_marginTop="@dimen/create_personal_account_view_pager_margin_top"
-        android:layout_marginEnd="@dimen/create_personal_account_view_pager_margin_end"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountTitleTextView"
-        app:layout_constraintVertical_bias="0.146">
+<com.google.android.material.tabs.TabLayout
+    android:id="@+id/createPersonalAccountTabLayout"
+    style="@style/TabLayout.Authentication"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/authentication_tab_layout_view_pager_margin_start"
+    android:layout_marginTop="@dimen/authentication_tab_layout_margin_top"
+    android:layout_marginEnd="@dimen/authentication_tab_layout_view_pager_margin_end"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountTitleTextView" />
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/createPersonalAccountTabLayout"
-            style="@style/TabLayout.Authentication"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-    </androidx.viewpager.widget.ViewPager>
+<androidx.viewpager2.widget.ViewPager2
+    android:id="@+id/createPersonalAccountViewPager"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:layout_marginStart="@dimen/authentication_tab_layout_view_pager_margin_start"
+    android:layout_marginEnd="@dimen/authentication_tab_layout_view_pager_margin_end"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountTabLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
