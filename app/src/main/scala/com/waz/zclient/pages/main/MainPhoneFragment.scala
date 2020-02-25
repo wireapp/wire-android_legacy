@@ -58,7 +58,7 @@ import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
 import com.waz.zclient.shortcuts.Shortcuts
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
+import com.waz.service.tracking.TrackingService.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 
