@@ -23,20 +23,16 @@ object Injector {
     fun start(context: Context) {
         startKoin {
             androidContext(context)
-            if (BuildConfig.KOTLIN_CORE) {
-                modules(listOf(productionModules(), developmentModules()).flatten())
-            } else {
-                modules(productionModules())
-            }
+            modules(listOf(productionModules(), developmentModules()).flatten())
         }
     }
 
-    private fun developmentModules() =
+    private fun developmentModules() = if (BuildConfig.KOTLIN_CORE)
         listOf(
             settingsAccountModule,
             settingsDeviceModule,
             clientsModule
-        )
+        ) else emptyList()
 
     private fun productionModules() =
         listOf(
