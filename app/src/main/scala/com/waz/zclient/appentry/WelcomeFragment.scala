@@ -24,7 +24,7 @@ import com.waz.utils.returning
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{Email, Login, SignInMethod}
-import com.waz.zclient.auth.signup.CreateAccountActivity
+import com.waz.zclient.auth.registration.CreateAccountActivity
 
 class WelcomeFragment extends SSOFragment {
 

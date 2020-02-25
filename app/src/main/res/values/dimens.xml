@@ -574,6 +574,16 @@
     <dimen name="item_view_country_code_text_size">18sp</dimen>
     <dimen name="item_view_country_code_padding">24dp</dimen>
 
+    <!-- Authentication (Shared dimensions between create account and login screens) -->
+    <dimen name="authentication_tab_layout_indicator_height">1dp</dimen>
+    <dimen name="authentication_tab_layout_title_text_size">12sp</dimen>
+    <dimen name="authentication_tab_layout_margin_top">24dp</dimen>
+    <dimen name="authentication_tab_layout_view_pager_margin_start">16dp</dimen>
+    <dimen name="authentication_tab_layout_view_pager_margin_end">16dp</dimen>
+    <dimen name="authentication_edit_text_padding">16dp</dimen>
+    <dimen name="authentication_edit_text_text_size">14sp</dimen>
+    <dimen name="authentication_confirmation_button_padding">8dp</dimen>
+    <dimen name="authentication_confirmation_button_margin_end">16dp</dimen>
 
     <!-- Create Account screen -->
     <dimen name="create_account_layout_container_margin">16dp</dimen>
@@ -581,4 +591,10 @@
     <dimen name="create_account_title_text_size">24sp</dimen>
     <dimen name="create_account_description_text_size">16sp</dimen>
     <dimen name="create_account_description_padding">32dp</dimen>
+
+    <!-- Create Personal Account screen -->
+    <dimen name="create_personal_account_title_text_view_size">32sp</dimen>
+    <dimen name="create_personal_account_text_input_layout_margin_top">14dp</dimen>
+    <dimen name="create_personal_account_edit_text_height">56dp</dimen>
+
 </resources>
