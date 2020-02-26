@@ -88,9 +88,9 @@ object TrackingService {
 
   trait NoReporting { self: Throwable => }
 
-  val analyticsPrefKey = BuildConfig.APPLICATION_ID match {
-    case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
-    case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
+  val analyticsPrefKey = BuildConfig.FLAVOR match {
+    case "prod" | "internal" => GlobalPreferences.AnalyticsEnabled
+    case _                   => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
   }
 
 }

@@ -68,10 +68,8 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
   tracking.events.foreach {
     case (zms, event: OpenedTeamRegistration) =>
       ZMessaging.currentAccounts.accountManagers.head.map {
-        _.size match {
-          case 0 => sendEvent(event, zms)
-          case _ => sendEvent(OpenedTeamRegistrationFromProfile(), zms)
-        }
+        case managers if managers.isEmpty => sendEvent(event, zms)
+        case _                            => sendEvent(OpenedTeamRegistrationFromProfile(), zms)
       }
     case (_, event: LoggedOutEvent) if event.reason == LoggedOutEvent.InvalidCredentials =>
       //This event type is trigged a lot, so disable for now
