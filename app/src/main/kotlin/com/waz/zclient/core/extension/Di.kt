@@ -18,16 +18,6 @@ inline fun <reified T : ViewModel> LifecycleOwner.viewModel(
         .getViewModel(this, T::class, viewModelQualifier, parameters)
 }
 
-inline fun <reified T : ViewModel> LifecycleOwner.viewModel(
-    scopeId: String,
-    scopeName: String,
-    viewModelQualifier: Qualifier? = null,
-    noinline parameters: ParametersDefinition? = null
-): Lazy<T> = lazy {
-    createScope(scopeId, scopeName)
-        .getViewModel(this, T::class, viewModelQualifier, parameters)
-}
-
 fun LifecycleOwner.createScope(
     scopeId: String,
     scopeName: String
