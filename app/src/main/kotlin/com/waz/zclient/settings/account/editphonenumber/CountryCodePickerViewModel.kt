@@ -9,9 +9,9 @@ import kotlinx.coroutines.Dispatchers
 
 class CountryCodePickerViewModel(private val getCountryCodesUseCase: GetCountryCodesUseCase) : ViewModel() {
 
-    private var _countriesLiveData = MutableLiveData<List<Country>>()
-    private var _countryLiveData = MutableLiveData<Country>()
-    private var _dismissLiveData = MutableLiveData<Unit>()
+    private val _countriesLiveData = MutableLiveData<List<Country>>()
+    private val _countryLiveData = MutableLiveData<Country>()
+    private val _dismissLiveData = MutableLiveData<Unit>()
 
     val countriesLiveData: LiveData<List<Country>> = _countriesLiveData
     val dismissLiveData: LiveData<Unit> = _dismissLiveData
