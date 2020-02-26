@@ -10,9 +10,7 @@ import com.waz.zclient.user.domain.usecase.email.ValidateEmailParams
 import com.waz.zclient.user.domain.usecase.email.ValidateEmailUseCase
 import kotlinx.coroutines.Dispatchers
 
-class CreatePersonalAccountViewModel(
-
-    private val validateEmailUseCase: ValidateEmailUseCase) : ViewModel() {
+class CreatePersonalAccountViewModel(private val validateEmailUseCase: ValidateEmailUseCase) : ViewModel() {
 
     private var _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
 
@@ -32,6 +30,5 @@ class CreatePersonalAccountViewModel(
 
     private fun updateConfirmation(enabled: Boolean) {
         _confirmationButtonEnabledLiveData.postValue(enabled)
-
     }
 }
