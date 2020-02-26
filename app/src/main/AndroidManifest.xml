@@ -241,7 +241,7 @@
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark.Preferences" />
         <activity
-            android:name=".auth.signup.CreateAccountActivity"
+            android:name=".auth.registration.CreateAccountActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Light"
             android:screenOrientation="portrait"

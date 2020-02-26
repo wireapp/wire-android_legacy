@@ -31,6 +31,7 @@
         android:textSize="@dimen/wire__text_size__small"
         android:maxLines="1"
         app:w_font="@string/wire__typeface__light"
+        android:ellipsize="end"
         android:layout_weight="1"
         />
 

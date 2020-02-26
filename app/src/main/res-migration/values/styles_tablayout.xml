@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TabLayout" parent="Widget.Design.TabLayout" />
+
+    <style name="TabLayout.Authentication">
+        <item name="tabMode">fixed</item>
+        <item name="tabTextColor">@color/black_48</item>
+        <item name="tabSelectedTextColor">@color/graphite</item>
+        <item name="tabIndicatorColor">@color/graphite</item>
+        <item name="tabIndicatorHeight">@dimen/authentication_tab_layout_indicator_height</item>
+        <item name="tabTextAppearance">@style/TextView.TabLayoutTitle</item>
+    </style>
+</resources>
