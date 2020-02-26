@@ -12,10 +12,11 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.getDeviceLocale
 import com.waz.zclient.core.extension.removeFragment
 import com.waz.zclient.core.extension.replaceFragment
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_edit_phone.*
-import org.koin.android.viewmodel.ext.android.viewModel
 
 @SuppressWarnings("TooManyFunctions")
 class EditPhoneNumberFragment : Fragment(R.layout.fragment_edit_phone) {
@@ -28,7 +29,9 @@ class EditPhoneNumberFragment : Fragment(R.layout.fragment_edit_phone) {
         arguments?.getBoolean(HAS_EMAIL_BUNDLE_KEY, false) ?: false
     }
 
-    private val settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
+    private val settingsAccountPhoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel(
+        SETTINGS_SCOPE_ID
+    )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -11,16 +11,17 @@ import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.ui.list.RecyclerViewItemClickListener
 import com.waz.zclient.settings.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.settings.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.settings.devices.list.adapter.DevicesViewHolder
 import com.waz.zclient.settings.devices.model.ClientItem
-import org.koin.android.viewmodel.ext.android.viewModel
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 
 class SettingsDeviceListFragment : Fragment() {
 
-    private val deviceListViewModel: SettingsDeviceListViewModel by viewModel()
+    private val deviceListViewModel: SettingsDeviceListViewModel by viewModel(SETTINGS_SCOPE_ID)
 
     private lateinit var devicesRecyclerView: RecyclerView
 
