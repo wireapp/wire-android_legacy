@@ -8,14 +8,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.settings.devices.model.ClientItem
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_device_detail.*
-import org.koin.android.viewmodel.ext.android.viewModel
 
 class SettingsDeviceDetailFragment : Fragment() {
 
-    private val deviceDetailsViewModel: SettingsDeviceDetailViewModel by viewModel()
+    private val deviceDetailsViewModel: SettingsDeviceDetailViewModel by viewModel(SETTINGS_SCOPE_ID)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_device_detail, container, false)
