@@ -42,7 +42,6 @@ import com.waz.zclient.cursor.MentionUtils.{Replacement, getMention}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.ui.cursor.CursorEditText.OnBackspaceListener
 import com.waz.zclient.ui.cursor._
-import com.waz.zclient.ui.text.TextTransform
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
 import com.waz.zclient.ui.views.OnDoubleClickListener
 import com.waz.zclient.utils.ContextUtils._
@@ -288,19 +287,16 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
 
   accentColor.map(_.color).onUi(cursorEditText.setAccentColor)
 
-  private lazy val transformer = TextTransform.get(ContextUtils.getString(R.string.single_image_message__name__font_transform))
-
   (for {
-    eph <- controller.isEphemeral
-    av <- controller.convAvailability
+    eph  <- controller.isEphemeral
+    av   <- controller.convAvailability
     name <- controller.conv.map(_.displayName)
   } yield (eph, av, name)).onUi {
     case (true, av, _) =>
       hintView.setText(getString(R.string.cursor__ephemeral_message))
       AvailabilityView.displayStartOfText(hintView, av, defaultHintTextColor)
     case (false, av, name) if av != Availability.None =>
-      val transformedName = transformer.transform(name.str.split(' ')(0)).toString
-      hintView.setText(getString(AvailabilityView.viewData(av).textId, transformedName))
+      hintView.setText(getString(AvailabilityView.viewData(av).textId))
       AvailabilityView.displayStartOfText(hintView, av, defaultHintTextColor)
     case _ =>
       hintView.setText(getString(R.string.cursor__type_a_message))
