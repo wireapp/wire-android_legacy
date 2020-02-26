@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 
 class SettingsSupportViewModel : ViewModel() {
 
-    private var _urlLiveData = MutableLiveData<SupportUrl>()
+    private val _urlLiveData = MutableLiveData<SupportUrl>()
 
     val urlLiveData = _urlLiveData
 
