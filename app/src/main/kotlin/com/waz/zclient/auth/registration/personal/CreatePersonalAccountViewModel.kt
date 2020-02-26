@@ -5,13 +5,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.user.domain.usecase.email.*
+import com.waz.zclient.user.domain.usecase.email.ValidateEmailError
+import com.waz.zclient.user.domain.usecase.email.ValidateEmailParams
+import com.waz.zclient.user.domain.usecase.email.ValidateEmailUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountViewModel(
-    private val validateEmailUseCase: ValidateEmailUseCase
-) : ViewModel() {
 
+    private val validateEmailUseCase: ValidateEmailUseCase) : ViewModel() {
 
     private var _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
 
@@ -19,17 +20,18 @@ class CreatePersonalAccountViewModel(
 
     fun validateEmail(email: String) {
         validateEmailUseCase(viewModelScope, ValidateEmailParams(email), Dispatchers.Default) {
-            it.fold(::handleFailure, ::handleSuccess)
+            it.fold(::handleFailure) { updateConfirmation(true) }
         }
-    }
-
-    private fun handleSuccess(validatedEmail: String) {
-        _confirmationButtonEnabledLiveData.postValue(true)
     }
 
     private fun handleFailure(failure: Failure) {
         if (failure is ValidateEmailError) {
-            _confirmationButtonEnabledLiveData.postValue(false)
+            updateConfirmation(false)
         }
+    }
+
+    private fun updateConfirmation(enabled: Boolean) {
+        _confirmationButtonEnabledLiveData.postValue(enabled)
+
     }
 }

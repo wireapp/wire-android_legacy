@@ -16,7 +16,7 @@ import org.mockito.Mockito.`when`
 @ExperimentalCoroutinesApi
 class ValidateEmailUseCaseTest : UnitTest() {
 
-    private var validationEmailUseCase = ValidateEmailUseCase()
+    private val validationEmailUseCase = ValidateEmailUseCase()
 
     @Mock
     private lateinit var validateEmailParams: ValidateEmailParams
@@ -33,7 +33,7 @@ class ValidateEmailUseCaseTest : UnitTest() {
     }
 
     @Test
-    fun `Given run is executed, when email matches regex and length is 1, then return failure`() {
+    fun `Given run is executed, when email matches regex and length is smaller than 5, then return failure`() {
         val email = "t"
 
         runBlockingTest {
@@ -73,8 +73,7 @@ class ValidateEmailUseCaseTest : UnitTest() {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given run is executed when request is canceled, then return false`() {
-
+    fun `Given run is executed when request is canceled, then return false`() =
         runBlockingTest {
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -82,7 +81,6 @@ class ValidateEmailUseCaseTest : UnitTest() {
 
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
-    }
 
     companion object {
         private const val TEST_EXCEPTION_MESSAGE = "The request has been cancelled"
