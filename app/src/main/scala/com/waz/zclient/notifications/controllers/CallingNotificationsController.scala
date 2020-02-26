@@ -40,7 +40,7 @@ import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.SoundController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
-import com.waz.zclient.utils.ContextUtils.{getString, _}
+import com.waz.zclient.utils.ContextUtils.getString
 import com.waz.zclient.utils.RingtoneUtils
 
 import scala.concurrent.Future
@@ -54,8 +54,6 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
   private lazy val soundController = inject[SoundController]
   private lazy val notificationManager = inject[NotificationManager]
   private lazy val callCtrler = inject[CallController]
-
-  private val callImageSizePx = toPx(CallImageSizeDp)
 
   private val filteredGlobalProfile: Signal[(Option[ConvId], Seq[(ConvId, (UserId, UserId))])] =
     for {
@@ -192,13 +190,12 @@ object CallingNotificationsController {
   object NotificationAction extends Enumeration {
     val DeclineOrJoin, Leave, Nothing = Value
   }
+
   type NotificationAction = NotificationAction.Value
 
   val CallNotificationTag = "call_notification"
 
-  val CallImageSizeDp = 64
-
-  def isAndroid10OrAbove: Boolean = Build.VERSION.SDK_INT >= 29
+  val isAndroid10OrAbove: Boolean = Build.VERSION.SDK_INT >= 29
 
   def androidNotificationBuilder(not: CallNotification, treatAsIncomingCall: Boolean = false)(implicit cxt: content.Context): NotificationCompat.Builder = {
     val title = if (not.isGroup) not.convName else not.caller

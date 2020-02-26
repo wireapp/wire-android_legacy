@@ -24,7 +24,7 @@ import android.content.Context
 import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
-import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content.{ConversationStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
@@ -60,7 +60,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]
   private lazy val conversations         = inject[Signal[ConversationsService]]
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
-  private lazy val membersStorage        = inject[Signal[MembersStorage]]
   private lazy val usersStorage          = inject[Signal[UsersStorage]]
   private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
   private lazy val account               = inject[Signal[Option[AccountManager]]]
@@ -196,20 +195,11 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def groupConversation(id: ConvId): Signal[Boolean] =
     conversations.flatMap(_.groupConversation(id))
 
-  def participantsIds(conv: ConvId): Future[Seq[UserId]] =
-    membersStorage.head.flatMap(_.getActiveUsers(conv))
-
   def setEphemeralExpiration(expiration: Option[FiniteDuration]): Future[Unit] =
     for {
       id <- currentConvId.head
       _  <- convsUi.head.flatMap(_.setEphemeral(id, expiration))
     } yield ()
-
-  def loadMembers(convId: ConvId): Future[Seq[UserData]] =
-    for {
-      userIds <- membersStorage.head.flatMap(_.getActiveUsers(convId)) // TODO: maybe switch to ConversationsMembersSignal
-      users   <- usersStorage.head.flatMap(_.listAll(userIds))
-    } yield users
 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?

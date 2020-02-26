@@ -61,7 +61,7 @@ import com.waz.zclient.conversation.{ConversationController, ReplyContent, Reply
 import com.waz.zclient.cursor._
 import com.waz.zclient.drawing.DrawingFragment.Sketch
 import com.waz.zclient.log.LogUI._
-import com.waz.zclient.messages.{MessagesController, MessagesListView}
+import com.waz.zclient.messages.{MessagesController, MessagesListView, UsersController}
 import com.waz.zclient.pages.extendedcursor.ExtendedCursorContainer
 import com.waz.zclient.pages.extendedcursor.emoji.EmojiKeyboardLayout
 import com.waz.zclient.pages.extendedcursor.image.CursorImagesLayout
@@ -92,6 +92,7 @@ class ConversationFragment extends FragmentHelper {
   private lazy val zms = inject[Signal[ZMessaging]]
 
   private lazy val convController         = inject[ConversationController]
+  private lazy val usersController        = inject[UsersController]
   private lazy val messagesController     = inject[MessagesController]
   private lazy val screenController       = inject[ScreenController]
   private lazy val collectionController   = inject[CollectionController]
@@ -217,7 +218,7 @@ class ConversationFragment extends FragmentHelper {
     (for {
       (convId, isConvActive) <- convController.currentConv.map(c => (c.id, c.isActive))
       isGroup                <- convController.groupConversation(convId)
-      participantsNumber     <- Signal.future(convController.participantsIds(convId).map(_.size))
+      participantsNumber     <- convController.convMembers(convId).map(_.size)
       selfUserId             <- zms.map(_.selfUserId)
       call                   <- callController.currentCallOpt
       isCallActive           = call.exists(_.convId == convId) && call.exists(_.selfParticipant.userId == selfUserId)
@@ -793,8 +794,8 @@ class ConversationFragment extends FragmentHelper {
 
       (for {
         self <- inject[UserAccountsController].currentUser.head
-        members <- convController.loadMembers(convId)
-        unverifiedUsers = members.filter { !_.isVerified }
+        members <- convController.convMembers(convId).head
+        unverifiedUsers <- usersController.users(members.keys).map(_.filter(_.isVerified)).head
         unverifiedDevices <-
           if (unverifiedUsers.size == 1) Future.sequence(unverifiedUsers.map(u => convController.loadClients(u.id).map(_.filter(!_.isVerified)))).map(_.flatten.size)
           else Future.successful(0) // in other cases we don't need this number

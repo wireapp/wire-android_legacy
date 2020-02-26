@@ -29,7 +29,7 @@ import com.waz.service.call.Avs.VideoState
 import com.waz.service.call.CallInfo.CallState.{SelfJoining, _}
 import com.waz.service.call.CallInfo.Participant
 import com.waz.service.call.{CallInfo, CallingService, GlobalCallingService}
-import com.waz.service.{AccountsService, GlobalModule, NetworkModeService, ZMessaging}
+import com.waz.service.{GlobalModule, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils._
 import com.waz.utils.events._
@@ -37,6 +37,7 @@ import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.CallController.CallParticipantInfo
 import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.controllers.{SoundController, ThemeController}
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.DeprecationUtils
@@ -51,12 +52,9 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   import Threading.Implicits.Background
   import VideoState._
 
-  val networkMode     = inject[NetworkModeService].networkMode
-  val accounts        = inject[AccountsService]
-  val themeController = inject[ThemeController]
-
   private lazy val screenManager  = new ScreenManager
   private lazy val soundController = inject[SoundController]
+  private lazy val convController = inject[ConversationController]
 
   inject[GlobalPreferences].apply(GlobalPreferences.SkipTerminatingState) := true
 
@@ -119,7 +117,7 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
 
   val theme: Signal[Theme] = isVideoCall.flatMap {
     case true  => Signal.const(Theme.Dark)
-    case false => themeController.currentTheme
+    case false => inject[ThemeController].currentTheme
   }
 
   private val mergedVideoStates: Signal[Map[UserId, Set[VideoState]]] = {
@@ -194,9 +192,8 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
   val conversation        = callingZms.zip(callConvId) flatMap { case (z, cId) => z.convsStorage.signal(cId) }
   val conversationName    = conversation.map(_.displayName)
   val conversationMembers = for {
-    zms     <- callingZms
     cId     <- callConvId
-    members <- zms.membersStorage.activeMembers(cId)
+    members <- convController.convMembers(cId)
   } yield members
 
   private lazy val otherUser = Signal(isGroupCall, userStorage, otherParticipants.map(_.keys.toSeq.headOption)).flatMap {
@@ -208,11 +205,14 @@ class CallController(implicit inj: Injector, cxt: WireContext, eventContext: Eve
       Signal.const[Option[UserData]](None)
   }
 
-  val memberForPicture: Signal[Option[UserId]] = for {
-    self <- callingZms.map(_.selfUserId)
-    member <- conversationMembers.map(_.find(_ != self))
-    isGroup <- isGroupCall
-  } yield member.filter(_ => !isGroup)
+  val memberForPicture: Signal[Option[UserId]] = isGroupCall.flatMap {
+    case true  => Signal.const(None)
+    case false =>
+      for {
+        self   <- callingZms.map(_.selfUserId)
+        member <- conversationMembers.map(_.find(m => m._1 != self).map(_._1))
+      } yield member
+  }
 
   private lazy val lastControlsClick = Signal[(Boolean, Instant)]() //true = show controls and set timer, false = hide controls
 
