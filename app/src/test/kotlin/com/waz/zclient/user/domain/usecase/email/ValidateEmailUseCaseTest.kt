@@ -65,9 +65,6 @@ class ValidateEmailUseCaseTest : UnitTest() {
             `when`(validateEmailParams.email).thenReturn(email)
 
             validationEmailUseCase.run(validateEmailParams).isRight shouldBe true
-            validationEmailUseCase.run(validateEmailParams).map {
-                it shouldBe email
-            }
         }
 
     }
