@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountViewModel(private val validateEmailUseCase: ValidateEmailUseCase) : ViewModel() {
 
-    private var _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
+    private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
 
     val confirmationButtonEnabledLiveData: LiveData<Boolean> = _confirmationButtonEnabledLiveData
 
