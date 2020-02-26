@@ -31,4 +31,15 @@
         <item name="android:background">@color/white</item>
     </style>
 
+    <style name="EditText.PinCodeDigit" parent="@style/EditText.RobotoRegular">
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:inputType">number</item>
+        <item name="android:background">@color/white</item>
+        <item name="android:textSize">32dp</item>
+        <item name="android:maxLength">1</item>
+    </style>
+
 </resources>
