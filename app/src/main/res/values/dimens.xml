@@ -600,5 +600,6 @@
     <!-- Email Verification screen -->
     <dimen name="email_verification_title_text_view_size">40sp</dimen>
     <dimen name="email_verification_description_text_view_size">16sp</dimen>
-
+    <dimen name="email_verification_resend_code_text_view_size">12sp</dimen>
+    <dimen name="email_verification_change_email_text_view_size">12sp</dimen>
 </resources>

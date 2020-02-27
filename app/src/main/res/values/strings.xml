@@ -1502,5 +1502,7 @@
     <!-- Email Verification screen -->
     <string name="email_verification_title">You\'ve got mail</string>
     <string name="email_verification_description">Enter the verification code we sent to %s</string>
+    <string name="email_verification_resend_code">RESEND CODE</string>
+    <string name="email_verification_change_email">CHANGE EMAIL</string>
 
 </resources>

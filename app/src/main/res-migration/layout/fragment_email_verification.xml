@@ -66,11 +66,9 @@
         android:layout_height="56dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/emailVerificationSecondDigitEditText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/emailVerificationDescriptionTextView"
-        app:layout_constraintVertical_bias="0.054"
         tools:text="0" />
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -79,11 +77,9 @@
         android:layout_width="50dp"
         android:layout_height="56dp"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/emailVerificationThirdDigitEditText"
         app:layout_constraintStart_toEndOf="@+id/emailVerificationFirstDigitEditText"
         app:layout_constraintTop_toBottomOf="@+id/emailVerificationDescriptionTextView"
-        app:layout_constraintVertical_bias="0.054"
         tools:text="0" />
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -92,11 +88,9 @@
         android:layout_width="50dp"
         android:layout_height="56dp"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/emailVerificationFourthDigitEditText"
         app:layout_constraintStart_toEndOf="@+id/emailVerificationSecondDigitEditText"
         app:layout_constraintTop_toBottomOf="@+id/emailVerificationDescriptionTextView"
-        app:layout_constraintVertical_bias="0.054"
         tools:text="0" />
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -105,11 +99,9 @@
         android:layout_width="50dp"
         android:layout_height="56dp"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/emailVerificationFifthDigitEditText"
         app:layout_constraintStart_toEndOf="@+id/emailVerificationThirdDigitEditText"
         app:layout_constraintTop_toBottomOf="@+id/emailVerificationDescriptionTextView"
-        app:layout_constraintVertical_bias="0.054"
         tools:text="0" />
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -118,11 +110,9 @@
         android:layout_width="50dp"
         android:layout_height="56dp"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/emailVerificationSixthDigitEditText"
         app:layout_constraintStart_toEndOf="@+id/emailVerificationFourthDigitEditText"
         app:layout_constraintTop_toBottomOf="@+id/emailVerificationDescriptionTextView"
-        app:layout_constraintVertical_bias="0.054"
         tools:text="0" />
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -132,11 +122,45 @@
         android:layout_height="56dp"
         android:layout_marginTop="60dp"
         android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/emailVerificationFifthDigitEditText"
         app:layout_constraintTop_toBottomOf="@+id/emailVerificationDescriptionTextView"
-        app:layout_constraintVertical_bias="0.054"
         tools:text="0" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/resendCodeTextView"
+        style="@style/TextView.RobotoBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="45dp"
+        android:gravity="center_horizontal"
+        android:text="@string/email_verification_resend_code"
+        android:textColor="@color/graphite"
+        android:textSize="@dimen/email_verification_resend_code_text_view_size"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/emailVerificationFirstDigitEditText"
+        app:layout_constraintVertical_bias="0.151"
+        app:layout_constraintHorizontal_bias="0.23"
+        />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/changeMailTextView"
+        style="@style/TextView.RobotoBold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="45dp"
+        android:gravity="center_horizontal"
+        android:text="@string/email_verification_change_email"
+        android:textColor="@color/graphite"
+        android:textSize="@dimen/email_verification_change_email_text_view_size"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/emailVerificationFirstDigitEditText"
+        app:layout_constraintVertical_bias="0.151"
+        app:layout_constraintHorizontal_bias="0.77"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
