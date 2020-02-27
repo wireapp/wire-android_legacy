@@ -31,6 +31,8 @@
         android:gravity="center"
         android:textSize="@dimen/wire__text_size__medium"
         app:w_font="@string/wire__typeface__light"
+        android:paddingStart="@dimen/wire__padding__small"
+        android:paddingEnd="@dimen/wire__padding__small"
         />
 
     <com.waz.zclient.ui.text.TypefaceTextView
