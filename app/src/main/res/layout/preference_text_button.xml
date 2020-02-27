@@ -52,6 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/wire__text_size__regular"
+            android:lines="1"
             android:ellipsize="end"
             android:textColor="@color/white"
             app:w_font="@string/wire__typeface__light"
