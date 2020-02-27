@@ -1,14 +1,15 @@
 package com.waz.zclient.user.domain.usecase.email
 
+import android.util.Patterns
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.core.functional.map
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -16,10 +17,15 @@ import org.mockito.Mockito.`when`
 @ExperimentalCoroutinesApi
 class ValidateEmailUseCaseTest : UnitTest() {
 
-    private val validationEmailUseCase = ValidateEmailUseCase()
+    private lateinit var validationEmailUseCase: ValidateEmailUseCase
 
     @Mock
     private lateinit var validateEmailParams: ValidateEmailParams
+
+    @Before
+    fun setup() {
+        validationEmailUseCase = ValidateEmailUseCase()
+    }
 
     @Test
     fun `Given run is executed, when email doesn't match regex, then return failure`() {
@@ -27,31 +33,16 @@ class ValidateEmailUseCaseTest : UnitTest() {
 
         runBlockingTest {
             `when`(validateEmailParams.email).thenReturn(email)
-
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
     }
 
     @Test
-    fun `Given run is executed, when email matches regex and length is smaller than 5, then return failure`() {
+    fun `Given run is executed, when email length is smaller than 5, then return failure`() {
         val email = "t"
 
         runBlockingTest {
-
             `when`(validateEmailParams.email).thenReturn(email)
-
-            validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
-        }
-    }
-
-    @Test
-    fun `Given run is executed, when email is empty then return failure`() {
-        val email = String.empty()
-
-        runBlockingTest {
-
-            `when`(validateEmailParams.email).thenReturn(email)
-
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
     }
@@ -61,9 +52,7 @@ class ValidateEmailUseCaseTest : UnitTest() {
         val email = "test@wire.com"
 
         runBlockingTest {
-
             `when`(validateEmailParams.email).thenReturn(email)
-
             validationEmailUseCase.run(validateEmailParams).isRight shouldBe true
         }
 
@@ -71,11 +60,10 @@ class ValidateEmailUseCaseTest : UnitTest() {
 
     @Test(expected = CancellationException::class)
     fun `Given run is executed when request is canceled, then return false`() =
-        runBlockingTest {
 
+        runBlockingTest {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
-
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
 

@@ -31,11 +31,11 @@ class SettingsAccountEditHandleViewModel(
     private val validateHandleUseCase: ValidateHandleUseCase
 ) : ViewModel() {
 
-    private var _handleLiveData = MutableLiveData<String>()
-    private var _errorLiveData = MutableLiveData<ValidateHandleError>()
-    private var _okEnabledLiveData = MutableLiveData<Boolean>()
-    private var _dismissLiveData = MutableLiveData<Unit>()
-    private var _successLiveData = MutableLiveData<ValidateHandleSuccess>()
+    private val _handleLiveData = MutableLiveData<String>()
+    private val _errorLiveData = MutableLiveData<ValidateHandleError>()
+    private val _okEnabledLiveData = MutableLiveData<Boolean>()
+    private val _dismissLiveData = MutableLiveData<Unit>()
+    private val _successLiveData = MutableLiveData<ValidateHandleSuccess>()
 
     val handleLiveData: LiveData<String> = _handleLiveData
     val successLiveData: LiveData<ValidateHandleSuccess> = _successLiveData
