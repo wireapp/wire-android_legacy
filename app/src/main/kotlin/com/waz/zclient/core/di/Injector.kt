@@ -1,6 +1,7 @@
 package com.waz.zclient.core.di
 
 import android.content.Context
+import com.waz.zclient.auth.registration.di.registrationModules
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.devices.di.clientsModule
 import com.waz.zclient.settings.di.settingsModules
@@ -29,6 +30,7 @@ object Injector {
         startKoin {
             androidContext(context)
             modules(listOf(
+                registrationModules,
                 settingsModules,
                 coreModules
             ).flatten())
