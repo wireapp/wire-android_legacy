@@ -25,7 +25,7 @@ import com.waz.content.Preferences.PrefKey
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.UserPreferences._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.ZMessaging
+import com.waz.service.{BackendConfig, ZMessaging}
 import com.waz.zclient.controllers.userpreferences.IUserPreferencesController._
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController
 import com.waz.zclient.controllers.userpreferences.UserPreferencesController._
@@ -94,28 +94,21 @@ trait AbstractPreferenceReceiver extends BroadcastReceiver with DerivedLogTag {
             setResultData("")
             setResultCode(Activity.RESULT_CANCELED)
         }
-      case SELECT_STAGING_BE =>
-        // Note, the app must be terminated for this to work.
-        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
-        implicit val injector = wireApplication.module
-        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.StagingBackend)
-        setResultCode(Activity.RESULT_OK)
-      case SELECT_QA_BE =>
-        // Note, the app must be terminated for this to work.
-        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
-        implicit val injector = wireApplication.module
-        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.QaBackend)
-        setResultCode(Activity.RESULT_OK)
-      case SELECT_PROD_BE =>
-        // Note, the app must be terminated for this to work.
-        val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
-        implicit val injector = wireApplication.module
-        wireApplication.inject[BackendController].setStoredBackendConfig(Backend.ProdBackend)
-        setResultCode(Activity.RESULT_OK)
+      case SELECT_STAGING_BE => updateStoredBackendConfig(context: Context, Backend.StagingBackend)
+      case SELECT_QA_BE => updateStoredBackendConfig(context: Context, Backend.QaBackend)
+      case SELECT_PROD_BE => updateStoredBackendConfig(context: Context, Backend.ProdBackend)
       case _ =>
         setResultData("Unknown Intent!")
         setResultCode(Activity.RESULT_CANCELED)
     }
+  }
+
+  private def updateStoredBackendConfig(context: Context, backendConfig: BackendConfig): Unit ={
+    // Note, the app must be terminated for this to work.
+    val wireApplication = context.getApplicationContext.asInstanceOf[WireApplication]
+    implicit val injector = wireApplication.module
+    wireApplication.inject[BackendController].setStoredBackendConfig(backendConfig)
+    setResultCode(Activity.RESULT_OK)
   }
 
 }
