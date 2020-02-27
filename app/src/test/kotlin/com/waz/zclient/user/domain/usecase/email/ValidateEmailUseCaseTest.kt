@@ -3,12 +3,14 @@ package com.waz.zclient.user.domain.usecase.email
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.user.domain.usecase.handle.ValidateHandleUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
@@ -16,10 +18,15 @@ import org.mockito.Mockito.`when`
 @ExperimentalCoroutinesApi
 class ValidateEmailUseCaseTest : UnitTest() {
 
-    private val validationEmailUseCase = ValidateEmailUseCase()
+    private lateinit var validationEmailUseCase: ValidateEmailUseCase
 
     @Mock
     private lateinit var validateEmailParams: ValidateEmailParams
+
+    @Before
+    fun setup() {
+        validationEmailUseCase = ValidateEmailUseCase()
+    }
 
     @Test
     fun `Given run is executed, when email doesn't match regex, then return failure`() {
