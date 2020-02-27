@@ -135,11 +135,6 @@ trait ImageLayoutAssetPart extends AssetPart with EphemeralIndicatorPartView {
     case _ => Dim2(0, 0)
   }
 
-  val forceDownload = this match {
-    case _: ImagePartView => false
-    case _ => true
-  }
-
   private lazy val imageContainer = returning(findById[FrameLayout](R.id.image_container)) {
     _.addOnLayoutChangeListener(new OnLayoutChangeListener {
       override def onLayoutChange(v: View, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int): Unit =
