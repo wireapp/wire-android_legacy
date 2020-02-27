@@ -9,6 +9,22 @@ import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
 
+
+fun LifecycleOwner.getKoin() = (this as ComponentCallbacks).getKoin()
+
+fun LifecycleOwner.createScope(
+    scopeId: String,
+    scopeName: String
+) = getKoin().getOrCreateScope(scopeId, named(scopeName))
+
+
+/**
+ * Lazy getByClass a viewModel instance
+ *
+ * @param scopeId - Is used to find the scope in reference for the ViewModel you're trying to retrieve
+ * @param viewModelQualifier - Koin BeanDefinition qualifier (if have several ViewModel beanDefinition of the same type)
+ * @param parameters - parameters to pass to the BeanDefinition
+ */
 inline fun <reified T : ViewModel> LifecycleOwner.viewModel(
     scopeId: String,
     viewModelQualifier: Qualifier? = null,
@@ -17,10 +33,3 @@ inline fun <reified T : ViewModel> LifecycleOwner.viewModel(
     getKoin().getScope(scopeId)
         .getViewModel(this, T::class, viewModelQualifier, parameters)
 }
-
-fun LifecycleOwner.createScope(
-    scopeId: String,
-    scopeName: String
-) = getKoin().getOrCreateScope(scopeId, named(scopeName))
-
-fun LifecycleOwner.getKoin() = (this as ComponentCallbacks).getKoin()

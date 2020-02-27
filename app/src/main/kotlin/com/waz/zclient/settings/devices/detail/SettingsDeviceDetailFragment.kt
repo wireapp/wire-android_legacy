@@ -16,7 +16,7 @@ import kotlinx.android.synthetic.main.fragment_device_detail.*
 
 class SettingsDeviceDetailFragment : Fragment() {
 
-    private val deviceDetailsViewModel: SettingsDeviceDetailViewModel by viewModel(SETTINGS_SCOPE_ID)
+    private val deviceDetailsViewModel by viewModel<SettingsDeviceDetailViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_device_detail, container, false)

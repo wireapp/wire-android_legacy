@@ -21,7 +21,7 @@ import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 
 class SettingsDeviceListFragment : Fragment() {
 
-    private val deviceListViewModel: SettingsDeviceListViewModel by viewModel(SETTINGS_SCOPE_ID)
+    private val deviceListViewModel by viewModel<SettingsDeviceListViewModel>(SETTINGS_SCOPE_ID)
 
     private lateinit var devicesRecyclerView: RecyclerView
 

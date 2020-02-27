@@ -12,7 +12,7 @@ import kotlinx.android.synthetic.main.fragment_settings_support.*
 
 class SettingsSupportFragment : Fragment(R.layout.fragment_settings_support) {
 
-    private val settingsSupportViewModel: SettingsSupportViewModel by viewModel(SETTINGS_SCOPE_ID)
+    private val settingsSupportViewModel by viewModel<SettingsSupportViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

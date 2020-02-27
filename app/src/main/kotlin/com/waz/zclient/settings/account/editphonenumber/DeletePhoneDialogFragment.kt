@@ -14,9 +14,7 @@ import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 
 class DeletePhoneDialogFragment : DialogFragment() {
 
-    private val phoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel(
-        SETTINGS_SCOPE_ID
-    )
+    private val phoneViewModel by viewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
 
     private val phoneNumber: String by lazy {
         arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
@@ -30,7 +28,7 @@ class DeletePhoneDialogFragment : DialogFragment() {
                     phoneNumber)
             )
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                phoneNumberViewModel.onDeleteNumberButtonConfirmed()
+                phoneViewModel.onDeleteNumberButtonConfirmed()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .create()

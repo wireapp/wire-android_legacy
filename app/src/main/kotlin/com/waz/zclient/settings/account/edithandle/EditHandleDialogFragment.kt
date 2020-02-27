@@ -26,7 +26,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @InternalCoroutinesApi
 class EditHandleDialogFragment : DialogFragment() {
 
-    private val editHandleViewModel: SettingsAccountEditHandleViewModel by viewModel(SETTINGS_SCOPE_ID)
+    private val editHandleViewModel by viewModel<SettingsAccountEditHandleViewModel>(SETTINGS_SCOPE_ID)
 
     private val suggestedHandle: String by lazy {
         arguments?.getString(CURRENT_HANDLE_BUNDLE_KEY, String.empty()) ?: String.empty()

@@ -23,7 +23,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @Suppress("TooManyFunctions")
 class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
 
-    private val settingsAccountViewModel: SettingsAccountViewModel by viewModel(SETTINGS_SCOPE_ID)
+    private val settingsAccountViewModel by viewModel<SettingsAccountViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

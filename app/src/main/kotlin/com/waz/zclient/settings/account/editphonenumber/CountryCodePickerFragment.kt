@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.fragment_dialog_country_code_picker.*
 
 class CountryCodePickerFragment : DialogFragment() {
 
-    private val viewModel: CountryCodePickerViewModel by viewModel(SETTINGS_SCOPE_ID)
+    private val viewModel by viewModel<CountryCodePickerViewModel>(SETTINGS_SCOPE_ID)
 
     private val countryDisplayName: String by lazy {
         arguments?.getString(COUNTRY_DISPLAY_NAME_BUNDLE_KEY, String.empty()) ?: String.empty()
