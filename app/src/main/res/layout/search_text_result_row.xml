@@ -63,6 +63,7 @@
                 android:textSize="@dimen/wire__text_size__small"
                 android:textColor="?wireSecondaryTextColor"
                 android:maxLines="1"
+                android:ellipsize="end"
                 />
 
         </LinearLayout>

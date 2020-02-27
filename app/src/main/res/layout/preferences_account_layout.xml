@@ -48,6 +48,7 @@
                 android:id="@+id/preferences_account_name"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"
+                android:lines="1"
                 app:subtitle="@string/pref_account_name_title"
                 />
 
