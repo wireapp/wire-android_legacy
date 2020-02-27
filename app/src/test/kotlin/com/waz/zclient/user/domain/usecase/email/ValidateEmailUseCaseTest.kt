@@ -1,9 +1,8 @@
 package com.waz.zclient.user.domain.usecase.email
 
+import android.util.Patterns
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.core.functional.map
-import com.waz.zclient.user.domain.usecase.handle.ValidateHandleUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -34,31 +33,16 @@ class ValidateEmailUseCaseTest : UnitTest() {
 
         runBlockingTest {
             `when`(validateEmailParams.email).thenReturn(email)
-
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
     }
 
     @Test
-    fun `Given run is executed, when email matches regex and length is smaller than 5, then return failure`() {
+    fun `Given run is executed, when email length is smaller than 5, then return failure`() {
         val email = "t"
 
         runBlockingTest {
-
             `when`(validateEmailParams.email).thenReturn(email)
-
-            validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
-        }
-    }
-
-    @Test
-    fun `Given run is executed, when email is empty then return failure`() {
-        val email = String.empty()
-
-        runBlockingTest {
-
-            `when`(validateEmailParams.email).thenReturn(email)
-
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
     }
@@ -68,9 +52,7 @@ class ValidateEmailUseCaseTest : UnitTest() {
         val email = "test@wire.com"
 
         runBlockingTest {
-
             `when`(validateEmailParams.email).thenReturn(email)
-
             validationEmailUseCase.run(validateEmailParams).isRight shouldBe true
         }
 
@@ -78,11 +60,10 @@ class ValidateEmailUseCaseTest : UnitTest() {
 
     @Test(expected = CancellationException::class)
     fun `Given run is executed when request is canceled, then return false`() =
-        runBlockingTest {
 
+        runBlockingTest {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
             delay(CANCELLATION_DELAY)
-
             validationEmailUseCase.run(validateEmailParams).isLeft shouldBe true
         }
 
