@@ -9,14 +9,12 @@ import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.named
 
-
 fun LifecycleOwner.getKoin() = (this as ComponentCallbacks).getKoin()
 
 fun LifecycleOwner.createScope(
     scopeId: String,
     scopeName: String
 ) = getKoin().getOrCreateScope(scopeId, named(scopeName))
-
 
 /**
  * Lazy getByClass a viewModel instance
