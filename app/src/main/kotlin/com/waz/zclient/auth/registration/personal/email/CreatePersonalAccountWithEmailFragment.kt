@@ -42,7 +42,7 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
         confirmationButton.setOnClickListener {
-            replaceFragment(EmailVerificationFragment.newInstance())
+            replaceFragment(EmailVerificationFragment.newInstance(createPersonalAccountWithEmailEditText.text.toString()))
         }
     }
 

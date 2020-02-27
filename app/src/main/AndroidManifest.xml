@@ -238,6 +238,7 @@
             android:launchMode="singleTask"
             android:theme="@style/Theme.Light"
             android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateVisible"
             />
 
         <receiver
