@@ -18,14 +18,19 @@
 
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-<item android:state_pressed="false">
-    <shape android:shape="oval">
-        <solid android:color="@color/athens_gray_normal" />
-    </shape>
-</item>
-<item android:state_pressed="true">
-    <shape android:shape="oval">
-        <solid android:color="@color/curious_blue" />
-    </shape>
-</item>
+    <item android:state_enabled="false">
+        <shape android:shape="oval">
+            <solid android:color="@color/athens_gray_normal" />
+        </shape>
+    </item>
+    <item android:state_enabled="true" android:state_pressed="true">
+        <shape android:shape="oval">
+            <solid android:color="@color/chathams_blue" />
+        </shape>
+    </item>
+    <item android:state_enabled="true" android:state_pressed="false">
+        <shape android:shape="oval">
+            <solid android:color="@color/curious_blue" />
+        </shape>
+    </item>
 </selector>
