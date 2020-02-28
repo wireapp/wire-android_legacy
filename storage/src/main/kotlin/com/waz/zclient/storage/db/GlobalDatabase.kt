@@ -15,7 +15,7 @@ import com.waz.zclient.storage.db.teams.TeamsEntity
     ActiveAccountsEntity::class,
     CacheEntryEntity::class,
     TeamsEntity::class
-], version = GlobalDatabase.VERSION)
+], version = GlobalDatabase.VERSION, exportSchema = false)
 @TypeConverters(value = [AccessTokenConverter::class, SsoIdConverter::class])
 abstract class GlobalDatabase : RoomDatabase() {
 

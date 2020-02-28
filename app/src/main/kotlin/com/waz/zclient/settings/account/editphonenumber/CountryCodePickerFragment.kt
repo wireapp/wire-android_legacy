@@ -11,14 +11,15 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.getDeviceLocale
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.user.domain.usecase.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_dialog_country_code_picker.*
-import org.koin.android.viewmodel.ext.android.viewModel
 
 class CountryCodePickerFragment : DialogFragment() {
 
-    private val countryCodePickerViewModel: CountryCodePickerViewModel by viewModel()
+    private val viewModel by viewModel<CountryCodePickerViewModel>(SETTINGS_SCOPE_ID)
 
     private val countryDisplayName: String by lazy {
         arguments?.getString(COUNTRY_DISPLAY_NAME_BUNDLE_KEY, String.empty()) ?: String.empty()
@@ -26,7 +27,7 @@ class CountryCodePickerFragment : DialogFragment() {
 
     private val countryAdapter: CountryCodesRecyclerAdapter by lazy {
         CountryCodesRecyclerAdapter {
-            countryCodePickerViewModel.onCountryCodeChanged(it, countryDisplayName)
+            viewModel.onCountryCodeChanged(it, countryDisplayName)
         }
     }
 
@@ -45,12 +46,12 @@ class CountryCodePickerFragment : DialogFragment() {
         initCountriesList()
         initDismiss()
         lifecycleScope.launchWhenResumed {
-            countryCodePickerViewModel.loadCountries(requireActivity().getDeviceLocale().language)
+            viewModel.loadCountries(requireActivity().getDeviceLocale().language)
         }
     }
 
     private fun initDismiss() {
-        countryCodePickerViewModel.dismissLiveData.observe(viewLifecycleOwner) {
+        viewModel.dismissLiveData.observe(viewLifecycleOwner) {
             dismiss()
         }
     }
@@ -60,10 +61,10 @@ class CountryCodePickerFragment : DialogFragment() {
         val divider = DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL)
         countryCodePickerDialogRecyclerView.addItemDecoration(divider)
         countryCodePickerDialogRecyclerView.setHasFixedSize(true)
-        countryCodePickerViewModel.countriesLiveData.observe(viewLifecycleOwner) {
+        viewModel.countriesLiveData.observe(viewLifecycleOwner) {
             countryAdapter.updateList(it)
         }
-        countryCodePickerViewModel.selectedCountryLiveData.observe(viewLifecycleOwner) {
+        viewModel.selectedCountryLiveData.observe(viewLifecycleOwner) {
             countryCodeListener?.onCountryCodeSelected(it)
         }
     }

@@ -24,10 +24,11 @@ import android.widget.{FrameLayout, ImageView}
 import com.waz.service.assets.{AssetStatus, DownloadAssetStatus, UploadAssetStatus}
 import com.waz.threading.Threading
 import com.waz.zclient.R
+import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.glide.WireGlide
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.{HighlightViewPart, MsgPart}
 import com.waz.zclient.utils.RichView
-import com.waz.zclient.log.LogUI._
 
 class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
   extends FrameLayout(context, attrs, style) with PlayableAsset with ImageLayoutAssetPart with HighlightViewPart {
@@ -38,6 +39,12 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
 
   private val controls = findById[View](R.id.controls)
   private val image = findById[ImageView](R.id.image)
+  private val assetController = inject[AssetsController]
+
+  assetController.openVideoProgress.onUi {
+    case true  => assetActionButton.startEndlessProgress()
+    case false => assetActionButton.clearProgress()
+  }
 
   hideContent.map(!_).onUi { visible =>
     controls.setVisible(visible)
@@ -54,7 +61,10 @@ class VideoAssetPartView(context: Context, attrs: AttributeSet, style: Int)
       case UploadAssetStatus.Failed       => message.currentValue.foreach(retr => { println(retr);  controller.retry(retr)})
       case UploadAssetStatus.InProgress   => message.currentValue.foreach(m => controller.cancelUpload(m.assetId.get, m))
       case DownloadAssetStatus.InProgress => message.currentValue.foreach(m => controller.cancelDownload(m.assetId.get))
-      case AssetStatus.Done               => asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+      case AssetStatus.Done               => {
+        assetController.openVideoProgress ! true
+        asset.head.foreach(a => controller.openFile(a.id))(Threading.Ui)
+      }
       case status                         => error(l"Unhandled asset status: $status")
     }
   }

@@ -41,7 +41,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            >
 
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:id="@+id/tv__collection_toolbar__name"

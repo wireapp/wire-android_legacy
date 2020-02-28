@@ -9,20 +9,21 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import org.koin.android.viewmodel.ext.android.viewModel
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Suppress("TooManyFunctions")
 class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
 
-    private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
+    private val settingsAccountViewModel by viewModel<SettingsAccountViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

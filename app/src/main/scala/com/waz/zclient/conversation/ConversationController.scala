@@ -292,6 +292,17 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
                  else sendAssetMessage(convs, content, activity, exp).map(_.head)
     } yield msg
 
+  def sendAssetMessages(uris:    Seq[URI],
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]],
+                       convs:    Seq[ConvId]): Future[Unit] =
+    for {
+      ui       <- convsUi.head
+      color    <- accentColorController.accentColor.head
+      contents <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri)))) }
+      _        <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
+    } yield ()
+
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))
 

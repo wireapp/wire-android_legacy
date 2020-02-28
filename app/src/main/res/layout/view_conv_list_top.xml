@@ -79,6 +79,8 @@
             android:textColor="@color/white"
             android:drawablePadding="@dimen/wire__padding__8"
             android:paddingEnd="?attr/actionBarSize"
+            android:lines="1"
+            android:ellipsize="end"
             />
 
     </LinearLayout>

@@ -10,7 +10,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
 import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleTooShort
@@ -19,13 +21,12 @@ import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import org.koin.android.viewmodel.ext.android.viewModel
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class EditHandleDialogFragment : DialogFragment() {
 
-    private val editHandleViewModel: SettingsAccountEditHandleViewModel by viewModel()
+    private val editHandleViewModel by viewModel<SettingsAccountEditHandleViewModel>(SETTINGS_SCOPE_ID)
 
     private val suggestedHandle: String by lazy {
         arguments?.getString(CURRENT_HANDLE_BUNDLE_KEY, String.empty()) ?: String.empty()
