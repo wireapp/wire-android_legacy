@@ -6,12 +6,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_settings_support.*
-import org.koin.android.viewmodel.ext.android.viewModel
 
 class SettingsSupportFragment : Fragment(R.layout.fragment_settings_support) {
 
-    private val settingsSupportViewModel: SettingsSupportViewModel by viewModel()
+    private val settingsSupportViewModel by viewModel<SettingsSupportViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
