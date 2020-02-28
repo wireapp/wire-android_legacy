@@ -8,12 +8,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
-import org.koin.android.viewmodel.ext.android.viewModel
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 
 class UpdatePhoneDialogFragment : DialogFragment() {
 
-    private val phoneNumberViewModel: SettingsAccountPhoneNumberViewModel by viewModel()
+    private val viewModel by viewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
 
     private val phoneNumber: String by lazy {
         arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
@@ -24,7 +25,7 @@ class UpdatePhoneDialogFragment : DialogFragment() {
             .setTitle(getString(R.string.pref__account_action__dialog__add_phone__confirm__title))
             .setMessage(getString(R.string.edit_phone_dialog_confirm_phone_confirmation, phoneNumber))
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                phoneNumberViewModel.onPhoneNumberConfirmed(phoneNumber)
+                viewModel.onPhoneNumberConfirmed(phoneNumber)
             }
             .setNegativeButton(android.R.string.cancel, null)
             .create()
