@@ -45,6 +45,7 @@ import com.waz.zclient.participants.OptionsMenu
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.ExternalFileSharing
 import com.waz.zclient.{ClipboardUtils, Injectable, Injector, R}
+import com.waz.zclient.log.LogUI._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -201,7 +202,7 @@ class MessageActionsController(implicit injector: Injector, ctx: Context, ec: Ev
         intentBuilder.startChooser()
 
       case Failure(err) =>
-        // TODO: show error info
+        error(l"Asset $id is not for sharing", err)
         dialog.dismiss()
     }
   }

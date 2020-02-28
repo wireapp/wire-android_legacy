@@ -19,8 +19,6 @@
 
 -->
 <resources>
-    <dimen name="otr__inbox__horizontal__padding">128dp</dimen>
-    <dimen name="cursor_desired_width">@dimen/content__width</dimen>
     <dimen name="content__width">504dp</dimen>
     <dimen name="new_reg__body_left_margin">128dp</dimen>
     <dimen name="new_reg__body_right_margin">128dp</dimen>

@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.notifications.controllers
 
-import java.io.{File, FileNotFoundException, FileOutputStream, IOException}
+import java.io.{File, FileNotFoundException, IOException}
 
 import android.app.{Notification, NotificationChannel, NotificationChannelGroup, NotificationManager}
 import android.content.{ContentValues, Context}
@@ -26,9 +26,9 @@ import android.graphics.{Color, Typeface}
 import android.net.Uri
 import android.os.{Build, Environment}
 import android.provider.MediaStore
-import androidx.core.app.NotificationCompat.Style
 import android.text.style.{ForegroundColorSpan, StyleSpan}
 import android.text.{SpannableString, Spanned}
+import androidx.core.app.NotificationCompat.Style
 import androidx.core.app.{NotificationCompat, RemoteInput}
 import com.waz.content.Preferences.PrefKey
 import com.waz.content.UserPreferences
@@ -38,8 +38,8 @@ import com.waz.service.AccountsService
 import com.waz.services.notifications.NotificationsHandlerService
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
-import com.waz.utils.returning
 import com.waz.utils.wrappers.Bitmap
+import com.waz.utils.{IoUtils, returning}
 import com.waz.zclient.Intents.{CallIntent, QuickReplyIntent}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{MessageNotificationsChannelId, PingNotificationsChannelId}
@@ -49,6 +49,7 @@ import com.waz.zclient.{Injectable, Injector, Intents, R}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 case class Span(style: Int, range: Int, offset: Int = 0)
 
@@ -314,7 +315,16 @@ object NotificationManagerWrapper {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
       addToExternalNotificationFolder(R.raw.new_message_gcm, getString(R.string.wire_notification_name))
+        .recover {
+          case ex: Exception =>
+            error(l"Failed to add `new message GCM` (${getString(R.string.wire_notification_name)}) to the external notification folder", ex)
+        }
+
       addToExternalNotificationFolder(R.raw.ping_from_them, getString(R.string.wire_ping_name))
+        .recover {
+          case ex: Exception =>
+            error(l"Failed to add `ping from them` (${getString(R.string.wire_ping_name)}) to the external notification folder", ex)
+        }
 
       accountChannels { channels =>
 
@@ -377,62 +387,67 @@ object NotificationManagerWrapper {
 
     def getNotificationChannel(channelId: String) = notificationManager.getNotificationChannel(channelId)
 
-    private def addToExternalNotificationFolder(rawId: Int, name: String) =
-      Option(cxt.getExternalFilesDir(Environment.DIRECTORY_NOTIFICATIONS)).foreach { dir =>
-        val uri      = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-        val query    = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
-        val toneFile = new File(s"${dir.getAbsolutePath}/$name.ogg")
-        if (toneFile.exists()) {
-          val contentValues = returning(new ContentValues) { values =>
-            values.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
-            values.put(MediaStore.MediaColumns.TITLE, name)
-            values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
-            values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])
-            values.put(MediaStore.Audio.AudioColumns.IS_RINGTONE, true)
-            values.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
-            values.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
-            values.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
-          }
-
-          try {
-            val fIn = cxt.getResources.openRawResource(rawId)
-            val buffer = new Array[Byte](fIn.available)
-            fIn.read(buffer)
-            fIn.close()
-
-            returning(new FileOutputStream(toneFile)) { fOut =>
-              fOut.write(buffer)
-              fOut.flush()
-              fOut.close()
-            }
-
-            // TODO: On some devices (Redmi 6A, Xperia X Compact) the query causes SQLiteException.
-            // test on one of these devices and find out why.
-            val cursor = try {
-              Option(cxt.getContentResolver.query(uri, null, query, null, null))
-            } catch {
-              case ex: SQLiteException =>
-                error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
-                None
-            }
-
-            if (cursor.forall(_.getCount == 0)) cxt.getContentResolver.insert(uri, contentValues)
-            cursor.foreach(_.close())
-          } catch {
-            case ex: FileNotFoundException =>
-              error(l"File not found: $toneFile")
-            case ex: IOException =>
-              error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
-          }
-        } else {
-          error(l"File not found: $toneFile")
-        }
-      }
-
     override def cancelNotifications(ids: Set[Int]): Unit = {
       verbose(l"cancel: $ids")
       ids.foreach(notificationManager.cancel)
     }
+
+    private def addToExternalNotificationFolder(rawId: Int, name: String) =
+      for {
+        dir      <- externalFilesDir
+        toneFile =  new File(s"${dir.getAbsolutePath}/$name.ogg")
+        _        <- if (toneFile.exists()) createTone(rawId, name, toneFile)
+                    else Failure(new IOException(s"File not found: $toneFile"))
+      } yield ()
+
+    private def externalFilesDir =
+      Try(cxt.getExternalFilesDir(Environment.DIRECTORY_NOTIFICATIONS))
+        .map(Option(_))
+        .flatMap {
+          case Some(dir) => Success(dir)
+          case None      => Failure(new IOException(s"No external files dir ${Environment.DIRECTORY_NOTIFICATIONS}"))
+        }
+
+    private def createTone(rawId: Int, name: String, toneFile: File) = {
+      val uri   = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+      val query = s"${MediaStore.MediaColumns.DATA} LIKE '%$name%'"
+      (for {
+        _      <- Try(IoUtils.copy(cxt.getResources.openRawResource(rawId), toneFile))
+        cursor <- getCursor(uri, query)
+        _      =  if (cursor.getCount == 0) cxt.getContentResolver.insert(uri, createContentValues(name, toneFile))
+        _      =  cursor.close()
+      } yield ()).recoverWith {
+        case ex: FileNotFoundException =>
+          error(l"File not found: $toneFile")
+          Failure(ex)
+        case ex: IOException =>
+          error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
+          Failure(ex)
+      }
+    }
+
+    private def createContentValues(name: String, toneFile: File) = returning(new ContentValues) { values =>
+      values.put(MediaStore.MediaColumns.DATA, toneFile.getAbsolutePath)
+      values.put(MediaStore.MediaColumns.TITLE, name)
+      values.put(MediaStore.MediaColumns.MIME_TYPE, "audio/ogg")
+      values.put(MediaStore.MediaColumns.SIZE, toneFile.length.toInt.asInstanceOf[Integer])
+      values.put(MediaStore.Audio.AudioColumns.IS_RINGTONE, true)
+      values.put(MediaStore.Audio.AudioColumns.IS_NOTIFICATION, true)
+      values.put(MediaStore.Audio.AudioColumns.IS_ALARM, true)
+      values.put(MediaStore.Audio.AudioColumns.IS_MUSIC, false)
+    }
+
+    private def getCursor(uri: Uri, query: String) =
+      Try(cxt.getContentResolver.query(uri, null, query, null, null))
+        .map(Option(_))
+        .flatMap {
+          case Some(dir) => Success(dir)
+          case None      => Failure(new SQLiteException(s"The cursor is null for uri: $uri, and query: ${redactedString(query)}"))
+        }.recoverWith {
+          case ex: SQLiteException =>
+            error(l"query to access the media store failed; uri: $uri, query: ${redactedString(query)}", ex)
+            Failure(ex)
+        }
   }
 }
 

@@ -45,7 +45,7 @@ class ReceiptService(messages: MessagesStorage,
     Future.traverse(filteredMessages) { case ((convId, userId), groupMessages) =>
       for {
         false <- convsService.isGroupConversation(convId)
-        _ <- sync.postReceipt(convId, groupMessages.map(_.id), userId, ReceiptType.Delivery)
+        _     <- sync.postReceipt(convId, groupMessages.map(_.id), userId, ReceiptType.Delivery)
       } yield ()
     }
   }

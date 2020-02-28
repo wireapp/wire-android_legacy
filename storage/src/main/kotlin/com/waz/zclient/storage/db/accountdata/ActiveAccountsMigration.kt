@@ -9,7 +9,7 @@ private const val END_VERSION = 25
 
 val ACTIVE_ACCOUNTS_MIGRATION = object : Migration(START_VERSION, END_VERSION) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+        if (BuildConfig.KOTLIN_CORE) {
             val tempTableName = "ActiveAccountsTemp"
             val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (

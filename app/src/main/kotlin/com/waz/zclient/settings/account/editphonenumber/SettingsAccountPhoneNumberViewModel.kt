@@ -28,12 +28,12 @@ class SettingsAccountPhoneNumberViewModel(
     private val deletePhoneNumberUseCase: DeletePhoneNumberUseCase
 ) : ViewModel() {
 
-    private var _countryCodeErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
-    private var _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
-    private var _deleteNumberLiveData = MutableLiveData<String>()
-    private var _confirmationLiveData = MutableLiveData<String>()
-    private var _confirmedLiveData = MutableLiveData<String>()
-    private var _phoneNumberDetailsLiveData = MutableLiveData<PhoneNumber>()
+    private val _countryCodeErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
+    private val _phoneNumberErrorLiveData = MutableLiveData<PhoneNumberErrorMessage>()
+    private val _deleteNumberLiveData = MutableLiveData<String>()
+    private val _confirmationLiveData = MutableLiveData<String>()
+    private val _confirmedLiveData = MutableLiveData<String>()
+    private val _phoneNumberDetailsLiveData = MutableLiveData<PhoneNumber>()
 
     val countryCodeErrorLiveData: LiveData<PhoneNumberErrorMessage> = _countryCodeErrorLiveData
     val phoneNumberErrorLiveData: LiveData<PhoneNumberErrorMessage> = _phoneNumberErrorLiveData

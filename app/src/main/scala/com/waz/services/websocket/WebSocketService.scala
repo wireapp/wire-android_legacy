@@ -28,7 +28,8 @@ import com.waz.content.GlobalPreferences.{PushEnabledKey, WsForegroundKey}
 import com.waz.jobs.PushTokenCheckJob
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.AccountsService.InForeground
-import com.waz.service.{AccountsService, GlobalModule, ZMessaging}
+import com.waz.service.push.WSPushService
+import com.waz.service.{AccountsService, GlobalModule, NetworkModeService}
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -36,25 +37,24 @@ import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient._
 import com.waz.zclient.log.LogUI._
 
-class WebSocketController(implicit inj: Injector) extends Injectable with DerivedLogTag {
+class WebSocketController(implicit inj: Injector) extends Injectable {
   private lazy val global = inject[GlobalModule]
   private lazy val accounts = inject[AccountsService]
 
   private lazy val cloudPushAvailable =
     for {
-      gpsAvailable <- global.googleApi.isGooglePlayServicesAvailable
+      gpsAvailable   <- global.googleApi.isGooglePlayServicesAvailable
       devPrefEnabled <- global.prefs(PushEnabledKey).signal
     } yield gpsAvailable && devPrefEnabled
 
-  lazy val accountWebsocketStates: Signal[(Set[ZMessaging], Set[ZMessaging])] =
+  lazy val accountWebsocketStates: Signal[(Set[WSPushService], Set[WSPushService])] =
     for {
-      cloudPushAvailable <- cloudPushAvailable
-      wsForegroundEnabled <- global.prefs(WsForegroundKey).signal
-      accs <- accounts.zmsInstances
-      accsInFG <- Signal.sequence(accs.map(_.selfUserId).map(id => accounts.accountState(id).map(st => id -> st)).toSeq: _*).map(_.toMap)
-      (zmsWithWSActive, zmsWithWSInactive) =
-      accs.partition(zms => accsInFG(zms.selfUserId) == InForeground || wsForegroundEnabled || !cloudPushAvailable)
-    } yield (zmsWithWSActive, zmsWithWSInactive)
+      cloudPushAvailable                   <- cloudPushAvailable
+      wsForegroundEnabled                  <- global.prefs(WsForegroundKey).signal
+      accs                                 <- accounts.zmsInstances
+      accsInFG                             <- Signal.sequence(accs.map(_.selfUserId).map(id => accounts.accountState(id).map(st => id -> st)).toSeq: _*).map(_.toMap)
+      (zmsWithWSActive, zmsWithWSInactive) =  accs.partition(zms => wsForegroundEnabled || !cloudPushAvailable || accsInFG(zms.selfUserId) == InForeground)
+    } yield (zmsWithWSActive.map(_.wsPushService), zmsWithWSInactive.map(_.wsPushService))
 
   lazy val serviceInForeground: Signal[Boolean] =
     for {
@@ -62,20 +62,17 @@ class WebSocketController(implicit inj: Injector) extends Injectable with Derive
       (zmsWithWS, _) <- accountWebsocketStates
     } yield !uiActive && zmsWithWS.nonEmpty
 
+  private lazy val anyPushServiceConnected =
+    accounts.zmsInstances.flatMap(zs =>
+      Signal.sequence(zs.map(_.wsPushService.connected).toSeq: _ *).map(_.exists(!identity(_)))
+    )
+
   lazy val notificationTitleRes: Signal[Option[Int]] =
-    serviceInForeground.flatMap {
-      case true =>
-        global.network.isOnline.flatMap {
-          //checks to see if there are any accounts that haven't yet established a web socket
-          case true => accounts.zmsInstances.flatMap(zs => Signal.sequence(zs.map(_.wsPushService.connected).toSeq: _ *).map(_.exists(!identity(_)))).map {
-            case true =>  Option(R.string.ws_foreground_notification_connecting_title)
-            case _ => Option(R.string.ws_foreground_notification_connected_title)
-          }
-          case _ =>
-            Signal.const(Option(R.string.ws_foreground_notification_no_internet_title))
-        }
-      case _ =>
-        Signal.const(Option.empty[Int])
+    Signal(serviceInForeground, global.network.isOnline, anyPushServiceConnected).map {
+      case (true, true, true)  => Option(R.string.ws_foreground_notification_connecting_title)
+      case (true, true, false) => Option(R.string.ws_foreground_notification_connected_title)
+      case (true, false, _)    => Option(R.string.ws_foreground_notification_no_internet_title)
+      case _                   => Option.empty[Int]
     }
 }
 
@@ -137,19 +134,27 @@ class WebSocketService extends ServiceHelper with DerivedLogTag {
 
   private implicit def context = getApplicationContext
 
-  private lazy val launchIntent = PendingIntent.getActivity(context, 1, Intents.ShowAdvancedSettingsIntent, 0)
+  private lazy val launchIntent        = PendingIntent.getActivity(context, 1, Intents.ShowAdvancedSettingsIntent, 0)
 
-  private lazy val controller = inject[WebSocketController]
+  private lazy val controller          = inject[WebSocketController]
+  private lazy val global              = inject[GlobalModule]
   private lazy val notificationManager = inject[NotificationManager]
 
   private lazy val webSocketActiveSubscription =
-    controller.accountWebsocketStates {
-      case (zmsWithWSActive, zmsWithWSInactive) =>
-        zmsWithWSActive.foreach(_.wsPushService.activate())
-        zmsWithWSInactive.foreach(_.wsPushService.deactivate())
-        if (zmsWithWSActive.isEmpty) stopSelf()
-
+    Signal(controller.accountWebsocketStates, global.network.networkMode) {
+      case ((zmsWithWSActive, zmsWithWSInactive), networkMode) if NetworkModeService.isOnlineMode(networkMode) =>
+        toggleWSPushServices(zmsWithWSActive, zmsWithWSInactive, stopIfNeeded = true)
+      case ((zmsWithWSActive, zmsWithWSInactive), _) =>
+        toggleWSPushServices(Set.empty, zmsWithWSActive ++ zmsWithWSInactive)
     }
+
+  private def toggleWSPushServices(activate:     Set[WSPushService],
+                                   deactivate:   Set[WSPushService],
+                                   stopIfNeeded: Boolean = false): Unit = {
+    activate.foreach(_.activate())
+    deactivate.foreach(_.deactivate())
+    if (stopIfNeeded && activate.isEmpty) stopSelf()
+  }
 
   private lazy val appInForegroundSubscription =
     controller.notificationTitleRes {

@@ -47,4 +47,6 @@ class SSOService(val loginClient: LoginClient) {
 
   def verifyDomain(domain: String) = loginClient.verifyDomain(domain)
 
+  def fetchSSO() = loginClient.fetchSSO()
+
 }

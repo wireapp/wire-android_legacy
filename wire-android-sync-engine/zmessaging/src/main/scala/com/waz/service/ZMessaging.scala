@@ -82,7 +82,6 @@ trait Assets2Module {
   def uriHelper: UriHelper
   def assetDetailsService: AssetDetailsService
   def assetPreviewService: AssetPreviewService
-  def assetsTransformationsService: AssetTransformationsService
 }
 
 class StorageModule(context: Context, val userId: UserId, globalPreferences: GlobalPreferences, tracking: TrackingService) {
@@ -219,7 +218,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val errors                                     = wire[ErrorsServiceImpl]
   lazy val reporting                                  = new ZmsReportingService(selfUserId, global.reporting)
   lazy val wsFactory                                  = new OkHttpWebSocketFactory(account.global.httpProxy)
-  lazy val wsPushService                              = wireWith(WSPushServiceImpl.apply _)
+  lazy val wsPushService: WSPushService               = wireWith(WSPushServiceImpl.apply _)
   lazy val userSearch                                 = wire[UserSearchService]
   lazy val users: UserService                         = wire[UserServiceImpl]
   lazy val teamSize: TeamSizeThreshold                = wire[TeamSizeThresholdImpl]
@@ -298,7 +297,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
       storage.inProgressAssetStorage,
       assets2Module.assetDetailsService,
       assets2Module.assetPreviewService,
-      assets2Module.assetsTransformationsService,
       new AssetRestrictionsServiceImpl(assets2Module.uriHelper, teamId),
       assets2Module.uriHelper,
       new AssetContentCacheImpl(
@@ -328,14 +326,16 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
         convOrder.conversationOrderEventsStage,
         conversations.convStateEventProcessingStage,
         msgEvents.messageEventProcessingStage,
+        notifications.messageNotificationEventsStage,
+        notifications.connectionNotificationEventStage,
         genericMsgs.eventProcessingStage,
         foldersService.eventProcessingStage,
-        propertiesService.eventProcessor,
-        notifications.messageNotificationEventsStage,
-        notifications.connectionNotificationEventStage
+        propertiesService.eventProcessor
       )
     )
   }
+
+  private lazy val blockStreamsWhenProcessing = push.processing(messagesStorage.blockStreams)
 
   // force loading of services which should run on start
   {
@@ -346,6 +346,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     push // connect on start
     notifications
+    blockStreamsWhenProcessing
 
     // services listening on lifecycle verified login events
     contacts

@@ -61,6 +61,10 @@ trait ConversationsUiService {
                        content: ContentForUpload,
                        confirmation: WifiWarningConfirmation = DefaultConfirmation,
                        exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]]
+  def sendAssetMessages(convId: ConvId,
+                        contents: Seq[ContentForUpload],
+                        confirmation: WifiWarningConfirmation = DefaultConfirmation,
+                        exp: Option[Option[FiniteDuration]] = None): Future[Unit]
 
   def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] //TODO remove use of MessageContent.Location
 
@@ -162,7 +166,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                                 content: ContentForUpload,
                                 confirmation: WifiWarningConfirmation = DefaultConfirmation,
                                 exp: Option[Option[FiniteDuration]] = None): Future[Some[MessageData]] = {
-    verbose(l"sendAssetMessage($convId, $content)")
     val messageId = MessageId()
     for {
       retention  <- messages.retentionPolicy2ById(convId)
@@ -174,6 +177,34 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       shouldSend <- checkSize(convId, rawAsset, message, confirmation)
       _          <- if (shouldSend) sync.postMessage(message.id, convId, message.editTime) else Future.successful(())
     } yield Some(message)
+  }
+
+  override def sendAssetMessages(convId:       ConvId,
+                                 contents:     Seq[ContentForUpload],
+                                 confirmation: WifiWarningConfirmation = DefaultConfirmation,
+                                 exp:          Option[Option[FiniteDuration]] = None): Future[Unit] = {
+    val contentMap = contents.map { c => MessageId() -> c }.toMap
+    for {
+      retention <- messages.retentionPolicy2ById(convId)
+      rr        <- readReceiptSettings(convId)
+      rawAssets <- Future.traverse(contentMap) { case (messageId, content) =>
+                     assets.createAndSaveUploadAsset(content, AES_CBC_Encryption.random, public = false, retention, Some(messageId))
+                           .map(asset => messageId -> asset)
+                   }
+      assetMap  =  rawAssets.toMap
+      msgs      <- Future.traverse(assetMap) { case (messageId, rawAsset) =>
+                     messages.addAssetMessage(convId, messageId, rawAsset, rr, exp)
+                   }
+      _         <- updateLastRead(msgs.toList.maxBy(_.time))
+      msgMap    =  msgs.map(m => m.id -> m).toMap
+      _         <- Future.traverse(assetMap) { case (messageId, rawAsset) =>
+                     val message = msgMap(messageId)
+                     checkSize(convId, rawAsset, message, confirmation).flatMap {
+                       case true  => sync.postMessage(message.id, convId, message.editTime)
+                       case false => Future.successful(())
+                     }
+                   }
+    } yield ()
   }
 
   override def sendLocationMessage(convId: ConvId, l: api.MessageContent.Location): Future[Some[MessageData]] = {

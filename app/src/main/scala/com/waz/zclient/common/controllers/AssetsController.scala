@@ -17,7 +17,7 @@
  */
 package com.waz.zclient.common.controllers
 
-import java.io.{File, FileOutputStream}
+import java.io.File
 
 import android.app.DownloadManager
 import android.content.pm.PackageManager
@@ -72,6 +72,7 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
   val permissions: Signal[PermissionsService] = zms.map(_.permissions)
   val messages: Signal[MessagesService] = zms.map(_.messages)
   val messagesStorage: Signal[MessagesStorage] = zms.map(_.messagesStorage)
+  val openVideoProgress = Signal(false)
 
   lazy val messageActionsController: MessageActionsController = inject[MessageActionsController]
   lazy val singleImage: ISingleImageController = inject[ISingleImageController]
@@ -117,18 +118,15 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def assetPreviewId(assetId: Signal[GeneralAssetId]): Signal[Option[GeneralAssetId]] =
     assetSignal(assetId).map {
-      case u: UploadAsset => u.preview match {
-        case PreviewUploaded(aId) => Option(aId)
+      case u: UploadAsset   => u.preview match {
+        case PreviewUploaded(aId)    => Option(aId)
         case PreviewNotUploaded(aId) => Option(aId)
-        case _ => Option.empty[GeneralAssetId]
+        case _                       => Option.empty[GeneralAssetId]
       }
       case d: DownloadAsset => d.preview
-      case a: Asset => a.preview
-      case _ => Option.empty[GeneralAssetId]
+      case a: Asset         => a.preview
+      case _                => Option.empty[GeneralAssetId]
     }
-
-  def assetPreviewId(assetId: GeneralAssetId): Signal[Option[GeneralAssetId]] =
-    assetPreviewId(Signal.const(assetId))
 
   def downloadProgress(idGeneral: GeneralAssetId): Signal[Progress] = idGeneral match {
     case id: DownloadAssetId => assets.flatMap(_.downloadProgress(id))
@@ -157,13 +155,11 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     def getPlaybackControls(asset: Signal[GeneralAsset]): Signal[PlaybackControls] = asset.flatMap { a =>
     (a.details, a) match {
       case (_: Audio, audioAsset: Asset) =>
-
         val file = new File(context.getCacheDir, s"${audioAsset.id.str}.m4a")
         Signal.future((if (!file.exists()) {
           file.createNewFile()
-          assets.head.flatMap(_.loadContent(audioAsset)).map { is =>
-            val os = new FileOutputStream(file)
-            IoUtils.copy(is, os)
+          assets.head.flatMap(_.loadContent(audioAsset).future).flatMap(ai => Future.fromTry(ai.toInputStream)).map { is =>
+            IoUtils.copy(is, file)
             is.close()
           }
         } else {
@@ -186,16 +182,20 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
 
   def openFile(idGeneral: GeneralAssetId): Unit = idGeneral match {
     case id: AssetId =>
-      assetForSharing(id).foreach { case AssetForShare(asset, file) =>
-        asset.details match {
-          case _: Video =>
-            context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
-          case _ =>
-            showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
-        }
+      assetForSharing(id).foreach {
+        case AssetForShare(asset, file) =>
+          asset.details match {
+            case _: Video =>
+              context.startActivity(getOpenFileIntent(externalFileSharing.getUriForFile(file), asset.mime.orDefault.str))
+              openVideoProgress ! false
+            case _ =>
+              showOpenFileDialog(externalFileSharing.getUriForFile(file), asset)
+          }
+        case _ =>
+          error(l"Asset $id is not for share")
       }
     case _ =>
-    // TODO: display error
+      error(l"GeneralAssetId is not AssetId: $idGeneral")
   }
 
   def showOpenFileDialog(uri: Uri, asset: Asset): Unit = {
@@ -249,9 +249,11 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       permissions <- permissions.head
       _           <- permissions.ensurePermissions(ListSet(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE))
       assets      <- assets.head
-      is          <- assets.loadContent(asset).future
+      assetInput  <- assets.loadContent(asset).future
+      bytes       <- Future.fromTry(assetInput.toByteArray)
+      // even if the asset input is a file it has to be copied to the "target file", visible from the outside
       targetFile  =  getTargetFile(asset, targetDir)
-      _           =  IoUtils.copy(is, new FileOutputStream(targetFile))
+      _           =  IoUtils.writeBytesToFile(targetFile, bytes)
     } yield targetFile
 
   def saveImageToGallery(asset: Asset): Unit =
@@ -297,12 +299,14 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
       else asset.name
 
     for {
-      assets <- zms.head.map(_.assetService)
-      asset  <- assets.getAsset(id)
-      is     <- assets.loadContent(asset)
-      file   =  new File(context.getExternalCacheDir, getSharedFilename(asset))
-      _      =  IoUtils.copy(is, file)
-      _      =  is.close()
+      assets     <- zms.head.map(_.assetService)
+      asset      <- assets.getAsset(id)
+      assetInput <- assets.loadContent(asset).future
+      is         <- Future.fromTry(assetInput.toInputStream)
+      // even if the asset input is a file it has to be copied to the "target file", visible from the outside
+      file       =  new File(context.getExternalCacheDir, getSharedFilename(asset))
+      _          =  IoUtils.copy(is, file)
+      _          =  is.close()
     } yield AssetForShare(asset, file)
   }
 }

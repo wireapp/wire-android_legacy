@@ -19,22 +19,20 @@ package com.waz.zclient.glide
 
 import com.waz.model.{AssetId, GeneralAssetId, Picture, PictureNotUploaded, PictureUploaded, UploadAssetId}
 import com.waz.api.MessageContent.Location
-import com.waz.service.assets.Asset
 
 sealed trait AssetRequest {
   val key: String
 }
 
 object AssetRequest {
-  def apply(assetIdGeneral: GeneralAssetId): AssetRequest = {
-    assetIdGeneral match {
-      case a: UploadAssetId => UploadAssetIdRequest(a)
-      case a: AssetId => AssetIdRequest(a)
-      case _ => EmptyRequest()
-    }
+  def apply(assetIdGeneral: GeneralAssetId): AssetRequest = assetIdGeneral match {
+    case a: UploadAssetId => UploadAssetIdRequest(a)
+    case a: AssetId       => AssetIdRequest(a)
+    case _                => EmptyRequest
   }
+
   def apply(picture: Picture): AssetRequest = picture match {
-    case PictureUploaded(assetId) => PublicAssetIdRequest(assetId)
+    case PictureUploaded(assetId)    => PublicAssetIdRequest(assetId)
     case PictureNotUploaded(assetId) => UploadAssetIdRequest(assetId)
   }
 }
@@ -42,18 +40,19 @@ object AssetRequest {
 case class AssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
+
 case class PublicAssetIdRequest(assetId: AssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
-case class ImageAssetRequest(asset: Asset) extends AssetRequest {
-  override val key: String = asset.id.str
-}
+
 case class UploadAssetIdRequest(assetId: UploadAssetId) extends AssetRequest {
   override val key: String = assetId.str
 }
+
 case class GoogleMapRequest(location: Location) extends AssetRequest {
   override val key: String = location.toString
 }
-case class EmptyRequest() extends AssetRequest {
+
+case object EmptyRequest extends AssetRequest {
   override val key: String = ""
 }

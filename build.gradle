@@ -86,6 +86,11 @@ ext {
     buildtimeConfiguration = prepareCustomizationEnvironment()
 
     project.logger.quiet("Build time configuration is: ${JsonOutput.prettyPrint(JsonOutput.toJson(buildtimeConfiguration.configuration))}")
+
+    //Update kotlinCore flag as well when adding new kotlin features
+    kotlinSettings = false
+    kotlinRegistration = false
+    kotlinCore = kotlinSettings || kotlinRegistration
 }
 
 class BuildtimeConfiguration {

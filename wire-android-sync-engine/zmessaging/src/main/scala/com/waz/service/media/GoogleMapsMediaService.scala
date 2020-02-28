@@ -17,10 +17,9 @@
  */
 package com.waz.service.media
 
-import java.io.InputStream
-
 import com.waz.api.MessageContent.Location
 import com.waz.model._
+import com.waz.service.assets.AssetInput
 import com.waz.service.media.RichMediaContentParser.GoogleMapsLocation
 import com.waz.sync.client.GoogleMapsClient
 import com.waz.threading.CancellableFuture
@@ -28,7 +27,7 @@ import com.waz.threading.CancellableFuture
 import scala.concurrent.ExecutionContext
 
 trait GoogleMapsMediaService {
-  def loadMapPreview(location: Location, dimensions: Dim2): CancellableFuture[InputStream]
+  def loadMapPreview(location: Location, dimensions: Dim2): CancellableFuture[AssetInput]
 }
 
 class GoogleMapsMediaServiceImpl(googleMapsClient: GoogleMapsClient)(implicit executionContext: ExecutionContext)
@@ -36,14 +35,14 @@ class GoogleMapsMediaServiceImpl(googleMapsClient: GoogleMapsClient)(implicit ex
 
   import com.waz.service.media.GoogleMapsMediaService._
 
-  def loadMapPreview(location: Location, dimensions: Dim2 = ImageDimensions): CancellableFuture[InputStream] = {
+  def loadMapPreview(location: Location, dimensions: Dim2 = ImageDimensions): CancellableFuture[AssetInput] = {
     val googleMapsLocation = GoogleMapsLocation(location.getLatitude.toString, location.getLongitude.toString, location.getZoom.toString)
     val constrainedDimensions = constrain(dimensions)
 
     googleMapsClient.loadMapPreview(googleMapsLocation, constrainedDimensions).flatMap {
       case Left(error) => CancellableFuture.failed(error)
       case Right(result) => CancellableFuture.successful(result)
-    }
+    }.map(AssetInput(_))
   }
 }
 

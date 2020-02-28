@@ -1102,9 +1102,9 @@
     <string name="availability_available">Available</string>
     <string name="availability_away">Away</string>
     <string name="availability_busy">Busy</string>
-    <string name="availability_text_available">%1$s IS AVAILABLE</string>
-    <string name="availability_text_away">%1$s IS AWAY</string>
-    <string name="availability_text_busy">%1$s IS BUSY</string>
+    <string name="availability_text_available">AVAILABLE</string>
+    <string name="availability_text_away">AWAY</string>
+    <string name="availability_text_busy">BUSY</string>
     <string name="availability_setstatus">SET A STATUS</string>
 
     <string name="availability_notification_warning_away_title">You are set to Away</string>
@@ -1489,9 +1489,19 @@
     <string name="edit_phone_dialog_confirm_phone_confirmation">We will send a notification code to:\n%s</string>
     <string name="edit_phone_save_phone_number">Save</string>
 
+    <!-- Delete Account -->
     <string name="delete_account_permanently_email_confirmation">We will send an email to:\n ![CDATA[<b> %1$s </b>]] \nFollow the link to permanently delete your account.</string>
     <string name="delete_account_permanently_sms_confirmation">We will send a SMS to:\n ![CDATA[<b> %1$s </b>]] \nFollow the link to permanently delete your account.</string>
     <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
+
+    <!-- Authentication (Shared strings between create account and login screens) -->
+    <string name="authentication_tab_layout_title_email">EMAIL</string>
+    <string name="authentication_tab_layout_title_phone">PHONE</string>
+
+    <!-- Create Personal Account screen -->
+    <string name="create_personal_account_title">Create an account</string>
+    <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
+    <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
 
 </resources>
 
