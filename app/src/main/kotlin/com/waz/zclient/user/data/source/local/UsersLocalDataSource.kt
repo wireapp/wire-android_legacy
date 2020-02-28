@@ -1,6 +1,7 @@
 package com.waz.zclient.user.data.source.local
 
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestDatabase
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
@@ -27,4 +28,6 @@ class UsersLocalDataSource constructor(
     suspend fun changePhone(value: String) = requestDatabase { userService.updatePhone(userId, value) }
 
     suspend fun deletePhone() = requestDatabase { userService.updatePhone(userId, String.empty()) }
+
+    fun currentUserId() = Either.Right(userId)
 }
