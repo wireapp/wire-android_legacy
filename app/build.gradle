@@ -375,6 +375,8 @@ dependencies {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
     implementation BuildDependencies.androidX.viewPager2
+    implementation BuildDependencies.androidX.navigationFragment
+    implementation BuildDependencies.androidX.navigationUi
 
     // Play services
     implementation BuildDependencies.playServices.base
