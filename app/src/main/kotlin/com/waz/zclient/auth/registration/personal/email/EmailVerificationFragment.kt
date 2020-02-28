@@ -27,6 +27,7 @@ class EmailVerificationFragment : Fragment(R.layout.fragment_email_verification)
     }
 
     private fun initVerificationCodeInput() {
+        //TODO handle all the cases for keyboard actions 
         emailVerificationFirstDigitEditText.requestFocus()
         emailVerificationFirstDigitEditText.showKeyboard()
         emailVerificationFirstDigitEditText.doAfterTextChanged { emailVerificationSecondDigitEditText.requestFocus() }
