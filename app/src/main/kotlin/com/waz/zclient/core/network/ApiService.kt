@@ -1,6 +1,7 @@
 package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.BadRequest
+import com.waz.zclient.core.exception.Cancelled
 import com.waz.zclient.core.exception.EmptyResponseBody
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.Forbidden
@@ -10,6 +11,7 @@ import com.waz.zclient.core.exception.NotFound
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.exception.Unauthorized
 import com.waz.zclient.core.functional.Either
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Response
@@ -36,8 +38,10 @@ abstract class ApiService {
                 handleRequestError(response)
             }
         } catch (exception: Throwable) {
-            //todo: check coroutine exceptions (e.g. Cancelled)
-            Either.Left(ServerError)
+            when (exception) {
+                is CancellationException -> Either.Left(Cancelled)
+                else -> Either.Left(ServerError)
+            }
         }
     }
 

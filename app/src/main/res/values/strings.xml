@@ -1490,8 +1490,8 @@
     <string name="edit_phone_save_phone_number">Save</string>
 
     <!-- Delete Account -->
-    <string name="delete_account_permanently_email_confirmation">We will send an email to:\n ![CDATA[<b> %1$s </b>]] \nFollow the link to permanently delete your account.</string>
-    <string name="delete_account_permanently_sms_confirmation">We will send a SMS to:\n ![CDATA[<b> %1$s </b>]] \nFollow the link to permanently delete your account.</string>
+    <string name="delete_account_permanently_email_confirmation">We will send an email to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="delete_account_permanently_sms_confirmation">We will send an SMS to:\n %1$s \nFollow the link to permanently delete your account.</string>
     <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
 
     <!-- Authentication (Shared strings between create account and login screens) -->

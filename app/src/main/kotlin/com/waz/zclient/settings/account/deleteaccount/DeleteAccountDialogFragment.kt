@@ -11,11 +11,11 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.toSpanned
 import com.waz.zclient.core.extension.withArgs
-import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.android.viewmodel.ext.android.sharedViewModel
 
 class DeleteAccountDialogFragment : DialogFragment() {
 
-    private val settingsAccountDeleteAccountViewModel: SettingsAccountDeleteAccountViewModel by viewModel()
+    private val settingsAccountDeleteAccountViewModel: SettingsAccountDeleteAccountViewModel by sharedViewModel()
 
     private val emailAddress: String by lazy {
         arguments?.getString(EMAIL_BUNDLE_KEY, String.empty()) ?: String.empty()
