@@ -19,36 +19,20 @@ class EmailVerificationFragment : Fragment(R.layout.fragment_email_verification)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initDescriptionTextView()
-        initFirstDigitEditText()
-        initSecondDigitEditText()
-        initThirdDigitEditText()
-        initFourthDigitEditText()
-        initFifthDigitEditText()
+        initVerificationCodeInput()
     }
 
     private fun initDescriptionTextView() {
         emailVerificationDescriptionTextView.text = String.format(getString(R.string.email_verification_description), email)
     }
 
-    private fun initFirstDigitEditText() {
+    private fun initVerificationCodeInput() {
         emailVerificationFirstDigitEditText.requestFocus()
         emailVerificationFirstDigitEditText.showKeyboard()
         emailVerificationFirstDigitEditText.doAfterTextChanged { emailVerificationSecondDigitEditText.requestFocus() }
-    }
-
-    private fun initSecondDigitEditText() {
         emailVerificationSecondDigitEditText.doAfterTextChanged { emailVerificationThirdDigitEditText.requestFocus() }
-    }
-
-    private fun initThirdDigitEditText() {
         emailVerificationThirdDigitEditText.doAfterTextChanged { emailVerificationFourthDigitEditText.requestFocus() }
-    }
-
-    private fun initFourthDigitEditText() {
         emailVerificationFourthDigitEditText.doAfterTextChanged { emailVerificationFifthDigitEditText.requestFocus() }
-    }
-
-    private fun initFifthDigitEditText() {
         emailVerificationFifthDigitEditText.doAfterTextChanged { emailVerificationSixthDigitEditText.requestFocus() }
     }
 
