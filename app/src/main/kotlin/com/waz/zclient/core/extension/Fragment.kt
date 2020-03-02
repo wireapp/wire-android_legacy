@@ -23,6 +23,6 @@ fun Fragment.openUrl(url: String) =
 fun Fragment.startActivityWithAction(intentAction: String) =
     startActivity(Intent().apply { action = intentAction })
 
-fun replaceFragment(frameId: Int, fragment: Fragment, parentActivity: FragmentActivity?, addToBackStack: Boolean = true) {
-    (parentActivity as AppCompatActivity).replaceFragment(frameId, fragment, addToBackStack)
+fun Fragment.replaceFragment(frameId: Int, fragment: Fragment, addToBackStack: Boolean = true) {
+    (activity as AppCompatActivity).replaceFragment(frameId, fragment, addToBackStack)
 }

@@ -44,8 +44,7 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
         confirmationButton.setOnClickListener {
             replaceFragment(
                 R.id.activityCreateAccountLayoutContainer,
-                EmailVerificationFragment.newInstance(createPersonalAccountWithEmailEditText.text.toString()),
-                activity)
+                EmailVerificationFragment.newInstance(createPersonalAccountWithEmailEditText.text.toString()))
         }
     }
 

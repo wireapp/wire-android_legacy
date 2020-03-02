@@ -20,7 +20,7 @@ class CreateAccountFragment : Fragment(R.layout.fragment_create_account) {
     private fun initCreatePersonalAccount() {
         createPersonalAccountLayoutContainer.setOnClickListener {
             replaceFragment(R.id.activityCreateAccountLayoutContainer,
-                CreatePersonalAccountFragment.newInstance(),activity)
+                CreatePersonalAccountFragment.newInstance())
         }
     }
 
