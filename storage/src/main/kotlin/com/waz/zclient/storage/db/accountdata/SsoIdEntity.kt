@@ -12,13 +12,15 @@ data class SsoIdEntity(
 class SsoIdConverter {
 
     @TypeConverter
-    fun fromStringToSsoId(tokenString: String): SsoIdEntity? =
+    fun fromStringToSsoId(tokenString: String?): SsoIdEntity? =
         try {
-            val json = JSONObject(tokenString)
-            SsoIdEntity(
-                subject = json.getString("subject"),
-                tenant = json.getString("tenant")
-            )
+            tokenString?.let {
+                val json = JSONObject(it)
+                SsoIdEntity(
+                    subject = json.getString("subject"),
+                    tenant = json.getString("tenant")
+                )
+            }
         } catch (e: JSONException) {
             null
         }

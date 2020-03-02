@@ -51,6 +51,8 @@ class UsersDataSource(
     override suspend fun changeEmail(email: String) = changeEmailRemotely(email)
         .onSuccess { runBlocking { changeEmailLocally(email) } }
 
+    override suspend fun currentUserId() = usersLocalDataSource.currentUserId()
+
     private suspend fun changeEmailRemotely(email: String) = usersRemoteDataSource.changeEmail(email)
 
     private suspend fun changeEmailLocally(email: String) = usersLocalDataSource.changeEmail(email)

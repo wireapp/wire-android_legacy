@@ -42,6 +42,9 @@ class UsersRemoteDataSource(
     suspend fun deletePhone(): Either<Failure, Any> =
         request { usersNetworkService.deletePhone() }
 
+    suspend fun deleteAccountPermanently(): Either<Failure, Unit> =
+        request { usersNetworkService.deleteAccount(DeleteAccountRequest) }
+
     companion object {
         private const val HANDLE_TAKEN = 200
         private const val HANDLE_INVALID = 400

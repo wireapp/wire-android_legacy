@@ -12,13 +12,15 @@ import com.waz.zclient.features.settings.account.editphonenumber.SettingsAccount
 import com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.features.settings.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.features.settings.support.SettingsSupportViewModel
-import com.waz.zclient.user.usecase.email.ChangeEmailUseCase
-import com.waz.zclient.user.usecase.name.ChangeNameUseCase
+import com.waz.zclient.settings.account.deleteaccount.DeleteAccountUseCase
+import com.waz.zclient.settings.account.deleteaccount.SettingsAccountDeleteAccountViewModel
 import com.waz.zclient.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.usecase.email.ChangeEmailUseCase
 import com.waz.zclient.user.usecase.handle.ChangeHandleUseCase
 import com.waz.zclient.user.usecase.handle.CheckHandleExistsUseCase
 import com.waz.zclient.user.usecase.handle.GetHandleUseCase
 import com.waz.zclient.user.usecase.handle.ValidateHandleUseCase
+import com.waz.zclient.user.usecase.name.ChangeNameUseCase
 import com.waz.zclient.user.usecase.phonenumber.ChangePhoneNumberUseCase
 import com.waz.zclient.user.usecase.phonenumber.CountryCodeAndPhoneNumberUseCase
 import com.waz.zclient.user.usecase.phonenumber.DeletePhoneNumberUseCase
@@ -72,9 +74,10 @@ val settingsDeviceModule: Module = module {
 @ExperimentalCoroutinesApi
 val settingsAccountModule: Module = module {
     scope(named(SETTINGS_SCOPE)) {
-        viewModel { SettingsAccountViewModel(get(), get(), get(), get()) }
+        viewModel { SettingsAccountViewModel(get(), get(), get(), get(), get()) }
         viewModel { SettingsAccountEditHandleViewModel(get(), get(), get(), get()) }
         viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
+        viewModel { SettingsAccountDeleteAccountViewModel(get()) }
         viewModel { CountryCodePickerViewModel(get()) }
 
         scoped { PhoneNumberUtil.getInstance() }
@@ -92,5 +95,6 @@ val settingsAccountModule: Module = module {
         factory { GetUserProfileUseCase(get()) }
         factory { ChangeNameUseCase(get()) }
         factory { ChangeEmailUseCase(get()) }
+        factory { DeleteAccountUseCase(get()) }
     }
 }

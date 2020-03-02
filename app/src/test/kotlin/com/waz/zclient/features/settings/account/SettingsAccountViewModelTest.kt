@@ -1,6 +1,7 @@
 package com.waz.zclient.features.settings.account
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.accounts.domain.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
@@ -44,6 +45,9 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var accountsUrlConfig: AccountUrlConfig
 
     @Mock
+    private lateinit var getActiveAccountUseCase: GetActiveAccountUseCase
+
+    @Mock
     private lateinit var user: User
 
     private lateinit var userFlow: Flow<User>
@@ -54,6 +58,7 @@ class SettingsAccountViewModelTest : UnitTest() {
             getUserProfileUseCase,
             changeNameUseCase,
             changeEmailUseCase,
+            getActiveAccountUseCase,
             accountsUrlConfig)
         userFlow = flow { user }
     }

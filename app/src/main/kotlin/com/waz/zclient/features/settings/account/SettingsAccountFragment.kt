@@ -8,12 +8,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.extension.invisible
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.extension.visible
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.features.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.features.settings.account.editphonenumber.EditPhoneNumberActivity
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
+import com.waz.zclient.settings.account.deleteaccount.DeleteAccountDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -28,20 +31,41 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
+        initSsoButtons()
+        initTeamButtons()
         initErrorHandling()
         initAccountName()
         initAccountHandle()
         initAccountEmail()
         initAccountPhoneNumber()
         initResetPassword()
+        initDeleteAccountButton()
         loadProfile()
     }
+
+    private fun initSsoButtons() {
+        settingsAccountViewModel.isSsoAccountLiveData.observe(viewLifecycleOwner) {
+            defineButtonVisibility(!it, settingsAccountEmailContainerLinearLayout)
+            defineButtonVisibility(!it, settingsAccountResetPasswordButton)
+            defineButtonVisibility(!it, settingsAccountDeleteAccountButton)
+        }
+    }
+
+    private fun initTeamButtons() {
+        settingsAccountViewModel.inATeamLiveData.observe(viewLifecycleOwner) {
+            defineButtonVisibility(!it, settingsAccountPhoneContainerLinearLayout)
+            defineButtonVisibility(!it, settingsAccountDeleteAccountButton)
+        }
+    }
+
+    private fun defineButtonVisibility(visible: Boolean, view: View) =
+        if (visible) view.visible() else view.invisible()
 
     private fun initAccountPhoneNumber() {
         settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
         settingsAccountViewModel.phoneDialogLiveData.observe(viewLifecycleOwner) {
             when (it) {
-                DialogDetail.EMPTY -> showAddPhoneDialog()
+                PhoneDialogDetail.EMPTY -> showAddPhoneDialog()
                 else -> launchEditPhoneScreen(it.number, it.hasEmail)
             }
         }
@@ -83,6 +107,15 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         }
         settingsAccountViewModel.resetPasswordUrlLiveData.observe(viewLifecycleOwner) {
             openUrl(it)
+        }
+    }
+
+    private fun initDeleteAccountButton() {
+        settingsAccountViewModel.deleteAccountDialogLiveData.observe(viewLifecycleOwner) {
+            showDeleteAccountDialog(it.email, it.number)
+        }
+        settingsAccountDeleteAccountButton.setOnClickListener {
+            settingsAccountViewModel.onDeleteAccountButtonClicked()
         }
     }
 
@@ -128,6 +161,11 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
     private fun showEditHandleDialog() =
         EditHandleDialogFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
+
+    private fun showDeleteAccountDialog(email: String, phoneNumber: String) {
+        DeleteAccountDialogFragment.newInstance(email, phoneNumber)
+            .show(requireActivity().supportFragmentManager, String.empty())
+    }
 
     private fun launchEditPhoneScreen(phoneNumber: String, hasEmail: Boolean) =
         startActivity(EditPhoneNumberActivity.newIntent(requireContext(), phoneNumber, hasEmail))
