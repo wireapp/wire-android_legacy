@@ -27,7 +27,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import retrofit2.Response
 
-//TODO: try to use runBlocking once the issue with threading solved:
+//TODO: try to use runBlockingTest once the issue with threading solved:
 //https://github.com/Kotlin/kotlinx.coroutines/issues/1222
 //https://github.com/Kotlin/kotlinx.coroutines/issues/1204
 @ExperimentalCoroutinesApi
