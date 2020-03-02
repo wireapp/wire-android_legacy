@@ -6,10 +6,10 @@ import com.waz.zclient.storage.BuildConfig
 
 private const val START_VERSION = 126
 private const val END_VERSION = 127
-private const val USER_PREFERENCE_TABLE_NAME = "KeyValuesTemp"
+private const val KEY_VALUES_TEMP_NAME = "KeyValuesTemp"
 private const val KEY_VALUES_TABLE_NAME = "KeyValues"
 
-private const val USER_TABLE_NAME = "UserCopy"
+private const val USER_TEMP_TABLE_NAME = "UserTemp"
 private const val USERS_TABLE_NAME = "Users"
 
 //Shared keys
@@ -59,13 +59,13 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, END_V
 
     private fun migrateKeyValuesTable(database: SupportSQLiteDatabase) {
         val createTempKeyValues = """
-                CREATE TABLE IF NOT EXISTS `$USER_PREFERENCE_TABLE_NAME` (
+                CREATE TABLE IF NOT EXISTS `$KEY_VALUES_TEMP_NAME` (
                 `key` TEXT PRIMARY KEY NOT NULL ,
                 `value` TEXT)
                 """.trimIndent()
-        val copyAllValues = "INSERT INTO $USER_PREFERENCE_TABLE_NAME SELECT * FROM $KEY_VALUES_TABLE_NAME"
+        val copyAllValues = "INSERT INTO $KEY_VALUES_TEMP_NAME SELECT * FROM $KEY_VALUES_TABLE_NAME"
         val dropOldValuesTable = "DROP TABLE $KEY_VALUES_TABLE_NAME"
-        val renameOldValuesTable = "ALTER TABLE $USER_PREFERENCE_TABLE_NAME RENAME TO $KEY_VALUES_TABLE_NAME"
+        val renameOldValuesTable = "ALTER TABLE $KEY_VALUES_TEMP_NAME RENAME TO $KEY_VALUES_TABLE_NAME"
 
         with(database) {
             execSQL(createTempKeyValues)
@@ -77,18 +77,18 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, END_V
 
     private fun migrateUserTable(database: SupportSQLiteDatabase) {
         val createTempUserTable = """
-              | CREATE TABLE $USER_TABLE_NAME (
+              | CREATE TABLE $USER_TEMP_TABLE_NAME (
               | _id TEXT PRIMARY KEY NOT NULL,
-              | teamId TEXT, name TEXT NOT NULL, email TEXT, phone TEXT, tracking_id TEXT,
+              | teamId TEXT, name TEXT, email TEXT, phone TEXT, tracking_id TEXT,
               | picture TEXT, accent INTEGER, skey TEXT, connection TEXT, conn_timestamp INTEGER,
               | conn_msg TEXT, conversation TEXT, relation TEXT, timestamp INTEGER,
-              | verified TEXT, deleted INTEGER NOT NULL, availability INTEGER,
+              | verified TEXT, deleted INTEGER, availability INTEGER,
               | handle TEXT, provider_id TEXT, integration_id TEXT, expires_at INTEGER,
               | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
               | )""".trimMargin()
 
         val copyUserTable = """
-              |INSERT INTO $USER_TABLE_NAME (
+              |INSERT INTO $USER_TEMP_TABLE_NAME (
               | _id,
               | teamId, name, email, phone, tracking_id,
               | picture, accent, skey, connection, conn_timestamp,
@@ -108,7 +108,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, END_V
               | FROM $USERS_TABLE_NAME""".trimMargin()
 
         val dropOldTable = "DROP TABLE $USERS_TABLE_NAME"
-        val renameTableBack = "ALTER TABLE $USER_TABLE_NAME RENAME TO $USERS_TABLE_NAME"
+        val renameTableBack = "ALTER TABLE $USER_TEMP_TABLE_NAME RENAME TO $USERS_TABLE_NAME"
         with(database) {
             execSQL(createTempUserTable)
             execSQL(copyUserTable)
