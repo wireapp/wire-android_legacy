@@ -3,6 +3,8 @@ package com.waz.zclient.auth.registration.personal
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.waz.zclient.auth.registration.personal.email.CreatePersonalAccountWithEmailFragment
+import com.waz.zclient.auth.registration.personal.phone.CreatePersonalAccountWithPhoneFragment
 
 class CreatePersonalAccountViewPagerAdapter(fragmentActivity: FragmentActivity) :
     FragmentStateAdapter(fragmentActivity) {
