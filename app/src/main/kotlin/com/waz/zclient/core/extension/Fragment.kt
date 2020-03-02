@@ -3,6 +3,7 @@ package com.waz.zclient.core.extension
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
@@ -20,3 +21,7 @@ fun Fragment.openUrl(url: String) =
 
 fun Fragment.startActivityWithAction(intentAction: String) =
     startActivity(Intent().apply { action = intentAction })
+
+fun Fragment.replaceFragment(frameId: Int, fragment: Fragment, addToBackStack: Boolean = true) {
+    (activity as AppCompatActivity).replaceFragment(frameId, fragment, addToBackStack)
+}

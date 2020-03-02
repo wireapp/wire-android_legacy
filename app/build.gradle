@@ -351,6 +351,7 @@ dependencies {
     }
 
     //Android
+    annotationProcessor BuildDependencies.androidX.annotation
     implementation BuildDependencies.androidX.material
     implementation BuildDependencies.androidX.multidex
     implementation BuildDependencies.androidX.appCompat
@@ -373,8 +374,7 @@ dependencies {
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
-    annotationProcessor BuildDependencies.androidX.annotation
-    annotationProcessor BuildDependencies.androidX.viewPager2
+    implementation BuildDependencies.androidX.viewPager2
 
     // Play services
     implementation BuildDependencies.playServices.base

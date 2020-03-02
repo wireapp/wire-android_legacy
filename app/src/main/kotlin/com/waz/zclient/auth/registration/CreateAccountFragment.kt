@@ -2,7 +2,6 @@ package com.waz.zclient.auth.registration
 
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.auth.registration.personal.CreatePersonalAccountFragment
@@ -19,7 +18,8 @@ class CreateAccountFragment : Fragment(R.layout.fragment_create_account) {
 
     private fun initCreatePersonalAccount() {
         createPersonalAccountLayoutContainer.setOnClickListener {
-            replaceFragment(CreatePersonalAccountFragment.newInstance())
+            replaceFragment(R.id.activityCreateAccountLayoutContainer,
+                CreatePersonalAccountFragment.newInstance())
         }
     }
 
@@ -27,10 +27,6 @@ class CreateAccountFragment : Fragment(R.layout.fragment_create_account) {
         createProAccountLayoutContainer.setOnClickListener {
             //TODO call CreateProAccountFragment once ready
         }
-    }
-
-    private fun replaceFragment(fragment: Fragment) {
-        (activity as AppCompatActivity).replaceFragment(R.id.activityCreateAccountLayoutContainer, fragment)
     }
 
     companion object {

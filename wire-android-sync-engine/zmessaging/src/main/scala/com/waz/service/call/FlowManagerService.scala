@@ -50,24 +50,21 @@ class DefaultFlowManagerService(context:      Context,
                                 network:      NetworkModeService) extends FlowManagerService with DerivedLogTag {
   import FlowManagerService._
 
-  val avsAudioTestFlag: Long = 1 << 1
-
   private implicit val ev = EventContext.Global
   private implicit val dispatcher = new SerialDispatchQueue(name = "FlowManagerService")
 
   override val cameraFailedSig = Signal[Boolean](false)
 
-  network.networkMode {  _ =>
-    doWithFlowManager(_.networkChanged())
+  network.networkMode.onChanged {  _ =>
+    flowManager.fold { warn(l"unable to access flow manager") } { fm => Try { fm.networkChanged() } }
   }
 
-  lazy val flowManager: Option[FlowManager] = {
+  lazy val flowManager: Option[FlowManager] =
     Try {
-      val fm = new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
-      fm.addListener(flowListener)
-      fm
+      returning(
+        new FlowManager(context, null, if (globalPrefs.getFromPref(AutoAnswerCallPrefKey)) avsAudioTestFlag else 0)
+      )(_.addListener(flowListener))
     }.toOption
-  }
 
   private val flowListener = new FlowManagerListener {
     override def cameraFailed(): Unit = {
@@ -114,11 +111,6 @@ class DefaultFlowManagerService(context:      Context,
     fm.setVideoView(id.str, partId.map(_.str).orNull, view)
   }
 
-  private def doWithFlowManager(op: FlowManager => Unit): Try[Unit] = withFlowManager(op, ())
-
-  private def withFlowManager[T](op: FlowManager => T, fallback: => T): Try[T] =
-    flowManager.fold { warn(l"unable to access flow manager"); Try(fallback) } { fm => Try { op(fm) } }
-
   private def schedule(op: FlowManager => Unit)(implicit dispatcher: ExecutionContext): Future[Unit] =
     scheduleWithoutRecovery(op) .recoverWithLog()
 
@@ -137,4 +129,6 @@ class DefaultFlowManagerService(context:      Context,
 
 object FlowManagerService {
   case class VideoCaptureDevice(id: String, name: String)
+
+  private[call] val avsAudioTestFlag: Long = 1 << 1
 }

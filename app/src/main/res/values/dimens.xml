@@ -593,8 +593,28 @@
     <dimen name="create_account_description_padding">32dp</dimen>
 
     <!-- Create Personal Account screen -->
-    <dimen name="create_personal_account_title_text_view_size">32sp</dimen>
+    <dimen name="create_personal_account_title_text_size">32sp</dimen>
     <dimen name="create_personal_account_text_input_layout_margin_top">14dp</dimen>
     <dimen name="create_personal_account_edit_text_height">56dp</dimen>
 
+    <!-- Email Verification screen -->
+    <dimen name="email_verification_title_text_size">40sp</dimen>
+    <dimen name="email_verification_description_text_size">16sp</dimen>
+    <dimen name="email_verification_description_text_margin_top">24dp</dimen>
+    <dimen name="email_verification_description_text_margin_start">24dp</dimen>
+    <dimen name="email_verification_description_text_margin_end">24dp</dimen>
+    <dimen name="email_verification_resend_code_text_size">12sp</dimen>
+    <dimen name="email_verification_change_email_text_size">12sp</dimen>
+    <dimen name="email_verification_first_digit_edit_text_margin_start">16dp</dimen>
+    <dimen name="email_verification_last_digit_edit_text_margin_end">16dp</dimen>
+    <dimen name="email_verification_digit_edit_text_margin_top">60dp</dimen>
+
+    <!-- PIN Code Digit (Shared dimensions between email verification and phone verification screens) -->
+    <dimen name="pin_code_digit_width">50dp</dimen>
+    <dimen name="pin_code_digit_height">56dp</dimen>
+    <dimen name="pin_code_digit_padding_start">16dp</dimen>
+    <dimen name="pin_code_digit_padding_end">16dp</dimen>
+    <dimen name="pin_code_digit_padding_top">8dp</dimen>
+    <dimen name="pin_code_digit_padding_bottom">8dp</dimen>
+    <dimen name="pin_code_digit_text_size">32dp</dimen>
 </resources>

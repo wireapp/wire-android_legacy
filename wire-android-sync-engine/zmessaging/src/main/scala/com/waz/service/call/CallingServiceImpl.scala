@@ -173,7 +173,7 @@ class CallingServiceImpl(val accountId:       UserId,
   private implicit val dispatcher: SerialDispatchQueue = new SerialDispatchQueue(name = "CallingService")
 
   //need to ensure that flow manager and media manager are initialised for v3 (they are lazy values)
-  private val fm = flowManagerService.flowManager
+  flowManagerService.flowManager
   private var closingPromise = Option.empty[Promise[Unit]]
 
   private[call] val callProfile = Signal(CallProfile.Empty)
@@ -387,9 +387,9 @@ class CallingServiceImpl(val accountId:       UserId,
         profile <- callProfile.head
         isGroup <- convsService.isGroupConversation(convId)
         vbr     <- userPrefs.preference(UserPreferences.VBREnabled).apply()
-        mems    <- members.getActiveUsers(conv.id)
+        convSize <- convsService.activeMembersData(conv.id).map(_.size).head
         callType =
-          if (mems.size > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
+          if (convSize > VideoCallMaxMembers) Avs.WCallType.ForcedAudio
           else if (isVideo) Avs.WCallType.Video
           else Avs.WCallType.Normal
         convType = if (isGroup) Avs.WCallConvType.Group else Avs.WCallConvType.OneOnOne

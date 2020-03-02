@@ -1,4 +1,4 @@
-package com.waz.zclient.auth.registration.personal
+package com.waz.zclient.auth.registration.personal.phone
 
 import android.os.Bundle
 import android.view.View

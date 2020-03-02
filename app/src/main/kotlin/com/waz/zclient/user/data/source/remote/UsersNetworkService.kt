@@ -6,6 +6,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.PUT
 import retrofit2.http.Path
 
@@ -13,6 +14,9 @@ interface UsersNetworkService {
 
     @GET(SELF)
     suspend fun profileDetails(): Response<UserApi>
+
+    @HTTP(method = "DELETE", path = SELF, hasBody = true)
+    suspend fun deleteAccount(@Body deleteAccount: DeleteAccountRequest): Response<Unit>
 
     @PUT(SELF)
     suspend fun changeName(@Body name: ChangeNameRequest): Response<Unit>
@@ -30,7 +34,7 @@ interface UsersNetworkService {
     suspend fun doesHandleExist(@Path("handle") handle: String): Response<Unit>
 
     @DELETE("$SELF$PHONE")
-    fun deletePhone(): Response<Unit>
+    suspend fun deletePhone(): Response<Unit>
 
     companion object {
         private const val SELF = "/self"
@@ -41,6 +45,8 @@ interface UsersNetworkService {
         private const val HANDLES = "/handles"
     }
 }
+
+object DeleteAccountRequest
 
 data class ChangeNameRequest(
     @SerializedName("name") val name: String

@@ -24,11 +24,25 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <style name="EditText.Authentication"  parent="@style/EditText.RobotoRegular">
+    <style name="EditText.Authentication" parent="@style/EditText.RobotoRegular">
         <item name="android:padding">@dimen/authentication_edit_text_padding</item>
         <item name="android:textColorHint">@color/heather</item>
         <item name="android:textSize">@dimen/authentication_edit_text_text_size</item>
         <item name="android:background">@color/white</item>
+    </style>
+
+    <style name="EditText.PinCodeDigit" parent="@style/EditText.RobotoRegular">
+        <item name="android:paddingStart">@dimen/pin_code_digit_padding_start</item>
+        <item name="android:paddingEnd">@dimen/pin_code_digit_padding_end</item>
+        <item name="android:paddingTop">@dimen/pin_code_digit_padding_top</item>
+        <item name="android:paddingBottom">@dimen/pin_code_digit_padding_bottom</item>
+        <item name="android:inputType">number</item>
+        <item name="android:background">@color/white</item>
+        <item name="android:textSize">@dimen/pin_code_digit_text_size</item>
+        <item name="android:maxLength">1</item>
+        <item name="android:cursorVisible">false</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:focusable">true</item>
     </style>
 
 </resources>
