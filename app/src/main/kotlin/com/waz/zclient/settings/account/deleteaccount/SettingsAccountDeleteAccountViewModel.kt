@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
-class SettingsAccountDeleteAccountViewModel(private val deleteAccountUserCase: DeleteAccountUseCase) : ViewModel() {
+class SettingsAccountDeleteAccountViewModel(
+    private val deleteAccountUserCase: DeleteAccountUseCase
+) : ViewModel() {
 
     private val _deletionConfirmedLiveData = MutableLiveData<Unit>()
 

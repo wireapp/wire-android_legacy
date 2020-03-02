@@ -9,13 +9,14 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.toSpanned
 import com.waz.zclient.core.extension.withArgs
-import org.koin.android.viewmodel.ext.android.sharedViewModel
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 
 class DeleteAccountDialogFragment : DialogFragment() {
 
-    private val settingsAccountDeleteAccountViewModel: SettingsAccountDeleteAccountViewModel by sharedViewModel()
+    private val deleteAccountViewModel by sharedViewModel<SettingsAccountDeleteAccountViewModel>(SETTINGS_SCOPE_ID)
 
     private val emailAddress: String by lazy {
         arguments?.getString(EMAIL_BUNDLE_KEY, String.empty()) ?: String.empty()
@@ -40,7 +41,7 @@ class DeleteAccountDialogFragment : DialogFragment() {
             .setTitle(getString(R.string.pref_account_delete_warning_title))
             .setMessage(message)
             .setPositiveButton(getString(R.string.pref_account_delete_warning_verify)) { _, _ ->
-                settingsAccountDeleteAccountViewModel.onDeleteAccountConfirmed()
+                deleteAccountViewModel.onDeleteAccountConfirmed()
             }
             .setNegativeButton(getString(R.string.pref_account_delete_warning_cancel), null)
             .create()
@@ -48,7 +49,7 @@ class DeleteAccountDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        settingsAccountDeleteAccountViewModel.deletionConfirmedLiveData.observe(viewLifecycleOwner) {
+        deleteAccountViewModel.deletionConfirmedLiveData.observe(viewLifecycleOwner) {
             val message = getString(R.string.pref_account_delete_confirmed)
             Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
         }
