@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/settings_nav_graph"
+    app:startDestination="@id/settingsMainFragment">
+
+    <fragment
+        android:id="@+id/settingsMainFragment"
+        android:name="com.waz.zclient.settings.main.SettingsMainFragment"
+        android:label="SettingsMainFragment" >
+        <action
+            android:id="@+id/action_settingsMainFragment_to_settingsAccountFragment"
+            app:destination="@id/settingsAccountFragment" />
+        <action
+            android:id="@+id/action_settingsMainFragment_to_settingsDeviceListFragment"
+            app:destination="@id/settingsDeviceListFragment" />
+        <action
+            android:id="@+id/action_settingsMainFragment_to_settingsOptionsFragment"
+            app:destination="@id/settingsOptionsFragment" />
+        <action
+            android:id="@+id/action_settingsMainFragment_to_settingsAdvancedFragment"
+            app:destination="@id/settingsAdvancedFragment" />
+        <action
+            android:id="@+id/action_settingsMainFragment_to_settingsSupportFragment"
+            app:destination="@id/settingsSupportFragment" />
+        <action
+            android:id="@+id/action_settingsMainFragment_to_settingsAboutFragment"
+            app:destination="@id/settingsAboutFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsAccountFragment"
+        android:name="com.waz.zclient.settings.account.SettingsAccountFragment"
+        android:label="SettingsAccountFragment" />
+    <fragment
+        android:id="@+id/settingsDeviceListFragment"
+        android:name="com.waz.zclient.settings.devices.list.SettingsDeviceListFragment"
+        android:label="SettingsDeviceListFragment" />
+    <fragment
+        android:id="@+id/settingsOptionsFragment"
+        android:name="com.waz.zclient.settings.options.SettingsOptionsFragment"
+        android:label="SettingsOptionsFragment" />
+    <fragment
+        android:id="@+id/settingsAdvancedFragment"
+        android:name="com.waz.zclient.settings.advanced.SettingsAdvancedFragment"
+        android:label="SettingsAdvancedFragment" />
+    <fragment
+        android:id="@+id/settingsSupportFragment"
+        android:name="com.waz.zclient.settings.support.SettingsSupportFragment"
+        android:label="SettingsSupportFragment" />
+    <fragment
+        android:id="@+id/settingsAboutFragment"
+        android:name="com.waz.zclient.settings.about.SettingsAboutFragment"
+        android:label="SettingsAboutFragment" />
+</navigation>
