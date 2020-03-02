@@ -3,8 +3,8 @@ package com.waz.zclient.features.settings.main
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import com.waz.zclient.R
+import com.waz.zclient.core.navigation.navigator
 import com.waz.zclient.core.ui.list.OnItemClickListener
 import com.waz.zclient.features.settings.main.list.SettingsMainListAdapter
 import com.waz.zclient.features.settings.main.list.SettingsMainListItemsFactory
@@ -24,15 +24,14 @@ class SettingsMainFragment : Fragment(R.layout.fragment_settings_main), OnItemCl
         )
     }
 
-    override fun onItemClicked(position: Int) {
+    override fun onItemClicked(position: Int) = with(navigator()) {
         when (position) {
-            //TODO: hide implementation details!
-            ACCOUNT -> findNavController().navigate(R.id.action_settingsMainFragment_to_settingsAccountFragment)
-            DEVICES -> findNavController().navigate(R.id.action_settingsMainFragment_to_settingsDeviceListFragment)
-            OPTIONS -> findNavController().navigate(R.id.action_settingsMainFragment_to_settingsOptionsFragment)
-            ADVANCED -> findNavController().navigate(R.id.action_settingsMainFragment_to_settingsAdvancedFragment)
-            SUPPORT -> findNavController().navigate(R.id.action_settingsMainFragment_to_settingsSupportFragment)
-            ABOUT -> findNavController().navigate(R.id.action_settingsMainFragment_to_settingsAboutFragment)
+            ACCOUNT -> navigateTo(R.id.action_settingsMainFragment_to_settingsAccountFragment)
+            DEVICES -> navigateTo(R.id.action_settingsMainFragment_to_settingsDeviceListFragment)
+            OPTIONS -> navigateTo(R.id.action_settingsMainFragment_to_settingsOptionsFragment)
+            ADVANCED -> navigateTo(R.id.action_settingsMainFragment_to_settingsAdvancedFragment)
+            SUPPORT -> navigateTo(R.id.action_settingsMainFragment_to_settingsSupportFragment)
+            ABOUT -> navigateTo(R.id.action_settingsMainFragment_to_settingsAboutFragment)
         }
     }
 
