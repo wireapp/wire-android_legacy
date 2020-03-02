@@ -1,7 +1,7 @@
 package com.waz.zclient.features.settings.devices
 
 import com.waz.zclient.R
-import com.waz.zclient.clients.domain.model.Client
+import com.waz.zclient.clients.Client
 
 enum class ClientVerification {
     VERIFIED,

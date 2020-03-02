@@ -6,9 +6,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.clients.domain.GetClientUseCase
-import com.waz.zclient.clients.domain.GetSpecificClientParams
-import com.waz.zclient.clients.domain.model.Client
+import com.waz.zclient.clients.usecase.GetClientUseCase
+import com.waz.zclient.clients.usecase.GetSpecificClientParams
+import com.waz.zclient.clients.Client
 import com.waz.zclient.features.settings.devices.ClientItem
 
 class SettingsDeviceDetailViewModel(private val getClientByIdUseCase: GetClientUseCase) : ViewModel() {

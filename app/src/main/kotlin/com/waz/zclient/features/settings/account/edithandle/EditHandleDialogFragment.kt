@@ -13,11 +13,11 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
-import com.waz.zclient.user.usecase.handle.HandleAlreadyExists
-import com.waz.zclient.user.usecase.handle.HandleInvalid
-import com.waz.zclient.user.usecase.handle.HandleTooShort
-import com.waz.zclient.user.usecase.handle.UnknownError
-import com.waz.zclient.user.usecase.handle.ValidateHandleError
+import com.waz.zclient.user.handle.HandleAlreadyExists
+import com.waz.zclient.user.handle.HandleInvalid
+import com.waz.zclient.user.handle.HandleTooShort
+import com.waz.zclient.user.handle.UnknownError
+import com.waz.zclient.user.handle.ValidateHandleError
 import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi

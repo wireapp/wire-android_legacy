@@ -4,7 +4,7 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
-import com.waz.zclient.user.usecase.phonenumber.Country
+import com.waz.zclient.user.phonenumber.Country
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe

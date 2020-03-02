@@ -1,12 +1,12 @@
 package com.waz.zclient.clients.di
 
 import com.waz.zclient.core.network.NetworkClient
-import com.waz.zclient.clients.data.ClientsDataSource
-import com.waz.zclient.clients.data.ClientsRepository
-import com.waz.zclient.clients.data.source.ClientMapper
-import com.waz.zclient.clients.data.source.local.ClientsLocalDataSource
-import com.waz.zclient.clients.data.source.remote.ClientsApi
-import com.waz.zclient.clients.data.source.remote.ClientsRemoteDataSource
+import com.waz.zclient.clients.datasources.ClientsDataSource
+import com.waz.zclient.clients.ClientsRepository
+import com.waz.zclient.clients.mapper.ClientMapper
+import com.waz.zclient.clients.datasources.local.ClientsLocalDataSource
+import com.waz.zclient.clients.datasources.remote.ClientsApi
+import com.waz.zclient.clients.datasources.remote.ClientsRemoteDataSource
 import com.waz.zclient.storage.db.UserDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.module

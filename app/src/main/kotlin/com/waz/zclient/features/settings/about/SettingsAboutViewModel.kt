@@ -10,7 +10,7 @@ import com.waz.zclient.core.config.AppDetailsConfig
 import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.User
-import com.waz.zclient.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi

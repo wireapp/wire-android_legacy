@@ -9,14 +9,15 @@ import com.waz.zclient.R
 import com.waz.zclient.core.config.Config
 import com.waz.zclient.core.extension.getDeviceLocale
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_settings_about.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.koin.android.viewmodel.ext.android.viewModel
 
 @ExperimentalCoroutinesApi
 class SettingsAboutFragment : Fragment(R.layout.fragment_settings_about) {
 
-    private val settingsAboutViewModel: SettingsAboutViewModel by viewModel()
+    private val settingsAboutViewModel by viewModel<SettingsAboutViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

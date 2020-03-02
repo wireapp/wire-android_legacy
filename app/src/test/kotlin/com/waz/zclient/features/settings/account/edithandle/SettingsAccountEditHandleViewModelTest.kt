@@ -6,7 +6,12 @@ import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
-import com.waz.zclient.user.usecase.handle.*
+import com.waz.zclient.user.handle.*
+import com.waz.zclient.user.handle.usecase.ChangeHandleUseCase
+import com.waz.zclient.user.handle.usecase.CheckHandleExistsParams
+import com.waz.zclient.user.handle.usecase.CheckHandleExistsUseCase
+import com.waz.zclient.user.handle.usecase.GetHandleUseCase
+import com.waz.zclient.user.handle.usecase.ValidateHandleUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

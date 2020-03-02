@@ -14,7 +14,7 @@ import com.waz.zclient.core.extension.getDeviceLocale
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
-import com.waz.zclient.user.usecase.phonenumber.Country
+import com.waz.zclient.user.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_dialog_country_code_picker.*
 
 class CountryCodePickerFragment : DialogFragment() {

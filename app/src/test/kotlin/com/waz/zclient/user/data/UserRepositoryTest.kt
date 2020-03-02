@@ -5,10 +5,12 @@ import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
-import com.waz.zclient.user.data.mapper.UserMapper
-import com.waz.zclient.user.data.source.local.UsersLocalDataSource
-import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
-import com.waz.zclient.user.data.source.remote.model.UserApi
+import com.waz.zclient.user.datasources.UsersDataSource
+import com.waz.zclient.user.UsersRepository
+import com.waz.zclient.user.mapper.UserMapper
+import com.waz.zclient.user.datasources.local.UsersLocalDataSource
+import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.user.datasources.remote.UserApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi

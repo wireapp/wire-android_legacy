@@ -4,8 +4,10 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
-import com.waz.zclient.user.data.source.local.UsersLocalDataSource
-import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
+import com.waz.zclient.user.datasources.local.UsersLocalDataSource
+import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.user.handle.UserHandleDataSource
+import com.waz.zclient.user.handle.UserHandleRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

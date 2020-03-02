@@ -2,9 +2,9 @@ package com.waz.zclient.user.usecase
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
-import com.waz.zclient.user.data.UsersRepository
-import com.waz.zclient.user.usecase.name.ChangeNameParams
-import com.waz.zclient.user.usecase.name.ChangeNameUseCase
+import com.waz.zclient.user.UsersRepository
+import com.waz.zclient.user.name.ChangeNameParams
+import com.waz.zclient.user.name.ChangeNameUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

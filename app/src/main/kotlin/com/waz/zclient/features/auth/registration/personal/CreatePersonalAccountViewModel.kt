@@ -5,9 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.user.usecase.email.ValidateEmailError
-import com.waz.zclient.user.usecase.email.ValidateEmailParams
-import com.waz.zclient.user.usecase.email.ValidateEmailUseCase
+import com.waz.zclient.user.email.ValidateEmailError
+import com.waz.zclient.user.email.ValidateEmailParams
+import com.waz.zclient.user.email.ValidateEmailUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountViewModel(private val validateEmailUseCase: ValidateEmailUseCase) : ViewModel() {

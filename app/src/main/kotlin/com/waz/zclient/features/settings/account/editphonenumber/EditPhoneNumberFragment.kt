@@ -15,7 +15,7 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
-import com.waz.zclient.user.usecase.phonenumber.Country
+import com.waz.zclient.user.phonenumber.Country
 import kotlinx.android.synthetic.main.fragment_edit_phone.*
 
 @SuppressWarnings("TooManyFunctions")

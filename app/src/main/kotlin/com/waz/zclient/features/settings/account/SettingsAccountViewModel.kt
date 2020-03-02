@@ -5,17 +5,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.accounts.domain.model.ActiveAccount
-import com.waz.zclient.accounts.domain.usecase.GetActiveAccountUseCase
+import com.waz.zclient.accounts.ActiveAccount
+import com.waz.zclient.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.user.User
-import com.waz.zclient.user.usecase.email.ChangeEmailParams
-import com.waz.zclient.user.usecase.email.ChangeEmailUseCase
-import com.waz.zclient.user.usecase.name.ChangeNameParams
-import com.waz.zclient.user.usecase.name.ChangeNameUseCase
-import com.waz.zclient.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.email.ChangeEmailParams
+import com.waz.zclient.user.email.ChangeEmailUseCase
+import com.waz.zclient.user.name.ChangeNameParams
+import com.waz.zclient.user.name.ChangeNameUseCase
+import com.waz.zclient.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi

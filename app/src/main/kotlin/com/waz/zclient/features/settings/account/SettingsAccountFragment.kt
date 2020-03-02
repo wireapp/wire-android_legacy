@@ -16,7 +16,7 @@ import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.features.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.features.settings.account.editphonenumber.EditPhoneNumberActivity
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
-import com.waz.zclient.settings.account.deleteaccount.DeleteAccountDialogFragment
+import com.waz.zclient.features.settings.account.deleteaccount.DeleteAccountDialogFragment
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi

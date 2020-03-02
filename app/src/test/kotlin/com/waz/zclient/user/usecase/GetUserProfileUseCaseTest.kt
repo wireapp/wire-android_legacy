@@ -1,7 +1,8 @@
 package com.waz.zclient.user.usecase
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.user.data.UsersRepository
+import com.waz.zclient.user.UsersRepository
+import com.waz.zclient.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

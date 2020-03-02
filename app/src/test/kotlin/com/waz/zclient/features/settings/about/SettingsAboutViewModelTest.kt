@@ -7,7 +7,7 @@ import com.waz.zclient.core.config.HostUrlConfig
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.User
-import com.waz.zclient.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect

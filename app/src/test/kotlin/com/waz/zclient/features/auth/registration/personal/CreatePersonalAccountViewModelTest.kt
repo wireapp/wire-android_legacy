@@ -4,9 +4,9 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
-import com.waz.zclient.user.usecase.email.EmailInvalid
-import com.waz.zclient.user.usecase.email.EmailTooShort
-import com.waz.zclient.user.usecase.email.ValidateEmailUseCase
+import com.waz.zclient.user.email.EmailInvalid
+import com.waz.zclient.user.email.EmailTooShort
+import com.waz.zclient.user.email.ValidateEmailUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest

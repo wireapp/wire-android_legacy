@@ -1,17 +1,17 @@
 package com.waz.zclient.features.settings.account
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.accounts.domain.usecase.GetActiveAccountUseCase
+import com.waz.zclient.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.user.User
-import com.waz.zclient.user.usecase.email.ChangeEmailParams
-import com.waz.zclient.user.usecase.email.ChangeEmailUseCase
-import com.waz.zclient.user.usecase.name.ChangeNameParams
-import com.waz.zclient.user.usecase.name.ChangeNameUseCase
-import com.waz.zclient.user.usecase.GetUserProfileUseCase
+import com.waz.zclient.user.email.ChangeEmailParams
+import com.waz.zclient.user.email.ChangeEmailUseCase
+import com.waz.zclient.user.name.ChangeNameParams
+import com.waz.zclient.user.name.ChangeNameUseCase
+import com.waz.zclient.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

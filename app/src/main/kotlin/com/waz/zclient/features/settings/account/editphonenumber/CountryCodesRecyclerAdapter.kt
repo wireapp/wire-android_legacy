@@ -5,7 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
-import com.waz.zclient.user.usecase.phonenumber.Country
+import com.waz.zclient.user.phonenumber.Country
 import kotlinx.android.synthetic.main.item_view_country_code.view.*
 
 class CountryCodesRecyclerAdapter(val countryClickAction: (Country) -> Unit) :
