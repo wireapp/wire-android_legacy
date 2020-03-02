@@ -795,7 +795,7 @@ class ConversationFragment extends FragmentHelper {
       (for {
         self <- inject[UserAccountsController].currentUser.head
         members <- convController.convMembers(convId).head
-        unverifiedUsers <- usersController.users(members.keys).map(_.filter(_.isVerified)).head
+        unverifiedUsers <- usersController.users(members.keys).map(_.filter(!_.isVerified)).head
         unverifiedDevices <-
           if (unverifiedUsers.size == 1) Future.sequence(unverifiedUsers.map(u => convController.loadClients(u.id).map(_.filter(!_.isVerified)))).map(_.flatten.size)
           else Future.successful(0) // in other cases we don't need this number
