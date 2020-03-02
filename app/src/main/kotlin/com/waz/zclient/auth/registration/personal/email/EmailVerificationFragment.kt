@@ -23,7 +23,8 @@ class EmailVerificationFragment : Fragment(R.layout.fragment_email_verification)
     }
 
     private fun initDescriptionTextView() {
-        emailVerificationDescriptionTextView.text = String.format(getString(R.string.email_verification_description), email)
+        emailVerificationDescriptionTextView.text =
+            String.format(getString(R.string.email_verification_description), email)
     }
 
     private fun initVerificationCodeInput() {
