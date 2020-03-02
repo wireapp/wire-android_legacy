@@ -157,7 +157,7 @@ class PhoneSetNameFragment extends FragmentHelper with TextWatcher with View.OnC
   private def isNameValid(name: String): Boolean = name != null && name.trim.length > 1
 
   override def onBackPressed(): Boolean = {
-    getFragmentManager.popBackStack()
+    getParentFragmentManager.popBackStack()
     true
   }
 

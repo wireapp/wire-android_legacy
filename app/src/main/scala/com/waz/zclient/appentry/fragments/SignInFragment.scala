@@ -423,8 +423,8 @@ class SignInFragment extends FragmentHelper with View.OnClickListener with Count
     Set(email, password, name, phone).foreach(_ ! "")
 
   override def onBackPressed(): Boolean =
-    if (getFragmentManager.getBackStackEntryCount > 1) {
-      getFragmentManager.popBackStack()
+    if (getParentFragmentManager.getBackStackEntryCount > 1) {
+      getParentFragmentManager.popBackStack()
       true
     } else {
       false

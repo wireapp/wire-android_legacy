@@ -82,7 +82,7 @@ class EphemeralOptionsFragment extends FragmentHelper {
               }).onComplete { res =>
                 if (res.isFailure) showToast(getString(R.string.generic_error_message))
                 spinner.showSpinner(false)
-                this.getFragmentManager.popBackStack()
+                this.getParentFragmentManager.popBackStack()
               }
             }
           }

@@ -389,7 +389,7 @@ class SearchUIFragment extends BaseFragment[Container]
   override def onCreateConversationClicked(): Unit = {
     keyboard.hideKeyboardIfVisible()
     inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
-    getFragmentManager.beginTransaction
+    getParentFragmentManager.beginTransaction
       .setCustomAnimations(
         R.anim.slide_in_from_bottom_pick_user,
         R.anim.open_new_conversation__thread_list_out,
@@ -471,7 +471,7 @@ class SearchUIFragment extends BaseFragment[Container]
     verbose(l"onIntegrationClicked(${data.id})")
 
     import IntegrationDetailsFragment._
-    getFragmentManager.beginTransaction
+    getParentFragmentManager.beginTransaction
       .setCustomAnimations(
         R.anim.slide_in_from_bottom_pick_user,
         R.anim.open_new_conversation__thread_list_out,

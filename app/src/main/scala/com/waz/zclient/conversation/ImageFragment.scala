@@ -122,7 +122,7 @@ class ImageFragment extends FragmentHelper {
     val headerToolbar   = findById[Toolbar](view, R.id.header_toolbar)
 
     headerToolbar.setNavigationOnClickListener(new OnClickListener {
-      override def onClick(v: View): Unit = getFragmentManager.popBackStack()
+      override def onClick(v: View): Unit = getParentFragmentManager.popBackStack()
     })
 
     topCursorItems.onUi(bottomToolbar.topToolbar.cursorItems ! _)
@@ -142,13 +142,13 @@ class ImageFragment extends FragmentHelper {
         }
 
         method.foreach { m =>
-          getFragmentManager.popBackStack()
+          getParentFragmentManager.popBackStack()
           imageInput.head.collect { case Some(id: AssetId) => id }.foreach {
             screenController.showSketch ! Sketch.asset(_, m)
           }
         }
       case item: MessageActionToolbarItem =>
-        if (item.action == MessageAction.Reveal) getFragmentManager.popBackStack()
+        if (item.action == MessageAction.Reveal) getParentFragmentManager.popBackStack()
         message.head foreach { msg => messageActionsController.onMessageAction ! (item.action, msg) }
       case _ =>
     }
@@ -185,7 +185,7 @@ class ImageFragment extends FragmentHelper {
 
   private def closeSingleImageView(id: MessageId): Unit =
     if (collectionController.focusedItem.map(_.map(_.id)).currentValue.flatten.contains(id)) {
-      getFragmentManager.popBackStack()
+      getParentFragmentManager.popBackStack()
       singleImageController.hideSingleImage()
     }
 

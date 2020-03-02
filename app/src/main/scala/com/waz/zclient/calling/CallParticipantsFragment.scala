@@ -62,7 +62,7 @@ class CallParticipantsFragment extends FragmentHelper {
     super.onResume()
     toolbar.foreach(_.setNavigationOnClickListener(new View.OnClickListener() {
       override def onClick(v: View): Unit =
-        getFragmentManager.popBackStack()
+        getParentFragmentManager.popBackStack()
     }))
   }
 

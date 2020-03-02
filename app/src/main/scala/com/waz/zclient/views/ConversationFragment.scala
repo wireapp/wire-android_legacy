@@ -716,10 +716,10 @@ class ConversationFragment extends FragmentHelper {
         case false => Future.successful((false, false, false))
       }.foreach {
         case (hasGuest, hasBot, isGroup) =>
-          val backStackSize = getFragmentManager.getBackStackEntryCount
+          val backStackSize = getParentFragmentManager.getBackStackEntryCount
           if (backStackSize > 0) {
             // update the guests' banner only if the conversation's fragment is on top
-            if (getFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
+            if (getParentFragmentManager.getBackStackEntryAt(backStackSize - 1).getName == ConversationFragment.TAG)
               updateGuestsBanner(hasGuest, hasBot, isGroup)
           } else
             updateGuestsBanner(hasGuest, hasBot, isGroup)

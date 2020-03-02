@@ -172,7 +172,7 @@ class SingleOtrClientFragment extends FragmentHelper {
   }
 
   private def close() = {
-    getFragmentManager.popBackStackImmediate
+    getParentFragmentManager.popBackStackImmediate
   }
 
   private def resetSession(): Unit = (userId, clientId) match {

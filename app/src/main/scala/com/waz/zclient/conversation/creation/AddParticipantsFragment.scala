@@ -213,7 +213,7 @@ class AddParticipantsFragment extends FragmentHelper {
 
   private def close() = {
     keyboard.hideKeyboardIfVisible()
-    getFragmentManager.popBackStack()
+    getParentFragmentManager.popBackStack()
   }
 }
 

@@ -140,7 +140,7 @@ class GroupParticipantsFragment extends FragmentHelper {
           case true =>
             participantsController.conv.head.foreach { conv =>
               inject[CreateConversationController].setAddToConversation(conv.id)
-              getFragmentManager.beginTransaction
+              getParentFragmentManager.beginTransaction
                 .setCustomAnimations(
                   R.anim.in_from_bottom_enter,
                   R.anim.out_to_bottom_exit,

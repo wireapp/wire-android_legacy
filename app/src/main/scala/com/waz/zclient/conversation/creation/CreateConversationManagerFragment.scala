@@ -91,7 +91,7 @@ class CreateConversationManagerFragment extends DefaultToolbarFragment[NoOpConta
     ctrl.onShowCreateConversation.onUi {
       case false =>
         ctrl.fromScreen.head.map {
-          case GroupConversationEvent.StartUi => getFragmentManager.popBackStack(Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+          case GroupConversationEvent.StartUi => getParentFragmentManager.popBackStack(Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
           case _ =>
         } (Threading.Background)
       case _ =>

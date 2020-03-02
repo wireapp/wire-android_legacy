@@ -198,7 +198,7 @@ trait FragmentHelper
 
   @inline
   def findFragment[T <: Fragment](tag: String): Option[T] =
-    findFragment(tag, getFragmentManager)
+    findFragment(tag, getParentFragmentManager)
 
   @inline
   def findChildFragment[T <: Fragment](tag: String): Option[T] =
@@ -224,7 +224,7 @@ trait FragmentHelper
   }
 
   def slideFragmentInFromRight(f: Fragment, tag: String): Unit =
-    getFragmentManager.beginTransaction
+    getParentFragmentManager.beginTransaction
       .setCustomAnimations(
         R.anim.fragment_animation_second_page_slide_in_from_right,
         R.anim.fragment_animation_second_page_slide_out_to_left,

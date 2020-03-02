@@ -56,7 +56,7 @@ case class SetNameFragment() extends CreateTeamFragment {
 
   override def onBackPressed(): Boolean = {
     createTeamController.code = ""
-    getFragmentManager.popBackStack(VerifyTeamEmailFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    getParentFragmentManager.popBackStack(VerifyTeamEmailFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     true
   }
 }

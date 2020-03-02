@@ -86,7 +86,7 @@ class SSOWebViewFragment extends FragmentHelper {
   }
 
   override def onBackPressed(): Boolean = {
-    getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    getParentFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     inject[UserAccountsController].ssoToken ! None
     true
   }

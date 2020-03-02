@@ -162,7 +162,7 @@ class VerifyPhoneFragment extends FragmentHelper with View.OnClickListener with 
     }
   }
 
-  private def goBack(): Unit = getFragmentManager.popBackStack()
+  private def goBack(): Unit = getParentFragmentManager.popBackStack()
 
   private def confirmCode(): Unit = {
     activity.enableProgress(true)

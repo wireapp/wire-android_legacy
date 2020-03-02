@@ -55,8 +55,8 @@ class CreateAccountFragment extends FragmentHelper {
   }
 
   override def onBackPressed(): Boolean =
-    if (getFragmentManager.getBackStackEntryCount > 1) {
-      getFragmentManager.popBackStack()
+    if (getParentFragmentManager.getBackStackEntryCount > 1) {
+      getParentFragmentManager.popBackStack()
       true
     } else false
 

@@ -121,7 +121,7 @@ class ControlsFragment extends FragmentHelper {
 
     callingMiddle.foreach(vh => subs += vh.onShowAllClicked.onUi { _ =>
       controller.callControlsVisible ! false
-      getFragmentManager.beginTransaction
+      getParentFragmentManager.beginTransaction
         .setCustomAnimations(
           R.anim.fragment_animation_second_page_slide_in_from_right_no_alpha,
           R.anim.fragment_animation_second_page_slide_out_to_left_no_alpha,

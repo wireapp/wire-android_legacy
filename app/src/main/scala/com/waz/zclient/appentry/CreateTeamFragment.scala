@@ -78,8 +78,8 @@ trait CreateTeamFragment extends FragmentHelper {
   protected def showFragment(f: => Fragment, tag: String, animated: Boolean = true): Unit = appEntryActivity().showFragment(f, tag, animated)
 
   override def onBackPressed(): Boolean =
-    if (getFragmentManager.getBackStackEntryCount > 1) {
-      getFragmentManager.popBackStack()
+    if (getParentFragmentManager.getBackStackEntryCount > 1) {
+      getParentFragmentManager.popBackStack()
       true
     } else {
       false

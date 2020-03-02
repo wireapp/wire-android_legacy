@@ -236,7 +236,7 @@ class MainPhoneFragment extends FragmentHelper
 
   private def newGroupConversation() = {
     inject[CreateConversationController].setCreateConversation(from = GroupConversationEvent.StartUi)
-    getFragmentManager.beginTransaction
+    getParentFragmentManager.beginTransaction
       .setCustomAnimations(
         R.anim.fragment_animation_second_page_slide_in_from_right,
         R.anim.fragment_animation_second_page_slide_in_from_left,

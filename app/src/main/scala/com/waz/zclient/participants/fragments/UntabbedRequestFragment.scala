@@ -73,7 +73,7 @@ abstract class UntabbedRequestFragment extends SingleParticipantFragment {
       false
     } else if (fromDeepLink) {
       CancellableFuture.delay(750.millis).map { _ =>
-        getFragmentManager.popBackStack(Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        getParentFragmentManager.popBackStack(Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       }
       true
     } else {

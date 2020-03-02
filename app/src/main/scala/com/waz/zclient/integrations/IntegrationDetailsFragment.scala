@@ -147,7 +147,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
                   setLoading(false)
                   res match {
                     case Right(_) =>
-                      getParentFragment.getFragmentManager.popBackStack()
+                      getParentFragment.getParentFragmentManager.popBackStack()
                       tracking.integrationRemoved(sId)
                     case Left(e) => Future.successful(showToast(errorMessage(e)))
                   }
@@ -190,7 +190,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
   }
 
   def goBack(): Boolean = {
-    getFragmentManager.popBackStack()
+    getParentFragmentManager.popBackStack()
     true
   }
 
@@ -200,7 +200,7 @@ class IntegrationDetailsFragment extends FragmentHelper {
     inject[ParticipantsController].onLeaveParticipants ! true
     true
   } else {
-    Option(getFragmentManager).foreach { fm =>
+    Option(getParentFragmentManager).foreach { fm =>
       fm.popBackStack(SearchUIFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
       inject[IPickUserController].hidePickUser()
       inject[INavigationController].setLeftPage(Page.CONVERSATION_LIST, IntegrationDetailsFragment.Tag)
