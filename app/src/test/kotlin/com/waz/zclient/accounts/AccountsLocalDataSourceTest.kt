@@ -41,7 +41,7 @@ class AccountsLocalDataSourceTest : UnitTest() {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given activeAccounts is called, when dao result is cancelled, then return the data`() {
+    fun `Given activeAccounts is called, when dao result is cancelled, then returns error`() {
         runBlockingTest {
             val result = accountsLocalDataSource.activeAccounts()
 
@@ -69,7 +69,7 @@ class AccountsLocalDataSourceTest : UnitTest() {
     }
 
     @Test(expected = CancellationException::class)
-    fun `Given removeAccount is called, when dao result is cancelled, then return the data`() {
+    fun `Given removeAccount is called, when dao result is cancelled, then returns error`() {
         runBlockingTest {
             val mockAccount = mock(ActiveAccountsEntity::class)
             accountsLocalDataSource.removeAccount(mockAccount)
