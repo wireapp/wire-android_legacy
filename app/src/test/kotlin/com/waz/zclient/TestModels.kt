@@ -2,7 +2,7 @@ package com.waz.zclient
 
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.model.User
+import com.waz.zclient.user.User
 
 val userApi = UserApi(
     id = "id",

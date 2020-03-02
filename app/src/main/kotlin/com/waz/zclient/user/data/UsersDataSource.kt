@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.user.data.mapper.UserMapper
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
-import com.waz.zclient.user.domain.model.User
+import com.waz.zclient.user.User
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch

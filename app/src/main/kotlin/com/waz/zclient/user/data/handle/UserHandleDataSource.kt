@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.user.data.source.local.UsersLocalDataSource
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
-import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
+import com.waz.zclient.user.usecase.handle.ValidateHandleSuccess
 import kotlinx.coroutines.runBlocking
 
 class UserHandleDataSource(

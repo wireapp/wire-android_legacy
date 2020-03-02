@@ -48,7 +48,7 @@ import com.waz.zclient.views.AvailabilityView
 import ProfileViewController.MaxAccountsCount
 import BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.zclient.appentry.AppEntryActivity
-import com.waz.zclient.settings.main.SettingsMainActivity
+import com.waz.zclient.features.settings.main.SettingsMainActivity
 
 trait ProfileView {
   val onDevicesDialogAccept: EventStream[Unit]

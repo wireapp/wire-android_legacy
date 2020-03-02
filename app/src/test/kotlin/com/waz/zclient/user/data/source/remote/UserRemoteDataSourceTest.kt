@@ -8,10 +8,10 @@ import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.eq
 import com.waz.zclient.user.data.source.remote.model.UserApi
-import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
-import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
-import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
-import com.waz.zclient.user.domain.usecase.handle.UnknownError
+import com.waz.zclient.user.usecase.handle.HandleAlreadyExists
+import com.waz.zclient.user.usecase.handle.HandleInvalid
+import com.waz.zclient.user.usecase.handle.HandleIsAvailable
+import com.waz.zclient.user.usecase.handle.UnknownError
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
