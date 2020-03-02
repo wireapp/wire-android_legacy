@@ -13,6 +13,7 @@ class SettingsAccountDeleteAccountViewModel(
 
     val deletionConfirmedLiveData: LiveData<Unit> = _deletionConfirmedLiveData
 
+    //TODO create an error scenario to notify the user when something has gone wrong?
     fun onDeleteAccountConfirmed() {
         deleteAccountUserCase(viewModelScope, Unit) {
             it.fold({}, { _deletionConfirmedLiveData.postValue(Unit) })
