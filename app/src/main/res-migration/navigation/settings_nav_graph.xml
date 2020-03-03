@@ -29,7 +29,17 @@
     <fragment
         android:id="@+id/settingsAccountFragment"
         android:name="com.waz.zclient.settings.account.SettingsAccountFragment"
-        android:label="SettingsAccountFragment" />
+        android:label="SettingsAccountFragment" >
+        <action
+            android:id="@+id/action_settingsAccountFragment_to_editPhoneNumberActivity"
+            app:destination="@id/editPhoneNumberActivity" />
+        <action
+            android:id="@+id/action_settingsAccountFragment_to_editHandleDialogFragment"
+            app:destination="@id/editHandleDialogFragment" />
+        <action
+            android:id="@+id/action_settingsAccountFragment_to_deleteAccountDialogFragment"
+            app:destination="@id/deleteAccountDialogFragment" />
+    </fragment>
     <fragment
         android:id="@+id/settingsDeviceListFragment"
         android:name="com.waz.zclient.settings.devices.list.SettingsDeviceListFragment"
@@ -50,4 +60,16 @@
         android:id="@+id/settingsAboutFragment"
         android:name="com.waz.zclient.settings.about.SettingsAboutFragment"
         android:label="SettingsAboutFragment" />
+    <activity
+        android:id="@+id/editPhoneNumberActivity"
+        android:name="com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity"
+        android:label="EditPhoneNumberActivity" />
+    <dialog
+        android:id="@+id/editHandleDialogFragment"
+        android:name="com.waz.zclient.settings.account.edithandle.EditHandleDialogFragment"
+        android:label="EditHandleDialogFragment" />
+    <dialog
+        android:id="@+id/deleteAccountDialogFragment"
+        android:name="com.waz.zclient.settings.account.deleteaccount.DeleteAccountDialogFragment"
+        android:label="DeleteAccountDialogFragment" />
 </navigation>

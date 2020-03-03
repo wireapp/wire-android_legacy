@@ -11,7 +11,6 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.toSpanned
-import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 
 class DeleteAccountDialogFragment : DialogFragment() {
@@ -60,8 +59,8 @@ class DeleteAccountDialogFragment : DialogFragment() {
         private const val EMAIL_BUNDLE_KEY = "emailBundleKey"
         private const val PHONE_NUMBER_BUNDLE_KEY = "phoneNumberBundleKey"
 
-        fun newInstance(email: String, phoneNumber: String) =
-            DeleteAccountDialogFragment().withArgs {
+        fun bundle(email: String, phoneNumber: String) =
+            Bundle().apply {
                 putString(EMAIL_BUNDLE_KEY, email)
                 putString(PHONE_NUMBER_BUNDLE_KEY, phoneNumber)
             }

@@ -11,7 +11,6 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.viewModel
-import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.user.handle.HandleAlreadyExists
 import com.waz.zclient.user.handle.HandleInvalid
@@ -119,8 +118,8 @@ class EditHandleDialogFragment : DialogFragment() {
     companion object {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
 
-        fun newInstance(currentHandle: String):
-            EditHandleDialogFragment = EditHandleDialogFragment()
-            .withArgs { putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle) }
+        fun bundle(currentHandle: String) = Bundle().apply {
+            putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle)
+        }
     }
 }

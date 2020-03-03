@@ -12,6 +12,7 @@ import com.waz.zclient.core.extension.invisible
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.visible
+import com.waz.zclient.core.navigation.navigator
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.features.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.features.settings.account.editphonenumber.EditPhoneNumberActivity
@@ -159,17 +160,24 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
 
     private fun showEditHandleDialog() =
-        EditHandleDialogFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
-            .show(requireActivity().supportFragmentManager, String.empty())
+        navigator().navigateTo(
+            R.id.action_settingsAccountFragment_to_editHandleDialogFragment,
+            EditHandleDialogFragment.bundle(settingsAccountHandleTitleTextView.text.toString())
+        )
 
-    private fun showDeleteAccountDialog(email: String, phoneNumber: String) {
-        DeleteAccountDialogFragment.newInstance(email, phoneNumber)
-            .show(requireActivity().supportFragmentManager, String.empty())
-    }
+    private fun showDeleteAccountDialog(email: String, phoneNumber: String) =
+        navigator().navigateTo(
+            R.id.action_settingsAccountFragment_to_deleteAccountDialogFragment,
+            DeleteAccountDialogFragment.bundle(email, phoneNumber)
+        )
 
     private fun launchEditPhoneScreen(phoneNumber: String, hasEmail: Boolean) =
-        startActivity(EditPhoneNumberActivity.newIntent(requireContext(), phoneNumber, hasEmail))
+        navigator().navigateTo(
+            R.id.action_settingsAccountFragment_to_editPhoneNumberActivity,
+            EditPhoneNumberActivity.bundle(phoneNumber, hasEmail)
+        )
 
+    //TODO: migrate to Navigator
     private fun showGenericEditDialog(
         title: String,
         defaultValue: String,
@@ -182,8 +190,4 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
                 }
             }
         ).show(requireActivity().supportFragmentManager, String.empty())
-
-    companion object {
-        fun newInstance() = SettingsAccountFragment()
-    }
 }

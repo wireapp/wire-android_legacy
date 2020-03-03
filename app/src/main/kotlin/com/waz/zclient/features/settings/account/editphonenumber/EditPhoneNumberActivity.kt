@@ -1,7 +1,5 @@
 package com.waz.zclient.features.settings.account.editphonenumber
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
@@ -38,11 +36,9 @@ class EditPhoneNumberActivity : AppCompatActivity(R.layout.activity_edit_phone) 
         private const val CURRENT_PHONE_NUMBER_KEY = "currentPhoneNumber"
         private const val HAS_EMAIL_BUNDLE_KEY = "hasEmailBundleKey"
 
-        @JvmStatic
-        fun newIntent(context: Context, phoneNumber: String, hasEmail: Boolean) =
-            Intent(context, EditPhoneNumberActivity::class.java).also {
-                it.putExtra(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
-                it.putExtra(HAS_EMAIL_BUNDLE_KEY, hasEmail)
-            }
+        fun bundle(phoneNumber: String, hasEmail: Boolean) = Bundle().apply {
+            putString(CURRENT_PHONE_NUMBER_KEY, phoneNumber)
+            putBoolean(HAS_EMAIL_BUNDLE_KEY, hasEmail)
+        }
     }
 }
