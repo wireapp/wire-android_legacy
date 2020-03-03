@@ -12,7 +12,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -41,7 +41,7 @@ class AccountsDataSourceTest : UnitTest() {
     @Test
     fun `given active accounts is called, when results are mapped, then should return a list of domain active accounts`() =
         runBlockingTest {
-            Mockito.`when`(localDataSource.activeAccounts()).thenReturn(Either.Right(mockListOfEntities()))
+            `when`(localDataSource.activeAccounts()).thenReturn(Either.Right(mockListOfEntities()))
 
             accountsDataSource.activeAccounts()
 

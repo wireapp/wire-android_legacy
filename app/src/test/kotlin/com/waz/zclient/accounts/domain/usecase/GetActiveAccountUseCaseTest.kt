@@ -14,7 +14,7 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verifyNoInteractions
 
@@ -38,8 +38,8 @@ class GetActiveAccountUseCaseTest : UnitTest() {
     fun `given use-case is executed, when active account exists in list, then should return filteredAccount`() = runBlockingTest {
         val mockListOfAccounts = successListOfAccounts()
 
-        Mockito.`when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_ACTIVE_USER_ID))
-        Mockito.`when`(accountsRepository.activeAccounts()).thenReturn(mockListOfAccounts)
+        `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_ACTIVE_USER_ID))
+        `when`(accountsRepository.activeAccounts()).thenReturn(mockListOfAccounts)
 
         val result = getActiveAccountUseCase.run(Unit)
 
@@ -50,8 +50,8 @@ class GetActiveAccountUseCaseTest : UnitTest() {
     fun `given use-case is executed, when active account does not exist in list, then should return error`() = runBlockingTest {
         val mockListOfAccounts = successListOfAccounts()
 
-        Mockito.`when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_NON_ACTIVE_USER_ID))
-        Mockito.`when`(accountsRepository.activeAccounts()).thenReturn(mockListOfAccounts)
+        `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_NON_ACTIVE_USER_ID))
+        `when`(accountsRepository.activeAccounts()).thenReturn(mockListOfAccounts)
 
         val result = getActiveAccountUseCase.run(Unit)
 
@@ -60,7 +60,7 @@ class GetActiveAccountUseCaseTest : UnitTest() {
 
     @Test
     fun `given use-case is executed, when failure is returned from data layer, then return failure`() = runBlockingTest {
-        Mockito.`when`(accountsRepository.activeAccounts()).thenReturn(Either.Left(ServerError))
+        `when`(accountsRepository.activeAccounts()).thenReturn(Either.Left(ServerError))
 
         val result = getActiveAccountUseCase.run(Unit)
 

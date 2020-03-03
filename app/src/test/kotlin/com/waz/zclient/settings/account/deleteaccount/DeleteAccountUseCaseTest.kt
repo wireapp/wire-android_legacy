@@ -7,7 +7,7 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class DeleteAccountUseCaseTest : UnitTest() {
@@ -26,6 +26,6 @@ class DeleteAccountUseCaseTest : UnitTest() {
     fun `given use case is executed, then fire repository request`() = runBlockingTest {
         deleteAccountUseCase.run(Unit)
 
-        Mockito.verify(accountsRepository).deleteAccountPermanently()
+        verify(accountsRepository).deleteAccountPermanently()
     }
 }

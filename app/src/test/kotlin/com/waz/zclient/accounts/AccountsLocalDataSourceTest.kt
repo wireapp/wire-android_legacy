@@ -14,7 +14,7 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class AccountsLocalDataSourceTest : UnitTest() {
@@ -34,7 +34,7 @@ class AccountsLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             val result = accountsLocalDataSource.activeAccounts()
 
-            Mockito.verify(activeAccountsDao).activeAccounts()
+            verify(activeAccountsDao).activeAccounts()
 
             result.isRight shouldBe true
         }
@@ -45,7 +45,7 @@ class AccountsLocalDataSourceTest : UnitTest() {
         runBlockingTest {
             val result = accountsLocalDataSource.activeAccounts()
 
-            Mockito.verify(activeAccountsDao).activeAccounts()
+            verify(activeAccountsDao).activeAccounts()
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
@@ -62,7 +62,7 @@ class AccountsLocalDataSourceTest : UnitTest() {
 
             val result = accountsLocalDataSource.removeAccount(mockAccount)
 
-            Mockito.verify(activeAccountsDao).removeAccount(eq(mockAccount))
+            verify(activeAccountsDao).removeAccount(eq(mockAccount))
 
             result.isRight shouldBe true
         }
