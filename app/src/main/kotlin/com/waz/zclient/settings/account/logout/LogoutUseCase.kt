@@ -4,8 +4,6 @@ import com.waz.zclient.accounts.AccountsRepository
 import com.waz.zclient.accounts.ActiveAccount
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.flatMap
-import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.storage.pref.GlobalPreferences
@@ -17,15 +15,8 @@ class LogoutUseCase(
     private val accessTokenRepository: AccessTokenRepository
 ) : UseCase<Unit, Unit>() {
 
-    override suspend fun run(params: Unit): Either<Failure, Unit> {
-        return accessTokenRepository.logout(accessTokenRepository.accessToken())
-            .onSuccess {
-                runBlocking {
-                    accountsRepository.activeAccounts()
-                        .flatMap { updateActiveAccounts(it) }
-                }
-            }
-    }
+    override suspend fun run(params: Unit): Either<Failure, Unit> =
+        accessTokenRepository.logout()
 
     private fun updateActiveAccounts(activeAccounts: List<ActiveAccount>) = runBlocking {
         val currentAccount = activeAccounts.first { it.id == globalPreferences.activeUserId }

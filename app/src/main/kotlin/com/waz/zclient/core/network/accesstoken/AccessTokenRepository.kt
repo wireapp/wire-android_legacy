@@ -11,7 +11,7 @@ class AccessTokenRepository(
     private val refreshTokenMapper: RefreshTokenMapper
 ) {
 
-    suspend fun logout(accessToken: AccessToken): Either<Failure, Unit> = remoteDataSource.logout(accessToken.token)
+    suspend fun logout(): Either<Failure, Unit> = remoteDataSource.logout(refreshToken().token, accessToken().token)
 
     suspend fun accessToken(): AccessToken =
         localDataSource.accessToken()?.let { accessTokenMapper.from(it) } ?: AccessToken.EMPTY

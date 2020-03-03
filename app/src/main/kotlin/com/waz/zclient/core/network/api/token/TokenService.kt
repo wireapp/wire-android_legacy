@@ -15,8 +15,10 @@ class TokenService(
             tokenApi.access(generateCookieHeader(refreshToken))
         }
 
-    suspend fun logout(accessToken: String): Either<Failure, Unit> =
-        request { tokenApi.logout(generateCookieHeader(accessToken)) }
+    suspend fun logout(refreshToken: String, accessToken: String): Either<Failure, Unit> =
+        request { tokenApi.logout(generateCookieHeader(refreshToken), generateTokenQuery(accessToken)) }
 
-    private fun generateCookieHeader(token: String) = mapOf("cookie" to "zuid=$token")
+    private fun generateTokenQuery(accessToken: String) = mapOf("access_token" to accessToken)
+
+    private fun generateCookieHeader(refreshToken: String) = mapOf("cookie" to "zuid=$refreshToken")
 }
