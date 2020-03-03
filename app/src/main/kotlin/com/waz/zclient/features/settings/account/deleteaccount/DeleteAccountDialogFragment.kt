@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
@@ -59,10 +60,9 @@ class DeleteAccountDialogFragment : DialogFragment() {
         private const val EMAIL_BUNDLE_KEY = "emailBundleKey"
         private const val PHONE_NUMBER_BUNDLE_KEY = "phoneNumberBundleKey"
 
-        fun bundle(email: String, phoneNumber: String) =
-            Bundle().apply {
-                putString(EMAIL_BUNDLE_KEY, email)
-                putString(PHONE_NUMBER_BUNDLE_KEY, phoneNumber)
-            }
+        fun bundle(email: String, phoneNumber: String) = bundleOf(
+            EMAIL_BUNDLE_KEY to email,
+            PHONE_NUMBER_BUNDLE_KEY to phoneNumber
+        )
     }
 }

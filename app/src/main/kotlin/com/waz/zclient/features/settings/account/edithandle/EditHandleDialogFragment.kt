@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
+import androidx.core.os.bundleOf
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
@@ -118,8 +119,8 @@ class EditHandleDialogFragment : DialogFragment() {
     companion object {
         private const val CURRENT_HANDLE_BUNDLE_KEY = "currentHandleBundleKey"
 
-        fun bundle(currentHandle: String) = Bundle().apply {
-            putString(CURRENT_HANDLE_BUNDLE_KEY, currentHandle)
-        }
+        fun bundle(currentHandle: String) = bundleOf(
+            CURRENT_HANDLE_BUNDLE_KEY to currentHandle
+        )
     }
 }
