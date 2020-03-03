@@ -1,39 +1,39 @@
 package com.waz.zclient.settings.account
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.extension.invisible
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.extension.visible
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
-import com.waz.zclient.settings.account.edithandle.EditHandleFragment
+import com.waz.zclient.settings.account.deleteaccount.DeleteAccountDialogFragment
+import com.waz.zclient.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity
 import com.waz.zclient.settings.account.logout.LogoutDialogFragment
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import org.koin.android.viewmodel.ext.android.viewModel
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
 @Suppress("TooManyFunctions")
-class SettingsAccountFragment : Fragment() {
+class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
 
-    private val settingsAccountViewModel: SettingsAccountViewModel by viewModel()
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_settings_account, container, false)
-    }
+    private val settingsAccountViewModel by viewModel<SettingsAccountViewModel>(SETTINGS_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
+        initSsoButtons()
+        initTeamButtons()
         initErrorHandling()
         initAccountName()
         initAccountHandle()
@@ -41,6 +41,7 @@ class SettingsAccountFragment : Fragment() {
         initAccountPhoneNumber()
         initResetPassword()
         initLogoutButton()
+        initDeleteAccountButton()
         loadProfile()
     }
 
@@ -51,11 +52,29 @@ class SettingsAccountFragment : Fragment() {
     }
 
     //TODO Will need changing to a phone dialog
+    private fun initSsoButtons() {
+        settingsAccountViewModel.isSsoAccountLiveData.observe(viewLifecycleOwner) {
+            defineButtonVisibility(!it, settingsAccountEmailContainerLinearLayout)
+            defineButtonVisibility(!it, settingsAccountResetPasswordButton)
+            defineButtonVisibility(!it, settingsAccountDeleteAccountButton)
+        }
+    }
+
+    private fun initTeamButtons() {
+        settingsAccountViewModel.inATeamLiveData.observe(viewLifecycleOwner) {
+            defineButtonVisibility(!it, settingsAccountPhoneContainerLinearLayout)
+            defineButtonVisibility(!it, settingsAccountDeleteAccountButton)
+        }
+    }
+
+    private fun defineButtonVisibility(visible: Boolean, view: View) =
+        if (visible) view.visible() else view.invisible()
+
     private fun initAccountPhoneNumber() {
         settingsAccountViewModel.phoneNumberLiveData.observe(viewLifecycleOwner) { updateAccountPhoneNumber(it) }
         settingsAccountViewModel.phoneDialogLiveData.observe(viewLifecycleOwner) {
             when (it) {
-                DialogDetail.EMPTY -> showAddPhoneDialog()
+                PhoneDialogDetail.EMPTY -> showAddPhoneDialog()
                 else -> launchEditPhoneScreen(it.number, it.hasEmail)
             }
         }
@@ -97,6 +116,15 @@ class SettingsAccountFragment : Fragment() {
         }
         settingsAccountViewModel.resetPasswordUrlLiveData.observe(viewLifecycleOwner) {
             openUrl(it)
+        }
+    }
+
+    private fun initDeleteAccountButton() {
+        settingsAccountViewModel.deleteAccountDialogLiveData.observe(viewLifecycleOwner) {
+            showDeleteAccountDialog(it.email, it.number)
+        }
+        settingsAccountDeleteAccountButton.setOnClickListener {
+            settingsAccountViewModel.onDeleteAccountButtonClicked()
         }
     }
 
@@ -145,8 +173,13 @@ class SettingsAccountFragment : Fragment() {
     }
 
     private fun showEditHandleDialog() =
-        EditHandleFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
+        EditHandleDialogFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
             .show(requireActivity().supportFragmentManager, String.empty())
+
+    private fun showDeleteAccountDialog(email: String, phoneNumber: String) {
+        DeleteAccountDialogFragment.newInstance(email, phoneNumber)
+            .show(requireActivity().supportFragmentManager, String.empty())
+    }
 
     private fun launchEditPhoneScreen(phoneNumber: String, hasEmail: Boolean) =
         startActivity(EditPhoneNumberActivity.newIntent(requireContext(), phoneNumber, hasEmail))

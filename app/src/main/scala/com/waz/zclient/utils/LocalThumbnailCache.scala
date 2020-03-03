@@ -25,6 +25,7 @@ import com.waz.utils.{Cache, TrimmingLruCache, returning}
 import com.waz.zclient.utils.LocalThumbnailCache._
 
 class LocalThumbnailCache(lru: Cache[Thumbnail, Bitmap]) {
+  import com.waz.service.assets.AssetInput._
 
   def getOrCreate(thumbnail: Thumbnail): Bitmap = Option(lru.get(thumbnail)).getOrElse {
     returning {

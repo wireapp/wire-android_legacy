@@ -17,6 +17,7 @@ import com.waz.zclient.user.domain.usecase.handle.ValidateHandleError
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleParams
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleSuccess
 import com.waz.zclient.user.domain.usecase.handle.ValidateHandleUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import java.util.Locale
@@ -30,11 +31,11 @@ class SettingsAccountEditHandleViewModel(
     private val validateHandleUseCase: ValidateHandleUseCase
 ) : ViewModel() {
 
-    private var _handleLiveData = MutableLiveData<String>()
-    private var _errorLiveData = MutableLiveData<ValidateHandleError>()
-    private var _okEnabledLiveData = MutableLiveData<Boolean>()
-    private var _dismissLiveData = MutableLiveData<Unit>()
-    private var _successLiveData = MutableLiveData<ValidateHandleSuccess>()
+    private val _handleLiveData = MutableLiveData<String>()
+    private val _errorLiveData = MutableLiveData<ValidateHandleError>()
+    private val _okEnabledLiveData = MutableLiveData<Boolean>()
+    private val _dismissLiveData = MutableLiveData<Unit>()
+    private val _successLiveData = MutableLiveData<ValidateHandleSuccess>()
 
     val handleLiveData: LiveData<String> = _handleLiveData
     val successLiveData: LiveData<ValidateHandleSuccess> = _successLiveData
@@ -47,7 +48,7 @@ class SettingsAccountEditHandleViewModel(
         if (!newHandle.equals(lowercaseHandle, ignoreCase = false)) {
             _handleLiveData.value = lowercaseHandle
         } else {
-            validateHandleUseCase(viewModelScope, ValidateHandleParams(newHandle)) {
+            validateHandleUseCase(viewModelScope, ValidateHandleParams(newHandle), Dispatchers.Default) {
                 it.fold(::handleFailure, ::afterTextChangedValidationSuccess)
             }
         }
@@ -72,7 +73,7 @@ class SettingsAccountEditHandleViewModel(
     }
 
     fun onOkButtonClicked(handleInput: String) {
-        validateHandleUseCase(viewModelScope, ValidateHandleParams(handleInput)) {
+        validateHandleUseCase(viewModelScope, ValidateHandleParams(handleInput), Dispatchers.Default) {
             it.fold(::handleFailure, ::updateHandle)
         }
     }

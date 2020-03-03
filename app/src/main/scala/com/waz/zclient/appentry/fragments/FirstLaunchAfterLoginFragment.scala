@@ -40,6 +40,7 @@ import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.appentry.fragments.FirstLaunchAfterLoginFragment._
 import com.waz.zclient.pages.main.conversation.AssetIntentsManager
 import com.waz.zclient.preferences.dialogs.BackupPasswordDialog
+import com.waz.zclient.preferences.dialogs.BackupPasswordDialog.InputPasswordMode
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.views.ZetaButton
 import com.waz.zclient.utils.ViewUtils
@@ -154,7 +155,9 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
   private def requestPassword(backup: Option[URI]): Future[Unit] = {
     backup match {
       case Some(_) =>
-        val fragment = returning(new BackupPasswordDialog) { _.onPasswordEntered(p => enter(backup, p))}
+        val fragment = returning(BackupPasswordDialog.newInstance(InputPasswordMode)) {
+          _.onPasswordEntered(p => enter(backup, Some(p)))
+        }
         getActivity.asInstanceOf[BaseActivity]
           .getSupportFragmentManager
           .beginTransaction
@@ -183,6 +186,7 @@ class FirstLaunchAfterLoginFragment extends FragmentHelper with View.OnClickList
         }
 
         val accountManager = await(accountsService.createAccountManager(userId.get, backupFile, isLogin = Some(true), backupPassword = backupPassword))
+        accountManager.foreach(_.addUnsplashPicture())
         backupFile.foreach(_.delete())
         await { accountsService.setAccount(userId) }
         val registrationState = await { accountManager.fold2(Future.successful(Left(ErrorResponse.internalError(""))), _.getOrRegisterClient()) }

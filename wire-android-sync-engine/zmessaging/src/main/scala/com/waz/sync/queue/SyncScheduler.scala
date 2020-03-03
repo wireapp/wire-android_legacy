@@ -143,9 +143,8 @@ class SyncSchedulerImpl(accountId:   UserId,
   }
 
   private def getStartTime(job: SyncJob): Long =
-    if (job.offline && network.isOnlineMode) 0  // start right away if request last failed due to possible network errors
+    if (job.offline && network.isOnline.currentValue.getOrElse(false)) 0  // start right away if request last failed due to possible network errors
     else job.startTime
-
 
   class WaitEntry(private var job: SyncJob) extends DerivedLogTag { self =>
     private val promise = Promise[Unit]()

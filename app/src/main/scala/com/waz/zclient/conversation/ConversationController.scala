@@ -21,21 +21,20 @@ import java.net.URI
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Bitmap
+import android.graphics.{Bitmap, BitmapFactory}
 import com.waz.api
 import com.waz.api.{IConversation, Verification}
-import com.waz.content.{ConversationStorage, MembersStorage, OtrClientsStorage, UsersStorage}
+import com.waz.content.{ConversationStorage, OtrClientsStorage, UsersStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model._
 import com.waz.model.otr.Client
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService, SelectedConversationService}
 import com.waz.service.AccountManager
-import com.waz.service.assets.{Content, ContentForUpload, UriHelper}
+import com.waz.service.assets.{AssetInput, Content, ContentForUpload, UriHelper}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue, Threading}
 import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
 import com.waz.utils.{Serialized, returning, _}
-import com.waz.zclient.assets.ImageCompressUtils
 import com.waz.zclient.calling.controllers.CallStartController
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.conversation.ConversationController.ConversationChange
@@ -44,7 +43,7 @@ import com.waz.zclient.conversationlist.{ConversationListController, FolderState
 import com.waz.zclient.core.stores.conversation.ConversationChangeRequester
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.utils.ContextUtils._
-import com.waz.zclient.utils.{Callback, currentRotation, rotate}
+import com.waz.zclient.utils.Callback
 import com.waz.zclient.{Injectable, Injector, R}
 import org.threeten.bp.Instant
 
@@ -61,7 +60,6 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val convsUi               = inject[Signal[ConversationsUiService]]
   private lazy val conversations         = inject[Signal[ConversationsService]]
   private lazy val convsStorage          = inject[Signal[ConversationStorage]]
-  private lazy val membersStorage        = inject[Signal[MembersStorage]]
   private lazy val usersStorage          = inject[Signal[UsersStorage]]
   private lazy val otrClientsStorage     = inject[Signal[OtrClientsStorage]]
   private lazy val account               = inject[Signal[Option[AccountManager]]]
@@ -197,20 +195,11 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   def groupConversation(id: ConvId): Signal[Boolean] =
     conversations.flatMap(_.groupConversation(id))
 
-  def participantsIds(conv: ConvId): Future[Seq[UserId]] =
-    membersStorage.head.flatMap(_.getActiveUsers(conv))
-
   def setEphemeralExpiration(expiration: Option[FiniteDuration]): Future[Unit] =
     for {
       id <- currentConvId.head
       _  <- convsUi.head.flatMap(_.setEphemeral(id, expiration))
     } yield ()
-
-  def loadMembers(convId: ConvId): Future[Seq[UserData]] =
-    for {
-      userIds <- membersStorage.head.flatMap(_.getActiveUsers(convId)) // TODO: maybe switch to ConversationsMembersSignal
-      users   <- usersStorage.head.flatMap(_.listAll(userIds))
-    } yield users
 
   def loadClients(userId: UserId): Future[Seq[Client]] =
     otrClientsStorage.head.flatMap(_.getClients(userId)) // TODO: move to SE maybe?
@@ -247,20 +236,22 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   // NOTE: Rotating makes sense only for images, but at this point we accept any content. If it's
   // not an image, `currentRotation` will return 0 and the method will return the original content.
-  def rotateImageIfNeeded(image: Content): Future[Content] = {
-    def rotateIfNeeded(image: Content, path: String): Future[Try[Content]] = {
-      val rotation = currentRotation(path)
-      if (rotation == 0) Future.successful(Success(image))
-      // rotation and compression is time-consuming - better not to do it on the Ui thread
-      else Future { rotate(path, rotation).map(ImageCompressUtils.toJpg) }(Threading.ImageDispatcher)
-    }
-
+  def rotateImageIfNeeded(image: Content): Future[Content] =
     (image match {
       case Content.Uri(uri)      => rotateIfNeeded(image, uri.getPath)
       case Content.File(_, file) => rotateIfNeeded(image, file.getPath)
       case _                     => Future.successful(Success(image))
     }).map(_.getOrElse(image))
-  }
+
+  // rotation and compression are time-consuming - better not to do it on the Ui thread
+  private def rotateIfNeeded(image: Content, path: String): Future[Try[Content]] = Future {
+    import AssetInput._
+    val cr = currentRotation(path)
+    if (cr == 0)
+      Success(image)
+    else
+      Try(BitmapFactory.decodeFile(path, BitmapOptions)).map { bmp => toJpg(rotate(bmp, cr)) }
+  }(Threading.ImageDispatcher)
 
   private def sendAssetMessage(convs:    Seq[ConvId],
                                content:  ContentForUpload,
@@ -276,7 +267,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
 
   def sendAssetMessage(bitmap: Bitmap, assetName: String): Future[Option[MessageData]] =
     for {
-      img     <- Future { ImageCompressUtils.toJpg(bitmap) }(Threading.Background)
+      img     <- Future { AssetInput.toJpg(bitmap) }(Threading.Background)
       content =  ContentForUpload(assetName, img)
       data    <- convsUiwithCurrentConv((ui, id) => ui.sendAssetMessage(id, content))
     } yield data
@@ -290,6 +281,17 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
       msg     <- if (convs.isEmpty) sendAssetMessage(content, activity, exp)
                  else sendAssetMessage(convs, content, activity, exp).map(_.head)
     } yield msg
+
+  def sendAssetMessages(uris:    Seq[URI],
+                       activity: Activity,
+                       exp:      Option[Option[FiniteDuration]],
+                       convs:    Seq[ConvId]): Future[Unit] =
+    for {
+      ui       <- convsUi.head
+      color    <- accentColorController.accentColor.head
+      contents <- Future.traverse(uris) { uri => Future.fromTry(uriHelper.extractFileName(uri).map(ContentForUpload(_,  Content.Uri(uri)))) }
+      _        <- Future.traverse(convs) { id => ui.sendAssetMessages(id, contents, (s: Long) => showWifiWarningDialog(s, color), exp) }
+    } yield ()
 
   def sendMessage(location: api.MessageContent.Location): Future[Option[MessageData]] =
     convsUiwithCurrentConv((ui, id) => ui.sendLocationMessage(id, location))

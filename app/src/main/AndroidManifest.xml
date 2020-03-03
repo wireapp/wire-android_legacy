@@ -232,7 +232,15 @@
             android:theme="@style/Theme.Dark.Preferences"
             android:launchMode="singleTask"
             android:label="@string/empty_string"/>
-      
+
+        <activity
+            android:name=".auth.registration.CreateAccountActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Light"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateVisible"
+            />
+
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"
             android:exported="true"
@@ -270,6 +278,15 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
+
+        <!--
+        We initialize Firebase dynamically.
+        https://firebase.googleblog.com/2017/03/take-control-of-your-firebase-init-on.html
+        -->
+        <provider
+            android:name="com.google.firebase.provider.FirebaseInitProvider"
+            android:authorities="${applicationId}.firebaseinitprovider"
+            tools:node="remove"/>
 
         <!--Disable tracking in the FCM core-->
         <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />

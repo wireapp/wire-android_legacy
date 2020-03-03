@@ -21,12 +21,6 @@
 <resources>
     <!-- Cursor-->
     <dimen name="cursor_menu_button_width">88dp</dimen>
-    <dimen name="cursor_button_width">32dp</dimen>
-    <dimen name="cursor_button_height">56dp</dimen>
-    <dimen name="cursor_button_offset">160dp</dimen>
-
-    <dimen name="otr__inbox__horizontal__padding">128dp</dimen>
-
     <dimen name="new_reg__body_left_margin">320dp</dimen>
     <dimen name="new_reg__body_right_margin">320dp</dimen>
 </resources>

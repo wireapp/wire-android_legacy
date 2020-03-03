@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2018 Wire Swiss GmbH
@@ -751,8 +750,8 @@
     <string name="timestamp_pattern__date_and_time__with_year_no_weekday">MMM d, yyyy, %1$s</string>
     <!-- Example: MONDAY, 9 MARCH 2015 \u30FB 12:08 -->
     <!-- MONDAY -->
-     <!-- MARCH 2 -->
-     <!-- MARCH 2, 2015 -->
+    <!-- MARCH 2 -->
+    <!-- MARCH 2, 2015 -->
     <!-- 23:15 -->
     <string name="timestamp_pattern__24h_format">HH:mm</string>
     <string name="timestamp_pattern__12h_format">hh:mm a</string>
@@ -1103,9 +1102,9 @@
     <string name="availability_available">Available</string>
     <string name="availability_away">Away</string>
     <string name="availability_busy">Busy</string>
-    <string name="availability_text_available">%1$s IS AVAILABLE</string>
-    <string name="availability_text_away">%1$s IS AWAY</string>
-    <string name="availability_text_busy">%1$s IS BUSY</string>
+    <string name="availability_text_available">AVAILABLE</string>
+    <string name="availability_text_away">AWAY</string>
+    <string name="availability_text_busy">BUSY</string>
     <string name="availability_setstatus">SET A STATUS</string>
 
     <string name="availability_notification_warning_away_title">You are set to Away</string>
@@ -1298,6 +1297,7 @@
     <string name="backup_password_dialog_message">The backup will be compressed, and if you set a password, also encrypted. Make sure to store it in a secure place.</string>
     <string name="backup_password_dialog_ok">OK</string>
     <string name="backup_password_dialog_no_password">Cancel</string>
+    <string name="restore_password_dialog_title">This backup is password protected.</string>
 
     <string name="add_email_address">Add your email address</string>
     <string name="set_a_password">Set a password</string>
@@ -1408,6 +1408,10 @@
     <string name="custom_backend_dialog_network_error_title">The server is not responding</string>
     <string name="custom_backend_dialog_network_error_message">Please check your internet connection, verify the link and try again.</string>
 
+    <string name="custom_backend_not_found_error_title">This server can\'t be reached</string>
+    <string name="custom_backend_not_found_error_message">We can\'t connect to the server at %1$s.\nLet your server
+        administrator know about this issue.</string>
+
     <string name="custom_backend_dialog_logged_in_error_title">Can\'t switch servers</string>
     <string name="custom_backend_dialog_logged_in_error_message">You are already logged in.\nTo connect to this server, log out of all accounts and try again.</string>
 
@@ -1482,5 +1486,28 @@
     <string name="edit_account_handle_error_unknown_error">Something went wrong, please try again.</string>
     <string name="edit_phone_remove_phone_number">Remove phone number</string>
     <string name="edit_phone_dialog_delete_phone_confirmation">Are you sure you want to remove %s from your Wire account?</string>
+    <string name="edit_phone_dialog_confirm_phone_confirmation">We will send a notification code to:\n%s</string>
     <string name="edit_phone_save_phone_number">Save</string>
+
+    <!-- Delete Account -->
+    <string name="delete_account_permanently_email_confirmation">We will send an email to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="delete_account_permanently_sms_confirmation">We will send an SMS to:\n %1$s \nFollow the link to permanently delete your account.</string>
+    <string name="pref_account_delete_confirmed">Account deletion confirmed, please check your email.</string>
+
+    <!-- Authentication (Shared strings between create account and login screens) -->
+    <string name="authentication_tab_layout_title_email">EMAIL</string>
+    <string name="authentication_tab_layout_title_phone">PHONE</string>
+
+    <!-- Create Personal Account screen -->
+    <string name="create_personal_account_title">Create an account</string>
+    <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
+    <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
+
+    <!-- Email Verification screen -->
+    <string name="email_verification_title">You\'ve got mail</string>
+    <string name="email_verification_description">Enter the verification code we sent to %s</string>
+    <string name="email_verification_resend_code">RESEND CODE</string>
+    <string name="email_verification_change_email">CHANGE EMAIL</string>
+
 </resources>
+

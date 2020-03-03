@@ -9,7 +9,7 @@ private const val END_VERSION = 25
 
 val ACTIVE_ACCOUNTS_MIGRATION = object : Migration(START_VERSION, END_VERSION) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        if (BuildConfig.KOTLIN_SETTINGS_MIGRATION) {
+        if (BuildConfig.KOTLIN_CORE) {
             val tempTableName = "ActiveAccountsTemp"
             val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
@@ -18,7 +18,7 @@ val ACTIVE_ACCOUNTS_MIGRATION = object : Migration(START_VERSION, END_VERSION) {
             `cookie` TEXT NOT NULL, 
             `access_token` TEXT, 
             `registered_push` TEXT,
-            `sso_id` TEXT)
+            `sso_id` TEXT DEFAULT NULL)
             """.trimIndent()
             val deleteNullValues = "DELETE FROM ActiveAccounts WHERE _id IS NULL"
             val copyAll = "INSERT INTO $tempTableName SELECT * FROM ActiveAccounts"

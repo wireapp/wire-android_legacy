@@ -6,6 +6,7 @@ import com.google.i18n.phonenumbers.Phonenumber
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
+import java.util.Locale
 
 class CountryCodeAndPhoneNumberUseCase(private val phoneNumberUtil: PhoneNumberUtil) :
     UseCase<PhoneNumber, CountryCodeAndPhoneNumberParams>() {
@@ -23,8 +24,9 @@ class CountryCodeAndPhoneNumberUseCase(private val phoneNumberUtil: PhoneNumberU
 
             val regionCountryCode = phoneNumberUtil.getRegionCodeForCountryCode(phoneNumber.countryCode)
             val countryCode = "+${phoneNumberUtil.getCountryCodeForRegion(regionCountryCode)}"
+            val country = Locale(params.deviceLanguage, regionCountryCode)
             val numberWithoutCountryCode = number.removePrefix(countryCode)
-            Either.Right(PhoneNumber(countryCode, numberWithoutCountryCode))
+            Either.Right(PhoneNumber(countryCode, numberWithoutCountryCode, country.displayCountry))
         } else {
             Either.Left(PhoneNumberInvalid)
         }
@@ -35,5 +37,5 @@ class CountryCodeAndPhoneNumberUseCase(private val phoneNumberUtil: PhoneNumberU
     }
 }
 
-data class PhoneNumber(val countryCode: String, val number: String)
-data class CountryCodeAndPhoneNumberParams(val phoneNumber: String)
+data class PhoneNumber(val countryCode: String, val number: String, val country: String)
+data class CountryCodeAndPhoneNumberParams(val phoneNumber: String, val deviceLanguage: String)

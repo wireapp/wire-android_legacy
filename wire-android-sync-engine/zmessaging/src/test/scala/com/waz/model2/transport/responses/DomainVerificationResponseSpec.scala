@@ -9,7 +9,7 @@ import org.robolectric.RobolectricTestRunner
 class DomainVerificationResponseSpec {
 
   @Test
-  def `given response has config_json_url responseDecoder returns DomainSuccessful with given url`() {
+  def `given response has config_json_url responseDecoder returns DomainSuccessful with given url`(): Unit = {
     val configUrl = "https://wire-rest.https.orange.com/config.json"
     val jsonString =
       s"""
@@ -26,7 +26,7 @@ class DomainVerificationResponseSpec {
   }
 
   @Test
-  def `given response has no config_json_url, responseDecoder returns DomainNotFound type`() {
+  def `given response has no config_json_url, responseDecoder returns DomainNotFound type`(): Unit = {
     val jsonObject = new JSONObject("{}")
 
     val response = DomainVerificationResponse.DomainVerificationResponseDecoder.apply(jsonObject)
