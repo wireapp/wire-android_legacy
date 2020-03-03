@@ -1,5 +1,6 @@
 package com.waz.zclient.features.settings.account
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -9,7 +10,6 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.invisible
-import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.visible
 import com.waz.zclient.core.navigation.navigator
@@ -107,7 +107,7 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
             settingsAccountViewModel.onResetPasswordClicked()
         }
         settingsAccountViewModel.resetPasswordUrlLiveData.observe(viewLifecycleOwner) {
-            openUrl(it)
+            navigator().navigateTo(Uri.parse(it))
         }
     }
 

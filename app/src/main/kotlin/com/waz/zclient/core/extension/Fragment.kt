@@ -16,6 +16,7 @@ inline fun <T : Fragment> T.withArgs(argsBuilder: Bundle.() -> Unit): T =
         arguments = Bundle().apply(argsBuilder)
     }
 
+@Deprecated("use Navigator#openUri", ReplaceWith("navigator().openUri(Uri)"))
 fun Fragment.openUrl(url: String) =
     requireActivity().startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 
