@@ -179,7 +179,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   databasesRenamedPref().flatMap {
     case true => Future.successful({}) //databases have been renamed - nothing to do.
     case false =>
-      for {
+      (for {
         active <- prefs.preference(CurrentAccountPrefOld).apply()
         accs <- filterLatestDb(storageOld.list())
         _ <- Future.sequence(accs.filter(_.userId.isDefined).map { acc =>
@@ -250,7 +250,11 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
           case true => accs.map(_.id).filterNot(active.contains)
         }.flatMap(storageOld.removeAll)
         _ <- markMigrationDone()
-      } yield {}
+      } yield {}).recoverWith {
+        case e: Exception =>
+          error(l"error migrating database from old accounts to new accounts $e")
+          Future.failed(e)
+      }
   }.recoverWith {
     case NonFatal(e) =>
       warn(l"Failed to migrate databases, aborting operation", e)
@@ -266,10 +270,14 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   override val accountManagers = Signal[Set[AccountManager]]()
 
   //create account managers for all logged in accounts on app start, or initialise the signal to an empty set
-  for {
+  (for {
     ids      <- storage.flatMap(_.list().map(_.map(_.id).toSet))
     managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
-  } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers ! managers.flatten))
+  } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers ! managers.flatten))).recoverWith{
+    case e : Exception =>
+      error(l"error creating account managers $e")
+      Future.failed(e)
+  }
 
   override def createAccountManager(userId:         UserId,
                                     importDbFile:   Option[File],

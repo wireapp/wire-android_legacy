@@ -87,7 +87,7 @@ object Contact extends ((ContactId, String, NameSource, String, SearchKey, GenSe
          |          (SELECT group_concat(${E.Email.name}) FROM ${E.table.name} WHERE ${E.Contact.name} = c.${Id.name}) AS emails
          |     FROM ${ContactsDao.table.name} c
          | ${limit.fold2("", l => s"ORDER BY c.${Sorting.name} COLLATE LOCALIZED ASC LIMIT $l")}
-       """.stripMargin, null)
+       """.stripMargin)
 
     override def apply(implicit c: DBCursor): Contact = Contact(Id, Name, Source, Sorting, Searching, split[PhoneNumber, mutable.HashSet]('phones, PhoneNumber), split[EmailAddress, mutable.HashSet]('emails, EmailAddress))
 

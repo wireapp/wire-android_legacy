@@ -271,7 +271,6 @@ class AccountManager(val userId:   UserId,
       case Failure(ex) =>
         if (storage.db2.inTransaction) storage.db2.endTransaction()
     }
-
     backup
   }
 

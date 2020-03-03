@@ -2,14 +2,18 @@ package com.waz.zclient.storage.db.users.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "Users")
+@Entity(
+    tableName = "Users",
+    indices = [Index(value = ["_id", "skey"])]
+)
 data class UserEntity(
 
     @ColumnInfo(name = "_id")
     @PrimaryKey
-    var id: String,
+    val id: String,
 
     @ColumnInfo(name = "teamId")
     var teamId: String?,
