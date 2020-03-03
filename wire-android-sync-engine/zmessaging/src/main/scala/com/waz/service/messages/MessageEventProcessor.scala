@@ -160,6 +160,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     case DeliveryReceipt(_)            => EventModifications.Empty
     case GenericContent.ReadReceipt(_) => EventModifications.Empty
     case _: Calling                    => EventModifications.Empty
+      //TODO BUTTONS: add cases for CompositeMessage, ButtonAction, ButtonActionConfirmation
     case _ =>
       // TODO: this message should be processed again after app update, maybe future app version will understand it
       EventModifications(MessageData(id, convId, UNKNOWN, from, time = time, localTime = localTime, protos = Seq(proto)))
