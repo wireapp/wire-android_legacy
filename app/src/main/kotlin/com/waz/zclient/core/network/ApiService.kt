@@ -45,7 +45,7 @@ abstract class ApiService {
         }
     }
 
-    private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
+    open fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
         return when (response.code()) {
             CODE_BAD_REQUEST -> Either.Left(BadRequest)
             CODE_UNAUTHORIZED -> Either.Left(Unauthorized)

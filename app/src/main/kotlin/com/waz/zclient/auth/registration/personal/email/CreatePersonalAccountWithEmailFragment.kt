@@ -6,23 +6,23 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
-import com.waz.zclient.auth.registration.personal.CreatePersonalAccountViewModel
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.fragment_create_personal_account_with_email.*
 import org.koin.android.viewmodel.ext.android.viewModel
 
 class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create_personal_account_with_email) {
 
-    private val createPersonalAccountViewModel: CreatePersonalAccountViewModel by viewModel()
+    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel by viewModel()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initViewModel()
+        observeConfirmationData()
+        observeActivationCodeData()
         initEmailChangedListener()
         initConfirmationButton()
     }
 
-    private fun initViewModel() {
+    private fun observeConfirmationData() {
         with(createPersonalAccountViewModel) {
             confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) { updateConfirmationButtonStatus(it) }
         }
@@ -42,9 +42,22 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
         updateConfirmationButtonStatus(false)
 
         confirmationButton.setOnClickListener {
-            replaceFragment(
-                R.id.activityCreateAccountLayoutContainer,
-                EmailVerificationFragment.newInstance(createPersonalAccountWithEmailEditText.text.toString()))
+            val email = createPersonalAccountWithEmailEditText.text.toString()
+            createPersonalAccountViewModel.sendActivationCode(email)
+        }
+    }
+
+    private fun observeActivationCodeData() {
+        with(createPersonalAccountViewModel) {
+            sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
+                val email = createPersonalAccountWithEmailEditText.text.toString()
+                replaceFragment(
+                    R.id.activityCreateAccountLayoutContainer,
+                    EmailVerificationFragment.newInstance(email))
+            }
+            sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
+                //TODO show different error messages
+            }
         }
     }
 
