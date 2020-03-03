@@ -12,8 +12,11 @@ import com.waz.zclient.user.domain.usecase.handle.HandleAlreadyExists
 import com.waz.zclient.user.domain.usecase.handle.HandleInvalid
 import com.waz.zclient.user.domain.usecase.handle.HandleIsAvailable
 import com.waz.zclient.user.domain.usecase.handle.UnknownError
-import kotlinx.coroutines.*
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
@@ -267,7 +270,7 @@ class UserRemoteDataSourceTest : UnitTest() {
         validateHandleExistsFailure(cancelled = true, failure = UnknownError)
     }
 
-    private fun validateHandleExistsSuccess() = runBlockingTest {
+    private fun validateHandleExistsSuccess() = runBlocking {
         `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
@@ -282,7 +285,7 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
 
-    private fun validateHandleExistsFailure(cancelled: Boolean = false, failure: Failure) = runBlockingTest {
+    private fun validateHandleExistsFailure(cancelled: Boolean = false, failure: Failure) = runBlocking {
         `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
@@ -300,6 +303,71 @@ class UserRemoteDataSourceTest : UnitTest() {
             it shouldBe failure
         }
     }
+
+    @Test
+    fun `Given deletePhone() is called, when api response success and response body is not null, then return a successful response`() {
+        validateDeletePhoneScenario(responseBody = Unit, isRight = true, cancelable = false)
+    }
+
+    @Test
+    fun `Given deletePhone() is called, when api response success and response body is null, then return an error response`() {
+        validateDeletePhoneScenario(responseBody = null, isRight = false, cancelable = false)
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given deletePhone() is called, when api response is cancelled, then return an error response`() {
+        validateDeletePhoneScenario(responseBody = Unit, isRight = false, cancelable = true)
+    }
+
+    private fun validateDeletePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.deletePhone()).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.deletePhone()
+
+        verify(usersNetworkService).deletePhone()
+
+        if (cancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        usersRemoteDataSource.deletePhone().isRight shouldBe isRight
+    }
+
+    @Test
+    fun `Given deleteAccountPermanently() is called, when api response success and response body is not null, then return a successful response`() {
+        validateDeleteAccountPermanantlyScenario(responseBody = Unit, isRight = true, cancelable = false)
+    }
+
+    @Test
+    fun `Given deleteAccountPermanently() is called, when api response success and response body is null, then return an error response`() {
+        validateDeleteAccountPermanantlyScenario(responseBody = null, isRight = false, cancelable = false)
+    }
+
+    @Test(expected = CancellationException::class)
+    fun `Given deleteAccountPermanently() is called, when api response is cancelled, then return an error response`() {
+        validateDeleteAccountPermanantlyScenario(responseBody = Unit, isRight = false, cancelable = true)
+    }
+
+    private fun validateDeleteAccountPermanantlyScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
+        `when`(emptyResponse.body()).thenReturn(responseBody)
+        `when`(emptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersNetworkService.deleteAccount(DeleteAccountRequest)).thenReturn(emptyResponse)
+
+        usersRemoteDataSource.deleteAccountPermanently()
+
+        verify(usersNetworkService).deleteAccount(DeleteAccountRequest)
+
+        if (cancelable) {
+            cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
+            delay(CANCELLATION_DELAY)
+        }
+
+        usersRemoteDataSource.deleteAccountPermanently().isRight shouldBe isRight
+    }
+
 
     companion object {
         private const val CANCELLATION_DELAY = 200L
