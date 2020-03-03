@@ -5,13 +5,14 @@ import com.waz.zclient.core.network.accesstoken.AccessTokenMapper
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import com.waz.zclient.storage.db.accountdata.SsoIdEntity
 
-data class ActiveAccounts(
+data class ActiveAccount(
     val id: String,
     val teamId: String?,
     val accessToken: AccessToken?,
     val refreshToken: String,
     val pushToken: String?,
-    val ssoId: SsoId?)
+    val ssoId: SsoId?
+)
 
 data class SsoId(
     val subject: String,
@@ -22,20 +23,20 @@ class AccountMapper {
 
     private val accessTokenMapper = AccessTokenMapper()
 
-    fun toEntity(activeAccounts: ActiveAccounts) = ActiveAccountsEntity(
-        id = activeAccounts.id,
-        teamId = activeAccounts.teamId,
-        accessToken = activeAccounts.accessToken?.let { accessTokenMapper.toEntity(it) },
-        refreshToken = activeAccounts.refreshToken,
-        pushToken = activeAccounts.pushToken,
-        ssoId = activeAccounts.ssoId?.let { toEntity(it) })
+    fun toEntity(activeAccount: ActiveAccount) = ActiveAccountsEntity(
+        id = activeAccount.id,
+        teamId = activeAccount.teamId,
+        accessToken = activeAccount.accessToken?.let { accessTokenMapper.toEntity(it) },
+        refreshToken = activeAccount.refreshToken,
+        pushToken = activeAccount.pushToken,
+        ssoId = activeAccount.ssoId?.let { toEntity(it) })
 
     private fun toEntity(ssoId: SsoId) = SsoIdEntity(
         subject = ssoId.subject,
         tenant = ssoId.tenant
     )
 
-    fun from(activeAccountEntity: ActiveAccountsEntity) = ActiveAccounts(
+    fun from(activeAccountEntity: ActiveAccountsEntity) = ActiveAccount(
         id = activeAccountEntity.id,
         teamId = activeAccountEntity.teamId,
         accessToken = activeAccountEntity.accessToken?.let { accessTokenMapper.from(it) },

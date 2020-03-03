@@ -9,18 +9,17 @@ import android.widget.Toast.LENGTH_LONG
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
-import com.waz.zclient.core.logging.Logger
-import org.koin.android.viewmodel.ext.android.viewModel
+import com.waz.zclient.core.extension.sharedViewModel
+import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
 
 class LogoutDialogFragment : DialogFragment() {
 
-    private val logoutDialogViewModel: LogoutDialogViewModel by viewModel()
+    private val logoutDialogViewModel: LogoutDialogViewModel by sharedViewModel(SETTINGS_SCOPE_ID)
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireContext())
             .setMessage(getString(R.string.pref_account_sign_out_warning_message))
             .setPositiveButton(getString(R.string.pref_account_sign_out_warning_verify)) { _, _ ->
-                Logger.error("LogoutDialogFragment", "dialog verify button clicked")
                 logoutDialogViewModel.onVerifyButtonClicked()
             }
             .setNegativeButton(getString(R.string.pref_account_sign_out_warning_cancel)) { _, _ ->

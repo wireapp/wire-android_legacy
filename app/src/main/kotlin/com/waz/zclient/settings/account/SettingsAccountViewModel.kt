@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.accounts.domain.model.ActiveAccount
+import com.waz.zclient.accounts.ActiveAccount
 import com.waz.zclient.accounts.domain.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure

@@ -1,7 +1,7 @@
 package com.waz.zclient.accounts.domain.usecase
 
 import com.waz.zclient.accounts.AccountsRepository
-import com.waz.zclient.accounts.domain.model.ActiveAccount
+import com.waz.zclient.accounts.ActiveAccount
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
