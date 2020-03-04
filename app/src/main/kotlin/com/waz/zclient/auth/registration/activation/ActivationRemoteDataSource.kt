@@ -5,27 +5,26 @@ import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.NetworkHandler
-import retrofit2.Response
 
 class ActivationRemoteDataSource(
     private val activationApi: ActivationApi, override val networkHandler: NetworkHandler
 ) : ApiService() {
 
-    suspend fun sendEmailActivationCode(email: String): Either<Failure, Unit> =
-        request { activationApi.sendActivationCode(SendActivationCodeRequest(email = email)) }
-
-    override fun <T> handleRequestError(response: Response<T>): Either<Failure, T> =
-        when (response.code()) {
+    suspend fun sendEmailActivationCode(email: String): Either<Failure, Unit> {
+        val sendEmailActivationCodeRequest = activationApi.sendActivationCode(SendActivationCodeRequest(email = email))
+        return when (sendEmailActivationCodeRequest.code()) {
             INVALID_EMAIL -> Either.Left(InvalidEmail)
             EMAIL_BLACKLISTED -> Either.Left(EmailBlackListed)
             EMAIL_IN_USE -> Either.Left(EmailInUse)
-            else -> super.handleRequestError(response)
+            else -> request { sendEmailActivationCodeRequest }
         }
+    }
 
     companion object {
         private const val INVALID_EMAIL = 400
         private const val EMAIL_BLACKLISTED = 403
         private const val EMAIL_IN_USE = 409
+
     }
 }
 

@@ -18,6 +18,7 @@ object Forbidden : NetworkFailure()
 object NotFound : NetworkFailure()
 object Cancelled : NetworkFailure()
 object InternalServerError : NetworkFailure()
+object Conflict : NetworkFailure()
 
 object EmptyResponseBody : NetworkFailure()
 

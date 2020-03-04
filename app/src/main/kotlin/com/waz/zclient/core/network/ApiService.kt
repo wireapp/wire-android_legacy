@@ -1,15 +1,6 @@
 package com.waz.zclient.core.network
 
-import com.waz.zclient.core.exception.BadRequest
-import com.waz.zclient.core.exception.Cancelled
-import com.waz.zclient.core.exception.EmptyResponseBody
-import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.Forbidden
-import com.waz.zclient.core.exception.InternalServerError
-import com.waz.zclient.core.exception.NetworkConnection
-import com.waz.zclient.core.exception.NotFound
-import com.waz.zclient.core.exception.ServerError
-import com.waz.zclient.core.exception.Unauthorized
+import com.waz.zclient.core.exception.*
 import com.waz.zclient.core.functional.Either
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -45,12 +36,13 @@ abstract class ApiService {
         }
     }
 
-    open fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
+    private fun <T> handleRequestError(response: Response<T>): Either<Failure, T> {
         return when (response.code()) {
             CODE_BAD_REQUEST -> Either.Left(BadRequest)
             CODE_UNAUTHORIZED -> Either.Left(Unauthorized)
             CODE_FORBIDDEN -> Either.Left(Forbidden)
             CODE_NOT_FOUND -> Either.Left(NotFound)
+            CODE_CONFLICT -> Either.Left(Conflict)
             CODE_INTERNAL_SERVER_ERROR -> Either.Left(InternalServerError)
             else -> Either.Left(ServerError)
         }
@@ -61,6 +53,7 @@ abstract class ApiService {
         private const val CODE_UNAUTHORIZED = 401
         private const val CODE_FORBIDDEN = 403
         private const val CODE_NOT_FOUND = 404
+        private const val CODE_CONFLICT = 409
         private const val CODE_INTERNAL_SERVER_ERROR = 500
     }
 }

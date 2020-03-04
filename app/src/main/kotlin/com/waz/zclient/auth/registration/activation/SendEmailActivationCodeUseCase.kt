@@ -5,11 +5,11 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 
 class SendEmailActivationCodeUseCase(private val activationRepository: ActivationRepository) :
-    UseCase<Any, SendActivationCodeParams>() {
+    UseCase<Unit, SendEmailActivationCodeParams>() {
 
-    override suspend fun run(params: SendActivationCodeParams): Either<Failure, Any> =
+    override suspend fun run(params: SendEmailActivationCodeParams): Either<Failure, Unit> =
         activationRepository.sendEmailActivationCode(params.email)
 
 }
 
-data class SendActivationCodeParams(val email: String)
+data class SendEmailActivationCodeParams(val email: String)
