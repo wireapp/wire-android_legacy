@@ -39,7 +39,7 @@ class ActivationRepositoryTest : UnitTest() {
     }
 
     @Test
-    fun `Given sendEmailActivationCode() is called and remote request is success, then return failure`() = runBlockingTest {
+    fun `Given sendEmailActivationCode() is called and remote request is success, then return success`() = runBlockingTest {
         `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
         activationRepository.sendEmailActivationCode(TEST_EMAIL)
