@@ -1,7 +1,6 @@
 package com.waz.zclient.auth.registration.activation
 
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.ApiService
 import com.waz.zclient.core.network.NetworkHandler
@@ -24,14 +23,5 @@ class ActivationRemoteDataSource(
         private const val INVALID_EMAIL = 400
         private const val EMAIL_BLACKLISTED = 403
         private const val EMAIL_IN_USE = 409
-
     }
 }
-
-object InvalidEmail : SendActivationCodeFailure()
-object EmailBlackListed : SendActivationCodeFailure()
-object EmailInUse : SendActivationCodeFailure()
-object ActivationCodeSent : SendActivationCodeSuccess()
-
-sealed class SendActivationCodeSuccess
-sealed class SendActivationCodeFailure : FeatureFailure()

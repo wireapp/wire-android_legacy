@@ -32,10 +32,9 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
-        createPersonalAccountWithEmailViewModel = CreatePersonalAccountWithEmailViewModel(validateEmailUseCase
-            , sendEmailActivationCodeUseCase)
+        createPersonalAccountWithEmailViewModel = CreatePersonalAccountWithEmailViewModel(
+            validateEmailUseCase, sendEmailActivationCodeUseCase)
     }
-
 
     @Test
     fun `given validateEmail is called, when the validation succeeds then ok button should be enabled`() =

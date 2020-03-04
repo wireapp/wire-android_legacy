@@ -10,7 +10,8 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class ActivationRepositoryTest : UnitTest() {
@@ -27,22 +28,23 @@ class ActivationRepositoryTest : UnitTest() {
 
     @Test
     fun `Given sendEmailActivationCode() is called and remote request fails then return failure`() = runBlockingTest {
-        Mockito.`when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
+
+        `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
 
         activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
-        Mockito.verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
+        verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
 
         activationRepository.sendEmailActivationCode(TEST_EMAIL).isLeft shouldBe true
     }
 
     @Test
     fun `Given sendEmailActivationCode() is called and remote request is success, then return failure`() = runBlockingTest {
-        Mockito.`when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
+        `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
         activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
-        Mockito.verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
+        verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
 
         activationRepository.sendEmailActivationCode(TEST_EMAIL).isRight shouldBe true
     }
