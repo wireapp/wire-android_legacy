@@ -6,19 +6,27 @@ import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.user.domain.usecase.email.ValidateEmailUseCase
 import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
+
+const val REGISTRATION_SCOPE_ID = "RegistrationScopeId"
+const val REGISTRATION_SCOPE = "RegistrationScope"
 
 val registrationModules: List<Module>
     get() = listOf(createPersonalAccountModule, activationModule)
 
 val createPersonalAccountModule: Module = module {
-    viewModel { CreatePersonalAccountWithEmailViewModel(get(), get()) }
-    factory { ValidateEmailUseCase() }
+    scope(named(REGISTRATION_SCOPE)) {
+        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get()) }
+        factory { ValidateEmailUseCase() }
+    }
 }
 
 val activationModule: Module = module {
-    factory { SendEmailActivationCodeUseCase(get()) }
-    single { ActivationDataSource(get()) as ActivationRepository }
-    factory { ActivationRemoteDataSource(get(), get()) }
-    factory { get<NetworkClient>().create(ActivationApi::class.java) }
+    scope(named(REGISTRATION_SCOPE)) {
+        factory { SendEmailActivationCodeUseCase(get()) }
+        scoped { ActivationDataSource(get()) as ActivationRepository }
+        factory { ActivationRemoteDataSource(get(), get()) }
+        factory { get<NetworkClient>().create(ActivationApi::class.java) }
+    }
 }

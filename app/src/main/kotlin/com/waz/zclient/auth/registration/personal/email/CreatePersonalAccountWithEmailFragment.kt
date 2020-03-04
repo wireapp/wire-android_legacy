@@ -6,13 +6,15 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
+import com.waz.zclient.auth.registration.di.REGISTRATION_SCOPE_ID
 import com.waz.zclient.core.extension.replaceFragment
+import com.waz.zclient.core.extension.viewModel
 import kotlinx.android.synthetic.main.fragment_create_personal_account_with_email.*
-import org.koin.android.viewmodel.ext.android.viewModel
 
 class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create_personal_account_with_email) {
 
-    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel by viewModel()
+    //TODO handle no internet connections status
+    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel by viewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
