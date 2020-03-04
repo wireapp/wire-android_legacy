@@ -447,6 +447,7 @@ object UserPreferences {
 
   lazy val OtrLastPrekey = PrefKey[Int]("otr_last_prekey_id")
   lazy val LastStableNotification = PrefKey[Option[Uid]]("last_notification_id")
+  lazy val FirstSyncAfterBackupRestoration = PrefKey[Boolean]("first_sync_after_backup_restoration", customDefault = false)
 
   lazy val LastSelfClientsSyncRequestedTime = PrefKey[Long]("last_self_clients_sync_requested")
 

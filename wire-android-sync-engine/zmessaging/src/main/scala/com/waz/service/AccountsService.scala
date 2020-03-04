@@ -23,6 +23,7 @@ import com.waz.api._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.GlobalPreferences._
 import com.waz.content.UserPreferences
+import com.waz.content.UserPreferences.FirstSyncAfterBackupRestoration
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.InternalLog
 import com.waz.log.LogSE._
@@ -30,15 +31,13 @@ import com.waz.log.LogShow.SafeToLog
 import com.waz.model.AccountData.Password
 import com.waz.model._
 import com.waz.service.backup.BackupManager
-import com.waz.service.tracking.LoggedOutEvent
 import com.waz.sync.client.AuthenticationManager.{AccessToken, Cookie}
-import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.sync.client.LoginClient.LoginResult
+import com.waz.sync.client.{ErrorOr, LoginClient}
 import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.utils.{Serialized, returning, _}
 
-import scala.async.Async.{async, await}
 import scala.concurrent.Future
 import scala.reflect.io.Directory
 import scala.util.control.NonFatal
@@ -277,13 +276,20 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
                                     initialUser:    Option[UserInfo] = None,
                                     backupPassword: Option[Password] = None) = Serialized.future(AccountManagersKey) {
     for {
-      managers <- accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head
-      manager  <- managers.find(_.userId == userId)
-                          .fold(createManager(userId, initialUser, isLogin, importDbFile.nonEmpty))(m => Future.successful(Some(m)))
-      _        = (manager, importDbFile, backupPassword) match {
-                   case (Some(mgr), Some(file), Some(password)) => restoreFromBackup(mgr, userId, file, password)
-                   case _ =>
-                 }
+      managers       <- accountManagers.orElse(Signal.const(Set.empty[AccountManager])).head
+      manager        <- managers.find(_.userId == userId)
+                                .fold(createManager(userId, initialUser, isLogin, importDbFile.nonEmpty))(m => Future.successful(Some(m)))
+      backupRestored =  (manager, importDbFile, backupPassword) match {
+                          case (Some(mgr), Some(file), Some(password)) =>
+                            restoreFromBackup(mgr, userId, file, password)
+                            true
+                          case _ =>
+                            false
+                        }
+      _ <- if (backupRestored)
+             manager.fold(Future.successful(()))(_.userPrefs.preference(FirstSyncAfterBackupRestoration) := true)
+           else
+             Future.successful(())
     } yield manager
   }
 
