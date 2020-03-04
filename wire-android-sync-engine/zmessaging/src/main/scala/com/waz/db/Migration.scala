@@ -17,12 +17,13 @@
  */
 package com.waz.db
 
-import android.database.sqlite.SQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogShow
 import com.waz.log.LogSE._
+import com.waz.log.LogShow
 import com.waz.service.tracking.TrackingService
 import com.waz.utils.wrappers.DB
+import androidx.room.migration.{Migration => RoomMigration}
 
 import scala.util.control.NonFatal
 
@@ -31,6 +32,10 @@ trait Migration { self =>
   val toVersion: Int
   
   def apply(db: DB): Unit
+
+  def toRoomMigration: RoomMigration = new RoomMigration(fromVersion, toVersion) {
+    override def migrate(database: SupportSQLiteDatabase): Unit = apply(DB(database))
+  }
 }
 
 object Migration {
@@ -92,7 +97,7 @@ class Migrations(migrations: Migration*)(implicit val tracking: TrackingService)
     * @throws IllegalStateException if no migration plan can be found
     */
   @throws[IllegalStateException]("If no migration plan can be found for given versions")
-  def migrate(storage: DaoDB, fromVersion: Int, toVersion: Int)(implicit db: SQLiteDatabase): Unit = {
+  def migrate(storage: DaoDB, fromVersion: Int, toVersion: Int)(implicit db: SupportSQLiteDatabase): Unit = {
     if (fromVersion != toVersion) {
       plan(fromVersion, toVersion) match {
         case Nil => throw new IllegalStateException(s"No migration plan from: $fromVersion to: $toVersion")
@@ -113,7 +118,7 @@ class Migrations(migrations: Migration*)(implicit val tracking: TrackingService)
     }
   }
 
-  def fallback(storage: DaoDB, db: SQLiteDatabase): Unit = {
+  def fallback(storage: DaoDB, db: SupportSQLiteDatabase): Unit = {
     warn(l"Dropping all data!!")
     storage.dropAllTables(db)
     storage.onCreate(db)

@@ -17,10 +17,10 @@
  */
 package com.waz.db.migrate
 
-import android.database.sqlite.SQLiteDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 object SearchQueryCacheMigration {
-  lazy val v75: SQLiteDatabase => Unit = { db =>
+  lazy val v75: SupportSQLiteDatabase => Unit = { db =>
     db.execSQL("DROP TABLE IF EXISTS SearchEntries")
     db.execSQL("DROP TABLE IF EXISTS SearchQueries")
     db.execSQL("CREATE TABLE SearchQueries (query TEXT PRIMARY KEY, timestamp INTEGER, entries TEXT)")

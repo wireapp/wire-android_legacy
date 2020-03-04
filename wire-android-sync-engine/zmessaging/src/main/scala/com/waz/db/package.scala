@@ -1,6 +1,6 @@
 /*
  * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
+ * Copyright (C) 2020 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,9 @@
  */
 package com.waz
 
-import com.waz.utils._
 import com.waz.log.LogSE._
-import com.waz.utils.wrappers._
-import com.waz.utils.wrappers.DB
+import com.waz.utils._
+import com.waz.utils.wrappers.{DB, _}
 
 import scala.language.implicitConversions
 import scala.util.Try
@@ -109,6 +108,7 @@ package object db {
 }
 
 package db {
+  import com.waz.db.DeferredModeReadTransactionSupport.FallbackReadTransactionSupport
   import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 
 /** See https://www.sqlite.org/isolation.html - "Isolation And Concurrency", par. 4 and following.
@@ -126,22 +126,17 @@ package db {
     def create: ReadTransactionSupport = new ReadTransactionSupport {
       verbose(l"using deferred mode read transactions")
 
-      override def beginReadTransaction(db: DB): Unit = try reflectiveBegin(db) catch { case _: Exception => db.beginTransactionNonExclusive() }
-
-      private def reflectiveBegin(db: DB): Unit = {
-        db.acquireReference()
-        try {
-          db.getThreadSession.beginTransaction()
-        }
-        finally db.releaseReference()
+      override def beginReadTransaction(db: DB): Unit = try db.beginTransaction() catch {
+        case _: Exception => db.beginTransactionNonExclusive()
       }
     }
-  }
 
-  object FallbackReadTransactionSupport extends DerivedLogTag {
-    def create: ReadTransactionSupport = new ReadTransactionSupport {
-      verbose(l"using fallback support for read transactions")
-      override def beginReadTransaction(db: DB): Unit = db.beginTransactionNonExclusive()
+    object FallbackReadTransactionSupport extends DerivedLogTag {
+      def create: ReadTransactionSupport = new ReadTransactionSupport {
+        verbose(l"using fallback support for read transactions")
+
+        override def beginReadTransaction(db: DB): Unit = db.beginTransactionNonExclusive()
+      }
     }
   }
 }

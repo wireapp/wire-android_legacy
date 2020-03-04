@@ -18,11 +18,7 @@
 package com.waz.db
 
 import android.content.ContentValues
-import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteDatabase._
-import com.waz.{DisabledTrackingService, Generators}
-import com.waz.utils.wrappers.{DB, URI}
 import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.model.AssetData.AssetDataDao
 import com.waz.model.AssetMetaData.Image.Tag.Medium
@@ -33,7 +29,9 @@ import com.waz.model.UserData.UserDataDao
 import com.waz.model._
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync.{SyncCommand, SyncJob}
+import com.waz.utils.wrappers.{DB, URI}
 import com.waz.utils.{DbLoader, returning}
+import com.waz.{DisabledTrackingService, Generators}
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest._
@@ -54,7 +52,7 @@ import org.threeten.bp.Instant
 
     scenario("Load db from binary file") {
       val db = loadDb("/db/zmessaging_60.db")
-      val c = db.rawQuery("select * from Users", null)
+      val c = db.rawQuery("select * from Users")
       c should not be null
       c.getCount should be > 0
       db.close()
@@ -100,7 +98,6 @@ import org.threeten.bp.Instant
       // reopening the db fixes the problem
       val path = db.getPath
       db.close()
-      db = SQLiteDatabase.openDatabase(path, null, OPEN_READWRITE)
 
       val assets = AssetDataDao.list
       assets should have size 57
@@ -182,7 +179,7 @@ import org.threeten.bp.Instant
 
       before should have size 100
 
-      db.insert(SyncJobDao.table.name, null, returning(new ContentValues) { cv =>
+      db.insert(SyncJobDao.table.name, SQLiteDatabase.CONFLICT_REPLACE, returning(new ContentValues) { cv =>
         cv.put("_id", "f94af0bf-4043-4278-8891-6d5562c266b3")
         cv.put("data",
           """{
@@ -199,7 +196,7 @@ import org.threeten.bp.Instant
           """.stripMargin)
       })
 
-      db.insert(SyncJobDao.table.name, null, returning(new ContentValues) { cv =>
+      db.insert(SyncJobDao.table.name, SQLiteDatabase.CONFLICT_REPLACE, returning(new ContentValues) { cv =>
         cv.put("_id", "7c75141c-29f3-47d1-b52d-715991a81fdf")
         cv.put("data",
           """{
@@ -247,5 +244,5 @@ import org.threeten.bp.Instant
     }
   }
 
-  def countUsers(implicit db: DB) = DatabaseUtils.queryNumEntries(db, "Users")
+  def countUsers(implicit db: DB) = db.query("SELECT * FROM Users").getCount.toLong
 }
