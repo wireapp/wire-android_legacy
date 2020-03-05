@@ -7,8 +7,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.createScope
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.settings.di.SETTINGS_SCOPE
-import com.waz.zclient.settings.di.SETTINGS_SCOPE_ID
+import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
+import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
+import com.waz.zclient.features.settings.support.SettingsSupportFragment
 import kotlinx.android.synthetic.main.activity_settings_support.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi

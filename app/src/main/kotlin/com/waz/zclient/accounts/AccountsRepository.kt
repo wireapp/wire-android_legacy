@@ -1,6 +1,5 @@
 package com.waz.zclient.accounts
 
-import com.waz.zclient.accounts.domain.model.ActiveAccount
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 

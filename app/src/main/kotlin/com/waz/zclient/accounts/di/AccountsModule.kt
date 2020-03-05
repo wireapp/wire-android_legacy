@@ -1,10 +1,10 @@
 package com.waz.zclient.accounts.di
 
-import com.waz.zclient.accounts.AccountsDataSource
-import com.waz.zclient.accounts.AccountsLocalDataSource
+import com.waz.zclient.accounts.datasources.AccountsDataSource
+import com.waz.zclient.accounts.datasources.local.AccountsLocalDataSource
 import com.waz.zclient.accounts.AccountsRepository
-import com.waz.zclient.accounts.domain.model.AccountMapper
-import com.waz.zclient.accounts.domain.usecase.GetActiveAccountUseCase
+import com.waz.zclient.accounts.AccountMapper
+import com.waz.zclient.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.storage.db.GlobalDatabase
 import org.koin.core.module.Module
 import org.koin.dsl.module
