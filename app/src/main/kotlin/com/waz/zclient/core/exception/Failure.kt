@@ -30,7 +30,4 @@ object DatabaseError : DatabaseFailure()
 data class GenericUseCaseError(val throwable: Throwable) : Failure()
 
 /** * Extend this class for UseCase specific failures.*/
-abstract class UseCaseFailure : Failure()
-
-//TODO replace FeatureFailure with UseCaseFailure everywhere
 abstract class FeatureFailure : Failure()

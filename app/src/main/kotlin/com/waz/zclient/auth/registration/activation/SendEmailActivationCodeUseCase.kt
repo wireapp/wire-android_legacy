@@ -25,4 +25,4 @@ object EmailBlackListed : SendActivationCodeFailure()
 object EmailInUse : SendActivationCodeFailure()
 object UnknownError : SendActivationCodeFailure()
 
-sealed class SendActivationCodeFailure : UseCaseFailure()
+sealed class SendActivationCodeFailure : FeatureFailure()
