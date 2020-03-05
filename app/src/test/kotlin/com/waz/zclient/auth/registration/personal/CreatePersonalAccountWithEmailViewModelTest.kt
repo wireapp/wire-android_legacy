@@ -112,7 +112,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
         runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
+            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(ActivationCodeSent))
 
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
