@@ -1,14 +1,12 @@
 package com.waz.zclient.auth.registration.activation
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.capture
+import com.waz.zclient.any
 import com.waz.zclient.core.network.NetworkHandler
 import kotlinx.coroutines.*
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.Captor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
@@ -29,9 +27,6 @@ class ActivationRemoteDataSourceTest : UnitTest() {
     @Mock
     private lateinit var emptyResponse: Response<Unit>
 
-    @Captor
-    private lateinit var sendEmailActivationCodeRequestCaptor: ArgumentCaptor<SendActivationCodeRequest>
-
     @Before
     fun setUp() {
         `when`(networkHandler.isConnected).thenReturn(true)
@@ -43,13 +38,12 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
         `when`(emptyResponse.body()).thenReturn(Unit)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(activationApi.sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))).thenReturn(emptyResponse)
+
+        `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
 
         val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
 
-        verify(activationApi).sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))
-
-        sendEmailActivationCodeRequestCaptor.value.email shouldBe TEST_EMAIL
+        verify(activationApi).sendActivationCode(any())
 
         response.isRight shouldBe true
     }
@@ -58,13 +52,11 @@ class ActivationRemoteDataSourceTest : UnitTest() {
     fun `Given sendActivationCode() is called, when api response failed, then return an error`() = runBlocking {
 
         `when`(emptyResponse.isSuccessful).thenReturn(false)
-        `when`(activationApi.sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))).thenReturn(emptyResponse)
+        `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
 
         val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
 
-        verify(activationApi).sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))
-
-        sendEmailActivationCodeRequestCaptor.value.email shouldBe TEST_EMAIL
+        verify(activationApi).sendActivationCode(any())
 
         response.isLeft shouldBe true
     }
@@ -74,16 +66,14 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
         `when`(emptyResponse.body()).thenReturn(Unit)
         `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(activationApi.sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))).thenReturn(emptyResponse)
+        `when`(activationApi.sendActivationCode(any())).thenReturn(emptyResponse)
 
         val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
 
-        verify(activationApi).sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))
+        verify(activationApi).sendActivationCode(any())
 
         cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
         delay(CANCELLATION_DELAY)
-
-        sendEmailActivationCodeRequestCaptor.value.email shouldBe TEST_EMAIL
 
         response.isLeft shouldBe true
     }
