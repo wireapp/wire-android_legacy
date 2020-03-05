@@ -15,7 +15,8 @@ import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountWithEmailViewModel(
     private val validateEmailUseCase: ValidateEmailUseCase,
-    private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase) : ViewModel() {
+    private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
+) : ViewModel() {
 
     private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
     private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()
@@ -43,7 +44,7 @@ class CreatePersonalAccountWithEmailViewModel(
 
     fun sendActivationCode(email: String) {
         sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email), Dispatchers.Default) {
-            it.fold(::sendActivationCodeFailure){sendActivationCodeSuccess()}
+            it.fold(::sendActivationCodeFailure) { sendActivationCodeSuccess() }
         }
     }
 

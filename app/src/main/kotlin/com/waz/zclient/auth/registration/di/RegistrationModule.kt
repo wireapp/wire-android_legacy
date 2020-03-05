@@ -1,6 +1,10 @@
 package com.waz.zclient.auth.registration.di
 
-import com.waz.zclient.auth.registration.activation.*
+import com.waz.zclient.auth.registration.activation.ActivationApi
+import com.waz.zclient.auth.registration.activation.ActivationDataSource
+import com.waz.zclient.auth.registration.activation.ActivationRemoteDataSource
+import com.waz.zclient.auth.registration.activation.ActivationRepository
+import com.waz.zclient.auth.registration.activation.SendEmailActivationCodeUseCase
 import com.waz.zclient.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.user.domain.usecase.email.ValidateEmailUseCase

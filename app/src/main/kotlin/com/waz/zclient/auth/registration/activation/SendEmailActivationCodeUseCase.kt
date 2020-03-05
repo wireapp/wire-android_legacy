@@ -1,6 +1,10 @@
 package com.waz.zclient.auth.registration.activation
 
-import com.waz.zclient.core.exception.*
+import com.waz.zclient.core.exception.BadRequest
+import com.waz.zclient.core.exception.Conflict
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.exception.FeatureFailure
+import com.waz.zclient.core.exception.Forbidden
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.usecase.UseCase
