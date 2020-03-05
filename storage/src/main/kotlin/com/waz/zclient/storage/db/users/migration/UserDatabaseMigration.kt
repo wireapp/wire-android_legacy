@@ -34,8 +34,10 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, END_V
         if (BuildConfig.KOTLIN_CORE) {
             migrateClientTable(database)
             migrateKeyValuesTable(database)
-            migrateUserTable(database)
         }
+
+        //Needed in production
+        migrateUserTable(database)
     }
 
     //TODO still needs determining what to do with this one.

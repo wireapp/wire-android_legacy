@@ -2,11 +2,16 @@ package com.waz.zclient.storage.db.conversations
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Fts3
 import androidx.room.PrimaryKey
 
+@Fts3
 @Entity(tableName = "MessageContentIndex")
 data class MessageContentIndexEntity(
     @PrimaryKey
+    @ColumnInfo(name = "rowid")
+    val rowId: Int,
+
     @ColumnInfo(name = "message_id")
     val messageId: String,
 
