@@ -74,7 +74,7 @@ object Liking {
     }
 
     def findMaxTime(implicit db: DB) =
-      iteratingWithReader(InstantReader)(db.rawQuery(s"SELECT MAX(${Timestamp.name}) FROM ${table.name}", null))
+      iteratingWithReader(InstantReader)(db.rawQuery(s"SELECT MAX(${Timestamp.name}) FROM ${table.name}"))
         .acquire(t => if (t.hasNext) t.next else RemoteInstant.Epoch)
 
     object InstantReader extends Reader[RemoteInstant] {

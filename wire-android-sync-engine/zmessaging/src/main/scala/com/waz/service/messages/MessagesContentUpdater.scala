@@ -76,14 +76,18 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
           }
         else Future.successful(None)
 
-      for {
+      (for {
         time <- remoteTimeAfterLast(msg.convId) //TODO: can we find a way to save this only on the localTime of the message?
         exp  <- expiration
         m = returning(msg.copy(state = state, time = time, localTime = localTime, ephemeral = exp)) { m =>
           verbose(l"addLocalMessage: $m, exp: $exp")
         }
         res <- messagesStorage.addMessage(m)
-      } yield res
+      } yield res).recoverWith {
+          case exception: Exception =>
+            error(l"Error while adding local message: $exception")
+            Future.failed(exception)
+      }
     }
 
   def addLocalSentMessage(msg: MessageData, time: Option[RemoteInstant] = None) = Serialized.future("add local message", msg.convId) {

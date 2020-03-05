@@ -257,7 +257,7 @@ class ContactsServiceImpl(userId:         UserId,
 
       val initialLimit = InitialContactsBatchSize - 1 // smaller than load batch (in #initialContactsLoading) so it does not get loaded twice there
 
-      storage.read(db => queryNumEntries(db, ContactsDao.table.name)).flatMap { count =>
+      storage.read(db => db.query(s"SELECT * FROM ${ContactsDao.table.name}").getCount.toLong).flatMap { count =>
         if (count > 0) updateWithLimit(None)
         else updateWithLimit(Some(initialLimit)).flatMap(imported => if (imported < initialLimit) Future.successful(()) else updateWithLimit(None))
       }

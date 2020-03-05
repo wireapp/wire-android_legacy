@@ -49,18 +49,14 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
   private val IndexColumns = Array(MessageId.name, Time.name)
 
   def findContent(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId])(implicit db: DB): DBCursor ={
-    if (UsingFTS) {
-      findContentFts(contentSearchQuery.toFtsQuery, convId)
-    } else {
-      findContentSimple(contentSearchQuery.elements, convId)
-    }
+    findContentFts(contentSearchQuery.toFtsQuery, convId)
   }
 
   def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
   def deleteUpTo(id: ConvId, upTo: RemoteInstant)(implicit db: DB) = db.delete(table.name, s"${Conv.name} = '${id.str}' AND ${Time.name} <= ${Time(upTo)}", null)
 
-  def findContentFts(queryText: String, convId: Option[ConvId])(implicit db: DB): DBCursor ={
+  def findContentFts(queryText: String, convId: Option[ConvId])(implicit db: DB): DBCursor = {
     convId match {
       case Some(conv) =>
         db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Content.name} MATCH '$queryText'", null, null, null, s"${Time.name} DESC", SearchLimit)
@@ -68,21 +64,10 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
         db.query(table.name, IndexColumns, s"${Content.name} MATCH '$queryText'", null, null, null, s"${Time.name} DESC", SearchLimit)
     }
   }
-
-  def findContentSimple(queries: Set[String], convId: Option[ConvId])(implicit db: DB): DBCursor ={
-    val likeQuery = queries.map(q => s"${Content.name} LIKE '%$q%'").mkString("(", " AND ", ")")
-    convId match {
-      case Some(conv) =>
-        db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND $likeQuery", null, null, null, s"${Time.name} DESC", SearchLimit)
-      case _ =>
-        db.query(table.name, IndexColumns, s"$likeQuery", null, null, null, s"${Time.name} DESC", SearchLimit)
-    }
-  }
 }
 
 object MessageContentIndex {
   val MaxSearchResults = 1024 // don't want to read whole db on common search query
   val SearchLimit = MaxSearchResults.toString
-  val UsingFTS = true
   val TextMessageTypes = Set(Message.Type.TEXT, Message.Type.TEXT_EMOJI_ONLY, Message.Type.RICH_MEDIA)
 }

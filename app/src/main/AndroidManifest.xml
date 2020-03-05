@@ -227,12 +227,18 @@
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
             android:screenOrientation="portrait" />
         <activity android:name="com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailActivity" />
-      
-        <activity android:name="com.waz.zclient.features.settings.account.editphonenumber.EditPhoneNumberActivity"
-            android:theme="@style/Theme.Dark.Preferences"
+        <activity
+            android:name="com.waz.zclient.features.settings.account.editphonenumber.EditPhoneNumberActivity"
             android:launchMode="singleTask"
-            android:label="@string/empty_string"/>
-
+            android:theme="@style/Theme.Dark.Preferences" />
+        <activity
+            android:name=".settings.about.SettingsAboutActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
+        <activity
+            android:name=".settings.support.SettingsSupportActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Dark.Preferences" />
         <activity
             android:name="com.waz.zclient.features.auth.registration.CreateAccountActivity"
             android:launchMode="singleTask"

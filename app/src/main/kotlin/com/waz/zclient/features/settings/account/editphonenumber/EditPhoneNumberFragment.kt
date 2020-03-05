@@ -12,7 +12,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.getDeviceLocale
 import com.waz.zclient.core.extension.removeFragment
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.user.phonenumber.Country
@@ -21,7 +21,7 @@ import kotlinx.android.synthetic.main.fragment_edit_phone.*
 @SuppressWarnings("TooManyFunctions")
 class EditPhoneNumberFragment : Fragment(R.layout.fragment_edit_phone) {
 
-    private val phoneViewModel by viewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
+    private val phoneViewModel by sharedViewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
 
     private val phoneNumber: String by lazy {
         arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()

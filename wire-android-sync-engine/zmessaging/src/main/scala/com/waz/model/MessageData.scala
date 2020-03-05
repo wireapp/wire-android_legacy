@@ -23,6 +23,7 @@ import java.nio.charset.Charset
 
 import android.database.DatabaseUtils.queryNumEntries
 import android.database.sqlite.SQLiteQueryBuilder
+import androidx.sqlite.db.{SupportSQLiteQuery, SupportSQLiteQueryBuilder}
 import com.waz.api.Message.Type._
 import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
@@ -39,7 +40,7 @@ import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder, returning}
-import com.waz.{api, model}
+import com.waz.{api, db, model}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
 
@@ -421,9 +422,10 @@ object MessageData extends
       iteratingWithReader(MessageEntryReader)(db.query(table.name, MessageEntryColumns, s"${Conv.name} = ?", Array(convId.toString), null, null, null)).acquire(_ count p)
 
     def countNewer(convId: ConvId, time: RemoteInstant)(implicit db: DB) =
-      queryNumEntries(db, table.name, s"${Conv.name} = '${convId.str}' AND ${Time.name} > ${time.toEpochMilli}")
+        db.query(s"SELECT * FROM ${table.name} WHERE ${Conv.name} = '${convId.str}' AND ${Time.name} > ${time.toEpochMilli}").getCount.toLong
 
-    def countFailed(convId: ConvId)(implicit db: DB) = queryNumEntries(db, table.name, s"${Conv.name} = '${convId.str}' AND ${State.name} = '${Message.Status.FAILED}'")
+    def countFailed(convId: ConvId)(implicit db: DB) =
+        db.query(s"SELECT * FROM ${table.name} WHERE ${Conv.name} = '${convId.str}' AND ${State.name} = '${Message.Status.FAILED}'").getCount.toLong
 
     def listLocalMessages(convId: ConvId)(implicit db: DB) = list(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${State.name} in ('${Message.Status.DEFAULT}', '${Message.Status.PENDING}', '${Message.Status.FAILED}')", null, null, null, s"${Time.name} ASC"))
 
@@ -435,7 +437,7 @@ object MessageData extends
       single(db.query(table.name, null, s"${Conv.name} = '$convId' AND ${Time.name} < ${time.toEpochMilli}", null, null, null, s"${Time.name} DESC", "1"))
 
     def findMessageIds(conv: ConvId)(implicit db: DB) =
-      iteratingWithReader(MessageIdReader)(db.rawQuery(s"SELECT ${Id.name} FROM ${table.name} WHERE ${Conv.name} = '$conv'", null)).acquire(_.toSet)
+      iteratingWithReader(MessageIdReader)(db.rawQuery(s"SELECT ${Id.name} FROM ${table.name} WHERE ${Conv.name} = '$conv'")).acquire(_.toSet)
 
     def findMessagesFrom(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' and ${Time.name} >= ${time.toEpochMilli}", null, null, null, s"${Time.name} ASC"))
@@ -457,7 +459,7 @@ object MessageData extends
 
     def getAssetIds(messageIds: Set[MessageId])(implicit db:DB) = {
       val idList = messageIds.map(t => s"'${Id(t)}'").mkString("(", "," , ")")
-      iteratingWithReader(AssetIdReader)(db.rawQuery(s"SELECT ${AssetId.name} FROM ${table.name} WHERE ${Id.name} IN $idList", null))
+      iteratingWithReader(AssetIdReader)(db.rawQuery(s"SELECT ${AssetId.name} FROM ${table.name} WHERE ${Id.name} IN $idList"))
         .acquire(_.flatten.toSet)
     }
 
@@ -466,12 +468,13 @@ object MessageData extends
     def msgCursor(conv: ConvId)(implicit db: DB) = db.query(table.name, null, s"${Conv.name} = '$conv'", null, null, null, s"${Time.name} DESC")
 
     def countAtLeastAsOld(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
-      queryNumEntries(db, table.name, s"""${Conv.name} = '${Conv(conv)}' AND ${Time.name} <= ${Time(time)}""")
+      db.query(s" SELECT * FROM ${table.name} WHERE ${Conv.name} = '${Conv(conv)}' AND ${Time.name} <= ${Time(time)}").getCount.toLong
 
-    def countLaterThan(conv: ConvId, time: RemoteInstant)(implicit db: DB) =
-      queryNumEntries(db, table.name, s"""${Conv.name} = '${Conv(conv)}' AND ${Time.name} > ${Time(time)}""")
+    def countLaterThan(conv: ConvId, time: RemoteInstant)(implicit db: DB) = {
+      db.query(s" SELECT * FROM ${table.name} WHERE ${Conv.name} = '${Conv(conv)}' AND ${Time.name} > ${Time(time)}").getCount.toLong
+    }
 
-    def countSentByType(selfUserId: UserId, tpe: Message.Type)(implicit db: DB) = queryNumEntries(db, table.name, s"${User.name} = '${User(selfUserId)}' AND ${Type.name} = '${Type(tpe)}'")
+    def countSentByType(selfUserId: UserId, tpe: Message.Type)(implicit db: DB) = db.query(s"SELECT * FROM ${table.name} WHERE ${User.name} = '${User(selfUserId)}' AND ${Type.name} = '${Type(tpe)}'").getCount.toLong
 
     def findByType(conv: ConvId, tpe: Message.Type)(implicit db: DB) =
       iterating(db.query(table.name, null, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(tpe)}'", null, null, null, s"${Time.name} ASC"))
@@ -491,7 +494,7 @@ object MessageData extends
             SQLiteQueryBuilder.buildQueryString(false, table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Type.name} = '${Type(mt.msgType)}' AND ${Expired.name} = 0", null, null, s"${Time.name} DESC", mt.limit.fold[String](null)(_.toString)) +
             s")").toArray,
         null, limit.fold[String](null)(_.toString))
-      db.rawQuery(q, null)
+      db.rawQuery(q)
     }
   }
 

@@ -17,18 +17,14 @@
  */
 package com.waz
 
-import java.nio.ByteBuffer
-import java.nio.charset.Charset
-
 import com.google.protobuf.nano.{CodedInputByteBufferNano, MessageNano}
 import com.waz.model.nano.Messages
 import com.waz.utils.crypto.AESUtils
 import com.waz.utils.{JsonDecoder, JsonEncoder, returning}
-import io.circe.{Decoder, Encoder}
 import org.json.JSONObject
 
-import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration
+import scala.language.implicitConversions
 
 package object model {
 
@@ -112,7 +108,6 @@ package object model {
     }
 
     object TextMessage {
-      import scala.concurrent.duration.DurationInt
 
       def apply(text: String): GenericMessage = GenericMessage(Uid(), Text(text, Nil, Nil, expectsReadConfirmation = false))
 

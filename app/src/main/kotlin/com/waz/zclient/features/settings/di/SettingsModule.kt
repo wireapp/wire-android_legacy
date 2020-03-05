@@ -12,9 +12,6 @@ import com.waz.zclient.features.settings.account.editphonenumber.SettingsAccount
 import com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.features.settings.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.features.settings.support.SettingsSupportViewModel
-import com.waz.zclient.features.settings.account.deleteaccount.DeleteAccountUseCase
-import com.waz.zclient.features.settings.account.deleteaccount.SettingsAccountDeleteAccountViewModel
-import com.waz.zclient.user.profile.GetUserProfileUseCase
 import com.waz.zclient.user.email.ChangeEmailUseCase
 import com.waz.zclient.user.handle.usecase.ChangeHandleUseCase
 import com.waz.zclient.user.handle.usecase.CheckHandleExistsUseCase
@@ -25,6 +22,7 @@ import com.waz.zclient.user.phonenumber.usecase.ChangePhoneNumberUseCase
 import com.waz.zclient.user.phonenumber.usecase.CountryCodeAndPhoneNumberUseCase
 import com.waz.zclient.user.phonenumber.usecase.DeletePhoneNumberUseCase
 import com.waz.zclient.user.phonenumber.usecase.ValidatePhoneNumberUseCase
+import com.waz.zclient.user.profile.GetUserProfileUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.viewmodel.dsl.viewModel
@@ -77,7 +75,6 @@ val settingsAccountModule: Module = module {
         viewModel { SettingsAccountViewModel(get(), get(), get(), get(), get()) }
         viewModel { SettingsAccountEditHandleViewModel(get(), get(), get(), get()) }
         viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
-        viewModel { SettingsAccountDeleteAccountViewModel(get()) }
         viewModel { CountryCodePickerViewModel(get()) }
 
         scoped { PhoneNumberUtil.getInstance() }
@@ -95,6 +92,5 @@ val settingsAccountModule: Module = module {
         factory { GetUserProfileUseCase(get()) }
         factory { ChangeNameUseCase(get()) }
         factory { ChangeEmailUseCase(get()) }
-        factory { DeleteAccountUseCase(get()) }
     }
 }

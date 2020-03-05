@@ -8,13 +8,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 
 class DeletePhoneDialogFragment : DialogFragment() {
 
-    private val phoneViewModel by viewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
+    private val phoneViewModel by sharedViewModel<SettingsAccountPhoneNumberViewModel>(SETTINGS_SCOPE_ID)
 
     private val phoneNumber: String by lazy {
         arguments?.getString(CURRENT_PHONE_NUMBER_KEY, String.empty()) ?: String.empty()
