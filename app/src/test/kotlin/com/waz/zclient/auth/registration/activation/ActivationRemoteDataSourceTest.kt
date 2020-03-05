@@ -45,13 +45,13 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         `when`(emptyResponse.isSuccessful).thenReturn(true)
         `when`(activationApi.sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))).thenReturn(emptyResponse)
 
-        activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
 
         verify(activationApi).sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))
 
         sendEmailActivationCodeRequestCaptor.value.email shouldBe TEST_EMAIL
 
-        activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL).isRight shouldBe true
+        response.isRight shouldBe true
     }
 
     @Test
@@ -60,13 +60,13 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         `when`(emptyResponse.isSuccessful).thenReturn(false)
         `when`(activationApi.sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))).thenReturn(emptyResponse)
 
-        activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
 
         verify(activationApi).sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))
 
         sendEmailActivationCodeRequestCaptor.value.email shouldBe TEST_EMAIL
 
-        activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL).isLeft shouldBe true
+        response.isLeft shouldBe true
     }
 
     @Test(expected = CancellationException::class)
@@ -76,7 +76,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
         `when`(emptyResponse.isSuccessful).thenReturn(true)
         `when`(activationApi.sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))).thenReturn(emptyResponse)
 
-        activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)
 
         verify(activationApi).sendActivationCode(capture(sendEmailActivationCodeRequestCaptor))
 
@@ -85,7 +85,7 @@ class ActivationRemoteDataSourceTest : UnitTest() {
 
         sendEmailActivationCodeRequestCaptor.value.email shouldBe TEST_EMAIL
 
-        activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL).isLeft shouldBe true
+        response.isLeft shouldBe true
     }
 
     companion object {

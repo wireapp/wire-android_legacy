@@ -14,7 +14,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
-class ActivationRepositoryTest : UnitTest() {
+class ActivationDataSourceTest : UnitTest() {
 
     private lateinit var activationRepository: ActivationRepository
 
@@ -31,22 +31,22 @@ class ActivationRepositoryTest : UnitTest() {
 
         `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
 
-        activationRepository.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
         verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
 
-        activationRepository.sendEmailActivationCode(TEST_EMAIL).isLeft shouldBe true
+        response.isLeft shouldBe true
     }
 
     @Test
     fun `Given sendEmailActivationCode() is called and remote request is success, then return success`() = runBlockingTest {
         `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
-        activationRepository.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
         verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
 
-        activationRepository.sendEmailActivationCode(TEST_EMAIL).isRight shouldBe true
+        response.isRight shouldBe true
     }
 
     companion object {
