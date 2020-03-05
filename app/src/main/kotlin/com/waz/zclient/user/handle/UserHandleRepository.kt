@@ -2,7 +2,6 @@ package com.waz.zclient.user.handle
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.user.handle.ValidateHandleSuccess
 
 interface UserHandleRepository {
     suspend fun changeHandle(handle: String): Either<Failure, Any>
