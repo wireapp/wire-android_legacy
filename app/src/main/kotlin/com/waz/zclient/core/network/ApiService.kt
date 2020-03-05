@@ -2,6 +2,7 @@ package com.waz.zclient.core.network
 
 import com.waz.zclient.core.exception.BadRequest
 import com.waz.zclient.core.exception.Cancelled
+import com.waz.zclient.core.exception.Conflict
 import com.waz.zclient.core.exception.EmptyResponseBody
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.Forbidden
@@ -51,6 +52,7 @@ abstract class ApiService {
             CODE_UNAUTHORIZED -> Either.Left(Unauthorized)
             CODE_FORBIDDEN -> Either.Left(Forbidden)
             CODE_NOT_FOUND -> Either.Left(NotFound)
+            CODE_CONFLICT -> Either.Left(Conflict)
             CODE_INTERNAL_SERVER_ERROR -> Either.Left(InternalServerError)
             else -> Either.Left(ServerError)
         }
@@ -61,6 +63,7 @@ abstract class ApiService {
         private const val CODE_UNAUTHORIZED = 401
         private const val CODE_FORBIDDEN = 403
         private const val CODE_NOT_FOUND = 404
+        private const val CODE_CONFLICT = 409
         private const val CODE_INTERNAL_SERVER_ERROR = 500
     }
 }
