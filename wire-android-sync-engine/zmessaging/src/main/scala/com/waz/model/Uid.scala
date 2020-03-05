@@ -364,3 +364,15 @@ object FolderId extends (String => FolderId) {
     override def decode(str: String): FolderId = FolderId(str)
   }
 }
+
+case class ButtonId(str: String) {
+  override def toString: String = str
+}
+object ButtonId extends (String => ButtonId) {
+  def apply(): ButtonId = Id.random()
+
+  implicit object Id extends Id[ButtonId] {
+    override def random(): ButtonId = ButtonId(Uid().toString)
+    override def decode(str: String): ButtonId = ButtonId(str)
+  }
+}
