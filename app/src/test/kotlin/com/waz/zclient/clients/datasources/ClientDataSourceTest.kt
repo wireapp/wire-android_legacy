@@ -20,7 +20,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
-class ClientsRepositoryTest {
+class ClientDataSourceTest {
 
     private lateinit var repository: ClientsRepository
 

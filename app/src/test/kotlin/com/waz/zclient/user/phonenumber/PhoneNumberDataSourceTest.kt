@@ -1,4 +1,4 @@
-package com.waz.zclient.user.data.phone
+package com.waz.zclient.user.phonenumber
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.ServerError
@@ -6,8 +6,6 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
 import com.waz.zclient.user.datasources.local.UsersLocalDataSource
 import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
-import com.waz.zclient.user.phonenumber.PhoneNumberDataSource
-import com.waz.zclient.user.phonenumber.PhoneNumberRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -16,7 +14,7 @@ import org.mockito.Mock
 import org.mockito.Mockito
 
 @ExperimentalCoroutinesApi
-class PhoneNumberRepositoryTest : UnitTest() {
+class PhoneNumberDataSourceTest : UnitTest() {
 
     private lateinit var phoneNumberRepository: PhoneNumberRepository
 

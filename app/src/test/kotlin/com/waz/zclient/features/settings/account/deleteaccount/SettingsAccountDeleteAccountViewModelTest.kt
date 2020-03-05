@@ -1,4 +1,4 @@
-package com.waz.zclient.settings.account.deleteaccount
+package com.waz.zclient.features.settings.account.deleteaccount
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.Either

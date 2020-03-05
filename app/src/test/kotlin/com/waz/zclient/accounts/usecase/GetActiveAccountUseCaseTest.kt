@@ -1,7 +1,8 @@
-package com.waz.zclient.accounts.domain.usecase
+package com.waz.zclient.accounts.usecase
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.accounts.AccountsRepository
+import com.waz.zclient.accounts.ActiveAccount
 import com.waz.zclient.accounts.domain.model.ActiveAccount
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.ServerError
@@ -10,7 +11,6 @@ import com.waz.zclient.user.data.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.mock
-import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock

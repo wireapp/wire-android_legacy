@@ -1,7 +1,7 @@
-package com.waz.zclient.user.phonenumber
+package com.waz.zclient.user.phonenumber.usecase
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.user.phonenumber.usecase.DeletePhoneNumberUseCase
+import com.waz.zclient.user.phonenumber.PhoneNumberRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

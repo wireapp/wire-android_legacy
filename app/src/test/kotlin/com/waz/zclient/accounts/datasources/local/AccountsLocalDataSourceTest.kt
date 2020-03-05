@@ -1,4 +1,4 @@
-package com.waz.zclient.accounts
+package com.waz.zclient.accounts.datasources.local
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq

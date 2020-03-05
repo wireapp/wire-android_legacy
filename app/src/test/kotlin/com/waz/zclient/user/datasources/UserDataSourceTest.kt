@@ -1,11 +1,10 @@
-package com.waz.zclient.user.data
+package com.waz.zclient.user.datasources
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
-import com.waz.zclient.user.datasources.UsersDataSource
 import com.waz.zclient.user.UsersRepository
 import com.waz.zclient.user.mapper.UserMapper
 import com.waz.zclient.user.datasources.local.UsersLocalDataSource
@@ -26,7 +25,7 @@ import org.mockito.Mockito.*
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-class UserRepositoryTest : UnitTest() {
+class UserDataSourceTest : UnitTest() {
 
     private lateinit var usersRepository: UsersRepository
 

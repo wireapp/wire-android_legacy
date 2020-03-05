@@ -1,9 +1,8 @@
-package com.waz.zclient.user.handle
+package com.waz.zclient.user.handle.usecase
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
-import com.waz.zclient.user.handle.usecase.CheckHandleExistsParams
-import com.waz.zclient.user.handle.usecase.CheckHandleExistsUseCase
+import com.waz.zclient.user.handle.UserHandleRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

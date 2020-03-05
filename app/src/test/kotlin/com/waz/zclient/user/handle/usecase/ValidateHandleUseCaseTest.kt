@@ -1,10 +1,8 @@
-package com.waz.zclient.user.handle
+package com.waz.zclient.user.handle.usecase
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.user.handle.usecase.ValidateHandleParams
-import com.waz.zclient.user.handle.usecase.ValidateHandleUseCase
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel

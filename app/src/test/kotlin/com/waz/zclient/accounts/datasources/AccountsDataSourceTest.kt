@@ -1,10 +1,11 @@
-package com.waz.zclient.accounts
+package com.waz.zclient.accounts.datasources
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.accounts.AccountMapper
+import com.waz.zclient.accounts.ActiveAccount
 import com.waz.zclient.accounts.domain.model.AccountMapper
 import com.waz.zclient.accounts.domain.model.ActiveAccount
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.map
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import com.waz.zclient.user.data.source.remote.UsersRemoteDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi

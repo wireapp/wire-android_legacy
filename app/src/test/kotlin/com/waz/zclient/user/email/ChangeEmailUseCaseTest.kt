@@ -1,10 +1,8 @@
-package com.waz.zclient.user.usecase
+package com.waz.zclient.user.email
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.eq
 import com.waz.zclient.user.UsersRepository
-import com.waz.zclient.user.email.ChangeEmailParams
-import com.waz.zclient.user.email.ChangeEmailUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

@@ -1,4 +1,4 @@
-package com.waz.zclient.user.usecase
+package com.waz.zclient.user.profile
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.user.UsersRepository
