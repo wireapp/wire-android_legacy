@@ -4,7 +4,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.auth.registration.activation.*
+import com.waz.zclient.auth.registration.activation.SendActivationCodeFailure
+import com.waz.zclient.auth.registration.activation.SendActivationCodeSuccess
+import com.waz.zclient.auth.registration.activation.SendEmailActivationCodeParams
+import com.waz.zclient.auth.registration.activation.SendEmailActivationCodeUseCase
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.user.domain.usecase.email.ValidateEmailError
 import com.waz.zclient.user.domain.usecase.email.ValidateEmailParams
@@ -41,12 +44,12 @@ class CreatePersonalAccountWithEmailViewModel(
 
     fun sendActivationCode(email: String) {
         sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email), Dispatchers.Default) {
-            it.fold(::sendActivationCodeFailure) { sendActivationCodeSuccess() }
+            it.fold(::sendActivationCodeFailure, ::sendActivationCodeSuccess)
         }
     }
 
-    private fun sendActivationCodeSuccess() {
-        _sendActivationCodeSuccessLiveData.postValue(ActivationCodeSent)
+    private fun sendActivationCodeSuccess(success: SendActivationCodeSuccess) {
+        _sendActivationCodeSuccessLiveData.postValue(success)
     }
 
     private fun sendActivationCodeFailure(failure: Failure) {
