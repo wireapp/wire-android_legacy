@@ -5,7 +5,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.auth.registration.activation.SendActivationCodeFailure
-import com.waz.zclient.auth.registration.activation.SendActivationCodeSuccess
 import com.waz.zclient.auth.registration.activation.SendEmailActivationCodeParams
 import com.waz.zclient.auth.registration.activation.SendEmailActivationCodeUseCase
 import com.waz.zclient.core.exception.Failure
@@ -19,11 +18,11 @@ class CreatePersonalAccountWithEmailViewModel(
     private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase) : ViewModel() {
 
     private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
-    private val _sendActivationCodeSuccessLiveData = MutableLiveData<SendActivationCodeSuccess>()
+    private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()
     private val _sendActivationCodeErrorLiveData = MutableLiveData<SendActivationCodeFailure>()
 
     val confirmationButtonEnabledLiveData: LiveData<Boolean> = _confirmationButtonEnabledLiveData
-    val sendActivationCodeSuccessLiveData: LiveData<SendActivationCodeSuccess> = _sendActivationCodeSuccessLiveData
+    val sendActivationCodeSuccessLiveData: LiveData<Unit> = _sendActivationCodeSuccessLiveData
     val sendActivationCodeErrorLiveData: LiveData<SendActivationCodeFailure> = _sendActivationCodeErrorLiveData
 
     fun validateEmail(email: String) {
@@ -44,12 +43,12 @@ class CreatePersonalAccountWithEmailViewModel(
 
     fun sendActivationCode(email: String) {
         sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email), Dispatchers.Default) {
-            it.fold(::sendActivationCodeFailure, ::sendActivationCodeSuccess)
+            it.fold(::sendActivationCodeFailure){sendActivationCodeSuccess()}
         }
     }
 
-    private fun sendActivationCodeSuccess(success: SendActivationCodeSuccess) {
-        _sendActivationCodeSuccessLiveData.postValue(success)
+    private fun sendActivationCodeSuccess() {
+        _sendActivationCodeSuccessLiveData.postValue(Unit)
     }
 
     private fun sendActivationCodeFailure(failure: Failure) {

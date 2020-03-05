@@ -2,7 +2,10 @@ package com.waz.zclient.auth.registration.personal
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
-import com.waz.zclient.auth.registration.activation.*
+import com.waz.zclient.auth.registration.activation.EmailBlackListed
+import com.waz.zclient.auth.registration.activation.EmailInUse
+import com.waz.zclient.auth.registration.activation.InvalidEmail
+import com.waz.zclient.auth.registration.activation.SendEmailActivationCodeUseCase
 import com.waz.zclient.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
@@ -112,12 +115,12 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
         runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(ActivationCodeSent))
+            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.sendActivationCodeSuccessLiveData.observeOnce {
-                it shouldBe ActivationCodeSent
+                it shouldBe Unit
             }
         }
 

@@ -109,7 +109,7 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
 
         response.isRight shouldBe true
         response.map {
-            it shouldBe ActivationCodeSent
+            it shouldBe Unit
         }
     }
 
