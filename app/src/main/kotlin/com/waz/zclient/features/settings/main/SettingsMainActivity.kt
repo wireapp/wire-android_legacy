@@ -13,7 +13,7 @@ import kotlinx.android.synthetic.main.activity_settings.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 
-class SettingsMainActivity : AppCompatActivity() {
+class SettingsMainActivity : AppCompatActivity(R.layout.activity_settings) {
 
     private val scope = createScope(
         scopeId = SETTINGS_SCOPE_ID,
@@ -25,7 +25,6 @@ class SettingsMainActivity : AppCompatActivity() {
     //TODO Method level annotations as this is the top of the chain
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         replaceFragment(R.id.activitySettingsMainLayoutContainer, SettingsMainFragment.newInstance())

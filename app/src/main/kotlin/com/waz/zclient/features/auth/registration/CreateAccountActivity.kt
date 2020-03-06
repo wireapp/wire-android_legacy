@@ -10,7 +10,7 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.features.auth.registration.di.REGISTRATION_SCOPE
 import com.waz.zclient.features.auth.registration.di.REGISTRATION_SCOPE_ID
 
-class CreateAccountActivity : AppCompatActivity() {
+class CreateAccountActivity : AppCompatActivity(R.layout.activity_create_account) {
 
     private val scope = createScope(
         scopeId = REGISTRATION_SCOPE_ID,
@@ -19,7 +19,6 @@ class CreateAccountActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_create_account)
         replaceFragment(R.id.activityCreateAccountLayoutContainer, CreateAccountFragment.newInstance(), false)
     }
 
