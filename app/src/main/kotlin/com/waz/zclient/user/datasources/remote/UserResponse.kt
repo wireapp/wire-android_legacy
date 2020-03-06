@@ -2,7 +2,7 @@ package com.waz.zclient.user.datasources.remote
 
 import com.google.gson.annotations.SerializedName
 
-data class UserApi(
+data class UserResponse(
     @SerializedName("id")
     var id: String? = null,
 

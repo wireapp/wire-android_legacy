@@ -9,10 +9,10 @@ import retrofit2.http.HTTP
 import retrofit2.http.PUT
 import retrofit2.http.Path
 
-interface UsersNetworkService {
+interface UsersApi {
 
     @GET(SELF)
-    suspend fun profileDetails(): Response<UserApi>
+    suspend fun profileDetails(): Response<UserResponse>
 
     @HTTP(method = "DELETE", path = SELF, hasBody = true)
     suspend fun deleteAccount(@Body deleteAccount: DeleteAccountRequest): Response<Unit>

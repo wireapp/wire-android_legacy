@@ -9,25 +9,25 @@ import com.waz.zclient.storage.pref.GlobalPreferences
 import kotlinx.coroutines.flow.Flow
 
 class UsersLocalDataSource constructor(
-    private val userService: UserDao,
+    private val userDao: UserDao,
     globalPreferences: GlobalPreferences
 ) {
 
     private val userId = globalPreferences.activeUserId
 
-    fun profileDetails(): Flow<UserEntity> = userService.byId(userId)
+    fun profileDetails(): Flow<UserEntity> = userDao.byId(userId)
 
-    suspend fun insertUser(user: UserEntity) = requestDatabase { userService.insert(user) }
+    suspend fun insertUser(user: UserEntity) = requestDatabase { userDao.insert(user) }
 
-    suspend fun changeName(value: String) = requestDatabase { userService.updateName(userId, value) }
+    suspend fun changeName(value: String) = requestDatabase { userDao.updateName(userId, value) }
 
-    suspend fun changeHandle(value: String) = requestDatabase { userService.updateHandle(userId, value) }
+    suspend fun changeHandle(value: String) = requestDatabase { userDao.updateHandle(userId, value) }
 
-    suspend fun changeEmail(value: String) = requestDatabase { userService.updateEmail(userId, value) }
+    suspend fun changeEmail(value: String) = requestDatabase { userDao.updateEmail(userId, value) }
 
-    suspend fun changePhone(value: String) = requestDatabase { userService.updatePhone(userId, value) }
+    suspend fun changePhone(value: String) = requestDatabase { userDao.updatePhone(userId, value) }
 
-    suspend fun deletePhone() = requestDatabase { userService.updatePhone(userId, String.empty()) }
+    suspend fun deletePhone() = requestDatabase { userDao.updatePhone(userId, String.empty()) }
 
     fun currentUserId() = Either.Right(userId)
 }
