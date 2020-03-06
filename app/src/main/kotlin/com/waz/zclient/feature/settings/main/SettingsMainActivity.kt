@@ -14,6 +14,9 @@ import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.activity_settings.*
+import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
+import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
+import kotlinx.android.synthetic.main.activity_settings_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 
@@ -32,9 +35,9 @@ class SettingsMainActivity : AppCompatActivity(R.layout.activity_settings),
     //TODO Method level annotations as this is the top of the chain
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSupportActionBar(toolbar)
+        setSupportActionBar(settingsMainToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        replaceFragment(R.id.activitySettingsMainLayoutContainer, SettingsMainFragment.newInstance())
+        replaceFragment(R.id.settingsMainLayoutContainer, SettingsMainFragment.newInstance())
         loadBackground(this, viewModel, activitySettingsMainConstraintLayout)
     }
 

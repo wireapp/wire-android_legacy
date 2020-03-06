@@ -18,11 +18,11 @@ class SettingsDeviceDetailActivity : AppCompatActivity(R.layout.activity_device_
 
     private fun startDeviceDetailsFragment() {
         val deviceId = intent.getStringExtra(DEVICE_ID_BUNDLE_KEY)
-        replaceFragment(R.id.layout_container, SettingsDeviceDetailFragment.newInstance(deviceId), false)
+        replaceFragment(R.id.deviceDetailsLayoutContainer, SettingsDeviceDetailFragment.newInstance(deviceId), false)
     }
 
     private fun initToolbar() {
-        setSupportActionBar(toolbar)
+        setSupportActionBar(deviceDetailsToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 

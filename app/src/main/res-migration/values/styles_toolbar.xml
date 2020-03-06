@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Toolbar" parent="@style/Widget.AppCompat.Toolbar" />
+
+    <style name="Toolbar.Settings">
+        <item name="android:background">@color/transparent</item>
+        <item name="android:theme">?actionBarTheme</item>
+        <item name="android:navigationIcon">?attr/homeAsUpIndicator</item>
+        <item name="android:popupTheme">?actionBarPopupTheme</item>
+        <item name="titleMarginStart">16dp</item>
+    </style>
+</resources>

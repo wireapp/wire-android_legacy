@@ -32,11 +32,11 @@ class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about
     @InternalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSupportActionBar(activitySettingsAboutToolbar)
+        setSupportActionBar(settingsAboutToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         replaceFragment(R.id.activitySettingsAboutLayoutContainer, SettingsAboutFragment.newInstance(), false)
         overridePendingTransition(R.anim.slide_in_left, 0)
-        loadBackground(this, viewModel, activitySettingsAboutConstraintLayout)
+        loadBackground(this, viewModel, settingsAboutLayoutContainer)
     }
 
     override fun onSupportNavigateUp(): Boolean {

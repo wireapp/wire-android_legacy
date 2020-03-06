@@ -20,35 +20,30 @@
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/screen_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    >
 
     <!-- We should really build a reusable toolbar component we can customise and then
          use composition over inheritance to take shape of that for the owner activity. -->
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/editPhoneActivityToolbar"
-        android:layout_width="match_parent"
+        android:id="@+id/editPhoneToolbar"
+        style="@style/Toolbar.Settings"
+        android:layout_width="0dp"
         android:layout_height="?actionBarSize"
-        android:background="@color/transparent"
-        android:theme="?actionBarTheme"
-        app:layout_constraintBottom_toTopOf="@id/editPhoneActivityFragmentContainer"
+        app:layout_constraintBottom_toTopOf="@id/editPhoneLayoutContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:popupTheme="?actionBarPopupTheme"
-        app:titleMarginStart="@dimen/wire__padding__regular" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <FrameLayout
-        android:id="@+id/editPhoneActivityFragmentContainer"
+        android:id="@+id/editPhoneLayoutContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/editPhoneActivityToolbar" />
+        app:layout_constraintTop_toBottomOf="@id/editPhoneToolbar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
