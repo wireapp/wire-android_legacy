@@ -9,7 +9,7 @@ import com.waz.zclient.user.UsersRepository
 import com.waz.zclient.user.mapper.UserMapper
 import com.waz.zclient.user.datasources.local.UsersLocalDataSource
 import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
-import com.waz.zclient.user.datasources.remote.UserApi
+import com.waz.zclient.user.datasources.remote.UserResponse
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -39,7 +39,7 @@ class UserDataSourceTest : UnitTest() {
     private lateinit var userMapper: UserMapper
 
     @Mock
-    private lateinit var userApi: UserApi
+    private lateinit var userResponse: UserResponse
 
     @Before
     fun setup() {
@@ -59,7 +59,7 @@ class UserDataSourceTest : UnitTest() {
 
     @Test(expected = CancellationException::class)
     fun `Given profileDetails() is called and local database request fails and api request succeeds, then map api response and emit it in flow`() = runBlockingTest {
-        `when`(usersRemoteDataSource.profileDetails()).thenReturn(Either.Right(userApi))
+        `when`(usersRemoteDataSource.profileDetails()).thenReturn(Either.Right(userResponse))
 
         usersRepository.profileDetails()
 

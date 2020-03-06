@@ -35,19 +35,19 @@ class UserRemoteDataSourceTest : UnitTest() {
     private lateinit var usersRemoteDataSource: UsersRemoteDataSource
 
     @Mock
-    private lateinit var usersNetworkService: UsersNetworkService
+    private lateinit var usersApi: UsersApi
 
     @Mock
     private lateinit var networkHandler: NetworkHandler
 
     @Mock
-    private lateinit var userApi: UserApi
+    private lateinit var userResponse: UserResponse
 
     @Mock
-    private lateinit var userResponse: Response<UserApi>
+    private lateinit var httpUserResponse: Response<UserResponse>
 
     @Mock
-    private lateinit var emptyResponse: Response<Unit>
+    private lateinit var httpEmptyResponse: Response<Unit>
 
     @Captor
     private lateinit var changeEmailRequestCaptor: ArgumentCaptor<ChangeEmailRequest>
@@ -64,12 +64,12 @@ class UserRemoteDataSourceTest : UnitTest() {
     @Before
     fun setUp() {
         `when`(networkHandler.isConnected).thenReturn(true)
-        usersRemoteDataSource = UsersRemoteDataSource(usersNetworkService, networkHandler)
+        usersRemoteDataSource = UsersRemoteDataSource(usersApi, networkHandler)
     }
 
     @Test
     fun `Given profileDetails() is called, when api response success and response body is not null, then return a successful response`() {
-        validateProfileDetailsScenario(responseBody = userApi, isRight = true, cancelable = false)
+        validateProfileDetailsScenario(responseBody = userResponse, isRight = true, cancelable = false)
     }
 
     @Test
@@ -79,17 +79,17 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Test(expected = CancellationException::class)
     fun `Given profileDetails() is called, when api response is cancelled, then return an error response`() {
-        validateProfileDetailsScenario(responseBody = userApi, isRight = false, cancelable = true)
+        validateProfileDetailsScenario(responseBody = userResponse, isRight = false, cancelable = true)
     }
 
-    private fun validateProfileDetailsScenario(responseBody: UserApi?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(userResponse.body()).thenReturn(responseBody)
-        `when`(userResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.profileDetails()).thenReturn(userResponse)
+    private fun validateProfileDetailsScenario(responseBody: UserResponse?, isRight: Boolean, cancelable: Boolean) = runBlocking {
+        `when`(httpUserResponse.body()).thenReturn(responseBody)
+        `when`(httpUserResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.profileDetails()).thenReturn(httpUserResponse)
 
         usersRemoteDataSource.profileDetails()
 
-        verify(usersNetworkService).profileDetails()
+        verify(usersApi).profileDetails()
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -115,13 +115,13 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateChangeNameScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(emptyResponse.body()).thenReturn(responseBody)
-        `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changeName(capture(changeNameRequestCaptor))).thenReturn(emptyResponse)
+        `when`(httpEmptyResponse.body()).thenReturn(responseBody)
+        `when`(httpEmptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.changeName(capture(changeNameRequestCaptor))).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.changeName(TEST_NAME)
 
-        verify(usersNetworkService).changeName(capture(changeNameRequestCaptor))
+        verify(usersApi).changeName(capture(changeNameRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -149,13 +149,13 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateChangeHandleScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(emptyResponse.body()).thenReturn(responseBody)
-        `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changeHandle(capture(changeHandleRequestCaptor))).thenReturn(emptyResponse)
+        `when`(httpEmptyResponse.body()).thenReturn(responseBody)
+        `when`(httpEmptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.changeHandle(capture(changeHandleRequestCaptor))).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.changeHandle(TEST_HANDLE)
 
-        verify(usersNetworkService).changeHandle(capture(changeHandleRequestCaptor))
+        verify(usersApi).changeHandle(capture(changeHandleRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -183,13 +183,13 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateChangeEmailScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(emptyResponse.body()).thenReturn(responseBody)
-        `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changeEmail(capture(changeEmailRequestCaptor))).thenReturn(emptyResponse)
+        `when`(httpEmptyResponse.body()).thenReturn(responseBody)
+        `when`(httpEmptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.changeEmail(capture(changeEmailRequestCaptor))).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.changeEmail(TEST_EMAIL)
 
-        verify(usersNetworkService).changeEmail(capture(changeEmailRequestCaptor))
+        verify(usersApi).changeEmail(capture(changeEmailRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -220,13 +220,13 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateChangePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(emptyResponse.body()).thenReturn(responseBody)
-        `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.changePhone(capture(changePhoneRequestCaptor))).thenReturn(emptyResponse)
+        `when`(httpEmptyResponse.body()).thenReturn(responseBody)
+        `when`(httpEmptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.changePhone(capture(changePhoneRequestCaptor))).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.changePhone(TEST_PHONE)
 
-        verify(usersNetworkService).changePhone(capture(changePhoneRequestCaptor))
+        verify(usersApi).changePhone(capture(changePhoneRequestCaptor))
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -240,27 +240,27 @@ class UserRemoteDataSourceTest : UnitTest() {
 
     @Test
     fun `Given doesHandleExist() is called, when response code is 200, then return a failure`() {
-        `when`(emptyResponse.code()).thenReturn(HANDLE_TAKEN)
+        `when`(httpEmptyResponse.code()).thenReturn(HANDLE_TAKEN)
         validateHandleExistsFailure(failure = HandleAlreadyExists)
 
     }
 
     @Test
     fun `Given doesHandleExist() is called, when response code is 400, then return a failure`() {
-        `when`(emptyResponse.code()).thenReturn(HANDLE_INVALID)
+        `when`(httpEmptyResponse.code()).thenReturn(HANDLE_INVALID)
         validateHandleExistsFailure(failure = HandleInvalid)
 
     }
 
     @Test
     fun `Given doesHandleExist() is called, when response code is 404, then return a HandleIsAvailable success`() {
-        `when`(emptyResponse.code()).thenReturn(HANDLE_AVAILABLE)
+        `when`(httpEmptyResponse.code()).thenReturn(HANDLE_AVAILABLE)
         validateHandleExistsSuccess()
     }
 
     @Test
     fun `Given doesHandleExist() is called, when response code is not 200, 400 or 404, then return a failure`() {
-        `when`(emptyResponse.code()).thenReturn(HANDLE_UNKNOWN)
+        `when`(httpEmptyResponse.code()).thenReturn(HANDLE_UNKNOWN)
         validateHandleExistsFailure(failure = UnknownError)
     }
 
@@ -270,11 +270,11 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateHandleExistsSuccess() = runBlocking {
-        `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
+        `when`(usersApi.doesHandleExist(TEST_HANDLE)).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
 
-        verify(usersNetworkService).doesHandleExist(eq(TEST_HANDLE))
+        verify(usersApi).doesHandleExist(eq(TEST_HANDLE))
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE).isRight shouldBe true
 
@@ -285,11 +285,11 @@ class UserRemoteDataSourceTest : UnitTest() {
 
 
     private fun validateHandleExistsFailure(cancelled: Boolean = false, failure: Failure) = runBlocking {
-        `when`(usersNetworkService.doesHandleExist(TEST_HANDLE)).thenReturn(emptyResponse)
+        `when`(usersApi.doesHandleExist(TEST_HANDLE)).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.doesHandleExist(TEST_HANDLE)
 
-        verify(usersNetworkService).doesHandleExist(eq(TEST_HANDLE))
+        verify(usersApi).doesHandleExist(eq(TEST_HANDLE))
 
         if (cancelled) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -319,13 +319,13 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateDeletePhoneScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(emptyResponse.body()).thenReturn(responseBody)
-        `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.deletePhone()).thenReturn(emptyResponse)
+        `when`(httpEmptyResponse.body()).thenReturn(responseBody)
+        `when`(httpEmptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.deletePhone()).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.deletePhone()
 
-        verify(usersNetworkService).deletePhone()
+        verify(usersApi).deletePhone()
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
@@ -351,13 +351,13 @@ class UserRemoteDataSourceTest : UnitTest() {
     }
 
     private fun validateDeleteAccountPermanantlyScenario(responseBody: Unit?, isRight: Boolean, cancelable: Boolean) = runBlocking {
-        `when`(emptyResponse.body()).thenReturn(responseBody)
-        `when`(emptyResponse.isSuccessful).thenReturn(true)
-        `when`(usersNetworkService.deleteAccount(DeleteAccountRequest)).thenReturn(emptyResponse)
+        `when`(httpEmptyResponse.body()).thenReturn(responseBody)
+        `when`(httpEmptyResponse.isSuccessful).thenReturn(true)
+        `when`(usersApi.deleteAccount(DeleteAccountRequest)).thenReturn(httpEmptyResponse)
 
         usersRemoteDataSource.deleteAccountPermanently()
 
-        verify(usersNetworkService).deleteAccount(DeleteAccountRequest)
+        verify(usersApi).deleteAccount(DeleteAccountRequest)
 
         if (cancelable) {
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))

@@ -1,10 +1,10 @@
 package com.waz.zclient
 
 import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.user.datasources.remote.UserApi
+import com.waz.zclient.user.datasources.remote.UserResponse
 import com.waz.zclient.user.User
 
-val userApi = UserApi(
+val userResponse = UserResponse(
     id = "id",
     name = "name",
     handle = "test",
