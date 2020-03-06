@@ -13,10 +13,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.ui.list.RecyclerViewItemClickListener
+import com.waz.zclient.features.settings.devices.ClientItem
 import com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailActivity
 import com.waz.zclient.features.settings.devices.list.adapter.DevicesRecyclerViewAdapter
 import com.waz.zclient.features.settings.devices.list.adapter.DevicesViewHolder
-import com.waz.zclient.features.settings.devices.ClientItem
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 
 class SettingsDeviceListFragment : Fragment() {
@@ -42,12 +42,19 @@ class SettingsDeviceListFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val rootView = inflater.inflate(R.layout.fragment_settings_devices, container, false)
         initRecyclerView(rootView)
-        initViewModel()
         return rootView
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        observeCurrentDeviceData()
+        observeOtherDevicesData()
+        observeLoadingData()
+        observeErrorData()
+        loadData()
+    }
+
+    private fun loadData() {
         lifecycleScope.launchWhenResumed {
             deviceListViewModel.loadData()
         }
@@ -63,20 +70,27 @@ class SettingsDeviceListFragment : Fragment() {
         singleDeviceViewHolder = DevicesViewHolder(rootView)
     }
 
-    private fun initViewModel() {
-        with(deviceListViewModel) {
-            loading.observe(viewLifecycleOwner) { isLoading ->
-                updateLoadingVisibility(isLoading)
-            }
-            error.observe(viewLifecycleOwner) { errorMessage ->
-                showErrorMessage(errorMessage)
-            }
-            currentDevice.observe(viewLifecycleOwner) { currentDevice ->
-                bindCurrentDevice(currentDevice)
-            }
-            otherDevices.observe(viewLifecycleOwner) { otherDevices ->
-                devicesAdapter.updateList(otherDevices)
-            }
+    private fun observeCurrentDeviceData() {
+        deviceListViewModel.currentDevice.observe(viewLifecycleOwner) { currentDevice ->
+            bindCurrentDevice(currentDevice)
+        }
+    }
+
+    private fun observeOtherDevicesData() {
+        deviceListViewModel.otherDevices.observe(viewLifecycleOwner) { otherDevices ->
+            devicesAdapter.updateList(otherDevices)
+        }
+    }
+
+    private fun observeLoadingData() {
+        deviceListViewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+            updateLoadingVisibility(isLoading)
+        }
+    }
+
+    private fun observeErrorData() {
+        deviceListViewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            showErrorMessage(errorMessage)
         }
     }
 

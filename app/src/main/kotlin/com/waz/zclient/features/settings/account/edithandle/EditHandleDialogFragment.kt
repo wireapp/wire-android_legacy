@@ -43,10 +43,13 @@ class EditHandleDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initViewModel()
         initHandleInput()
         initBackButton()
         initOkButton()
+        observeHandleSuccessData()
+        observeHandleErrorData()
+        observeOkEnabledData()
+        observeDismissData()
     }
 
     private fun initHandleInput() {
@@ -72,13 +75,20 @@ class EditHandleDialogFragment : DialogFragment() {
         }
     }
 
-    private fun initViewModel() {
-        with(editHandleViewModel) {
-            successLiveData.observe(viewLifecycleOwner) { updateSuccessMessage() }
-            errorLiveData.observe(viewLifecycleOwner) { updateErrorMessage(it) }
-            okEnabledLiveData.observe(viewLifecycleOwner) { editHandleDialogOkButton.isEnabled = it }
-            dismissLiveData.observe(viewLifecycleOwner) { dismiss() }
-        }
+    private fun observeHandleSuccessData() {
+        editHandleViewModel.successLiveData.observe(viewLifecycleOwner) { updateSuccessMessage() }
+    }
+
+    private fun observeHandleErrorData() {
+        editHandleViewModel.errorLiveData.observe(viewLifecycleOwner) { updateErrorMessage(it) }
+    }
+
+    private fun observeOkEnabledData() {
+        editHandleViewModel.okEnabledLiveData.observe(viewLifecycleOwner) { editHandleDialogOkButton.isEnabled = it }
+    }
+
+    private fun observeDismissData() {
+        editHandleViewModel.dismissLiveData.observe(viewLifecycleOwner) { dismiss() }
     }
 
     private fun updateSuccessMessage() {

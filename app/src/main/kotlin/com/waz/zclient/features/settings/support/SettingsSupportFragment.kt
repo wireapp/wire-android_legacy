@@ -17,9 +17,9 @@ class SettingsSupportFragment : Fragment(R.layout.fragment_settings_support) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
-        initViewModel()
         initSupportWebsiteButton()
         initSupportContactButton()
+        observeUrlData()
     }
 
     private fun initSupportContactButton() {
@@ -34,7 +34,7 @@ class SettingsSupportFragment : Fragment(R.layout.fragment_settings_support) {
         }
     }
 
-    private fun initViewModel() {
+    private fun observeUrlData() {
         settingsSupportViewModel.urlLiveData.observe(viewLifecycleOwner) {
             openUrl(it.url)
         }

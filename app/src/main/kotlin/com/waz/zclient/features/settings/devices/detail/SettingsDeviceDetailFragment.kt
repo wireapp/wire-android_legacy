@@ -1,9 +1,7 @@
 package com.waz.zclient.features.settings.devices.detail
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
@@ -14,31 +12,39 @@ import com.waz.zclient.features.settings.devices.ClientItem
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_device_detail.*
 
-class SettingsDeviceDetailFragment : Fragment() {
+class SettingsDeviceDetailFragment : Fragment(R.layout.fragment_device_detail) {
 
     private val deviceDetailsViewModel by viewModel<SettingsDeviceDetailViewModel>(SETTINGS_SCOPE_ID)
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val rootView = inflater.inflate(R.layout.fragment_device_detail, container, false)
-        initViewModel()
-        return rootView
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        observeCurrentDeviceData()
+        observeLoadingData()
+        observeErrorData()
+        loadData()
     }
 
-    private fun initViewModel() {
-        with(deviceDetailsViewModel) {
-            currentDevice.observe(viewLifecycleOwner) { clientItem ->
-                bindDataToView(clientItem)
-            }
-
-            loading.observe(viewLifecycleOwner) { isLoading ->
-                bindLoading(isLoading)
-            }
-
-            error.observe(viewLifecycleOwner) { errorMessage ->
-                bindError(errorMessage)
-            }
+    private fun loadData(){
+        lifecycleScope.launchWhenResumed {
+            val id = arguments?.getString(DEVICE_ID_BUNDLE_KEY)
+            id?.let { deviceDetailsViewModel.loadData(it) }
         }
     }
+
+    private fun observeCurrentDeviceData() =
+        deviceDetailsViewModel.currentDevice.observe(viewLifecycleOwner) { clientItem ->
+            bindDataToView(clientItem)
+        }
+
+    private fun observeLoadingData() =
+        deviceDetailsViewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+            bindLoading(isLoading)
+        }
+
+    private fun observeErrorData() =
+        deviceDetailsViewModel.error.observe(viewLifecycleOwner) { errorMessage ->
+            bindError(errorMessage)
+        }
 
     private fun bindError(errorMessage: String?) {
         //Show error when we need to
@@ -52,14 +58,6 @@ class SettingsDeviceDetailFragment : Fragment() {
         device_detail_id.text = clientItem.client.id
         device_detail_name.text = clientItem.client.label
         device_detail_activated.text = clientItem.client.time
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        lifecycleScope.launchWhenResumed {
-            val id = arguments?.getString(DEVICE_ID_BUNDLE_KEY)
-            id?.let { deviceDetailsViewModel.loadData(it) }
-        }
     }
 
     companion object {
