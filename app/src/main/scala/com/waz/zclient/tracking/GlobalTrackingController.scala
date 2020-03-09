@@ -21,17 +21,16 @@ package com.waz.zclient.tracking
 import android.content.Context
 import android.renderscript.RSRuntimeException
 import com.waz.api.impl.ErrorResponse
-import com.waz.content.Preferences.PrefKey
-import com.waz.content.{GlobalPreferences, UsersStorage}
+import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{UserId, _}
-import com.waz.service.{SearchQuery, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.service.tracking._
 import com.waz.threading.{SerialDispatchQueue, Threading}
-import com.waz.utils.events.{EventContext, Signal}
+import com.waz.utils.events.EventContext
 import com.waz.zclient._
 import com.waz.zclient.appentry.fragments.SignInFragment
 import com.waz.zclient.appentry.fragments.SignInFragment.{InputType, SignInMethod}
@@ -43,21 +42,14 @@ import scala.util.Try
 
 class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventContext: EventContext)
   extends Injectable with DerivedLogTag {
-
   import GlobalTrackingController._
 
   private implicit val dispatcher = new SerialDispatchQueue(name = "Tracking")
 
-  private val isTrackingEnabled =
-    Signal.future(ZMessaging.globalModule).flatMap(_.prefs(analyticsPrefKey).signal)
-
   //For automation tests
   def getId: String = ""
 
-  val zmsOpt      = inject[Signal[Option[ZMessaging]]]
-  val zMessaging  = inject[Signal[ZMessaging]]
-  val currentConv = inject[Signal[ConversationData]]
-  val tracking    = inject[TrackingService]
+  val tracking  = inject[TrackingService]
 
   def optIn(): Future[Unit] = {
     verbose(l"optIn")
@@ -73,47 +65,35 @@ class GlobalTrackingController(implicit inj: Injector, cxt: WireContext, eventCo
     * Sets super properties and actually performs the tracking of an event. Super properties are user scoped, so for that
     * reason, we need to ensure they're correctly set based on whatever account (zms) they were fired within.
     */
-  ZMessaging.globalModule.map(_.trackingService.events).foreach {
-    _ { case (zms, event) =>
-      event match {
-        case _: OpenedTeamRegistration =>
-          ZMessaging.currentAccounts.accountManagers.head.map {
-            _.size match {
-              case 0 => sendEvent(event, zms)
-              case _ => sendEvent(OpenedTeamRegistrationFromProfile(), zms)
-            }
-          }
-        case e: LoggedOutEvent if e.reason == LoggedOutEvent.InvalidCredentials =>
-          //This event type is trigged a lot, so disable for now
-        case e@ExceptionEvent(_, _, description, Some(throwable)) =>
-          error(l"description: ${redactedString(description)}", throwable)(e.tag)
-          isTrackingEnabled.head.map {
-            case true =>
-              throwable match {
-                case _: NoReporting =>
-                case _ => saveException(throwable, description)(e.tag)
-              }
-            case _ => //no action
-          }
-        case _ => sendEvent(event, zms)
+  tracking.events.foreach {
+    case (zms, event: OpenedTeamRegistration) =>
+      ZMessaging.currentAccounts.accountManagers.head.map {
+        case managers if managers.isEmpty => sendEvent(event, zms)
+        case _                            => sendEvent(OpenedTeamRegistrationFromProfile(), zms)
       }
-    }
+    case (_, event: LoggedOutEvent) if event.reason == LoggedOutEvent.InvalidCredentials =>
+      //This event type is trigged a lot, so disable for now
+    case (_, event@ExceptionEvent(_, _, description, Some(throwable))) =>
+      error(l"description: ${redactedString(description)}", throwable)(event.tag)
+      tracking.isTrackingEnabled.head.map {
+        case true =>
+          throwable match {
+            case _: NoReporting =>
+            case _              => saveException(throwable, description)(event.tag)
+          }
+        case _ => //no action
+      }
+    case (zms, event) => sendEvent(event, zms)
   }
 
   /**
     * @param eventArg the event to track
     * @param zmsArg a specific zms (account) to associate the event to. If none, we will try and use the current active one
+    *
+    * Right now it does nothing. The functionality stays here to be used when we implement a new tracking system
     */
   private def sendEvent(eventArg: TrackingEvent, zmsArg: Option[ZMessaging] = None) =
-    for {
-      zms          <- zmsArg.fold(zmsOpt.head)(z => Future.successful(Some(z)))
-      teamSize <- zms match {
-        case Some(z) => z.teamId.fold(Future.successful(0))(_ => z.teams.searchTeamMembers(SearchQuery.Empty).head.map(_.size))
-        case _ => Future.successful(0)
-      }
-    } yield {
-      verbose(l"send event: $eventArg")
-    }
+    Future.successful(verbose(l"send event: $eventArg"))
 
   def onEnteredCredentials(response: Either[ErrorResponse, _], method: SignInMethod): Unit =
     tracking.track(EnteredCredentialsEvent(method, responseToErrorPair(response)), None)
@@ -146,11 +126,6 @@ object GlobalTrackingController {
         val userId = Try(ZMessaging.context.getSharedPreferences("zprefs", Context.MODE_PRIVATE).getString("com.waz.device.id", "???")).getOrElse("????")
         error(l"userId: ${redactedString(userId)}", t)(tag)
     }
-  }
-
-  val analyticsPrefKey = BuildConfig.APPLICATION_ID match {
-    case "com.wire" | "com.wire.internal" => GlobalPreferences.AnalyticsEnabled
-    case _ => PrefKey[Boolean]("DEVELOPER_TRACKING_ENABLED")
   }
 
   def isBot(conv: ConversationData, users: UsersStorage): Future[Boolean] =
