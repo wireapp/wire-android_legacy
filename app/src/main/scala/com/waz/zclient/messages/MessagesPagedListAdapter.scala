@@ -18,7 +18,7 @@
 package com.waz.zclient.messages
 
 import android.view.ViewGroup
-import androidx.paging.{PagedList, PagedListAdapter}
+import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
@@ -78,10 +78,6 @@ class MessagesPagedListAdapter()(implicit ec: EventContext, inj: Injector)
     ds <- Option(list.getDataSource)
     pos <- if(convInfo.lastRead.isEpoch) None else ds.asInstanceOf[MessageDataSource].positionForMessage(convInfo.lastRead)
   } yield pos).getOrElse(-1)
-
-  override def onCurrentListChanged(currentList: PagedList[MessageAndLikes]): Unit = {
-    super.onCurrentListChanged(currentList)
-  }
 
   def positionForMessage(mId: MessageId): Option[Int] = for {
     list <- Option(getCurrentList)

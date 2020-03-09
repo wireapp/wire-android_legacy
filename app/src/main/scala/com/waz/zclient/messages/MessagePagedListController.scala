@@ -98,10 +98,14 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
 object MessagePagedListController {
   case class PagedListConfig(pageSize: Int, initialLoadSizeHint: Int, prefetchDistance: Int) {
+    /**
+     * The reason why placeholders are disabled is taken from this Stackoverflow answer to a bug:
+     * https://stackoverflow.com/a/56873666/2975925
+     */
     lazy val config = new PagedList.Config.Builder()
       .setPageSize(pageSize)
       .setInitialLoadSizeHint(initialLoadSizeHint)
-      .setEnablePlaceholders(true)
+      .setEnablePlaceholders(false)
       .setPrefetchDistance(prefetchDistance)
       .build()
   }
