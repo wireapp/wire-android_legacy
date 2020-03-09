@@ -1,12 +1,10 @@
-@file:Suppress("MagicNumber", "NoBlankLineBeforeRbrace", "NoConsecutiveBlankLines", "FinalNewline")
+@file:Suppress("MagicNumber")
 package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.BuildConfig
 
-private const val START_VERSION = 126
-private const val END_VERSION = 128
 private const val KEY_VALUES_TEMP_NAME = "KeyValuesTemp"
 private const val KEY_VALUES_TABLE_NAME = "KeyValues"
 
@@ -30,7 +28,7 @@ private const val NEW_CLIENT_LOCATION_NAME_KEY = "locationName"
 private const val NEW_CLIENT_TIME_KEY = "time"
 private const val NEW_CLIENT_TYPE_KEY = "type"
 
-val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, 127) {
+val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     override fun migrate(database: SupportSQLiteDatabase) {
         if (BuildConfig.KOTLIN_CORE) {
             migrateClientTable(database)
@@ -39,6 +37,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, 127) 
 
         //Needed in production
         migrateUserTable(database)
+        createButtonsTable(database)
     }
 
     //TODO still needs determining what to do with this one.
@@ -119,11 +118,14 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(START_VERSION, 127) 
             execSQL(renameTableBack)
         }
     }
-}
 
-val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, END_VERSION) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        // just a new table: ButtonEntity
+    private fun createButtonsTable(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `Buttons` (
+                `message_id` TEXT NOT NULL, `button_id` TEXT NOT NULL, `title` TEXT NOT NULL, `state` INTEGER NOT NULL, 
+                `error` TEXT, 
+                PRIMARY KEY(`message_id`, `button_id`)
+            )""".trimIndent()
+        )
     }
-
 }

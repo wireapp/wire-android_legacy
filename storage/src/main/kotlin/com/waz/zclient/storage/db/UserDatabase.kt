@@ -33,7 +33,6 @@ import com.waz.zclient.storage.db.properties.PropertiesEntity
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
 import com.waz.zclient.storage.db.users.service.UserDao
@@ -59,9 +58,9 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun clientsDbService(): ClientsDao
 
     companion object {
-        const val VERSION = 128
+        const val VERSION = 127
 
         @JvmStatic
-        val migrations = arrayOf(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
+        val migrations = arrayOf(USER_DATABASE_MIGRATION_126_TO_127)
     }
 }
