@@ -10,12 +10,14 @@ case class ButtonData(messageId: MessageId,
                       buttonId:  ButtonId,
                       title:     String,
                       state:     ButtonState = ButtonNotClicked) extends Identifiable[(MessageId, ButtonId)]{
-  override def id: (MessageId, ButtonId) = (messageId, buttonId)
+  override def id: ButtonDataDaoId = (messageId, buttonId)
 
   def copyWithError(error: String): ButtonData = copy(state = ButtonError(error))
 }
 
 object ButtonData {
+  type ButtonDataDaoId = (MessageId, ButtonId)
+
   private val ButtonErrorId = 0
 
   sealed trait ButtonState { val id: Int }

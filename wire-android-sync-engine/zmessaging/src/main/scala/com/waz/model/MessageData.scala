@@ -47,28 +47,28 @@ import org.threeten.bp.Instant.now
 import scala.collection.breakOut
 import scala.concurrent.duration._
 
-case class MessageData(override val id: MessageId              = MessageId(),
-                       convId:          ConvId                 = ConvId(),
-                       msgType:         Message.Type           = Message.Type.TEXT,
-                       userId:          UserId                 = UserId(),
-                       content:         Seq[MessageContent]    = Seq.empty,
-                       protos:          Seq[GenericMessage]    = Seq.empty,
-                       firstMessage:    Boolean                = false,
-                       members:         Set[UserId]            = Set.empty[UserId],
-                       recipient:       Option[UserId]         = None,
-                       email:           Option[String]         = None,
-                       name:            Option[Name]           = None,
-                       state:           MessageState           = Message.Status.SENT,
-                       time:            RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
-                       localTime:       LocalInstant           = LocalInstant.Epoch,
-                       editTime:        RemoteInstant          = RemoteInstant.Epoch,
-                       ephemeral:       Option[FiniteDuration] = None,
-                       expiryTime:      Option[LocalInstant]   = None, // local expiration time
-                       expired:         Boolean                = false,
-                       duration:        Option[FiniteDuration] = None, //for successful calls and message_timer changes
-                       assetId:         Option[GeneralAssetId] = None,
+case class MessageData(override val id:   MessageId              = MessageId(),
+                       convId:            ConvId                 = ConvId(),
+                       msgType:           Message.Type           = Message.Type.TEXT,
+                       userId:            UserId                 = UserId(),
+                       content:           Seq[MessageContent]    = Seq.empty,
+                       protos:            Seq[GenericMessage]    = Seq.empty,
+                       firstMessage:      Boolean                = false,
+                       members:           Set[UserId]            = Set.empty[UserId],
+                       recipient:         Option[UserId]         = None,
+                       email:             Option[String]         = None,
+                       name:              Option[Name]           = None,
+                       state:             MessageState           = Message.Status.SENT,
+                       time:              RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
+                       localTime:         LocalInstant           = LocalInstant.Epoch,
+                       editTime:          RemoteInstant          = RemoteInstant.Epoch,
+                       ephemeral:         Option[FiniteDuration] = None,
+                       expiryTime:        Option[LocalInstant]   = None, // local expiration time
+                       expired:           Boolean                = false,
+                       duration:          Option[FiniteDuration] = None, //for successful calls and message_timer changes
+                       assetId:           Option[GeneralAssetId] = None,
                        quote:             Option[QuoteContent]   = None,
-                       forceReadReceipts: Option[Int]    = None
+                       forceReadReceipts: Option[Int]            = None
                       ) extends Identifiable[MessageId] with DerivedLogTag {
   def getContent(index: Int) = {
     if (index == 0) content.headOption.getOrElse(MessageContent.Empty)
@@ -332,6 +332,7 @@ object MessageData extends
     case Message.Type.UNKNOWN              => "Unknown"
     case Message.Type.RECALLED             => "Recalled"
     case Message.Type.MESSAGE_TIMER        => "MessageTimer"
+    case Message.Type.COMPOSITE            => "Composite"
   }
 
   implicit object MessageDataDao extends Dao[MessageData, MessageId] with StorageCodecs {

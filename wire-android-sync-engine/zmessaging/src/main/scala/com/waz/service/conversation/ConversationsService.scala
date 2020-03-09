@@ -74,6 +74,8 @@ trait ConversationsService {
   def setConversationRole(id: ConvId, userId: UserId, role: ConversationRole): Future[Unit]
 
   def deleteConversation(rConvId: RConvId): Future[Unit]
+
+  def addButtons(buttons: Seq[ButtonData]): Future[Unit]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -98,7 +100,8 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                receiptsStorage: ReadReceiptsStorage,
                                notificationService: NotificationService,
                                foldersService:  FoldersService,
-                               rolesService:    ConversationRolesService
+                               rolesService:    ConversationRolesService,
+                               buttonsStorage:  ButtonsStorage
                               ) extends ConversationsService with DerivedLogTag {
 
   private implicit val ev = EventContext.Global
@@ -533,6 +536,11 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _        <- membersStorage.updateOrCreate(convId, userId, newRole)
       _        <- sync.postConversationRole(convId, userId, newRole, origRole.getOrElse(ConversationRole.MemberRole))
     } yield ()
+
+  override def addButtons(buttons: Seq[ButtonData]): Future[Unit] = {
+    val newButtons = buttons.map(b => b.id -> b).toMap
+    buttonsStorage.updateOrCreateAll2(newButtons.keys, { (id, _) => newButtons(id) }).map(_ => ())
+  }
 }
 
 object ConversationsService {
