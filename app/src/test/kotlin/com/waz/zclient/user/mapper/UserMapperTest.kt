@@ -1,8 +1,8 @@
 package com.waz.zclient.user.mapper
 
 import com.waz.zclient.user
-import com.waz.zclient.userApi
 import com.waz.zclient.userDao
+import com.waz.zclient.userResponse
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
@@ -13,18 +13,18 @@ class UserMapperTest {
     @Test
     fun `Mapping UserApi to User should be correct`() {
 
-        val user = userMapper.toUser(userApi)
+        val user = userMapper.toUser(userResponse)
 
-        assertEquals(userApi.id, user.id)
-        assertEquals(userApi.name, user.name)
-        assertEquals(userApi.handle, user.handle)
-        assertEquals(userApi.email, user.email)
-        assertEquals(userApi.phone, user.phone)
-        assertEquals(userApi.pictures, user.pictures)
-        assertEquals(userApi.accentId, user.accentId)
-        assertEquals(userApi.accentId, user.accentId)
-        assertEquals(userApi.deleted, user.deleted)
-        assertEquals(userApi.managedBy, user.managedBy)
+        assertEquals(userResponse.id, user.id)
+        assertEquals(userResponse.name, user.name)
+        assertEquals(userResponse.handle, user.handle)
+        assertEquals(userResponse.email, user.email)
+        assertEquals(userResponse.phone, user.phone)
+        assertEquals(userResponse.pictures, user.pictures)
+        assertEquals(userResponse.accentId, user.accentId)
+        assertEquals(userResponse.accentId, user.accentId)
+        assertEquals(userResponse.deleted, user.deleted)
+        assertEquals(userResponse.managedBy, user.managedBy)
     }
 
     @Test

@@ -11,27 +11,27 @@ import com.waz.zclient.user.handle.UnknownError
 import com.waz.zclient.user.handle.ValidateHandleSuccess
 
 class UsersRemoteDataSource(
-    private val usersNetworkService: UsersNetworkService,
+    private val usersApi: UsersApi,
     override val networkHandler: NetworkHandler
 ) : ApiService() {
 
-    suspend fun profileDetails(): Either<Failure, UserApi> =
-        request { usersNetworkService.profileDetails() }
+    suspend fun profileDetails(): Either<Failure, UserResponse> =
+        request { usersApi.profileDetails() }
 
     suspend fun changeName(name: String): Either<Failure, Any> =
-        request { usersNetworkService.changeName(ChangeNameRequest(name)) }
+        request { usersApi.changeName(ChangeNameRequest(name)) }
 
     suspend fun changeHandle(handle: String): Either<Failure, Any> =
-        request { usersNetworkService.changeHandle(ChangeHandleRequest(handle)) }
+        request { usersApi.changeHandle(ChangeHandleRequest(handle)) }
 
     suspend fun changeEmail(email: String): Either<Failure, Any> =
-        request { usersNetworkService.changeEmail(ChangeEmailRequest(email)) }
+        request { usersApi.changeEmail(ChangeEmailRequest(email)) }
 
     suspend fun changePhone(phone: String): Either<Failure, Any> =
-        request { usersNetworkService.changePhone(ChangePhoneRequest(phone)) }
+        request { usersApi.changePhone(ChangePhoneRequest(phone)) }
 
     suspend fun doesHandleExist(newHandle: String): Either<Failure, ValidateHandleSuccess> =
-        when (usersNetworkService.doesHandleExist(newHandle).code()) {
+        when (usersApi.doesHandleExist(newHandle).code()) {
             HANDLE_TAKEN -> Either.Left(HandleAlreadyExists)
             HANDLE_INVALID -> Either.Left(HandleInvalid)
             HANDLE_AVAILABLE -> Either.Right(HandleIsAvailable)
@@ -39,10 +39,10 @@ class UsersRemoteDataSource(
         }
 
     suspend fun deletePhone(): Either<Failure, Any> =
-        request { usersNetworkService.deletePhone() }
+        request { usersApi.deletePhone() }
 
     suspend fun deleteAccountPermanently(): Either<Failure, Unit> =
-        request { usersNetworkService.deleteAccount(DeleteAccountRequest) }
+        request { usersApi.deleteAccount(DeleteAccountRequest) }
 
     companion object {
         private const val HANDLE_TAKEN = 200

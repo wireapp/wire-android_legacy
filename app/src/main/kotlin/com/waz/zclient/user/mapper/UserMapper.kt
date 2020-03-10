@@ -1,12 +1,12 @@
 package com.waz.zclient.user.mapper
 
 import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.user.datasources.remote.UserApi
+import com.waz.zclient.user.datasources.remote.UserResponse
 import com.waz.zclient.user.User
 
 class UserMapper {
 
-    fun toUser(userApi: UserApi) = with(userApi) {
+    fun toUser(userResponse: UserResponse) = with(userResponse) {
         User(
             id = id,
             name = name,
