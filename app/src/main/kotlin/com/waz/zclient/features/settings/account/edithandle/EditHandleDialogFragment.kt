@@ -43,10 +43,12 @@ class EditHandleDialogFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initViewModel()
         initHandleInput()
         initBackButton()
         initOkButton()
+        observeHandleSuccessData()
+        observeHandleErrorData()
+        observeDismissData()
     }
 
     private fun initHandleInput() {
@@ -61,6 +63,9 @@ class EditHandleDialogFragment : DialogFragment() {
     }
 
     private fun initOkButton() {
+        editHandleViewModel.okEnabledLiveData.observe(viewLifecycleOwner) {
+            editHandleDialogOkButton.isEnabled = it
+        }
         editHandleDialogOkButton.setOnClickListener {
             editHandleViewModel.onOkButtonClicked(editHandleDialogHandleEditText.text.toString())
         }
@@ -72,13 +77,16 @@ class EditHandleDialogFragment : DialogFragment() {
         }
     }
 
-    private fun initViewModel() {
-        with(editHandleViewModel) {
-            successLiveData.observe(viewLifecycleOwner) { updateSuccessMessage() }
-            errorLiveData.observe(viewLifecycleOwner) { updateErrorMessage(it) }
-            okEnabledLiveData.observe(viewLifecycleOwner) { editHandleDialogOkButton.isEnabled = it }
-            dismissLiveData.observe(viewLifecycleOwner) { dismiss() }
-        }
+    private fun observeHandleSuccessData() {
+        editHandleViewModel.successLiveData.observe(viewLifecycleOwner) { updateSuccessMessage() }
+    }
+
+    private fun observeHandleErrorData() {
+        editHandleViewModel.errorLiveData.observe(viewLifecycleOwner) { updateErrorMessage(it) }
+    }
+
+    private fun observeDismissData() {
+        editHandleViewModel.dismissLiveData.observe(viewLifecycleOwner) { dismiss() }
     }
 
     private fun updateSuccessMessage() {

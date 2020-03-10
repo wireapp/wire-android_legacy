@@ -22,12 +22,13 @@ class SettingsAboutFragment : Fragment(R.layout.fragment_settings_about) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
-        initViewModel()
         initAboutWebsiteButton()
         initTermsAndConditionsButton()
         initPrivacyButton()
         initLicensesButton()
         initAppVersionDetailsButton()
+        observeUrlData()
+        observeVersionDetailsData()
     }
 
     private fun initAppVersionDetailsButton() {
@@ -65,11 +66,13 @@ class SettingsAboutFragment : Fragment(R.layout.fragment_settings_about) {
         activity?.title = getString(R.string.pref_about_screen_title)
     }
 
-    private fun initViewModel() {
+    private fun observeUrlData() {
         settingsAboutViewModel.urlLiveData.observe(viewLifecycleOwner) {
             openUrl(it.url)
         }
+    }
 
+    private fun observeVersionDetailsData() {
         settingsAboutViewModel.versionDetailsLiveData.observe(viewLifecycleOwner) {
             val translationId = resources.getIdentifier(
                 it.translationsVersionId,
