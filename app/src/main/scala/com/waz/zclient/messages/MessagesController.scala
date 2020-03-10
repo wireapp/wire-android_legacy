@@ -131,4 +131,6 @@ import scala.concurrent.Future
       res <- Future.traverse(messages)(msg => zms.messages.retryMessageSending(msg.convId, msg.id))
     } yield res.flatten
 
+  def getButtons(messageId: MessageId): Signal[Seq[ButtonData]] =
+    zms.flatMap(_.messages.buttonsForMessage(messageId))
 }

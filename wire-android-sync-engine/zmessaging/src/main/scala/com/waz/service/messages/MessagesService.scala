@@ -36,7 +36,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventContext, EventStream}
+import com.waz.utils.events.{EventContext, EventStream, RefreshingSignal, Signal}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -90,19 +90,23 @@ trait MessagesService {
   def findMessageIds(convId: ConvId): Future[Set[MessageId]]
 
   def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
+
+  def addButtons(buttons: Seq[ButtonData]): Future[Unit]
+  def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]]
 }
 
-class MessagesServiceImpl(selfUserId:   UserId,
-                          teamId:       Option[TeamId],
-                          replyHashing: ReplyHashing,
-                          storage:      MessagesStorage,
-                          updater:      MessagesContentUpdater,
-                          edits:        EditHistoryStorage,
-                          convs:        ConversationsContentUpdater,
-                          network:      NetworkModeService,
-                          members:      MembersStorage,
-                          usersStorage: UsersStorage,
-                          sync:         SyncServiceHandle) extends MessagesService with DerivedLogTag {
+class MessagesServiceImpl(selfUserId:      UserId,
+                          teamId:          Option[TeamId],
+                          replyHashing:    ReplyHashing,
+                          storage:         MessagesStorage,
+                          updater:         MessagesContentUpdater,
+                          edits:           EditHistoryStorage,
+                          convs:           ConversationsContentUpdater,
+                          network:         NetworkModeService,
+                          members:         MembersStorage,
+                          usersStorage:    UsersStorage,
+                          buttonsStorage:  ButtonsStorage,
+                          sync:            SyncServiceHandle) extends MessagesService with DerivedLogTag {
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
@@ -495,4 +499,14 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def findMessageIds(convId: ConvId): Future[Set[MessageId]] = storage.findMessageIds(convId)
 
   override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] = storage.getAssetIds(messageIds)
+
+  override def addButtons(buttons: Seq[ButtonData]): Future[Unit] = {
+    val newButtons = buttons.map(b => b.id -> b).toMap
+    buttonsStorage.updateOrCreateAll2(newButtons.keys, { (id, _) => newButtons(id) }).map(_ => ())
+  }
+
+  override def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]] = RefreshingSignal[Seq[ButtonData]](
+    loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId)),
+    refreshEvent = EventStream.union(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
+  )
 }

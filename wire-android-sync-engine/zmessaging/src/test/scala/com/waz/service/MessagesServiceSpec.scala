@@ -48,10 +48,11 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val users =         mock[UsersStorage]
   val replyHashing =  mock[ReplyHashing]
   lazy val prefs =         new TestGlobalPreferences()
+  private lazy val buttonsStorage = mock[ButtonsStorage]
 
   def getService = {
     val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
-    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
+    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, buttonsStorage, sync)
   }
 
   scenario("Add local memberJoinEvent with no previous member change events") {

@@ -64,7 +64,6 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   private lazy val properties     = mock[PropertiesService]
   private lazy val deletions      = mock[MsgDeletionStorage]
   private lazy val rolesService   = mock[ConversationRolesService]
-  private lazy val buttonsStorage = mock[ButtonsStorage]
 
   private lazy val globalPrefs    = new TestGlobalPreferences()
   private lazy val userPrefs      = new TestUserPreferences()
@@ -98,8 +97,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
     receiptStorage,
     notifications,
     folders,
-    rolesService,
-    buttonsStorage
+    rolesService
   )
 
   private def createConvsUi(teamId: Option[TeamId] = Some(TeamId())): ConversationsUiService = {
