@@ -182,12 +182,15 @@ class MessageEventProcessor(selfUserId:           UserId,
         textMessage(id, convId, text, mentions, links, quote, from, localTime, time, readReceipts, proto)
     }
 
-    val buttons = compositeData.items.collect {
-      case ButtonItem(button) => ButtonData(id, ButtonId(button.id), button.text)
-    }
+    val buttons =
+      compositeData.items
+        .collect { case ButtonItem(button) => button }
+        .zipWithIndex
+        .map { case (button, ord) => ButtonData(id, ButtonId(button.id), button.text, ord) }
 
     val msg =
       if (textParts.isEmpty) RichMessage.Empty
+      else if (textParts.size == 1) textParts.head
       else textParts.reduce[RichMessage] { case (acc, next) =>
         val message = acc.message.copy(
           content = acc.message.content ++ next.message.content,
