@@ -35,9 +35,7 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
 
     items.foreach { data =>
       val buttonItemView = new ButtonItemView(getContext)
-      buttonItemView.setButton(
-        new ButtonItemViewUIModel(data.title, data.error)
-      )
+      buttonItemView.setButton(ButtonItemViewUIModel(data.title, data.error))
 
       val tag = data.id
       buttonItemView.setTag(tag)
@@ -63,6 +61,6 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
 }
 
 //TODO: add state
-class ButtonItemData(val id: String,
-                     val title: String,
-                     val error: Option[String])
+case class ButtonItemData(id: String,
+                          title: String,
+                          error: Option[String])

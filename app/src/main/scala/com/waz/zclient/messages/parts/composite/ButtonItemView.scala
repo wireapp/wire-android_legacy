@@ -65,4 +65,4 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
 }
 
 //TODO: add state
-class ButtonItemViewUIModel(val title: String, val error: Option[String])
+case class ButtonItemViewUIModel(title: String, error: Option[String])
