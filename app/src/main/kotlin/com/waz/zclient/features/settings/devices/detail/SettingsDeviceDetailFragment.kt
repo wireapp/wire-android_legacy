@@ -24,7 +24,7 @@ class SettingsDeviceDetailFragment : Fragment(R.layout.fragment_device_detail) {
         loadData()
     }
 
-    private fun loadData(){
+    private fun loadData() {
         lifecycleScope.launchWhenResumed {
             val id = arguments?.getString(DEVICE_ID_BUNDLE_KEY)
             id?.let { deviceDetailsViewModel.loadData(it) }

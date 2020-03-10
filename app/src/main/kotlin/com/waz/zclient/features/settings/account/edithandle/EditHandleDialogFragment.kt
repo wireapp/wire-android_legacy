@@ -48,7 +48,6 @@ class EditHandleDialogFragment : DialogFragment() {
         initOkButton()
         observeHandleSuccessData()
         observeHandleErrorData()
-        observeOkEnabledData()
         observeDismissData()
     }
 
@@ -64,6 +63,9 @@ class EditHandleDialogFragment : DialogFragment() {
     }
 
     private fun initOkButton() {
+        editHandleViewModel.okEnabledLiveData.observe(viewLifecycleOwner) {
+            editHandleDialogOkButton.isEnabled = it
+        }
         editHandleDialogOkButton.setOnClickListener {
             editHandleViewModel.onOkButtonClicked(editHandleDialogHandleEditText.text.toString())
         }
@@ -81,10 +83,6 @@ class EditHandleDialogFragment : DialogFragment() {
 
     private fun observeHandleErrorData() {
         editHandleViewModel.errorLiveData.observe(viewLifecycleOwner) { updateErrorMessage(it) }
-    }
-
-    private fun observeOkEnabledData() {
-        editHandleViewModel.okEnabledLiveData.observe(viewLifecycleOwner) { editHandleDialogOkButton.isEnabled = it }
     }
 
     private fun observeDismissData() {
