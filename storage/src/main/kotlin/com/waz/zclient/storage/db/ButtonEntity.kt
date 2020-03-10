@@ -19,5 +19,5 @@ data class ButtonEntity(
     val state: Int,
 
     @ColumnInfo(name = "error")
-    val error: String
+    val error: String?
 )
