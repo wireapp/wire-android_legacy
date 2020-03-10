@@ -8,7 +8,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.activity_edit_phone.*
 
-class EditPhoneNumberActivity : AppCompatActivity() {
+class EditPhoneNumberActivity : AppCompatActivity(R.layout.activity_edit_phone) {
 
     private val phoneNumber: String by lazy {
         intent.getStringExtra(CURRENT_PHONE_NUMBER_KEY)
@@ -20,7 +20,6 @@ class EditPhoneNumberActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_edit_phone)
         setSupportActionBar(editPhoneActivityToolbar)
 
         replaceFragment(

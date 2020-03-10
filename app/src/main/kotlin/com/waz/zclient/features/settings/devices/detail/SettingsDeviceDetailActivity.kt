@@ -8,11 +8,10 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.activity_device_detail.*
 
-class SettingsDeviceDetailActivity : AppCompatActivity() {
+class SettingsDeviceDetailActivity : AppCompatActivity(R.layout.activity_device_detail) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_device_detail)
         initToolbar()
         startDeviceDetailsFragment()
     }
