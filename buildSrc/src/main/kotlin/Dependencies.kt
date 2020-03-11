@@ -155,7 +155,8 @@ object TestDependencies {
         "testCore" to "androidx.arch.core:core-testing:${Versions.ANDROIDX_TEST_CORE}",
         "testJunit" to "androidx.test.ext:junit:${Versions.ANDROIDX_TEST_JUNIT}",
         "testRules" to "androidx.test:rules:${Versions.ANDROIDX_TEST_JUNIT}",
-        "testWorkManager" to "androidx.work:work-testing:${Versions.WORK_MANAGER}"
+        "testWorkManager" to "androidx.work:work-testing:${Versions.WORK_MANAGER}",
+        "testRoom" to "androidx.room:room-testing:${Versions.ANDROIDX_ROOM}"
     ))
     val okHttpMockWebServer = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
     val robolectric = "org.robolectric:android-all:${Versions.ROBOLECTRIC}"

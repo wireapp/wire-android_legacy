@@ -48,8 +48,7 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
         CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class, UploadAssetsEntity::class,
         PropertiesEntity::class, ReadReceiptsEntity::class, PushNotificationEventEntity::class,
         MessageContentIndexEntity::class, EditHistoryEntity::class, ButtonEntity::class],
-    version = UserDatabase.VERSION,
-    exportSchema = false
+    version = UserDatabase.VERSION
 )
 abstract class UserDatabase : RoomDatabase() {
 
