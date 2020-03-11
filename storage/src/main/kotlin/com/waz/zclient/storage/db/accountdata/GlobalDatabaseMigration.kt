@@ -3,7 +3,11 @@ package com.waz.zclient.storage.db.accountdata
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(24, 25) {
+const val START_VERSION = 24
+const val END_VERSION = 25
+
+val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERSION) {
+
     override fun migrate(database: SupportSQLiteDatabase) {
         migrateActiveAccounts(database)
         migrateCacheEntryTable(database)
@@ -40,7 +44,6 @@ val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(24, 25) {
             length INTEGER)
             """.trimIndent()
         executeSimpleMigration(database, originalTableName, tempTableName, createTempTable, "key")
-
     }
 
     private fun migrateActiveAccounts(database: SupportSQLiteDatabase) {
