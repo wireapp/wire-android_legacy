@@ -166,4 +166,7 @@
     
     <attr name="dropdownSeparatorBackgroundColor" format="color"/>
 
+    <!-- Composite Message Alarm Buttons -->
+    <attr name="alarmButtonTextColor" format="color"/>
+
 </resources>

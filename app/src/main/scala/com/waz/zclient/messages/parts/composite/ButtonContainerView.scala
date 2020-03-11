@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.model.{ButtonData, ButtonId, MessageId}
 import com.waz.utils.events.{EventStream, Signal, Subscription}
-import com.waz.zclient.ViewHelper
+import com.waz.zclient.{R, ViewHelper}
 
 class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
     extends LinearLayout(context, attrs, style)
@@ -32,7 +32,9 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
     clearSubscriptions()
 
     items.foreach { data =>
-      val buttonItemView = new ButtonItemView(getContext)
+      val buttonItemView =
+        inflate(R.layout.composite_message_alarm_buttonitemview, this, addToParent = false)
+          .asInstanceOf[ButtonItemView]
       buttonItemView.bindButton(ButtonItemViewUIModel(data.title, data.state))
       subscriptions += buttonItemView.selected.onUi(_ => selectedButtonId ! data.id)
       addView(buttonItemView)
