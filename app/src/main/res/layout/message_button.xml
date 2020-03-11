@@ -12,6 +12,7 @@
         android:layout_height="wrap_content">
 
         <ProgressBar
+            android:id="@+id/message_button_item_progressbar"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="end"
@@ -20,6 +21,7 @@
             tools:visibility="visible" />
 
         <Button
+            android:id="@+id/message_button_item_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAlignment="textStart"
@@ -28,6 +30,7 @@
     </FrameLayout>
 
     <TextView
+        android:id="@+id/message_button_item_error_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"

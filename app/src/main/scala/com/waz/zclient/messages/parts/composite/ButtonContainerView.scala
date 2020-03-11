@@ -3,7 +3,8 @@ package com.waz.zclient.messages.parts.composite
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
-import com.waz.utils.events.{EventStream, Subscription}
+import com.waz.model.{ButtonData, ButtonId, MessageId}
+import com.waz.utils.events.{EventStream, Signal, Subscription}
 import com.waz.zclient.ViewHelper
 
 class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
@@ -16,31 +17,24 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
   setOrientation(LinearLayout.VERTICAL)
 
   //TODO: observe this and send ButtonAction request
-  val selectedButtonId = EventStream[String]()
+  val selectedButtonId = EventStream[(MessageId, ButtonId)]()
+
+  val buttonsSignal = Signal[Seq[ButtonData]]()
 
   private var subscriptions = Set.empty[Subscription]
 
-  private def buttonItemViews(): Seq[ButtonItemView] = {
-    val childCount = getChildCount
-    val childViews = Seq[ButtonItemView]()
-    for (i <- 0 to childCount) {
-      childViews :+ getChildAt(i).asInstanceOf[ButtonItemView]
-    }
-    childViews
-  }
+  //we already receive ordered
+  buttonsSignal.onUi { setButtons }
 
-  def setButtons(items: Seq[ButtonItemData]): Unit = {
+  //TODO: convert to a more efficient way. calculate diff.
+  private def setButtons(items: Seq[ButtonData]): Unit = {
     removeAllViews()
     clearSubscriptions()
 
     items.foreach { data =>
       val buttonItemView = new ButtonItemView(getContext)
-      buttonItemView.setButton(ButtonItemViewUIModel(data.title, data.error))
-
-      val tag = data.id
-      buttonItemView.setTag(tag)
-      subscriptions += buttonItemView.selected.onUi(_ => selectedButtonId ! tag)
-
+      buttonItemView.bindButton(ButtonItemViewUIModel(data.title, data.state))
+      subscriptions += buttonItemView.selected.onUi(_ => selectedButtonId ! data.id)
       addView(buttonItemView)
     }
   }
@@ -49,18 +43,4 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
     subscriptions.foreach(_.unsubscribe())
     subscriptions = Set.empty[Subscription]
   }
-
-  def confirmButtonSelection(buttonId: String): Unit = {
-    val childButtons = buttonItemViews()
-    childButtons.foreach(_.clearError())
-
-    val (toConfirm, others) = childButtons.partition(_.getTag() == buttonId)
-    toConfirm.headOption.foreach(_.setConfirmed())
-    others.foreach(_.setUnselected())
-  }
 }
-
-//TODO: add state
-case class ButtonItemData(id: String,
-                          title: String,
-                          error: Option[String])

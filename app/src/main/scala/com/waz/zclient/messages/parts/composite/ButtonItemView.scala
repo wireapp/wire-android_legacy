@@ -2,9 +2,10 @@ package com.waz.zclient.messages.parts.composite
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.{View, ViewGroup}
+import android.view.View
 import android.view.View.OnClickListener
 import android.widget.{Button, LinearLayout, ProgressBar, TextView}
+import com.waz.model.ButtonData
 import com.waz.utils.events.EventStream
 import com.waz.zclient.{R, ViewHelper}
 
@@ -18,51 +19,55 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
   setOrientation(LinearLayout.VERTICAL)
   inflate(R.layout.message_button)
 
-  private lazy val buttonContainer: ViewGroup = getChildAt(0).asInstanceOf[ViewGroup]
-  private lazy val button: Button = buttonContainer.getChildAt(1).asInstanceOf[Button]
-  private lazy val progressBar: ProgressBar = buttonContainer.getChildAt(0).asInstanceOf[ProgressBar]
-  private lazy val errorText: TextView = getChildAt(1).asInstanceOf[TextView]
+  private lazy val button = findById[Button](R.id.message_button_item_button)
+  private lazy val progressBar = findById[ProgressBar](R.id.message_button_item_progressbar)
+  private lazy val errorText: TextView = findById[TextView](R.id.message_button_item_error_text)
 
   val selected = EventStream[Unit]()
 
   button.setOnClickListener(new OnClickListener {
     override def onClick(v: View): Unit = {
-      setWaiting()
       selected ! {}
     }
   })
 
-  def setError(error: String): Unit = {
-    errorText.setText(error)
-    errorText.setVisibility(View.VISIBLE)
+  def bindButton(uiModel: ButtonItemViewUIModel): Unit = {
+    button.setText(uiModel.title)
+    button.setContentDescription(uiModel.title)
+    uiModel.state match {
+      case ButtonData.ButtonError(error) => setUnselected(Some(error))
+      case ButtonData.ButtonNotClicked   => setUnselected(None)
+      case ButtonData.ButtonWaiting      => setWaiting()
+      case ButtonData.ButtonConfirmed    => setConfirmed()
+    }
   }
 
-  def clearError(): Unit = {
-    errorText.setText(null)
-    errorText.setVisibility(View.GONE)
-  }
-
-  def setConfirmed(): Unit = {
+  private def setConfirmed(): Unit = {
+    clearError()
     progressBar.setVisibility(View.GONE)
     //TODO: highlight button
   }
 
-  def setWaiting(): Unit = {
+  private def setWaiting(): Unit = {
+    clearError()
     progressBar.setVisibility(View.VISIBLE)
   }
 
-  def setUnselected(): Unit = {
+  private def setUnselected(error: Option[String]): Unit = {
     progressBar.setVisibility(View.GONE)
+    error.fold(clearError())(setError)
     //TODO: remove highlight
   }
 
-  def setButton(uiModel: ButtonItemViewUIModel): Unit = {
-    button.setText(uiModel.title)
-    button.setContentDescription(uiModel.title)
-    uiModel.error.fold(clearError())(setError)
-    //TODO: set button state (confirmed, waiting, cleared)
+  private def setError(error: String): Unit = {
+    errorText.setText(error)
+    errorText.setVisibility(View.VISIBLE)
+  }
+
+  private def clearError(): Unit = {
+    errorText.setText(null)
+    errorText.setVisibility(View.GONE)
   }
 }
 
-//TODO: add state
-case class ButtonItemViewUIModel(title: String, error: Option[String])
+case class ButtonItemViewUIModel(title: String, state: ButtonData.ButtonState)
