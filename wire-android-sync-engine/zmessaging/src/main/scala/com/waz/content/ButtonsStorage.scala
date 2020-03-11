@@ -22,5 +22,4 @@ class ButtonsStorageImpl(context: Context, storage: Database)
 
   override def findByMessage(messageId: MessageId): Future[Seq[ButtonData]] =
     find(_.messageId == messageId, ButtonDataDao.findForMessage(messageId)(_), identity)
-    .map(_.sortBy(_.ord))
 }

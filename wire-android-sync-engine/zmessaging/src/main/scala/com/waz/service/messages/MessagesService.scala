@@ -506,7 +506,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
   }
 
   override def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]] = RefreshingSignal[Seq[ButtonData]](
-    loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId)),
+    loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ord))),
     refreshEvent = EventStream.union(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
   )
 }

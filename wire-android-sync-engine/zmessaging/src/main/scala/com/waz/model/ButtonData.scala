@@ -9,7 +9,7 @@ import com.waz.model.ButtonData._
 case class ButtonData(messageId: MessageId,
                       buttonId:  ButtonId,
                       title:     String,
-                      ord:     Int,
+                      ord:       Int,
                       state:     ButtonState = ButtonNotClicked) extends Identifiable[(MessageId, ButtonId)]{
   override def id: ButtonDataDaoId = (messageId, buttonId)
 
