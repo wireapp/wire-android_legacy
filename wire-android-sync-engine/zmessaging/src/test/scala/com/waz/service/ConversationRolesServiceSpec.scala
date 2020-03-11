@@ -78,7 +78,7 @@ class ConversationRolesServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     insertAll(vs.toSeq).map(_ => vs.toSet)
   }
 
-  (storage.contents _).expects().anyNumberOfTimes().returning(roleActions.map(_.map(v => v.id -> v).toMap))
+  (storage.contents _).expects().anyNumberOfTimes().returning(roleActions.map(_.toIdMap))
 
   feature("Manage conversation roles") {
 

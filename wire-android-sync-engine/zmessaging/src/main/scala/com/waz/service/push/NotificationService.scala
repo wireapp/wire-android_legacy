@@ -300,7 +300,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
     messages.getAll(reactions.map(_.message).toSet).map(_.flatten).map { msgs =>
 
-      val msgsById = msgs.map(m => m.id -> m).toMap
+      val msgsById = msgs.toIdMap
       val convsByMsg = msgs.iterator.by[MessageId, Map](_.id).mapValues(_.convId)
       val myMsgs = msgs.collect { case m if m.userId == selfUserId => m.id }.toSet
 
