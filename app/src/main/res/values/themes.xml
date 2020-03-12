@@ -187,6 +187,9 @@
         <item name="selfMentionBackgroundColor">@color/self_mention_background_light</item>
 
         <item name="dropdownSeparatorBackgroundColor">@color/background_graphite</item>
+
+        <!-- Composite Message Alarm Buttons -->
+        <item name="alarmButtonTextColor">@color/white</item>
     </style>
 
     <style name="Theme.Light" parent="@style/Theme.Design.Light.NoActionBar">
@@ -355,6 +358,9 @@
         <item name="selfMentionBackgroundColor">@color/self_mention_background_dark</item>
 
         <item name="dropdownSeparatorBackgroundColor">@color/black_4</item>
+
+        <!-- Composite Message Alarm Buttons -->
+        <item name="alarmButtonTextColor">@color/accent_red</item>
     </style>
 
     <style name="Theme.Dark.Preferences" parent="@style/Theme.Design.NoActionBar">
