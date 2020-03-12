@@ -107,7 +107,6 @@ class GlobalSQLiteDbTestHelper private constructor() {
             val contentValues = ContentValues().also {
                 it.put(CACHE_ENTRY_ID_COL, id)
                 it.put(CACHE_ENTRY_FILE_ID_COL, fileId)
-                it.put(CACHE_ENTRY_DATA_COL, data)
                 it.put(CACHE_ENTRY_LAST_USED_COL, lastUsed)
                 it.put(CACHE_ENTRY_DATA_COL, data)
                 it.put(CACHE_ENTRY_TIMEOUT_COL, timeout)
