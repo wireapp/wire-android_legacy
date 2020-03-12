@@ -296,10 +296,9 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     val service = getService
     val res = result(service.buttonsForMessage(msgId).head)
 
-    println(s"buttons: $res")
-    res.size shouldEqual(2)
+    res.size shouldEqual 2
 
-    res(0) shouldEqual(ButtonData(msgId, button0Id, title0, 0, ButtonNotClicked))
-    res(1) shouldEqual(ButtonData(msgId, button1Id, title1, 1, ButtonNotClicked))
+    res.head shouldEqual ButtonData(msgId, button0Id, title0, 0, ButtonNotClicked)
+    res(1)   shouldEqual ButtonData(msgId, button1Id, title1, 1, ButtonNotClicked)
   }
 }
