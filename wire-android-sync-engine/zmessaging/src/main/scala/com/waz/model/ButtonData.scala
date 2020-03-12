@@ -9,7 +9,7 @@ import com.waz.model.ButtonData._
 case class ButtonData(messageId: MessageId,
                       buttonId:  ButtonId,
                       title:     String,
-                      ord:       Int,
+                      ordinal:   Int,
                       state:     ButtonState = ButtonNotClicked) extends Identifiable[(MessageId, ButtonId)]{
   override def id: ButtonDataDaoId = (messageId, buttonId)
 
@@ -41,7 +41,7 @@ object ButtonData {
     val Message = id[MessageId]('message_id).apply(_.messageId)
     val Button  = id[ButtonId]('button_id).apply(_.buttonId)
     val Title   = text('title).apply(_.title)
-    val Ord   = int('ord).apply(_.ord)
+    val Ordinal = int('ordinal).apply(_.ordinal)
     val StateId = int('state).apply(_.state.id)
     val Error   = text('error).apply(_.state match {
       case ButtonError(error) => error
@@ -50,9 +50,9 @@ object ButtonData {
 
     override val idCol = (Message, Button)
 
-    override val table = Table("Buttons", Message, Button, Title, Ord, StateId, Error)
+    override val table = Table("Buttons", Message, Button, Title, Ordinal, StateId, Error)
 
-    override def apply(implicit cursor: DBCursor): ButtonData = ButtonData(Message, Button, Title, Ord, buttonState(StateId, Error))
+    override def apply(implicit cursor: DBCursor): ButtonData = ButtonData(Message, Button, Title, Ordinal, buttonState(StateId, Error))
 
     def findForMessage(id: MessageId)(implicit db: DB) = iterating(find(Message, id))
   }

@@ -125,7 +125,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 `message_id` TEXT NOT NULL, 
                 `button_id` TEXT NOT NULL, 
                 `title` TEXT NOT NULL,
-                 `ord` INTEGER NOT NULL,
+                `ordinal` INTEGER NOT NULL,
                 `state` INTEGER NOT NULL, 
                 `error` TEXT, 
                 PRIMARY KEY(`message_id`, `button_id`)

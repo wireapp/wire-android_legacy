@@ -15,8 +15,8 @@ data class ButtonEntity(
     @ColumnInfo(name = "title")
     val title: String,
 
-    @ColumnInfo(name = "ord")
-    val ord: Int,
+    @ColumnInfo(name = "ordinal")
+    val ordinal: Int,
 
     @ColumnInfo(name = "state")
     val state: Int,
