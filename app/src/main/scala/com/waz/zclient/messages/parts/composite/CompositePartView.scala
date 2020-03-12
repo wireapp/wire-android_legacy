@@ -46,7 +46,7 @@ class CompositePartView(context: Context, attrs: AttributeSet, style: Int)
         assetId = None,
         forceReadReceipts = None
       )
-      val textMessageAndLikes = MessageAndLikes.Empty.copy(message = textMessageData)
+      val textMessageAndLikes = msg.copy(message = textMessageData)
 
       textPartView.set(textMessageAndLikes, None, None)
     }

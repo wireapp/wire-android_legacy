@@ -20,13 +20,13 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
   //TODO: observe this and send ButtonAction request
   val selectedButtonId = EventStream[(MessageId, ButtonId)]()
 
-  private lazy val messagesService = inject[MessagesController]
+  private lazy val messagesController = inject[MessagesController]
 
   private var subscriptions = Set.empty[Subscription]
 
   //we already receive ordered
   def bindMessage(messageId: MessageId): Unit =
-    messagesService.getButtons(messageId).onUi { setButtons }
+    messagesController.getButtons(messageId).onUi { setButtons }
 
   //TODO: convert to a more efficient way. calculate diff.
   private def setButtons(items: Seq[ButtonData]): Unit = {
