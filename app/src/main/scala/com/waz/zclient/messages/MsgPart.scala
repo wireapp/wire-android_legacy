@@ -91,7 +91,8 @@ object MsgPart {
       case RICH_MEDIA => Empty // RICH_MEDIA will be handled separately
       case MESSAGE_TIMER => MessageTimer
       case READ_RECEIPTS_ON | READ_RECEIPTS_OFF => if (isOneToOne) Empty else ReadReceipts
-      case UNKNOWN => Unknown
+      case COMPOSITE => Text // TODO
+      case _ => Unknown
     }
   }
 

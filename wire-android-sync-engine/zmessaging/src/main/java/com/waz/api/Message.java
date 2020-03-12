@@ -44,6 +44,8 @@ public interface Message extends UiObservable {
 
         READ_RECEIPTS_ON, READ_RECEIPTS_OFF,
 
+        COMPOSITE,
+
         UNKNOWN
     }
 
