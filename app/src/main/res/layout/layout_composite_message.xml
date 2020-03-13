@@ -10,7 +10,7 @@
         android:id="@+id/composite_message_text_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="@dimen/composite_message_text_layout_margin_bottom"
         android:orientation="vertical" />
 
     <com.waz.zclient.messages.parts.composite.ButtonContainerView
