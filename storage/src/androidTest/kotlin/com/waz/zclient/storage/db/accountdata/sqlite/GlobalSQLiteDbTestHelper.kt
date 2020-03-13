@@ -1,8 +1,33 @@
 package com.waz.zclient.storage.db.accountdata.sqlite
 
 import android.content.ContentValues
+import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONObject
+
+/**
+ * This class is to merely tell the unit tests that an SQLiteDatabase existed before the room ones
+ * without having to bridge the gap between Scala and Kotlin.
+ */
+class GlobalDbSQLiteOpenHelper(
+    context: Context,
+    name: String
+) : SQLiteOpenHelper(context, name, null, 24) {
+
+    override fun onCreate(db: SQLiteDatabase?) {
+        //Not required for testing version 24 to 25
+    }
+
+    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        //Not required for testing version 24 to 25
+    }
+
+    override fun onDowngrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+        //Not required for testing version 24 to 25
+    }
+
+}
 
 class GlobalSQLiteDbTestHelper private constructor() {
 

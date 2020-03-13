@@ -1,9 +1,6 @@
 package com.waz.zclient.storage.db.accountdata
 
-import androidx.room.testing.MigrationTestHelper
-import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
-import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
-import androidx.test.platform.app.InstrumentationRegistry
+import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.accountdata.sqlite.GlobalDbSQLiteOpenHelper
 import com.waz.zclient.storage.db.accountdata.sqlite.GlobalSQLiteDbTestHelper
@@ -13,23 +10,12 @@ import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
 @ExperimentalCoroutinesApi
-@RunWith(AndroidJUnit4ClassRunner::class)
-class GlobalDatabase24to25MigrationTest {
+class GlobalDatabase24to25MigrationTest : IntegrationTest(GlobalDatabase::class.java.canonicalName) {
 
     private lateinit var testOpenHelper: GlobalDbSQLiteOpenHelper
-
-    @Rule
-    @JvmField
-    val testHelper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        GlobalDatabase::class.java.canonicalName,
-        FrameworkSQLiteOpenHelperFactory()
-    )
 
     @Before
     fun setUp() {
@@ -67,7 +53,7 @@ class GlobalDatabase24to25MigrationTest {
             assert(account.refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE)
         }
 
-        testHelper.closeWhenFinished(db)
+        closeDb(db)
     }
 
     @Test
@@ -91,7 +77,7 @@ class GlobalDatabase24to25MigrationTest {
             assert(team.teamName == TEST_TEAM_NAME)
         }
 
-        testHelper.closeWhenFinished(db)
+        closeDb(db)
     }
 
     private fun validateMigraton() =
@@ -106,9 +92,6 @@ class GlobalDatabase24to25MigrationTest {
             getApplicationContext(),
             GlobalDatabase.migrations
         )
-
-    private fun getApplicationContext() =
-        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
     private suspend fun getActiveAccounts() =
         getGlobalDb().activeAccountsDao().activeAccounts()
