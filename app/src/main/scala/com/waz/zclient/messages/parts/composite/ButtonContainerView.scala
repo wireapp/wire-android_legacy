@@ -4,7 +4,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.waz.model.{ButtonData, ButtonId, MessageId}
-import com.waz.utils.events.{EventStream, Signal, Subscription}
+import com.waz.utils.events.{EventStream, Subscription}
+import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.{R, ViewHelper}
 
 class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
@@ -19,12 +20,13 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
   //TODO: observe this and send ButtonAction request
   val selectedButtonId = EventStream[(MessageId, ButtonId)]()
 
-  val buttonsSignal = Signal[Seq[ButtonData]]()
+  private lazy val messagesController = inject[MessagesController]
 
   private var subscriptions = Set.empty[Subscription]
 
   //we already receive ordered
-  buttonsSignal.onUi { setButtons }
+  def bindMessage(messageId: MessageId): Unit =
+    messagesController.getButtons(messageId).onUi { setButtons }
 
   //TODO: convert to a more efficient way. calculate diff.
   private def setButtons(items: Seq[ButtonData]): Unit = {
