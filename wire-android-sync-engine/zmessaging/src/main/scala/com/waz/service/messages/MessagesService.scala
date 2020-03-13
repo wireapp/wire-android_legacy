@@ -91,7 +91,6 @@ trait MessagesService {
 
   def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
 
-  def addButtons(buttons: Seq[ButtonData]): Future[Unit]
   def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]]
 }
 
@@ -499,11 +498,6 @@ class MessagesServiceImpl(selfUserId:      UserId,
   override def findMessageIds(convId: ConvId): Future[Set[MessageId]] = storage.findMessageIds(convId)
 
   override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] = storage.getAssetIds(messageIds)
-
-  override def addButtons(buttons: Seq[ButtonData]): Future[Unit] = {
-    val newButtons = buttons.map(b => b.id -> b).toMap
-    buttonsStorage.updateOrCreateAll2(newButtons.keys, { (id, _) => newButtons(id) }).map(_ => ())
-  }
 
   override def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]] = RefreshingSignal[Seq[ButtonData]](
     loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ordinal))),

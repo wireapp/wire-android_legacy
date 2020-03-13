@@ -54,7 +54,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   lazy val prefs =         new TestGlobalPreferences()
 
   def getService = {
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs)
     new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, buttons, sync)
   }
 
@@ -129,6 +129,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
     (deletions.insertAll _).expects(Seq(deletion)).returning(Future.successful(Set(deletion)))
     (storage.removeAll _).expects(Seq(messageId)).returning(Future.successful(()))
+    (buttons.deleteAllForMessage _).expects(messageId).atLeastOnce().returning(Future.successful(()))
 
     val recalledMessage = Await.result(service.recallMessage(convId, messageId, selfUserId, time = now), 1.second)
 
@@ -165,6 +166,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
     (deletions.insertAll _).expects(Seq(deletion)).returning(Future.successful(Set(deletion)))
     (storage.removeAll _).expects(Seq(messageId)).returning(Future.successful(()))
+    (buttons.deleteAllForMessage _).expects(messageId).returning(Future.successful(()))
 
     val recalledMessage = Await.result(service.recallMessage(convId, messageId, selfUserId, time = now), 1.second)
 
@@ -201,6 +203,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     val editHistory = EditHistory(messageId, messageId2, now)
 
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+    (buttons.deleteAllForMessage _).expects(messageId).returning(Future.successful(Nil))
     (edits.insert _).expects(editHistory).returning(Future.successful(editHistory))
     (deletions.getAll _).expects(Seq(messageId2)).returning(Future.successful(Seq(None)))
     (storage.updateOrCreate _).expects(*, *, *).onCall { (_, updater, _) => Future.successful(updater(msg)) }

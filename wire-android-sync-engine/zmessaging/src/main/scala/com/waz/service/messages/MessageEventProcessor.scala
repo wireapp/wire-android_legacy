@@ -339,7 +339,7 @@ class MessageEventProcessor(selfUserId:           UserId,
   private def addButtons(richMessages: Seq[RichMessage]) = {
     val msgsWithButtons = richMessages.filter(_.buttons.nonEmpty)
     if (msgsWithButtons.nonEmpty)
-      Future.sequence(msgsWithButtons.map(m => msgsService.addButtons(m.buttons)))
+      Future.sequence(msgsWithButtons.map(m => contentUpdater.addButtons(m.buttons)))
     else Future.successful(())
   }
 
