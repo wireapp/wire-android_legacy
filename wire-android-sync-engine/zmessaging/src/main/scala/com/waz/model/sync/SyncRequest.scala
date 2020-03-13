@@ -127,7 +127,7 @@ object SyncRequest {
   }
 
   case class PostSelfAccentColor(color: AccentColor) extends BaseRequest(Cmd.PostSelfAccentColor) {
-    override def merge(req: SyncRequest) = mergeHelper[PostSelfName](req)(Merged(_))
+    override def merge(req: SyncRequest) = mergeHelper[PostSelfAccentColor](req)(Merged(_))
   }
 
   case class PostAvailability(availability: Availability) extends BaseRequest(Cmd.PostAvailability) {
@@ -253,6 +253,10 @@ object SyncRequest {
 
   case class PostLiking(convId: ConvId, liking: Liking) extends RequestForConversation(Cmd.PostLiking) {
     override val mergeKey = (cmd, convId, liking.id)
+  }
+
+  case class PostButtonAction(messageId: MessageId, buttonId: ButtonId) extends BaseRequest(Cmd.PostButtonAction) {
+    override val mergeKey: Any = (cmd, messageId, buttonId)
   }
 
   case class PostSessionReset(convId: ConvId, userId: UserId, client: ClientId) extends RequestForConversation(Cmd.PostSessionReset) {
@@ -396,6 +400,7 @@ object SyncRequest {
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
           case Cmd.PostAddBot                => PostAddBot(decodeId[ConvId]('convId), decodeId[ProviderId]('providerId), decodeId[IntegrationId]('integrationId))
           case Cmd.PostRemoveBot             => PostRemoveBot(decodeId[ConvId]('convId), decodeId[UserId]('botId))
+          case Cmd.PostButtonAction           => PostButtonAction(messageId, decodeId[ButtonId]('buttonId))
           case Cmd.PostSessionReset          => PostSessionReset(convId, userId, decodeId[ClientId]('client))
           case Cmd.PostOpenGraphMeta         => PostOpenGraphMeta(convId, messageId, 'time)
           case Cmd.PostReceipt               => PostReceipt(convId, decodeMessageIdSeq('messages), userId, ReceiptType.fromName('type))
@@ -440,6 +445,9 @@ object SyncRequest {
         case PostRemoveBot(cId, botId)        =>
           o.put("convId", cId.str)
           o.put("botId", botId.str)
+        case PostButtonAction(messageId, buttonId) =>
+          putId("message", messageId)
+          putId("buttonId", buttonId)
         case ExactMatchHandle(handle)         => o.put("handle", handle.string)
         case SyncTeamMember(userId)           => o.put("user", userId.str)
         case DeletePushToken(token)           => putId("token", token)

@@ -77,7 +77,7 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Option(message)))
     (convs.convById _).expects(convId).returning(Future.successful(Option(ConversationData(convId))))
 
-    (otrSync.postOtrMessage _).expects(convId, *, * ,*).returning(Future.successful(Left(connectionError)))
+    (otrSync.postOtrMessage _).expects(convId, *, * ,*, *).returning(Future.successful(Left(connectionError)))
 
     (service.messageDeliveryFailed _).expects(convId, message, connectionError).returning(Future.successful(Some(message.copy(state = Message.Status.FAILED))))
 
