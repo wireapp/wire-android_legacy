@@ -1,6 +1,7 @@
 package com.waz.zclient.storage.db.accountdata
 
 import com.waz.zclient.storage.IntegrationTest
+import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.accountdata.sqlite.GlobalDbSQLiteOpenHelper
 import com.waz.zclient.storage.db.accountdata.sqlite.GlobalSQLiteDbTestHelper
@@ -13,12 +14,15 @@ import org.junit.Before
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class GlobalDatabase24to25MigrationTest : IntegrationTest(GlobalDatabase::class.java.canonicalName) {
+class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
     private lateinit var testOpenHelper: GlobalDbSQLiteOpenHelper
 
+    private lateinit var testHelper: MigrationTestHelper
+
     @Before
     fun setUp() {
+        testHelper = MigrationTestHelper(GlobalDatabase::class.java.canonicalName)
         testOpenHelper = GlobalDbSQLiteOpenHelper(getApplicationContext(),
             TEST_DB_NAME)
         GlobalSQLiteDbTestHelper.createTable(testOpenHelper)
@@ -53,7 +57,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest(GlobalDatabase::class.
             assert(account.refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE)
         }
 
-        closeDb(db)
+        testHelper.closeDb(db)
     }
 
     @Test
@@ -77,15 +81,16 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest(GlobalDatabase::class.
             assert(team.teamName == TEST_TEAM_NAME)
         }
 
-        closeDb(db)
+        testHelper.closeDb(db)
     }
 
     private fun validateMigraton() =
-        testHelper.runMigrationsAndValidate(
+        testHelper.validateMigration(
             TEST_DB_NAME,
             25,
             true,
-            GLOBAL_DATABASE_MIGRATION_24_25)
+            GLOBAL_DATABASE_MIGRATION_24_25
+        )
 
     private fun getGlobalDb() =
         getGlobalDatabase(
