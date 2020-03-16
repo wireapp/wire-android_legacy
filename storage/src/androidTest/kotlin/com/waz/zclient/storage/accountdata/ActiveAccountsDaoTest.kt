@@ -29,8 +29,13 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         activeAccountsDao = globalDatabase.activeAccountsDao()
     }
 
+    @After
+    fun tearDown() {
+        globalDatabase.close()
+    }
+
     @Test
-    fun givenAccessTokenIsCalled_whenUserIdIsActiveUser_thenDataShouldBeTheSame() = runBlocking {
+    fun givenAnActiveAccount_whenAccessTokenIsCalledWithUserIdThatIsActiveUser_thenDataShouldBeTheSame() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -41,7 +46,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenAccessTokenIsCalled_whenUserIdIsNotAnActiveUser_thenDataShouldBeTheSame() = runBlocking {
+    fun givenAnActiveAccount_whenAccessTokenIsCalledWithUserIdThatIsNotAnActiveUser_thenDataShouldBeTheSame() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -50,7 +55,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenUpdateAccessTokenIsCalled_thenDataShouldBeTheSameAsInserted() = runBlocking {
+    fun givenAnActiveAccount_whenUpdateAccessTokenIsCalledWithNewToken_thenDataShouldBeTheSameAsInserted() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -68,27 +73,29 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenRefreshTokenIsCalled_whenUserIdIsActiveUser_thenDataShouldBeTheSameAsInserted() = runBlocking {
-        val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        activeAccountsDao.insertActiveAccount(activeAccount)
+    fun givenAnActiveAccount_whenUpdateRefreshTokenIsCalledAndUserIdIsActiveUser_thenDataShouldBeTheSameAsInserted() =
+        runBlocking {
+            val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+            activeAccountsDao.insertActiveAccount(activeAccount)
 
-        activeAccountsDao.updateRefreshToken(
-            TEST_ACTIVE_ACCOUNT_ID_ACTIVE,
-            TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED
-        )
+            activeAccountsDao.updateRefreshToken(
+                TEST_ACTIVE_ACCOUNT_ID_ACTIVE,
+                TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED
+            )
 
-        val refreshToken = activeAccountsDao.refreshToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        assert(refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
-    }
+            val refreshToken = activeAccountsDao.refreshToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+            assert(refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
+        }
 
     @Test
-    fun givenGetAllAccountsIsCalled_thenDataShouldBeSameAsInserted() = runBlocking {
+    fun givenAnActiveAccount_withGetAllAccountsIsCalled_thenDataShouldBeSameAsInserted() = runBlocking {
         val activeAccounts = createActiveAccountsList()
         activeAccounts.map {
             activeAccountsDao.insertActiveAccount(it)
         }
 
         val roomActiveAccounts = activeAccountsDao.activeAccounts()
+        assert(roomActiveAccounts.size == 2)
 
         val firstAccount = roomActiveAccounts[0]
         assert(firstAccount.id == TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
@@ -98,7 +105,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenDeleteAccountsIsCalled_thenRemoveAccountFromDatabase() = runBlocking {
+    fun givenAnActiveAccount_whenDeleteAccountsWithThatAccount_thenRemoveAccountFromDatabase() = runBlocking {
         val activeAccounts = createActiveAccountsList()
         activeAccounts.map {
             activeAccountsDao.insertActiveAccount(it)
@@ -139,11 +146,6 @@ class ActiveAccountsDaoTest : IntegrationTest() {
             createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE),
             createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
         )
-
-    @After
-    fun tearDown() {
-        globalDatabase.close()
-    }
 
     companion object {
         private const val TEST_ACTIVE_ACCOUNT_ID_ACTIVE = "101"

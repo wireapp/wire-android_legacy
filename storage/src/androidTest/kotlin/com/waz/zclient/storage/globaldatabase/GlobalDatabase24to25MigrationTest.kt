@@ -35,12 +35,20 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
     @Test
     fun givenMigrateActiveAccountsFrom24to25_thenValidateDataIsStillIntact() {
+        val testActiveAccountId = "1"
+        val testActiveAccountCookie = "111122333"
+        val testActiveAccountRegisteredPush = "11111122222"
+        val testAccessTokenType = "Bearer"
+        val testAccessTokenExpiration = 1582896705028
+        val testAccessTokenJson = """{"token":"$testActiveAccountCookie","type":$testAccessTokenType,"expires":$testAccessTokenExpiration}"""
+        val testAccessTokenJsonObject = JSONObject(testAccessTokenJson)
+
         GlobalSQLiteDbTestHelper.insertActiveAccount(
-            id = TEST_ACTIVE_ACCOUNT_ID,
+            id = testActiveAccountId,
             teamId = null,
-            cookie = TEST_ACTIVE_ACCOUNT_COOKIE,
-            accessToken = TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN,
-            registeredPush = TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH,
+            cookie = testActiveAccountCookie,
+            accessToken = testAccessTokenJsonObject,
+            registeredPush = testActiveAccountRegisteredPush,
             openHelper = testOpenHelper
         )
 
@@ -48,23 +56,29 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
         runBlocking {
             val activeAccounts = getActiveAccounts()
-            val account = activeAccounts[0]
-            assert(account.id == TEST_ACTIVE_ACCOUNT_ID)
-            assert(account.teamId == null)
-            assert(account.accessToken?.token == TEST_ACTIVE_ACCOUNT_COOKIE)
-            assert(account.accessToken?.tokenType == TEST_ACCESS_TOKEN_TYPE)
-            assert(account.accessToken?.expiresInMillis == 1582896705028)
-            assert(account.refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE)
+            with(activeAccounts[0]) {
+                assert(id == testActiveAccountId)
+                assert(teamId == null)
+                assert(accessToken?.token == testActiveAccountCookie)
+                assert(accessToken?.tokenType == testAccessTokenType)
+                assert(accessToken?.expiresInMillis == 1582896705028)
+                assert(refreshToken == testActiveAccountCookie)
+            }
         }
     }
 
     @Test
     fun givenMigrateTeamsFrom24to25_thenValidateDataIsStillIntact() {
+        val testTeamId = "1"
+        val testTeamName = "testTeam"
+        val testTeamCreator = "123"
+        val testTeamIcon = "teamIcon.png"
+
         GlobalSQLiteDbTestHelper.insertTeam(
-            id = TEST_TEAM_ID,
-            name = TEST_TEAM_NAME,
-            creator = TEST_TEAM_CREATOR,
-            icon = TEST_TEAM_ICON,
+            id = testTeamId,
+            name = testTeamName,
+            creator = testTeamCreator,
+            icon = testTeamIcon,
             openHelper = testOpenHelper
         )
 
@@ -72,28 +86,39 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
         runBlocking {
             val teams = getTeams()
-            val team = teams[0]
-            assert(team.teamId == TEST_TEAM_ID)
-            assert(team.creatorId == TEST_TEAM_CREATOR)
-            assert(team.iconId == TEST_TEAM_ICON)
-            assert(team.teamName == TEST_TEAM_NAME)
+            with(teams[0]) {
+                assert(teamId == testTeamId)
+                assert(creatorId == testTeamCreator)
+                assert(iconId == testTeamIcon)
+                assert(teamName == testTeamName)
+            }
         }
     }
 
 
     @Test
     fun givenMigrateCacheEntryFrom24to25_thenValidateDataIsStillIntact() {
+        val testCacheEntryId = "1"
+        val testCacheEntryFileId = "fileId"
+        val testCacheEntryLastUsed = 38847746L
+        val testCacheEntryTimeout = 1582896705028L
+        val testCacheEntryFilePath = "/data/downloads/"
+        val testCacheEntryfileName = "cachentry2"
+        val testCacheEntryMime = ".txt"
+        val testCacheEntryEncKey = "AES256"
+        val testCacheEntryLength = 200L
+
         GlobalSQLiteDbTestHelper.insertCacheEntry(
-            id = TEST_CACHE_ENTRY_ID,
-            fileId = TEST_CACHE_ENTRY_FILE_ID,
+            id = testCacheEntryId,
+            fileId = testCacheEntryFileId,
             data = null,
-            lastUsed = TEST_CACHE_ENTRY_LAST_USED,
-            timeout = TEST_CACHE_ENTRY_TIME_OUT,
-            filePath = TEST_CACHE_ENTRY_FILE_PATH,
-            fileName = TEST_CACHE_ENTRY_FILE_NAME,
-            mime = TEST_CACHE_ENTRY_MIME,
-            encKey = TEST_CACHE_ENTRY_ENC_KEY,
-            length = TEST_CACHE_ENTRY_LENGTH,
+            lastUsed = testCacheEntryLastUsed,
+            timeout = testCacheEntryTimeout,
+            filePath = testCacheEntryFilePath,
+            fileName = testCacheEntryfileName,
+            mime = testCacheEntryMime,
+            encKey = testCacheEntryEncKey,
+            length = testCacheEntryLength,
             openHelper = testOpenHelper
         )
 
@@ -101,16 +126,17 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
         runBlocking {
             val cachedEntries = getCacheEntries()
-            val cachedEntry = cachedEntries[0]
-            assert(cachedEntry.key == TEST_CACHE_ENTRY_ID)
-            assert(cachedEntry.fileId == TEST_CACHE_ENTRY_FILE_ID)
-            assertNull(cachedEntry.data)
-            assert(cachedEntry.lastUsed == TEST_CACHE_ENTRY_LAST_USED)
-            assert(cachedEntry.timeout == TEST_CACHE_ENTRY_TIME_OUT)
-            assert(cachedEntry.filePath == TEST_CACHE_ENTRY_FILE_PATH)
-            assert(cachedEntry.mime == TEST_CACHE_ENTRY_MIME)
-            assert(cachedEntry.encKey == TEST_CACHE_ENTRY_ENC_KEY)
-            assert(cachedEntry.length == TEST_CACHE_ENTRY_LENGTH)
+            with(cachedEntries[0]) {
+                assert(key == testCacheEntryId)
+                assert(fileId == testCacheEntryFileId)
+                assertNull(data)
+                assert(lastUsed == testCacheEntryLastUsed)
+                assert(timeout == testCacheEntryTimeout)
+                assert(filePath == testCacheEntryFilePath)
+                assert(mime == testCacheEntryMime)
+                assert(encKey == testCacheEntryEncKey)
+                assert(length == testCacheEntryLength)
+            }
         }
     }
 
@@ -138,33 +164,6 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         getGlobalDb().teamsDao().allTeams()
 
     companion object {
-
-        private const val TEST_ACTIVE_ACCOUNT_ID = "1"
-
-        //ActiveAccount
         private const val TEST_DB_NAME = "ZGlobal.db"
-        private const val TEST_ACTIVE_ACCOUNT_COOKIE = "111122333"
-        private const val TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH = "11111122222"
-        private const val TEST_ACCESS_TOKEN_TYPE = "Bearer"
-        private const val TEST_ACCESS_TOKEN_EXPIRATION_TIME = 1582896705028
-        private const val ACCESS_TOKEN_JSON = """{"token":"$TEST_ACTIVE_ACCOUNT_COOKIE","type":$TEST_ACCESS_TOKEN_TYPE,"expires":$TEST_ACCESS_TOKEN_EXPIRATION_TIME}"""
-        private val TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN = JSONObject(ACCESS_TOKEN_JSON)
-
-        //Teams
-        private const val TEST_TEAM_ID = "1"
-        private const val TEST_TEAM_NAME = "testTeam"
-        private const val TEST_TEAM_CREATOR = "123"
-        private const val TEST_TEAM_ICON = "teamIcon.png"
-
-        //Cache Entry
-        private const val TEST_CACHE_ENTRY_ID = "1"
-        private const val TEST_CACHE_ENTRY_FILE_ID = "fileId"
-        private const val TEST_CACHE_ENTRY_LAST_USED = 38847746L
-        private const val TEST_CACHE_ENTRY_TIME_OUT = 1582896705028L
-        private const val TEST_CACHE_ENTRY_FILE_PATH = "/data/downloads/"
-        private const val TEST_CACHE_ENTRY_FILE_NAME = "cachentry2"
-        private const val TEST_CACHE_ENTRY_MIME = ".txt"
-        private const val TEST_CACHE_ENTRY_ENC_KEY = "AES256"
-        private const val TEST_CACHE_ENTRY_LENGTH = 200L
     }
 }

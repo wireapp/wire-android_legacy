@@ -42,6 +42,13 @@ class GlobalSQLiteDbTestHelper private constructor() {
         private const val ACTIVE_ACCOUNT_SSO_ID_COL = "sso_id"
         private const val ACTIVE_ACCOUNTS_TABLE_NAME = "ActiveAccounts"
 
+        private const val TEST_ACTIVE_ACCOUNT_COOKIE = "111122333"
+        private const val TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH = "11111122222"
+        private const val TEST_ACCESS_TOKEN_TYPE = "Bearer"
+        private const val TEST_ACCESS_TOKEN_EXPIRATION_TIME = 1582896705028
+        private const val ACCESS_TOKEN_JSON = """{"token":"$TEST_ACTIVE_ACCOUNT_COOKIE","type":$TEST_ACCESS_TOKEN_TYPE,"expires":$TEST_ACCESS_TOKEN_EXPIRATION_TIME}"""
+        private val TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN = JSONObject(ACCESS_TOKEN_JSON)
+
         //Teams
         private const val TEAMS_ID_COL = "_id"
         private const val TEAM_NAME_COL = "name"
@@ -64,10 +71,10 @@ class GlobalSQLiteDbTestHelper private constructor() {
 
         fun insertActiveAccount(
             id: String,
-            teamId: String?,
-            cookie: String,
-            accessToken: JSONObject,
-            registeredPush: String,
+            teamId: String? = null,
+            cookie: String = TEST_ACTIVE_ACCOUNT_COOKIE,
+            accessToken: JSONObject = TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN,
+            registeredPush: String = TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH,
             ssoId: String? = null,
             openHelper: GlobalDbSQLiteOpenHelper
         ) {

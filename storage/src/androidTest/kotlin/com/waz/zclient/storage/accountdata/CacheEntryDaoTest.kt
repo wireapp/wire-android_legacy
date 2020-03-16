@@ -27,8 +27,13 @@ class CacheEntryDaoTest : IntegrationTest() {
         cacheEntryDao = globalDatabase.cacheEntryDao()
     }
 
+    @After
+    fun tearDown() {
+        globalDatabase.close()
+    }
+
     @Test
-    fun givenCachedEntriesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
+    fun givenAListOfEntries_whenCachedEntriesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
         val cachedEntries = getListOfCacheEntries()
         cachedEntries.map {
             cacheEntryDao.insertCacheEntry(it)
@@ -37,8 +42,8 @@ class CacheEntryDaoTest : IntegrationTest() {
         val roomActiveAccounts = cacheEntryDao.cacheEntries()
         assert(roomActiveAccounts[0].key == TEST_CACHE_ENTRY_FIRST_ID)
         assert(roomActiveAccounts[1].key == TEST_CACHE_ENTRY_SECOND_ID)
+        assert(roomActiveAccounts.size == 2)
         roomActiveAccounts.map {
-            assert(roomActiveAccounts.size == 2)
             assert(it.fileId == TEST_CACHE_ENTRY_FILE_ID)
             assert(it.data == null)
             assert(it.lastUsed == TEST_CACHE_ENTRY_LAST_USED)
@@ -70,11 +75,6 @@ class CacheEntryDaoTest : IntegrationTest() {
         createCacheEntry(TEST_CACHE_ENTRY_FIRST_ID),
         createCacheEntry(TEST_CACHE_ENTRY_SECOND_ID)
     )
-
-    @After
-    fun tearDown() {
-        globalDatabase.close()
-    }
 
     companion object {
         private const val TEST_CACHE_ENTRY_FIRST_ID = "1"

@@ -27,8 +27,13 @@ class TeamsDaoTest : IntegrationTest() {
         teamsDao = globalDatabase.teamsDao()
     }
 
+    @After
+    fun tearDown() {
+        globalDatabase.close()
+    }
+
     @Test
-    fun givenAllTeamsIsCalled_ThenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
+    fun givenAListOfTeams_whenAllTeamsIsCalled_ThenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
         val teams = getListOfTeams()
         teams.map {
             teamsDao.insertTeam(it)
@@ -37,8 +42,8 @@ class TeamsDaoTest : IntegrationTest() {
         val roomActiveAccounts = teamsDao.allTeams()
         assert(roomActiveAccounts[0].teamId == TEST_TEAM_FIRST_ID)
         assert(roomActiveAccounts[1].teamId == TEST_TEAM_SECOND_ID)
+        assert(roomActiveAccounts.size == 2)
         roomActiveAccounts.map {
-            assert(roomActiveAccounts.size == 2)
             assert(it.teamName == TEST_TEAM_NAME)
             assert(it.creatorId == TEST_TEAM_CREATOR)
             assert(it.iconId == TEST_TEAM_ICON)
@@ -58,11 +63,6 @@ class TeamsDaoTest : IntegrationTest() {
         createTeamEntity(TEST_TEAM_FIRST_ID),
         createTeamEntity(TEST_TEAM_SECOND_ID)
     )
-
-    @After
-    fun tearDown() {
-        globalDatabase.close()
-    }
 
     companion object {
         private const val TEST_TEAM_FIRST_ID = "1"
