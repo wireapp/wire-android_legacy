@@ -119,7 +119,6 @@ class UsersTable126to127MigrationTest : IntegrationTest() {
 
 
     companion object {
-        //Users
         private const val TEST_USER_ID = "id"
         private const val TEST_TEAM_ID = "teamId"
         private const val TEST_NAME = "name"

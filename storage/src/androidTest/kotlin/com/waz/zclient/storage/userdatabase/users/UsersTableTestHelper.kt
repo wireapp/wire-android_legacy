@@ -8,8 +8,6 @@ import com.waz.zclient.storage.userdatabase.UserDbSQLiteOpenHelper
 class UsersTableTestHelper private constructor() {
 
     companion object {
-
-        //Users
         private const val USERS_TABLE_NAME = "Users"
         private const val USERS_ID_COL = "_id"
         private const val USERS_TEAM_ID_COL = "teamId"
@@ -37,7 +35,6 @@ class UsersTableTestHelper private constructor() {
         private const val USERS_SELF_PERMISSIONS_COL = "self_permissions"
         private const val USERS_COPY_PERMISSIONS_COL = "copy_permissions"
         private const val USERS_CREATED_BY_COL = "created_by"
-
 
         fun insertUser(
             id: String,
