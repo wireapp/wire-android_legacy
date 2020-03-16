@@ -186,6 +186,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val readReceiptsStorage: ReadReceiptsStorage               = wire[ReadReceiptsStorageImpl]
   lazy val foldersStorage: FoldersStorage                         = wire[FoldersStorageImpl]
   lazy val conversationFoldersStorage: ConversationFoldersStorage = wire[ConversationFoldersStorageImpl]
+  lazy val buttonsStorage: ButtonsStorage                         = wire[ButtonsStorageImpl]
 
   lazy val googleMapsClient   = new GoogleMapsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val youtubeClient      = new YouTubeClientImpl()(urlCreator, httpClient, authRequestInterceptor)
