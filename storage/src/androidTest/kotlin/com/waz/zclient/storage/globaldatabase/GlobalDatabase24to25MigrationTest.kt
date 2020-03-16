@@ -5,6 +5,7 @@ import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_24_25
 import com.waz.zclient.storage.di.StorageModule.getGlobalDatabase
+import junit.framework.Assert.assertNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -33,13 +34,21 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
     }
 
     @Test
-    fun migrateActiveAccountsFrom24to25_validateDataIsStillIntact() {
+    fun givenActiveAccountInsertedIntoActiveAccountVersion24_whenMigratedToVersion25_thenAssertDataIsStillIntact() {
+        val testActiveAccountId = "1"
+        val testActiveAccountCookie = "111122333"
+        val testActiveAccountRegisteredPush = "11111122222"
+        val testAccessTokenType = "Bearer"
+        val testAccessTokenExpiration = 1582896705028
+        val testAccessTokenJson = """{"token":"$testActiveAccountCookie","type":$testAccessTokenType,"expires":$testAccessTokenExpiration}"""
+        val testAccessTokenJsonObject = JSONObject(testAccessTokenJson)
+
         GlobalSQLiteDbTestHelper.insertActiveAccount(
-            id = TEST_ACTIVE_ACCOUNT_ID,
+            id = testActiveAccountId,
             teamId = null,
-            cookie = TEST_ACTIVE_ACCOUNT_COOKIE,
-            accessToken = TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN,
-            registeredPush = TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH,
+            cookie = testActiveAccountCookie,
+            accessToken = testAccessTokenJsonObject,
+            registeredPush = testActiveAccountRegisteredPush,
             openHelper = testOpenHelper
         )
 
@@ -47,23 +56,29 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
         runBlocking {
             val activeAccounts = getActiveAccounts()
-            val account = activeAccounts[0]
-            assert(account.id == TEST_ACTIVE_ACCOUNT_ID)
-            assert(account.teamId == null)
-            assert(account.accessToken?.token == TEST_ACTIVE_ACCOUNT_COOKIE)
-            assert(account.accessToken?.tokenType == TEST_ACCESS_TOKEN_TYPE)
-            assert(account.accessToken?.expiresInMillis == 1582896705028)
-            assert(account.refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE)
+            with(activeAccounts[0]) {
+                assert(id == testActiveAccountId)
+                assert(teamId == null)
+                assert(accessToken?.token == testActiveAccountCookie)
+                assert(accessToken?.tokenType == testAccessTokenType)
+                assert(accessToken?.expiresInMillis == 1582896705028)
+                assert(refreshToken == testActiveAccountCookie)
+            }
         }
     }
 
     @Test
-    fun migrateTeamsFrom24to25_validateDataIsStillIntact() {
+    fun givenTeamInsertedIntoTeamsVersion24_whenMigratedToVersion25_thenAssertDataIsStillIntact() {
+        val testTeamId = "1"
+        val testTeamName = "testTeam"
+        val testTeamCreator = "123"
+        val testTeamIcon = "teamIcon.png"
+
         GlobalSQLiteDbTestHelper.insertTeam(
-            id = TEST_TEAM_ID,
-            name = TEST_TEAM_NAME,
-            creator = TEST_TEAM_CREATOR,
-            icon = TEST_TEAM_ICON,
+            id = testTeamId,
+            name = testTeamName,
+            creator = testTeamCreator,
+            icon = testTeamIcon,
             openHelper = testOpenHelper
         )
 
@@ -71,11 +86,57 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
         runBlocking {
             val teams = getTeams()
-            val team = teams[0]
-            assert(team.teamId == TEST_TEAM_ID)
-            assert(team.creatorId == TEST_TEAM_CREATOR)
-            assert(team.iconId == TEST_TEAM_ICON)
-            assert(team.teamName == TEST_TEAM_NAME)
+            with(teams[0]) {
+                assert(teamId == testTeamId)
+                assert(creatorId == testTeamCreator)
+                assert(iconId == testTeamIcon)
+                assert(teamName == testTeamName)
+            }
+        }
+    }
+
+
+    @Test
+    fun givenCacheEntryInsertedIntoCacheEntryVersion24_whenMigratedToVersion25_thenAssertDataIsStillIntact() {
+        val testCacheEntryId = "1"
+        val testCacheEntryFileId = "fileId"
+        val testCacheEntryLastUsed = 38847746L
+        val testCacheEntryTimeout = 1582896705028L
+        val testCacheEntryFilePath = "/data/downloads/"
+        val testCacheEntryfileName = "cachentry2"
+        val testCacheEntryMime = ".txt"
+        val testCacheEntryEncKey = "AES256"
+        val testCacheEntryLength = 200L
+
+        GlobalSQLiteDbTestHelper.insertCacheEntry(
+            id = testCacheEntryId,
+            fileId = testCacheEntryFileId,
+            data = null,
+            lastUsed = testCacheEntryLastUsed,
+            timeout = testCacheEntryTimeout,
+            filePath = testCacheEntryFilePath,
+            fileName = testCacheEntryfileName,
+            mime = testCacheEntryMime,
+            encKey = testCacheEntryEncKey,
+            length = testCacheEntryLength,
+            openHelper = testOpenHelper
+        )
+
+        validateMigration()
+
+        runBlocking {
+            val cachedEntries = getCacheEntries()
+            with(cachedEntries[0]) {
+                assert(key == testCacheEntryId)
+                assert(fileId == testCacheEntryFileId)
+                assertNull(data)
+                assert(lastUsed == testCacheEntryLastUsed)
+                assert(timeout == testCacheEntryTimeout)
+                assert(filePath == testCacheEntryFilePath)
+                assert(mime == testCacheEntryMime)
+                assert(encKey == testCacheEntryEncKey)
+                assert(length == testCacheEntryLength)
+            }
         }
     }
 
@@ -93,6 +154,9 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
             GlobalDatabase.migrations
         )
 
+    private suspend fun getCacheEntries() =
+        getGlobalDb().cacheEntryDao().cacheEntries()
+
     private suspend fun getActiveAccounts() =
         getGlobalDb().activeAccountsDao().activeAccounts()
 
@@ -100,23 +164,6 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         getGlobalDb().teamsDao().allTeams()
 
     companion object {
-
-        private const val TEST_ACTIVE_ACCOUNT_ID = "1"
-
-        //ActiveAccount
         private const val TEST_DB_NAME = "ZGlobal.db"
-        private const val TEST_ACTIVE_ACCOUNT_COOKIE = "111122333"
-        private const val TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH = "11111122222"
-        private const val TEST_ACCESS_TOKEN_TYPE = "Bearer"
-        private const val TEST_ACCESS_TOKEN_EXPIRATION_TIME = 1582896705028
-        private const val ACCESS_TOKEN_JSON = """{"token":"$TEST_ACTIVE_ACCOUNT_COOKIE","type":$TEST_ACCESS_TOKEN_TYPE,"expires":$TEST_ACCESS_TOKEN_EXPIRATION_TIME}"""
-
-        //Teams
-        private const val TEST_TEAM_ID = "1"
-        private const val TEST_TEAM_NAME = "testTeam"
-        private const val TEST_TEAM_CREATOR = "123"
-        private const val TEST_TEAM_ICON = "teamIcon.png"
-
-        private val TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN = JSONObject(ACCESS_TOKEN_JSON)
     }
 }
