@@ -28,7 +28,7 @@ class TeamsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenAllTeamsIsCalled_ThenAsserDataIsTheSameAsInserted(): Unit = runBlocking {
+    fun givenAllTeamsIsCalled_ThenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
         val teams = getListOfTeams()
         teams.map {
             teamsDao.insertTeam(it)
