@@ -6,17 +6,15 @@
     tools:orientation="vertical"
     tools:parentTag="android.widget.LinearLayout">
 
-    <LinearLayout
-        android:id="@+id/composite_message_text_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/composite_message_text_layout_margin_bottom"
-        android:orientation="vertical" />
+    <include
+        android:id="@+id/composite_message_textpartview"
+        layout="@layout/message_text" />
 
     <com.waz.zclient.messages.parts.composite.ButtonContainerView
         android:id="@+id/composite_message_button_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/content__padding_left"
+        android:layout_marginTop="@dimen/composite_message_button_layout_margin_top"
         android:layout_marginEnd="@dimen/content__padding_right" />
 </merge>

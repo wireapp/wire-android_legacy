@@ -224,7 +224,7 @@ object MessageBottomSheetDialog {
 
     case object Details extends MessageAction(R.id.message_bottom_menu_item_details, R.string.glyph__view, R.string.message_bottom_menu_action_details) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] = msg.msgType match {
-        case ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET if !msg.isEphemeral =>
+        case ANY_ASSET | IMAGE_ASSET | AUDIO_ASSET | LOCATION | TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | VIDEO_ASSET | COMPOSITE if !msg.isEphemeral =>
           for {
             isGroup <- zms.conversations.groupConversation(msg.convId)
             isMember <- isMemberOfConversation(msg.convId, zms)

@@ -815,7 +815,7 @@ object GenericContent {
         else if (protoItem.hasButton) ButtonItem(protoItem.getButton)
         else UnknownItem
       }
-      Some(new CompositeData(items, Option(proto.expectsReadConfirmation), Option(proto.legalHoldStatus)))
+      Some(CompositeData(items, Option(proto.expectsReadConfirmation), Option(proto.legalHoldStatus)))
     }
   }
 }

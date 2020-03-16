@@ -69,5 +69,5 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
 object MessageContentIndex {
   val MaxSearchResults = 1024 // don't want to read whole db on common search query
   val SearchLimit = MaxSearchResults.toString
-  val TextMessageTypes = Set(Message.Type.TEXT, Message.Type.TEXT_EMOJI_ONLY, Message.Type.RICH_MEDIA)
+  val TextMessageTypes = Set(Message.Type.TEXT, Message.Type.TEXT_EMOJI_ONLY, Message.Type.RICH_MEDIA, Message.Type.COMPOSITE)
 }
