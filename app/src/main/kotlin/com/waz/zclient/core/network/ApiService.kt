@@ -12,6 +12,7 @@ import com.waz.zclient.core.exception.NotFound
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.exception.Unauthorized
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.logging.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,12 +34,15 @@ abstract class ApiService {
         return try {
             val response = call()
             if (response.isSuccessful) {
+                Logger.error("ApiService", "Response is successful")
                 response.body()?.let { Either.Right(it) }
                     ?: (default?.let { Either.Right(it) } ?: Either.Left(EmptyResponseBody))
             } else {
+                Logger.error("ApiService", "Response failed with ${response.code()}")
                 handleRequestError(response)
             }
         } catch (exception: Throwable) {
+            Logger.error("ApiService", "Response failed with", exception)
             when (exception) {
                 is CancellationException -> Either.Left(Cancelled)
                 else -> Either.Left(ServerError)

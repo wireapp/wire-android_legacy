@@ -246,6 +246,7 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="stateVisible"
             />
+        <activity android:name=".features.teams.conversations.TeamsConversationListActivity" />
 
         <receiver
             android:name=".broadcast.ReferralBroadcastReceiver"

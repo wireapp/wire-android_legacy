@@ -28,8 +28,8 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.views.FlatWireButton
+import com.waz.zclient.features.teams.conversations.TeamsConversationListActivity
 import com.waz.zclient.preferences.views.TextButton
-import com.waz.zclient.settings.about.SettingsAboutActivity
 import com.waz.zclient.settings.support.SettingsSupportActivity
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
 
@@ -65,7 +65,7 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsBackStackKey()) }
   advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedBackStackKey()) }
   supportButton.onClickEvent.on(Threading.Ui) { _ => context.startActivity(SettingsSupportActivity.newIntent(context))}
-  aboutButton.onClickEvent.on(Threading.Ui) { _ => context.startActivity(SettingsAboutActivity.newIntent(context)) }
+  aboutButton.onClickEvent.on(Threading.Ui) { _ => context.startActivity(TeamsConversationListActivity.newIntent(context)) }
   devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsBackStackKey()) }
   avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsBackStackKey()) }
 
