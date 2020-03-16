@@ -5,7 +5,7 @@
 
     <fragment
         android:id="@+id/settingsMainFragment"
-        android:name="com.waz.zclient.settings.main.SettingsMainFragment"
+        android:name="com.waz.zclient.features.settings.main.SettingsMainFragment"
         android:label="SettingsMainFragment" >
         <action
             android:id="@+id/action_settingsMainFragment_to_settingsAccountFragment"
@@ -28,7 +28,7 @@
     </fragment>
     <fragment
         android:id="@+id/settingsAccountFragment"
-        android:name="com.waz.zclient.settings.account.SettingsAccountFragment"
+        android:name="com.waz.zclient.features.settings.account.SettingsAccountFragment"
         android:label="SettingsAccountFragment" >
         <action
             android:id="@+id/action_settingsAccountFragment_to_editPhoneNumberActivity"
@@ -42,34 +42,34 @@
     </fragment>
     <fragment
         android:id="@+id/settingsDeviceListFragment"
-        android:name="com.waz.zclient.settings.devices.list.SettingsDeviceListFragment"
+        android:name="com.waz.zclient.features.settings.devices.list.SettingsDeviceListFragment"
         android:label="SettingsDeviceListFragment" />
     <fragment
         android:id="@+id/settingsOptionsFragment"
-        android:name="com.waz.zclient.settings.options.SettingsOptionsFragment"
+        android:name="com.waz.zclient.features.settings.options.SettingsOptionsFragment"
         android:label="SettingsOptionsFragment" />
     <fragment
         android:id="@+id/settingsAdvancedFragment"
-        android:name="com.waz.zclient.settings.advanced.SettingsAdvancedFragment"
+        android:name="com.waz.zclient.features.settings.advanced.SettingsAdvancedFragment"
         android:label="SettingsAdvancedFragment" />
     <fragment
         android:id="@+id/settingsSupportFragment"
-        android:name="com.waz.zclient.settings.support.SettingsSupportFragment"
+        android:name="com.waz.zclient.features.settings.support.SettingsSupportFragment"
         android:label="SettingsSupportFragment" />
     <fragment
         android:id="@+id/settingsAboutFragment"
-        android:name="com.waz.zclient.settings.about.SettingsAboutFragment"
+        android:name="com.waz.zclient.features.settings.about.SettingsAboutFragment"
         android:label="SettingsAboutFragment" />
     <activity
         android:id="@+id/editPhoneNumberActivity"
-        android:name="com.waz.zclient.settings.account.editphonenumber.EditPhoneNumberActivity"
+        android:name="com.waz.zclient.features.settings.account.editphonenumber.EditPhoneNumberActivity"
         android:label="EditPhoneNumberActivity" />
     <dialog
         android:id="@+id/editHandleDialogFragment"
-        android:name="com.waz.zclient.settings.account.edithandle.EditHandleDialogFragment"
+        android:name="com.waz.zclient.features.settings.account.edithandle.EditHandleDialogFragment"
         android:label="EditHandleDialogFragment" />
     <dialog
         android:id="@+id/deleteAccountDialogFragment"
-        android:name="com.waz.zclient.settings.account.deleteaccount.DeleteAccountDialogFragment"
+        android:name="com.waz.zclient.features.settings.account.deleteaccount.DeleteAccountDialogFragment"
         android:label="DeleteAccountDialogFragment" />
 </navigation>
