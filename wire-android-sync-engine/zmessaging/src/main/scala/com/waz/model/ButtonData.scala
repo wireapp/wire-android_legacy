@@ -10,7 +10,7 @@ case class ButtonData(messageId: MessageId,
                       buttonId:  ButtonId,
                       title:     String,
                       ordinal:   Int,
-                      state:     ButtonState = ButtonNotClicked) extends Identifiable[(MessageId, ButtonId)]{
+                      state:     ButtonState = ButtonNotClicked) extends Identifiable[ButtonDataDaoId]{
   override def id: ButtonDataDaoId = (messageId, buttonId)
 
   def copyWithError(error: String): ButtonData = copy(state = ButtonError(error))
