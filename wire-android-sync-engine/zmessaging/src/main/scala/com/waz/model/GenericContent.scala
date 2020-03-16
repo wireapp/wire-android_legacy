@@ -787,8 +787,8 @@ object GenericContent {
   implicit object ButtonActionConfirmation extends GenericContent[ButtonActionConfirmation] {
     override def set(msg: GenericMessage): ButtonActionConfirmation => GenericMessage = msg.setButtonActionConfirmation
 
-    def unapply(proto: ButtonActionConfirmation): Option[(String, Option[String])] =
-      Some(proto.referenceMessageId, Option(proto.buttonId))
+    def unapply(proto: ButtonActionConfirmation): Option[(MessageId, Option[ButtonId])] =
+      Some(MessageId(proto.referenceMessageId), Option(proto.buttonId).map(ButtonId(_)))
   }
 
   type ButtonAction = Messages.ButtonAction
@@ -805,7 +805,6 @@ object GenericContent {
   type Composite = Messages.Composite
   type Button = Messages.Button
 
-  //TODO BUTTONS: can it be ephemeral?
   implicit object Composite extends GenericContent[Composite] {
     override def set(msg: GenericMessage): Composite => GenericMessage = msg.setComposite
 
