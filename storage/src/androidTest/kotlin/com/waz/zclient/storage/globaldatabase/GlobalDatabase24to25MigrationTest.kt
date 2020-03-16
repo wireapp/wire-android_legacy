@@ -34,7 +34,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
     }
 
     @Test
-    fun migrateActiveAccountsFrom24to25_validateDataIsStillIntact() {
+    fun givenMigrateActiveAccountsFrom24to25_thenValidateDataIsStillIntact() {
         GlobalSQLiteDbTestHelper.insertActiveAccount(
             id = TEST_ACTIVE_ACCOUNT_ID,
             teamId = null,
@@ -59,7 +59,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
     }
 
     @Test
-    fun migrateTeamsFrom24to25_validateDataIsStillIntact() {
+    fun givenMigrateTeamsFrom24to25_thenValidateDataIsStillIntact() {
         GlobalSQLiteDbTestHelper.insertTeam(
             id = TEST_TEAM_ID,
             name = TEST_TEAM_NAME,
@@ -82,7 +82,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
 
     @Test
-    fun migrateCacheEntryFrom24to25_validateDataIsStillIntact() {
+    fun givenMigrateCacheEntryFrom24to25_thenValidateDataIsStillIntact() {
         GlobalSQLiteDbTestHelper.insertCacheEntry(
             id = TEST_CACHE_ENTRY_ID,
             fileId = TEST_CACHE_ENTRY_FILE_ID,
@@ -148,6 +148,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         private const val TEST_ACCESS_TOKEN_TYPE = "Bearer"
         private const val TEST_ACCESS_TOKEN_EXPIRATION_TIME = 1582896705028
         private const val ACCESS_TOKEN_JSON = """{"token":"$TEST_ACTIVE_ACCOUNT_COOKIE","type":$TEST_ACCESS_TOKEN_TYPE,"expires":$TEST_ACCESS_TOKEN_EXPIRATION_TIME}"""
+        private val TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN = JSONObject(ACCESS_TOKEN_JSON)
 
         //Teams
         private const val TEST_TEAM_ID = "1"
@@ -165,8 +166,5 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         private const val TEST_CACHE_ENTRY_MIME = ".txt"
         private const val TEST_CACHE_ENTRY_ENC_KEY = "AES256"
         private const val TEST_CACHE_ENTRY_LENGTH = 200L
-
-
-        private val TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN = JSONObject(ACCESS_TOKEN_JSON)
     }
 }

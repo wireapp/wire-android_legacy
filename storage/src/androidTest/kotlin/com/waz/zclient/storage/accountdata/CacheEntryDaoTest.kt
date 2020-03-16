@@ -28,7 +28,7 @@ class CacheEntryDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun getAllCachedEntriesFromCacheEntry(): Unit = runBlocking {
+    fun givenCachedEntriesIsCalled_thenAssertDataIsTheSameAsInserted(): Unit = runBlocking {
         val cachedEntries = getListOfCacheEntries()
         cachedEntries.map {
             cacheEntryDao.insertCacheEntry(it)

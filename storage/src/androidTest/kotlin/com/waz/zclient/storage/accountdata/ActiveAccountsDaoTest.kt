@@ -30,7 +30,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun getAccessTokenFromActiveAccount_whereUserIdIsActiveUser() = runBlocking {
+    fun givenAccessTokenIsCalled_whenUserIdIsActiveUser_thenDataShouldBeTheSame() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -41,7 +41,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun getAccessTokenFromActiveAccount_whereUserIdIsNotActiveUser() = runBlocking {
+    fun givenAccessTokenIsCalled_whenUserIdIsNotAnActiveUser_thenDataShouldBeTheSame() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -50,7 +50,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun updateAccessTokenFromActiveAccount_whereUserIdIsActiveUser() = runBlocking {
+    fun givenUpdateAccessTokenIsCalled_thenDataShouldBeTheSameAsInserted() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -68,7 +68,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun refreshTokenFromActiveAccount_whereUserIdIsActiveUser() = runBlocking {
+    fun givenRefreshTokenIsCalled_whenUserIdIsActiveUser_thenDataShouldBeTheSameAsInserted() = runBlocking {
         val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
@@ -82,7 +82,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun getAllAccountsFromActiveAccount() = runBlocking {
+    fun givenGetAllAccountsIsCalled_thenDataShouldBeSameAsInserted() = runBlocking {
         val activeAccounts = createActiveAccountsList()
         activeAccounts.map {
             activeAccountsDao.insertActiveAccount(it)
@@ -98,7 +98,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun deleteAccountsFromActiveAccount() = runBlocking {
+    fun givenDeleteAccountsIsCalled_thenRemoveAccountFromDatabase() = runBlocking {
         val activeAccounts = createActiveAccountsList()
         activeAccounts.map {
             activeAccountsDao.insertActiveAccount(it)
