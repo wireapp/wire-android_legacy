@@ -6,7 +6,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4ClassRunner::class)
-abstract class IntegrationTest {
+open class IntegrationTest {
     protected fun getApplicationContext(): Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 }

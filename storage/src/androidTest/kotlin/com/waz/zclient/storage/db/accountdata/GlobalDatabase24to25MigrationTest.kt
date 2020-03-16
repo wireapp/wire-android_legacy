@@ -56,8 +56,6 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
             assert(account.accessToken?.expiresInMillis == 1582896705028)
             assert(account.refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE)
         }
-
-        testHelper.closeDb(db)
     }
 
     @Test
@@ -80,8 +78,6 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
             assert(team.iconId == TEST_TEAM_ICON)
             assert(team.teamName == TEST_TEAM_NAME)
         }
-
-        testHelper.closeDb(db)
     }
 
     private fun validateMigraton() =

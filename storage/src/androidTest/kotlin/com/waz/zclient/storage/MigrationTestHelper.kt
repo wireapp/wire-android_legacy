@@ -18,8 +18,6 @@ class MigrationTestHelper(assetLocation: String?) {
             FrameworkSQLiteOpenHelperFactory()
         )
 
-    fun closeDb(db: SupportSQLiteDatabase) = migrationTestHelper.closeWhenFinished(db)
-
     fun validateMigration(
         dbName: String,
         dbVersion: Int,
