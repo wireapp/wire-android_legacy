@@ -10,18 +10,19 @@ import androidx.navigation.fragment.findNavController
 import java.lang.ref.WeakReference
 
 internal class NavigationComponentsNavigator(
-    private val navController: NavController,
+    navController: NavController,
     activity: Activity?
 ) : Navigator {
 
+    private val navController = WeakReference<NavController>(navController)
     private val activityWeakRef = WeakReference<Activity>(activity)
 
     override fun navigateTo(navigationId: Int) {
-        navController.navigate(navigationId)
+        navController.get()?.navigate(navigationId)
     }
 
     override fun navigateTo(navigationId: Int, bundle: Bundle) {
-        navController.navigate(navigationId, bundle)
+        navController.get()?.navigate(navigationId, bundle)
     }
 
     //TODO: do we need a custom navigator (for backstack, etc.)
