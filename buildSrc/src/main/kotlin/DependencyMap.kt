@@ -88,4 +88,5 @@ class AndroidXTestDependencyMap(map: Map<String, String>) {
     val testJunit: String by map
     val testRules: String by map
     val testWorkManager: String by map
+    val testRoom: String by map
 }
