@@ -1,10 +1,9 @@
-package com.waz.zclient.storage.db.accountdata
+package com.waz.zclient.storage.globaldatabase
 
 import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.GlobalDatabase
-import com.waz.zclient.storage.db.accountdata.sqlite.GlobalDbSQLiteOpenHelper
-import com.waz.zclient.storage.db.accountdata.sqlite.GlobalSQLiteDbTestHelper
+import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_24_25
 import com.waz.zclient.storage.di.StorageModule.getGlobalDatabase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -44,7 +43,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
             openHelper = testOpenHelper
         )
 
-        val db = validateMigraton()
+        validateMigration()
 
         runBlocking {
             val activeAccounts = getActiveAccounts()
@@ -68,7 +67,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
             openHelper = testOpenHelper
         )
 
-        val db = validateMigraton()
+        validateMigration()
 
         runBlocking {
             val teams = getTeams()
@@ -80,7 +79,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         }
     }
 
-    private fun validateMigraton() =
+    private fun validateMigration() =
         testHelper.validateMigration(
             TEST_DB_NAME,
             25,

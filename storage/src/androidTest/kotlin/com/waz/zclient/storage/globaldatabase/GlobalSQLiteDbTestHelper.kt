@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.accountdata.sqlite
+package com.waz.zclient.storage.globaldatabase
 
 import android.content.ContentValues
 import android.content.Context

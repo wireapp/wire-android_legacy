@@ -21,11 +21,11 @@ class MigrationTestHelper(assetLocation: String?) {
     fun validateMigration(
         dbName: String,
         dbVersion: Int,
-        validateDroppedTabled: Boolean,
+        validateDroppedTables: Boolean,
         vararg migrations: Migration): SupportSQLiteDatabase =
         migrationTestHelper.runMigrationsAndValidate(
             dbName,
             dbVersion,
-            validateDroppedTabled,
+            validateDroppedTables,
             *migrations)
 }
