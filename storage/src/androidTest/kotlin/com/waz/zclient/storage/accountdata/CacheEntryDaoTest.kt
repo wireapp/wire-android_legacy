@@ -20,8 +20,10 @@ class CacheEntryDaoTest : IntegrationTest() {
 
     @Before
     fun setup() {
-        globalDatabase = Room.inMemoryDatabaseBuilder(getApplicationContext(),
-            GlobalDatabase::class.java).build()
+        globalDatabase = Room.inMemoryDatabaseBuilder(
+            getApplicationContext(),
+            GlobalDatabase::class.java
+        ).build()
         cacheEntryDao = globalDatabase.cacheEntryDao()
     }
 

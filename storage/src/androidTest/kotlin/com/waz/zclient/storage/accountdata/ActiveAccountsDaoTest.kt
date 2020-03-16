@@ -22,8 +22,10 @@ class ActiveAccountsDaoTest : IntegrationTest() {
 
     @Before
     fun setup() {
-        globalDatabase = Room.inMemoryDatabaseBuilder(getApplicationContext(),
-            GlobalDatabase::class.java).build()
+        globalDatabase = Room.inMemoryDatabaseBuilder(
+            getApplicationContext(),
+            GlobalDatabase::class.java
+        ).build()
         activeAccountsDao = globalDatabase.activeAccountsDao()
     }
 
@@ -129,7 +131,8 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     private fun createAccessTokenEntity(
         token: String,
         tokenType: String = TEST_ACCESS_TOKEN_TYPE,
-        expiration: Long = TEST_ACCESS_TOKEN_EXPIRATION_TIME): AccessTokenEntity = AccessTokenEntity(token, tokenType, expiration)
+        expiration: Long = TEST_ACCESS_TOKEN_EXPIRATION_TIME
+    ): AccessTokenEntity = AccessTokenEntity(token, tokenType, expiration)
 
     private fun createActiveAccountsList() =
         listOf(
