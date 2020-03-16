@@ -5,6 +5,7 @@ import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_24_25
 import com.waz.zclient.storage.di.StorageModule.getGlobalDatabase
+import junit.framework.Assert.assertNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -79,6 +80,40 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         }
     }
 
+
+    @Test
+    fun migrateCacheEntryFrom24to25_validateDataIsStillIntact() {
+        GlobalSQLiteDbTestHelper.insertCacheEntry(
+            id = TEST_CACHE_ENTRY_ID,
+            fileId = TEST_CACHE_ENTRY_FILE_ID,
+            data = null,
+            lastUsed = TEST_CACHE_ENTRY_LAST_USED,
+            timeout = TEST_CACHE_ENTRY_TIME_OUT,
+            filePath = TEST_CACHE_ENTRY_FILE_PATH,
+            fileName = TEST_CACHE_ENTRY_FILE_NAME,
+            mime = TEST_CACHE_ENTRY_MIME,
+            encKey = TEST_CACHE_ENTRY_ENC_KEY,
+            length = TEST_CACHE_ENTRY_LENGTH,
+            openHelper = testOpenHelper
+        )
+
+        validateMigration()
+
+        runBlocking {
+            val cachedEntries = getCacheEntries()
+            val cachedEntry = cachedEntries[0]
+            assert(cachedEntry.key == TEST_CACHE_ENTRY_ID)
+            assert(cachedEntry.fileId == TEST_CACHE_ENTRY_FILE_ID)
+            assertNull(cachedEntry.data)
+            assert(cachedEntry.lastUsed == TEST_CACHE_ENTRY_LAST_USED)
+            assert(cachedEntry.timeout == TEST_CACHE_ENTRY_TIME_OUT)
+            assert(cachedEntry.filePath == TEST_CACHE_ENTRY_FILE_PATH)
+            assert(cachedEntry.mime == TEST_CACHE_ENTRY_MIME)
+            assert(cachedEntry.encKey == TEST_CACHE_ENTRY_ENC_KEY)
+            assert(cachedEntry.length == TEST_CACHE_ENTRY_LENGTH)
+        }
+    }
+
     private fun validateMigration() =
         testHelper.validateMigration(
             TEST_DB_NAME,
@@ -92,6 +127,9 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
             getApplicationContext(),
             GlobalDatabase.migrations
         )
+
+    private suspend fun getCacheEntries() =
+        getGlobalDb().cacheEntryDao().cacheEntries()
 
     private suspend fun getActiveAccounts() =
         getGlobalDb().activeAccountsDao().activeAccounts()
@@ -116,6 +154,18 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         private const val TEST_TEAM_NAME = "testTeam"
         private const val TEST_TEAM_CREATOR = "123"
         private const val TEST_TEAM_ICON = "teamIcon.png"
+
+        //Cache Entry
+        private const val TEST_CACHE_ENTRY_ID = "1"
+        private const val TEST_CACHE_ENTRY_FILE_ID = "fileId"
+        private const val TEST_CACHE_ENTRY_LAST_USED = 38847746L
+        private const val TEST_CACHE_ENTRY_TIME_OUT = 1582896705028L
+        private const val TEST_CACHE_ENTRY_FILE_PATH = "/data/downloads/"
+        private const val TEST_CACHE_ENTRY_FILE_NAME = "cachentry2"
+        private const val TEST_CACHE_ENTRY_MIME = ".txt"
+        private const val TEST_CACHE_ENTRY_ENC_KEY = "AES256"
+        private const val TEST_CACHE_ENTRY_LENGTH = 200L
+
 
         private val TEST_ACTIVE_ACCOUNT_ACCESS_TOKEN = JSONObject(ACCESS_TOKEN_JSON)
     }
