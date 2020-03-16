@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.globaldatabase
+package com.waz.zclient.storage.globaldb
 
 import android.content.ContentValues
 import android.content.Context
@@ -51,7 +51,7 @@ class GlobalSQLiteDbTestHelper private constructor() {
 
         //CacheEntry
         private const val CACHE_ENTRY_ID_COL = "key"
-        private const val CACHE_ENTRY_FILE_ID_COL = "fileId"
+        private const val CACHE_ENTRY_FILE_ID_COL = "file"
         private const val CACHE_ENTRY_DATA_COL = "data"
         private const val CACHE_ENTRY_LAST_USED_COL = "lastUsed"
         private const val CACHE_ENTRY_TIMEOUT_COL = "timeout"
