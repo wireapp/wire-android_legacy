@@ -34,7 +34,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
     }
 
     @Test
-    fun givenMigrateActiveAccountsFrom24to25_thenValidateDataIsStillIntact() {
+    fun givenActiveAccountInsertedIntoActiveAccountVersion24_whenMigratedToVersion25_thenAssertDataIsStillIntact() {
         val testActiveAccountId = "1"
         val testActiveAccountCookie = "111122333"
         val testActiveAccountRegisteredPush = "11111122222"
@@ -68,7 +68,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
     }
 
     @Test
-    fun givenMigrateTeamsFrom24to25_thenValidateDataIsStillIntact() {
+    fun givenTeamInsertedIntoTeamsVersion24_whenMigratedToVersion25_thenAssertDataIsStillIntact() {
         val testTeamId = "1"
         val testTeamName = "testTeam"
         val testTeamCreator = "123"
@@ -97,7 +97,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
 
     @Test
-    fun givenMigrateCacheEntryFrom24to25_thenValidateDataIsStillIntact() {
+    fun givenCacheEntryInsertedIntoCacheEntryVersion24_whenMigratedToVersion25_thenAssertDataIsStillIntact() {
         val testCacheEntryId = "1"
         val testCacheEntryFileId = "fileId"
         val testCacheEntryLastUsed = 38847746L
