@@ -400,7 +400,7 @@ object SyncRequest {
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
           case Cmd.PostAddBot                => PostAddBot(decodeId[ConvId]('convId), decodeId[ProviderId]('providerId), decodeId[IntegrationId]('integrationId))
           case Cmd.PostRemoveBot             => PostRemoveBot(decodeId[ConvId]('convId), decodeId[UserId]('botId))
-          case Cmd.PostButtonAction           => PostButtonAction(messageId, decodeId[ButtonId]('buttonId))
+          case Cmd.PostButtonAction          => PostButtonAction(messageId, decodeId[ButtonId]('buttonId))
           case Cmd.PostSessionReset          => PostSessionReset(convId, userId, decodeId[ClientId]('client))
           case Cmd.PostOpenGraphMeta         => PostOpenGraphMeta(convId, messageId, 'time)
           case Cmd.PostReceipt               => PostReceipt(convId, decodeMessageIdSeq('messages), userId, ReceiptType.fromName('type))

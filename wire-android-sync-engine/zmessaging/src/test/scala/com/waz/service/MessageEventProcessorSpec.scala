@@ -55,7 +55,6 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   val downloadStorage   = mock[DownloadAssetStorage]
   val buttonsStorage    = mock[ButtonsStorage]
   val prefs             = new TestGlobalPreferences()
-  val buttonsStorage    = mock[ButtonsStorage]
 
   val messagesInStorage = Signal[Seq[MessageData]](Seq.empty)
   (storage.getMessages _).expects(*).atLeastOnce.onCall { ids: Traversable[MessageId] =>

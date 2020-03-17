@@ -26,11 +26,9 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
   //we already receive ordered
   def bindMessage(messageId: MessageId): Unit = {
     subscription.foreach(_.destroy())
-    subscription = Option.empty[Subscription]
-
     subscription = Option(messagesController.getButtons(messageId).onUi { items =>
       removeAllViews()
-      items.map(button => ButtonItemViewUIModel(button, selectedButtonId)).foreach { uiModel =>
+      items.map(ButtonItemViewUIModel(_, selectedButtonId)).foreach { uiModel =>
         val buttonItemView =
           inflate(R.layout.composite_message_alarm_buttonitemview, this, addToParent = false)
             .asInstanceOf[ButtonItemView]
