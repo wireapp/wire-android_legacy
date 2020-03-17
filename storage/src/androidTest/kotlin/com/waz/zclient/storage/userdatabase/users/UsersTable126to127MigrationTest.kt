@@ -1,11 +1,11 @@
 package com.waz.zclient.storage.userdatabase.users
 
+import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.di.StorageModule.getUserDatabase
-import com.waz.zclient.storage.userdatabase.UserDbSQLiteOpenHelper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -15,21 +15,22 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class UsersTable126to127MigrationTest : IntegrationTest() {
 
-    private lateinit var testOpenHelper: UserDbSQLiteOpenHelper
+    private lateinit var testOpenHelper: DbSQLiteOpenHelper
 
     private lateinit var testHelper: MigrationTestHelper
 
     @Before
     fun setUp() {
         testHelper = MigrationTestHelper(UserDatabase::class.java.canonicalName)
-        testOpenHelper = UserDbSQLiteOpenHelper(getApplicationContext(),
-            TEST_DB_NAME)
+        testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
+            TEST_DB_NAME,126)
         UsersTableTestHelper.createTable(testOpenHelper)
     }
 
     @After
     fun tearDown() {
         UsersTableTestHelper.clearTable(testOpenHelper)
+        UsersTableTestHelper.closeDatabase(testOpenHelper)
     }
 
     @Test
@@ -117,17 +118,16 @@ class UsersTable126to127MigrationTest : IntegrationTest() {
     private suspend fun getAllUsers() =
         getUserDb().userDbService().allUsers()
 
-
     companion object {
         private const val TEST_USER_ID = "id"
         private const val TEST_TEAM_ID = "teamId"
         private const val TEST_NAME = "name"
         private const val TEST_EMAIL = "test@wire.com"
-        private const val TEST_PHONE = ""
-        private const val TEST_TRACKING_ID = ""
+        private const val TEST_PHONE = "+49383837373"
+        private const val TEST_TRACKING_ID = "id"
         private const val TEST_PICTURE = "picture"
         private const val TEST_ACCENT_ID = 0
-        private const val TEST_SKEY = ""
+        private const val TEST_SKEY = "key"
         private const val TEST_CONNECTION = "unconnected"
         private const val TEST_CONNECTION_TIMESTAMP: Long = 1584372387
         private const val TEST_CONNECTION_MESSAGE = "conn_msg"
@@ -138,13 +138,13 @@ class UsersTable126to127MigrationTest : IntegrationTest() {
         private const val TEST_DELETED = 0
         private const val TEST_AVAILABILITY = 0
         private const val TEST_HANDLE = "handle"
-        private const val TEST_PROVIDER_ID = ""
-        private const val TEST_INTEGRATION_ID = ""
+        private const val TEST_PROVIDER_ID = "id"
+        private const val TEST_INTEGRATION_ID = "id"
         private const val TEST_EXPIRES_AT = 0
         private const val TEST_MANAGED_BY = "wire"
         private const val TEST_SELF_PERMISSIONS = 0
         private const val TEST_COPY_PERMISSIONS = 0
-        private const val TEST_CREATED_BY = ""
+        private const val TEST_CREATED_BY = "wire"
 
         private const val TEST_DB_NAME = "$TEST_USER_ID.db"
     }

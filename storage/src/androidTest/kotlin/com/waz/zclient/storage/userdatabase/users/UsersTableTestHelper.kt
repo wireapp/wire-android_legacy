@@ -2,7 +2,7 @@ package com.waz.zclient.storage.userdatabase.users
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import com.waz.zclient.storage.userdatabase.UserDbSQLiteOpenHelper
+import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
 class UsersTableTestHelper private constructor() {
@@ -63,7 +63,7 @@ class UsersTableTestHelper private constructor() {
             selfPermission: Int?,
             copyPermission: Int?,
             createdBy: String?,
-            openHelper: UserDbSQLiteOpenHelper
+            openHelper: DbSQLiteOpenHelper
         ) {
             val contentValues = ContentValues().also {
                 it.put(USERS_ID_COL, id)
@@ -101,11 +101,10 @@ class UsersTableTestHelper private constructor() {
                     contentValues,
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
-                close()
             }
         }
 
-        fun createTable(testOpenHelper: UserDbSQLiteOpenHelper) {
+        fun createTable(testOpenHelper: DbSQLiteOpenHelper) {
 
             val createUserTableQuery = """
               | CREATE TABLE $USERS_TABLE_NAME (
@@ -118,18 +117,19 @@ class UsersTableTestHelper private constructor() {
               | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
               | )""".trimMargin()
 
-            with(testOpenHelper.writableDatabase) {
+            with(testOpenHelper) {
                 execSQL(createUserTableQuery)
-                close()
             }
         }
 
-        fun clearTable(testOpenHelper: UserDbSQLiteOpenHelper) {
-            with(testOpenHelper.writableDatabase) {
+        fun clearTable(testOpenHelper: DbSQLiteOpenHelper) {
+            with(testOpenHelper) {
                 execSQL("DROP TABLE IF EXISTS $USERS_TABLE_NAME")
-                close()
             }
+        }
+
+        fun closeDatabase(testOpenHelper: DbSQLiteOpenHelper) {
+            testOpenHelper.close()
         }
     }
-
 }

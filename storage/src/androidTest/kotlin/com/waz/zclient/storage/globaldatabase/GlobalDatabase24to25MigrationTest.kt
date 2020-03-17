@@ -1,5 +1,6 @@
 package com.waz.zclient.storage.globaldatabase
 
+import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.GlobalDatabase
@@ -15,21 +16,22 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class GlobalDatabase24to25MigrationTest : IntegrationTest() {
 
-    private lateinit var testOpenHelper: GlobalDbSQLiteOpenHelper
+    private lateinit var testOpenHelper: DbSQLiteOpenHelper
 
     private lateinit var testHelper: MigrationTestHelper
 
     @Before
     fun setUp() {
         testHelper = MigrationTestHelper(GlobalDatabase::class.java.canonicalName)
-        testOpenHelper = GlobalDbSQLiteOpenHelper(getApplicationContext(),
-            TEST_DB_NAME)
+        testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
+            TEST_DB_NAME,24)
         GlobalSQLiteDbTestHelper.createTable(testOpenHelper)
     }
 
     @After
     fun tearDown() {
         GlobalSQLiteDbTestHelper.clearDatabase(testOpenHelper)
+        GlobalSQLiteDbTestHelper.closeDatabase(testOpenHelper)
     }
 
     @Test
