@@ -31,6 +31,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
 
         migrateUserTable(database)
         migrateKeyValuesTable(database)
+        migrateUploadAssetTable(database)
+        migrateDownloadAssetTable(database)
         migrateAssets2Table(database)
         migrateFcmNotificationsTable(database)
         migrateFcmNotificationStatsTable(database)
@@ -40,6 +42,61 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
 
         //TODO Move this to 127 - 128 Migration when finished with migration bug
         createButtonsTable(database)
+    }
+
+    private fun migrateUploadAssetTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "UploadAssetsTemp"
+        val originalTableName = "UploadAssets"
+        val createTempTable = """
+             CREATE TABLE $tempTableName (
+             _id TEXT NOT NULL, 
+             source TEXT NOT NULL, 
+             name TEXT NOT NUL, 
+             sha BLOB NOT NUL, 
+             md5 BLOB NOT NUL, 
+             mime TEXT NOT NUL, 
+             preview TEXT NOT NUL, 
+             uploaded INTEGER NOT NUL, 
+             size INTEGER NOT NUL, 
+             retention INTEGER NOT NUL, 
+             public INTEGER NOT NUL, 
+             encryption TEXT NOT NUL, 
+             encryption_salt TEXT, 
+             details TEXT NOT NUL, 
+             status INTEGER NOT NUL, 
+             asset_id TEXT, 
+             PRIMARY KEY (_id)
+             )""".trimIndent()
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migrateDownloadAssetTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "DownloadAssetsTemp"
+        val originalTableName = "DownloadAssets"
+        val createTempTable = """
+              CREATE TABLE $tempTableName (
+              _id TEXT NOT NULL, 
+              mime TEXT NOT NULL, 
+              name TEXT NOT NULL , 
+              preview TEXT NOT NULL, 
+              details TEXT NOT NULL, 
+              downloaded INTEGER NOT NULL, 
+              size INTEGER NOT NULL, 
+              status INTEGER NOT NULL, 
+              PRIMARY KEY (_id)
+              )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
     }
 
     private fun migrateAssets2Table(database: SupportSQLiteDatabase) {
