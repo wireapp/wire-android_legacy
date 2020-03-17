@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber")
+@file:Suppress("MagicNumber", "TooManyFunctions")
 
 package com.waz.zclient.storage.db.users.migration
 
@@ -370,5 +370,4 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 |PRIMARY KEY('$CLIENT_ID_KEY')
                 |)""".trimMargin())
     }
-
 }
