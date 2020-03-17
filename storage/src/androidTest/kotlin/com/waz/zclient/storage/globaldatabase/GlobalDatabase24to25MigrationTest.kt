@@ -24,7 +24,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
     fun setUp() {
         testHelper = MigrationTestHelper(GlobalDatabase::class.java.canonicalName)
         testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
-            TEST_DB_NAME,24)
+            TEST_DB_NAME, 24)
         GlobalSQLiteDbTestHelper.createTable(testOpenHelper)
     }
 

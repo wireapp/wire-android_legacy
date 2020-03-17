@@ -23,7 +23,7 @@ class UsersTable126to127MigrationTest : IntegrationTest() {
     fun setUp() {
         testHelper = MigrationTestHelper(UserDatabase::class.java.canonicalName)
         testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
-            TEST_DB_NAME,126)
+            TEST_DB_NAME, 126)
         UsersTableTestHelper.createTable(testOpenHelper)
     }
 
