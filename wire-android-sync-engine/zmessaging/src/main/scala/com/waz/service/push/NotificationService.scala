@@ -179,6 +179,10 @@ class NotificationServiceImpl(selfUserId:      UserId,
     if (!allowedForDisplay) {
       false
     } else {
+      if (n.msgType == NotificationType.COMPOSITE) {
+        return true
+      }
+
       val isReplyOrMention = n.isSelfMentioned || n.isReply
       if (self.availability == Availability.Away) {
         false
@@ -237,7 +241,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
           import Message.Type._
 
           val tpe = msg.msgType match {
-            case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | COMPOSITE => Some(NotificationType.TEXT)
+            case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA => Some(NotificationType.TEXT)
             case KNOCK        => Some(NotificationType.KNOCK)
             case IMAGE_ASSET  => Some(NotificationType.IMAGE_ASSET)
             case LOCATION     => Some(NotificationType.LOCATION)
@@ -250,6 +254,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
               if (msg.members == Set(msg.userId)) None // ignoring auto-generated member join event when user accepts connection
               else Some(NotificationType.MEMBER_JOIN)
             case MEMBER_LEAVE => Some(NotificationType.MEMBER_LEAVE)
+            case COMPOSITE    => Some(NotificationType.COMPOSITE)
             case _ => None
           }
 
