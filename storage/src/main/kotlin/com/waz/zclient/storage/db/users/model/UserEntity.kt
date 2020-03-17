@@ -19,7 +19,7 @@ data class UserEntity(
     val teamId: String?,
 
     @ColumnInfo(name = "name")
-    val name: String?,
+    val name: String,
 
     @ColumnInfo(name = "email")
     val email: String?,
@@ -34,16 +34,16 @@ data class UserEntity(
     val picture: String?,
 
     @ColumnInfo(name = "accent")
-    val accentId: Int?,
+    val accentId: Int,
 
     @ColumnInfo(name = "skey")
-    val sKey: String?,
+    val sKey: String,
 
     @ColumnInfo(name = "connection")
-    val connection: String?,
+    val connection: String,
 
     @ColumnInfo(name = "conn_timestamp")
-    val connectionTimestamp: Long?,
+    val connectionTimestamp: Long,
 
     @ColumnInfo(name = "conn_msg")
     val connectionMessage: String?,
@@ -52,19 +52,19 @@ data class UserEntity(
     val conversation: String?,
 
     @ColumnInfo(name = "relation")
-    val relation: String?,
+    val relation: String,
 
     @ColumnInfo(name = "timestamp")
     val timestamp: Long?,
 
     @ColumnInfo(name = "verified")
-    val verified: String?,
+    val verified: String,
 
     @ColumnInfo(name = "deleted")
-    val deleted: Int?,
+    val deleted: Int,
 
     @ColumnInfo(name = "availability")
-    val availability: Int?,
+    val availability: Int,
 
     @ColumnInfo(name = "handle")
     val handle: String?,
@@ -82,10 +82,10 @@ data class UserEntity(
     val managedBy: String?,
 
     @ColumnInfo(name = "self_permissions")
-    val selfPermission: Int?,
+    val selfPermission: Int,
 
     @ColumnInfo(name = "copy_permissions")
-    val copyPermission: Int?,
+    val copyPermission: Int,
 
     @ColumnInfo(name = "created_by")
     val createdBy: String?

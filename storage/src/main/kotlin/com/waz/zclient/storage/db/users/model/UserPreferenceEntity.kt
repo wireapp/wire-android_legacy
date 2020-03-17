@@ -12,5 +12,5 @@ data class UserPreferenceEntity(
     val key: String,
 
     @ColumnInfo(name = "value")
-    val value: String?
+    val value: String
 )

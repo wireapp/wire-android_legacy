@@ -209,41 +209,60 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     }
 
     private fun migrateKeyValuesTable(database: SupportSQLiteDatabase) {
-        val keyValuesTempTable = "KeyValuesTemp"
-        val keyValuesOriginalTable = "KeyValues"
-        val createTempKeyValues = """
-                CREATE TABLE IF NOT EXISTS `$keyValuesTempTable` (
-                'key' TEXT PRIMARY KEY NOT NULL ,
-                `value` TEXT)
-                """.trimIndent()
+        val tempTableName = "KeyValuesTemp"
+        val originalTableName = "KeyValues"
+        val createTempTable = """
+                CREATE TABLE $tempTableName (
+                key TEXT PRIMARY KEY NOT NULL,
+                value TEXT NOT NULL
+                )""".trimIndent()
 
         executeSimpleMigration(
             database = database,
-            originalTableName = keyValuesOriginalTable,
-            tempTableName = keyValuesTempTable,
-            createTempTable = createTempKeyValues
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
         )
     }
 
     private fun migrateUserTable(database: SupportSQLiteDatabase) {
-        val usersTempTable = "UsersTemp"
-        val usersOriginalTable = "Users"
-        val createTempUserTable = """
-              | CREATE TABLE $usersTempTable (
-              | _id TEXT PRIMARY KEY NOT NULL,
-              | teamId TEXT, name TEXT, email TEXT, phone TEXT, tracking_id TEXT,
-              | picture TEXT, accent INTEGER, skey TEXT, connection TEXT, conn_timestamp INTEGER,
-              | conn_msg TEXT, conversation TEXT, relation TEXT, timestamp INTEGER,
-              | verified TEXT, deleted INTEGER, availability INTEGER,
-              | handle TEXT, provider_id TEXT, integration_id TEXT, expires_at INTEGER,
-              | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
-              | )""".trimIndent()
+        val tempTableName = "UsersTemp"
+        val originalTableName = "Users"
+        val createTempTable = """
+        CREATE TABLE $tempTableName (
+            _id TEXT PRIMARY KEY NOT NULL,
+            teamId TEXT,
+            name TEXT NOT NULL,
+            email TEXT, 
+            phone TEXT, 
+            tracking_id TEXT, 
+            picture TEXT, 
+            accent INTEGER NOT NULL, 
+            skey TEXT NOT NULL, 
+            connection TEXT NOT NULL, 
+            conn_timestamp INTEGER NOT NULL, 
+            conn_msg TEXT, 
+            conversation TEXT, 
+            relation TEXT NOT NULL, 
+            timestamp INTEGER, 
+            verified TEXT NOT NULL, 
+            deleted INTEGER NOT NULL, 
+            availability INTEGER NOT NULL, 
+            handle TEXT, 
+            provider_id TEXT, 
+            integration_id TEXT, 
+            expires_at INTEGER, 
+            managed_by TEXT, 
+            self_permissions INTEGER NOT NULL, 
+            copy_permissions INTEGER NOT NULL, 
+            created_by TEXT 
+        )""".trimIndent()
 
         executeSimpleMigration(
             database = database,
-            originalTableName = usersOriginalTable,
-            tempTableName = usersTempTable,
-            createTempTable = createTempUserTable
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
         )
     }
 
