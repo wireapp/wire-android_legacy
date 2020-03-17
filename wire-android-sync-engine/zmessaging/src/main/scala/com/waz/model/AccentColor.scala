@@ -21,8 +21,10 @@ import android.content.Context
 import android.graphics.Color
 import com.waz.log.LogShow.SafeToLog
 import com.waz.model.AccentColor._
+import com.waz.utils.Identifiable
 
-case class AccentColor(id: Int, r: Int, g: Int, b: Int, a: Int) extends SafeToLog {
+case class AccentColor(override val id: Int, r: Int, g: Int, b: Int, a: Int)
+  extends SafeToLog with Identifiable[Int] {
   def this(id: Int, r: Double, g: Double, b: Double, a: Double) = this(id, int(r), int(g), int(b), int(a))
 
   lazy val color = Color.argb(a, r, g, b)
@@ -46,7 +48,7 @@ object AccentColor {
 
   private val Default = new AccentColor(1, 0.141, 0.552, 0.827, 1)
 
-  private[AccentColor] var colors = Array(
+  private[AccentColor] var colors = Vector(
     new AccentColor(1, 0.141, 0.552, 0.827, 1),
     new AccentColor(2, 0, 0.784, 0, 1),
     new AccentColor(3, 1, 0.823, 0, 1),
@@ -56,19 +58,19 @@ object AccentColor {
     new AccentColor(7, 0.615, 0, 1, 1)
   )
 
-  private[AccentColor] var colorsMap = Map(0 -> Default) ++ colors.map(c => c.id -> c).toMap
+  private[AccentColor] var colorsMap = Map(0 -> Default) ++ colors.toIdMap
 
   def defaultColor = colorsMap.getOrElse(0, Default)
 
-  def getColors: Array[AccentColor] = colors
+  def getColors: Vector[AccentColor] = colors
 
-  def setColors(arr: Array[AccentColor]): Unit = {
-    colors = arr
+  def setColors(newColors: Vector[AccentColor]): Unit = {
+    colors = newColors
     colorsMap = Map(0 -> colors.headOption.getOrElse(Default)) ++ colors.map(c => c.id -> c).toMap
   }
 
-  def loadArray(context: Context, colorsArrayId: Int): Array[AccentColor] =
-    context.getResources.getIntArray(colorsArrayId).zipWithIndex map { case (color, id) => create(id + 1, color) }
+  def loadArray(context: Context, colorsArrayId: Int): Vector[AccentColor] =
+    context.getResources.getIntArray(colorsArrayId).zipWithIndex.map { case (color, id) => create(id + 1, color) }.toVector
 
   def create(id: Int, color: Int): AccentColor =
     new AccentColor(id, Color.red(color), Color.green(color), Color.blue(color), Color.alpha(color))

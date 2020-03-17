@@ -56,7 +56,7 @@ class VerificationStateUpdater(selfUserId:     UserId,
   }
 
   clientsStorage.getClients(selfUserId).map{ clients =>
-    onClientsChanged(Map(selfUserId -> (UserClients(selfUserId, clients.map(c => c.id -> c).toMap), ClientAdded)))
+    onClientsChanged(Map(selfUserId -> (UserClients(selfUserId, clients.toIdMap), ClientAdded)))
   }
 
   clientsStorage.onAdded { ucs =>
