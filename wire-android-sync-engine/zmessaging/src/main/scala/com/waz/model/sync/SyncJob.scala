@@ -33,15 +33,16 @@ import scala.collection.breakOut
 import scala.util.Try
 
 case class SyncJob(override val id:        SyncId,
-                   request:   SyncRequest,
-                   dependsOn: Set[SyncId]           = Set(),
-                   priority:  Int                   = SyncJob.Priority.Normal,
-                   timestamp: Long                  = SyncJob.timestamp,
-                   startTime: Long                  = 0, // next scheduled execution time
-                   attempts:  Int                   = 0,
-                   offline:   Boolean               = false,
-                   state:     SyncState             = SyncState.WAITING,
-                   error:     Option[ErrorResponse] = None) extends Identifiable[SyncId] {
+                                request:   SyncRequest,
+                                dependsOn: Set[SyncId]           = Set(),
+                                priority:  Int                   = SyncJob.Priority.Normal,
+                                timestamp: Long                  = SyncJob.timestamp,
+                                startTime: Long                  = 0, // next scheduled execution time
+                                attempts:  Int                   = 0,
+                                offline:   Boolean               = false,
+                                state:     SyncState             = SyncState.WAITING,
+                                error:     Option[ErrorResponse] = None)
+  extends Identifiable[SyncId] {
 
   def mergeKey = request.mergeKey
 
