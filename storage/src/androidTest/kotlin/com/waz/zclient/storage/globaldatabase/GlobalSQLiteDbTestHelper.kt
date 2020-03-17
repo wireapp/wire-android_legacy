@@ -1,33 +1,9 @@
 package com.waz.zclient.storage.globaldatabase
 
 import android.content.ContentValues
-import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
+import com.waz.zclient.storage.DbSQLiteOpenHelper
 import org.json.JSONObject
-
-/**
- * This class is to merely tell the unit tests that an SQLiteDatabase existed before the room ones
- * without having to bridge the gap between Scala and Kotlin.
- */
-class GlobalDbSQLiteOpenHelper(
-    context: Context,
-    name: String
-) : SQLiteOpenHelper(context, name, null, 24) {
-
-    override fun onCreate(db: SQLiteDatabase?) {
-        //Not required for testing version 24 to 25
-    }
-
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        //Not required for testing version 24 to 25
-    }
-
-    override fun onDowngrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        //Not required for testing version 24 to 25
-    }
-
-}
 
 class GlobalSQLiteDbTestHelper private constructor() {
 
@@ -69,7 +45,7 @@ class GlobalSQLiteDbTestHelper private constructor() {
             accessToken: JSONObject,
             registeredPush: String,
             ssoId: String? = null,
-            openHelper: GlobalDbSQLiteOpenHelper
+            openHelper: DbSQLiteOpenHelper
         ) {
             val contentValues = ContentValues().also {
                 it.put(ACTIVE_ACCOUNT_ID_COL, id)
@@ -87,7 +63,6 @@ class GlobalSQLiteDbTestHelper private constructor() {
                     contentValues,
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
-                close()
             }
         }
 
@@ -96,7 +71,7 @@ class GlobalSQLiteDbTestHelper private constructor() {
             name: String,
             creator: String,
             icon: String,
-            openHelper: GlobalDbSQLiteOpenHelper
+            openHelper: DbSQLiteOpenHelper
         ) {
             val contentValues = ContentValues().also {
                 it.put(TEAMS_ID_COL, id)
@@ -112,7 +87,6 @@ class GlobalSQLiteDbTestHelper private constructor() {
                     contentValues,
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
-                close()
             }
         }
 
@@ -127,7 +101,7 @@ class GlobalSQLiteDbTestHelper private constructor() {
             mime: String,
             encKey: String? = null,
             length: Long? = null,
-            openHelper: GlobalDbSQLiteOpenHelper
+            openHelper: DbSQLiteOpenHelper
         ) {
             val contentValues = ContentValues().also {
                 it.put(CACHE_ENTRY_ID_COL, id)
@@ -149,13 +123,12 @@ class GlobalSQLiteDbTestHelper private constructor() {
                     contentValues,
                     SQLiteDatabase.CONFLICT_REPLACE
                 )
-                close()
             }
         }
 
 
-        fun createTable(testOpenHelper: GlobalDbSQLiteOpenHelper) {
-            with(testOpenHelper.writableDatabase) {
+        fun createTable(testOpenHelper: DbSQLiteOpenHelper) {
+            with(testOpenHelper) {
                 execSQL("""
                     CREATE TABLE IF NOT EXISTS ActiveAccounts (_id TEXT PRIMARY KEY, team_id TEXT , cookie TEXT , access_token TEXT , registered_push TEXT , sso_id TEXT )
                 """.trimIndent())
@@ -165,17 +138,19 @@ class GlobalSQLiteDbTestHelper private constructor() {
                 execSQL("""
                     CREATE TABLE CacheEntry (key TEXT PRIMARY KEY, file TEXT , data BLOB , lastUsed INTEGER , timeout INTEGER , enc_key TEXT , path TEXT , mime TEXT , file_name TEXT , length INTEGER )
                 """.trimIndent())
-                close()
             }
         }
 
-        fun clearDatabase(testOpenHelper: GlobalDbSQLiteOpenHelper) {
-            with(testOpenHelper.writableDatabase) {
+        fun clearDatabase(testOpenHelper: DbSQLiteOpenHelper) {
+            with(testOpenHelper) {
                 execSQL("DROP TABLE IF EXISTS ActiveAccounts")
                 execSQL("DROP TABLE IF EXISTS Teams")
                 execSQL("DROP TABLE IF EXISTS CacheEntry")
-                close()
             }
+        }
+
+        fun closeDatabase(testOpenHelper: DbSQLiteOpenHelper) {
+            testOpenHelper.close()
         }
     }
 

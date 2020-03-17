@@ -237,7 +237,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
           import Message.Type._
 
           val tpe = msg.msgType match {
-            case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA => Some(NotificationType.TEXT)
+            case TEXT | TEXT_EMOJI_ONLY | RICH_MEDIA | COMPOSITE => Some(NotificationType.TEXT)
             case KNOCK        => Some(NotificationType.KNOCK)
             case IMAGE_ASSET  => Some(NotificationType.IMAGE_ASSET)
             case LOCATION     => Some(NotificationType.LOCATION)
