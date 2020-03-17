@@ -62,7 +62,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val tempTableName = "NotificationDataTemp"
         val originalTableName = "NotificationData"
         val createTempTable = """
-            CREATE TABLE NotificationData (
+            CREATE TABLE $tempTableName (
             _id TEXT PRIMARY KEY NOT NULL, 
             data TEXT NOT NULL 
             )""".trimIndent()
