@@ -13,6 +13,7 @@ import scala.concurrent.Future
 
 trait ButtonsStorage extends CachedStorage[(MessageId, ButtonId), ButtonData] {
   def findByMessage(messageId: MessageId): Future[Seq[ButtonData]]
+  def deleteAllForMessage(messageId: MessageId): Future[Unit]
 }
 
 class ButtonsStorageImpl(context: Context, storage: Database)
@@ -22,4 +23,9 @@ class ButtonsStorageImpl(context: Context, storage: Database)
 
   override def findByMessage(messageId: MessageId): Future[Seq[ButtonData]] =
     find(_.messageId == messageId, ButtonDataDao.findForMessage(messageId)(_), identity)
+
+  override def deleteAllForMessage(messageId: MessageId): Future[Unit] = for {
+    buttons <- findByMessage(messageId)
+    _       <- removeAll(buttons.map(_.id))
+  } yield ()
 }

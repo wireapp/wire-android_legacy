@@ -298,11 +298,14 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
   protected def load(key: K)(implicit db: DB): Option[V] = dao.getById(key)
 
-  protected def load(keys: Set[K])(implicit db: DB): Seq[V] = dao.getAll(keys)
+  protected def load(keys: Set[K])(implicit db: DB): Seq[V] =
+    if (keys.isEmpty) Nil else dao.getAll(keys)
 
-  protected def save(values: Seq[V])(implicit db: DB): Unit = dao.insertOrReplace(values)
+  protected def save(values: Seq[V])(implicit db: DB): Unit =
+    if (values.nonEmpty) dao.insertOrReplace(values)
 
-  protected def delete(keys: Iterable[K])(implicit db: DB): Unit = dao.deleteEvery(keys)
+  protected def delete(keys: Iterable[K])(implicit db: DB): Unit =
+    if (keys.nonEmpty) dao.deleteEvery(keys)
 
   private def cachedOrElse(key: K, default: => Future[Option[V]]): Future[Option[V]] =
     Option(cache.get(key)).fold(default)(Future.successful)
@@ -383,7 +386,7 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
 
   def list() = db.read { dao.list(_) } // TODO: should we update cache?
 
-  def getAll(keys: Traversable[K]): Future[Seq[Option[V]]] = {
+  def getAll(keys: Traversable[K]): Future[Seq[Option[V]]] = if (keys.isEmpty) Future.successful(Nil) else {
     val cachedEntries = keys.flatMap { key => Option(cache.get(key)) map { value => (key, value) } }.toMap
     val missingKeys = keys.toSet -- cachedEntries.keys
 
@@ -508,12 +511,13 @@ class CachedStorageImpl[K, V <: Identifiable[K]](cache: LruCache[K, Option[V]], 
     }
   } .flatten
 
-  def removeAll(keys: Iterable[K]): Future[Unit] = Future {
-    keys foreach { key => cache.put(key, None) }
-    db(delete(keys)(_)).future.map { _ =>
-      tellDeleted(keys.toVector)
-    }
-  } .flatten
+  def removeAll(keys: Iterable[K]): Future[Unit] =
+    if (keys.isEmpty) Future.successful(())
+    else
+      Future {
+        keys.foreach { key => cache.put(key, None) }
+        db(delete(keys)(_)).future.map { _ => tellDeleted(keys.toVector) }
+      } .flatten
 
   def cacheIfNotPresent(key: K, value: V) = cachedOrElse(key, Future {
     Option(cache.get(key)).getOrElse { returning(Some(value))(cache.put(key, _)) }

@@ -53,6 +53,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   val convs             = mock[ConversationsContentUpdater]
   val convsService      = mock[ConversationsService]
   val downloadStorage   = mock[DownloadAssetStorage]
+  val buttonsStorage    = mock[ButtonsStorage]
   val prefs             = new TestGlobalPreferences()
 
   val messagesInStorage = Signal[Seq[MessageData]](Seq.empty)
@@ -250,11 +251,12 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
       (storage.updateOrCreate _).expects(*, *, *).anyNumberOfTimes().onCall { (_, _, creator) => Future.successful(creator)}
       (storage.get _).expects(*).anyNumberOfTimes().returns(Future.successful(None))
 
-      val expectedButtons = Seq(
+      val expectedButtons = Set(
         ButtonData(messageId, button1Id, button1Text, 0),
         ButtonData(messageId, button2Id, button2Text, 1)
       )
-      (msgsService.addButtons _).expects(expectedButtons).atLeastOnce().returning(Future.successful(()))
+
+      (buttonsStorage.updateOrCreateAll2 _).expects(expectedButtons.map(_.id), *).atLeastOnce().returning(Future.successful((expectedButtons)))
 
       val processor = getProcessor
       inside(result(processor.processEvents(conv, isGroup = false, Seq(messageEvent))).head) {
@@ -272,7 +274,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   }
 
   def getProcessor = {
-    val content = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
+    val content = new MessagesContentUpdater(storage, convsStorage, deletions, buttonsStorage, prefs)
 
     //TODO make VerificationStateUpdater mockable
     (otrClientsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserClients]]())
