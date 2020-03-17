@@ -3,7 +3,7 @@ package com.waz.zclient.messages.parts.composite
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
-import com.waz.model.{ButtonData, ButtonId, MessageId}
+import com.waz.model.{ButtonId, MessageId}
 import com.waz.utils.events.{EventStream, Subscription}
 import com.waz.zclient.messages.MessagesController
 import com.waz.zclient.{R, ViewHelper}
@@ -17,34 +17,26 @@ class ButtonContainerView(context: Context, attrs: AttributeSet, style: Int)
 
   setOrientation(LinearLayout.VERTICAL)
 
-  //TODO: observe this and send ButtonAction request
   val selectedButtonId = EventStream[(MessageId, ButtonId)]()
 
   private lazy val messagesController = inject[MessagesController]
 
-  private var subscriptions = Set.empty[Subscription]
+  private var subscription = Option.empty[Subscription]
 
   //we already receive ordered
-  def bindMessage(messageId: MessageId): Unit =
-    messagesController.getButtons(messageId).onUi { setButtons }
+  def bindMessage(messageId: MessageId): Unit = {
+    subscription.foreach(_.destroy())
+    subscription = Option.empty[Subscription]
 
-  //TODO: convert to a more efficient way. calculate diff.
-  private def setButtons(items: Seq[ButtonData]): Unit = {
-    removeAllViews()
-    clearSubscriptions()
-
-    items.foreach { data =>
-      val buttonItemView =
-        inflate(R.layout.composite_message_alarm_buttonitemview, this, addToParent = false)
-          .asInstanceOf[ButtonItemView]
-      buttonItemView.bindButton(ButtonItemViewUIModel(data.title, data.state))
-      subscriptions += buttonItemView.selected.onUi(_ => selectedButtonId ! data.id)
-      addView(buttonItemView)
-    }
-  }
-
-  private def clearSubscriptions(): Unit = {
-    subscriptions.foreach(_.unsubscribe())
-    subscriptions = Set.empty[Subscription]
+    subscription = Option(messagesController.getButtons(messageId).onUi { items =>
+      removeAllViews()
+      items.map(button => ButtonItemViewUIModel(button, selectedButtonId)).foreach { uiModel =>
+        val buttonItemView =
+          inflate(R.layout.composite_message_alarm_buttonitemview, this, addToParent = false)
+            .asInstanceOf[ButtonItemView]
+        buttonItemView.bindButton(uiModel)
+        addView(buttonItemView)
+      }
+    })
   }
 }
