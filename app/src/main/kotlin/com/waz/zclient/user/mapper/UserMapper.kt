@@ -95,4 +95,3 @@ class UserMapper {
         private const val DEFAULT_COPY_PERMISSION_VALUE = 0
     }
 }
-
