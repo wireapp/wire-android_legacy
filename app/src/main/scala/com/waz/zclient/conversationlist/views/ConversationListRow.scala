@@ -415,7 +415,7 @@ object ConversationListRow {
         formatSubtitle(getString(R.string.conversation_list__ephemeral), senderName, isGroup, isEphemeral = true)
     } else {
       messageData.msgType match {
-        case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA =>
+        case Message.Type.TEXT | Message.Type.TEXT_EMOJI_ONLY | Message.Type.RICH_MEDIA | Message.Type.COMPOSITE =>
           formatSubtitle(messageData.contentString, senderName, isGroup, quotePrefix = isQuote)
         case Message.Type.IMAGE_ASSET =>
           formatSubtitle(getString(R.string.conversation_list__shared__image), senderName, isGroup, quotePrefix = isQuote)

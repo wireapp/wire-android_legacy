@@ -619,7 +619,7 @@
     <dimen name="pin_code_digit_text_size">32dp</dimen>
     
     <!-- Composite Message -->
-    <dimen name="composite_message_text_layout_margin_bottom">16dp</dimen>
+    <dimen name="composite_message_button_layout_margin_top">16dp</dimen>
     <dimen name="composite_message_buttonitemview_gap">8dp</dimen>
     <dimen name="composite_message_button_progressbar_size">48dp</dimen>
     <dimen name="composite_message_button_progressbar_elevation">3dp</dimen>

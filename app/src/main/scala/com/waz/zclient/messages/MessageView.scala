@@ -24,7 +24,7 @@ import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.messages.MessageAndLikes
-import com.waz.utils.RichOption
+import com.waz.utils.{RichOption, RichWireInstant}
 import com.waz.zclient.common.controllers.AssetsController
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.messages.MessageViewLayout.PartDesc
@@ -37,7 +37,6 @@ import com.waz.zclient.utils._
 import com.waz.zclient.{BuildConfig, R, ViewHelper}
 
 import scala.concurrent.duration._
-import com.waz.utils.RichWireInstant
 
 class MessageView(context: Context, attrs: AttributeSet, style: Int)
     extends MessageViewLayout(context, attrs, style) with ViewHelper {
@@ -207,7 +206,8 @@ object MessageView extends DerivedLogTag {
   )
 
   val longClickableTypes = clickableTypes ++ Set(
-    KNOCK
+    KNOCK,
+    COMPOSITE
   )
 
   val GenericMessage = 0

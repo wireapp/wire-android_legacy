@@ -21,16 +21,14 @@ import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
-import android.database.DatabaseUtils.queryNumEntries
 import android.database.sqlite.SQLiteQueryBuilder
-import androidx.sqlite.db.{SupportSQLiteQuery, SupportSQLiteQueryBuilder}
 import com.waz.api.Message.Type._
 import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, ImageAsset, Knock, LinkPreview, Location, MsgEdit, Quote, Text}
+import com.waz.model.GenericContent.{Asset, Composite, ImageAsset, Knock, LinkPreview, Location, MsgEdit, Quote, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
@@ -40,7 +38,7 @@ import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder, returning}
-import com.waz.{api, db, model}
+import com.waz.{api, model}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
 
@@ -70,14 +68,10 @@ case class MessageData(override val id:   MessageId              = MessageId(),
                        quote:             Option[QuoteContent]   = None,
                        forceReadReceipts: Option[Int]            = None
                       ) extends Identifiable[MessageId] with DerivedLogTag {
-  def getContent(index: Int) = {
-    if (index == 0) content.headOption.getOrElse(MessageContent.Empty)
-    else content.drop(index).headOption.getOrElse(MessageContent.Empty)
-  }
-
   lazy val contentString = protos.lastOption match {
     case Some(TextMessage(ct, _, _, _, _)) => ct
     case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
+    case _ if msgType == api.Message.Type.COMPOSITE => content.map(_.content).mkString("\n")
     case _ => content.headOption.fold("")(_.content)
   }
 
@@ -96,6 +90,7 @@ case class MessageData(override val id:   MessageId              = MessageId(),
     case GenericMessage(_, a @ Knock())              => a.expectsReadConfirmation
     case GenericMessage(_, a @ Location(_, _, _, _)) => a.expectsReadConfirmation
     case GenericMessage(_, a @ Asset(_, _))          => a.expectsReadConfirmation
+    case GenericMessage(_, a @ Composite(_))         => a.expectsReadConfirmation
     case _ => false
   }
 
