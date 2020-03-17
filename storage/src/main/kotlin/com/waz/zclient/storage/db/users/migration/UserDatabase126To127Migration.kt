@@ -172,8 +172,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val originalTableName = "EmailAddresses"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             contact TEXT, 
-             email_address TEXT,
+             contact TEXT NOT NULL, 
+             email_address TEXT NOT NULL,
              PRIMARY KEY (contact, email_address)
              )""".trimIndent()
 
