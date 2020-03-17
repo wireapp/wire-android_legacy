@@ -29,22 +29,69 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             migrateClientTable(database)
         }
 
-        //Needed in production
         migrateUserTable(database)
         migrateKeyValuesTable(database)
+        migrateAssets2Table(database)
+        migrateFcmNotificationsTable(database)
+        migrateFcmNotificationStatsTable(database)
         migrateFoldersTable(database)
         migrateConversationFoldersTable(database)
         migrateConversationRoleActionTable(database)
 
-        //TODO move this to 127 - 128 Migration
+        //TODO Move this to 127 - 128 Migration when finished with migration bug
         createButtonsTable(database)
+    }
+
+    private fun migrateAssets2Table(database: SupportSQLiteDatabase) {
+        val tempTableName = "Assets2Temp"
+        val originalTableName = "Assets2"
+        val createTempTable = """
+              CREATE TABLE $tempTableName (
+              _id TEXT NOT NULL, 
+              token TEXT, 
+              name TEXT NOT NULL, 
+              encryption TEXT NOT NULL, 
+              mime TEXT NOT NULL, 
+              sha BLOB NOT NULL, 
+              size INTEGER NOT NULL, 
+              source TEXT, 
+              preview TEXT, 
+              details TEXT NOT NULL, 
+              conversation_id TEXT, 
+              PRIMARY KEY (_id)
+              )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migrateFcmNotificationsTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "FCMNotificationsTemp"
+        val originalTableName = "FCMNotifications"
+        val createTempTable = """
+              CREATE TABLE $tempTableName (
+              _id TEXT NOT NULL, 
+              stage TEXT NOT NULL, 
+              stage_start_time INTEGER NOT NULL, 
+              PRIMARY KEY (_id, stage)
+              )""".trimIndent()
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
     }
 
     private fun migrateKeyValuesTable(database: SupportSQLiteDatabase) {
         val keyValuesTempTable = "KeyValuesTemp"
         val keyValuesOriginalTable = "KeyValues"
         val createTempKeyValues = """
-                CREATE TABLE IF NOT EXISTS `$keyValuesOriginalTable` (
+                CREATE TABLE IF NOT EXISTS `$keyValuesTempTable` (
                 'key' TEXT PRIMARY KEY NOT NULL ,
                 `value` TEXT)
                 """.trimIndent()
@@ -78,14 +125,32 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         )
     }
 
+    private fun migrateFcmNotificationStatsTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "FCMNotificationStatsTemp"
+        val originalTableName = "FCMNotificationStats"
+        val createTempTable = """
+              CREATE TABLE $tempTableName (
+              stage TEXT PRIMARY KEY NOT NULL, 
+              bucket1 INTEGER NOT NULL, 
+              bucket2 INTEGER NOT NULL, 
+              bucket3 INTEGER NOT NULL 
+              )""".trimIndent()
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
     private fun migrateFoldersTable(database: SupportSQLiteDatabase) {
         val tempTableName = "FoldersTemp"
         val originalTableName = "Folders"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              _id TEXT PRIMARY KEY NON NULL, 
-              name TEXT NON NULL, 
-              type INTEGER NON NULL
+              _id TEXT PRIMARY KEY NOT NULL, 
+              name TEXT NOT NULL, 
+              type INTEGER NOT NULL
               )""".trimIndent()
         executeSimpleMigration(
             database = database,
@@ -100,8 +165,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val originalTableName = "ConversationFolders"
         val createTempTable = """
               CREATE TABLE $tempTableName (
-              conv_id TEXT NON NULL, 
-              folder_id TEXT NON NULL, 
+              conv_id TEXT NOT NULL, 
+              folder_id TEXT NOT NULL, 
               PRIMARY KEY (conv_id, folder_id)
               )""".trimIndent()
         executeSimpleMigration(
@@ -117,9 +182,9 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val originalTableName = "ConversationRoleAction"
         val createTempTable = """
                CREATE TABLE $tempTableName (
-               label TEXT NON NULL, 
-               action TEXT NON NULL, 
-               conv_id TEXT NON NULL, 
+               label TEXT NOT NULL, 
+               action TEXT NOT NULL, 
+               conv_id TEXT NOT NULL, 
                PRIMARY KEY (label, action, conv_id)
                )""".trimIndent()
         executeSimpleMigration(
