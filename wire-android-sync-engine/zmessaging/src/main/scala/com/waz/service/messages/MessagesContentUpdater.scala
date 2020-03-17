@@ -38,7 +38,6 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
                              deletions:       MsgDeletionStorage,
                              buttonsStorage:  ButtonsStorage,
                              prefs:           GlobalPreferences) extends DerivedLogTag {
-
   import Threading.Implicits.Background
 
   def getMessage(msgId: MessageId) = messagesStorage.getMessage(msgId)
@@ -62,6 +61,18 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
     case _ =>
       None
   }
+
+  def updateButtonConfirmations(confirmations: Map[MessageId, Option[ButtonId]]): Future[Unit] =
+    Future.sequence(confirmations.map {
+      case (msgId, confirmedId) =>
+        for {
+          buttons <- buttonsStorage.findByMessage(msgId)
+          _       <- buttonsStorage.updateAll2(buttons.map(_.id), {
+                       case b if confirmedId.contains(b.buttonId) => b.copy(state = ButtonData.ButtonConfirmed)
+                       case b                                     => b.copy(state = ButtonData.ButtonNotClicked)
+                     })
+        } yield ()
+    }).map(_ => ())
 
   // removes messages and records deletion
   // this is used when user deletes a message manually (on local or remote device)

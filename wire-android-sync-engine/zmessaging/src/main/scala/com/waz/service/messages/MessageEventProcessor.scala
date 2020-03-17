@@ -22,7 +22,7 @@ import com.waz.api.Message.Type._
 import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
+import com.waz.model.GenericContent.{Asset, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
 import com.waz.service.EventScheduler
 import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
@@ -163,6 +163,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     case DeliveryReceipt(_)            => RichMessage.Empty
     case GenericContent.ReadReceipt(_) => RichMessage.Empty
     case _: Calling                    => RichMessage.Empty
+    case _: ButtonActionConfirmation   => RichMessage.Empty
     case _ =>
       // TODO: this message should be processed again after app update, maybe future app version will understand it
       RichMessage(MessageData(id, convId, UNKNOWN, from, time = time, localTime = localTime, protos = Seq(proto)))

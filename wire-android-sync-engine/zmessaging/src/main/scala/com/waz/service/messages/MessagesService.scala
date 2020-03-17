@@ -92,6 +92,7 @@ trait MessagesService {
   def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
 
   def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]]
+  def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit]
 }
 
 class MessagesServiceImpl(selfUserId:      UserId,
@@ -503,4 +504,10 @@ class MessagesServiceImpl(selfUserId:      UserId,
     loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ordinal))),
     refreshEvent = EventStream.union(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
   )
+
+  override def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
+    for {
+      _ <- buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonWaiting))
+      _ <- sync.postButtonAction(messageId, buttonId)
+    } yield ()
 }

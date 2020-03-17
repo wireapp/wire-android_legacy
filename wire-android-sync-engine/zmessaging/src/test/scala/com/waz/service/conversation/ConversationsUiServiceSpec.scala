@@ -51,6 +51,7 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   val properties =      mock[PropertiesService]
   val buttons =         mock[ButtonsStorage]
 
+
   val prefs = new TestGlobalPreferences()
 
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {

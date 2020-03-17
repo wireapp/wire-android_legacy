@@ -40,7 +40,12 @@ import scala.concurrent.Future.successful
 import scala.util.control.NonFatal
 
 trait OtrSyncHandler {
-  def postOtrMessage(convId: ConvId, message: GenericMessage, recipients: Option[Set[UserId]] = None, nativePush: Boolean = true): Future[Either[ErrorResponse, RemoteInstant]]
+  def postOtrMessage(convId:               ConvId,
+                     message:              GenericMessage,
+                     recipients:           Option[Set[UserId]] = None,
+                     nativePush:           Boolean = true,
+                     enforceIgnoreMissing: Boolean = false
+                    ): Future[Either[ErrorResponse, RemoteInstant]]
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
   def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, RemoteInstant]]
 }
@@ -62,7 +67,11 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
   import OtrSyncHandler._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def postOtrMessage(convId: ConvId, message: GenericMessage, recipients: Option[Set[UserId]] = None, nativePush: Boolean = true) = {
+  override def postOtrMessage(convId:               ConvId,
+                              message:              GenericMessage,
+                              recipients:           Option[Set[UserId]] = None,
+                              nativePush:           Boolean = true,
+                              enforceIgnoreMissing: Boolean = false): Future[Either[ErrorResponse, RemoteInstant]] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
     def encryptAndSend(msg: GenericMessage, external: Option[Array[Byte]] = None, retries: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): ErrorOr[MessageResponse] =
@@ -74,7 +83,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         content <- service.encryptForUsers(us, msg, retries > 0, previous)
         resp    <-
           if (content.estimatedSize < MaxContentSize)
-            msgClient.postMessage(conv.remoteId, OtrMessage(selfClientId, content, external, nativePush), ignoreMissing = retries > 1, recipients).future
+            msgClient.postMessage(conv.remoteId, OtrMessage(selfClientId, content, external, nativePush), ignoreMissing = enforceIgnoreMissing || retries > 1, recipients).future
           else {
             verbose(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
             val key = AESKey()

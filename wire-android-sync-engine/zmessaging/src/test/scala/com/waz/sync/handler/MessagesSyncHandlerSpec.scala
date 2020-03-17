@@ -29,7 +29,7 @@ import com.waz.service.otr.OtrClientsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncHandler.RequestInfo
 import com.waz.sync.SyncResult.Failure
-import com.waz.sync.SyncServiceHandle
+import com.waz.sync.{SyncResult, SyncServiceHandle}
 import com.waz.sync.otr.OtrSyncHandler
 
 import scala.concurrent.Future
@@ -77,10 +77,32 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Option(message)))
     (convs.convById _).expects(convId).returning(Future.successful(Option(ConversationData(convId))))
 
-    (otrSync.postOtrMessage _).expects(convId, *, * ,*).returning(Future.successful(Left(connectionError)))
+    (otrSync.postOtrMessage _).expects(convId, *, * ,*, *).returning(Future.successful(Left(connectionError)))
 
     (service.messageDeliveryFailed _).expects(convId, message, connectionError).returning(Future.successful(Some(message.copy(state = Message.Status.FAILED))))
 
     result(getHandler.postMessage(convId, messageId, RemoteInstant.Epoch)).isInstanceOf[Failure] should be(true)
+  }
+
+  scenario("post button action") {
+
+    val convId = ConvId()
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+
+    (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
+    (otrSync.postOtrMessage _).expects(convId, *, * ,*, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
+
+    result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Success
+  }
+
+  scenario("post button action fails if the message is missing") {
+
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+
+    (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(None))
+
+    result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Failure("message not found")
   }
 }

@@ -133,4 +133,7 @@ import scala.concurrent.Future
 
   def getButtons(messageId: MessageId): Signal[Seq[ButtonData]] =
     zms.flatMap(_.messages.buttonsForMessage(messageId))
+
+  def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
+    zms.head.flatMap(_.messages.clickButton(messageId, buttonId))
 }

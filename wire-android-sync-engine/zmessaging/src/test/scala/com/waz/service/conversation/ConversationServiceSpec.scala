@@ -65,6 +65,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   private lazy val deletions      = mock[MsgDeletionStorage]
   private lazy val buttons        = mock[ButtonsStorage]
   private lazy val rolesService   = mock[ConversationRolesService]
+  private lazy val buttonsStorage = mock[ButtonsStorage]
 
   private lazy val globalPrefs    = new TestGlobalPreferences()
   private lazy val userPrefs      = new TestUserPreferences()
