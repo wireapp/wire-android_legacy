@@ -30,11 +30,13 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         }
 
         migrateUserTable(database)
+        migrateAssetsTable(database)
+        migrateConversationsTable(database)
         migrateKeyValuesTable(database)
         migrateNotificationData(database)
         migrateContactHashesTable(database)
         migrateContactsOnWire(database)
-        migrateUserClientsTable(database)
+        migrateClientsTable(database)
         migrateLikingTable(database)
         migrateContactsTable(database)
         migrateEmailAddressTable(database)
@@ -56,6 +58,130 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
 
         //TODO Move this to 127 - 128 Migration when finished with migration bug
         createButtonsTable(database)
+    }
+
+    private fun migrateUserTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "UsersTemp"
+        val originalTableName = "Users"
+        val createTempTable = """
+        CREATE TABLE $tempTableName (
+            _id TEXT PRIMARY KEY NOT NULL,
+            teamId TEXT,
+            name TEXT NOT NULL,
+            email TEXT, 
+            phone TEXT, 
+            tracking_id TEXT, 
+            picture TEXT, 
+            accent INTEGER NOT NULL, 
+            skey TEXT NOT NULL, 
+            connection TEXT NOT NULL, 
+            conn_timestamp INTEGER NOT NULL, 
+            conn_msg TEXT, 
+            conversation TEXT, 
+            relation TEXT NOT NULL, 
+            timestamp INTEGER, 
+            verified TEXT NOT NULL, 
+            deleted INTEGER NOT NULL, 
+            availability INTEGER NOT NULL, 
+            handle TEXT, 
+            provider_id TEXT, 
+            integration_id TEXT, 
+            expires_at INTEGER, 
+            managed_by TEXT, 
+            self_permissions INTEGER NOT NULL, 
+            copy_permissions INTEGER NOT NULL, 
+            created_by TEXT 
+        )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migrateAssetsTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "AssetsTemp"
+        val originalTableName = "Assets"
+        val createTempTable = """
+                CREATE TABLE $tempTableName (
+                _id TEXT PRIMARY KEY NOT NULL,
+                asset_type TEXT NOT NULL,
+                data TEXT NOT NULL
+                )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migrateConversationsTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "ConversationsTemp"
+        val originalTableName = "Conversations"
+        val createTempTable = """
+                CREATE TABLE $tempTableName (
+                _id TEXT PRIMARY KEY NOT NULL,
+                remote_id TEXT NOT NULL,
+                name TEXT ,
+                creator TEXT NOT NULL,
+                conv_type INTEGER NOT NULL,
+                team TEXT,
+                is_managed INTEGER,
+                last_event_time INTEGER NOT NULL,
+                is_active INTEGER NOT NULL,
+                last_read INTEGER NOT NULL,
+                muted_status INTEGER NOT NULL,
+                mute_time INTEGER NOT NULL,
+                archived INTEGER NOT NULL,
+                archive_time INTEGER NOT NULL,
+                cleared INTEGER,
+                generated_name TEXT NOT NULL,
+                search_key TEXT, 
+                unread_count INTEGER NOT NULL, 
+                unsent_count INTEGER NOT NULL, 
+                hidden INTEGER NOT NULL, 
+                missed_call TEXT,
+                incoming_knock TEXT, 
+                verified TEXT NOT NULL, 
+                ephemeral INTEGER,
+                global_ephemeral INTEGER,
+                unread_call_count INTEGER NOT NULL,
+                unread_ping_count INTEGER NOT NULL,
+                access TEXT NOT NULL, 
+                access_role TEXT, 
+                link TEXT, 
+                unread_mentions_count INTEGER NOT NULL, 
+                unread_quote_count INTEGER NOT NULL, 
+                receipt_mode INTEGER 
+                )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migrateKeyValuesTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "KeyValuesTemp"
+        val originalTableName = "KeyValues"
+        val createTempTable = """
+                CREATE TABLE $tempTableName (
+                key TEXT PRIMARY KEY NOT NULL,
+                value TEXT NOT NULL
+                )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
     }
 
     private fun migrateNotificationData(database: SupportSQLiteDatabase) {
@@ -110,7 +236,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         )
     }
 
-    private fun migrateUserClientsTable(database: SupportSQLiteDatabase) {
+    private fun migrateClientsTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ClientsTemp"
         val originalTableName = "Clients"
         val createTempTable = """
@@ -411,64 +537,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               stage_start_time INTEGER NOT NULL, 
               PRIMARY KEY (_id, stage)
               )""".trimIndent()
-
-        executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
-        )
-    }
-
-    private fun migrateKeyValuesTable(database: SupportSQLiteDatabase) {
-        val tempTableName = "KeyValuesTemp"
-        val originalTableName = "KeyValues"
-        val createTempTable = """
-                CREATE TABLE $tempTableName (
-                key TEXT PRIMARY KEY NOT NULL,
-                value TEXT NOT NULL
-                )""".trimIndent()
-
-        executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
-        )
-    }
-
-    private fun migrateUserTable(database: SupportSQLiteDatabase) {
-        val tempTableName = "UsersTemp"
-        val originalTableName = "Users"
-        val createTempTable = """
-        CREATE TABLE $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL,
-            teamId TEXT,
-            name TEXT NOT NULL,
-            email TEXT, 
-            phone TEXT, 
-            tracking_id TEXT, 
-            picture TEXT, 
-            accent INTEGER NOT NULL, 
-            skey TEXT NOT NULL, 
-            connection TEXT NOT NULL, 
-            conn_timestamp INTEGER NOT NULL, 
-            conn_msg TEXT, 
-            conversation TEXT, 
-            relation TEXT NOT NULL, 
-            timestamp INTEGER, 
-            verified TEXT NOT NULL, 
-            deleted INTEGER NOT NULL, 
-            availability INTEGER NOT NULL, 
-            handle TEXT, 
-            provider_id TEXT, 
-            integration_id TEXT, 
-            expires_at INTEGER, 
-            managed_by TEXT, 
-            self_permissions INTEGER NOT NULL, 
-            copy_permissions INTEGER NOT NULL, 
-            created_by TEXT 
-        )""".trimIndent()
 
         executeSimpleMigration(
             database = database,
