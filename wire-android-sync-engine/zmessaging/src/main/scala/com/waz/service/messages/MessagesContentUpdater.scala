@@ -62,14 +62,15 @@ class MessagesContentUpdater(messagesStorage: MessagesStorage,
       None
   }
 
-  def updateButtonConfirmations(buttonConfirmations: Map[MessageId, Option[ButtonId]]): Future[Unit] =
-    Future.sequence(buttonConfirmations.map {
-      case (msgId, confirmedButtonId) =>
+  def updateButtonConfirmations(confirmations: Map[MessageId, Option[ButtonId]]): Future[Unit] =
+    Future.sequence(confirmations.map {
+      case (msgId, confirmedId) =>
         for {
           buttons <- buttonsStorage.findByMessage(msgId)
-          ids     =  buttons.map(_.id)
-          _       <- buttonsStorage.updateAll2(ids, _.copy(state = ButtonData.ButtonNotClicked))
-          _       <- confirmedButtonId.fold[Future[Option[(ButtonData, ButtonData)]]](Future.successful(None))(bId => buttonsStorage.update((msgId, bId), _.copy(state = ButtonData.ButtonConfirmed)))
+          _       <- buttonsStorage.updateAll2(buttons.map(_.id), {
+                       case b if confirmedId.contains(b.buttonId) => b.copy(state = ButtonData.ButtonConfirmed)
+                       case b                                     => b.copy(state = ButtonData.ButtonNotClicked)
+                     })
         } yield ()
     }).map(_ => ())
 

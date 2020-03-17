@@ -24,7 +24,6 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
     // the tested method does not return anything so instead we check if the button is modified in the storage
     (buttons.findByMessage _).expects(messageId).atLeastOnce().returning(Future.successful(Seq(buttonData)))
     (buttons.updateAll2 _).expects(Seq((messageId, buttonId)), *).atLeastOnce().returning(Future.successful(Nil))
-    (buttons.update _).expects((messageId, buttonId), *).atLeastOnce().returning(Future.successful(None))
 
     val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs, buttons)
 
@@ -44,7 +43,6 @@ class MessagesContentUpdaterSpec extends AndroidFreeSpec {
     // the tested method does not return anything so instead we check if the button is modified in the storage
     (buttons.findByMessage _).expects(messageId).atLeastOnce().returning(Future.successful(Seq(buttonData1, buttonData2)))
     (buttons.updateAll2 _).expects(ids, *).atLeastOnce().returning(Future.successful(Nil))
-    (buttons.update _).expects((messageId, buttonId2), *).atLeastOnce().returning(Future.successful(None))
 
     val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs, buttons)
 
