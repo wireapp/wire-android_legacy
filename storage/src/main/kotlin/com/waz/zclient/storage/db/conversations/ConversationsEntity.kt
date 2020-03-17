@@ -96,7 +96,7 @@ data class ConversationsEntity(
     val access: String,
 
     @ColumnInfo(name = "access_role")
-    val accessRole: String,
+    val accessRole: String?,
 
     @ColumnInfo(name = "link")
     val link: String?,
