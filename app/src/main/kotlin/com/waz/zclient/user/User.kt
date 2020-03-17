@@ -1,16 +1,14 @@
 package com.waz.zclient.user
 
 data class User(
-    val id: String? = null,
+    val id: String,
     val teamId: String? = null,
-    val name: String? = null,
-    val handle: String?,
-    val email: String?,
-    val phone: String?,
+    val name: String,
+    val email: String? = null,
+    val phone: String? = null,
     val trackingId: String? = null,
-    var picture: String? = null,
-    var pictures: List<String>? = null,
-    val accentId: Int?,
+    val picture: String? = null,
+    val accentId: Int? = null,
     val sKey: String? = null,
     val connection: String? = null,
     val connectionTimestamp: Long? = null,
@@ -18,15 +16,16 @@ data class User(
     val conversation: String? = null,
     val relation: String? = null,
     val timestamp: Long? = null,
-    val displayName: String? = null,
     val verified: String? = null,
     val deleted: Int? = null,
     val availability: Int? = null,
+    val handle: String? = null,
     val providerId: String? = null,
     val integrationId: String? = null,
-    val expiresAt: Int? = null,
-    val managedBy: String?,
+    val expiresAt: Long? = null,
+    val managedBy: String? = null,
     val selfPermission: Int? = null,
     val copyPermission: Int? = null,
-    val createdBy: String? = null
+    val createdBy: String? = null,
+    var locale: String? = null
 )
