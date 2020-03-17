@@ -31,6 +31,9 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
 
         migrateUserTable(database)
         migrateKeyValuesTable(database)
+        migratePushNotificationEvents(database)
+        migrateReadRecieptsTable(database)
+        migratePropertiesTable(database)
         migrateUploadAssetTable(database)
         migrateDownloadAssetTable(database)
         migrateAssets2Table(database)
@@ -44,6 +47,65 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         createButtonsTable(database)
     }
 
+    private fun migratePushNotificationEvents(database: SupportSQLiteDatabase) {
+        val tempTableName = "PushNotificationEventsTemp"
+        val originalTableName = "PushNotificationEvents"
+        val createTempTable = """
+             CREATE TABLE $tempTableName (
+             pushId TEXT NOT NULL, 
+             event_index INTEGER NOT NULL, 
+             decrypted INTEGER NOT NULL, 
+             event TEXT NOT NULL, 
+             plain BLOB, 
+             transient INTEGER NOT NULL, 
+             PRIMARY KEY (event_index)
+             )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migrateReadRecieptsTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "ReadReceiptsTemp"
+        val originalTableName = "ReadReceipts"
+        val createTempTable = """
+             CREATE TABLE $tempTableName (
+             message_id TEXT NOT NULL, 
+             user_id TEXT NOT NULL, 
+             timestamp INTEGER NOT NULL, 
+             PRIMARY KEY (message_id, user_id)
+             )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
+    private fun migratePropertiesTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "PropertiesTemp"
+        val originalTableName = "Properties"
+        val createTempTable = """
+             CREATE TABLE $tempTableName (
+             key TEXT NOT NULL, 
+             value TEXT NOT NULL, 
+             PRIMARY KEY (key)
+             )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
+        )
+    }
+
     private fun migrateUploadAssetTable(database: SupportSQLiteDatabase) {
         val tempTableName = "UploadAssetsTemp"
         val originalTableName = "UploadAssets"
@@ -51,22 +113,23 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
              CREATE TABLE $tempTableName (
              _id TEXT NOT NULL, 
              source TEXT NOT NULL, 
-             name TEXT NOT NUL, 
-             sha BLOB NOT NUL, 
-             md5 BLOB NOT NUL, 
-             mime TEXT NOT NUL, 
-             preview TEXT NOT NUL, 
-             uploaded INTEGER NOT NUL, 
-             size INTEGER NOT NUL, 
-             retention INTEGER NOT NUL, 
-             public INTEGER NOT NUL, 
-             encryption TEXT NOT NUL, 
+             name TEXT NOT NULL, 
+             sha BLOB NOT NULL, 
+             md5 BLOB NOT NULL, 
+             mime TEXT NOT NULL, 
+             preview TEXT NOT NULL, 
+             uploaded INTEGER NOT NULL, 
+             size INTEGER NOT NULL, 
+             retention INTEGER NOT NULL, 
+             public INTEGER NOT NULL, 
+             encryption TEXT NOT NULL, 
              encryption_salt TEXT, 
-             details TEXT NOT NUL, 
-             status INTEGER NOT NUL, 
+             details TEXT NOT NULL, 
+             status INTEGER NOT NULL, 
              asset_id TEXT, 
              PRIMARY KEY (_id)
              )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = originalTableName,
@@ -136,6 +199,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               stage_start_time INTEGER NOT NULL, 
               PRIMARY KEY (_id, stage)
               )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = originalTableName,
@@ -174,6 +238,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               | handle TEXT, provider_id TEXT, integration_id TEXT, expires_at INTEGER,
               | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
               | )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = usersOriginalTable,
@@ -192,6 +257,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               bucket2 INTEGER NOT NULL, 
               bucket3 INTEGER NOT NULL 
               )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = originalTableName,
@@ -209,6 +275,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               name TEXT NOT NULL, 
               type INTEGER NOT NULL
               )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = originalTableName,
@@ -226,6 +293,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               folder_id TEXT NOT NULL, 
               PRIMARY KEY (conv_id, folder_id)
               )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = originalTableName,
@@ -244,6 +312,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                conv_id TEXT NOT NULL, 
                PRIMARY KEY (label, action, conv_id)
                )""".trimIndent()
+
         executeSimpleMigration(
             database = database,
             originalTableName = originalTableName,
