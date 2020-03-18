@@ -196,7 +196,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                      messages.addAssetMessage(convId, messageId, rawAsset, rr, exp)
                    }
       _         <- updateLastRead(msgs.toList.maxBy(_.time))
-      msgMap    =  msgs.map(m => m.id -> m).toMap
+      msgMap    =  msgs.toIdMap
       _         <- Future.traverse(assetMap) { case (messageId, rawAsset) =>
                      val message = msgMap(messageId)
                      checkSize(convId, rawAsset, message, confirmation).flatMap {

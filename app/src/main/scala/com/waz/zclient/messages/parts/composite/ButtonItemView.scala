@@ -5,8 +5,8 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.{ProgressBar, TextView}
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.waz.model.ButtonData
-import com.waz.utils.events.EventStream
+import com.waz.model.{ButtonData, ButtonId, MessageId}
+import com.waz.utils.events.SourceStream
 import com.waz.zclient.{R, ViewHelper}
 
 class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
@@ -18,27 +18,27 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
 
   inflate(R.layout.message_button)
 
-  private lazy val button = findById[ButtonWithConfirmation](R.id.message_button_item_button)
-  private lazy val progressBar = findById[ProgressBar](R.id.message_button_item_progressbar)
+  private lazy val button              = findById[ButtonWithConfirmation](R.id.message_button_item_button)
+  private lazy val progressBar         = findById[ProgressBar](R.id.message_button_item_progressbar)
   private lazy val errorText: TextView = findById[TextView](R.id.message_button_item_error_text)
 
-  val selected = EventStream[Unit]()
-
-  button.setOnClickListener(new View.OnClickListener {
-    override def onClick(v: View): Unit = {
-      selected ! {}
-    }
-  })
+  private var onClickStream = Option.empty[SourceStream[(MessageId, ButtonId)]]
 
   def bindButton(uiModel: ButtonItemViewUIModel): Unit = {
-    button.setText(uiModel.title)
-    button.setContentDescription(uiModel.title)
-    uiModel.state match {
+    button.setText(uiModel.button.title)
+    button.setContentDescription(uiModel.button.title)
+    uiModel.button.state match {
       case ButtonData.ButtonError(error) => setUnselected(Some(error))
       case ButtonData.ButtonNotClicked   => setUnselected(None)
       case ButtonData.ButtonWaiting      => setWaiting()
       case ButtonData.ButtonConfirmed    => setConfirmed()
     }
+
+    onClickStream = Some(uiModel.onClick)
+
+    button.setOnClickListener(new View.OnClickListener {
+      override def onClick(v: View): Unit = onClickStream.foreach { _ ! uiModel.button.id }
+    })
   }
 
   private def setConfirmed(): Unit = {
@@ -70,4 +70,4 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
   }
 }
 
-case class ButtonItemViewUIModel(title: String, state: ButtonData.ButtonState)
+case class ButtonItemViewUIModel(button: ButtonData, onClick: SourceStream[(MessageId, ButtonId)])

@@ -6,10 +6,10 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
 import com.waz.zclient.user.UsersRepository
-import com.waz.zclient.user.mapper.UserMapper
 import com.waz.zclient.user.datasources.local.UsersLocalDataSource
-import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
 import com.waz.zclient.user.datasources.remote.UserResponse
+import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.user.mapper.UserMapper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -21,7 +21,9 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
@@ -70,7 +72,7 @@ class UserDataSourceTest : UnitTest() {
         usersRemoteDataSource.profileDetails().map {
             runBlockingTest {
                 val user = userMapper.toUser(it)
-                verify(usersLocalDataSource).insertUser(eq(userMapper.toUserDao(user)))
+                verify(usersLocalDataSource).insertUser(eq(userMapper.toUserEntity(user)))
 
                 usersRepository.profileDetails().single() shouldBe user
             }

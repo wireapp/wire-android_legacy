@@ -34,10 +34,6 @@ import scala.collection.generic._
 import scala.collection.{GenTraversableOnce, Seq, breakOut, mutable}
 import scala.concurrent.{ExecutionContext, Future}
 
-trait Identifiable[K] {
-  def id: K
-}
-
 trait StorageDao[K, V <: Identifiable[K]] {
   def getById(key: K)(implicit db: DB): Option[V]
   def getAll(keys: Set[K])(implicit db: DB): Seq[V]
@@ -170,10 +166,10 @@ class ReactiveStorageImpl2[K, V <: Identifiable[K]](storage: Storage2[K,V]) exte
   override def loadAll(keys: Set[K]): Future[Seq[V]] = storage.loadAll(keys)
 
   override def saveAll(values: Iterable[V]): Future[Unit] = {
-    val valuesByKey = values.map(v => v.id -> v).toMap
+    val valuesByKey = values.toIdMap
     for {
       loadedValues <- loadAll(valuesByKey.keySet)
-      loadedValuesByKey = loadedValues.map(v => v.id -> v).toMap
+      loadedValuesByKey = loadedValues.toIdMap
       toSave = Vector.newBuilder[V]
       added = Vector.newBuilder[V]
       updated = Vector.newBuilder[(V, V)]

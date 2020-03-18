@@ -33,6 +33,7 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
+
 /**
  * Keeps actual SyncJobs in memory, and persists all changes to db.
  * Handles merging of new requests, only adds new jobs if actually needed.
@@ -102,7 +103,7 @@ class SyncContentUpdaterImpl(db: Database) extends SyncContentUpdater with Deriv
       syncStorage.onRemoved { job => onChange ! Del(job) }
     }
 
-    new AggregatingSignal[Cmd, Map[SyncId, SyncJob]](onChange, listSyncJobs.map(_.map(j => j.id -> j).toMap), { (jobs, cmd) =>
+    new AggregatingSignal[Cmd, Map[SyncId, SyncJob]](onChange, listSyncJobs.map(_.toIdMap), { (jobs, cmd) =>
       cmd match {
         case Add(job) => jobs + (job.id -> job)
         case Del(job) => jobs - job.id

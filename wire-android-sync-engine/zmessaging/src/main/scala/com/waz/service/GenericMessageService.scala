@@ -71,6 +71,10 @@ class GenericMessageService(selfUserId: UserId,
       }
     }.flatten
 
+    val buttonConfirmations = (events collect {
+      case GenericMessageEvent(_, _, _, GenericMessage(_, ButtonActionConfirmation(msgId, buttonId))) => msgId -> buttonId
+    }).toMap
+
     for {
       _ <- messages.deleteOnUserRequest(deleted)
       _ <- traverse(lastRead) { case (remoteId, timestamp) =>
@@ -83,6 +87,7 @@ class GenericMessageService(selfUserId: UserId,
       _ <- receipts.processDeliveryReceipts(confirmed)
       _ <- receipts.processReadReceipts(read)
       _ <- users.storeAvailabilities(availabilities)
+      _ <- messages.updateButtonConfirmations(buttonConfirmations)
     } yield ()
   }
 }

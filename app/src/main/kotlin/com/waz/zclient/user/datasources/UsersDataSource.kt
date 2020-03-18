@@ -4,9 +4,9 @@ import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.functional.onSuccess
 import com.waz.zclient.user.User
 import com.waz.zclient.user.UsersRepository
-import com.waz.zclient.user.mapper.UserMapper
 import com.waz.zclient.user.datasources.local.UsersLocalDataSource
 import com.waz.zclient.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.user.mapper.UserMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -39,7 +39,7 @@ class UsersDataSource(
         .map { userMapper.toUser(it) }
 
     private suspend fun saveUser(): suspend (User) -> Unit = {
-        usersLocalDataSource.insertUser(userMapper.toUserDao(it))
+        usersLocalDataSource.insertUser(userMapper.toUserEntity(it))
     }
 
     override suspend fun changeName(name: String) = changeNameRemotely(name)

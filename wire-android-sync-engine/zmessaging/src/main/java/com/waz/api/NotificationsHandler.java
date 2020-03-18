@@ -36,7 +36,8 @@ public interface NotificationsHandler {
         LIKE,
         LOCATION,
         MESSAGE_SENDING_FAILED,
-        CONVERSATION_DELETED;
+        CONVERSATION_DELETED,
+        COMPOSITE;
 
         public enum LikedContent {
             TEXT_OR_URL, // the text or URL is contained in #getMessage in this case

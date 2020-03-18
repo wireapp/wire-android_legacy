@@ -76,7 +76,7 @@ data class UserEntity(
     val integrationId: String?,
 
     @ColumnInfo(name = "expires_at")
-    val expiresAt: Int?,
+    val expiresAt: Long?,
 
     @ColumnInfo(name = "managed_by")
     val managedBy: String?,

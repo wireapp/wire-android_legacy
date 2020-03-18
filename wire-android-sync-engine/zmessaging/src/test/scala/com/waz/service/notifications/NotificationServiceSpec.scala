@@ -177,6 +177,16 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
     }
 
+    scenario("Push composite message notifications to UI even when the user is away") {
+      setup(userAvailability = Availability.Away)
+      testCompositeMessageNotificationShown()
+    }
+
+    scenario("Push composite message notifications to UI even when the user is busy") {
+      setup(userAvailability = Availability.Busy)
+      testCompositeMessageNotificationShown()
+    }
+
     scenario("Notifications are only pushed to UI for conversations with correct mute states") {
       val rConvId2 = RConvId("conv2")
       val conv = ConversationData(ConvId("conv"), rConvId, muted = MuteSet.AllMuted)
@@ -505,5 +515,28 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       (messages.getAll _).expects(Set(msg.id)).anyNumberOfTimes().returning(Future.successful(Seq(Some(msg))))
       (messages.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
     }
+  }
+
+  private def testCompositeMessageNotificationShown() {
+    (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
+      IndexedSeq(
+        MessageData(
+          MessageId(content.messageId),
+          conv.id,
+          msgType = Message.Type.COMPOSITE,
+          protos = Seq(content),
+          userId = from,
+          time   = lastEventTime
+        )
+      )
+    ))
+
+    (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
+      nots.size shouldEqual 1
+      nots.head.msgType shouldEqual NotificationType.COMPOSITE
+      Future.successful({})
+    }
+
+    result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
   }
 }
