@@ -4,6 +4,7 @@ package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.waz.zclient.storage.BuildConfig
 
 //Shared keys
 private const val CLIENT_ID_KEY = "id"
@@ -24,6 +25,11 @@ private const val NEW_CLIENT_TYPE_KEY = "type"
 
 val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     override fun migrate(database: SupportSQLiteDatabase) {
+        if (BuildConfig.KOTLIN_CORE) {
+            //TODO Remove this
+            migrateClientTable(database)
+        }
+
         migrateUserTable(database)
         migrateAssetsTable(database)
         migrateConversationsTable(database)
@@ -31,11 +37,11 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateMessagesTable(database)
         migrateKeyValuesTable(database)
         migrateSyncJobsTable(database)
+        migrateClientsTable(database)
         migrateSyncErrorsTable(database)
         migrateNotificationData(database)
         migrateContactHashesTable(database)
         migrateContactsOnWire(database)
-        migrateClientsTable(database)
         migrateLikingTable(database)
         migrateContactsTable(database)
         migrateEmailAddressTable(database)
@@ -167,7 +173,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 unread_quote_count INTEGER NOT NULL, 
                 receipt_mode INTEGER 
                 )""".trimIndent()
-        val conversationSearchKeyIndex = """"
+        val conversationSearchKeyIndex = """
             CREATE INDEX IF NOT EXISTS Conversation_search_key on $originalTableName ($searchKey)
             """.trimIndent()
         executeSimpleMigration(
@@ -757,7 +763,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                PRIMARY KEY (label, action, conv_id)
                )""".trimIndent()
 
-        val conversationIdIndex = """"
+        val conversationIdIndex = """
             CREATE INDEX IF NOT EXISTS ConversationRoleAction_convid on $originalTableName ($convId)
             """.trimIndent()
 
