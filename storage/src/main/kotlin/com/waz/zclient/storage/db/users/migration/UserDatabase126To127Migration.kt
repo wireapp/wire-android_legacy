@@ -61,9 +61,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateConversationFoldersTable(database)
         migrateConversationRoleActionTable(database)
 
-        //TODO Remove this
-        migrateClientTable(database)
-
         //TODO Move this to 127 - 128 Migration when finished with migration bug
         createButtonsTable(database)
     }
