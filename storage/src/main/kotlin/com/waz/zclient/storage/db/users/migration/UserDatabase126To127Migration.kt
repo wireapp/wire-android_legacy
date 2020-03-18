@@ -65,9 +65,11 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateUserTable(database: SupportSQLiteDatabase) {
         val tempTableName = "UsersTemp"
         val originalTableName = "Users"
+        val primaryKey = "_id"
+        val searchKey = "skey"
         val createTempTable = """
         CREATE TABLE $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL,
+            $primaryKey TEXT PRIMARY KEY NOT NULL,
             teamId TEXT,
             name TEXT NOT NULL,
             email TEXT, 
@@ -75,7 +77,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             tracking_id TEXT, 
             picture TEXT, 
             accent INTEGER NOT NULL, 
-            skey TEXT NOT NULL, 
+            $searchKey TEXT NOT NULL, 
             connection TEXT NOT NULL, 
             conn_timestamp INTEGER NOT NULL, 
             conn_msg TEXT, 
