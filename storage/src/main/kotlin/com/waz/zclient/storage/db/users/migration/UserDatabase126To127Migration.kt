@@ -26,6 +26,7 @@ private const val NEW_CLIENT_TYPE_KEY = "type"
 val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     override fun migrate(database: SupportSQLiteDatabase) {
         if (BuildConfig.KOTLIN_CORE) {
+            //TODO Remove this
             migrateClientTable(database)
         }
 
@@ -36,11 +37,11 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateMessagesTable(database)
         migrateKeyValuesTable(database)
         migrateSyncJobsTable(database)
+        migrateClientsTable(database)
         migrateSyncErrorsTable(database)
         migrateNotificationData(database)
         migrateContactHashesTable(database)
         migrateContactsOnWire(database)
-        migrateClientsTable(database)
         migrateLikingTable(database)
         migrateContactsTable(database)
         migrateEmailAddressTable(database)
@@ -67,9 +68,11 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateUserTable(database: SupportSQLiteDatabase) {
         val tempTableName = "UsersTemp"
         val originalTableName = "Users"
+        val primaryKey = "_id"
+        val searchKey = "skey"
         val createTempTable = """
         CREATE TABLE $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL,
+            $primaryKey TEXT PRIMARY KEY NOT NULL,
             teamId TEXT,
             name TEXT NOT NULL,
             email TEXT, 
@@ -77,7 +80,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             tracking_id TEXT, 
             picture TEXT, 
             accent INTEGER NOT NULL, 
-            skey TEXT NOT NULL, 
+            $searchKey TEXT NOT NULL, 
             connection TEXT NOT NULL, 
             conn_timestamp INTEGER NOT NULL, 
             conn_msg TEXT, 
@@ -97,11 +100,15 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             created_by TEXT 
         )""".trimIndent()
 
+        val conversationIdIndex = "CREATE INDEX IF NOT EXISTS Conversation_id on $originalTableName ($primaryKey)"
+        val searchKeyIndex = "CREATE INDEX IF NOT EXISTS UserData_search_key on $originalTableName ($searchKey)"
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            conversationIdIndex,
+            searchKeyIndex
         )
     }
 
@@ -126,6 +133,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateConversationsTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ConversationsTemp"
         val originalTableName = "Conversations"
+        val searchKey = "search_key"
         val createTempTable = """
                 CREATE TABLE $tempTableName (
                 _id TEXT PRIMARY KEY NOT NULL,
@@ -144,7 +152,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 archive_time INTEGER NOT NULL,
                 cleared INTEGER,
                 generated_name TEXT NOT NULL,
-                search_key TEXT, 
+                $searchKey TEXT, 
                 unread_count INTEGER NOT NULL, 
                 unsent_count INTEGER NOT NULL, 
                 hidden INTEGER NOT NULL, 
@@ -162,46 +170,58 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 unread_quote_count INTEGER NOT NULL, 
                 receipt_mode INTEGER 
                 )""".trimIndent()
-
+        val conversationSearchKeyIndex = """
+            CREATE INDEX IF NOT EXISTS Conversation_search_key on $originalTableName ($searchKey)
+            """.trimIndent()
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            conversationSearchKeyIndex
         )
     }
 
     private fun migrateConversationMembersTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ConversationMembersTemp"
         val originalTableName = "ConversationMembers"
+        val convid = "conv_id"
+        val userId = "user_id"
         val createTempTable = """
                 CREATE TABLE $tempTableName (
-                user_id TEXT NOT NULL, 
-                conv_id TEXT NOT NULL, 
+                $userId TEXT NOT NULL, 
+                $convid TEXT NOT NULL, 
                 role TEXT NOT NULL,
                 PRIMARY KEY (user_id, conv_id));
                 )""".trimIndent()
 
+        val conversationIdIndex = "CREATE INDEX IF NOT EXISTS ConversationMembers_conv on $originalTableName ($convid)"
+        val userIdIndex = "CREATE INDEX IF NOT EXISTS ConversationMembers_userid on $originalTableName ($userId)"
+
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            conversationIdIndex,
+            userIdIndex
         )
     }
 
     private fun migrateMessagesTable(database: SupportSQLiteDatabase) {
         val tempTableName = "MessagesTemp"
         val originalTableName = "Messages"
+        val convId = "conv_id"
+        val time = "time"
         val createTempTable = """
                 CREATE TABLE $tempTableName (
                 _id TEXT PRIMARY KEY NOT NULL,
-                 conv_id TEXT NOT NULL,
+                $convId TEXT NOT NULL,
                 msg_type TEXT NOT NULL, 
                 user_id TEXT NOT NULL,
                 content TEXT,
                 protos BLOB, 
-                time INTEGER NOT NULL, 
+                $time INTEGER NOT NULL, 
                 local_time INTEGER NOT NULL, 
                 first_msg INTEGER NOT NULL,
                 members TEXT, 
@@ -220,12 +240,14 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 force_read_receipts INTEGER,
                 asset_id TEXT
                 )""".trimIndent()
+        val convAndTimeIndex = "CREATE INDEX IF NOT EXISTS Messages_conv_time on $originalTableName ($convId, $time)"
 
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            convAndTimeIndex
         )
     }
 
@@ -324,18 +346,22 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateContactsOnWire(database: SupportSQLiteDatabase) {
         val tempTableName = "ContactsOnWireTemp"
         val originalTableName = "ContactsOnWire"
+        val contact = "contact"
         val createTempTable = """
              CREATE TABLE $tempTableName (
              user TEXT NOT NULL, 
-             contact TEXT NOT NULL, 
+             $contact TEXT NOT NULL, 
              PRIMARY KEY (user, contact)
              )""".trimIndent()
 
+        val contactIndex = "CREATE INDEX IF NOT EXISTS ContactsOnWire_contact on $originalTableName ( $contact )"
+
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            contactIndex
         )
     }
 
@@ -379,56 +405,74 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateContactsTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ContactsTemp"
         val originalTableName = "Contacts"
+        val sorting = "sort_key"
         val createTempTable = """
              CREATE TABLE $tempTableName (
              _id TEXT PRIMARY KEY NOT NULL, 
              name TEXT NOT NULL, 
              name_source INTEGER NOT NULL, 
-             sort_key TEXT NOT NULL, 
+             $sorting TEXT NOT NULL, 
              search_key TEXT NOT NULL
              )""".trimIndent()
 
+        val contactSortingIndex = "CREATE INDEX IF NOT EXISTS Contacts_sorting on $originalTableName ( $sorting )"
+
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            contactSortingIndex
         )
     }
 
     private fun migrateEmailAddressTable(database: SupportSQLiteDatabase) {
         val tempTableName = "EmailAddressesTemp"
         val originalTableName = "EmailAddresses"
+        val contact = "contact"
+        val emailAddress = "email_address"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             contact TEXT NOT NULL, 
-             email_address TEXT NOT NULL,
+             $contact TEXT NOT NULL, 
+             $emailAddress TEXT NOT NULL,
              PRIMARY KEY (contact, email_address)
              )""".trimIndent()
 
+        val contactIndex = "CREATE INDEX IF NOT EXISTS EmailAddresses_contact on EmailAddresses ($contact)"
+        val emailIndex = "CREATE INDEX IF NOT EXISTS EmailAddresses_email on EmailAddresses ($emailAddress)"
+
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            contactIndex,
+            emailIndex
         )
     }
 
     private fun migratePhoneNumbersTable(database: SupportSQLiteDatabase) {
         val tempTableName = "PhoneNumbersTemp"
         val originalTableName = "PhoneNumbers"
+        val contact = "contact"
+        val phoneNumber = "phone_number"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             contact TEXT NOT NULL, 
-             phone_number TEXT NOT NULL,
+             $contact TEXT NOT NULL, 
+             $phoneNumber TEXT NOT NULL,
              PRIMARY KEY (contact, phone_number)
              )""".trimIndent()
 
+        val contactIndex = "CREATE INDEX IF NOT EXISTS PhoneNumbers_contact on $originalTableName ($contact)"
+        val phoneIndex = "CREATE INDEX IF NOT EXISTS PhoneNumbers_phone on $originalTableName ($phoneNumber)"
+
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            contactIndex,
+            phoneIndex
         )
     }
 
@@ -707,19 +751,25 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateConversationRoleActionTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ConversationRoleActionTemp"
         val originalTableName = "ConversationRoleAction"
+        val convId = "conv_id"
         val createTempTable = """
                CREATE TABLE $tempTableName (
                label TEXT NOT NULL, 
                action TEXT NOT NULL, 
-               conv_id TEXT NOT NULL, 
+               $convId TEXT NOT NULL, 
                PRIMARY KEY (label, action, conv_id)
                )""".trimIndent()
 
+        val conversationIdIndex = """
+            CREATE INDEX IF NOT EXISTS ConversationRoleAction_convid on $originalTableName ($convId)
+            """.trimIndent()
+
         executeSimpleMigration(
-            database = database,
-            originalTableName = originalTableName,
-            tempTableName = tempTableName,
-            createTempTable = createTempTable
+            database,
+            originalTableName,
+            tempTableName,
+            createTempTable,
+            conversationIdIndex
         )
     }
 
@@ -727,7 +777,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         database: SupportSQLiteDatabase,
         originalTableName: String,
         tempTableName: String,
-        createTempTable: String
+        createTempTable: String,
+        vararg indicesCalls: String
     ) {
         val copyAll = "INSERT INTO $tempTableName SELECT * FROM $originalTableName"
         val dropOldTable = "DROP TABLE $originalTableName"
@@ -737,6 +788,9 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             execSQL(copyAll)
             execSQL(dropOldTable)
             execSQL(renameTableBack)
+            indicesCalls.forEach {
+                execSQL(it)
+            }
         }
     }
 

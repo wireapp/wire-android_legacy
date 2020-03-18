@@ -6,8 +6,8 @@ import androidx.room.Index
 
 @Entity(
     tableName = "ConversationRoleAction",
-    primaryKeys = ["conv_id", "label", "action"],
-    indices = [Index(value = ["conv_id"])]
+    primaryKeys = ["label", "action", "conv_id"],
+    indices = [Index(name = "ConversationRoleAction_convid", value = ["conv_id"])]
 )
 data class ConversationRoleActionEntity(
     @ColumnInfo(name = "conv_id")

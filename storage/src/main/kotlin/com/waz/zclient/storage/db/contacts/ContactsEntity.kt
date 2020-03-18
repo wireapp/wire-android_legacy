@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Contacts",
-    indices = [Index(value = ["sort_key"])]
+    indices = [Index(name = "Contacts_sorting", value = ["sort_key"])]
 )
 data class ContactsEntity(
     @PrimaryKey
