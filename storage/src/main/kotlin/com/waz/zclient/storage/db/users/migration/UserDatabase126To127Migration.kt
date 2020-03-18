@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber", "TooManyFunctions")
+@file:Suppress("MagicNumber", "TooManyFunctions", "LargeClass")
 
 package com.waz.zclient.storage.db.users.migration
 
