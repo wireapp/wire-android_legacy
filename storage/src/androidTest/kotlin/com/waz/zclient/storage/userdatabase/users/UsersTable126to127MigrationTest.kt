@@ -129,13 +129,13 @@ class UsersTable126to127MigrationTest : IntegrationTest() {
         private const val TEST_ACCENT_ID = 0
         private const val TEST_SKEY = "key"
         private const val TEST_CONNECTION = "unconnected"
-        private const val TEST_CONNECTION_TIMESTAMP: Long = 1584372387
+        private const val TEST_CONNECTION_TIMESTAMP = 1584372387
         private const val TEST_CONNECTION_MESSAGE = "conn_msg"
         private const val TEST_CONVERSATION = "conversation"
         private const val TEST_RELATION = "Other"
-        private const val TEST_TIMESTAMP: Long = 1584372387
+        private const val TEST_TIMESTAMP = 1584372387
         private const val TEST_VERIFIED = "Unknown"
-        private const val TEST_DELETED = 0
+        private const val TEST_DELETED = false
         private const val TEST_AVAILABILITY = 0
         private const val TEST_HANDLE = "handle"
         private const val TEST_PROVIDER_ID = "id"
