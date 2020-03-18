@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.userdatabase.users
+package com.waz.zclient.storage.userdatabase
 
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest
@@ -6,6 +6,7 @@ import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.di.StorageModule.getUserDatabase
+import com.waz.zclient.storage.userdatabase.users.UsersTableTestHelper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -13,7 +14,7 @@ import org.junit.Before
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class UsersTable126to127MigrationTest : IntegrationTest() {
+class UserDatabase126to127MigrationTest : IntegrationTest() {
 
     private lateinit var testOpenHelper: DbSQLiteOpenHelper
 
@@ -129,13 +130,13 @@ class UsersTable126to127MigrationTest : IntegrationTest() {
         private const val TEST_ACCENT_ID = 0
         private const val TEST_SKEY = "key"
         private const val TEST_CONNECTION = "unconnected"
-        private const val TEST_CONNECTION_TIMESTAMP: Long = 1584372387
+        private const val TEST_CONNECTION_TIMESTAMP = 1584372387
         private const val TEST_CONNECTION_MESSAGE = "conn_msg"
         private const val TEST_CONVERSATION = "conversation"
         private const val TEST_RELATION = "Other"
-        private const val TEST_TIMESTAMP: Long = 1584372387
+        private const val TEST_TIMESTAMP = 1584372387
         private const val TEST_VERIFIED = "Unknown"
-        private const val TEST_DELETED = 0
+        private const val TEST_DELETED = false
         private const val TEST_AVAILABILITY = 0
         private const val TEST_HANDLE = "handle"
         private const val TEST_PROVIDER_ID = "id"

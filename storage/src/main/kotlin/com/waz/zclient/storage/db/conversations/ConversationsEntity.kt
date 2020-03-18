@@ -7,7 +7,9 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Conversations",
-    indices = [Index(value = ["search_key"])]
+    indices = [
+        Index(name = "Conversation_search_key", value = ["search_key"])
+    ]
 )
 data class ConversationsEntity(
     @PrimaryKey
@@ -96,7 +98,7 @@ data class ConversationsEntity(
     val access: String,
 
     @ColumnInfo(name = "access_role")
-    val accessRole: String,
+    val accessRole: String?,
 
     @ColumnInfo(name = "link")
     val link: String?,

@@ -23,7 +23,7 @@ data class ErrorsEntity(
     val conversationId: String?,
 
     @ColumnInfo(name = "res_code")
-    val responseCode: String,
+    val responseCode: Int,
 
     @ColumnInfo(name = "res_msg")
     val responseMessage: String,

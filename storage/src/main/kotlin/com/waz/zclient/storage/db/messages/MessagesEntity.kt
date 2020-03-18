@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Messages",
-    indices = [Index(value = ["conv_id", "time"])]
+    indices = [Index(name = "Messages_conv_time", value = ["conv_id", "time"])]
 )
 data class MessagesEntity(
     @PrimaryKey
@@ -54,10 +54,10 @@ data class MessagesEntity(
     val messageState: String,
 
     @ColumnInfo(name = "content_size")
-    val contentSize: String,
+    val contentSize: Int,
 
     @ColumnInfo(name = "edit_time")
-    val editTime: String,
+    val editTime: Int,
 
     @ColumnInfo(name = "ephemeral")
     val ephemeral: Int?,
@@ -75,7 +75,7 @@ data class MessagesEntity(
     val quote: String?,
 
     @ColumnInfo(name = "quote_validity")
-    val quoteValidity: Int?,
+    val quoteValidity: Int,
 
     @ColumnInfo(name = "force_read_receipts")
     val forceReadReceipts: Int?,
