@@ -24,10 +24,10 @@ data class MessagesEntity(
     val userId: String,
 
     @ColumnInfo(name = "content")
-    val content: String?,
+    val content: String,
 
     //TODO: override equals/hashcode?
-    @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB) val protos: ByteArray?,
+    @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB) val protos: ByteArray,
 
     @ColumnInfo(name = "time")
     val time: Int,
@@ -39,7 +39,7 @@ data class MessagesEntity(
     val firstMessage: Int,
 
     @ColumnInfo(name = "members")
-    val members: String?,
+    val members: String,
 
     @ColumnInfo(name = "recipient")
     val recipient: String?,
@@ -75,7 +75,7 @@ data class MessagesEntity(
     val quote: String?,
 
     @ColumnInfo(name = "quote_validity")
-    val quoteValidity: Int?,
+    val quoteValidity: Int,
 
     @ColumnInfo(name = "force_read_receipts")
     val forceReadReceipts: Int?,
