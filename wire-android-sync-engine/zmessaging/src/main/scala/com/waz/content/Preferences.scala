@@ -85,8 +85,7 @@ object Preferences {
         apply().map { v =>
           s.publish(v, Threading.Background)
         }.recoverWith { case exception =>
-          Log.e(s"Error while getting signal with preference key $key", "Exception is:", exception)
-//          error(l"Error while getting signal with preference key $key. Exception is: $exception")
+          error(l"Error while getting signal with preference key $key. Exception is: $exception")
           throw exception
         }
       }
