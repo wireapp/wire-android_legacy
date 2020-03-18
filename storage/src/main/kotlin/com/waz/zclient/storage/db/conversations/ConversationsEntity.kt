@@ -7,7 +7,9 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Conversations",
-    indices = [Index(value = ["search_key"])]
+    indices = [
+        Index(name = "Conversation_search_key", value = ["search_key"])
+    ]
 )
 data class ConversationsEntity(
     @PrimaryKey

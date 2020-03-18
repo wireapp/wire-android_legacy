@@ -19,6 +19,7 @@ package com.waz.content
 
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.{Context, SharedPreferences}
+import android.util.Log
 import com.waz.content.Preferences.Preference.PrefCodec
 import com.waz.content.Preferences.{PrefKey, Preference}
 import com.waz.log.BasicLogging.LogTag
@@ -84,7 +85,8 @@ object Preferences {
         apply().map { v =>
           s.publish(v, Threading.Background)
         }.recoverWith { case exception =>
-          error(l"Error while getting signal with preference key $key. Exception is: $exception")
+          Log.e(s"Error while getting signal with preference key $key", "Exception is:", exception)
+//          error(l"Error while getting signal with preference key $key. Exception is: $exception")
           throw exception
         }
       }
