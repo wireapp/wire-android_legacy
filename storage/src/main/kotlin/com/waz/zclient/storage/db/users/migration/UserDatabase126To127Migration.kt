@@ -67,9 +67,11 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
     private fun migrateUserTable(database: SupportSQLiteDatabase) {
         val tempTableName = "UsersTemp"
         val originalTableName = "Users"
+        val primaryKey = "_id"
+        val searchKey = "skey"
         val createTempTable = """
         CREATE TABLE $tempTableName (
-            _id TEXT PRIMARY KEY NOT NULL,
+            $primaryKey TEXT PRIMARY KEY NOT NULL,
             teamId TEXT,
             name TEXT NOT NULL,
             email TEXT, 
@@ -77,7 +79,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             tracking_id TEXT, 
             picture TEXT, 
             accent INTEGER NOT NULL, 
-            skey TEXT NOT NULL, 
+            $searchKey TEXT NOT NULL, 
             connection TEXT NOT NULL, 
             conn_timestamp INTEGER NOT NULL, 
             conn_msg TEXT, 
@@ -199,12 +201,12 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                  conv_id TEXT NOT NULL,
                 msg_type TEXT NOT NULL, 
                 user_id TEXT NOT NULL,
-                content TEXT NOT NULL,
-                protos BLOB NOT NULL, 
+                content TEXT,
+                protos BLOB, 
                 time INTEGER NOT NULL, 
                 local_time INTEGER NOT NULL, 
                 first_msg INTEGER NOT NULL,
-                members TEXT NOT NULL, 
+                members TEXT, 
                 recipient TEXT, 
                 email TEXT,
                 name TEXT,
@@ -421,7 +423,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
              CREATE TABLE $tempTableName (
              contact TEXT NOT NULL, 
              phone_number TEXT NOT NULL,
-             PRIMARY KEY (contact, phone_number))
+             PRIMARY KEY (contact, phone_number)
              )""".trimIndent()
 
         executeSimpleMigration(
@@ -439,7 +441,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
              CREATE TABLE $tempTableName (
              message_id TEXT NOT NULL, 
              timestamp INTEGER NOT NULL, 
-             PRIMARY KEY (message_id))""".trimIndent()
+             PRIMARY KEY (message_id)
+             )""".trimIndent()
 
         executeSimpleMigration(
             database = database,
@@ -473,11 +476,10 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val originalTableName = "MessageContentIndex"
         val createTempTable = """
              CREATE VIRTUAL TABLE $tempTableName using fts3(
-             message_id TEXT NOT NULL, 
-             conv_id TEST NOT NULL, 
-             content TEST NOT NULL, 
-             time INTEGER NOT NULL,
-             PRIMARY KEY (message_id)
+             message_id TEXT PRIMARY KEY NOT NULL, 
+             conv_id TEXT NOT NULL, 
+             content TEXT NOT NULL, 
+             time INTEGER NOT NULL
              )""".trimIndent()
 
         executeSimpleMigration(

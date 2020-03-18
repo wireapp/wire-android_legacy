@@ -207,7 +207,6 @@ object UserData {
     val IntegrationId = opt(id[IntegrationId]('integration_id))(_.integrationId)
     val ExpiresAt = opt(remoteTimestamp('expires_at))(_.expiresAt)
     val Managed = opt(text[ManagedBy]('managed_by, _.toString, ManagedBy(_)))(_.managedBy)
-    val Fields = json[Seq[UserField]]('fields)(UserField.userFieldsDecoder, UserField.userFieldsEncoder)(_.fields)
     val SelfPermissions = long('self_permissions)(_.permissions._1)
     val CopyPermissions = long('copy_permissions)(_.permissions._2)
     val CreatedBy = opt(id[UserId]('created_by))(_.createdBy)
