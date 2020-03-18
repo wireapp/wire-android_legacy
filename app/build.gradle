@@ -100,8 +100,7 @@ android {
             customURLScheme   : buildtimeConfiguration.configuration.custom_url_scheme,
             applicationLabel  : "Wire Dev",
             applicationIcon   : "@mipmap/ic_launcher_wire_dev",
-            sharedUserId      : "",
-            internal_features : "true"
+            sharedUserId      : ""
         ]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
@@ -222,8 +221,7 @@ android {
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_dev",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+                                    sharedUserId           : ""]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
             buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
@@ -234,8 +232,7 @@ android {
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_candidate",
-                                    sharedUserId           : "",
-                                    internal_features      : "false"]
+                                    sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
@@ -246,8 +243,7 @@ android {
             applicationId buildtimeConfiguration.configuration.applicationId
             manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
                                     applicationIcon        : "@mipmap/ic_launcher_wire",
-                                    sharedUserId           : buildtimeConfiguration.configuration.userId,
-                                    internal_features      : "false"]
+                                    sharedUserId           : buildtimeConfiguration.configuration.userId]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
@@ -259,8 +255,7 @@ android {
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
                                     applicationIcon  : "@mipmap/ic_launcher_wire_internal",
-                                    sharedUserId     : "",
-                                    internal_features: "true"]
+                                    sharedUserId     : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
@@ -272,8 +267,7 @@ android {
             versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_playground",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+                                    sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
