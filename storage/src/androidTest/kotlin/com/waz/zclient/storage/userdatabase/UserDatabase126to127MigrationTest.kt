@@ -18,6 +18,10 @@ class UserDatabase126to127MigrationTest : IntegrationTest() {
 
     private lateinit var testOpenHelper: DbSQLiteOpenHelper
 
+    private val databaseHelper: UserDatabaseHelper by lazy {
+        UserDatabaseHelper()
+    }
+
     private lateinit var testHelper: MigrationTestHelper
 
     @Before
@@ -25,13 +29,12 @@ class UserDatabase126to127MigrationTest : IntegrationTest() {
         testHelper = MigrationTestHelper(UserDatabase::class.java.canonicalName)
         testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
             TEST_DB_NAME, 126)
-        UsersTableTestHelper.createTable(testOpenHelper)
+        databaseHelper.createDatabase(testOpenHelper)
     }
 
     @After
     fun tearDown() {
-        UsersTableTestHelper.clearTable(testOpenHelper)
-        UsersTableTestHelper.closeDatabase(testOpenHelper)
+        databaseHelper.clearDatabase(testOpenHelper)
     }
 
     @Test
