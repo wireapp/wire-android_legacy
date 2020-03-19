@@ -103,33 +103,5 @@ class UsersTableTestHelper private constructor() {
                 )
             }
         }
-
-        fun createTable(testOpenHelper: DbSQLiteOpenHelper) {
-
-            val createUserTableQuery = """
-              | CREATE TABLE $USERS_TABLE_NAME (
-              | _id TEXT PRIMARY KEY,
-              | teamId TEXT, name TEXT, email TEXT, phone TEXT, tracking_id TEXT,
-              | picture TEXT, accent INTEGER, skey TEXT, connection TEXT, conn_timestamp INTEGER,
-              | conn_msg TEXT, conversation TEXT, relation TEXT, timestamp INTEGER,
-              | verified TEXT, deleted INTEGER, availability INTEGER,
-              | handle TEXT, provider_id TEXT, integration_id TEXT, expires_at INTEGER,
-              | managed_by TEXT, self_permissions INTEGER, copy_permissions INTEGER, created_by TEXT
-              | )""".trimMargin()
-
-            with(testOpenHelper) {
-                execSQL(createUserTableQuery)
-            }
-        }
-
-        fun clearTable(testOpenHelper: DbSQLiteOpenHelper) {
-            with(testOpenHelper) {
-                execSQL("DROP TABLE IF EXISTS $USERS_TABLE_NAME")
-            }
-        }
-
-        fun closeDatabase(testOpenHelper: DbSQLiteOpenHelper) {
-            testOpenHelper.close()
-        }
     }
 }
