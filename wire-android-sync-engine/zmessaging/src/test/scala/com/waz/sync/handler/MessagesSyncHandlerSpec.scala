@@ -18,6 +18,7 @@
 package com.waz.sync.handler
 import com.waz.api.{Message, NetworkMode}
 import com.waz.api.impl.ErrorResponse
+import com.waz.api.impl.ErrorResponse.internalError
 import com.waz.cache.CacheService
 import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.model._
@@ -105,4 +106,19 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
 
     result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Failure("message not found")
   }
+
+  scenario("when post button action fails, sets button error on db") {
+
+    val convId = ConvId()
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+    val errorText = "Error"
+
+    (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
+    (otrSync.postOtrMessage _).expects(convId, *, * ,*, *).returning(Future.successful(Left(internalError(errorText))))
+    (service.setButtonError _).expects(messageId, buttonId).once().returning(Future.successful({}))
+
+    result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Failure(errorText)
+  }
+
 }

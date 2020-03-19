@@ -93,6 +93,7 @@ trait MessagesService {
 
   def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]]
   def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit]
+  def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit]
 }
 
 class MessagesServiceImpl(selfUserId:      UserId,
@@ -510,4 +511,8 @@ class MessagesServiceImpl(selfUserId:      UserId,
       _ <- buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonWaiting))
       _ <- sync.postButtonAction(messageId, buttonId)
     } yield ()
+
+  override def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
+    buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonError))
+      .flatMap(_ => Future.successful(()))
 }

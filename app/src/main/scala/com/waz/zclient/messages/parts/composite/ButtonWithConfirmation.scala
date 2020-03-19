@@ -25,6 +25,10 @@ class ButtonWithConfirmation(context: Context, attrs: AttributeSet, style: Int)
 
   def setConfirmed(confirmed: Boolean) : Unit = {
     this.confirmed = confirmed
+    setContentDescription(
+      if (confirmed) getContext.getString(R.string.composite_message_confirmed_button_content_description, getText)
+      else getText
+    )
   }
 }
 

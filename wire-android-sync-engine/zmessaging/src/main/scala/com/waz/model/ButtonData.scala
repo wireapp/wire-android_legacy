@@ -12,29 +12,19 @@ case class ButtonData(messageId: MessageId,
                       ordinal:   Int,
                       state:     ButtonState = ButtonNotClicked) extends Identifiable[ButtonDataDaoId]{
   override def id: ButtonDataDaoId = (messageId, buttonId)
-
-  def copyWithError(error: String): ButtonData = copy(state = ButtonError(error))
 }
 
 object ButtonData {
   type ButtonDataDaoId = (MessageId, ButtonId)
 
-  private val ButtonErrorId = 0
-
   sealed trait ButtonState { val id: Int }
-  case class   ButtonError(error: String) extends ButtonState { override val id: Int = ButtonErrorId }
-  case object  ButtonNotClicked           extends ButtonState { override val id: Int = 1 }
-  case object  ButtonWaiting              extends ButtonState { override val id: Int = 2 }
-  case object  ButtonConfirmed            extends ButtonState { override val id: Int = 3 }
+  case object  ButtonError      extends ButtonState { override val id: Int = 0 }
+  case object  ButtonNotClicked extends ButtonState { override val id: Int = 1 }
+  case object  ButtonWaiting    extends ButtonState { override val id: Int = 2 }
+  case object  ButtonConfirmed  extends ButtonState { override val id: Int = 3 }
 
-  private val validStates =
-    List[ButtonState](ButtonNotClicked, ButtonWaiting, ButtonConfirmed)
-    .map(state => state.id -> state).toMap
-
-  def buttonState(id: Int, error: String): ButtonState = id match {
-    case ButtonErrorId => ButtonError(error)
-    case _             => validStates(id)
-  }
+  def buttonState(id: Int) =
+   List[ButtonState](ButtonError, ButtonNotClicked, ButtonWaiting, ButtonConfirmed).find(_.id == id).head
 
   import com.waz.db.Col._
   implicit object ButtonDataDao extends Dao2[ButtonData, MessageId, ButtonId] {
@@ -43,16 +33,12 @@ object ButtonData {
     val Title   = text('title).apply(_.title)
     val Ordinal = int('ordinal).apply(_.ordinal)
     val StateId = int('state).apply(_.state.id)
-    val Error   = text('error).apply(_.state match {
-      case ButtonError(error) => error
-      case _ => ""
-    })
 
     override val idCol = (Message, Button)
 
-    override val table = Table("Buttons", Message, Button, Title, Ordinal, StateId, Error)
+    override val table = Table("Buttons", Message, Button, Title, Ordinal, StateId)
 
-    override def apply(implicit cursor: DBCursor): ButtonData = ButtonData(Message, Button, Title, Ordinal, buttonState(StateId, Error))
+    override def apply(implicit cursor: DBCursor): ButtonData = ButtonData(Message, Button, Title, Ordinal, buttonState(StateId))
 
     def findForMessage(id: MessageId)(implicit db: DB) = iterating(find(Message, id))
   }

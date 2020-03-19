@@ -113,11 +113,12 @@ class MessagesSyncHandler(selfUserId: UserId,
   def postButtonAction(messageId: MessageId, buttonId: ButtonId): Future[SyncResult] =
     storage.get(messageId).flatMap {
       case None      => successful(Failure("message not found"))
-      case Some(msg) =>
-        otrSync.postOtrMessage(msg.convId,
-                               GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
-                               enforceIgnoreMissing = true
-                              ).map(SyncResult(_))
+      case Some(msg) => for {
+        result <- otrSync.postOtrMessage(msg.convId,
+                    GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
+                    enforceIgnoreMissing = true)
+        _      <- result.fold(_ => service.setButtonError(messageId, buttonId), _ => Future.successful(()))
+      } yield SyncResult(result)
     }
 
   def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] =

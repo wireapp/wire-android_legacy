@@ -168,5 +168,6 @@
 
     <!-- Composite Message Alarm Buttons -->
     <attr name="alarmButtonTextColor" format="color"/>
+    <attr name="alarmButtonProgressBarBackground" format="color"/>
 
 </resources>
