@@ -802,7 +802,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 `title` TEXT NOT NULL,
                 `ordinal` INTEGER NOT NULL,
                 `state` INTEGER NOT NULL, 
-                `error` TEXT, 
                 PRIMARY KEY(`message_id`, `button_id`)
             )""".trimIndent()
         )

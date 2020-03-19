@@ -28,10 +28,10 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
     button.setText(uiModel.button.title)
     button.setContentDescription(uiModel.button.title)
     uiModel.button.state match {
-      case ButtonData.ButtonError(error) => setUnselected(Some(error))
-      case ButtonData.ButtonNotClicked   => setUnselected(None)
-      case ButtonData.ButtonWaiting      => setWaiting()
-      case ButtonData.ButtonConfirmed    => setConfirmed()
+      case ButtonData.ButtonError      => setUnselected(true)
+      case ButtonData.ButtonNotClicked => setUnselected(false)
+      case ButtonData.ButtonWaiting    => setWaiting()
+      case ButtonData.ButtonConfirmed  => setConfirmed()
     }
 
     onClickStream = Some(uiModel.onClick)
@@ -42,32 +42,29 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
   }
 
   private def setConfirmed(): Unit = {
-    clearError()
+    hideError()
     progressBar.setVisibility(View.GONE)
     button.setConfirmed(true)
+    button.setEnabled(false)
   }
 
   private def setWaiting(): Unit = {
-    clearError()
+    hideError()
     progressBar.setVisibility(View.VISIBLE)
     button.setConfirmed(false)
+    button.setEnabled(false)
   }
 
-  private def setUnselected(error: Option[String]): Unit = {
+  private def setUnselected(hasError: Boolean): Unit = {
     progressBar.setVisibility(View.GONE)
-    error.fold(clearError())(setError)
+    if (hasError) showError() else hideError()
     button.setConfirmed(false)
+    button.setEnabled(true)
   }
 
-  private def setError(error: String): Unit = {
-    errorText.setText(error)
-    errorText.setVisibility(View.VISIBLE)
-  }
+  private def showError(): Unit = errorText.setVisibility(View.VISIBLE)
 
-  private def clearError(): Unit = {
-    errorText.setText(null)
-    errorText.setVisibility(View.GONE)
-  }
+  private def hideError(): Unit = errorText.setVisibility(View.GONE)
 }
 
 case class ButtonItemViewUIModel(button: ButtonData, onClick: SourceStream[(MessageId, ButtonId)])
