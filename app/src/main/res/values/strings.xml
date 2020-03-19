@@ -1509,5 +1509,9 @@
     <string name="email_verification_resend_code">RESEND CODE</string>
     <string name="email_verification_change_email">CHANGE EMAIL</string>
 
+    <!-- Composite Message -->
+    <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
+    <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
+
 </resources>
 
