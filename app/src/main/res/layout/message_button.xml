@@ -33,6 +33,7 @@
         android:indeterminateTint="@color/accent_red"
         android:padding="@dimen/composite_message_button_progressbar_padding"
         android:visibility="gone"
+        android:layout_margin="1dp"
         app:layout_constraintBottom_toBottomOf="@id/message_button_item_button"
         app:layout_constraintEnd_toEndOf="@id/message_button_item_button"
         app:layout_constraintTop_toTopOf="@id/message_button_item_button" />
