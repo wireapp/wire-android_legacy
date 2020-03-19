@@ -26,7 +26,6 @@ class ButtonItemView(context: Context, attrs: AttributeSet, style: Int)
 
   def bindButton(uiModel: ButtonItemViewUIModel): Unit = {
     button.setText(uiModel.button.title)
-    button.setContentDescription(uiModel.button.title)
     uiModel.button.state match {
       case ButtonData.ButtonError      => setUnselected(true)
       case ButtonData.ButtonNotClicked => setUnselected(false)
