@@ -5,7 +5,7 @@ import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule
+import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseHelper
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -13,6 +13,7 @@ import org.junit.Before
 import org.junit.Test
 
 class AssetTables126to127MigrationTests : IntegrationTest() {
+    
     private lateinit var testOpenHelper: DbSQLiteOpenHelper
 
     private val databaseHelper: UserDatabaseHelper by lazy {
@@ -49,7 +50,6 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
 
         validateMigration()
 
-
         runBlocking {
             with(getV1Assets()[0]) {
                 assert(this.id == assetId)
@@ -75,7 +75,6 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
         val details = "This is a test image"
         val conversationId = "1100"
 
-
         AssetsV2TableTestHelper.insertV2Asset(
             assetId,
             assetToken,
@@ -93,7 +92,6 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
 
         validateMigration()
 
-
         runBlocking {
             with(getV2Assets()[0]) {
                 assert(this.id == assetId)
@@ -109,6 +107,46 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
                 assert(this.conversationId == conversationId)
             }
         }
+    }
+
+    @Test
+    fun givenDownloadAssetInsertedIntoDownloadAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+        val assetId = "i747749kk-77"
+        val assetName = "IMAGE"
+        val mime = "png"
+        val name = "Test image"
+        val size = 1024L
+        val preview = "none"
+        val details = "This is a test image"
+        val downloaded = 125777583L
+        val status = 0
+
+        DownloadAssetsTableTestHelper.insertDownloadAsset(
+            assetId,
+            mime,
+            downloaded,
+            size,
+            name,
+            preview,
+            details,
+            status,
+            testOpenHelper
+        )
+
+        validateMigration()
+
+        runBlocking {
+            with(getDownloadAssets()[0]) {
+                assert(this.id == assetId)
+                assert(this.mime == mime)
+                assert(this.downloaded == downloaded)
+                assert(this.size == size)
+                assert(this.name == assetName)
+                assert(this.preview == preview)
+                assert(this.details == details)
+                assert(this.status == status)
+            }
+        }
 
 
     }
@@ -122,7 +160,7 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
         )
 
     private fun getUserDb() =
-        StorageModule.getUserDatabase(
+        getUserDatabase(
             getApplicationContext(),
             TEST_DB_NAME,
             UserDatabase.migrations
@@ -133,6 +171,9 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
 
     private suspend fun getV2Assets() =
         getUserDb().assetsDao().allAssets()
+
+    private suspend fun getDownloadAssets() =
+        getUserDb().downloadAssetsDao().allDownloadAssets()
 
     companion object {
         private const val TEST_DB_NAME = "UserDatabase.db"

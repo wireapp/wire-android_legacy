@@ -8,6 +8,7 @@ import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
 import com.waz.zclient.storage.db.assets.AssetsV1Dao
 import com.waz.zclient.storage.db.assets.AssetsV1Entity
+import com.waz.zclient.storage.db.assets.DownloadAssetsDao
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.contacthashes.ContactHashesEntity
@@ -59,6 +60,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun clientsDbService(): ClientsDao
     abstract fun assetsV1Dao(): AssetsV1Dao
     abstract fun assetsDao(): AssetsDao
+    abstract fun downloadAssetsDao(): DownloadAssetsDao
 
     companion object {
         const val VERSION = 127
