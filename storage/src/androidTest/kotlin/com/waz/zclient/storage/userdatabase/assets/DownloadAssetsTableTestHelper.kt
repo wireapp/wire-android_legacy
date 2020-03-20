@@ -9,9 +9,7 @@ class DownloadAssetsTableTestHelper private constructor() {
     companion object {
         private const val DOWNLOAD_ASSETS_TABLE_NAME = "DownloadAssets"
         private const val DOWNLOAD_ASSET_ID_COL = "_id"
-        private const val TOKEN_COL = "token"
         private const val NAME_COL = "name"
-        private const val ENCRYPTION_COL = "encryption"
         private const val MIME_COL = "mime"
         private const val STATUS_COL = "status"
         private const val SIZE_COL = "size"
