@@ -39,19 +39,22 @@ class SyncJobsTable126to127MigrationTest : IntegrationTest() {
 
     @Test
     fun givenSyncJobInsertedIntoSyncJobsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+
+        val id = "testId"
+        val data = "testData"
+
         SyncJobsTableTestHelper.insertSyncJob(
-            id = TEST_SYNC_ID,
-            data = TEST_SYNC_DATA,
+            id = id,
+            data = data,
             openHelper = testOpenHelper
         )
 
         validateMigration()
 
         runBlocking {
-            val user = allSyncJobs()[0]
-            with(user) {
-                assert(id == TEST_SYNC_ID)
-                assert(data == TEST_SYNC_DATA)
+            with(allSyncJobs()[0]) {
+                assert(this.id == id)
+                assert(this.data == data)
             }
         }
     }
@@ -76,7 +79,5 @@ class SyncJobsTable126to127MigrationTest : IntegrationTest() {
 
     companion object {
         private const val TEST_DB_NAME = "userDatabase.db"
-        private const val TEST_SYNC_ID = "id"
-        private const val TEST_SYNC_DATA = "data"
     }
 }
