@@ -2,6 +2,7 @@ package com.waz.zclient.core.di
 
 import android.content.Context
 import com.waz.zclient.accounts.di.accountsModule
+import com.waz.zclient.assets.di.assetsModule
 import com.waz.zclient.clients.di.clientsModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
@@ -25,7 +26,8 @@ object Injector {
         storageModule,
         networkModule,
         accountsModule,
-        configModule
+        configModule,
+        assetsModule
     )
 
     @JvmStatic
