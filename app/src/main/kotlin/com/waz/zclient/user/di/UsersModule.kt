@@ -12,7 +12,9 @@ import com.waz.zclient.user.handle.UserHandleRepository
 import com.waz.zclient.user.mapper.UserMapper
 import com.waz.zclient.user.phonenumber.PhoneNumberDataSource
 import com.waz.zclient.user.phonenumber.PhoneNumberRepository
+import com.waz.zclient.user.profile.GetUserProfilePictureUseCase
 import com.waz.zclient.user.profile.GetUserProfileUseCase
+import com.waz.zclient.user.profile.ProfilePictureMapper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -32,4 +34,6 @@ val usersModule: Module = module {
     factory { get<UserDatabase>().userPreferencesDbService() }
 
     factory { GetUserProfileUseCase(get()) }
+    factory { ProfilePictureMapper() }
+    factory { GetUserProfilePictureUseCase(get(), get()) }
 }

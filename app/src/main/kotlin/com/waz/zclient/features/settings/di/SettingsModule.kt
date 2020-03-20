@@ -13,6 +13,7 @@ import com.waz.zclient.features.settings.account.editphonenumber.GetCountryCodes
 import com.waz.zclient.features.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.features.settings.devices.list.SettingsDeviceListViewModel
+import com.waz.zclient.features.settings.main.SettingsMainViewModel
 import com.waz.zclient.features.settings.support.SettingsSupportViewModel
 import com.waz.zclient.user.email.ChangeEmailUseCase
 import com.waz.zclient.user.handle.usecase.ChangeHandleUseCase
@@ -39,11 +40,20 @@ const val SETTINGS_SCOPE = "SettingsScope"
 @InternalCoroutinesApi
 val settingsModules: List<Module>
     get() = listOf(
+        settingsMainModule,
         settingsAboutModule,
         settingsAccountModule,
         settingsDeviceModule,
         settingsSupportModule
     )
+
+@InternalCoroutinesApi
+@ExperimentalCoroutinesApi
+val settingsMainModule: Module = module {
+    scope(named(SETTINGS_SCOPE)) {
+        viewModel { SettingsMainViewModel(get()) }
+    }
+}
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
