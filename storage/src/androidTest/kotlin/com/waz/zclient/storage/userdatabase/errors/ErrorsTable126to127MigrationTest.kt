@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.userdatabase.errors
+package com.waz.zclient.storage.userdatabase.sync
 
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest
@@ -7,6 +7,7 @@ import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseHelper
+import com.waz.zclient.storage.userdatabase.errors.ErrorsTableTestHelper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -39,16 +40,27 @@ class ErrorsTable126to127MigrationTest : IntegrationTest() {
 
     @Test
     fun givenErrorInsertedIntoErrorsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+
+        val id = "id"
+        val type = "type"
+        val users = "users"
+        val message = "test message"
+        val conversationId = "testConvId"
+        val resCode = 1
+        val resMessage = "message"
+        val resLabel = "label"
+        val timestamp = 1584698132
+
         ErrorsTableTestHelper.insertError(
-            id = TEST_ERRORS_ID,
-            errorType = TEST_ERRORS_TYPE,
-            users = TEST_ERRORS_USERS,
-            messages = TEST_ERRORS_MESSAGES,
-            conversationId = TEST_ERRORS_CONV_ID,
-            resCode = TEST_ERRORS_RES_CODE,
-            resMessage = TEST_ERRORS_RES_MESSAGE,
-            resLabel = TEST_ERRORS_RES_LABEL,
-            time = TEST_ERRORS_TIME,
+            id = id,
+            errorType = type,
+            users = users,
+            messages = message,
+            conversationId = conversationId,
+            resCode = resCode,
+            resMessage = resMessage,
+            resLabel = resLabel,
+            time = timestamp,
             openHelper = testOpenHelper
         )
 
@@ -57,16 +69,15 @@ class ErrorsTable126to127MigrationTest : IntegrationTest() {
         runBlocking {
             val syncJob = allErrors()[0]
             with(syncJob) {
-                assert(id == TEST_ERRORS_ID)
-                assert(errorType == TEST_ERRORS_TYPE)
-                assert(errorType == TEST_ERRORS_TYPE)
-                assert(users == TEST_ERRORS_USERS)
-                assert(messages == TEST_ERRORS_MESSAGES)
-                assert(conversationId == TEST_ERRORS_CONV_ID)
-                assert(responseCode == TEST_ERRORS_RES_CODE)
-                assert(responseMessage == TEST_ERRORS_RES_MESSAGE)
-                assert(responseLabel == TEST_ERRORS_RES_LABEL)
-                assert(time == TEST_ERRORS_TIME)
+                assert(this.id == id)
+                assert(this.errorType == type)
+                assert(this.users == users)
+                assert(this.messages == message)
+                assert(this.conversationId == conversationId)
+                assert(this.responseCode == resCode)
+                assert(this.responseMessage == resMessage)
+                assert(this.responseLabel == resLabel)
+                assert(this.time == timestamp)
             }
         }
     }
@@ -91,14 +102,5 @@ class ErrorsTable126to127MigrationTest : IntegrationTest() {
 
     companion object {
         private const val TEST_DB_NAME = "userDatabase.db"
-        private const val TEST_ERRORS_ID = "id"
-        private const val TEST_ERRORS_TYPE = "type"
-        private const val TEST_ERRORS_USERS = "users"
-        private const val TEST_ERRORS_MESSAGES = "test message"
-        private const val TEST_ERRORS_CONV_ID = "conv_id"
-        private const val TEST_ERRORS_RES_CODE = 1
-        private const val TEST_ERRORS_RES_MESSAGE = "message"
-        private const val TEST_ERRORS_RES_LABEL = "label"
-        private const val TEST_ERRORS_TIME = 1584698132
     }
 }
