@@ -12,8 +12,12 @@ import com.waz.zclient.storage.db.contacthashes.ContactHashesEntity
 import com.waz.zclient.storage.db.contacts.ContactsEntity
 import com.waz.zclient.storage.db.contacts.ContactsOnWireEntity
 import com.waz.zclient.storage.db.conversationmembers.ConversationMembersEntity
+import com.waz.zclient.storage.db.conversations.ConversationFoldersDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
+import com.waz.zclient.storage.db.conversations.ConversationMembersDao
+import com.waz.zclient.storage.db.conversations.ConversationRoleActionDao
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
+import com.waz.zclient.storage.db.conversations.ConversationsDao
 import com.waz.zclient.storage.db.conversations.ConversationsEntity
 import com.waz.zclient.storage.db.conversations.EditHistoryEntity
 import com.waz.zclient.storage.db.conversations.MessageContentIndexEntity
@@ -59,6 +63,10 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun clientsDbService(): ClientsDao
     abstract fun syncJobsDao(): SyncJobsDao
     abstract fun errorsDao(): ErrorsDao
+    abstract fun conversationFoldersDao(): ConversationFoldersDao
+    abstract fun conversationMembersDao(): ConversationMembersDao
+    abstract fun conversationRoleActionDao(): ConversationRoleActionDao
+    abstract fun conversationsDao(): ConversationsDao
 
     companion object {
         const val VERSION = 127
