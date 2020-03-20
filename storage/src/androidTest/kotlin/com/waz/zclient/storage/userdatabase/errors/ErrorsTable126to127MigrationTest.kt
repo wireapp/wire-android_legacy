@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.userdatabase.sync
+package com.waz.zclient.storage.userdatabase.errors
 
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest

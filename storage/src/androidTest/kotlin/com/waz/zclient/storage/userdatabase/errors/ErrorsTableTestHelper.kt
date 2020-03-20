@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.userdatabase.sync
+package com.waz.zclient.storage.userdatabase.errors
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
