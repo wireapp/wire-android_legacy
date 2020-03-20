@@ -20,14 +20,17 @@ import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import com.waz.zclient.storage.db.conversations.ConversationsDao
 import com.waz.zclient.storage.db.conversations.ConversationsEntity
 import com.waz.zclient.storage.db.conversations.EditHistoryEntity
-import com.waz.zclient.storage.db.conversations.MessageContentIndexEntity
 import com.waz.zclient.storage.db.conversations.ReadReceiptsEntity
 import com.waz.zclient.storage.db.email.EmailAddressesEntity
 import com.waz.zclient.storage.db.errors.ErrorsDao
 import com.waz.zclient.storage.db.errors.ErrorsEntity
 import com.waz.zclient.storage.db.folders.FoldersEntity
+import com.waz.zclient.storage.db.likes.LikesDao
 import com.waz.zclient.storage.db.likes.LikesEntity
-import com.waz.zclient.storage.db.messagedeletion.MessageDeletionEntity
+import com.waz.zclient.storage.db.messages.MessageContentIndexEntity
+import com.waz.zclient.storage.db.messages.MessageDeletionEntity
+import com.waz.zclient.storage.db.messages.MessagesDao
+import com.waz.zclient.storage.db.messages.MessagesDeletionDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
 import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
 import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
@@ -63,6 +66,9 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun clientsDbService(): ClientsDao
     abstract fun syncJobsDao(): SyncJobsDao
     abstract fun errorsDao(): ErrorsDao
+    abstract fun messagesDao(): MessagesDao
+    abstract fun messagesDeletionDao(): MessagesDeletionDao
+    abstract fun likesDao(): LikesDao
     abstract fun conversationFoldersDao(): ConversationFoldersDao
     abstract fun conversationMembersDao(): ConversationMembersDao
     abstract fun conversationRoleActionDao(): ConversationRoleActionDao
