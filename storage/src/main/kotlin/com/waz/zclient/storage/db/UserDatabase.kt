@@ -19,7 +19,8 @@ import com.waz.zclient.storage.db.conversations.EditHistoryEntity
 import com.waz.zclient.storage.db.conversations.MessageContentIndexEntity
 import com.waz.zclient.storage.db.conversations.ReadReceiptsEntity
 import com.waz.zclient.storage.db.email.EmailAddressesEntity
-import com.waz.zclient.storage.db.error.ErrorsEntity
+import com.waz.zclient.storage.db.errors.ErrorsDao
+import com.waz.zclient.storage.db.errors.ErrorsEntity
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import com.waz.zclient.storage.db.likes.LikesEntity
 import com.waz.zclient.storage.db.messagedeletion.MessageDeletionEntity
@@ -30,6 +31,7 @@ import com.waz.zclient.storage.db.notifications.NotificationsEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.phonenumbers.PhoneNumbersEntity
 import com.waz.zclient.storage.db.properties.PropertiesEntity
+import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
@@ -55,6 +57,8 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun userPreferencesDbService(): UserPreferenceDao
     abstract fun userDbService(): UserDao
     abstract fun clientsDbService(): ClientsDao
+    abstract fun syncJobsDao(): SyncJobsDao
+    abstract fun errorsDao(): ErrorsDao
 
     companion object {
         const val VERSION = 127

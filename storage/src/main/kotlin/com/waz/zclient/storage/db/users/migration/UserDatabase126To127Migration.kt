@@ -37,11 +37,11 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateMessagesTable(database)
         migrateKeyValuesTable(database)
         migrateSyncJobsTable(database)
-        migrateClientsTable(database)
-        migrateSyncErrorsTable(database)
+        migrateErrorsTable(database)
         migrateNotificationData(database)
         migrateContactHashesTable(database)
         migrateContactsOnWire(database)
+        migrateClientsTable(database)
         migrateLikingTable(database)
         migrateContactsTable(database)
         migrateEmailAddressTable(database)
@@ -285,7 +285,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         )
     }
 
-    private fun migrateSyncErrorsTable(database: SupportSQLiteDatabase) {
+    private fun migrateErrorsTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ErrorsTemp"
         val originalTableName = "Errors"
         val createTempTable = """
@@ -530,8 +530,9 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
              $rowId INTEGER PRIMARY KEY NOT NULL 
              )""".trimIndent()
 
-        val copyAll = """INSERT INTO $tempTableName ($messageId, $convId, $content, $time, $rowId) 
-            | SELECT $messageId, $convId, $content, $time, $messageId FROM $originalTableName""".trimIndent()
+        val copyAll = """INSERT INTO $tempTableName ($messageId, $convId, $content, $time, $rowId)
+        SELECT $messageId, $convId, $content, $time, $rowId FROM $originalTableName""".trimIndent()
+
         val dropOldTable = "DROP TABLE $originalTableName"
         val renameTableBack = "ALTER TABLE $tempTableName RENAME TO $originalTableName"
         with(database) {

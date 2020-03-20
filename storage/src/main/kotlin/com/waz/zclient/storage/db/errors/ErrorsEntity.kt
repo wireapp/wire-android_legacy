@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.error
+package com.waz.zclient.storage.db.errors
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
