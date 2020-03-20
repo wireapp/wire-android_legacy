@@ -35,7 +35,7 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
     }
 
     @Test
-    fun givenUserInsertedIntoUsersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenV1AssetInsertedIntoAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetType = "IMAGE"
         val assetData = "data"
@@ -61,6 +61,58 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
 
     }
 
+    @Test
+    fun givenV2AssetInsertedIntoAssetsV2TableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+        val assetId = "i747749kk-77"
+        val assetToken = "084782999838_Aa--4777277_"
+        val assetName = "IMAGE"
+        val encryption = "AES256"
+        val mime = "png"
+        val sha = byteArrayOf(16)
+        val size = 1024
+        val source = "message"
+        val preview = "none"
+        val details = "This is a test image"
+        val conversationId = "1100"
+
+
+        AssetsV2TableTestHelper.insertV2Asset(
+            assetId,
+            assetToken,
+            assetName,
+            encryption,
+            mime,
+            sha,
+            size,
+            source,
+            preview,
+            details,
+            conversationId,
+            testOpenHelper
+        )
+
+        validateMigration()
+
+
+        runBlocking {
+            with(getV2Assets()[0]) {
+                assert(this.id == assetId)
+                assert(this.token == assetToken)
+                assert(this.name == assetName)
+                assert(this.encryption == encryption)
+                assert(this.mime == mime)
+                assert(this.sha.contentEquals(sha))
+                assert(this.size == size)
+                assert(this.source == source)
+                assert(this.preview == preview)
+                assert(this.details == details)
+                assert(this.conversationId == conversationId)
+            }
+        }
+
+
+    }
+
     private fun validateMigration() =
         testHelper.validateMigration(
             TEST_DB_NAME,
@@ -76,8 +128,11 @@ class AssetTables126to127MigrationTests : IntegrationTest() {
             UserDatabase.migrations
         )
 
-    suspend fun getV1Assets() =
+    private suspend fun getV1Assets() =
         getUserDb().assetsV1Dao().allAssets()
+
+    private suspend fun getV2Assets() =
+        getUserDb().assetsDao().allAssets()
 
     companion object {
         private const val TEST_DB_NAME = "UserDatabase.db"

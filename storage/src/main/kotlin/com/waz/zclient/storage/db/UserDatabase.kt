@@ -2,11 +2,12 @@ package com.waz.zclient.storage.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
-import com.waz.zclient.storage.db.assetsv1.AssetsV1Dao
-import com.waz.zclient.storage.db.assetsv1.AssetsV1Entity
+import com.waz.zclient.storage.db.assets.AssetsV1Dao
+import com.waz.zclient.storage.db.assets.AssetsV1Entity
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.contacthashes.ContactHashesEntity
@@ -57,6 +58,7 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun userDbService(): UserDao
     abstract fun clientsDbService(): ClientsDao
     abstract fun assetsV1Dao(): AssetsV1Dao
+    abstract fun assetsDao(): AssetsDao
 
     companion object {
         const val VERSION = 127
