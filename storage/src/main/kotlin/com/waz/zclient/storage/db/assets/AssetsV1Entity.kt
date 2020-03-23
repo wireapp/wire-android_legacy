@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.assetsv1
+package com.waz.zclient.storage.db.assets
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
