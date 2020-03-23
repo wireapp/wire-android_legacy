@@ -12,7 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.koin.core.KoinComponent
 import java.io.InputStream
 
-class GlideInputStreamLoader<T>(
+class InputStreamLoader<T>(
     private val keyFunction: (T, Int, Int, Options) -> Key,
     private val useCase: UseCase<InputStream, T>
 ) : ModelLoader<T, InputStream>, KoinComponent {
