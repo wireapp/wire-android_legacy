@@ -4,12 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
-import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
-import com.waz.zclient.storage.db.assets.UploadAssetsEntity
 import com.waz.zclient.storage.db.assets.AssetsV1Dao
 import com.waz.zclient.storage.db.assets.AssetsV1Entity
 import com.waz.zclient.storage.db.assets.DownloadAssetsDao
+import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsDao
+import com.waz.zclient.storage.db.assets.UploadAssetsEntity
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.contacthashes.ContactHashesEntity
@@ -63,6 +63,8 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
         MessageContentIndexEntity::class, EditHistoryEntity::class, ButtonEntity::class],
     version = UserDatabase.VERSION
 )
+
+@Suppress("TooManyFunctions")
 abstract class UserDatabase : RoomDatabase() {
 
     abstract fun userPreferencesDbService(): UserPreferenceDao
