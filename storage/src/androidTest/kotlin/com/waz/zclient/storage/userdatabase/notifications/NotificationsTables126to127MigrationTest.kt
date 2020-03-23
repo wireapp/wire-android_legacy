@@ -131,7 +131,6 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_
     private suspend fun allCloudNotifications() =
         getUserDb().cloudNotificationsDao().allCloudNotifications()
 
-
     private suspend fun allCloudNotificationStats() =
         getUserDb().cloudNotificationStatsDao().allCloudNotificationStats()
 

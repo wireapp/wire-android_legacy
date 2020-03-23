@@ -60,15 +60,17 @@ import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 
 @Database(
-    entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class, ConversationMembersEntity::class,
-        MessagesEntity::class, KeyValuesEntity::class, SyncJobsEntity::class, ErrorsEntity::class,
-        NotificationsDataEntity::class, ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
+    entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
+        ConversationMembersEntity::class, MessagesEntity::class, KeyValuesEntity::class,
+        SyncJobsEntity::class, ErrorsEntity::class, NotificationsDataEntity::class,
+        ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
         ClientEntity::class, LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
         PhoneNumbersEntity::class, MessageDeletionEntity::class, ConversationRoleActionEntity::class,
         ConversationFoldersEntity::class, FoldersEntity::class, CloudNotificationStatsEntity::class,
-        CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class, UploadAssetsEntity::class,
-        PropertiesEntity::class, ReadReceiptsEntity::class, PushNotificationEventEntity::class,
-        MessageContentIndexEntity::class, EditHistoryEntity::class, ButtonEntity::class],
+        CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class,
+        UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
+        PushNotificationEventEntity::class, MessageContentIndexEntity::class,
+        EditHistoryEntity::class, ButtonEntity::class],
     version = UserDatabase.VERSION
 )
 
