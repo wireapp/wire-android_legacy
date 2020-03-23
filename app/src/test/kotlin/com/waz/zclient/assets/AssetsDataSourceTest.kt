@@ -1,6 +1,7 @@
 package com.waz.zclient.assets
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.assets.datasources.AssetsDataSource
 import com.waz.zclient.assets.datasources.AssetsRemoteDataSource
 import com.waz.zclient.assets.mapper.AssetMapper
 import com.waz.zclient.core.exception.ServerError
@@ -17,7 +18,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 
 @ExperimentalCoroutinesApi
-class AssetsRepositoryTest : UnitTest() {
+class AssetsDataSourceTest : UnitTest() {
 
     @Mock
     private lateinit var assetsRemoteDataSource: AssetsRemoteDataSource
@@ -25,11 +26,11 @@ class AssetsRepositoryTest : UnitTest() {
     @Mock
     private lateinit var assetMapper: AssetMapper
 
-    private lateinit var assetsRepository: AssetsRepository
+    private lateinit var assetsDataSource: AssetsDataSource
 
     @Before
     fun setUp() {
-        assetsRepository = AssetsRepository(assetsRemoteDataSource, assetMapper)
+        assetsDataSource = AssetsDataSource(assetsRemoteDataSource, assetMapper)
     }
 
     @Test
@@ -37,7 +38,7 @@ class AssetsRepositoryTest : UnitTest() {
         val assetId = "assetId"
         `when`(assetsRemoteDataSource.publicAsset(assetId)).thenReturn(Either.Left(ServerError))
 
-        assetsRepository.publicAsset(assetId)
+        assetsDataSource.publicAsset(assetId)
 
         verify(assetsRemoteDataSource).publicAsset(assetId)
     }
@@ -50,7 +51,7 @@ class AssetsRepositoryTest : UnitTest() {
 
             `when`(assetsRemoteDataSource.publicAsset(assetId)).thenReturn(Either.Right(responseBody))
 
-            assetsRepository.publicAsset(assetId)
+            assetsDataSource.publicAsset(assetId)
 
             verify(assetMapper).toInputStream(responseBody)
         }
@@ -61,7 +62,7 @@ class AssetsRepositoryTest : UnitTest() {
             val assetId = "assetId"
             `when`(assetsRemoteDataSource.publicAsset(assetId)).thenReturn(Either.Left(ServerError))
 
-            assetsRepository.publicAsset(assetId)
+            assetsDataSource.publicAsset(assetId)
 
             verifyNoInteractions(assetMapper)
         }

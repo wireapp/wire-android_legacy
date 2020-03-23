@@ -1,15 +1,9 @@
 package com.waz.zclient.assets
 
-import com.waz.zclient.assets.datasources.AssetsRemoteDataSource
-import com.waz.zclient.assets.mapper.AssetMapper
-import com.waz.zclient.core.functional.map
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+import java.io.InputStream
 
-class AssetsRepository(
-    private val assetsRemoteDataSource: AssetsRemoteDataSource,
-    private val assetMapper: AssetMapper
-) {
-
-    suspend fun publicAsset(assetId: String) = assetsRemoteDataSource.publicAsset(assetId).map {
-        assetMapper.toInputStream(it)
-    }
+interface AssetsRepository {
+    suspend fun publicAsset(assetId: String): Either<Failure, InputStream>
 }
