@@ -14,9 +14,11 @@ class CloudNotificationsStatsTableTestHelper private constructor() {
         private const val CLOUD_NOTIFICATION_STATS_SECOND_BUCKET_COL = "bucket2"
         private const val CLOUD_NOTIFICATION_STATS_THIRD_BUCKET_COL = "bucket3"
 
-        fun insertCloudNotificationStat(stage: String, firstBucket: Int,
-                                        secondBucket: Int, thirdBucket: Int,
-                                        openHelper: DbSQLiteOpenHelper) {
+        fun insertCloudNotificationStat(
+            stage: String,
+            firstBucket: Int,
+            secondBucket: Int, thirdBucket: Int,
+            openHelper: DbSQLiteOpenHelper) {
 
             val contentValues = ContentValues().also {
                 it.put(CLOUD_NOTIFICATION_STATS_STAGE_COL, stage)
