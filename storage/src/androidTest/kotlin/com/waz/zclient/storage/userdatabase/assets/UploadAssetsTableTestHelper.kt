@@ -1,13 +1,12 @@
 package com.waz.zclient.storage.userdatabase.assets
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 class UploadAssetsTableTestHelper private constructor() {
 
     companion object {
-        private const val UPLOAD_ASSETS_TABLE_NAMR = "UploadAssets"
+        private const val UPLOAD_ASSETS_TABLE_NAME = "UploadAssets"
         private const val UPLOAD_ASSET_ID_COL = "_id"
         private const val SOURCE_COL = "source"
         private const val NAME_COL = "name"
@@ -63,14 +62,10 @@ class UploadAssetsTableTestHelper private constructor() {
                 it.put(ASSETS_ID_COL, assetId)
             }
 
-            with(openHelper) {
-                writableDatabase.insertWithOnConflict(
-                    UPLOAD_ASSETS_TABLE_NAMR,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = UPLOAD_ASSETS_TABLE_NAME,
+                contentValues = contentValues
+            )
 
         }
     }

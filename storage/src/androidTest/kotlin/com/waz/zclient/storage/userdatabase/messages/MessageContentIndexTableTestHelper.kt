@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.messages
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -30,14 +29,10 @@ class MessageContentIndexTableTestHelper private constructor() {
 
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    MESSAGES_CONTENT_INDEX_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = MESSAGES_CONTENT_INDEX_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

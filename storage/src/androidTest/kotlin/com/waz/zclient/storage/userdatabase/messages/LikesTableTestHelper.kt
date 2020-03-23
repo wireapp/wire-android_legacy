@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.messages
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -25,14 +24,10 @@ class LikesTableTestHelper private constructor() {
                 it.put(LIKES_ACTION_COL, action)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    LIKES_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = LIKES_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

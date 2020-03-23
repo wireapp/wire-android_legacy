@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.messages
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -68,17 +67,12 @@ class MessagesTableTestHelper private constructor() {
                 it.put(MESSAGES_QUOTE_VALIDITY_COL, quoteValidity)
                 it.put(MESSAGES_FORCE_READ_RECEIPTS_COL, forceReadReceipts)
                 it.put(MESSAGES_ASSET_ID_COL, assetId)
-
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    MESSAGES_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = MESSAGES_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

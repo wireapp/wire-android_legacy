@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.sync
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -18,14 +17,10 @@ class SyncJobsTableTestHelper private constructor() {
                 it.put(SYNC_JOBS_DATA_COL, data)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    SYNC_JOBS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = SYNC_JOBS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }
