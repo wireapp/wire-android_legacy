@@ -5,8 +5,6 @@ import androidx.room.Query
 
 @Dao
 interface PropertiesDao {
-
     @Query("SELECT * FROM Properties")
     suspend fun allProperties(): List<PropertiesEntity>
-
 }

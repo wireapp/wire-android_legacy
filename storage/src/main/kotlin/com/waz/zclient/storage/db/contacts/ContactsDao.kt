@@ -6,11 +6,9 @@ import androidx.room.Query
 
 @Dao
 interface ContactsDao {
-
     @Query("SELECT * FROM Contacts")
     suspend fun allContacts(): List<ContactsEntity>
 
     @Insert
     fun insert(contactsEntity: ContactsEntity)
-
 }
