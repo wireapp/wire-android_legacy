@@ -28,7 +28,6 @@
         android:id="@+id/message_button_item_progressbar"
         android:layout_width="@dimen/composite_message_button_progressbar_size"
         android:layout_height="0dp"
-        android:background="@drawable/alarm_button_progressbar_background"
         android:elevation="@dimen/composite_message_button_progressbar_elevation"
         android:indeterminateTint="@color/accent_red"
         android:padding="@dimen/composite_message_button_progressbar_padding"

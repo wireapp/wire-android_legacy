@@ -1,6 +1,7 @@
 package com.waz.zclient.storage
 
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
@@ -29,5 +30,16 @@ class DbSQLiteOpenHelper(
 
     fun execSQL(sql: String) {
         writableDatabase.execSQL(sql)
+    }
+
+    fun insertWithOnConflict(
+        tableName: String, nullColumnHack: String? = null,
+        contentValues: ContentValues, conflictAlgorithm: Int = SQLiteDatabase.CONFLICT_REPLACE) {
+        writableDatabase.insertWithOnConflict(
+            tableName,
+            nullColumnHack,
+            contentValues,
+            conflictAlgorithm
+        )
     }
 }

@@ -22,7 +22,7 @@ import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
 import com.waz.log.BasicLogging
-import com.waz.model.ButtonData.ButtonNotClicked
+import com.waz.model.ButtonData.{ButtonError, ButtonNotClicked, ButtonWaiting}
 import com.waz.model.GenericContent.{MsgEdit, Text}
 import com.waz.model._
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -32,7 +32,7 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.EventStream
+import com.waz.utils.events.{EventStream, Signal}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -303,5 +303,68 @@ class MessagesServiceSpec extends AndroidFreeSpec {
 
     res.head shouldEqual ButtonData(msgId, button0Id, title0, 0, ButtonNotClicked)
     res(1)   shouldEqual ButtonData(msgId, button1Id, title1, 1, ButtonNotClicked)
+  }
+
+  scenario("Include the sender id in the button action") {
+    import Threading.Implicits.Background
+    implicit val logTag = BasicLogging.LogTag("MessagesServiceSpec")
+
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+    val convId = ConvId()
+    val senderId = UserId()
+
+    val message = MessageData(messageId, msgType = Message.Type.COMPOSITE, convId = convId, userId = senderId)
+    val button = Signal(ButtonData(messageId, buttonId, "button", 0, ButtonNotClicked))
+
+    (storage.get _).expects(messageId).atLeastOnce().returning(Future.successful(Some(message)))
+    (members.isActiveMember _).expects(convId, senderId).anyNumberOfTimes().returning(Future.successful(true))
+    (buttons.update _).expects((messageId, buttonId), *).anyNumberOfTimes().onCall { (_, updater) =>
+      button.head.map { b =>
+        val newB = updater(b)
+        button ! newB
+        Option((b, newB))
+      }
+    }
+    (sync.postButtonAction _).expects(messageId, buttonId, senderId).atLeastOnce().returning(Future.successful(SyncId()))
+
+    val service = getService
+
+    result(service.clickButton(messageId, buttonId))
+    val res = result(button.filter(_.state == ButtonWaiting).head)
+
+    res.messageId shouldEqual messageId
+    res.buttonId shouldEqual buttonId
+  }
+
+  scenario("Set button error if the poll's sender is not in the conversation") {
+    import Threading.Implicits.Background
+    implicit val logTag = BasicLogging.LogTag("MessagesServiceSpec")
+
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+    val convId = ConvId()
+    val senderId = UserId()
+
+    val message = MessageData(messageId, msgType = Message.Type.COMPOSITE, convId = convId, userId = senderId)
+    val button = Signal(ButtonData(messageId, buttonId, "button", 0, ButtonNotClicked))
+
+    (storage.get _).expects(messageId).atLeastOnce().returning(Future.successful(Some(message)))
+    (members.isActiveMember _).expects(convId, senderId).anyNumberOfTimes().returning(Future.successful(false))
+    (buttons.update _).expects((messageId, buttonId), *).anyNumberOfTimes().onCall { (_, updater) =>
+      button.head.map { b =>
+        val newB = updater(b)
+        button ! newB
+        Option((b, newB))
+      }
+    }
+
+    val service = getService
+
+    result(service.clickButton(messageId, buttonId))
+    val res = result(button.filter(_.state == ButtonError).head)
+
+    res.messageId shouldEqual messageId
+    res.buttonId shouldEqual buttonId
   }
 }

@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.conversations
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 class ConversationMembersTableTestHelper private constructor() {
@@ -25,14 +24,10 @@ class ConversationMembersTableTestHelper private constructor() {
                 it.put(ROLE_COL, role)
             }
 
-            with(openHelper) {
-                writableDatabase.insertWithOnConflict(
-                    CONVERSATION_MEMBERS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = CONVERSATION_MEMBERS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

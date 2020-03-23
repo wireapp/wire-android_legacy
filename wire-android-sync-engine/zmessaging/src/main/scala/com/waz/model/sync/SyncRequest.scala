@@ -255,7 +255,7 @@ object SyncRequest {
     override val mergeKey = (cmd, convId, liking.id)
   }
 
-  case class PostButtonAction(messageId: MessageId, buttonId: ButtonId) extends BaseRequest(Cmd.PostButtonAction) {
+  case class PostButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId) extends BaseRequest(Cmd.PostButtonAction) {
     override val mergeKey: Any = (cmd, messageId, buttonId)
   }
 
@@ -400,7 +400,7 @@ object SyncRequest {
           case Cmd.PostLiking                => PostLiking(convId, JsonDecoder[Liking]('liking))
           case Cmd.PostAddBot                => PostAddBot(decodeId[ConvId]('convId), decodeId[ProviderId]('providerId), decodeId[IntegrationId]('integrationId))
           case Cmd.PostRemoveBot             => PostRemoveBot(decodeId[ConvId]('convId), decodeId[UserId]('botId))
-          case Cmd.PostButtonAction          => PostButtonAction(messageId, decodeId[ButtonId]('buttonId))
+          case Cmd.PostButtonAction          => PostButtonAction(messageId, decodeId[ButtonId]('button), decodeId[UserId]('sender))
           case Cmd.PostSessionReset          => PostSessionReset(convId, userId, decodeId[ClientId]('client))
           case Cmd.PostOpenGraphMeta         => PostOpenGraphMeta(convId, messageId, 'time)
           case Cmd.PostReceipt               => PostReceipt(convId, decodeMessageIdSeq('messages), userId, ReceiptType.fromName('type))
@@ -445,9 +445,10 @@ object SyncRequest {
         case PostRemoveBot(cId, botId)        =>
           o.put("convId", cId.str)
           o.put("botId", botId.str)
-        case PostButtonAction(messageId, buttonId) =>
+        case PostButtonAction(messageId, buttonId, senderId) =>
           putId("message", messageId)
-          putId("buttonId", buttonId)
+          putId("button", buttonId)
+          putId("sender", senderId)
         case ExactMatchHandle(handle)         => o.put("handle", handle.string)
         case SyncTeamMember(userId)           => o.put("user", userId.str)
         case DeletePushToken(token)           => putId("token", token)

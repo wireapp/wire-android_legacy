@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.users
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -94,14 +93,10 @@ class UsersTableTestHelper private constructor() {
                 it.put(USERS_CREATED_BY_COL, createdBy)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    USERS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = USERS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

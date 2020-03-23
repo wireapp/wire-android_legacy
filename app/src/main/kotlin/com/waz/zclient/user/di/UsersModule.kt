@@ -31,7 +31,7 @@ val usersModule: Module = module {
     factory { UsersLocalDataSource(get(), get()) }
     factory { get<NetworkClient>().create(UsersApi::class.java) }
     factory { get<UserDatabase>().userDbService() }
-    factory { get<UserDatabase>().userPreferencesDbService() }
+    factory { get<UserDatabase>().keyValuesDao() }
 
     factory { GetUserProfileUseCase(get()) }
     factory { ProfilePictureMapper() }

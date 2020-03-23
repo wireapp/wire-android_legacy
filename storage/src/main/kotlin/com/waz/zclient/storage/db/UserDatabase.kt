@@ -2,13 +2,20 @@ package com.waz.zclient.storage.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.waz.zclient.storage.db.assets.AssetsDao
 import com.waz.zclient.storage.db.assets.AssetsEntity
+import com.waz.zclient.storage.db.assets.AssetsV1Dao
+import com.waz.zclient.storage.db.assets.AssetsV1Entity
+import com.waz.zclient.storage.db.assets.DownloadAssetsDao
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
+import com.waz.zclient.storage.db.assets.UploadAssetsDao
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
-import com.waz.zclient.storage.db.assetsv1.AssetsV1Entity
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import com.waz.zclient.storage.db.clients.service.ClientsDao
-import com.waz.zclient.storage.db.contacthashes.ContactHashesEntity
+import com.waz.zclient.storage.db.contacts.ContactHashesDao
+import com.waz.zclient.storage.db.contacts.ContactHashesEntity
+import com.waz.zclient.storage.db.contacts.ContactOnWireDao
+import com.waz.zclient.storage.db.contacts.ContactsDao
 import com.waz.zclient.storage.db.contacts.ContactsEntity
 import com.waz.zclient.storage.db.contacts.ContactsOnWireEntity
 import com.waz.zclient.storage.db.conversationmembers.ConversationMembersEntity
@@ -37,19 +44,20 @@ import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
 import com.waz.zclient.storage.db.notifications.NotificationsEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.phonenumbers.PhoneNumbersEntity
-import com.waz.zclient.storage.db.properties.PropertiesEntity
+import com.waz.zclient.storage.db.property.KeyValuesDao
+import com.waz.zclient.storage.db.property.KeyValuesEntity
+import com.waz.zclient.storage.db.property.PropertiesDao
+import com.waz.zclient.storage.db.property.PropertiesEntity
 import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
 import com.waz.zclient.storage.db.users.service.UserDao
-import com.waz.zclient.storage.db.users.service.UserPreferenceDao
 
 @Database(
     entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class, ConversationMembersEntity::class,
-        MessagesEntity::class, UserPreferenceEntity::class, SyncJobsEntity::class, ErrorsEntity::class,
+        MessagesEntity::class, KeyValuesEntity::class, SyncJobsEntity::class, ErrorsEntity::class,
         NotificationsEntity::class, ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
         ClientEntity::class, LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
         PhoneNumbersEntity::class, MessageDeletionEntity::class, ConversationRoleActionEntity::class,
@@ -59,11 +67,16 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
         MessageContentIndexEntity::class, EditHistoryEntity::class, ButtonEntity::class],
     version = UserDatabase.VERSION
 )
+
+@Suppress("TooManyFunctions")
 abstract class UserDatabase : RoomDatabase() {
 
-    abstract fun userPreferencesDbService(): UserPreferenceDao
     abstract fun userDbService(): UserDao
     abstract fun clientsDbService(): ClientsDao
+    abstract fun assetsV1Dao(): AssetsV1Dao
+    abstract fun assetsDao(): AssetsDao
+    abstract fun downloadAssetsDao(): DownloadAssetsDao
+    abstract fun uploadAssetsDao(): UploadAssetsDao
     abstract fun syncJobsDao(): SyncJobsDao
     abstract fun errorsDao(): ErrorsDao
     abstract fun messagesDao(): MessagesDao
@@ -73,6 +86,11 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun conversationMembersDao(): ConversationMembersDao
     abstract fun conversationRoleActionDao(): ConversationRoleActionDao
     abstract fun conversationsDao(): ConversationsDao
+    abstract fun keyValuesDao(): KeyValuesDao
+    abstract fun propertiesDao(): PropertiesDao
+    abstract fun contactsDao(): ContactsDao
+    abstract fun contactOnWireDao(): ContactOnWireDao
+    abstract fun contactHashesDao(): ContactHashesDao
 
     companion object {
         const val VERSION = 127

@@ -90,21 +90,23 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val convId = ConvId()
     val messageId = MessageId()
     val buttonId = ButtonId()
+    val senderId = UserId()
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
     (otrSync.postOtrMessage _).expects(convId, *, * ,*, *).returning(Future.successful(Right(RemoteInstant.Epoch)))
 
-    result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Success
+    result(getHandler.postButtonAction(messageId, buttonId, senderId)) shouldEqual SyncResult.Success
   }
 
   scenario("post button action fails if the message is missing") {
 
     val messageId = MessageId()
     val buttonId = ButtonId()
+    val senderId = UserId()
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(None))
 
-    result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Failure("message not found")
+    result(getHandler.postButtonAction(messageId, buttonId, senderId)) shouldEqual SyncResult.Failure("message not found")
   }
 
   scenario("when post button action fails, sets button error on db") {
@@ -112,13 +114,14 @@ class MessagesSyncHandlerSpec extends AndroidFreeSpec {
     val convId = ConvId()
     val messageId = MessageId()
     val buttonId = ButtonId()
+    val senderId = UserId()
     val errorText = "Error"
 
     (storage.get _).expects(messageId).anyNumberOfTimes().returning(Future.successful(Option(MessageData(messageId, convId = convId))))
     (otrSync.postOtrMessage _).expects(convId, *, * ,*, *).returning(Future.successful(Left(internalError(errorText))))
     (service.setButtonError _).expects(messageId, buttonId).once().returning(Future.successful({}))
 
-    result(getHandler.postButtonAction(messageId, buttonId)) shouldEqual SyncResult.Failure(errorText)
+    result(getHandler.postButtonAction(messageId, buttonId, senderId)) shouldEqual SyncResult.Failure(errorText)
   }
 
 }

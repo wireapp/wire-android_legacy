@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.contacthashes
+package com.waz.zclient.storage.db.contacts
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

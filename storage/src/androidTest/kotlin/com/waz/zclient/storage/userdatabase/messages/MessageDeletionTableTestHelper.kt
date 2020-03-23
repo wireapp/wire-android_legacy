@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.messages
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -20,14 +19,10 @@ class MessageDeletionTableTestHelper private constructor() {
                 it.put(MESSAGE_DELETION_TIMESTAMP_COL, timestamp)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    MESSAGE_DELETION_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = MESSAGE_DELETION_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }
