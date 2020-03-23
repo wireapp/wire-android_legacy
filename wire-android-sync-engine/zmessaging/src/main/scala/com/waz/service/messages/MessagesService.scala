@@ -508,8 +508,13 @@ class MessagesServiceImpl(selfUserId:      UserId,
 
   override def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
     for {
-      _ <- buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonWaiting))
-      _ <- sync.postButtonAction(messageId, buttonId)
+      Some(msg)      <- storage.get(messageId)
+      isSenderActive <- members.isActiveMember(msg.convId, msg.userId)
+      _              <- if (isSenderActive)
+                          buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonWaiting))
+                        else
+                          setButtonError(messageId, buttonId)
+      _              <- if (isSenderActive) sync.postButtonAction(messageId, buttonId, msg.userId) else Future.successful(())
     } yield ()
 
   override def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
