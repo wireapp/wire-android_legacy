@@ -1,11 +1,11 @@
-package com.waz.zclient.core.image.glide.customparser.publicasset
+package com.waz.zclient.core.images.publicasset
 
 import com.bumptech.glide.load.Key
 import com.bumptech.glide.load.Options
 import com.waz.zclient.assets.usecase.GetPublicAssetUseCase
 import com.waz.zclient.assets.usecase.PublicAsset
-import com.waz.zclient.core.image.glide.customparser.AssetKey
-import com.waz.zclient.core.image.glide.customparser.GlideStreamParserFactory
+import com.waz.zclient.core.images.AssetKey
+import com.waz.zclient.core.images.GlideStreamParserFactory
 import com.waz.zclient.core.usecase.UseCase
 import org.koin.core.KoinComponent
 import org.koin.core.get

@@ -21,8 +21,6 @@ import kotlinx.android.synthetic.main.activity_settings.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 
-data class Pic(val id: String)
-
 @ExperimentalCoroutinesApi
 class SettingsMainActivity : AppCompatActivity(R.layout.activity_settings) {
 

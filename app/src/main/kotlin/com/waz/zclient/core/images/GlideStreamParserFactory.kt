@@ -1,4 +1,4 @@
-package com.waz.zclient.core.image.glide.customparser
+package com.waz.zclient.core.images
 
 import com.bumptech.glide.load.Key
 import com.bumptech.glide.load.Options

@@ -1,4 +1,4 @@
-package com.waz.zclient.core.image.glide
+package com.waz.zclient.core.images
 
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
@@ -8,7 +8,6 @@ import com.waz.zclient.any
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.image.glide.customparser.InputStreamFetcher
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.eq
 import kotlinx.coroutines.ExperimentalCoroutinesApi

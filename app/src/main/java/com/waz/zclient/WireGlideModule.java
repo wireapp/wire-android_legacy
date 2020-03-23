@@ -28,7 +28,7 @@ import com.bumptech.glide.module.AppGlideModule;
 import com.waz.api.MessageContent;
 import com.waz.model.GeneralAssetId;
 import com.waz.model.Picture;
-import com.waz.zclient.core.image.glide.customparser.publicasset.PublicAssetFactory;
+import com.waz.zclient.core.images.publicasset.PublicAssetFactory;
 import com.waz.zclient.assets.usecase.PublicAsset;
 import com.waz.zclient.glide.loaders.AssetModelLoader;
 import com.waz.zclient.glide.loaders.GoogleMapModelLoader;

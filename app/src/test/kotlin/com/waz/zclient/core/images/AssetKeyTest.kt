@@ -1,8 +1,7 @@
-package com.waz.zclient.core.image.glide
+package com.waz.zclient.core.images
 
 import com.bumptech.glide.load.Option
 import com.bumptech.glide.load.Options
-import com.waz.zclient.core.image.glide.customparser.AssetKey
 import org.junit.Test
 
 class AssetKeyTest {

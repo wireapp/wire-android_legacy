@@ -24,7 +24,7 @@ import com.waz.service.tracking.TrackingEvent
 import com.waz.zclient.Intents.RichIntent
 import com.waz.zclient.collection.controllers.CollectionController.ContentType
 import com.waz.zclient.common.views.ChatHeadView.{ChatHeadViewOptions, CropShape, OverlayIcon}
-import com.waz.zclient.core.image.glide.customparser.AssetKey
+import com.waz.zclient.core.images.AssetKey
 import com.waz.zclient.glide.AssetRequest
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.messages.MessageView.MsgBindOptions
