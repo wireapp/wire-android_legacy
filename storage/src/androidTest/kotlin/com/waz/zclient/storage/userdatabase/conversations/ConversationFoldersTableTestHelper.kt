@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.conversations
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 class ConversationFoldersTableTestHelper private constructor() {
@@ -21,14 +20,10 @@ class ConversationFoldersTableTestHelper private constructor() {
                 it.put(FOLDER_ID_COL, folderId)
             }
 
-            with(openHelper) {
-                writableDatabase.insertWithOnConflict(
-                    CONVERSATION_FOLDERS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = CONVERSATION_FOLDERS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

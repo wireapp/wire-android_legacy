@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.property
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -20,14 +19,10 @@ class PropertiesTableTestHelper private constructor() {
                 it.put(PROPERTIES_VALUE_COL, value)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    PROPERTIES_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = PROPERTIES_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

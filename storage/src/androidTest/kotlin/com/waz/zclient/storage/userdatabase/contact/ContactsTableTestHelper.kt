@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.contact
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 class ContactsTableTestHelper private constructor() {
@@ -26,14 +25,10 @@ class ContactsTableTestHelper private constructor() {
                 it.put(CONTACTS_SEARCH_KEY_COL, searchKey)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    CONTACTS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = CONTACTS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

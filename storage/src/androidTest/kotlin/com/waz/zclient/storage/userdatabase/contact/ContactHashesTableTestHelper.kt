@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.contact
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -20,14 +19,10 @@ class ContactHashesTableTestHelper private constructor() {
                 it.put(CONTACT_HASHES_HASHES_COL, hashes)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    CONTACT_HASHES_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = CONTACT_HASHES_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

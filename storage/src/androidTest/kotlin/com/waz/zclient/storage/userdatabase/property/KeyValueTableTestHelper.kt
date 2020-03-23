@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.property
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -20,14 +19,10 @@ class KeyValueTableTestHelper private constructor() {
                 it.put(KEY_VALUES_VALUE_COL, value)
             }
 
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    KEY_VALUES_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = KEY_VALUES_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }

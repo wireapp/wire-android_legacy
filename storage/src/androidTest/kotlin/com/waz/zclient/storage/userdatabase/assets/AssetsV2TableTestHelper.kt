@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.assets
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 class AssetsV2TableTestHelper private constructor() {
@@ -49,14 +48,10 @@ class AssetsV2TableTestHelper private constructor() {
                 it.put(CONVERSATION_ID_COL, conversationId)
             }
 
-            with(openHelper) {
-                writableDatabase.insertWithOnConflict(
-                    ASSETS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = ASSETS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 

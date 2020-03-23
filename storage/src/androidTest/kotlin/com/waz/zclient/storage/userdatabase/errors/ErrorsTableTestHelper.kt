@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.userdatabase.errors
 
 import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 
 
@@ -35,15 +34,10 @@ class ErrorsTableTestHelper private constructor() {
                 it.put(ERRORS_RES_LABEL_COL, resLabel)
                 it.put(ERRORS_TIME_COL, time)
             }
-
-            with(openHelper.writableDatabase) {
-                insertWithOnConflict(
-                    ERRORS_TABLE_NAME,
-                    null,
-                    contentValues,
-                    SQLiteDatabase.CONFLICT_REPLACE
-                )
-            }
+            openHelper.insertWithOnConflict(
+                tableName = ERRORS_TABLE_NAME,
+                contentValues = contentValues
+            )
         }
     }
 }
