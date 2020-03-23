@@ -77,7 +77,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
 
   private val schedulePushNotificationsToUi = Signal(false)
 
-  Signal(schedulePushNotificationsToUi, pushService.processing) {
+  Signal(schedulePushNotificationsToUi, pushService.processing).onChanged {
     case (true, false) =>
       pushNotificationsToUi().map { _ => schedulePushNotificationsToUi ! false }
     case _ =>
@@ -217,9 +217,9 @@ class NotificationServiceImpl(selfUserId:      UserId,
                                        case (n, None) if n.isConvDeleted => true
                                        case (_, None)                    => false
                                       }
-        showNotifications         = show.map(_._1).toSet
-        ignoreNotifications       = ignore.map(_._1.id).toSet
-        _                         <- if (showNotifications.nonEmpty) uiController.onNotificationsChanged(self.id, showNotifications) else Future.successful(())
+        showNotifications         =  show.map(_._1).toSet
+        ignoreNotifications       =  ignore.map(_._1.id).toSet
+        _                         <- if (toShow.nonEmpty) uiController.onNotificationsChanged(self.id, showNotifications) else Future.successful(())
         _                         <- storage.insertAll(showNotifications.map(_.copy(hasBeenDisplayed = true)))
         _                         <- storage.removeAll(ignoreNotifications)
       } yield {}).recoverWith {
