@@ -6,11 +6,10 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 import java.io.InputStream
 
-class GetPublicAssetUseCase(private val assetsRepository: AssetsRepository): UseCase<InputStream, PublicAsset>() {
+class GetPublicAssetUseCase(private val assetsRepository: AssetsRepository) : UseCase<InputStream, PublicAsset>() {
 
     override suspend fun run(params: PublicAsset): Either<Failure, InputStream> =
         assetsRepository.publicAsset(params.assetId)
 }
 
 open class PublicAsset(val assetId: String)
-

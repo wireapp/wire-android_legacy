@@ -13,9 +13,9 @@ class AssetKey(
     override fun hashCode(): Int = toString().hashCode()
 
     override fun equals(other: Any?): Boolean {
-        return other is AssetKey
-            && other.key == this.key && other.width == this.width
-            && other.height == this.height && other.options == this.options
+        return other is AssetKey &&
+            other.key == this.key && other.width == this.width &&
+            other.height == this.height && other.options == this.options
     }
 
     override fun toString(): String = "$key-$width-$height-$options"

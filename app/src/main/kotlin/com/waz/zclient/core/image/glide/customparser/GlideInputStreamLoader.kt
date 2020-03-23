@@ -17,7 +17,12 @@ class GlideInputStreamLoader<T>(
     private val useCase: UseCase<InputStream, T>
 ) : ModelLoader<T, InputStream>, KoinComponent {
 
-    override fun buildLoadData(model: T, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? =
+    override fun buildLoadData(
+        model: T,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? =
         ModelLoader.LoadData(
             keyFunction(model, width, height, options),
             InputStreamFetcher(model, useCase)

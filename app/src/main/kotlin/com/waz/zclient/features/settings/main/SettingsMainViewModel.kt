@@ -13,7 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 class SettingsMainViewModel(private val getUserProfilePictureUseCase: GetUserProfilePictureUseCase) : ViewModel() {
 
     private val _backgroundAsset = MutableLiveData<ProfilePictureAsset>()
-    var backgroundAsset : LiveData<ProfilePictureAsset> = _backgroundAsset
+    var backgroundAsset: LiveData<ProfilePictureAsset> = _backgroundAsset
 
     fun fetchBackgroundImage() {
         getUserProfilePictureUseCase(viewModelScope, Unit) {
