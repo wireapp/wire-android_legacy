@@ -1,16 +1,15 @@
-package com.waz.zclient.storage.db.users.model
+package com.waz.zclient.storage.db.property
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "KeyValues")
-data class UserPreferenceEntity(
-
-    @ColumnInfo(name = "key")
+@Entity(tableName = "Properties")
+data class PropertiesEntity(
     @PrimaryKey
+    @ColumnInfo(name = "key")
     val key: String,
 
     @ColumnInfo(name = "value")
-    val value: String
+    var value: String
 )

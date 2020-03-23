@@ -37,19 +37,20 @@ import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
 import com.waz.zclient.storage.db.notifications.NotificationsEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.phonenumbers.PhoneNumbersEntity
-import com.waz.zclient.storage.db.properties.PropertiesEntity
+import com.waz.zclient.storage.db.property.KeyValuesDao
+import com.waz.zclient.storage.db.property.KeyValuesEntity
+import com.waz.zclient.storage.db.property.PropertiesDao
+import com.waz.zclient.storage.db.property.PropertiesEntity
 import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.model.UserEntity
-import com.waz.zclient.storage.db.users.model.UserPreferenceEntity
 import com.waz.zclient.storage.db.users.service.UserDao
-import com.waz.zclient.storage.db.users.service.UserPreferenceDao
 
 @Database(
     entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class, ConversationMembersEntity::class,
-        MessagesEntity::class, UserPreferenceEntity::class, SyncJobsEntity::class, ErrorsEntity::class,
+        MessagesEntity::class, KeyValuesEntity::class, SyncJobsEntity::class, ErrorsEntity::class,
         NotificationsEntity::class, ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
         ClientEntity::class, LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
         PhoneNumbersEntity::class, MessageDeletionEntity::class, ConversationRoleActionEntity::class,
@@ -61,7 +62,6 @@ import com.waz.zclient.storage.db.users.service.UserPreferenceDao
 )
 abstract class UserDatabase : RoomDatabase() {
 
-    abstract fun userPreferencesDbService(): UserPreferenceDao
     abstract fun userDbService(): UserDao
     abstract fun clientsDbService(): ClientsDao
     abstract fun syncJobsDao(): SyncJobsDao
@@ -73,6 +73,8 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun conversationMembersDao(): ConversationMembersDao
     abstract fun conversationRoleActionDao(): ConversationRoleActionDao
     abstract fun conversationsDao(): ConversationsDao
+    abstract fun keyValuesDao(): KeyValuesDao
+    abstract fun propertiesDao(): PropertiesDao
 
     companion object {
         const val VERSION = 127
