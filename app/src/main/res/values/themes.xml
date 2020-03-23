@@ -190,7 +190,6 @@
 
         <!-- Composite Message Alarm Buttons -->
         <item name="alarmButtonTextColor">@color/white</item>
-        <item name="alarmButtonProgressBarBackground">@color/white_8</item>
     </style>
 
     <style name="Theme.Light" parent="@style/Theme.Design.Light.NoActionBar">
@@ -362,7 +361,6 @@
 
         <!-- Composite Message Alarm Buttons -->
         <item name="alarmButtonTextColor">@color/accent_red</item>
-        <item name="alarmButtonProgressBarBackground">@color/black_8</item>
     </style>
 
     <style name="Theme.Dark.Preferences" parent="@style/Theme.Design.NoActionBar">
