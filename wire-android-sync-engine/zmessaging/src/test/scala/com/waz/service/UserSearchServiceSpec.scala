@@ -461,7 +461,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val res = result(preparedSearch.perform())
 
       // THEN
-      res shouldBe ids('mm1, 'mm2)
+      res shouldBe ids('mm1, 'mm2, 'me1)
     }
 
     scenario("as a member, search connected guests whether they are in a conversation with me or not") {
@@ -639,7 +639,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       // THEN
       res shouldBe ids(
-        'aa2, 'mm1, 'mm2, 'mm3, // all non-External team members
+        'aa2, 'mm1, 'mm2, 'mm3, 'me1, // all non-External team members
         'pp1 // External that I invited
       )
 
