@@ -94,7 +94,7 @@ class UserTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 1
         )
 
     private suspend fun getAllUsers() =
-        getUserDb().userDbService().allUsers()
+        getUserDb().userDao().allUsers()
 
     companion object {
         private const val TEST_USER_ID = "id"

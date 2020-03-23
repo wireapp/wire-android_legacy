@@ -18,22 +18,23 @@ import com.waz.zclient.storage.db.contacts.ContactOnWireDao
 import com.waz.zclient.storage.db.contacts.ContactsDao
 import com.waz.zclient.storage.db.contacts.ContactsEntity
 import com.waz.zclient.storage.db.contacts.ContactsOnWireEntity
-import com.waz.zclient.storage.db.conversationmembers.ConversationMembersEntity
 import com.waz.zclient.storage.db.conversations.ConversationFoldersDao
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.ConversationMembersDao
+import com.waz.zclient.storage.db.conversations.ConversationMembersEntity
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionDao
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import com.waz.zclient.storage.db.conversations.ConversationsDao
 import com.waz.zclient.storage.db.conversations.ConversationsEntity
 import com.waz.zclient.storage.db.conversations.EditHistoryEntity
 import com.waz.zclient.storage.db.conversations.ReadReceiptsEntity
+import com.waz.zclient.storage.db.email.EmailAddressesDao
 import com.waz.zclient.storage.db.email.EmailAddressesEntity
 import com.waz.zclient.storage.db.errors.ErrorsDao
 import com.waz.zclient.storage.db.errors.ErrorsEntity
 import com.waz.zclient.storage.db.folders.FoldersEntity
-import com.waz.zclient.storage.db.likes.LikesDao
-import com.waz.zclient.storage.db.likes.LikesEntity
+import com.waz.zclient.storage.db.messages.LikesDao
+import com.waz.zclient.storage.db.messages.LikesEntity
 import com.waz.zclient.storage.db.messages.MessageContentIndexEntity
 import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesDao
@@ -43,13 +44,15 @@ import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
 import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
 import com.waz.zclient.storage.db.notifications.NotificationsEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
-import com.waz.zclient.storage.db.phonenumbers.PhoneNumbersEntity
+import com.waz.zclient.storage.db.phone.PhoneNumbersDao
+import com.waz.zclient.storage.db.phone.PhoneNumbersEntity
 import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesDao
 import com.waz.zclient.storage.db.property.PropertiesEntity
 import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
+import com.waz.zclient.storage.db.userclients.UserClientDao
 import com.waz.zclient.storage.db.userclients.UserClientsEntity
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.db.users.model.UserEntity
@@ -71,8 +74,8 @@ import com.waz.zclient.storage.db.users.service.UserDao
 @Suppress("TooManyFunctions")
 abstract class UserDatabase : RoomDatabase() {
 
-    abstract fun userDbService(): UserDao
-    abstract fun clientsDbService(): ClientsDao
+    abstract fun userDao(): UserDao
+    abstract fun userClientDao(): UserClientDao
     abstract fun assetsV1Dao(): AssetsV1Dao
     abstract fun assetsDao(): AssetsDao
     abstract fun downloadAssetsDao(): DownloadAssetsDao
@@ -91,6 +94,9 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun contactsDao(): ContactsDao
     abstract fun contactOnWireDao(): ContactOnWireDao
     abstract fun contactHashesDao(): ContactHashesDao
+    abstract fun emailAddressesDao(): EmailAddressesDao
+    abstract fun phoneNumbersDao(): PhoneNumbersDao
+    abstract fun clientDao(): ClientsDao
 
     companion object {
         const val VERSION = 127

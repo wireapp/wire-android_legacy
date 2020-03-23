@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.likes
+package com.waz.zclient.storage.db.messages
 
 import androidx.room.Dao
 import androidx.room.Query
