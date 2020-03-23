@@ -27,7 +27,8 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.GeneralAssetId
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
-import com.waz.zclient.glide.{AssetKey, AssetRequest, ImageAssetFetcher}
+import com.waz.zclient.core.images.AssetKey
+import com.waz.zclient.glide.{AssetRequest, ImageAssetFetcher}
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Injectable, Injector, WireContext}
 
@@ -35,7 +36,7 @@ class AssetModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[GeneralAsset
   with DerivedLogTag {
 
   override def buildLoadData(model: GeneralAssetId, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
-    val key = AssetKey(model.toString, width, height, options)
+    val key = new AssetKey(model.toString, width, height, options)
     verbose(l"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(AssetRequest(model), zms))
   }
