@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.phonenumbers
+package com.waz.zclient.storage.db.phone
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

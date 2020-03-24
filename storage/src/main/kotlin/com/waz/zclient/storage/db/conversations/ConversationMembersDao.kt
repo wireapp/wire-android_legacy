@@ -3,7 +3,6 @@ package com.waz.zclient.storage.db.conversations
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.waz.zclient.storage.db.conversationmembers.ConversationMembersEntity
 
 @Dao
 interface ConversationMembersDao {

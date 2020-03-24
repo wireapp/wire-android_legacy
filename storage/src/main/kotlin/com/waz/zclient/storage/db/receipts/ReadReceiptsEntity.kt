@@ -1,10 +1,10 @@
-package com.waz.zclient.storage.db.likes
+package com.waz.zclient.storage.db.receipts
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
-@Entity(tableName = "Likings", primaryKeys = ["message_id", "user_id"])
-data class LikesEntity(
+@Entity(tableName = "ReadReceipts", primaryKeys = ["message_id", "user_id"])
+data class ReadReceiptsEntity(
     @ColumnInfo(name = "message_id")
     val messageId: String,
 
@@ -12,8 +12,5 @@ data class LikesEntity(
     val userId: String,
 
     @ColumnInfo(name = "timestamp")
-    val timeStamp: Int,
-
-    @ColumnInfo(name = "action")
-    val action: Int
+    val timestamp: Int
 )
