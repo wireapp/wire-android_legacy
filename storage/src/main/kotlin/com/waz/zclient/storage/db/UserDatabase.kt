@@ -26,13 +26,14 @@ import com.waz.zclient.storage.db.conversations.ConversationRoleActionDao
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import com.waz.zclient.storage.db.conversations.ConversationsDao
 import com.waz.zclient.storage.db.conversations.ConversationsEntity
-import com.waz.zclient.storage.db.conversations.EditHistoryEntity
-import com.waz.zclient.storage.db.conversations.ReadReceiptsEntity
 import com.waz.zclient.storage.db.email.EmailAddressesDao
 import com.waz.zclient.storage.db.email.EmailAddressesEntity
 import com.waz.zclient.storage.db.errors.ErrorsDao
 import com.waz.zclient.storage.db.errors.ErrorsEntity
+import com.waz.zclient.storage.db.folders.FoldersDao
 import com.waz.zclient.storage.db.folders.FoldersEntity
+import com.waz.zclient.storage.db.history.EditHistoryDao
+import com.waz.zclient.storage.db.history.EditHistoryEntity
 import com.waz.zclient.storage.db.messages.LikesDao
 import com.waz.zclient.storage.db.messages.LikesEntity
 import com.waz.zclient.storage.db.messages.MessageContentIndexEntity
@@ -50,6 +51,8 @@ import com.waz.zclient.storage.db.property.KeyValuesDao
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesDao
 import com.waz.zclient.storage.db.property.PropertiesEntity
+import com.waz.zclient.storage.db.receipts.ReadReceiptsDao
+import com.waz.zclient.storage.db.receipts.ReadReceiptsEntity
 import com.waz.zclient.storage.db.sync.SyncJobsDao
 import com.waz.zclient.storage.db.sync.SyncJobsEntity
 import com.waz.zclient.storage.db.userclients.UserClientDao
@@ -96,7 +99,10 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun contactHashesDao(): ContactHashesDao
     abstract fun emailAddressesDao(): EmailAddressesDao
     abstract fun phoneNumbersDao(): PhoneNumbersDao
-    abstract fun clientDao(): ClientsDao
+    abstract fun foldersDao(): FoldersDao
+    abstract fun readReceiptsDao(): ReadReceiptsDao
+    abstract fun editHistoryDao(): EditHistoryDao
+    abstract fun clientsDao(): ClientsDao
 
     companion object {
         const val VERSION = 127

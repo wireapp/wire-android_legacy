@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.db.conversations
+package com.waz.zclient.storage.db.history
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
