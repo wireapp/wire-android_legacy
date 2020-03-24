@@ -11,12 +11,11 @@ class CertificatePinnerFactory private constructor() {
         fun createCertificatePinner(
             pin: CertificatePin,
             pinGenerator: PinGenerator = PinGenerator()
-        ) =
-            CertificatePinner.Builder()
-                .add(
-                    pin.domain,
-                    pinGenerator.pin(pin.certificate)
-                ).build()
+        ) = CertificatePinner.Builder()
+            .add(
+                pin.domain,
+                pinGenerator.pin(pin.certificate)
+            ).build()
     }
 
     class PinGenerator(

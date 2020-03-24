@@ -10,21 +10,21 @@ class HttpProxyFactoryTest : UnitTest() {
     @Test
     fun `given HttpProxy instance, when proxy host url is valid and port is valid, then return correct proxy instance`() {
         val validHostUrl = "www.wire.com"
-        val valiePort = "8080"
-        val proxyDetails = ProxyDetails(validHostUrl, valiePort)
+        val validPort = "8080"
+        val proxyDetails = ProxyDetails(validHostUrl, validPort)
 
         val proxy = HttpProxyFactory.generateProxy(proxyDetails)
         val socketAddress = (proxy?.address() as InetSocketAddress)
         assert(proxy.type() == Proxy.Type.HTTP)
         assert(socketAddress.hostName == validHostUrl)
-        assert(socketAddress.port == valiePort.toInt())
+        assert(socketAddress.port == validPort.toInt())
     }
 
     @Test
     fun `given HttpProxy instance, when proxy host url is "none" and port is valid, then return default proxy`() {
         val invalidHostUrl = "none"
-        val valiePort = "8080"
-        val proxyDetails = ProxyDetails(invalidHostUrl, valiePort)
+        val validPort = "8080"
+        val proxyDetails = ProxyDetails(invalidHostUrl, validPort)
         proxyFailure(proxyDetails)
     }
 
