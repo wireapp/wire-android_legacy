@@ -41,9 +41,13 @@ import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesDeletionDao
 import com.waz.zclient.storage.db.messages.MessagesEntity
+import com.waz.zclient.storage.db.notifications.CloudNotificationStatsDao
 import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
+import com.waz.zclient.storage.db.notifications.CloudNotificationsDao
 import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
-import com.waz.zclient.storage.db.notifications.NotificationsEntity
+import com.waz.zclient.storage.db.notifications.NotificationDataDao
+import com.waz.zclient.storage.db.notifications.NotificationDataEntity
+import com.waz.zclient.storage.db.notifications.PushNotificationEventDao
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.phone.PhoneNumbersDao
 import com.waz.zclient.storage.db.phone.PhoneNumbersEntity
@@ -62,15 +66,17 @@ import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
 
 @Database(
-    entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class, ConversationMembersEntity::class,
-        MessagesEntity::class, KeyValuesEntity::class, SyncJobsEntity::class, ErrorsEntity::class,
-        NotificationsEntity::class, ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
+    entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
+        ConversationMembersEntity::class, MessagesEntity::class, KeyValuesEntity::class,
+        SyncJobsEntity::class, ErrorsEntity::class, NotificationDataEntity::class,
+        ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
         ClientEntity::class, LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
         PhoneNumbersEntity::class, MessageDeletionEntity::class, ConversationRoleActionEntity::class,
         ConversationFoldersEntity::class, FoldersEntity::class, CloudNotificationStatsEntity::class,
-        CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class, UploadAssetsEntity::class,
-        PropertiesEntity::class, ReadReceiptsEntity::class, PushNotificationEventEntity::class,
-        MessageContentIndexEntity::class, EditHistoryEntity::class, ButtonEntity::class],
+        CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class,
+        UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
+        PushNotificationEventEntity::class, MessageContentIndexEntity::class,
+        EditHistoryEntity::class, ButtonEntity::class],
     version = UserDatabase.VERSION
 )
 
@@ -97,13 +103,17 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun contactsDao(): ContactsDao
     abstract fun contactOnWireDao(): ContactOnWireDao
     abstract fun contactHashesDao(): ContactHashesDao
+    abstract fun cloudNotificationsDao(): CloudNotificationsDao
+    abstract fun cloudNotificationStatsDao(): CloudNotificationStatsDao
+    abstract fun notificationDataDao(): NotificationDataDao
+    abstract fun pushNotificationEventDao(): PushNotificationEventDao
     abstract fun emailAddressesDao(): EmailAddressesDao
     abstract fun phoneNumbersDao(): PhoneNumbersDao
     abstract fun foldersDao(): FoldersDao
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
     abstract fun clientsDao(): ClientsDao
-
+  
     companion object {
         const val VERSION = 127
 

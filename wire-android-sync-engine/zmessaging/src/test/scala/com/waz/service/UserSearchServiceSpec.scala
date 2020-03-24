@@ -124,6 +124,13 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       permissions = (adminPermissions, adminPermissions),
       teamId = teamId,
       handle = Some(Handle("aa2"))
+    ),
+    id('me1) -> UserData(id('me1), "Team Member With Email").copy(
+      email = Some(EmailAddress("a_member@wire.com")),
+      teamId = teamId
+    ),
+    id('pe1) -> UserData(id('pe1), "Person With Email").copy(
+      email = Some(EmailAddress("a_person@wire.com"))
     )
   )
 
@@ -245,6 +252,14 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
     scenario("Return no search results for handle") {
       verifySearch("@relt", Set.empty[UserId])
+    }
+
+    scenario("Return no search results for team member when query matches only to email") {
+      verifySearch("a_member@wire.com", Set.empty[UserId])
+    }
+
+    scenario("Return no search results for personal account when query matches only to email") {
+      verifySearch("a_person@wire.com", Set.empty[UserId])
     }
 
   }
@@ -446,7 +461,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val res = result(preparedSearch.perform())
 
       // THEN
-      res shouldBe ids('mm1, 'mm2)
+      res shouldBe ids('mm1, 'mm2, 'me1)
     }
 
     scenario("as a member, search connected guests whether they are in a conversation with me or not") {
@@ -624,7 +639,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
       // THEN
       res shouldBe ids(
-        'aa2, 'mm1, 'mm2, 'mm3, // all non-External team members
+        'aa2, 'mm1, 'mm2, 'mm3, 'me1, // all non-External team members
         'pp1 // External that I invited
       )
 
