@@ -57,6 +57,7 @@ object NetworkDependencyProvider {
             .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
             .addInterceptor(accessTokenInterceptor)
             .addInterceptor(userAgentInterceptor)
+            .proxy(HttpProxyFactory.generateProxy())
             .authenticator(accessTokenAuthenticator)
             .addLoggingInterceptor()
             .build()
@@ -68,6 +69,7 @@ object NetworkDependencyProvider {
         OkHttpClient.Builder()
             .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
             .addInterceptor(userAgentInterceptor)
+            .proxy(HttpProxyFactory.generateProxy())
             .addLoggingInterceptor()
             .build()
 
