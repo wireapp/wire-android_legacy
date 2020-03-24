@@ -55,5 +55,4 @@ class AccessTokenAuthenticator(
         const val AUTH_HEADER = "Authorization"
         const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
     }
-
 }

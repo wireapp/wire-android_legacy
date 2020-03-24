@@ -95,7 +95,9 @@ val networkModule: Module = module {
 
     //Token manipulation
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
-    single<NetworkClient>(named(networkClientForToken)) { RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get())) }
+    single<NetworkClient>(named(networkClientForToken)) {
+        RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get()))
+    }
     single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
     single { TokenService(get(), get()) }
 }

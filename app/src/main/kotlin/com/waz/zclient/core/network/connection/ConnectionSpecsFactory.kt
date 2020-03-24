@@ -5,9 +5,7 @@ import okhttp3.ConnectionSpec
 import okhttp3.TlsVersion
 
 class ConnectionSpecsFactory private constructor() {
-
     companion object {
-
         fun createConnectionSpecs() = listOf(
             createModernConnectionSpec(),
             ConnectionSpec.CLEARTEXT
@@ -21,6 +19,5 @@ class ConnectionSpecsFactory private constructor() {
                     CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
                 )
                 .build()
-
     }
 }

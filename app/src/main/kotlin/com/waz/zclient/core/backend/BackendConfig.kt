@@ -6,6 +6,8 @@ import java.net.URI
 
 class BackendConfig {
 
+    //TODO change then wehen you update dynamic backends
+    @Suppress("FunctionOnlyReturningConstant")
     fun currentBackend(): Backend? =
         null
 }
