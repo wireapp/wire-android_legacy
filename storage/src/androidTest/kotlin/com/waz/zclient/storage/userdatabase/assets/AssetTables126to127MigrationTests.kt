@@ -1,13 +1,12 @@
 package com.waz.zclient.storage.userdatabase.assets
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
+    USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
     fun givenV1AssetInsertedIntoAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -185,34 +184,14 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(TEST_DB_NAME
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun getV1Assets() =
-        getUserDb().assetsV1Dao().allAssets()
+        getUserDatabase().assetsV1Dao().allAssets()
 
-    private suspend fun getV2Assets() =
-        getUserDb().assetsDao().allAssets()
+    private suspend fun getV2Assets() = getUserDatabase().assetsDao().allAssets()
 
     private suspend fun getDownloadAssets() =
-        getUserDb().downloadAssetsDao().allDownloadAssets()
+        getUserDatabase().downloadAssetsDao().allDownloadAssets()
 
     private suspend fun getUploadAssets() =
-        getUserDb().uploadAssetsDao().allUploadAssets()
-
-    companion object {
-        private const val TEST_DB_NAME = "UserDatabase.db"
-    }
+        getUserDatabase().uploadAssetsDao().allUploadAssets()
 }

@@ -1,15 +1,14 @@
 package com.waz.zclient.storage.userdatabase.notifications
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
     fun givenCloudNotificationsStatInsertedIntoCloudNotificationsStatsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -107,40 +106,21 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_
                 assert(this.pushId == pushId)
                 assert(this.isDecrypted == isDecrypted)
                 assert(this.eventJson == eventJson)
-                assert(this.plain == plain)
+                assert(this.plain!!.contentEquals(plain)  )
                 assert(this.isTransient == isTransient)
             }
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun allCloudNotifications() =
-        getUserDb().cloudNotificationsDao().allCloudNotifications()
+        getUserDatabase().cloudNotificationsDao().allCloudNotifications()
 
     private suspend fun allCloudNotificationStats() =
-        getUserDb().cloudNotificationStatsDao().allCloudNotificationStats()
+        getUserDatabase().cloudNotificationStatsDao().allCloudNotificationStats()
 
     private suspend fun allNotificationsData() =
-        getUserDb().notificationDataDao().allNotificationsData()
+        getUserDatabase().notificationDataDao().allNotificationsData()
 
     private suspend fun allPushNotificationEvents() =
-        getUserDb().pushNotificationEventDao().allPushNotificationEvents()
-
-    companion object {
-        private const val TEST_DB_NAME = "userDatabase.db"
-    }
+        getUserDatabase().pushNotificationEventDao().allPushNotificationEvents()
 }

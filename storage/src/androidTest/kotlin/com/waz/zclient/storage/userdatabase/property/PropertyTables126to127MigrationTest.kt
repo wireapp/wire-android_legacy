@@ -1,15 +1,14 @@
 package com.waz.zclient.storage.userdatabase.property
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
     fun givenKeyValueInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -54,29 +53,9 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NA
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun allKeyValues() =
-        getUserDb().keyValuesDao().allKeyValues()
-
+        getUserDatabase().keyValuesDao().allKeyValues()
 
     private suspend fun allProperties() =
-        getUserDb().propertiesDao().allProperties()
-
-    companion object {
-        private const val TEST_DB_NAME = "userDatabase.db"
-    }
+        getUserDatabase().propertiesDao().allProperties()
 }

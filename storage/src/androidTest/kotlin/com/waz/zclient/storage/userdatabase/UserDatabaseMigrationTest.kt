@@ -1,13 +1,18 @@
 package com.waz.zclient.storage.userdatabase
 
+import androidx.room.migration.Migration
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.UserDatabase
+import com.waz.zclient.storage.di.StorageModule
 import org.junit.After
 import org.junit.Before
 
-abstract class UserDatabaseMigrationTest(val dbName: String, val version: Int) : IntegrationTest() {
+abstract class UserDatabaseMigrationTest(
+    private val startVersion: Int,
+    private val endVersion: Int,
+    private val migration: Migration) : IntegrationTest() {
 
     protected lateinit var testOpenHelper: DbSQLiteOpenHelper
 
@@ -15,18 +20,34 @@ abstract class UserDatabaseMigrationTest(val dbName: String, val version: Int) :
         UserDatabaseHelper()
     }
 
-    protected lateinit var testHelper: MigrationTestHelper
+    private lateinit var testHelper: MigrationTestHelper
 
     @Before
     fun setUp() {
         testHelper = MigrationTestHelper(UserDatabase::class.java.canonicalName)
         testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
-            dbName, version)
+            TEST_DB_NAME, startVersion)
         databaseHelper.createDatabase(testOpenHelper)
     }
 
     @After
     fun tearDown() {
         databaseHelper.clearDatabase(testOpenHelper)
+    }
+
+    protected fun getUserDatabase() = StorageModule.getUserDatabase(
+        getApplicationContext(), TEST_DB_NAME, UserDatabase.migrations
+    )
+
+    protected fun validateMigration() =
+        testHelper.validateMigration(
+            dbName = TEST_DB_NAME,
+            dbVersion = endVersion,
+            validateDroppedTables = true,
+            migrations = *arrayOf(migration)
+        )
+
+    companion object {
+        private const val TEST_DB_NAME = "UserDatabase.db"
     }
 }
