@@ -44,7 +44,7 @@ import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
 import com.waz.zclient.storage.db.notifications.CloudNotificationsDao
 import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
 import com.waz.zclient.storage.db.notifications.NotificationDataDao
-import com.waz.zclient.storage.db.notifications.NotificationsDataEntity
+import com.waz.zclient.storage.db.notifications.NotificationDataEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventDao
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
 import com.waz.zclient.storage.db.phonenumbers.PhoneNumbersEntity
@@ -62,7 +62,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
 @Database(
     entities = [UserEntity::class, AssetsV1Entity::class, ConversationsEntity::class,
         ConversationMembersEntity::class, MessagesEntity::class, KeyValuesEntity::class,
-        SyncJobsEntity::class, ErrorsEntity::class, NotificationsDataEntity::class,
+        SyncJobsEntity::class, ErrorsEntity::class, NotificationDataEntity::class,
         ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
         ClientEntity::class, LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
         PhoneNumbersEntity::class, MessageDeletionEntity::class, ConversationRoleActionEntity::class,

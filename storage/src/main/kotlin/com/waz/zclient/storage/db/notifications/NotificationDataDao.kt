@@ -6,5 +6,5 @@ import androidx.room.Query
 @Dao
 interface NotificationDataDao {
     @Query("SELECT * FROM NotificationData")
-    suspend fun allNotificationsData(): List<NotificationsDataEntity>
+    suspend fun allNotificationsData(): List<NotificationDataEntity>
 }
