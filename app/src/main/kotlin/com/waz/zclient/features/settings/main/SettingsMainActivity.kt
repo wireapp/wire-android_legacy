@@ -6,11 +6,13 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.observe
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.addTransformations
 import com.waz.zclient.core.extension.createScope
 import com.waz.zclient.core.extension.imageLoader
 import com.waz.zclient.core.extension.intoBackground
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.images.transformations.AppBackgroundTransformations
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.activity_settings.*
@@ -40,8 +42,10 @@ class SettingsMainActivity : AppCompatActivity(R.layout.activity_settings) {
     private fun setBackgroundImage() = viewModel.let {
         it.fetchBackgroundImage()
         it.backgroundAsset.observe(this) {
-            //TODO: add ScaleTransformation(1.4f), BlurTransformation(), DarkenTransformation(148, 2f)
-            imageLoader().load(it).intoBackground(activitySettingsMainConstraintLayout)
+            imageLoader()
+                .load(it)
+                .addTransformations(*AppBackgroundTransformations.transformations(this))
+                .intoBackground(activitySettingsMainConstraintLayout)
         }
     }
 
