@@ -21,7 +21,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 import android.content.Context
 import com.waz.api.impl.ErrorResponse
-import com.waz.api.{Message, MessageFilter}
+import com.waz.api.{ContentSearchQuery, Message, MessageFilter}
+import com.waz.db.CursorIterator
 import com.waz.log.BasicLogging.LogTag
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -81,6 +82,9 @@ trait MessagesStorage extends CachedStorage[MessageId, MessageData] {
 
   def findQuotesOf(msgId: MessageId): Future[Seq[MessageData]]
   def countUnread(conv: ConvId, lastReadTime: RemoteInstant): Future[UnreadCount]
+
+  def matchingMessages(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId]): Future[Set[MessageId]]
+  def getNormalizedContentForMessage(messageId: MessageId): Future[Option[String]]
 }
 
 class MessagesStorageImpl(context:     Context,
@@ -274,7 +278,6 @@ class MessagesStorageImpl(context:     Context,
     for {
       _ <- storage { deleteUnsentMessages(conv)(_) }.future
       _ <- storage { MessageDataDao.deleteUpTo(conv, upTo)(_) } .future
-      _ <- storage { MessageContentIndexDao.deleteUpTo(conv, upTo)(_) } .future
       _ <- deleteCached(m => m.convId == conv && ! m.time.isAfter(upTo))
       _ <- Future(msgsFilteredIndex(conv).foreach(_.delete(upTo)))
       _ <- msgsIndex(conv).flatMap(_.delete(upTo))
@@ -287,7 +290,6 @@ class MessagesStorageImpl(context:     Context,
     verbose(l"deleteAll($conv)")
     for {
       _ <- storage { MessageDataDao.deleteForConv(conv)(_) } .future
-      _ <- storage { MessageContentIndexDao.deleteForConv(conv)(_) } .future
       _ <- deleteCached(_.convId == conv)
       _ <- Future(msgsFilteredIndex(conv).foreach(_.delete()))
       _ <- msgsIndex(conv).flatMap(_.delete())
@@ -311,6 +313,14 @@ class MessagesStorageImpl(context:     Context,
     val unsentMessages = MessageDataDao.listUnsentMsgs(convId)
     MessageDataDao.iteratingMultiple(unsentMessages).foreach(_.foreach(delete))
   }
+
+  override def matchingMessages(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId]): Future[Set[MessageId]] =
+    storage.read { implicit db =>
+      CursorIterator.list[MessageId](MessageDataDao.findContent(contentSearchQuery, convId))(MessageDataDao.MessageIdReader).toSet
+    }
+
+  override def getNormalizedContentForMessage(messageId: MessageId): Future[Option[String]] =
+    get(messageId).map(_.map(c => ContentSearchQuery.transliterated(c.contentString)))
 }
 
 object MessagesStorage {

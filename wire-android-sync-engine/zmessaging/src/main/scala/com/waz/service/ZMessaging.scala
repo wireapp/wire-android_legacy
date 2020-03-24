@@ -181,7 +181,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
   lazy val messagesStorage: MessagesStorage                       = wire[MessagesStorageImpl]
   lazy val msgAndLikes: MessageAndLikesStorageImpl                = wire[MessageAndLikesStorageImpl]
-  lazy val messagesIndexStorage: MessageIndexStorage              = wire[MessageIndexStorage]
   lazy val eventStorage: PushNotificationEventsStorage            = wire[PushNotificationEventsStorageImpl]
   lazy val readReceiptsStorage: ReadReceiptsStorage               = wire[ReadReceiptsStorageImpl]
   lazy val foldersStorage: FoldersStorage                         = wire[FoldersStorageImpl]
@@ -359,8 +358,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     tempFiles
     recordAndPlay
-
-    messagesIndexStorage
 
     verificationUpdater
 
