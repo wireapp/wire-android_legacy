@@ -1,15 +1,17 @@
 package com.waz.zclient.storage.userdatabase.notifications
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
+class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenCloudNotificationsStatInsertedIntoCloudNotificationsStatsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenCloudNotificationsStatInsertedIntoCloudNotificationsStatsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val stage = "testStage"
         val firstBucket = 1
@@ -19,7 +21,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
         CloudNotificationsStatsTableTestHelper.insertCloudNotificationStat(stage, firstBucket,
             secondBucket, thirdBucket, openHelper = testOpenHelper)
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allCloudNotificationStats()[0]) {
@@ -32,7 +34,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenCloudNotificationInsertedIntoCloudNotificationsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenCloudNotificationInsertedIntoCloudNotificationsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val stage = "testStage"
@@ -42,7 +44,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allCloudNotifications()[0]) {
@@ -54,7 +56,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenNotificationDataInsertedIntoNotificationDataTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenNotificationDataInsertedIntoNotificationDataTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val data = "testData"
@@ -65,7 +67,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allNotificationsData()[0]) {
@@ -76,7 +78,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenPushNotificationEventInsertedIntoPushNotificationEventsDataTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenPushNotificationEventInsertedIntoPushNotificationEventsDataTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
 
         val eventIndex = 1
@@ -96,7 +98,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allPushNotificationEvents()[0]) {
@@ -104,7 +106,7 @@ class NotificationsTablesMigrationsTest : UserDatabaseMigrationTest() {
                 assert(this.pushId == pushId)
                 assert(this.isDecrypted == isDecrypted)
                 assert(this.eventJson == eventJson)
-                assert(this.plain!!.contentEquals(plain))
+                assert(this.plain!!.contentEquals(plain)  )
                 assert(this.isTransient == isTransient)
             }
         }

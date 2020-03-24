@@ -1,15 +1,17 @@
 package com.waz.zclient.storage.userdatabase.messages
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class MessagesTablesMigrationsTest : UserDatabaseMigrationTest() {
+class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
+    USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenMessageInsertedIntoMessagesTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenMessageInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val conversationId = "testId"
@@ -60,7 +62,7 @@ class MessagesTablesMigrationsTest : UserDatabaseMigrationTest() {
             assetId = assetId,
             openHelper = testOpenHelper)
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allMessages()[0]) {
@@ -92,7 +94,7 @@ class MessagesTablesMigrationsTest : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenMessageDeletionInsertedIntoMessageDeletionTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenMessageDeletionInsertedIntoMessageDeletionTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val messageId = "testMessageId"
         val timestamp = 1584710479
@@ -103,7 +105,7 @@ class MessagesTablesMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allMessageDeletions()[0]) {
@@ -114,7 +116,7 @@ class MessagesTablesMigrationsTest : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenLikeInsertedIntoLikesTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenLikeInsertedIntoLikesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val messageId = "testMessageId"
         val userId = "testUserId"
@@ -130,7 +132,7 @@ class MessagesTablesMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allLikes()[0]) {

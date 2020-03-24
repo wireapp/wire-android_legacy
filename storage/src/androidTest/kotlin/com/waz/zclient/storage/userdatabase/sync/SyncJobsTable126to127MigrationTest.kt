@@ -1,15 +1,17 @@
 package com.waz.zclient.storage.userdatabase.sync
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class SyncJobsTableMigrationsTest : UserDatabaseMigrationTest() {
+class SyncJobsTable126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenSyncJobInsertedIntoSyncJobsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenSyncJobInsertedIntoSyncJobsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val data = "testData"
@@ -20,7 +22,7 @@ class SyncJobsTableMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allSyncJobs()[0]) {

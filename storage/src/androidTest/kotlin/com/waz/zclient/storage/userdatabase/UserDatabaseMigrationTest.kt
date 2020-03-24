@@ -1,5 +1,6 @@
 package com.waz.zclient.storage.userdatabase
 
+import androidx.room.migration.Migration
 import com.waz.zclient.storage.DbSQLiteOpenHelper
 import com.waz.zclient.storage.IntegrationTest
 import com.waz.zclient.storage.MigrationTestHelper
@@ -8,7 +9,10 @@ import com.waz.zclient.storage.di.StorageModule
 import org.junit.After
 import org.junit.Before
 
-abstract class UserDatabaseMigrationTest : IntegrationTest() {
+abstract class UserDatabaseMigrationTest(
+    private val startVersion: Int,
+    private val endVersion: Int,
+    private val migration: Migration) : IntegrationTest() {
 
     protected lateinit var testOpenHelper: DbSQLiteOpenHelper
 
@@ -22,7 +26,7 @@ abstract class UserDatabaseMigrationTest : IntegrationTest() {
     fun setUp() {
         testHelper = MigrationTestHelper(UserDatabase::class.java.canonicalName)
         testOpenHelper = DbSQLiteOpenHelper(getApplicationContext(),
-            TEST_DB_NAME, START_VERSION)
+            TEST_DB_NAME, startVersion)
         databaseHelper.createDatabase(testOpenHelper)
     }
 
@@ -35,19 +39,15 @@ abstract class UserDatabaseMigrationTest : IntegrationTest() {
         getApplicationContext(), TEST_DB_NAME, UserDatabase.migrations
     )
 
-    protected fun validateMigrations() =
+    protected fun validateMigration() =
         testHelper.validateMigration(
             dbName = TEST_DB_NAME,
-            dbVersion = END_VERSION,
+            dbVersion = endVersion,
             validateDroppedTables = true,
-            migrations = *UserDatabase.migrations
+            migrations = *arrayOf(migration)
         )
 
     companion object {
         private const val TEST_DB_NAME = "UserDatabase.db"
-        private const val START_VERSION = 126
-
-        // Increment END_VERSION to test future migrations
-        private const val END_VERSION = 127
     }
 }

@@ -1,15 +1,17 @@
 package com.waz.zclient.storage.userdatabase.email
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class EmailAddressesTableMigrationsTest : UserDatabaseMigrationTest() {
+class EmailAddressesTable126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenEmailAddressInsertedIntoEmailAddressesTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenEmailAddressInsertedIntoEmailAddressesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val contactId = "testContactId"
         val email = "test@wire.com"
@@ -20,7 +22,7 @@ class EmailAddressesTableMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allEmailAddresses()[0]) {

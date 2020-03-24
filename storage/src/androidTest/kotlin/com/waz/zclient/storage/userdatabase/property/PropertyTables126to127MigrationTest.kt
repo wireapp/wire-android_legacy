@@ -1,15 +1,17 @@
 package com.waz.zclient.storage.userdatabase.property
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class PropertyTablesMigrationsTest : UserDatabaseMigrationTest() {
+class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenKeyValueInsertedIntoMessagesTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenKeyValueInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val key = "testKey"
         val value = "testValue"
@@ -19,7 +21,7 @@ class PropertyTablesMigrationsTest : UserDatabaseMigrationTest() {
             value = value,
             openHelper = testOpenHelper)
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allKeyValues()[0]) {
@@ -30,7 +32,7 @@ class PropertyTablesMigrationsTest : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenPropertyInsertedIntoPropertiesTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenPropertyInsertedIntoPropertiesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val key = "testKey"
         val value = "testValue"
@@ -41,7 +43,7 @@ class PropertyTablesMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allProperties()[0]) {

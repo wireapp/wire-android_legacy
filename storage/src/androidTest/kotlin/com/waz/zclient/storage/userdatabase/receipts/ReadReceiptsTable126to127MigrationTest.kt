@@ -1,15 +1,17 @@
 package com.waz.zclient.storage.userdatabase.receipts
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class ReadReceiptsTableMigrationsTest : UserDatabaseMigrationTest() {
+class ReadReceiptsTable126to127MigrationTest : UserDatabaseMigrationTest(126,
+    127, USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenReceiptsInsertedIntoReadReceiptsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenReceiptsInsertedIntoReadReceiptsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
 
         val messageId = "messageId"
         val userId = "UserId"
@@ -22,7 +24,7 @@ class ReadReceiptsTableMigrationsTest : UserDatabaseMigrationTest() {
             openHelper = testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(allReceipts()[0]) {

@@ -1,13 +1,15 @@
 package com.waz.zclient.storage.userdatabase.assets
 
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
+class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
+    USER_DATABASE_MIGRATION_126_TO_127) {
 
     @Test
-    fun givenV1AssetInsertedIntoAssetsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenV1AssetInsertedIntoAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetType = "IMAGE"
         val assetData = "data"
@@ -19,7 +21,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
             testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(getV1Assets()[0]) {
@@ -31,7 +33,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenV2AssetInsertedIntoAssetsV2Table_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenV2AssetInsertedIntoAssetsV2TableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetToken = "084782999838_Aa--4777277_"
         val assetName = "IMAGE"
@@ -59,7 +61,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
             testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(getV2Assets()[0]) {
@@ -79,7 +81,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenDownloadAssetInsertedIntoDownloadAssetsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenDownloadAssetInsertedIntoDownloadAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetName = "IMAGE"
         val mime = "png"
@@ -102,7 +104,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
             testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(getDownloadAssets()[0]) {
@@ -119,7 +121,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
     }
 
     @Test
-    fun givenUploadAssetInsertedIntoUploadAssetsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
+    fun givenUploadAssetInsertedIntoUploadAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
         val uploadAssetId = "1100"
         val assetId = "i747749kk-77"
         val assetToken = "084782999838_Aa--4777277_"
@@ -157,7 +159,7 @@ class AssetTablesMigrationsTests : UserDatabaseMigrationTest() {
             testOpenHelper
         )
 
-        validateMigrations()
+        validateMigration()
 
         runBlocking {
             with(getUploadAssets()[0]) {
