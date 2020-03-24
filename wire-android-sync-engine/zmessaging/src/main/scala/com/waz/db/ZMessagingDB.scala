@@ -72,7 +72,7 @@ object ZMessagingDB {
     UserDataDao, AssetDataDao, ConversationDataDao, ConversationMemberDataDao,
     MessageDataDao, KeyValueDataDao, SyncJobDao, ErrorDataDao, NotificationDataDao,
     ContactHashesDao, ContactsOnWireDao, UserClientsDao, LikingDao, ContactsDao, EmailAddressesDao,
-    PhoneNumbersDao, MsgDeletionDao, EditHistoryDao,
+    PhoneNumbersDao, MsgDeletionDao, EditHistoryDao, MessageContentIndexDao,
     PushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
     AssetDao, FCMNotificationsDao, FCMNotificationStatsDao, FolderDataDao, ConversationFolderDataDao,
     ConversationRoleActionDao, ButtonDataDao
