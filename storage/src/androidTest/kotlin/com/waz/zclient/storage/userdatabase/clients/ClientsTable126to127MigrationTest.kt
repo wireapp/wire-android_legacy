@@ -26,8 +26,7 @@ class ClientsTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME
         validateMigration()
 
         runBlocking {
-            val syncJob = allClients()[0]
-            with(syncJob) {
+            with(allClients()[0]) {
                 assert(this.id == id)
                 assert(this.data == data)
             }

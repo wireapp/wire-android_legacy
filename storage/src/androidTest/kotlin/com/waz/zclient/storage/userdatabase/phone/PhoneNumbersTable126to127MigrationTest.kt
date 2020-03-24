@@ -26,8 +26,7 @@ class PhoneNumbersTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB
         validateMigration()
 
         runBlocking {
-            val syncJob = allPhoneNumbers()[0]
-            with(syncJob) {
+            with(allPhoneNumbers()[0]) {
                 assert(this.contactId == contactId)
                 assert(this.phoneNumber == phone)
             }

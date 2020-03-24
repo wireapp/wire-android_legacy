@@ -26,8 +26,7 @@ class EmailAddressesTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_
         validateMigration()
 
         runBlocking {
-            val syncJob = allEmailAddresses()[0]
-            with(syncJob) {
+            with(allEmailAddresses()[0]) {
                 assert(this.contactId == contactId)
                 assert(this.emailAddress == email)
             }
