@@ -15,10 +15,11 @@ class HttpProxyFactory private constructor() {
         ): Proxy? {
             val proxyHost = parseHost(proxyDetails.hostUrl)
             val proxyPort = parsePort(proxyDetails.port)
-            return if (proxyHost != null && proxyPort != null) {
-                Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
-            } else {
-                null
+            return when {
+                proxyHost != null && proxyPort != null -> {
+                    Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
+                }
+                else -> null
             }
         }
 

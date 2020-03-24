@@ -22,10 +22,16 @@ class UserAgentInterceptor(
             .build())
 
     private fun newUserAgentHeader() =
-        """Android ${userAgentConfig.androidVersion} 
-           / Wire ${userAgentConfig.appVersionNameConfig.versionName} 
-           / HttpLibrary ${userAgentConfig.httpUserAgent}
-        """.trimIndent()
+        "${androidVersion()} / ${wireVersion()} / ${httpVersion()}"
+
+    private fun androidVersion(): String =
+        "Android ${userAgentConfig.androidVersion}"
+
+    private fun wireVersion(): String =
+        "Wire ${userAgentConfig.appVersionNameConfig.versionName}"
+
+    private fun httpVersion(): String =
+        "HttpLibrary ${userAgentConfig.httpUserAgent}"
 
     companion object {
         private const val USER_AGENT_HEADER_KEY = "User-Agent"

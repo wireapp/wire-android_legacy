@@ -4,7 +4,6 @@ import android.content.Context
 import com.waz.zclient.accounts.di.accountsModule
 import com.waz.zclient.assets.di.assetsModule
 import com.waz.zclient.clients.di.clientsModule
-import com.waz.zclient.core.backend.di.backendModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
 import com.waz.zclient.features.auth.registration.di.registrationModules
@@ -24,8 +23,7 @@ object Injector {
     private val coreModules: List<Module> = listOf(
         storageModule,
         networkModule,
-        configModule,
-        backendModule
+        configModule
     )
 
     private val highLevelModules: List<Module> = listOf(

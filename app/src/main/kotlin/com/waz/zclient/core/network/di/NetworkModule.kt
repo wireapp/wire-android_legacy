@@ -3,7 +3,6 @@
 package com.waz.zclient.core.network.di
 
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.core.backend.Backend
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.RetrofitClient
@@ -39,8 +38,7 @@ object NetworkDependencyProvider {
     private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
 
     fun retrofit(
-        okHttpClient: OkHttpClient,
-        backend: Backend
+        okHttpClient: OkHttpClient
     ): Retrofit =
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -51,8 +49,7 @@ object NetworkDependencyProvider {
     fun createHttpClient(
         accessTokenInterceptor: AccessTokenInterceptor,
         accessTokenAuthenticator: AccessTokenAuthenticator,
-        userAgentInterceptor: UserAgentInterceptor,
-        backend: Backend
+        userAgentInterceptor: UserAgentInterceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
             .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
@@ -64,8 +61,7 @@ object NetworkDependencyProvider {
             .build()
 
     fun createHttpClientForToken(
-        userAgentInterceptor: UserAgentInterceptor,
-        backend: Backend
+        userAgentInterceptor: UserAgentInterceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
             .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
@@ -83,8 +79,8 @@ object NetworkDependencyProvider {
 
 val networkModule: Module = module {
     single { NetworkHandler(androidContext()) }
-    single { createHttpClient(get(), get(), get(), get()) }
-    single { retrofit(get(), get()) }
+    single { createHttpClient(get(), get(), get()) }
+    single { retrofit(get()) }
     single { AccessTokenRemoteDataSource(get()) }
     single { AccessTokenLocalDataSource(get(), get<GlobalDatabase>().activeAccountsDao()) }
     single { AccessTokenMapper() }
@@ -99,7 +95,7 @@ val networkModule: Module = module {
     //Token manipulation
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
     single<NetworkClient>(named(networkClientForToken)) {
-        RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get()))
+        RetrofitClient(retrofit(createHttpClientForToken(get())))
     }
     single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
     single { TokenService(get(), get()) }
