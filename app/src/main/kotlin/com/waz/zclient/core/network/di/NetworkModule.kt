@@ -1,10 +1,9 @@
 @file:Suppress("MatchingDeclarationName")
+
 package com.waz.zclient.core.network.di
 
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClient
-import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClientForToken
-import com.waz.zclient.core.network.di.NetworkDependencyProvider.retrofit
+import com.waz.zclient.core.backend.Backend
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.RetrofitClient
@@ -17,6 +16,12 @@ import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
 import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
+import com.waz.zclient.core.network.connection.ConnectionSpecsFactory
+import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClient
+import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClientForToken
+import com.waz.zclient.core.network.di.NetworkDependencyProvider.retrofit
+import com.waz.zclient.core.network.proxy.HttpProxyFactory
+import com.waz.zclient.core.network.useragent.UserAgentInterceptor
 import com.waz.zclient.storage.db.GlobalDatabase
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -32,7 +37,10 @@ object NetworkDependencyProvider {
 
     private const val BASE_URL = "https://staging-nginz-https.zinfra.io"
 
-    fun retrofit(okHttpClient: OkHttpClient): Retrofit =
+    fun retrofit(
+        okHttpClient: OkHttpClient,
+        backend: Backend
+    ): Retrofit =
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
@@ -41,16 +49,27 @@ object NetworkDependencyProvider {
 
     fun createHttpClient(
         accessTokenInterceptor: AccessTokenInterceptor,
-        accessTokenAuthenticator: AccessTokenAuthenticator
+        accessTokenAuthenticator: AccessTokenAuthenticator,
+        userAgentInterceptor: UserAgentInterceptor,
+        backend: Backend
     ): OkHttpClient =
         OkHttpClient.Builder()
+            .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
             .addInterceptor(accessTokenInterceptor)
+            .addInterceptor(userAgentInterceptor)
             .authenticator(accessTokenAuthenticator)
             .addLoggingInterceptor()
             .build()
 
-    fun createHttpClientForToken(): OkHttpClient =
-        OkHttpClient.Builder().addLoggingInterceptor().build()
+    fun createHttpClientForToken(
+        userAgentInterceptor: UserAgentInterceptor,
+        backend: Backend
+    ): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
+            .addInterceptor(userAgentInterceptor)
+            .addLoggingInterceptor()
+            .build()
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() = this.apply {
         if (BuildConfig.DEBUG) {
@@ -61,8 +80,8 @@ object NetworkDependencyProvider {
 
 val networkModule: Module = module {
     single { NetworkHandler(androidContext()) }
-    single { createHttpClient(get(), get()) }
-    single { retrofit(get()) }
+    single { createHttpClient(get(), get(), get(), get()) }
+    single { retrofit(get(), get()) }
     single { AccessTokenRemoteDataSource(get()) }
     single { AccessTokenLocalDataSource(get(), get<GlobalDatabase>().activeAccountsDao()) }
     single { AccessTokenMapper() }
@@ -74,7 +93,7 @@ val networkModule: Module = module {
 
     //Token manipulation
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
-    single<NetworkClient>(named(networkClientForToken)) { RetrofitClient(retrofit(createHttpClientForToken())) }
+    single<NetworkClient>(named(networkClientForToken)) { RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get())) }
     single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
     single { TokenService(get(), get()) }
 }

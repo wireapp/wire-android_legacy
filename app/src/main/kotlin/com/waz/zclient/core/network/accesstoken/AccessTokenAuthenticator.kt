@@ -19,11 +19,6 @@ class AccessTokenAuthenticator(
     private val refreshTokenMapper: RefreshTokenMapper
 ) : Authenticator {
 
-    companion object {
-        const val AUTH_HEADER = "Authorization"
-        const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
-    }
-
     /**
      * This authenticate() method is called when server returns 401 Unauthorized.
      */
@@ -55,4 +50,10 @@ class AccessTokenAuthenticator(
                 repository.updateRefreshToken(newRefreshToken)
             }
         }
+
+    companion object {
+        const val AUTH_HEADER = "Authorization"
+        const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
+    }
+
 }
