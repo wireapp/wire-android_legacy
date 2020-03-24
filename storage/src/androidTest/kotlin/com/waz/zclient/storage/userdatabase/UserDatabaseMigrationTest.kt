@@ -11,8 +11,8 @@ import org.junit.Before
 
 abstract class UserDatabaseMigrationTest(
     private val startVersion: Int,
-    private val endVersion: Int,
-    private val migration: Migration) : IntegrationTest() {
+    private val endVersion: Int
+) : IntegrationTest() {
 
     protected lateinit var testOpenHelper: DbSQLiteOpenHelper
 
@@ -35,16 +35,16 @@ abstract class UserDatabaseMigrationTest(
         databaseHelper.clearDatabase(testOpenHelper)
     }
 
-    protected fun getUserDatabase() = StorageModule.getUserDatabase(
+    protected fun getDatabase() = StorageModule.getUserDatabase(
         getApplicationContext(), TEST_DB_NAME, UserDatabase.migrations
     )
 
-    protected fun validateMigration() =
+    protected fun validateMigration(vararg migrations: Migration) =
         testHelper.validateMigration(
             dbName = TEST_DB_NAME,
             dbVersion = endVersion,
             validateDroppedTables = true,
-            migrations = *arrayOf(migration)
+            migrations = *migrations
         )
 
     companion object {

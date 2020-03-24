@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class UserTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class UserTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenUserInsertedIntoUsersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -70,7 +69,7 @@ class UserTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(getAllUsers()[0]) {
@@ -104,5 +103,5 @@ class UserTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
         }
     }
 
-    private suspend fun getAllUsers() = getUserDatabase().userDao().allUsers()
+    private suspend fun getAllUsers() = getDatabase().userDao().allUsers()
 }

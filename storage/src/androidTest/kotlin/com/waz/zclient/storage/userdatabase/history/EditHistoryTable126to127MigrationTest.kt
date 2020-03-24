@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class EditHistoryTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class EditHistoryTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenHistoryInsertedIntoEditHistoryTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -24,7 +23,7 @@ class EditHistoryTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allHistory()[0]) {
@@ -36,5 +35,5 @@ class EditHistoryTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127
     }
 
     private suspend fun allHistory() =
-        getUserDatabase().editHistoryDao().allHistory()
+        getDatabase().editHistoryDao().allHistory()
 }

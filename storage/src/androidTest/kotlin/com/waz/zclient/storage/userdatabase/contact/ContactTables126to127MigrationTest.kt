@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenContactInsertedIntoContactsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -27,7 +26,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             searchKey = searchKey,
             openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allContacts()[0]) {
@@ -51,7 +50,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allContactOnWire()[0]) {
@@ -73,7 +72,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allContactHashes()[0]) {
@@ -84,11 +83,11 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
     }
 
     private suspend fun allContacts() =
-        getUserDatabase().contactsDao().allContacts()
+        getDatabase().contactsDao().allContacts()
 
     private suspend fun allContactHashes() =
-        getUserDatabase().contactHashesDao().allContactHashes()
+        getDatabase().contactHashesDao().allContactHashes()
 
     private suspend fun allContactOnWire() =
-        getUserDatabase().contactOnWireDao().allContactOnWire()
+        getDatabase().contactOnWireDao().allContactOnWire()
 }

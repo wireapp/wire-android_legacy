@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
-    127, USER_DATABASE_MIGRATION_126_TO_127) {
+class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenCloudNotificationsStatInsertedIntoCloudNotificationsStatsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -21,7 +20,7 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
         CloudNotificationsStatsTableTestHelper.insertCloudNotificationStat(stage, firstBucket,
             secondBucket, thirdBucket, openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allCloudNotificationStats()[0]) {
@@ -44,7 +43,7 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allCloudNotifications()[0]) {
@@ -67,7 +66,7 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allNotificationsData()[0]) {
@@ -98,7 +97,7 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allPushNotificationEvents()[0]) {
@@ -106,21 +105,21 @@ class NotificationsTables126to127MigrationTest : UserDatabaseMigrationTest(126,
                 assert(this.pushId == pushId)
                 assert(this.isDecrypted == isDecrypted)
                 assert(this.eventJson == eventJson)
-                assert(this.plain!!.contentEquals(plain)  )
+                this.plain?.let { assert(it.contentEquals(plain)) }
                 assert(this.isTransient == isTransient)
             }
         }
     }
 
     private suspend fun allCloudNotifications() =
-        getUserDatabase().cloudNotificationsDao().allCloudNotifications()
+        getDatabase().cloudNotificationsDao().allCloudNotifications()
 
     private suspend fun allCloudNotificationStats() =
-        getUserDatabase().cloudNotificationStatsDao().allCloudNotificationStats()
+        getDatabase().cloudNotificationStatsDao().allCloudNotificationStats()
 
     private suspend fun allNotificationsData() =
-        getUserDatabase().notificationDataDao().allNotificationsData()
+        getDatabase().notificationDataDao().allNotificationsData()
 
     private suspend fun allPushNotificationEvents() =
-        getUserDatabase().pushNotificationEventDao().allPushNotificationEvents()
+        getDatabase().pushNotificationEventDao().allPushNotificationEvents()
 }

@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126,
-    127, USER_DATABASE_MIGRATION_126_TO_127) {
+class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenKeyValueInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -21,7 +20,7 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             value = value,
             openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allKeyValues()[0]) {
@@ -43,7 +42,7 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allProperties()[0]) {
@@ -54,8 +53,8 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126,
     }
 
     private suspend fun allKeyValues() =
-        getUserDatabase().keyValuesDao().allKeyValues()
+        getDatabase().keyValuesDao().allKeyValues()
 
     private suspend fun allProperties() =
-        getUserDatabase().propertiesDao().allProperties()
+        getDatabase().propertiesDao().allProperties()
 }

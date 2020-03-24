@@ -5,8 +5,7 @@ import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
-    127, USER_DATABASE_MIGRATION_126_TO_127) {
+class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenFolderInsertedIntoConversationFoldersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -19,7 +18,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversationFolders()[0]) {
@@ -42,7 +41,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversationMembers()[0]) {
@@ -66,7 +65,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversationRoleActions()[0]) {
@@ -149,7 +148,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversations()[0]) {
@@ -191,14 +190,14 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
     }
 
     private suspend fun allConversationFolders() =
-        getUserDatabase().conversationFoldersDao().allConversationFolders()
+        getDatabase().conversationFoldersDao().allConversationFolders()
 
     private suspend fun allConversationMembers() =
-        getUserDatabase().conversationMembersDao().allConversationMemebers()
+        getDatabase().conversationMembersDao().allConversationMemebers()
 
     private suspend fun allConversationRoleActions() =
-        getUserDatabase().conversationRoleActionDao().allConversationRoleActions()
+        getDatabase().conversationRoleActionDao().allConversationRoleActions()
 
     private suspend fun allConversations() =
-        getUserDatabase().conversationsDao().allConversations()
+        getDatabase().conversationsDao().allConversations()
 }

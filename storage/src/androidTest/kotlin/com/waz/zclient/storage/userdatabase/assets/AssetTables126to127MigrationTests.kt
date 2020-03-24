@@ -5,8 +5,7 @@ import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenV1AssetInsertedIntoAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -21,7 +20,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(getV1Assets()[0]) {
@@ -61,7 +60,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(getV2Assets()[0]) {
@@ -104,7 +103,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(getDownloadAssets()[0]) {
@@ -159,7 +158,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(getUploadAssets()[0]) {
@@ -185,13 +184,13 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127,
     }
 
     private suspend fun getV1Assets() =
-        getUserDatabase().assetsV1Dao().allAssets()
+        getDatabase().assetsV1Dao().allAssets()
 
-    private suspend fun getV2Assets() = getUserDatabase().assetsDao().allAssets()
+    private suspend fun getV2Assets() = getDatabase().assetsDao().allAssets()
 
     private suspend fun getDownloadAssets() =
-        getUserDatabase().downloadAssetsDao().allDownloadAssets()
+        getDatabase().downloadAssetsDao().allDownloadAssets()
 
     private suspend fun getUploadAssets() =
-        getUserDatabase().uploadAssetsDao().allUploadAssets()
+        getDatabase().uploadAssetsDao().allUploadAssets()
 }

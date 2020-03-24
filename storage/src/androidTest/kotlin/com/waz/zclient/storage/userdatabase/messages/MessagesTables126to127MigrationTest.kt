@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenMessageInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -62,7 +61,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             assetId = assetId,
             openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allMessages()[0]) {
@@ -105,7 +104,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allMessageDeletions()[0]) {
@@ -132,7 +131,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allLikes()[0]) {
@@ -145,10 +144,10 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
     }
 
     private suspend fun allMessages() =
-        getUserDatabase().messagesDao().allMessages()
+        getDatabase().messagesDao().allMessages()
 
     private suspend fun allMessageDeletions() =
-        getUserDatabase().messagesDeletionDao().allMessageDeletions()
+        getDatabase().messagesDeletionDao().allMessageDeletions()
 
-    private suspend fun allLikes() = getUserDatabase().likesDao().allLikes()
+    private suspend fun allLikes() = getDatabase().likesDao().allLikes()
 }

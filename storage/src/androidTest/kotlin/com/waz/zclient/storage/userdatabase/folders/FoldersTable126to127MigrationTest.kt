@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class FoldersTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class FoldersTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenFolderInsertedIntoFoldersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -24,7 +23,7 @@ class FoldersTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allFolders()[0]) {
@@ -35,5 +34,5 @@ class FoldersTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
         }
     }
 
-    private suspend fun allFolders() = getUserDatabase().foldersDao().allFolders()
+    private suspend fun allFolders() = getDatabase().foldersDao().allFolders()
 }
