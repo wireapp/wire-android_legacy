@@ -23,7 +23,7 @@ import java.nio.charset.Charset
 
 import android.database.sqlite.SQLiteQueryBuilder
 import com.waz.api.Message.Type._
-import com.waz.api.{Message, TypeFilter}
+import com.waz.api.{ContentSearchQuery, Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -492,6 +492,16 @@ object MessageData extends
         null, limit.fold[String](null)(_.toString))
       db.rawQuery(q)
     }
+
+    private val MaxSearchResults = 1024 // don't want to read whole db on common search query
+
+    def findContent(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId])(implicit db: DB): DBCursor =
+      convId match {
+        case Some(conv) =>
+          db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Content.name} MATCH '${contentSearchQuery.toFtsQuery}'", null, null, null, s"${Time.name} DESC", MaxSearchResults.toString)
+        case _ =>
+          db.query(table.name, IndexColumns, s"${Content.name} MATCH '${contentSearchQuery.toFtsQuery}'", null, null, null, s"${Time.name} DESC", MaxSearchResults.toString)
+      }
   }
 
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
