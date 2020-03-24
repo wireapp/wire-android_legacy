@@ -1,17 +1,15 @@
 package com.waz.zclient.storage.userdatabase.contact
 
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class ContactTablesMigrationsTest : UserDatabaseMigrationTest() {
 
     @Test
-    fun givenContactInsertedIntoContactsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenContactInsertedIntoContactsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val name = "testName"
@@ -27,7 +25,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             searchKey = searchKey,
             openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allContacts()[0]) {
@@ -40,7 +38,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
     }
 
     @Test
-    fun givenContactOnWireInsertedIntoContactOnWireTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenContactOnWireInsertedIntoContactOnWireTable_whenMigrationDone_thenAssertDataIsStillIntact() {
 
         val userId = "testUserId"
         val contactId = "testContactId"
@@ -51,7 +49,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allContactOnWire()[0]) {
@@ -62,7 +60,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
     }
 
     @Test
-    fun givenContactHashInsertedIntoContactHashesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenContactHashInsertedIntoContactHashesTable_whenMigrationDone_thenAssertDataIsStillIntact() {
 
         val id = "testId"
         val hashes = "testHashes"
@@ -73,7 +71,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allContactHashes()[0]) {

@@ -1,17 +1,15 @@
 package com.waz.zclient.storage.userdatabase.users
 
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class UserTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class UserTableMigrationsTest : UserDatabaseMigrationTest() {
 
     @Test
-    fun givenUserInsertedIntoUsersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenUserInsertedIntoUsersTable_whenMigrationDone_thenAssertDataIsStillIntact() {
 
         val userId = "testUserId"
         val teamId = "testTeamId"
@@ -70,7 +68,7 @@ class UserTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(getAllUsers()[0]) {

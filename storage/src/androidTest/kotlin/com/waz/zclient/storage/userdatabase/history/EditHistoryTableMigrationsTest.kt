@@ -1,17 +1,15 @@
 package com.waz.zclient.storage.userdatabase.history
 
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class EditHistoryTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127,
-    USER_DATABASE_MIGRATION_126_TO_127) {
+class EditHistoryTableMigrationsTest : UserDatabaseMigrationTest() {
 
     @Test
-    fun givenHistoryInsertedIntoEditHistoryTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenHistoryInsertedIntoEditHistoryTable_whenMigrationDone_thenAssertDataIsStillIntact() {
 
         val originalId = "testOriginalID"
         val updatedId = "testUpdatedID"
@@ -24,7 +22,7 @@ class EditHistoryTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allHistory()[0]) {

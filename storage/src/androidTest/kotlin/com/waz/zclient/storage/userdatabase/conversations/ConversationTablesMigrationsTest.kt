@@ -1,15 +1,13 @@
 package com.waz.zclient.storage.userdatabase.conversations
 
-import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
-    127, USER_DATABASE_MIGRATION_126_TO_127) {
+class ConversationTablesMigrationsTest : UserDatabaseMigrationTest() {
 
     @Test
-    fun givenFolderInsertedIntoConversationFoldersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenFolderInsertedIntoConversationFoldersTable_whenMigrationDone_thenAssertDataIsStillIntact() {
         val conversationId = "7577489"
         val folderId = "377474"
 
@@ -19,7 +17,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allConversationFolders()[0]) {
@@ -30,7 +28,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
     }
 
     @Test
-    fun givenMemberInsertedIntoConversationMembersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenMemberInsertedIntoConversationMembersTable_whenMigrationDone_thenAssertDataIsStillIntact() {
         val userId = "h477474849jfnj777478-"
         val convId = "7577489"
         val roleId = "1100"
@@ -42,7 +40,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allConversationMembers()[0]) {
@@ -54,7 +52,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
     }
 
     @Test
-    fun givenRoleActionInsertedIntoConversationRoleActionTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenRoleActionInsertedIntoConversationRoleActionTable_whenMigrationDone_thenAssertDataIsStillIntact() {
         val convId = "7577489"
         val label = "Join"
         val action = "JOINED"
@@ -66,7 +64,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allConversationRoleActions()[0]) {
@@ -78,7 +76,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
     }
 
     @Test
-    fun givenRoleActionInsertedIntoConversationsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenRoleActionInsertedIntoConversationsTable_whenMigrationDone_thenAssertDataIsStillIntact() {
         val convId = "7577489"
         val remoteId = "888"
         val name = "Test Conversation Name"
@@ -149,7 +147,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126,
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigrations()
 
         runBlocking {
             with(allConversations()[0]) {
