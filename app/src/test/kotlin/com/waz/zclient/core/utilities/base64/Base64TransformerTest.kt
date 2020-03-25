@@ -3,14 +3,13 @@ package com.waz.zclient.core.utilities.base64
 import com.waz.zclient.UnitTest
 import org.junit.Test
 
-@ExperimentalStdlibApi
 class Base64TransformerTest : UnitTest() {
 
     private val base64Transformer: Base64Transformer = Base64Transformer()
 
     @Test
     fun `given input as byteArray, then return base 64 string`() {
-        val input = "hello".encodeToByteArray()
+        val input = "hello".toByteArray()
         val output = base64Transformer.encode(input)
 
         assert(output == "aGVsbG8=")
