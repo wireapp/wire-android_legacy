@@ -55,7 +55,6 @@ object NetworkDependencyProvider {
     ): OkHttpClient =
         defaultHttpClient(backendItem, userAgentInterceptor)
             .addInterceptor(accessTokenInterceptor)
-            .addInterceptor(userAgentInterceptor)
             .authenticator(accessTokenAuthenticator)
             .build()
 
