@@ -2,7 +2,6 @@ package com.waz.zclient.core.network.useragent
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.config.AppVersionNameConfig
-import com.waz.zclient.core.extension.empty
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -46,15 +45,14 @@ class UserAgentInterceptorTest : UnitTest() {
         `when`(initialRequest.newBuilder()).thenReturn(requestBuilder)
         `when`(requestBuilder.addHeader(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(requestBuilder)
 
-        val requestWithHeader = mock(Request::class.java)
-        requestBuilder.addHeader(USER_AGENT_HEADER_KEY, String.empty())
-        `when`(requestBuilder.build()).thenReturn(requestWithHeader)
-        `when`(chain.proceed(requestWithHeader)).thenReturn(mock(Response::class.java))
+        val requestWithoutHeader = mock(Request::class.java)
+        `when`(requestBuilder.build()).thenReturn(requestWithoutHeader)
+        `when`(chain.proceed(requestWithoutHeader)).thenReturn(mock(Response::class.java))
 
         userAgentInterceptor.intercept(chain)
 
-        verify(requestBuilder).addHeader(USER_AGENT_HEADER_KEY, userAgent)
-        verify(chain).proceed(requestWithHeader)
+        verify(requestBuilder).addHeader(USER_AGENT_HEADER_KEY, USER_AGENT)
+        verify(chain).proceed(requestWithoutHeader)
         verify(requestBuilder, never()).removeHeader(USER_AGENT_HEADER_KEY)
     }
 
@@ -69,7 +67,7 @@ class UserAgentInterceptorTest : UnitTest() {
         `when`(requestBuilder.addHeader(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(requestBuilder)
 
         val requestWithHeader = mock(Request::class.java)
-        requestBuilder.addHeader(USER_AGENT_HEADER_KEY, userAgent)
+        requestBuilder.addHeader(USER_AGENT_HEADER_KEY, USER_AGENT)
         `when`(requestBuilder.build()).thenReturn(requestWithHeader)
         `when`(chain.proceed(requestWithHeader)).thenReturn(mock(Response::class.java))
 
@@ -84,9 +82,9 @@ class UserAgentInterceptorTest : UnitTest() {
         private const val ANDROID_VERSION = "10.0"
         private const val WIRE_VERSION = "3.12.300"
         private const val HTTP_LIBRARY_VERSION = "4.1.0"
-        private val userAgent = """Android $ANDROID_VERSION 
-           / Wire $WIRE_VERSION 
-           / HttpLibrary $HTTP_LIBRARY_VERSION
-        """.trimIndent()
+        private const val ANDROID_DETAILS = "Android $ANDROID_VERSION"
+        private const val WIRE_DETAILS = "Wire $WIRE_VERSION"
+        private const val HTTP_DETAILS = "HttpLibrary $HTTP_LIBRARY_VERSION"
+        private const val USER_AGENT = "$ANDROID_DETAILS / $WIRE_DETAILS / $HTTP_DETAILS"
     }
 }
