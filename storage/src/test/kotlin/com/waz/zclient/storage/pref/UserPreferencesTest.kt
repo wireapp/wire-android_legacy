@@ -2,6 +2,8 @@ package com.waz.zclient.storage.pref
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.waz.zclient.storage.pref.global.GlobalPreferences
+import com.waz.zclient.storage.pref.user.UserPreferences
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

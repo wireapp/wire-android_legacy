@@ -1,7 +1,8 @@
-package com.waz.zclient.storage.pref
+package com.waz.zclient.storage.pref.user
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.waz.zclient.storage.pref.global.GlobalPreferences
 
 class UserPreferences(
     private val context: Context,

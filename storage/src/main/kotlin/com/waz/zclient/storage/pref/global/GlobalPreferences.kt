@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.pref
+package com.waz.zclient.storage.pref.global
 
 import android.content.Context
 import android.content.SharedPreferences
