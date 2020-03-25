@@ -163,7 +163,6 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NA
     private suspend fun allMessages() =
         getUserDb().messagesDao().allMessages()
 
-
     private suspend fun allMessageDeletions() =
         getUserDb().messagesDeletionDao().allMessageDeletions()
 
