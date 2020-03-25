@@ -15,6 +15,8 @@ import com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailView
 import com.waz.zclient.features.settings.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.features.settings.main.SettingsMainViewModel
 import com.waz.zclient.features.settings.support.SettingsSupportViewModel
+import com.waz.zclient.settings.about.SettingsAboutMainViewModel
+import com.waz.zclient.settings.support.SettingsSupportMainViewModel
 import com.waz.zclient.user.email.ChangeEmailUseCase
 import com.waz.zclient.user.handle.usecase.ChangeHandleUseCase
 import com.waz.zclient.user.handle.usecase.CheckHandleExistsUseCase
@@ -60,6 +62,7 @@ val settingsMainModule: Module = module {
 val settingsAboutModule: Module = module {
     scope(named(SETTINGS_SCOPE)) {
         viewModel { SettingsAboutViewModel(get(), get(), get()) }
+        viewModel { SettingsAboutMainViewModel(get()) }
     }
 }
 
@@ -68,6 +71,7 @@ val settingsAboutModule: Module = module {
 val settingsSupportModule: Module = module {
     scope(named(SETTINGS_SCOPE)) {
         viewModel { SettingsSupportViewModel() }
+        viewModel { SettingsSupportMainViewModel(get()) }
     }
 }
 

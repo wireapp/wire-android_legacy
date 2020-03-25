@@ -1,10 +1,10 @@
-package com.waz.zclient.features.settings.main
+package com.waz.zclient.settings.about
 
 import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import com.waz.zclient.user.profile.GetUserProfilePictureDelegate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
-class SettingsMainViewModel(
+class SettingsAboutMainViewModel(
     getUserProfilePictureDelegate: GetUserProfilePictureDelegate
-) : BackgroundAssetViewModel(getUserProfilePictureDelegate)
+): BackgroundAssetViewModel(getUserProfilePictureDelegate)
