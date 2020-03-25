@@ -454,7 +454,7 @@ class MessagesServiceImpl(selfUserId:      UserId,
   override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: RemoteInstant, duration: FiniteDuration) =
     updater.addMessage(MessageData(MessageId(), convId, Message.Type.SUCCESSFUL_CALL, from, time = time, duration = Some(duration)))
 
-  def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]] =
+  override def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]] =
     updateMessageState(convId, msg.id, Message.Status.FAILED) andThen {
       case Success(Some(m)) => storage.onMessageFailed ! (m, error)
     }

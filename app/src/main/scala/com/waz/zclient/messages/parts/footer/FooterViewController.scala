@@ -18,7 +18,6 @@
 package com.waz.zclient.messages.parts.footer
 
 import android.content.Context
-import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.{LocalInstant, MessageData, ReadReceipt, UserId}
@@ -114,16 +113,19 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     timeout     <- ephemeralTimeout
     reads       <- readReceiptsStorage.flatMap(_.receipts(msg.id))
     isOffline   <- inject[NetworkModeService].isOnline.map(!_)
-  } yield {
-    val timestamp = SameDayTimeStamp(msg.time.instant).string
-    val editedTimestamp = SameDayTimeStamp(msg.editTime.instant).string
-    val finalTimestamp = if (msg.editTime.isEpoch) timestamp else getString(R.string.message_footer__status__edited, editedTimestamp)
-    timeout match {
-      case Some(t)                          => ephemeralTimeoutString(timestamp, t, isGroup, reads, isTeamConv)
-      case None if selfUserId == msg.userId => statusString(finalTimestamp, msg, isGroup, isOffline, reads, isTeamConv)
-      case None                             => timestamp
+  } yield
+    if (msg.isFailed) getString(R.string.message_footer__status__failed)
+    else {
+      lazy val timestamp = SameDayTimeStamp(msg.time.instant).string
+      lazy val finalTimestamp =
+        if (!msg.isEdited) timestamp
+        else getString(R.string.message_footer__status__edited, SameDayTimeStamp(msg.editTime.instant).string)
+      timeout match {
+        case Some(t)                          => ephemeralTimeoutString(timestamp, t, isGroup, reads, isTeamConv)
+        case None if selfUserId == msg.userId => statusString(finalTimestamp, msg, isGroup, isOffline, reads, isTeamConv)
+        case None                             => timestamp
+      }
     }
-  }
 
   val linkColor = expiring flatMap {
     case true => accents.accentColor.map(_.color)
@@ -134,40 +136,32 @@ class FooterViewController(implicit inj: Injector, context: Context, ec: EventCo
     def run() = for {
       msgs <- inject[Signal[MessagesService]].head
       m    <- message.head
-    } yield {
-      if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) {
-        msgs.retryMessageSending(m.convId, m.id)
-      }
-    }
+    } yield
+      if (m.isFailed) msgs.retryMessageSending(m.convId, m.id)
   }
 
   def onLikeClicked() = messageAndLikes.head.map { likesController.onLikeButtonClicked ! _ }
 
-  private def timestampAndReads(timestamp: String, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean): Option[String] = {
-    if (reads.nonEmpty && isGroup && isTeamConv) {
+  private def timestampAndReads(timestamp: String, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean): Option[String] =
+    if (reads.nonEmpty && isGroup && isTeamConv)
       Some(getString(R.string.message_footer__status__read_group, timestamp, reads.size.toString))
-    } else if (reads.nonEmpty && !isGroup){
-      val readTimestampString = SameDayTimeStamp(reads.head.timestamp.instant).string
-      Some(getString(R.string.message_footer__status__read, timestamp, readTimestampString))
-    } else {
+    else if (reads.nonEmpty && !isGroup)
+      Some(getString(R.string.message_footer__status__read, timestamp, SameDayTimeStamp(reads.head.timestamp.instant).string))
+    else
       None
-    }
-  }
 
-  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) = {
-    timestampAndReads(timestamp, isGroup, reads, isTeamConv)
-      .getOrElse(m.state match {
+  private def statusString(timestamp: String, m: MessageData, isGroup: Boolean, isOffline: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) =
+    timestampAndReads(timestamp, isGroup, reads, isTeamConv).getOrElse(
+      m.state match {
         case Status.PENDING if isOffline => getString(R.string.message_footer__status__waiting_for_connection)
         case Status.PENDING              => getString(R.string.message_footer__status__sending)
         case Status.SENT                 => getString(R.string.message_footer__status__sent, timestamp)
         case Status.DELIVERED if isGroup => getString(R.string.message_footer__status__sent, timestamp)
         case Status.DELIVERED            => getString(R.string.message_footer__status__delivered, timestamp)
         case Status.DELETED              => getString(R.string.message_footer__status__deleted, timestamp)
-        case Status.FAILED |
-             Status.FAILED_READ          => getString(R.string.message_footer__status__failed)
         case _                           => timestamp
-      })
-  }
+      }
+    )
 
   private def ephemeralTimeoutString(timestamp: String, remaining: FiniteDuration, isGroup: Boolean, reads: Seq[ReadReceipt], isTeamConv: Boolean) = {
 

@@ -213,7 +213,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   private val stateGlyph = message map {
     case m if m.msgType == Message.Type.RECALLED => Some(R.string.glyph__trash)
-    case m if !m.editTime.isEpoch => Some(R.string.glyph__edit)
+    case m if m.isEdited => Some(R.string.glyph__edit)
     case _ => None
   }
 
