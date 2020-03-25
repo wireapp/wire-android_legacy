@@ -36,7 +36,6 @@ import com.waz.zclient.storage.db.history.EditHistoryDao
 import com.waz.zclient.storage.db.history.EditHistoryEntity
 import com.waz.zclient.storage.db.messages.LikesDao
 import com.waz.zclient.storage.db.messages.LikesEntity
-import com.waz.zclient.storage.db.messages.MessageContentIndexEntity
 import com.waz.zclient.storage.db.messages.MessageDeletionEntity
 import com.waz.zclient.storage.db.messages.MessagesDao
 import com.waz.zclient.storage.db.messages.MessagesDeletionDao
@@ -75,8 +74,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
         ConversationFoldersEntity::class, FoldersEntity::class, CloudNotificationStatsEntity::class,
         CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class,
         UploadAssetsEntity::class, PropertiesEntity::class, ReadReceiptsEntity::class,
-        PushNotificationEventEntity::class, MessageContentIndexEntity::class,
-        EditHistoryEntity::class, ButtonEntity::class],
+        PushNotificationEventEntity::class, EditHistoryEntity::class, ButtonEntity::class],
     version = UserDatabase.VERSION
 )
 
