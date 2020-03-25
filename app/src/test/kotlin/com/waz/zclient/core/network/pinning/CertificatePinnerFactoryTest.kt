@@ -6,11 +6,13 @@ import com.waz.zclient.eq
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verify
 import java.security.MessageDigest
 
 //This is just here to ensure SE can compile on its own for tests. The actual pin is specified in default.json
-internal val certificate: ByteArray = arrayOf(
+private val certificate: ByteArray = arrayOf(
     0x30, 0x82, 0x01, 0x22, 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01,
     0x05, 0x00, 0x03, 0x82, 0x01, 0x0F, 0x00, 0x30, 0x82, 0x01, 0x0A, 0x02, 0x82, 0x01, 0x01, 0x00, 0xAD,
     0xE6, 0x33, 0x05, 0x6B, 0xAF, 0x9D, 0x52, 0x98, 0x7E, 0x03, 0x4D, 0x5F, 0x77, 0x55, 0x8D, 0x49, 0xEA,
@@ -40,9 +42,17 @@ class CertificatePinnerFactoryTest : UnitTest() {
 
     @Test
     fun `given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
+        `when`(certificationPin.certificate).thenReturn(certificate)
+        `when`(certificationPin.domain).thenReturn(TEST_DOMAIN)
+        lenient().`when`(pinGenerator.pin(certificate)).thenReturn("sha256/")
+
         CertificatePinnerFactory.createCertificatePinner(certificationPin, pinGenerator)
 
-        verify(pinGenerator).pin(eq(certificationPin.certificate))
+        verify(pinGenerator).pin(eq(certificate))
+    }
+
+    companion object {
+        private const val TEST_DOMAIN = "www.wire.com"
     }
 }
 
