@@ -111,7 +111,6 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
 
-
     companion object {
         const val VERSION = 127
 
