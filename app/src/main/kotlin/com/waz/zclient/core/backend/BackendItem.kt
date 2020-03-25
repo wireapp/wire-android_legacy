@@ -33,7 +33,6 @@ class BackendClient {
     fun get(environment: String): BackendItem = clients[environment] ?: ProductionBackendItem()
 }
 
-
 enum class Backend(val environment: String) {
     STAGING("staging"),
     QA("qa-demo"),
