@@ -1,7 +1,7 @@
 package com.waz.zclient.core.network.pinning
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.core.extension.encodeBase64
+import com.waz.zclient.core.utilities.base64.Base64Transformer
 import com.waz.zclient.eq
 import org.junit.Before
 import org.junit.Test
@@ -11,7 +11,6 @@ import org.mockito.Mockito.lenient
 import org.mockito.Mockito.verify
 import java.security.MessageDigest
 
-//This is just here to ensure SE can compile on its own for tests. The actual pin is specified in default.json
 private val certificate: ByteArray = arrayOf(
     0x30, 0x82, 0x01, 0x22, 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01,
     0x05, 0x00, 0x03, 0x82, 0x01, 0x0F, 0x00, 0x30, 0x82, 0x01, 0x0A, 0x02, 0x82, 0x01, 0x01, 0x00, 0xAD,
@@ -46,7 +45,7 @@ class CertificatePinnerFactoryTest : UnitTest() {
         `when`(certificationPin.domain).thenReturn(TEST_DOMAIN)
         lenient().`when`(pinGenerator.pin(certificate)).thenReturn("sha256/")
 
-        CertificatePinnerFactory.createCertificatePinner(certificationPin, pinGenerator)
+        CertificatePinnerFactory.create(certificationPin, pinGenerator)
 
         verify(pinGenerator).pin(eq(certificate))
     }
@@ -62,17 +61,19 @@ class PinGeneratorTest : UnitTest() {
 
     private lateinit var messageDigest: MessageDigest
 
+    private lateinit var base64Transformer: Base64Transformer
+
     @Before
     fun setup() {
+        base64Transformer = Base64Transformer()
         messageDigest = MessageDigest.getInstance(PUBLIC_KEY_ALGORITHM)
-        pinGenerator = CertificatePinnerFactory.PinGenerator(messageDigest)
+        pinGenerator = CertificatePinnerFactory.PinGenerator(messageDigest, base64Transformer)
     }
 
     @Test
     fun `given pin is generated, when certificate is digested, then return pin that related to CertificatePinner restrictions`() {
-        val newCert = messageDigest.digest(certificate).encodeBase64()
+        val newCert = base64Transformer.encode(messageDigest.digest(certificate))
         val pin = pinGenerator.pin(certificate)
-
         assert(pin == "$PINS$newCert")
     }
 

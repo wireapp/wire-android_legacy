@@ -52,10 +52,10 @@ object NetworkDependencyProvider {
         userAgentInterceptor: UserAgentInterceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
-            .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
+            .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(accessTokenInterceptor)
             .addInterceptor(userAgentInterceptor)
-            .proxy(HttpProxyFactory.generateProxy())
+            .proxy(HttpProxyFactory.create())
             .authenticator(accessTokenAuthenticator)
             .addLoggingInterceptor()
             .build()
@@ -64,9 +64,9 @@ object NetworkDependencyProvider {
         userAgentInterceptor: UserAgentInterceptor
     ): OkHttpClient =
         OkHttpClient.Builder()
-            .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
+            .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(userAgentInterceptor)
-            .proxy(HttpProxyFactory.generateProxy())
+            .proxy(HttpProxyFactory.create())
             .addLoggingInterceptor()
             .build()
 

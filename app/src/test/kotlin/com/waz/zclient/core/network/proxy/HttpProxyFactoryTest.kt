@@ -13,7 +13,7 @@ class HttpProxyFactoryTest : UnitTest() {
         val validPort = "8080"
         val proxyDetails = ProxyDetails(validHostUrl, validPort)
 
-        val proxy = HttpProxyFactory.generateProxy(proxyDetails)
+        val proxy = HttpProxyFactory.create(proxyDetails)
         val socketAddress = (proxy?.address() as InetSocketAddress)
         assert(proxy.type() == Proxy.Type.HTTP)
         assert(socketAddress.hostName == validHostUrl)
@@ -45,7 +45,7 @@ class HttpProxyFactoryTest : UnitTest() {
     }
 
     private fun proxyFailure(proxyDetails: ProxyDetails) {
-        val proxy = HttpProxyFactory.generateProxy(proxyDetails)
+        val proxy = HttpProxyFactory.create(proxyDetails)
         assert(proxy == null)
     }
 }
