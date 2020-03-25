@@ -10,8 +10,6 @@ import com.waz.zclient.storage.db.assets.DownloadAssetsDao
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsDao
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
-import com.waz.zclient.storage.db.clients.model.ClientEntity
-import com.waz.zclient.storage.db.clients.service.ClientsDao
 import com.waz.zclient.storage.db.contacts.ContactHashesDao
 import com.waz.zclient.storage.db.contacts.ContactHashesEntity
 import com.waz.zclient.storage.db.contacts.ContactOnWireDao
@@ -69,7 +67,7 @@ import com.waz.zclient.storage.db.users.service.UserDao
         ConversationMembersEntity::class, MessagesEntity::class, KeyValuesEntity::class,
         SyncJobsEntity::class, ErrorsEntity::class, NotificationDataEntity::class,
         ContactHashesEntity::class, ContactsOnWireEntity::class, UserClientsEntity::class,
-        ClientEntity::class, LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
+        LikesEntity::class, ContactsEntity::class, EmailAddressesEntity::class,
         PhoneNumbersEntity::class, MessageDeletionEntity::class, ConversationRoleActionEntity::class,
         ConversationFoldersEntity::class, FoldersEntity::class, CloudNotificationStatsEntity::class,
         CloudNotificationsEntity::class, AssetsEntity::class, DownloadAssetsEntity::class,
@@ -110,7 +108,6 @@ abstract class UserDatabase : RoomDatabase() {
     abstract fun foldersDao(): FoldersDao
     abstract fun readReceiptsDao(): ReadReceiptsDao
     abstract fun editHistoryDao(): EditHistoryDao
-    abstract fun clientsDao(): ClientsDao
 
     companion object {
         const val VERSION = 127

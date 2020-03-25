@@ -1,15 +1,13 @@
 package com.waz.zclient.storage.userdatabase.contact
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenContactInsertedIntoContactsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -28,7 +26,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAM
             searchKey = searchKey,
             openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allContacts()[0]) {
@@ -52,7 +50,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAM
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allContactOnWire()[0]) {
@@ -74,7 +72,7 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAM
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allContactHashes()[0]) {
@@ -84,31 +82,12 @@ class ContactTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAM
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun allContacts() =
-        getUserDb().contactsDao().allContacts()
+        getDatabase().contactsDao().allContacts()
 
     private suspend fun allContactHashes() =
-        getUserDb().contactHashesDao().allContactHashes()
+        getDatabase().contactHashesDao().allContactHashes()
 
     private suspend fun allContactOnWire() =
-        getUserDb().contactOnWireDao().allContactOnWire()
-
-    companion object {
-        private const val TEST_DB_NAME = "userDatabase.db"
-    }
+        getDatabase().contactOnWireDao().allContactOnWire()
 }
