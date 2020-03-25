@@ -17,5 +17,5 @@ val clientsModule: Module = module {
     factory { get<NetworkClient>().create(ClientsApi::class.java) }
     factory { ClientsRemoteDataSource(get(), get()) }
     factory { ClientsLocalDataSource(get()) }
-    factory { get<UserDatabase>().clientsDao() }
+    //factory { get<UserDatabase>().clientsDao() }
 }
