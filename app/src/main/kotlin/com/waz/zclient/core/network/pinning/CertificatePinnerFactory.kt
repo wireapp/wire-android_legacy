@@ -1,29 +1,25 @@
 package com.waz.zclient.core.network.pinning
 
-import com.waz.zclient.core.extension.encodeBase64
+import com.waz.zclient.core.utilities.base64.Base64Transformer
 import okhttp3.CertificatePinner
 import java.security.MessageDigest
 
 class CertificatePinnerFactory private constructor() {
 
     companion object {
-
-        fun createCertificatePinner(
-            pin: CertificatePin,
-            pinGenerator: PinGenerator = PinGenerator()
-        ): CertificatePinner = CertificatePinner.Builder()
-            .add(
-                pin.domain,
-                pinGenerator.pin(pin.certificate)
-            ).build()
+        fun create(pin: CertificatePin, pinGenerator: PinGenerator = PinGenerator()): CertificatePinner =
+            CertificatePinner.Builder()
+                .add(pin.domain, pinGenerator.pin(pin.certificate))
+                .build()
     }
 
     class PinGenerator(
-        private val messageDigest: MessageDigest = MessageDigest.getInstance(PUBLIC_KEY_ALGORITHM)
+        private val messageDigest: MessageDigest = MessageDigest.getInstance(PUBLIC_KEY_ALGORITHM),
+        private val base64Transformer: Base64Transformer = Base64Transformer()
     ) {
 
         internal fun pin(base64Cert: ByteArray): String? =
-            "$PINS${publicKey(base64Cert).encodeBase64()}"
+            "$PINS${base64Transformer.encode(publicKey(base64Cert))}"
 
         private fun publicKey(certificate: ByteArray) =
             messageDigest.digest(certificate)

@@ -6,12 +6,12 @@ import okhttp3.TlsVersion
 
 class ConnectionSpecsFactory private constructor() {
     companion object {
-        fun createConnectionSpecs() = listOf(
-            createModernConnectionSpec(),
+        fun create() = listOf(
+            modernTlsConnectionSpec(),
             ConnectionSpec.CLEARTEXT
         )
 
-        private fun createModernConnectionSpec(): ConnectionSpec =
+        private fun modernTlsConnectionSpec(): ConnectionSpec =
             ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
                 .tlsVersions(TlsVersion.TLS_1_2)
                 .cipherSuites(

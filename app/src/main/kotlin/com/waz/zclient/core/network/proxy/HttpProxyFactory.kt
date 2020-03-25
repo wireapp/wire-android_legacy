@@ -7,12 +7,9 @@ import java.net.Proxy
 class HttpProxyFactory private constructor() {
 
     companion object {
-
         private const val INVALID_PROXY_HOST = "none"
 
-        fun generateProxy(
-            proxyDetails: ProxyDetails = ProxyDetails()
-        ): Proxy? {
+        fun create(proxyDetails: ProxyDetails = ProxyDetails()): Proxy? {
             val proxyHost = parseHost(proxyDetails.hostUrl)
             val proxyPort = parsePort(proxyDetails.port)
             return when {

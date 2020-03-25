@@ -68,13 +68,12 @@ object NetworkDependencyProvider {
     private fun defaultHttpClient(
         backendItem: BackendItem,
         userAgentInterceptor: UserAgentInterceptor
-    ) =
-        OkHttpClient.Builder()
-            .certificatePinner(CertificatePinnerFactory.createCertificatePinner(backendItem.pinningCertificate()))
-            .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
-            .addInterceptor(userAgentInterceptor)
-            .proxy(HttpProxyFactory.generateProxy())
-            .addLoggingInterceptor()
+    ) = OkHttpClient.Builder()
+        .certificatePinner(CertificatePinnerFactory.createCertificatePinner(backendItem.pinningCertificate()))
+        .connectionSpecs(ConnectionSpecsFactory.createConnectionSpecs())
+        .addInterceptor(userAgentInterceptor)
+        .proxy(HttpProxyFactory.create())
+        .addLoggingInterceptor()
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() = this.apply {
         if (BuildConfig.DEBUG) {
