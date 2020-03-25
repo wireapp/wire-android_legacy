@@ -26,14 +26,22 @@ object Injector {
         configModule
     )
 
-    private val highLevelModules: List<Module> = listOf(
+    /**
+     * High level feature modules should contain dependencies that can
+     * build up multiple features
+     */
+    private val highLevelFeatureModules: List<Module> = listOf(
         usersModule,
         clientsModule,
         accountsModule,
         assetsModule
     )
 
-    private val lowLevelModules: List<Module> = listOf(
+    /**
+     * Low level feature modules should contain dependencies that build up specific
+     * features and don't tend to live outside of that feature
+     */
+    private val lowLevelFeatureModules: List<Module> = listOf(
         registrationModules,
         settingsModules
     ).flatten()
@@ -44,8 +52,8 @@ object Injector {
             androidContext(context)
             modules(listOf(
                 coreModules,
-                highLevelModules,
-                lowLevelModules
+                highLevelFeatureModules,
+                lowLevelFeatureModules
             ).flatten())
         }
     }
