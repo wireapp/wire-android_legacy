@@ -1,13 +1,11 @@
 package com.waz.zclient.storage.userdatabase.conversations
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenFolderInsertedIntoConversationFoldersTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -20,7 +18,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_D
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversationFolders()[0]) {
@@ -28,7 +26,6 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_D
                 assert(this.folderId == folderId)
             }
         }
-
     }
 
     @Test
@@ -44,10 +41,10 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_D
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
-            with(allConversationMemebers()[0]) {
+            with(allConversationMembers()[0]) {
                 assert(this.userId == userId)
                 assert(this.conversationId == convId)
                 assert(this.role == roleId)
@@ -68,7 +65,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_D
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversationRoleActions()[0]) {
@@ -151,7 +148,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_D
             testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allConversations()[0]) {
@@ -192,34 +189,15 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_D
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun allConversationFolders() =
-        getUserDb().conversationFoldersDao().allConversationFolders()
+        getDatabase().conversationFoldersDao().allConversationFolders()
 
-    private suspend fun allConversationMemebers() =
-        getUserDb().conversationMembersDao().allConversationMemebers()
+    private suspend fun allConversationMembers() =
+        getDatabase().conversationMembersDao().allConversationMemebers()
 
     private suspend fun allConversationRoleActions() =
-        getUserDb().conversationRoleActionDao().allConversationRoleActions()
+        getDatabase().conversationRoleActionDao().allConversationRoleActions()
 
     private suspend fun allConversations() =
-        getUserDb().conversationsDao().allConversations()
-
-    companion object {
-        private const val TEST_DB_NAME = "userDatabase.db"
-    }
+        getDatabase().conversationsDao().allConversations()
 }
