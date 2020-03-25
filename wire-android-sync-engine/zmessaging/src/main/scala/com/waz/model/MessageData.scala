@@ -493,14 +493,14 @@ object MessageData extends
       db.rawQuery(q)
     }
 
-    private val MaxSearchResults = 1024 // don't want to read whole db on common search query
+    private val MaxSearchResults = 1024.toString // don't want to read whole db on common search query
 
     def findContent(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId])(implicit db: DB): DBCursor =
       convId match {
         case Some(conv) =>
-          db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Content.name} MATCH '${contentSearchQuery.toFtsQuery}'", null, null, null, s"${Time.name} DESC", MaxSearchResults.toString)
+          db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Content.name} LIKE '%${contentSearchQuery.query}%'", null, null, null, s"${Time.name} DESC", MaxSearchResults)
         case _ =>
-          db.query(table.name, IndexColumns, s"${Content.name} MATCH '${contentSearchQuery.toFtsQuery}'", null, null, null, s"${Time.name} DESC", MaxSearchResults.toString)
+          db.query(table.name, IndexColumns, s"${Content.name} LIKE '%${contentSearchQuery.query}%'", null, null, null, s"${Time.name} DESC", MaxSearchResults)
       }
   }
 
