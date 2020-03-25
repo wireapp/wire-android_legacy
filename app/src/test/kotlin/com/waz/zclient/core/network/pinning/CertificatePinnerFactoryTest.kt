@@ -44,7 +44,7 @@ class CertificatePinnerFactoryTest : UnitTest() {
     fun `given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
         `when`(certificationPin.certificate).thenReturn(certificate)
         `when`(certificationPin.domain).thenReturn(TEST_DOMAIN)
-        lenient().`when`(pinGenerator.pin(certificate)).thenReturn("sha256/")
+        lenient().`when`(pinGenerator.pin(certificate)).thenReturn(PINS)
 
         CertificatePinnerFactory.createCertificatePinner(certificationPin, pinGenerator)
 
@@ -52,6 +52,7 @@ class CertificatePinnerFactoryTest : UnitTest() {
     }
 
     companion object {
+        private const val PINS = "sha256/"
         private const val TEST_DOMAIN = "www.wire.com"
     }
 }
@@ -69,7 +70,7 @@ class PinGeneratorTest : UnitTest() {
     }
 
     @Test
-    fun `given pin is generated, when certificate is digested, then return pin that related to CertificatePinner restrictions`() {
+    fun `given pin is generated, when certificate is digested, then return pin that relates to CertificatePinner restrictions`() {
         val newCert = messageDigest.digest(certificate).encodeBase64()
         val pin = pinGenerator.pin(certificate)
 
