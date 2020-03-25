@@ -10,6 +10,7 @@ object AppBackgroundTransformations {
     private const val BLUR_RADIUS = 25F
     private const val BLUR_PASSES = 12
 
+    @JvmStatic
     fun transformations(context: Context) = arrayOf(
         CenterCrop(),
         ScaleTransformation(SCALE),

@@ -12,7 +12,7 @@ import java.security.MessageDigest
 
 data class DarkenTransformation(
     private val alphaValue: Int,
-    private val saturation: Float
+    private val saturation: Float = 1F
 ) : BitmapTransformation() {
 
     override fun updateDiskCacheKey(messageDigest: MessageDigest) {
