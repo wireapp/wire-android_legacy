@@ -17,7 +17,7 @@ class CertificatePinnerFactoryTest : UnitTest() {
     private lateinit var pinGenerator: CertificatePinnerFactory.PinGenerator
 
     @Test
-    fun `given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
+    fun `Given CertificatePinner is generated, when pin is injected, then verify pin is generated`() {
         `when`(certificationPin.certificate).thenReturn(certificate)
         `when`(certificationPin.domain).thenReturn(TEST_DOMAIN)
         lenient().`when`(pinGenerator.pin(certificate)).thenReturn("sha256/")

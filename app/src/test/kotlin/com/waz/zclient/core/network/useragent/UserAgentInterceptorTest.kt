@@ -57,7 +57,7 @@ class UserAgentInterceptorTest : UnitTest() {
     }
 
     @Test
-    fun `given current User-Agent header does exist already, then proceed with initial request`() {
+    fun `Given current User-Agent header does exist already, then proceed with initial request`() {
         val chain = mock(Interceptor.Chain::class.java)
         val initialRequest = mock(Request::class.java)
         `when`(chain.request()).thenReturn(initialRequest)

@@ -24,7 +24,7 @@ class PinGeneratorTest : UnitTest() {
     }
 
     @Test
-    fun `given pin is generated, when certificate is digested, then return pin that related to CertificatePinner restrictions`() {
+    fun `Given pin is generated, when certificate is digested, then return pin that related to CertificatePinner restrictions`() {
         `when`(messageDigest.digest(oldCert)).thenReturn(publicKey)
         `when`(base64Transformer.encode(publicKey)).thenReturn(NEW_CERTIFICATE)
 

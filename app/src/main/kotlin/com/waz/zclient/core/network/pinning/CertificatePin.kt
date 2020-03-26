@@ -5,10 +5,10 @@ data class CertificatePin(
     val certificate: ByteArray
 ) {
     override fun equals(other: Any?) =
-        this === other
-            && this.javaClass == other.javaClass
-            && domain == other.domain
-            && certificate.contentEquals(other.certificate)
+        this === other &&
+            this.javaClass == other.javaClass &&
+            domain == other.domain &&
+            certificate.contentEquals(other.certificate)
 
     override fun hashCode(): Int {
         var result = domain.hashCode()
