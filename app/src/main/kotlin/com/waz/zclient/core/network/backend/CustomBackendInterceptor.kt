@@ -35,5 +35,4 @@ class CustomBackendInterceptor(
 
     private suspend fun getCustomBackendConfig() =
         backendRepository.getCustomBackendConfig(configUrl)
-
 }

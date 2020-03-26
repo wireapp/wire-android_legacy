@@ -7,4 +7,3 @@ import com.waz.zclient.core.functional.Either
 interface BackendRepository {
     suspend fun getCustomBackendConfig(url: String): Either<Failure, CustomBackend>
 }
-

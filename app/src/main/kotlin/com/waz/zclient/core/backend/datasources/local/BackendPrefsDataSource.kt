@@ -33,5 +33,4 @@ class BackendPrefsDataSource(private val backendPreferences: BackendPreferences)
         backendPreferences.accountsUrl = backendPrefResponse.prefEndpoints.accountsUrl
         backendPreferences.teamsUrl = backendPrefResponse.prefEndpoints.teamsUrl
     }
-
 }
