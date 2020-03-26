@@ -11,7 +11,7 @@ class HttpProxyFactory private constructor() {
 
         fun create(proxyDetails: ProxyDetails = ProxyDetails()): Proxy? {
             val proxyHost = parseHost(proxyDetails.hostUrl)
-            val proxyPort = parsePort(proxyDetails.port)
+            val proxyPort = proxyDetails.port.toIntOrNull()
             return when {
                 proxyHost != null && proxyPort != null -> {
                     Proxy(Proxy.Type.HTTP, InetSocketAddress(proxyHost, proxyPort))
@@ -19,13 +19,6 @@ class HttpProxyFactory private constructor() {
                 else -> null
             }
         }
-
-        private fun parsePort(proxyPort: String) =
-            try {
-                proxyPort.toInt()
-            } catch (exception: NumberFormatException) {
-                null
-            }
 
         private fun parseHost(proxyHostUrl: String) =
             if (proxyHostUrl.equals(INVALID_PROXY_HOST, ignoreCase = true)) {
