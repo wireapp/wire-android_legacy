@@ -8,7 +8,7 @@ import java.net.Proxy
 class HttpProxyFactoryTest : UnitTest() {
 
     @Test
-    fun `given HttpProxy instance, when proxy host url is valid and port is valid, then return correct proxy instance`() {
+    fun `Given HttpProxy instance, when proxy host url is valid and port is valid, then return correct proxy instance`() {
         val validHostUrl = "www.wire.com"
         val validPort = "8080"
         val proxyDetails = ProxyDetails(validHostUrl, validPort)
@@ -21,7 +21,7 @@ class HttpProxyFactoryTest : UnitTest() {
     }
 
     @Test
-    fun `given HttpProxy instance, when proxy host url is "none" and port is valid, then return null`() {
+    fun `Given HttpProxy instance, when proxy host url is "none" and port is valid, then return default proxy`() {
         val invalidHostUrl = "none"
         val validPort = "8080"
         val proxyDetails = ProxyDetails(invalidHostUrl, validPort)
@@ -29,7 +29,7 @@ class HttpProxyFactoryTest : UnitTest() {
     }
 
     @Test
-    fun `given HttpProxy instance, when proxy host url is "none" and port is not valid, then return null`() {
+    fun `Given HttpProxy instance, when proxy host url is "none" and port is not valid, then return default proxy `() {
         val invalidHostUrl = "none"
         val invalidPort = "Wire"
         val proxyDetails = ProxyDetails(invalidHostUrl, invalidPort)
@@ -37,7 +37,7 @@ class HttpProxyFactoryTest : UnitTest() {
     }
 
     @Test
-    fun `given HttpProxy instance, when proxy host url is valid" and port is not valid, then return null`() {
+    fun `Given HttpProxy instance, when proxy host url is valid" and port is not valid, then return default proxy`() {
         val validHostUrl = "www.wire.com"
         val invalidPort = "Wire"
         val proxyDetails = ProxyDetails(validHostUrl, invalidPort)

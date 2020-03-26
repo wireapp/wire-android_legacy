@@ -9,13 +9,13 @@ import org.junit.Test
 class ConnectionSpecsFactoryTest : UnitTest() {
 
     @Test
-    fun `given connectionSpecs are created, then ensure list contains two specs`() {
+    fun `Given connectionSpecs are created, then ensure list contains two specs`() {
         val connectionSpecs = ConnectionSpecsFactory.create()
         assert(connectionSpecs.size == 2)
     }
 
     @Test
-    fun `given connectionSpecs are created, then ensure list contains modern specification`() {
+    fun `Given connectionSpecs are created, then ensure list contains modern specification`() {
         val connectionSpecs = ConnectionSpecsFactory.create()
         with(connectionSpecs[0]) {
             tlsVersions()?.let {
@@ -30,7 +30,7 @@ class ConnectionSpecsFactoryTest : UnitTest() {
     }
 
     @Test
-    fun `given connectionSpecs are created, then list should container CLEARTEXT`() {
+    fun `Given connectionSpecs are created, then list should container CLEARTEXT`() {
         val connectionSpecs = ConnectionSpecsFactory.create()
         assert(connectionSpecs[1] == ConnectionSpec.CLEARTEXT)
     }
