@@ -1,3 +1,4 @@
+@file:Suppress("SpreadOperator")
 package com.waz.zclient.core.extension
 
 import android.view.View
