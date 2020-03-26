@@ -1,6 +1,7 @@
 package com.waz.zclient.core.functional
 
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.extension.foldSuspendable
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -14,14 +15,14 @@ import kotlinx.coroutines.runBlocking
 data class FallbackOnFailure<R>(
     private val primaryAction: suspend () -> Either<Failure, R>,
     private val fallbackAction: suspend () -> Either<Failure, R>,
-    private var fallbackSuccessAction: (suspend () -> Any)? = null
+    private var fallbackSuccessAction: (suspend (R) -> Any)? = null
 ) {
 
     /**
      * Adds an optional [action] to be performed upon a successful [fallbackAction]. If [primaryAction] is
      * successful, and [fallbackAction] is never called, this [action] won't be called too.
      */
-    fun finally(action: suspend () -> Any): FallbackOnFailure<R> = apply {
+    fun finally(action: suspend (R) -> Any): FallbackOnFailure<R> = apply {
         fallbackSuccessAction = action
     }
 
@@ -32,7 +33,7 @@ data class FallbackOnFailure<R>(
         primaryAction().foldSuspendable({
             fallbackAction().onSuccess {
                 runBlocking {
-                    fallbackSuccessAction?.invoke()
+                    fallbackSuccessAction?.invoke(it)
                 }
             }
         }) { Either.Right(it) }!!

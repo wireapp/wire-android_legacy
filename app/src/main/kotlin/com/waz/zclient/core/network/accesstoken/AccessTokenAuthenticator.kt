@@ -1,6 +1,6 @@
 package com.waz.zclient.core.network.accesstoken
 
-import com.waz.zclient.core.functional.foldSuspendable
+import com.waz.zclient.core.extension.foldSuspendable
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request

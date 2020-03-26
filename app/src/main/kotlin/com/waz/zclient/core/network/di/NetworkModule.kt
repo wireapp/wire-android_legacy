@@ -16,6 +16,7 @@ import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.network.accesstoken.RefreshTokenMapper
 import com.waz.zclient.core.network.api.token.TokenApi
 import com.waz.zclient.core.network.api.token.TokenService
+import com.waz.zclient.core.network.backend.CustomBackendInterceptor
 import com.waz.zclient.core.network.connection.ConnectionSpecsFactory
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClient
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClientForToken
@@ -25,6 +26,7 @@ import com.waz.zclient.core.network.proxy.HttpProxyFactory
 import com.waz.zclient.core.network.useragent.UserAgentConfig
 import com.waz.zclient.core.network.useragent.UserAgentInterceptor
 import com.waz.zclient.storage.db.GlobalDatabase
+import com.waz.zclient.storage.pref.backend.BackendPreferences
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
@@ -51,28 +53,32 @@ object NetworkDependencyProvider {
         accessTokenInterceptor: AccessTokenInterceptor,
         accessTokenAuthenticator: AccessTokenAuthenticator,
         userAgentInterceptor: UserAgentInterceptor,
+        customBackendInterceptor: CustomBackendInterceptor,
         backendItem: BackendItem
     ): OkHttpClient =
-        defaultHttpClient(backendItem, userAgentInterceptor)
+        defaultHttpClient(backendItem, userAgentInterceptor, customBackendInterceptor)
             .addInterceptor(accessTokenInterceptor)
             .authenticator(accessTokenAuthenticator)
             .build()
 
     fun createHttpClientForToken(
         userAgentInterceptor: UserAgentInterceptor,
+        customBackendInterceptor: CustomBackendInterceptor,
         backendItem: BackendItem
     ): OkHttpClient =
-        defaultHttpClient(backendItem, userAgentInterceptor)
+        defaultHttpClient(backendItem, userAgentInterceptor, customBackendInterceptor)
             .build()
 
     private fun defaultHttpClient(
         backendItem: BackendItem,
-        userAgentInterceptor: UserAgentInterceptor
+        userAgentInterceptor: UserAgentInterceptor,
+        customBackendInterceptor: CustomBackendInterceptor
     ): OkHttpClient.Builder =
         OkHttpClient.Builder()
             .certificatePinner(CertificatePinnerFactory.create(backendItem.pinningCertificate()))
             .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(userAgentInterceptor)
+            .addInterceptor(customBackendInterceptor)
             .proxy(HttpProxyFactory.create())
             .addLoggingInterceptor()
 
@@ -85,13 +91,14 @@ object NetworkDependencyProvider {
 
 val networkModule: Module = module {
     single { NetworkHandler(androidContext()) }
-    single { createHttpClient(get(), get(), get(), get()) }
+    single { createHttpClient(get(), get(), get(), get(), get()) }
     single { retrofit(get(), get()) }
     single { AccessTokenRemoteDataSource(get()) }
     single { AccessTokenLocalDataSource(get(), get<GlobalDatabase>().activeAccountsDao()) }
     single { AccessTokenMapper() }
     single { RefreshTokenMapper() }
     single { UserAgentInterceptor(get()) }
+    single { CustomBackendInterceptor(get(), get<BackendPreferences>().customConfigUrl) }
     factory { UserAgentConfig(get()) }
     single { AccessTokenRepository(get(), get(), get(), get()) }
     single { AccessTokenAuthenticator(get(), get()) }
@@ -101,7 +108,7 @@ val networkModule: Module = module {
     //Token manipulation
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
     single<NetworkClient>(named(networkClientForToken)) {
-        RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get()))
+        RetrofitClient(retrofit(createHttpClientForToken(get(), get(), get()), get()))
     }
     single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
     single { TokenService(get(), get()) }
