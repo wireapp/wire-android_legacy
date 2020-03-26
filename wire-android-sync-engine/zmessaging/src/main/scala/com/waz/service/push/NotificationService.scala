@@ -205,7 +205,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
   }
 
   private def pushNotificationsToUi(): Future[Unit] = storage.list().map {
-    case Nil => Future.successful(())
+    case Nil    => Future.successful(())
     case toShow =>
       verbose(l"pushNotificationsToUi, toShow: ${toShow.size}")
       (for {
@@ -219,7 +219,7 @@ class NotificationServiceImpl(selfUserId:      UserId,
                                       }
         showNotifications         =  show.map(_._1).toSet
         ignoreNotifications       =  ignore.map(_._1.id).toSet
-        _                         <- if (toShow.nonEmpty) uiController.onNotificationsChanged(self.id, showNotifications) else Future.successful(())
+        _                         <- uiController.onNotificationsChanged(self.id, showNotifications)
         _                         <- storage.insertAll(showNotifications.map(_.copy(hasBeenDisplayed = true)))
         _                         <- storage.removeAll(ignoreNotifications)
       } yield {}).recoverWith {
