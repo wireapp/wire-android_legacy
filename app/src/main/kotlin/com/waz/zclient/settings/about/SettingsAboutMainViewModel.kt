@@ -7,4 +7,4 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @ExperimentalCoroutinesApi
 class SettingsAboutMainViewModel(
     getUserProfilePictureDelegate: GetUserProfilePictureDelegate
-): BackgroundAssetViewModel(getUserProfilePictureDelegate)
+) : BackgroundAssetViewModel(getUserProfilePictureDelegate)

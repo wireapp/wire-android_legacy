@@ -9,7 +9,7 @@ import android.renderscript.ScriptIntrinsicBlur
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import java.security.MessageDigest
-import java.util.*
+import java.util.Objects
 
 class BlurTransformation(
     private val appContext: Context,
@@ -43,9 +43,9 @@ class BlurTransformation(
 
     override fun equals(other: Any?): Boolean =
         other === this ||
-            (other is BlurTransformation
-                && other.blurPasses == this.blurPasses
-                && other.blurRadius == this.blurRadius)
+            (other is BlurTransformation &&
+                other.blurPasses == this.blurPasses &&
+                other.blurRadius == this.blurRadius)
 
     override fun hashCode(): Int = Objects.hash(blurPasses, blurRadius)
 
