@@ -7,5 +7,5 @@ import retrofit2.http.Url
 interface BackendApi {
 
     @GET
-    suspend fun getBackendConfig(@Url url: String): Response<CustomBackendResponse>
+    suspend fun getCustomBackendConfig(@Url url: String): Response<CustomBackendResponse>
 }

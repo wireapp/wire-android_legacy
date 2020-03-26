@@ -9,5 +9,5 @@ class BackendApiService(
 ) : ApiService() {
 
     suspend fun getCustomBackendConfig(url: String) =
-        request { backendApi.getBackendConfig(url) }
+        request { backendApi.getCustomBackendConfig(url) }
 }
