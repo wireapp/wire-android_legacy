@@ -1,4 +1,4 @@
-package com.waz.zclient.storage.accountdata
+package com.waz.zclient.storage.globaldatabase.dao
 
 import androidx.room.Room
 import com.waz.zclient.storage.IntegrationTest

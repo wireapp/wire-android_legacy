@@ -57,8 +57,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         validateMigration()
 
         runBlocking {
-            val activeAccounts = getActiveAccounts()
-            with(activeAccounts[0]) {
+            with(getActiveAccounts()[0]) {
                 assert(id == testActiveAccountId)
                 assert(teamId == null)
                 assert(accessToken?.token == testActiveAccountCookie)
@@ -87,8 +86,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         validateMigration()
 
         runBlocking {
-            val teams = getTeams()
-            with(teams[0]) {
+            with(getTeams()[0]) {
                 assert(teamId == testTeamId)
                 assert(creatorId == testTeamCreator)
                 assert(iconId == testTeamIcon)
@@ -127,8 +125,7 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         validateMigration()
 
         runBlocking {
-            val cachedEntries = getCacheEntries()
-            with(cachedEntries[0]) {
+            with(getCacheEntries()[0]) {
                 assert(key == testCacheEntryId)
                 assert(fileId == testCacheEntryFileId)
                 assertNull(data)
