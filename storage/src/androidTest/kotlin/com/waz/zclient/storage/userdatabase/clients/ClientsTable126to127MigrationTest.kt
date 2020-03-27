@@ -1,15 +1,13 @@
 package com.waz.zclient.storage.userdatabase.clients
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class ClientsTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class ClientsTable126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenClientIntoClientsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -23,7 +21,7 @@ class ClientsTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allClients()[0]) {
@@ -33,25 +31,6 @@ class ClientsTable126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun allClients() =
-        getUserDb().userClientDao().allClients()
-
-    companion object {
-        private const val TEST_DB_NAME = "userDatabase.db"
-    }
+        getDatabase().userClientDao().allClients()
 }

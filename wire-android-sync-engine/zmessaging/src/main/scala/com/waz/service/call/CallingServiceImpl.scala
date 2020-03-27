@@ -17,6 +17,8 @@
  */
 package com.waz.service.call
 
+import java.net.InetSocketAddress
+
 import android.Manifest.permission.CAMERA
 import com.sun.jna.Pointer
 import com.waz.api.impl.ErrorResponse
@@ -63,7 +65,7 @@ class GlobalCallingService extends DerivedLogTag {
       GlobalCallProfile(profiles.flatMap(_.calls.map(c => (c._2.selfParticipant.userId, c._2.convId) -> c._2)).toMap)
     }
 
-  lazy val services: Signal[Set[(UserId, CallingServiceImpl)]] = ZMessaging.currentAccounts.zmsInstances.map(_.map(z => z.selfUserId -> z.calling))
+  private lazy val services: Signal[Set[(UserId, CallingServiceImpl)]] = ZMessaging.currentAccounts.zmsInstances.map(_.map(z => z.selfUserId -> z.calling))
 
   //If there is an active call in one or more of the logged in accounts, returns the account id for the one with the oldest call
   lazy val activeAccount: Signal[Option[UserId]] = globalCallProfile.map(_.activeCall.map(_.selfParticipant.userId))
@@ -177,6 +179,11 @@ class CallingServiceImpl(val accountId:       UserId,
   private var closingPromise = Option.empty[Promise[Unit]]
 
   private[call] val callProfile = Signal(CallProfile.Empty)
+
+  ZMessaging.currentGlobal.httpProxy.foreach { proxy =>
+     val proxyAddress = proxy.address().asInstanceOf[InetSocketAddress]
+     avs.setProxy(proxyAddress.getHostName, proxyAddress.getPort)
+  }
 
   callProfile(p => verbose(l"Call profile: ${p.calls}"))
 
