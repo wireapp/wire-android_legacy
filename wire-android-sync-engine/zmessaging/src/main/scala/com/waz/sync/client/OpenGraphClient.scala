@@ -23,9 +23,9 @@ import java.net.URL
 import com.waz.api.impl.ErrorResponse
 import com.waz.sync.client.OpenGraphClient.{OpenGraphData, OpenGraphImage}
 import com.waz.threading.{CancellableFuture, Threading}
-import com.waz.utils.wrappers.URI
+import com.waz.utils.wrappers.{AndroidURIUtil, URI}
 import com.waz.utils.{IoUtils, JsonDecoder, JsonEncoder}
-import com.waz.znet2.http.HttpClient.{ConnectionError, HttpClientError}
+import com.waz.znet2.http.HttpClient.{ConnectionError, HttpClientError, UnknownServiceError}
 import com.waz.znet2.http._
 import org.json.JSONObject
 
@@ -46,14 +46,21 @@ class OpenGraphClientImpl(implicit httpClient: HttpClient) extends OpenGraphClie
     RawBodyDeserializer[String].map(bodyStr => OpenGraphDataResponse(StringResponse(bodyStr)))
 
   override def loadMetadata(uri: URI): ErrorOrResponse[Option[OpenGraphData]] = {
-    Request.create(method = Method.Get, url = new URL(uri.toString), headers = Headers("User-Agent" -> DesktopUserAgent))
+    val url = new URL(uri.toString)
+    Request.create(method = Method.Get, url = url, headers = Headers("User-Agent" -> DesktopUserAgent))
       .withResultType[OpenGraphDataResponse]
       .withErrorType[ErrorResponse]
       .execute
       .map(response => Right(response.data))
-      .recover {
-        case _: ConnectionError => Right(None)
-        case err: HttpClientError => Left(ErrorResponse.errorResponseConstructor.constructFrom(err))
+      .recoverWith {
+        case _: UnknownServiceError if url.getProtocol == "http" =>
+          loadMetadata(
+            AndroidURIUtil.parse(
+              uri.toString.toLowerCase.trim.replaceFirst("http", "https")
+            )
+          )
+        case _: ConnectionError   => CancellableFuture.successful(Right(None))
+        case err: HttpClientError => CancellableFuture.successful(Left(ErrorResponse.errorResponseConstructor.constructFrom(err)))
       }
   }
 
