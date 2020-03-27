@@ -9,7 +9,9 @@ abstract class BackendItem {
 
     private val base64Transformer = Base64Transformer()
 
-    private val certBytes = base64Transformer.decode(BuildConfig.CERTIFICATE_PIN_BYTES)
+    private val certBytes by lazy {
+        base64Transformer.decode(BuildConfig.CERTIFICATE_PIN_BYTES)
+    }
 
     private val certPin by lazy {
         CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
