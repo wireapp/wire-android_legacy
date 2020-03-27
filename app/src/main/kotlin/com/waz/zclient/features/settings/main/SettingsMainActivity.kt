@@ -5,10 +5,10 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.observe
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.createScope
-import com.waz.zclient.core.extension.load
+import com.waz.zclient.core.extension.imageLoader
+import com.waz.zclient.core.extension.intoBackground
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
@@ -41,7 +41,7 @@ class SettingsMainActivity : AppCompatActivity(R.layout.activity_settings) {
         it.fetchBackgroundImage()
         it.backgroundAsset.observe(this) {
             //TODO: add ScaleTransformation(1.4f), BlurTransformation(), DarkenTransformation(148, 2f)
-            activitySettingsMainConstraintLayout.load(it, arrayOf(CenterCrop()))
+            imageLoader().load(it).intoBackground(activitySettingsMainConstraintLayout)
         }
     }
 

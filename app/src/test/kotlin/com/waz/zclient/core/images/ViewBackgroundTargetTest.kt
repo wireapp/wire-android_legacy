@@ -29,10 +29,17 @@ class ViewBackgroundTargetTest : UnitTest() {
     }
 
     @Test
-    fun `given an error drawable, when onLoadFailed is called, does nothing`() {
+    fun `given null as error drawable, when onLoadFailed is called, does nothing`() {
+        viewBackgroundTarget.onLoadFailed(null)
+
+        verifyNoInteractions(view)
+    }
+
+    @Test
+    fun `given an error drawable, when onLoadFailed is called, sets the drawable as view's background`() {
         viewBackgroundTarget.onLoadFailed(drawable)
 
-        verifyNoInteractions(view, drawable)
+        verify(view).background = drawable
     }
 
     @Test
