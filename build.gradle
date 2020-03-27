@@ -23,6 +23,7 @@ buildscript {
         classpath 'org.ajoberstar.grgit:grgit-core:3.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
+        classpath "org.jacoco:org.jacoco.core:0.8.5"
     }
 }
 
@@ -162,7 +163,8 @@ task ci(dependsOn: [
     ':app:assembleDevDebug',
     ':app:lintDevDebug',
     ':app:pmd',
-    ':detektAll'
+    ':detektAll',
+    ':app:jacocoTestReport'
 ]) {
 
     doLast {
