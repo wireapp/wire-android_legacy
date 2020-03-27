@@ -9,6 +9,7 @@ import com.waz.zclient.assets.usecase.GetPublicAssetUseCase
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -19,5 +20,5 @@ val assetsModule: Module = module {
     factory { AssetsRemoteDataSource(get(), get()) }
     factory { get<NetworkClient>().create(AssetsApi::class.java) }
     factory { GetPublicAssetUseCase(get()) }
-    factory { BackgroundAssetViewModel(get()) }
+    viewModel { BackgroundAssetViewModel(get()) }
 }
