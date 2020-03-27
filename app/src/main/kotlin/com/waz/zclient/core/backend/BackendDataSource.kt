@@ -8,7 +8,7 @@ import com.waz.zclient.core.backend.mapper.BackendMapper
 import com.waz.zclient.core.backend.usecase.CustomBackend
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.FallbackOnFailure
+import com.waz.zclient.core.functional.fallback
 import com.waz.zclient.core.functional.map
 import kotlinx.coroutines.runBlocking
 
@@ -19,12 +19,10 @@ class BackendDataSource(
 ) : BackendRepository {
 
     override suspend fun getCustomBackendConfig(url: String): Either<Failure, CustomBackend> =
-        FallbackOnFailure(
-            { getCustomBackendConfigLocally() },
-            { getCustomBackendConfigRemotely(url) }
-        ).finally {
-            updateCustomBackendConfigLocally(url, backendMapper.toCustomPrefBackend(it))
-        }.execute()
+        getCustomBackendConfigLocally()
+            .fallback { getCustomBackendConfigRemotely(url) }
+            .finally { updateCustomBackendConfigLocally(url, backendMapper.toCustomPrefBackend(it)) }
+            .execute()
 
     private fun updateCustomBackendConfigLocally(
         configUrl: String,
@@ -38,10 +36,11 @@ class BackendDataSource(
             }
         }
 
-    private fun getCustomBackendConfigLocally() =
+    private fun getCustomBackendConfigLocally(): suspend () -> Either<Failure, CustomBackend> = {
         runBlocking {
             prefsDataSource.getCustomBackendConfig().map {
                 backendMapper.toCustomBackend(it)
             }
         }
+    }
 }
