@@ -20,16 +20,18 @@ data class ScaleTransformation(
     override fun transform(pool: BitmapPool, toTransform: Bitmap, outWidth: Int, outHeight: Int): Bitmap {
         val bitmap = pool.get(outWidth, outHeight, Bitmap.Config.ARGB_8888)
 
-        val dx = (toTransform.width - toTransform.width * scaleX) * SCALE_HALF
-        val dy = (toTransform.height - toTransform.height * scaleY) * SCALE_HALF
+        val matrix = Matrix().apply {
+            val dx = (toTransform.width - toTransform.width * scaleX) * SCALE_HALF
+            val dy = (toTransform.height - toTransform.height * scaleY) * SCALE_HALF
 
-        val matrix = Matrix()
-        matrix.setScale(scaleX, scaleY)
-        matrix.postTranslate(dx, dy)
+            setScale(scaleX, scaleY)
+            postTranslate(dx, dy)
+        }
 
-        val canvas = Canvas(bitmap)
-        canvas.drawBitmap(toTransform, matrix, Paint(Paint.ANTI_ALIAS_FLAG))
-        canvas.setBitmap(null)
+        with(Canvas(bitmap)) {
+            drawBitmap(toTransform, matrix, Paint(Paint.ANTI_ALIAS_FLAG))
+            setBitmap(null)
+        }
 
         return bitmap
     }

@@ -31,7 +31,7 @@ class BlurTransformation(
 
         val blurAlloc = Allocation.createFromBitmap(renderScript, copiedBmp)
         blur.setInput(blurAlloc)
-        for (i in 0..blurPasses) {
+        repeat(blurPasses) {
             blur.forEach(blurAlloc)
         }
         blurAlloc.copyTo(copiedBmp)
