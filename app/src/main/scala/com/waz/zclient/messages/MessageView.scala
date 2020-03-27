@@ -174,7 +174,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
   private def shouldShowChathead(msg: MessageData, prev: Option[MessageData]) = {
     val userChanged = prev.forall(m => m.userId != msg.userId || systemMessage(m))
     val recalled = msg.msgType == Message.Type.RECALLED
-    val edited = !msg.editTime.isEpoch
+    val edited = msg.isEdited
     val knock = msg.msgType == Message.Type.KNOCK
 
     !knock && !systemMessage(msg) && (recalled || edited || userChanged)
@@ -184,7 +184,7 @@ class MessageView(context: Context, attrs: AttributeSet, style: Int)
     mAndL.likes.nonEmpty ||
       selection.isFocused(mAndL.message.id) ||
       opts.isLastSelf ||
-      mAndL.message.state == Message.Status.FAILED || mAndL.message.state == Message.Status.FAILED_READ
+      mAndL.message.isFailed
   }
 
   def getFooter = listParts.lastOption.collect { case footer: FooterPartView => footer }
