@@ -2,14 +2,14 @@ package com.waz.zclient.core.backend
 
 import ProductionBackendItem
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.core.extension.decodeBase64
 import com.waz.zclient.core.network.pinning.CertificatePin
+import com.waz.zclient.core.utilities.base64.Base64Transformer
 
 abstract class BackendItem {
 
-    private val certBytes by lazy {
-        BuildConfig.CERTIFICATE_PIN_BYTES.decodeBase64()
-    }
+    private val base64Transformer = Base64Transformer()
+
+    private val certBytes = base64Transformer.decode(BuildConfig.CERTIFICATE_PIN_BYTES)
 
     private val certPin by lazy {
         CertificatePin(BuildConfig.CERTIFICATE_PIN_DOMAIN, certBytes)
