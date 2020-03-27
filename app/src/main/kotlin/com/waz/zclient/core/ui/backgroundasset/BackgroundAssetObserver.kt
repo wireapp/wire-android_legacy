@@ -1,3 +1,5 @@
+@file:Suppress("SpreadOperator")
+
 package com.waz.zclient.core.ui.backgroundasset
 
 import android.view.View
@@ -10,16 +12,16 @@ import com.waz.zclient.core.extension.intoBackground
 import com.waz.zclient.core.images.transformations.AppBackgroundTransformations
 
 interface BackgroundAssetObserver<T : LifecycleOwner> {
-    fun loadBackground(
-        lifecycleOwner: T,
-        backgroundAssetOwner: BackgroundAssetOwner,
-        view: View
-    )
+    fun loadBackground(lifecycleOwner: T, backgroundAssetOwner: BackgroundAssetOwner, view: View)
 }
 
 class ActivityBackgroundAssetObserver : BackgroundAssetObserver<AppCompatActivity> {
 
-    override fun loadBackground(lifecycleOwner: AppCompatActivity, backgroundAssetOwner: BackgroundAssetOwner, view: View) {
+    override fun loadBackground(
+        lifecycleOwner: AppCompatActivity,
+        backgroundAssetOwner: BackgroundAssetOwner,
+        view: View
+    ) {
         backgroundAssetOwner.let {
             it.fetchBackgroundAsset()
             it.backgroundAsset.observe(lifecycleOwner, Observer {
