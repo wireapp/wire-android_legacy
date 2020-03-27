@@ -1,47 +1,49 @@
 package com.waz.zclient.core.ui.backgroundasset
 
-import androidx.lifecycle.viewModelScope
 import com.waz.zclient.UnitTest
-import com.waz.zclient.capture
-import com.waz.zclient.user.profile.GetUserProfilePictureDelegate
-import kotlinx.coroutines.CoroutineScope
+import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.user.profile.GetUserProfilePictureUseCase
+import com.waz.zclient.user.profile.ProfilePictureAsset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.amshove.kluent.`should be`
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.runBlockingTest
+import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.Captor
 import org.mockito.Mock
-import org.mockito.Mockito.verify
+import org.mockito.Mockito
 
 @ExperimentalCoroutinesApi
 class BackgroundAssetViewModelTest : UnitTest() {
 
     @Mock
-    private lateinit var getUserProfilePictureDelegate: GetUserProfilePictureDelegate
-
-    @Captor
-    private lateinit var scopeCaptor: ArgumentCaptor<CoroutineScope>
+    private lateinit var getUserProfilePictureUseCase: GetUserProfilePictureUseCase
 
     private lateinit var backgroundAssetViewModel: BackgroundAssetViewModel
 
     @Before
     fun setUp() {
-        backgroundAssetViewModel = BackgroundAssetViewModel(getUserProfilePictureDelegate)
+        backgroundAssetViewModel = BackgroundAssetViewModel(getUserProfilePictureUseCase)
     }
 
+    @InternalCoroutinesApi
     @Test
-    fun `given a delegate, when backgroundAsset is called, then returns delegate's profile picture`() {
-        backgroundAssetViewModel.backgroundAsset
+    fun `given useCase emits an asset, when fetchProfilePicture is called, then updates profilePicture with that asset`() =
+        runBlockingTest {
+            val profilePictureAsset = Mockito.mock(ProfilePictureAsset::class.java)
+            val assetFlow = flow {
+                emit(profilePictureAsset)
+            }
+            Mockito.lenient().`when`(getUserProfilePictureUseCase.run(Unit)).thenReturn(assetFlow)
 
-        verify(getUserProfilePictureDelegate).profilePicture
-    }
+            backgroundAssetViewModel.fetchBackgroundAsset()
 
-    @Test
-    fun `given a delegate, when fetchBackgroundImage is called, then calls delegate's fetchProfilePicture with viewModelScope`() {
-        backgroundAssetViewModel.fetchBackgroundAsset()
-
-        verify(getUserProfilePictureDelegate).fetchProfilePicture(capture(scopeCaptor))
-        scopeCaptor.value `should be` backgroundAssetViewModel.viewModelScope
-    }
+            assetFlow.collect {
+                backgroundAssetViewModel.backgroundAsset.observeOnce {
+                    it shouldBe profilePictureAsset
+                }
+            }
+        }
 }

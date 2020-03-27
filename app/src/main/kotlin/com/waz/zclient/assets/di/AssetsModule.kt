@@ -7,13 +7,17 @@ import com.waz.zclient.assets.datasources.AssetsRemoteDataSource
 import com.waz.zclient.assets.mapper.AssetMapper
 import com.waz.zclient.assets.usecase.GetPublicAssetUseCase
 import com.waz.zclient.core.network.NetworkClient
+import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
+@ExperimentalCoroutinesApi
 val assetsModule: Module = module {
     factory { AssetMapper() }
     single { AssetsDataSource(get(), get()) as AssetsRepository }
     factory { AssetsRemoteDataSource(get(), get()) }
     factory { get<NetworkClient>().create(AssetsApi::class.java) }
     factory { GetPublicAssetUseCase(get()) }
+    factory { BackgroundAssetViewModel(get()) }
 }

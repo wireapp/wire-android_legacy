@@ -10,6 +10,7 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.ui.backgroundasset.ActivityBackgroundAssetObserver
 import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetObserver
+import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.activity_settings.*
@@ -25,7 +26,7 @@ class SettingsMainActivity : AppCompatActivity(R.layout.activity_settings),
         scopeName = SETTINGS_SCOPE
     )
 
-    private val viewModel by viewModel<SettingsMainViewModel>(SETTINGS_SCOPE_ID)
+    private val viewModel by viewModel<BackgroundAssetViewModel>(SETTINGS_SCOPE_ID)
 
     @InternalCoroutinesApi
     //TODO Method level annotations as this is the top of the chain

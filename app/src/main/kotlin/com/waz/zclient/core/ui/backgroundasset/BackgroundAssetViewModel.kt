@@ -1,17 +1,26 @@
 package com.waz.zclient.core.ui.backgroundasset
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.user.profile.GetUserProfilePictureDelegate
+import com.waz.zclient.core.functional.onSuccess
+import com.waz.zclient.user.profile.GetUserProfilePictureUseCase
+import com.waz.zclient.user.profile.ProfilePictureAsset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
-open class BackgroundAssetViewModel(
-    private val getUserProfilePictureDelegate: GetUserProfilePictureDelegate
-) : ViewModel(),
+class BackgroundAssetViewModel(private val getUserProfilePictureUseCase: GetUserProfilePictureUseCase) : ViewModel(),
     BackgroundAssetOwner {
-    override val backgroundAsset: LiveData<*> = getUserProfilePictureDelegate.profilePicture
 
-    override fun fetchBackgroundAsset() = getUserProfilePictureDelegate.fetchProfilePicture(viewModelScope)
+    private val _backgroundAsset = MutableLiveData<ProfilePictureAsset>()
+    override val backgroundAsset: LiveData<*> = _backgroundAsset
+
+    override fun fetchBackgroundAsset() {
+        getUserProfilePictureUseCase(viewModelScope, Unit) {
+            it.onSuccess {
+                _backgroundAsset.value = it
+            }
+        }
+    }
 }

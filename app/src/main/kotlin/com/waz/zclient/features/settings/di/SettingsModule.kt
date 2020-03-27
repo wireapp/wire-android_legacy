@@ -13,10 +13,7 @@ import com.waz.zclient.features.settings.account.editphonenumber.GetCountryCodes
 import com.waz.zclient.features.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
 import com.waz.zclient.features.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.features.settings.devices.list.SettingsDeviceListViewModel
-import com.waz.zclient.features.settings.main.SettingsMainViewModel
 import com.waz.zclient.features.settings.support.SettingsSupportViewModel
-import com.waz.zclient.settings.about.SettingsAboutMainViewModel
-import com.waz.zclient.settings.support.SettingsSupportMainViewModel
 import com.waz.zclient.user.email.ChangeEmailUseCase
 import com.waz.zclient.user.handle.usecase.ChangeHandleUseCase
 import com.waz.zclient.user.handle.usecase.CheckHandleExistsUseCase
@@ -42,7 +39,6 @@ const val SETTINGS_SCOPE = "SettingsScope"
 @InternalCoroutinesApi
 val settingsModules: List<Module>
     get() = listOf(
-        settingsMainModule,
         settingsAboutModule,
         settingsAccountModule,
         settingsDeviceModule,
@@ -51,18 +47,9 @@ val settingsModules: List<Module>
 
 @InternalCoroutinesApi
 @ExperimentalCoroutinesApi
-val settingsMainModule: Module = module {
-    scope(named(SETTINGS_SCOPE)) {
-        viewModel { SettingsMainViewModel(get()) }
-    }
-}
-
-@InternalCoroutinesApi
-@ExperimentalCoroutinesApi
 val settingsAboutModule: Module = module {
     scope(named(SETTINGS_SCOPE)) {
         viewModel { SettingsAboutViewModel(get(), get(), get()) }
-        viewModel { SettingsAboutMainViewModel(get()) }
     }
 }
 
@@ -71,7 +58,6 @@ val settingsAboutModule: Module = module {
 val settingsSupportModule: Module = module {
     scope(named(SETTINGS_SCOPE)) {
         viewModel { SettingsSupportViewModel() }
-        viewModel { SettingsSupportMainViewModel(get()) }
     }
 }
 

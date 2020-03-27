@@ -10,6 +10,7 @@ import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.ui.backgroundasset.ActivityBackgroundAssetObserver
 import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetObserver
+import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.features.settings.support.SettingsSupportFragment
@@ -26,7 +27,7 @@ class SettingsSupportActivity : AppCompatActivity(R.layout.activity_settings_sup
         scopeName = SETTINGS_SCOPE
     )
 
-    private val viewModel by viewModel<SettingsSupportMainViewModel>(SETTINGS_SCOPE_ID)
+    private val viewModel by viewModel<BackgroundAssetViewModel>(SETTINGS_SCOPE_ID)
 
     @ExperimentalCoroutinesApi
     @InternalCoroutinesApi

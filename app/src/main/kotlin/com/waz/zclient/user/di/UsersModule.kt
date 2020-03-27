@@ -12,7 +12,6 @@ import com.waz.zclient.user.handle.UserHandleRepository
 import com.waz.zclient.user.mapper.UserMapper
 import com.waz.zclient.user.phonenumber.PhoneNumberDataSource
 import com.waz.zclient.user.phonenumber.PhoneNumberRepository
-import com.waz.zclient.user.profile.GetUserProfilePictureDelegate
 import com.waz.zclient.user.profile.GetUserProfilePictureUseCase
 import com.waz.zclient.user.profile.GetUserProfileUseCase
 import com.waz.zclient.user.profile.ProfilePictureMapper
@@ -37,5 +36,4 @@ val usersModule: Module = module {
     factory { GetUserProfileUseCase(get()) }
     factory { ProfilePictureMapper() }
     factory { GetUserProfilePictureUseCase(get(), get()) }
-    factory { GetUserProfilePictureDelegate(get()) }
 }
