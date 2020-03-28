@@ -29,7 +29,6 @@ import android.util.TypedValue
 import android.view.{Gravity, View}
 import android.widget.{TextView, Toast}
 import androidx.appcompat.app.AppCompatDialog
-import com.waz.api.Message
 import com.waz.content.MessagesStorage
 import com.waz.content.UserPreferences.DownloadImagesAlways
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -149,8 +148,8 @@ class AssetsController(implicit context: Context, inj: Injector, ec: EventContex
     case _ => ()
   }
 
-  def retry(m: MessageData) =
-    if (m.state == Message.Status.FAILED || m.state == Message.Status.FAILED_READ) messages.currentValue.foreach(_.retryMessageSending(m.convId, m.id))
+  def retry(m: MessageData): Unit =
+    if (m.isFailed) messages.currentValue.foreach(_.retryMessageSending(m.convId, m.id))
 
     def getPlaybackControls(asset: Signal[GeneralAsset]): Signal[PlaybackControls] = asset.flatMap { a =>
     (a.details, a) match {

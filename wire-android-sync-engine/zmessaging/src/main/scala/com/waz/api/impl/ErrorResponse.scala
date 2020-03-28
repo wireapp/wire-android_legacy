@@ -81,6 +81,8 @@ object ErrorResponse {
           ErrorResponse(response.code, label = "Decoding error", message = s"Decoding body error: $err")
         case HttpClient.ConnectionError(err) =>
           ErrorResponse(ErrorResponse.ConnectionErrorCode, message = s"connection error: $err", label = "")
+        case HttpClient.UnknownServiceError(ex) =>
+          ErrorResponse.InternalError.copy(message = s"Unknown service exception: $ex")
         case HttpClient.UnknownError(err) =>
           ErrorResponse.InternalError.copy(message = s"Unknown error: $err")
       }

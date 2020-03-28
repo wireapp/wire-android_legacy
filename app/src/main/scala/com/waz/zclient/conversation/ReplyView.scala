@@ -61,7 +61,7 @@ class ReplyView(context: Context, attrs: AttributeSet, defStyle: Int) extends Fr
   def setOnClose(onClose: => Unit): Unit = this.onClose = () => onClose
 
   def setMessage(messageData: MessageData, asset: Option[GeneralAsset], senderName: String): Unit = {
-    setSender(senderName, !messageData.editTime.isEpoch)
+    setSender(senderName, messageData.isEdited)
 
     messageData.msgType match {
       case Type.TEXT | Type.TEXT_EMOJI_ONLY | Type.RICH_MEDIA =>
