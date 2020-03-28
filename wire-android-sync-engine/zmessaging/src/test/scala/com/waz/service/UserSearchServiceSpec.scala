@@ -26,7 +26,6 @@ import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestUserPreferences
-import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.Managed
 import com.waz.utils.events.{EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.DB
@@ -34,7 +33,6 @@ import com.waz.utils.wrappers.DB
 import scala.collection.breakOut
 import scala.collection.generic.CanBuild
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
@@ -216,54 +214,6 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   def ids(s: Symbol*) = s.map(id)(breakOut).toSet
   def ud(s: Symbol) = users(id(s))
 
-  def verifySearch(prefix: String, matches: Set[UserId]) = {
-    val query = SearchQuery(prefix)
-    val expected = users.filterKeys(matches.contains).values.toVector
-
-    (usersStorage.find[UserData, Vector[UserData]](
-      _: UserData => Boolean,
-      _: DB => Managed[TraversableOnce[UserData]],
-      _: UserData => UserData
-    )(_: CanBuild[UserData, Vector[UserData]]))
-      .expects(*, *, *, *)
-      .once()
-      .returning(Future.successful(expected))
-    (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserData]]())
-    (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
-    (usersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserId]]())
-    (sync.syncSearchQuery _).expects(*).once().returning(Future.successful(SyncId()))
-    val resSignal = getService(false, id('me)).searchUserData(query).map(_.map(_.id)).disableAutowiring()
-
-    result(resSignal.map(_.toSet).filter(_ == matches).head)
-  }
-
-  feature("Recommended people search") {
-    scenario("Return search results for name") {
-      verifySearch("rel", ids('d, 'e))
-    }
-
-    scenario("Return no search results for name") {
-      verifySearch("relt", Set.empty[UserId])
-    }
-
-    scenario("Return search results for handle") {
-      verifySearch("@rel", ids('d, 'e))
-    }
-
-    scenario("Return no search results for handle") {
-      verifySearch("@relt", Set.empty[UserId])
-    }
-
-    scenario("Return no search results for team member when query matches only to email") {
-      verifySearch("a_member@wire.com", Set.empty[UserId])
-    }
-
-    scenario("Return no search results for personal account when query matches only to email") {
-      verifySearch("a_person@wire.com", Set.empty[UserId])
-    }
-
-  }
-
   feature("Search by searchState") {
     scenario("search for top people"){
       val expected = ids('g, 'h, 'i)
@@ -285,11 +235,10 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("search for local results"){
       val expected = ids('g, 'h)
       val query = SearchQuery("fr")
-      val querySignal = new SourceSignal[Option[Vector[UserId]]]()
-      val queryResults = Vector.empty[UserId]
 
-      (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
-        .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
+      val querySignal = new SourceSignal[Option[IndexedSeq[UserData]]]()
+      val queryResults = IndexedSeq.empty[UserData]
+
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
@@ -302,43 +251,9 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         }
       }
 
-      (usersStorage.listSignal _).expects(*).never()
-      (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserData]]())
-      (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
-      (usersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserId]]())
-
       val res = getService(false, id('me)).search("fr").map(_.local.map(_.id).toSet)
 
       result(res.filter(_ == expected).head)
-    }
-
-    scenario("search for remote results") {
-      val expected = ids('a, 'b)
-      val query = SearchQuery("ot")
-      val queryStream = EventStream[Seq[UserData]]()
-      val queryResults = users.filterKeys(expected.contains).values.toSeq
-
-      (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
-        .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
-      (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(Map.empty[UserId, UserData]))
-
-      (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
-
-      (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(queryStream)
-      (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
-      (usersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserId]]())
-
-      (sync.syncSearchQuery _).expects(query).once().onCall { _: SearchQuery =>
-        CancellableFuture.delay(500.millis).future.map { _ =>
-          println(s"results: $queryResults")
-          queryStream ! queryResults
-          SyncId()
-        }(Threading.Background)
-      }
-
-      val res = getService(false, id('me)).search("ot").map(_.dir.map(_.id).toSet)
-
-      result(res.filter(_.nonEmpty).head)
     }
   }
 
@@ -677,8 +592,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
   }
 
-  def getService(inTeam: Boolean, selfId: UserId) = {
-    new UserSearchService(
+  def getService(inTeam: Boolean, selfId: UserId): UserSearchService =
+    new UserSearchServiceImpl(
       selfId,
       if (inTeam) teamId else emptyTeamId,
       userService,
@@ -693,6 +608,5 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       convs,
       userPrefs
     )
-  }
 
 }

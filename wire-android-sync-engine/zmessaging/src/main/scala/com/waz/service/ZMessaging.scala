@@ -220,9 +220,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val reporting                                  = new ZmsReportingService(selfUserId, global.reporting)
   lazy val wsFactory                                  = new OkHttpWebSocketFactory(account.global.httpProxy)
   lazy val wsPushService: WSPushService               = wireWith(WSPushServiceImpl.apply _)
-  lazy val userSearch                                 = wire[UserSearchService]
+  lazy val userSearch: UserSearchService              = wire[UserSearchServiceImpl]
   lazy val users: UserService                         = wire[UserServiceImpl]
-  lazy val teamSize: TeamSizeThreshold                = wire[TeamSizeThresholdImpl]
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]
@@ -254,7 +253,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
   lazy val rolesService: ConversationRolesService     = wire[ConversationRolesServiceImpl]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
-  lazy val usersSync                                  = wire[UsersSyncHandler]
+  lazy val usersSync: UsersSyncHandler                = wire[UsersSyncHandlerImpl]
   lazy val conversationSync                           = wire[ConversationsSyncHandler]
   lazy val teamsSync:       TeamsSyncHandler          = wire[TeamsSyncHandlerImpl]
   lazy val connectionsSync                            = wire[ConnectionsSyncHandler]

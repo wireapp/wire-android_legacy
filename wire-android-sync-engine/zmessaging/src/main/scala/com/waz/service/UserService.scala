@@ -97,7 +97,6 @@ class UserServiceImpl(selfUserId:        UserId,
                       sync:              SyncServiceHandle,
                       assetsStorage:     AssetStorage,
                       credentialsClient: CredentialsUpdateClient,
-                      teamSize:          TeamSizeThreshold,
                       selectedConv:      SelectedConversationService) extends UserService with DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -114,7 +113,7 @@ class UserServiceImpl(selfUserId:        UserId,
       .flatMap(_ => shouldSyncUsers := false)
     }
 
-  val currentConvMembers = for {
+  override val currentConvMembers = for {
     Some(convId) <- selectedConv.selectedConversationId
     membersIds   <- membersStorage.activeMembers(convId)
   } yield membersIds
@@ -311,7 +310,8 @@ class UserServiceImpl(selfUserId:        UserId,
   override def updateAvailability(availability: Availability) =
     updateAndSync(
       _.copy(availability = availability),
-      _ => teamSize.runIfBelowStatusPropagationThreshold(() => sync.postAvailability(availability)))
+      _ => sync.postAvailability(availability)
+    )
 
   override def storeAvailabilities(availabilities: Map[UserId, Availability]) = {
     usersStorage.updateAll2(availabilities.keySet, u => availabilities.get(u.id).fold(u)(av => u.copy(availability = av)))

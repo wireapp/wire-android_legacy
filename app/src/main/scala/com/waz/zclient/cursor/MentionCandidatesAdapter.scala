@@ -31,15 +31,13 @@ class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateView
   private var _data = Seq[UserData]()
   private var _teamId = Option.empty[TeamId]
   private var _theme: Theme = Theme.Light
-  private var _hideUserStatus = false
 
   val onUserClicked: SourceStream[UserData] = EventStream()
 
-  def setData(data: Seq[UserData], teamId: Option[TeamId], theme: Theme, hideStatus: Boolean): Unit = {
+  def setData(data: Seq[UserData], teamId: Option[TeamId], theme: Theme): Unit = {
     _data = data
     _teamId = teamId
     _theme = theme
-    _hideUserStatus = hideStatus
 
     notifyDataSetChanged()
   }
@@ -57,7 +55,7 @@ class MentionCandidatesAdapter extends RecyclerView.Adapter[MentionCandidateView
   }
 
   override def onBindViewHolder(holder: MentionCandidateViewHolder, position: Int): Unit = {
-    holder.bind(getItem(position), _teamId, _hideUserStatus)
+    holder.bind(getItem(position), _teamId)
   }
 
   override def getItemId(position: Int): Long = getItem(position).id.str.hashCode
@@ -70,8 +68,8 @@ class MentionCandidateViewHolder(v: View, onUserClick: UserData => Unit) extends
     override def onClick(v: View): Unit = userData.foreach(onUserClick(_))
   })
 
-  def bind(userData: UserData, teamId: Option[TeamId], hideStatus: Boolean): Unit = {
+  def bind(userData: UserData, teamId: Option[TeamId]): Unit = {
     this.userData = Some(userData)
-    v.asInstanceOf[SingleUserRowView].setUserData(userData, teamId, hideStatus)
+    v.asInstanceOf[SingleUserRowView].setUserData(userData, teamId)
   }
 }

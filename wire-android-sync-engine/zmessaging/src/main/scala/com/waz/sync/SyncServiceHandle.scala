@@ -39,6 +39,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait SyncServiceHandle {
+  def syncSearchResults(ids: Set[UserId]): Future[SyncId]
   def syncSearchQuery(query: SearchQuery): Future[SyncId]
   def exactMatchHandle(handle: Handle): Future[SyncId]
   def syncUsers(ids: Set[UserId]): Future[SyncId]
@@ -137,6 +138,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] =
     service.addRequest(account, req, priority, dependsOn, forceRetry, delay)
 
+  def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
   def exactMatchHandle(handle: Handle) = addRequest(ExactMatchHandle(handle), priority = Priority.High)
@@ -261,6 +263,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncConversations                               => zms.conversationSync.syncConversations()
           case SyncConvLink(conv)                              => zms.conversationSync.syncConvLink(conv)
           case SyncUser(u)                                     => zms.usersSync.syncUsers(u.toSeq: _*)
+          case SyncSearchResults(u)                            => zms.usersSync.syncSearchResults(u.toSeq: _*)
           case SyncSearchQuery(query)                          => zms.usersearchSync.syncSearchQuery(query)
           case ExactMatchHandle(query)                         => zms.usersearchSync.exactMatchHandle(query)
           case SyncRichMedia(messageId)                        => zms.richmediaSync.syncRichMedia(messageId)

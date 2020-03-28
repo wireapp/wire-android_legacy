@@ -19,12 +19,12 @@ package com.waz.zclient.conversationlist.views
 
 import android.animation.ObjectAnimator
 import android.content.Context
-import androidx.recyclerview.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.{View, ViewGroup}
 import android.widget.LinearLayout.LayoutParams
 import android.widget.{FrameLayout, ImageView, LinearLayout}
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.recyclerview.widget.RecyclerView
 import com.waz.api.Message
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
@@ -34,7 +34,7 @@ import com.waz.service.call.CallInfo
 import com.waz.service.call.CallInfo.CallState.SelfCalling
 import com.waz.threading.Threading
 import com.waz.utils._
-import com.waz.utils.events.{Signal, SourceSignal}
+import com.waz.utils.events.Signal
 import com.waz.zclient.calling.CallingActivity
 import com.waz.zclient.calling.controllers.{CallController, CallStartController}
 import com.waz.zclient.common.controllers.UserAccountsController
@@ -54,6 +54,7 @@ import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{ConversationSignal, StringUtils, UiStorage, UserSetSignal, UserSignal, ViewUtils}
 import com.waz.zclient.views.AvailabilityView
 import com.waz.zclient.{R, ViewHelper}
+
 import scala.collection.Set
 
 trait ConversationListRow extends View
@@ -95,7 +96,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   val menuIndicatorView = ViewUtils.getView(this, R.id.conversation_menu_indicator).asInstanceOf[MenuIndicatorView]
 
   var conversationData = Option.empty[ConversationData]
-  private val hideAvailability: SourceSignal[Boolean] = Signal(false)
 
   val conversation = for {
     Some(convId) <- conversationId
@@ -179,13 +179,11 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
 
   // User availability (for 1:1)
   (for {
-    Some(id)  <- conversationId
-    av            <- controller.availability(id)
-    hide          <- hideAvailability
-  } yield(av, hide)).onUi {
-      case (_, true)              => AvailabilityView.hideAvailabilityIcon(title)
-      case (Availability.None, _) => AvailabilityView.hideAvailabilityIcon(title)
-      case (av, _)                => AvailabilityView.displayStartOfText(title, av, title.getCurrentTextColor, pushDown = true)
+    Some(id) <- conversationId
+    availability       <- controller.availability(id)
+  } yield availability).onUi {
+    case Availability.None => AvailabilityView.hideAvailabilityIcon(title)
+    case availability      => AvailabilityView.displayStartOfText(title, availability, title.getCurrentTextColor, pushDown = true)
   }
 
 
@@ -238,7 +236,7 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
   private var maxOffset: Float = .0f
   private var moveToAnimator: ObjectAnimator = _
 
-  def setConversation(conversationData: ConversationData, hideStatus: Boolean): Unit = {
+  def setConversation(conversationData: ConversationData): Unit =
     if (this.conversationData.forall(_.id != conversationData.id)) {
       this.conversationData = Some(conversationData)
       title.setText(if (conversationData.displayName.str.nonEmpty) conversationData.displayName.str else getString(R.string.default_deleted_username))
@@ -251,8 +249,6 @@ class NormalConversationListRow(context: Context, attrs: AttributeSet, style: In
       closeImmediate()
     }
 
-    hideAvailability ! hideStatus
-  }
 
   menuIndicatorView.setClickable(false)
   menuIndicatorView.setMaxOffset(menuOpenOffset)
@@ -435,7 +431,7 @@ object ConversationListRow {
           members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
-        case Message.Type.MEMBER_JOIN if members.length > 1=>
+        case Message.Type.MEMBER_JOIN if members.length > 1 =>
           getString(R.string.conversation_list__added, memberName)
         case Message.Type.MEMBER_JOIN =>
           getString(R.string.conversation_list__added, memberName)
@@ -573,8 +569,8 @@ class ConversationFolderListRow(context: Context, attrs: AttributeSet, style: In
   with DerivedLogTag {
 
   import ConversationFolderListRow._
-  import com.waz.zclient.utils._
   import com.waz.zclient.log.LogUI._
+  import com.waz.zclient.utils._
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)

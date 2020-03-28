@@ -255,10 +255,6 @@ class NotificationServiceImpl(selfUserId:      UserId,
             case ANY_ASSET    => Some(NotificationType.ANY_ASSET)
             case AUDIO_ASSET  => Some(NotificationType.AUDIO_ASSET)
             case VIDEO_ASSET  => Some(NotificationType.VIDEO_ASSET)
-            case MEMBER_JOIN  =>
-              if (msg.members == Set(msg.userId)) None // ignoring auto-generated member join event when user accepts connection
-              else Some(NotificationType.MEMBER_JOIN)
-            case MEMBER_LEAVE => Some(NotificationType.MEMBER_LEAVE)
             case COMPOSITE    => Some(NotificationType.COMPOSITE)
             case _ => None
           }
