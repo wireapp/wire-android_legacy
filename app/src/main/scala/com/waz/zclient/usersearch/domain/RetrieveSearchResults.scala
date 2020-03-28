@@ -120,8 +120,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
     def addTopPeople(): Unit = {
       if (topUsers.nonEmpty) {
-        val topUserSectionHeader = new SectionViewItem(SectionViewModel(TopUsersSection, 0))
-        val topUsersListItem = new TopUserViewItem(TopUserViewModel(0, topUsers))
+        val topUserSectionHeader = SectionViewItem(SectionViewModel(TopUsersSection, 0))
+        val topUsersListItem = TopUserViewItem(TopUserViewModel(0, topUsers))
         mergedResult = mergedResult ++ Seq(topUserSectionHeader)
         mergedResult = mergedResult ++ Seq(topUsersListItem)
       }
@@ -151,7 +151,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
     def addGroupConversations(): Unit = {
       if (conversations.nonEmpty) {
-        val groupConversationSectionHeader = new SectionViewItem(SectionViewModel(GroupConversationsSection, 0, teamName))
+        val groupConversationSectionHeader = SectionViewItem(SectionViewModel(GroupConversationsSection, 0, teamName))
         mergedResult = mergedResult ++ Seq(groupConversationSectionHeader)
 
         val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
