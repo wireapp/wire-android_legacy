@@ -19,30 +19,15 @@ package com.waz.zclient.usersearch.listitems
 
 import com.waz.model.UserData
 
-case class TopUserViewItem(data: TopUserViewModel) extends SearchViewItem {
-
+case class TopUserViewItem(override val index: Int, topUsers: Seq[UserData]) extends SearchViewItem {
   import SearchViewItem._
   import SectionViewItem._
 
-  override def section: Int = TopUsersSection
-
-  override def index: Int = data.indexVal
-
-  override def itemType: Int = TopUsers
+  override val section: Int = TopUsersSection
+  override val itemType: Int = TopUsers
 }
 
-case class TopUserViewModel(indexVal: Int,
-                            topUsers: Seq[UserData])
+case class TopUserButtonViewItem(override val itemType: Int,
+                                 override val section:  Int,
+                                 override val index:    Int) extends SearchViewItem
 
-case class TopUserButtonViewItem(data: TopUserButtonViewModel) extends SearchViewItem {
-
-  override def section: Int = data.section
-
-  override def index: Int = data.indexVal
-
-  override def itemType: Int = data.itemType
-}
-
-case class TopUserButtonViewModel(itemType: Int,
-                                  section: Int,
-                                  indexVal: Int)

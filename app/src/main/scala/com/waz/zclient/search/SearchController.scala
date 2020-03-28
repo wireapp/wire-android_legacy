@@ -86,9 +86,9 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
             results     <- search.search(filter)
             _ = verbose(l"results: $results")
           } yield
-            if (results.isEmpty)
+            if (results.isEmpty) {
               if (filter.isEmpty) NoUsers else NoUsersFound
-            else Users(results)
+            } else Users(results)
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal

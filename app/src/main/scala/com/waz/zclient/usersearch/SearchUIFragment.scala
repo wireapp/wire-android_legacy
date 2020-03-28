@@ -285,7 +285,7 @@ class SearchUIFragment extends BaseFragment[Container]
       isExternal <- userAccountsController.isExternal
     } yield isTeam && !isExternal).onUi(tabs.setVisible)
 
-    searchController.filter! ""
+    searchController.filter ! ""
 
     containerSub = Some((for {
       kb <- keyboard.isKeyboardVisible

@@ -17,17 +17,12 @@
   */
 package com.waz.zclient.usersearch.listitems
 
-case class ExpandViewItem(data: ExpandViewModel) extends SearchViewItem {
-
+case class ExpandViewItem(override val index:   Int,
+                          override val section: Int,
+                          itemCount:            Int
+                         ) extends SearchViewItem {
   import SearchViewItem._
 
-  override def section: Int = data.section
-
-  override def index: Int = data.indexVal
-
-  override def itemType: Int = Expand
+  override val itemType: Int = Expand
 }
 
-case class ExpandViewModel(indexVal:  Int,
-                           section:   Int,
-                           itemCount: Int)
