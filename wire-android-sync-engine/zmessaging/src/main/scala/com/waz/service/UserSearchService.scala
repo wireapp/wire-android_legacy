@@ -17,7 +17,6 @@
  */
 package com.waz.service
 
-import androidx.annotation.VisibleForTesting
 import com.waz.content.UserPreferences.SelfPermissions
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -30,7 +29,6 @@ import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncServiceHandle
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.threading.Threading
-import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.waz.utils._
 import com.waz.utils.events._
 
@@ -65,6 +63,7 @@ class UserSearchService(selfUserId:           UserId,
   import timeouts.search._
 
   private val exactMatchUser = new SourceSignal[Option[UserData]]()
+  private val userSearchResult = new SourceSignal[IndexedSeq[UserData]]()
 
   private lazy val isExternal = userPrefs(SelfPermissions).apply()
     .map(decodeBitmask)
@@ -192,6 +191,7 @@ class UserSearchService(selfUserId:           UserId,
     val query = SearchQuery(queryStr)
 
     exactMatchUser ! None // reset the exact match to None on any query change
+    userSearchResult ! IndexedSeq.empty[UserData]
 
     val topUsers: Signal[IndexedSeq[UserData]] =
       if (query.isEmpty && teamId.isEmpty) topPeople.map(_.filter(!_.isWireBot)) else Signal.const(IndexedSeq.empty)
@@ -214,43 +214,44 @@ class UserSearchService(selfUserId:           UserId,
           }
       else Signal.const(IndexedSeq.empty)
 
-    val directorySearch: Signal[IndexedSeq[UserData]] =
+    val directorySearch: Future[IndexedSeq[UserData]] =
       for {
-        dir   <- if (!query.isEmpty) {
-                   searchUserData(query).map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
-                 } else Signal.const(IndexedSeq.empty[UserData])
-        _     =  verbose(l"directory search results: $dir")
-        exact <- exactMatchUser.orElse(Signal.const(None))
-        _     =  verbose(l"exact match: $exact")
+           _               <- if (!query.isEmpty) {
+                                  sync.syncSearchQuery(query)
+                              } else Future.successful(Unit)
+
+           localSearch     <- if (!query.isEmpty) {
+                                  localSearch(query).flatMap(filterForExternal(query, _))
+                              } else Future.successful(IndexedSeq.empty[UserData])
+
+           remoteSearch    <- userSearchResult.head
+           combinedResults = (localSearch ++ remoteSearch).distinctBy(_.id).toIndexedSeq
+           filteredResults = combinedResults.filter(u => !u.isWireBot && u.expiresAt.isEmpty)
+           dir             = sortUsers(filteredResults, query)
+           _               = verbose(l"directory search results: $dir")
+           exact           <- exactMatchUser.orElse(Signal.const(None)).head
+           _               = verbose(l"exact match: $exact")
       } yield
         (dir, exact) match {
           case (_, None)           => dir
           case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
         }
 
+    val directorySearchResult = Signal.future(directorySearch)
+
     for {
       top        <- topUsers
       local      <- filterForExternal(query, searchLocal(query, showBlockedUsers = true))
       convs      <- conversations
       isExternal <- Signal.future(isExternal)
-      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
+      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearchResult)
       _ = verbose(l"dir results: $dir")
     } yield SearchResults(top, local, convs, dir)
   }
 
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
-    val users = unapply(results)
-
-    verbose(l"updateSearchResults($query), users: ${users.map(u => (u.name, u.handle))}")
-
-    if (!users.map(_.handle).exists(_.exactMatchQuery(query.str))) {
-      sync.exactMatchHandle(Handle(query.str))
-    }
-
-    for {
-      updated <- userService.updateUsers(users)
-      _       <- userService.syncIfNeeded(updated.map(_.id), Duration.Zero)
-    } yield ()
+    userSearchResult ! unapply(results).map(UserData.apply).toIndexedSeq
+    Future.successful(Unit)
   }
 
   def updateExactMatch(userId: UserId): Future[Unit] = {
@@ -259,33 +260,6 @@ class UserSearchService(selfUserId:           UserId,
     usersStorage.get(userId).collect {
       case Some(user) => verbose(l"exact match found: $user"); exactMatchUser ! Some(user)
     }.map(_ => ())
-  }
-
-  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-  def searchUserData(query: SearchQuery): Signal[IndexedSeq[UserData]] = {
-    verbose(l"searchUserData($query)")
-    sync.syncSearchQuery(query)
-    val changesStream = EventStream.union[Seq[ContentChange[UserId, UserData]]](
-      usersStorage.onAdded.map(_.map(d => Added(d.id, d))),
-      usersStorage.onUpdated.map(_.map { case (prv, curr) => Updated(prv.id, prv, curr) }),
-      usersStorage.onDeleted.map(_.map(Removed(_)))
-    )
-
-    def load = localSearch(query).flatMap(filterForExternal(query, _))
-
-    new AggregatingSignal[Seq[ContentChange[UserId, UserData]], IndexedSeq[UserData]](changesStream, load, { (current, changes) =>
-      val added = changes.collect {
-        case Added(_, data)      => data
-        case Updated(_, _, data) => data
-      }.toSet
-
-      val removed = changes.collect {
-        case Removed(id)       => id
-        case Updated(id, _, _) => id
-      }.toSet
-
-      current.filterNot(d => removed.contains(d.id) || added.exists(_.id == d.id)) ++ added
-    })
   }
 
   private def localSearch(query: SearchQuery) = {
