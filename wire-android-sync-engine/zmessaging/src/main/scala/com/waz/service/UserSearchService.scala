@@ -214,22 +214,22 @@ class UserSearchService(selfUserId:           UserId,
           }
       else Signal.const(IndexedSeq.empty)
 
-    val directorySearch: Future[IndexedSeq[UserData]] =
+    val directorySearch: Signal[IndexedSeq[UserData]] =
       for {
            _               <- if (!query.isEmpty) {
-                                  sync.syncSearchQuery(query)
-                              } else Future.successful(Unit)
+                                  Signal.future(sync.syncSearchQuery(query))
+                              } else Signal.const(Unit)
 
            localSearch     <- if (!query.isEmpty) {
-                                  localSearch(query).flatMap(filterForExternal(query, _))
-                              } else Future.successful(IndexedSeq.empty[UserData])
+                                  Signal.future(localSearch(query).flatMap(filterForExternal(query, _)))
+                              } else Signal.const(IndexedSeq.empty[UserData])
 
-           remoteSearch    <- userSearchResult.head
+           remoteSearch    <- userSearchResult
            combinedResults = (localSearch ++ remoteSearch).distinctBy(_.id).toIndexedSeq
            filteredResults = combinedResults.filter(u => !u.isWireBot && u.expiresAt.isEmpty)
            dir             = sortUsers(filteredResults, query)
            _               = verbose(l"directory search results: $dir")
-           exact           <- exactMatchUser.orElse(Signal.const(None)).head
+           exact           <- exactMatchUser.orElse(Signal.const(None))
            _               = verbose(l"exact match: $exact")
       } yield
         (dir, exact) match {
@@ -237,14 +237,12 @@ class UserSearchService(selfUserId:           UserId,
           case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
         }
 
-    val directorySearchResult = Signal.future(directorySearch)
-
     for {
       top        <- topUsers
       local      <- filterForExternal(query, searchLocal(query, showBlockedUsers = true))
       convs      <- conversations
       isExternal <- Signal.future(isExternal)
-      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearchResult)
+      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
       _ = verbose(l"dir results: $dir")
     } yield SearchResults(top, local, convs, dir)
   }
