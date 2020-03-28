@@ -60,12 +60,16 @@ class UserSearchClientImpl(implicit
 
 
   override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
-    Request.Get(relativePath = handlesQuery(handle))
+    Request
+      .Get(
+        relativePath = HandlesPath,
+        queryParameters = queryParameters("handles" -> Handle.stripSymbol(handle.string))
+      )
       .withResultType[ExactHandleResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
       .map {
-        case Right(response) => Right(Some(UserId(response.user)))
+        case Right(response) => Right(Some(UserId(response.id)))
         case Left(response) if response.code == ResponseCode.NotFound => Right(None)
         case Left(response) => Left(response)
       }
@@ -74,16 +78,13 @@ class UserSearchClientImpl(implicit
 
 object UserSearchClient extends DerivedLogTag {
   val ContactsPath = "/search/contacts"
-  val HandlesPath = "/users/handles"
+  val HandlesPath = "/users"
 
   val DefaultLimit = 10
 
-  def handlesQuery(handle: Handle): String =
-    UserSearchClient.HandlesPath + "/" + Handle.stripSymbol(handle.string)
-
   // Response types
 
-  case class ExactHandleResponse(user: String)
+  case class ExactHandleResponse(id: String)
   case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
 
   object UserSearchResponse {

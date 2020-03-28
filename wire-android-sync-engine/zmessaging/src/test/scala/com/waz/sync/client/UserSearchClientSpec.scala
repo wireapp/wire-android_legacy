@@ -1,7 +1,7 @@
 package com.waz.sync.client
 
 import com.waz.specs.AndroidFreeSpec
-import com.waz.sync.client.UserSearchClient.UserSearchResponse
+import com.waz.sync.client.UserSearchClient.{ExactHandleResponse, UserSearchResponse}
 import com.waz.utils.CirceJSONSupport
 
 class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
@@ -56,6 +56,41 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
 
       val searchResult = result.right.get
       searchResult shouldEqual UserSearchResponse(took = 13, found = 2, returned = 2, documents = documents)
+    }
+
+    scenario("Exact handle response decoding") {
+      // Given
+      val response =
+        """
+          |{
+          |  "id": "d3410a8f-8903-4e2c-93e3-4fa039410e4f",
+          |  "assets": [
+          |    {
+          |      "key": "3-2-78d7e7a8-357b-47bd-be69-c3be68056c9b",
+          |      "size": "preview",
+          |      "type": "image"
+          |    },
+          |    {
+          |      "key": "3-2-5c32d3e7-66d5-455c-817d-5c33febacf72",
+          |      "size": "complete",
+          |      "type": "image"
+          |    }
+          |  ],
+          |  "team": "399a5fd1-9a2b-4339-a005-09518baba91b",
+          |  "name": "aaa",
+          |  "accent_id": 2,
+          |  "handle": "aaa"
+          |}
+        """.stripMargin
+
+      // When
+      val result = decode[ExactHandleResponse](response)
+
+      // Then
+      result.isRight shouldBe true
+
+      val searchResult = result.right.get
+      searchResult shouldEqual ExactHandleResponse(id = "d3410a8f-8903-4e2c-93e3-4fa039410e4f")
     }
 
   }
