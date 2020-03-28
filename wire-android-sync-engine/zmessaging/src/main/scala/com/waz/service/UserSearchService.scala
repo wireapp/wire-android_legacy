@@ -326,12 +326,16 @@ object UserSearchService {
   /**
     * Model object extracted from `UserSearchResponse`.
     */
-  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle)
+  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle, teamId: Option[TeamId])
 
   object UserSearchEntry {
     def apply(searchUser: UserSearchResponse.User): UserSearchEntry = {
       import searchUser._
-      UserSearchEntry(UserId(id), Name(name), accent_id, handle.fold(Handle.Empty)(Handle(_)))
+      UserSearchEntry(UserId(id),
+                      Name(name),
+                      accent_id,
+                      handle.fold(Handle.Empty)(Handle(_)),
+                      team_id.map(TeamId.apply))
     }
   }
 

@@ -87,6 +87,6 @@ object UserSearchClient extends DerivedLogTag {
   case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int])
+    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team_id: Option[String])
   }
 }
