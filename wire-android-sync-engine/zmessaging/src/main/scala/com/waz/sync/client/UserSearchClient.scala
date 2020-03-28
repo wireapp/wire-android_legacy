@@ -31,7 +31,7 @@ import com.waz.znet2.http._
 
 trait UserSearchClient {
   def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
-  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]]
+  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]]
 }
 
 class UserSearchClientImpl(implicit
@@ -59,17 +59,17 @@ class UserSearchClientImpl(implicit
   }
 
 
-  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
+  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]] = {
     Request
       .Get(
         relativePath = HandlesPath,
         queryParameters = queryParameters("handles" -> Handle.stripSymbol(handle.string))
       )
-      .withResultType[ExactHandleResponse]
+      .withResultType[UserSearchResponse.User]
       .withErrorType[ErrorResponse]
       .executeSafe
       .map {
-        case Right(response) => Right(Some(UserId(response.id)))
+        case Right(user) => Right(Some(user))
         case Left(response) if response.code == ResponseCode.NotFound => Right(None)
         case Left(response) => Left(response)
       }
@@ -84,10 +84,10 @@ object UserSearchClient extends DerivedLogTag {
 
   // Response types
 
-  case class ExactHandleResponse(id: String)
   case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team_id: Option[String])
+    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team_id: Option[String], assets: Seq[Asset])
+    case class Asset(key: String, size: String, `type`: String)
   }
 }

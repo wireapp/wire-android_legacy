@@ -254,12 +254,10 @@ class UserSearchService(selfUserId:           UserId,
     Future.successful(Unit)
   }
 
-  def updateExactMatch(userId: UserId): Future[Unit] = {
-    verbose(l"updateExactMatch($userId)")
-
-    usersStorage.get(userId).collect {
-      case Some(user) => verbose(l"exact match found: $user"); exactMatchUser ! Some(user)
-    }.map(_ => ())
+  def updateExactMatch(result: UserSearchResponse.User): Unit = {
+    verbose(l"updateExactMatch(${result.id})")
+    val userData = UserData(UserSearchEntry(result))
+    exactMatchUser ! Some(userData)
   }
 
   private def localSearch(query: SearchQuery) = {

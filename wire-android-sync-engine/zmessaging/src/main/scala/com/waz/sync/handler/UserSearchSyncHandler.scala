@@ -46,13 +46,10 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
   }
 
   def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.flatMap {
-    case Right(Some(userId)) =>
-      debug(l"exactMatchHandle, got: $userId for the handle $handle")
-      for {
-        _ <- usersSyncHandler.syncUsers(userId)
-        _ <- userSearch.updateExactMatch(userId)
-      } yield SyncResult.Success
-    case Right(None)         => successful(SyncResult.Success)
-    case Left(error)         => successful(SyncResult(error))
+    case Right(Some(user)) =>
+      debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
+      userSearch.updateExactMatch(user)
+      successful(SyncResult.Success)
+    case Left(error) => successful(SyncResult(error))
   }
 }
