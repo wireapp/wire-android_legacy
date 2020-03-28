@@ -11,7 +11,6 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
 
     import io.circe.parser._
 
-
     scenario("Contact response decoding") {
       // Given
       val response =
@@ -46,7 +45,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         handle = Some("ma75"),
         accent_id = None,
         team_id = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
-        assets = Seq.empty
+        assets = None
       )
 
       val user2 = User(
@@ -55,7 +54,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         handle = None,
         accent_id = Some(0),
         team_id = None,
-        assets = Seq.empty
+        assets = None
       )
 
       val documents = Seq(user1, user2)
@@ -79,7 +78,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
           |      "type": "image"
           |    }
           |  ],
-          |  "team": "399a5fd1-9a2b-4339-a005-09518baba91b",
+          |  "team_id": "399a5fd1-9a2b-4339-a005-09518baba91b",
           |  "name": "aaa",
           |  "accent_id": 2,
           |  "handle": "aaa"
@@ -102,7 +101,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         handle = Some("aaa"),
         accent_id = Some(2),
         team_id = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
-        assets = Seq(asset)
+        assets = Some(Seq(asset))
       )
 
       result.isRight shouldBe true
