@@ -17,6 +17,7 @@
  */
 package com.waz.service
 
+import androidx.annotation.VisibleForTesting
 import com.waz.content.UserPreferences.SelfPermissions
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -260,7 +261,7 @@ class UserSearchService(selfUserId:           UserId,
     }.map(_ => ())
   }
 
-  // not private for tests
+  @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
   def searchUserData(query: SearchQuery): Signal[IndexedSeq[UserData]] = {
     verbose(l"searchUserData($query)")
     sync.syncSearchQuery(query)
