@@ -4,7 +4,7 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.eq
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runBlockingTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -29,11 +29,13 @@ class BackendApiServiceTest : UnitTest() {
     }
 
     @Test
-    fun `given config url, when getting custom backend config, returns config json`() =
-        runBlockingTest {
+    fun `given config url, when getting custom backend config, returns config json`(): Unit =
+        runBlocking {
             backendApiService.getCustomBackendConfig(TEST_URL)
 
             verify(backendApi).getCustomBackendConfig(eq(TEST_URL))
+
+            Unit
         }
 
     companion object {

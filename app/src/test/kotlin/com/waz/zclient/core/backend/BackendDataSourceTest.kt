@@ -1,12 +1,12 @@
 package com.waz.zclient.core.backend
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.backend.datasources.BackendDataSource
 import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponse
 import com.waz.zclient.core.backend.mapper.BackendMapper
-import com.waz.zclient.core.backend.usecase.CustomBackend
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
