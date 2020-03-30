@@ -28,6 +28,7 @@ class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about
         setSupportActionBar(activitySettingsAboutToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         replaceFragment(R.id.activitySettingsAboutLayoutContainer, SettingsAboutFragment.newInstance(), false)
+        overridePendingTransition(R.anim.slide_in_left, 0)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -35,13 +36,18 @@ class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about
         return true
     }
 
-    companion object {
-        @JvmStatic
-        fun newIntent(context: Context) = Intent(context, SettingsAboutActivity::class.java)
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(0, R.anim.slide_out_right)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         scope.close()
+    }
+
+    companion object {
+        @JvmStatic
+        fun newIntent(context: Context) = Intent(context, SettingsAboutActivity::class.java)
     }
 }
