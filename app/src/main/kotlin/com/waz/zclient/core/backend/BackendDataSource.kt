@@ -2,7 +2,6 @@ package com.waz.zclient.core.backend
 
 import com.waz.zclient.core.backend.datasources.BackendRepository
 import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
-import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.mapper.BackendMapper
 import com.waz.zclient.core.backend.usecase.CustomBackend
@@ -21,13 +20,12 @@ class BackendDataSource(
     override suspend fun getCustomBackendConfig(url: String): Either<Failure, CustomBackend> =
         getCustomBackendConfigLocally()
             .fallback { getCustomBackendConfigRemotely(url) }
-            .finally { updateCustomBackendConfigLocally(url, backendMapper.toCustomPrefBackend(it)) }
+            .finally { updateCustomBackendConfigLocally(url) }
             .execute()
 
-    private fun updateCustomBackendConfigLocally(
-        configUrl: String,
-        backendPrefResponse: CustomBackendPrefResponse
-    ) = prefsDataSource.updateCustomBackendConfig(configUrl, backendPrefResponse)
+    private fun updateCustomBackendConfigLocally(configUrl: String): suspend (CustomBackend) -> Unit = {
+        prefsDataSource.updateCustomBackendConfig(configUrl, backendMapper.toCustomPrefBackend(it))
+    }
 
     private fun getCustomBackendConfigRemotely(url: String) =
         runBlocking {

@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
  * If a [fallbackSuccessAction] is provided, it also invokes the action upon successful [fallbackAction].
  */
 data class FallbackOnFailure<R>(
-    private val primaryAction: suspend () -> Either<Failure, Rx>,
+    private val primaryAction: suspend () -> Either<Failure, R>,
     private val fallbackAction: suspend () -> Either<Failure, R>,
     private var fallbackSuccessAction: (suspend () -> Any)? = null
 ) {
