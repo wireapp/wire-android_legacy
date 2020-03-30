@@ -2,9 +2,9 @@ package com.waz.zclient.core.backend.di
 
 import com.waz.zclient.core.backend.BackendRepository
 import com.waz.zclient.core.backend.datasources.BackendDataSource
-import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
+import com.waz.zclient.core.backend.datasources.local.BackendLocalDataSource
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefEndpoints
-import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
+import com.waz.zclient.core.backend.datasources.local.CustomBackendPreferences
 import com.waz.zclient.core.backend.datasources.remote.BackendApiService
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.items.BackendClient
@@ -20,10 +20,9 @@ val backendModule: Module = module {
     factory { BackendClient() }
     factory { BackendRemoteDataSource(get()) }
     factory { BackendApiService(get(), get()) }
-    factory { BackendPrefsDataSource(get(), get()) }
     factory {
         val backendPreferences = get<BackendPreferences>()
-        CustomBackendPrefResponse(
+        CustomBackendPreferences(
             backendPreferences.environment,
             CustomBackendPrefEndpoints(
                 backendPreferences.baseUrl,
@@ -34,5 +33,6 @@ val backendModule: Module = module {
             )
         )
     }
+    factory { BackendLocalDataSource(get(), get()) }
     factory { BackendMapper() }
 }

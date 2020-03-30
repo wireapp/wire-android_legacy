@@ -3,6 +3,7 @@
 package com.waz.zclient.core.network.di
 
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.core.backend.datasources.remote.BackendApi
 import com.waz.zclient.core.backend.items.BackendItem
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
@@ -109,5 +110,6 @@ val networkModule: Module = module {
         RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get()))
     }
     single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
+    single { get<NetworkClient>(named(networkClientForToken)).create(BackendApi::class.java) }
     single { TokenService(get(), get()) }
 }
