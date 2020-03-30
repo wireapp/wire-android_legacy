@@ -4,8 +4,8 @@ import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefEndpoints
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponse
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponseEndpoints
-import com.waz.zclient.core.backend.usecase.CustomBackend
-import com.waz.zclient.core.backend.usecase.CustomBackendEndpoint
+import com.waz.zclient.core.backend.CustomBackend
+import com.waz.zclient.core.backend.CustomBackendEndpoint
 
 class BackendMapper {
 

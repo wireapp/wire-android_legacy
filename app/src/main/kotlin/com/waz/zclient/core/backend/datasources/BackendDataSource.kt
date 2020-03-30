@@ -1,10 +1,10 @@
-package com.waz.zclient.core.backend
+package com.waz.zclient.core.backend.datasources
 
-import com.waz.zclient.core.backend.datasources.BackendRepository
+import com.waz.zclient.core.backend.BackendRepository
+import com.waz.zclient.core.backend.CustomBackend
 import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.mapper.BackendMapper
-import com.waz.zclient.core.backend.usecase.CustomBackend
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.fallback

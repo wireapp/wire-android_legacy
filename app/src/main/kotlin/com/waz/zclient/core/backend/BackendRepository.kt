@@ -1,6 +1,6 @@
-package com.waz.zclient.core.backend.datasources
+package com.waz.zclient.core.backend
 
-import com.waz.zclient.core.backend.usecase.CustomBackend
+import com.waz.zclient.core.backend.CustomBackend
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 

@@ -1,6 +1,6 @@
 package com.waz.zclient.core.network.backend
 
-import com.waz.zclient.core.backend.datasources.BackendRepository
+import com.waz.zclient.core.backend.BackendRepository
 import com.waz.zclient.core.extension.foldSuspendable
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor

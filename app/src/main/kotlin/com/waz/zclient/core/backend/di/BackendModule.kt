@@ -1,8 +1,8 @@
 package com.waz.zclient.core.backend.di
 
-import com.waz.zclient.core.backend.BackendClient
-import com.waz.zclient.core.backend.BackendDataSource
-import com.waz.zclient.core.backend.datasources.BackendRepository
+import com.waz.zclient.core.backend.items.BackendClient
+import com.waz.zclient.core.backend.datasources.BackendDataSource
+import com.waz.zclient.core.backend.BackendRepository
 import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
 import com.waz.zclient.core.backend.datasources.remote.BackendApiService
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
