@@ -10,7 +10,6 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.fallback
 import com.waz.zclient.core.functional.map
-import kotlinx.coroutines.runBlocking
 
 class BackendDataSource(
     private val remoteDataSource: BackendRemoteDataSource,
@@ -29,18 +28,14 @@ class BackendDataSource(
         backendPrefResponse: CustomBackendPrefResponse
     ) = prefsDataSource.updateCustomBackendConfig(configUrl, backendPrefResponse)
 
-    private fun getCustomBackendConfigRemotely(url: String) =
-        runBlocking {
-            remoteDataSource.getCustomBackendConfig(url).map {
-                backendMapper.toCustomBackend(it)
-            }
+    private suspend fun getCustomBackendConfigRemotely(url: String) =
+        remoteDataSource.getCustomBackendConfig(url).map {
+            backendMapper.toCustomBackend(it)
         }
 
     private fun getCustomBackendConfigLocally(): suspend () -> Either<Failure, CustomBackend> = {
-        runBlocking {
-            prefsDataSource.getCustomBackendConfig().map {
-                backendMapper.toCustomBackend(it)
-            }
+        prefsDataSource.getCustomBackendConfig().map {
+            backendMapper.toCustomBackend(it)
         }
     }
 }
