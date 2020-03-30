@@ -19,11 +19,11 @@ class BackendDataSource(
     override suspend fun getCustomBackendConfig(url: String): Either<Failure, CustomBackend> =
         getCustomBackendConfigLocally()
             .fallback { getCustomBackendConfigRemotely(url) }
-            .finally { updateCustomBackendConfigLocally(url) }
+            .finally { updateCustomBackendConfigLocally(url, it) }
             .execute()
 
-    private fun updateCustomBackendConfigLocally(configUrl: String): suspend (CustomBackend) -> Unit = {
-        localDataSource.updateCustomBackendConfig(configUrl, backendMapper.toCustomPrefBackend(it))
+    private fun updateCustomBackendConfigLocally(configUrl: String, customBackend: CustomBackend) {
+        localDataSource.updateCustomBackendConfig(configUrl, backendMapper.toCustomPrefBackend(customBackend))
     }
 
     private suspend fun getCustomBackendConfigRemotely(url: String) =

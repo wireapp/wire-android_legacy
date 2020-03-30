@@ -1,14 +1,14 @@
 package com.waz.zclient.clients.datasources
 
+import com.waz.zclient.clients.Client
 import com.waz.zclient.clients.ClientsRepository
+import com.waz.zclient.clients.datasources.local.ClientsLocalDataSource
+import com.waz.zclient.clients.datasources.remote.ClientsRemoteDataSource
+import com.waz.zclient.clients.mapper.ClientMapper
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.fallback
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.clients.mapper.ClientMapper
-import com.waz.zclient.clients.datasources.local.ClientsLocalDataSource
-import com.waz.zclient.clients.datasources.remote.ClientsRemoteDataSource
-import com.waz.zclient.clients.Client
 
 class ClientsDataSource constructor(
     private val remoteDataSource: ClientsRemoteDataSource,
@@ -19,13 +19,13 @@ class ClientsDataSource constructor(
     override suspend fun clientById(clientId: String): Either<Failure, Client> =
         clientByIdLocal(clientId)
             .fallback { clientByIdRemote(clientId) }
-            .finally { saveClient() }
+            .finally { saveClient(it) }
             .execute()
 
     override suspend fun allClients() =
         allClientsLocal()
             .fallback { allClientsRemote() }
-            .finally { saveAllClients() }
+            .finally { saveAllClients(it) }
             .execute()
 
     private suspend fun clientByIdRemote(clientId: String) =
@@ -42,11 +42,11 @@ class ClientsDataSource constructor(
         localDataSource.allClients().map { clientMapper.toListOfClients(it) }
     }
 
-    private fun saveClient(): suspend (Client) -> Unit = {
-        localDataSource.updateClient(clientMapper.toClientDao(it))
+    private suspend fun saveClient(client: Client) {
+        localDataSource.updateClient(clientMapper.toClientDao(client))
     }
 
-    private fun saveAllClients(): suspend (List<Client>) -> Unit = {
-        localDataSource.updateClients(clientMapper.toListOfClientDao(it))
+    private suspend fun saveAllClients(clients: List<Client>) {
+        localDataSource.updateClients(clientMapper.toListOfClientDao(clients))
     }
 }

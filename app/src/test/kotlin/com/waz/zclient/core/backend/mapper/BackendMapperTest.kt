@@ -4,7 +4,7 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.backend.CustomBackend
 import com.waz.zclient.core.backend.CustomBackendEndpoint
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefEndpoints
-import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
+import com.waz.zclient.core.backend.datasources.local.CustomBackendPreferences
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponse
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponseEndpoints
 import org.amshove.kluent.shouldBe
@@ -79,7 +79,7 @@ class BackendMapperTest : UnitTest() {
             )
         )
 
-        private val customPrefBackend = CustomBackendPrefResponse(
+        private val customPrefBackend = CustomBackendPreferences(
             TITLE,
             CustomBackendPrefEndpoints(
                 BACKEND_URL,

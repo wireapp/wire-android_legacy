@@ -1,26 +1,28 @@
 package com.waz.zclient.clients.datasources
 
+import com.waz.zclient.UnitTest
 import com.waz.zclient.clients.ClientsRepository
+import com.waz.zclient.clients.datasources.local.ClientsLocalDataSource
+import com.waz.zclient.clients.datasources.remote.ClientResponse
+import com.waz.zclient.clients.datasources.remote.ClientsRemoteDataSource
+import com.waz.zclient.clients.mapper.ClientMapper
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.clients.mapper.ClientMapper
-import com.waz.zclient.clients.datasources.local.ClientsLocalDataSource
-import com.waz.zclient.clients.datasources.remote.ClientsRemoteDataSource
-import com.waz.zclient.clients.datasources.remote.ClientResponse
 import com.waz.zclient.eq
 import com.waz.zclient.storage.db.clients.model.ClientEntity
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 
-class ClientDataSourceTest {
+@ExperimentalCoroutinesApi
+class ClientDataSourceTest : UnitTest() {
 
     private lateinit var repository: ClientsRepository
 
@@ -35,13 +37,12 @@ class ClientDataSourceTest {
 
     @Before
     fun setup() {
-        MockitoAnnotations.initMocks(this)
         repository = ClientsDataSource(remoteDataSource, localDataSource, clientMapper)
     }
 
     @Test
     fun `Given getAllClients() is called, when the local data source succeeded, then map the data response to domain`() {
-        runBlocking {
+        runBlockingTest {
             `when`(localDataSource.allClients()).thenReturn(Either.Right(listOf(generateMockDao())))
 
             repository.allClients()
@@ -57,7 +58,7 @@ class ClientDataSourceTest {
 
     @Test
     fun `Given getAllClients() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
-        runBlocking {
+        runBlockingTest {
             `when`(remoteDataSource.allClients()).thenReturn(Either.Right(listOf(generateMockApi())))
             `when`(localDataSource.allClients()).thenReturn(Either.Left(DatabaseError))
 
@@ -66,14 +67,15 @@ class ClientDataSourceTest {
             verify(remoteDataSource).allClients()
 
             remoteDataSource.allClients().map {
-                verify(clientMapper).toListOfClients(it)
+                val listOfClients = verify(clientMapper).toListOfClients(it)
+                runBlockingTest { verify(localDataSource).updateClients(clientMapper.toListOfClientDao(listOfClients)) }
             }
         }
     }
 
     @Test
     fun `Given allClients() is called, when the local data source failed, remote data source is called and failed, then return error`() {
-        runBlocking {
+        runBlockingTest {
             `when`(remoteDataSource.allClients()).thenReturn(Either.Left(ServerError))
             `when`(localDataSource.allClients()).thenReturn(Either.Left(DatabaseError))
 
@@ -87,7 +89,7 @@ class ClientDataSourceTest {
 
     @Test
     fun `Given getClientById() is called, when the local data source succeeded, then map the data response to domain`() {
-        runBlocking {
+        runBlockingTest {
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockDao()))
 
             repository.clientById(TEST_ID)
@@ -102,7 +104,7 @@ class ClientDataSourceTest {
 
     @Test
     fun `Given getClientById() is called, when the local data source failed, remote data source is called, then map the data response to domain`() {
-        runBlocking {
+        runBlockingTest {
             `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Right(generateMockApi()))
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(DatabaseError))
 
@@ -111,14 +113,15 @@ class ClientDataSourceTest {
             verify(remoteDataSource).clientById(eq(TEST_ID))
 
             remoteDataSource.clientById(TEST_ID).map { clientApi ->
-                verify(clientMapper).toClient(clientApi)
+                val client = verify(clientMapper).toClient(clientApi)
+                runBlockingTest { verify(localDataSource).updateClient(clientMapper.toClientDao(client)) }
             }
         }
     }
 
     @Test
     fun `Given getClientById() is called, when the local data source failed, remote data source is called and failed, then return error`() {
-        runBlocking {
+        runBlockingTest {
             `when`(remoteDataSource.clientById(TEST_ID)).thenReturn(Either.Left(ServerError))
             `when`(localDataSource.clientById(TEST_ID)).thenReturn(Either.Left(DatabaseError))
 

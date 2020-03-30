@@ -11,17 +11,17 @@ import org.mockito.Mockito.verify
 
 class BackendPrefsDataSourceTest : UnitTest() {
 
-    private lateinit var backendPrefsDataSource: BackendPrefsDataSource
+    private lateinit var backendPrefsDataSource: BackendLocalDataSource
 
     @Mock
     private lateinit var backendPreferences: BackendPreferences
 
     @Mock
-    private lateinit var backendConfig: CustomBackendPrefResponse
+    private lateinit var backendConfig: CustomBackendPreferences
 
     @Before
     fun setup() {
-        backendPrefsDataSource = BackendPrefsDataSource(backendPreferences, backendConfig)
+        backendPrefsDataSource = BackendLocalDataSource(backendPreferences, backendConfig)
     }
 
     @Test
@@ -52,7 +52,7 @@ class BackendPrefsDataSourceTest : UnitTest() {
         val teamsUrl = "https://teams.wire.com"
         val websiteUrl = "https://wire.com"
 
-        val newBackendConfig = CustomBackendPrefResponse(
+        val newBackendConfig = CustomBackendPreferences(
             environment,
             CustomBackendPrefEndpoints(
                 baseUrl,

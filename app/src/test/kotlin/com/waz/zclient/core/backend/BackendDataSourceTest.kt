@@ -2,8 +2,8 @@ package com.waz.zclient.core.backend
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.backend.datasources.BackendDataSource
-import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
-import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
+import com.waz.zclient.core.backend.datasources.local.BackendLocalDataSource
+import com.waz.zclient.core.backend.datasources.local.CustomBackendPreferences
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponse
 import com.waz.zclient.core.backend.mapper.BackendMapper
@@ -29,14 +29,14 @@ class BackendDataSourceTest : UnitTest() {
     private lateinit var backendRemoteDataSource: BackendRemoteDataSource
 
     @Mock
-    private lateinit var backendPrefsDataSource: BackendPrefsDataSource
+    private lateinit var backendLocalDataSource: BackendLocalDataSource
 
     @Mock
     private lateinit var backendMapper: BackendMapper
 
     @Before
     fun setup() {
-        backendDataSource = BackendDataSource(backendRemoteDataSource, backendPrefsDataSource, backendMapper)
+        backendDataSource = BackendDataSource(backendRemoteDataSource, backendLocalDataSource, backendMapper)
     }
 
     @Test
@@ -44,32 +44,32 @@ class BackendDataSourceTest : UnitTest() {
         runBlockingTest {
             val customBackendResponse = mock(CustomBackendResponse::class.java)
             val customBackend = mock(CustomBackend::class.java)
-            val customPrefBackend: CustomBackendPrefResponse = mock(CustomBackendPrefResponse::class.java)
+            val customPrefBackend: CustomBackendPreferences = mock(CustomBackendPreferences::class.java)
 
-            `when`(backendPrefsDataSource.getCustomBackendConfig()).thenReturn(Either.Left(ServerError))
+            `when`(backendLocalDataSource.getCustomBackendConfig()).thenReturn(Either.Left(ServerError))
             `when`(backendRemoteDataSource.getCustomBackendConfig(TEST_URL)).thenReturn(Either.Right(customBackendResponse))
             `when`(backendMapper.toCustomBackend(customBackendResponse)).thenReturn(customBackend)
             `when`(backendMapper.toCustomPrefBackend(customBackend)).thenReturn(customPrefBackend)
 
             backendDataSource.getCustomBackendConfig(TEST_URL)
 
-            verify(backendPrefsDataSource).getCustomBackendConfig()
+            verify(backendLocalDataSource).getCustomBackendConfig()
             verify(backendRemoteDataSource).getCustomBackendConfig(eq(TEST_URL))
-            verify(backendPrefsDataSource).updateCustomBackendConfig(eq(TEST_URL), eq(customPrefBackend))
+            verify(backendLocalDataSource).updateCustomBackendConfig(eq(TEST_URL), eq(customPrefBackend))
         }
 
     @Test
     fun `Given url is provided, when getCustomBackendConfig is called and pref request succeeds, then return pref config`() =
         runBlockingTest {
             val customBackend = mock(CustomBackend::class.java)
-            val customPrefBackend: CustomBackendPrefResponse = mock(CustomBackendPrefResponse::class.java)
+            val customPrefBackend: CustomBackendPreferences = mock(CustomBackendPreferences::class.java)
 
-            `when`(backendPrefsDataSource.getCustomBackendConfig()).thenReturn(Either.Right(customPrefBackend))
+            `when`(backendLocalDataSource.getCustomBackendConfig()).thenReturn(Either.Right(customPrefBackend))
             `when`(backendMapper.toCustomBackend(customPrefBackend)).thenReturn(customBackend)
 
             backendDataSource.getCustomBackendConfig(TEST_URL)
 
-            verify(backendPrefsDataSource).getCustomBackendConfig()
+            verify(backendLocalDataSource).getCustomBackendConfig()
             verifyNoInteractions(backendRemoteDataSource)
         }
 
