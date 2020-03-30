@@ -3,7 +3,7 @@ package com.waz.zclient.core.backend.di
 import com.waz.zclient.core.backend.items.BackendClient
 import com.waz.zclient.core.backend.datasources.BackendDataSource
 import com.waz.zclient.core.backend.BackendRepository
-import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
+import com.waz.zclient.core.backend.datasources.local.BackendLocalDataSource
 import com.waz.zclient.core.backend.datasources.remote.BackendApiService
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.mapper.BackendMapper
@@ -18,6 +18,6 @@ val backendModule: Module = module {
     factory { BackendClient() }
     factory { BackendRemoteDataSource(get()) }
     factory { BackendApiService(get(), get()) }
-    factory { BackendPrefsDataSource(get()) }
+    factory { BackendLocalDataSource(get()) }
     factory { BackendMapper() }
 }

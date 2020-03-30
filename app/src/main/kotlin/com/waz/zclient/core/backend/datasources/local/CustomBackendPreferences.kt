@@ -1,6 +1,6 @@
 package com.waz.zclient.core.backend.datasources.local
 
-data class CustomBackendPrefResponse(
+data class CustomBackendPreferences(
     val title: String,
     val prefEndpoints: CustomBackendPrefEndpoints
 ) {

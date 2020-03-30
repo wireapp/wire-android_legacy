@@ -7,9 +7,9 @@ import com.waz.zclient.storage.pref.backend.BackendPreferences
 
 object InvalidBackendConfig : FeatureFailure()
 
-class BackendPrefsDataSource(private val backendPreferences: BackendPreferences) {
+class BackendLocalDataSource(private val backendPreferences: BackendPreferences) {
 
-    private val customBackendConfig = CustomBackendPrefResponse(
+    private val customBackendConfig = CustomBackendPreferences(
         backendPreferences.environment,
         CustomBackendPrefEndpoints(
             backendPreferences.baseUrl,
@@ -20,20 +20,20 @@ class BackendPrefsDataSource(private val backendPreferences: BackendPreferences)
         )
     )
 
-    fun getCustomBackendConfig(): Either<Failure, CustomBackendPrefResponse> =
+    fun getCustomBackendConfig(): Either<Failure, CustomBackendPreferences> =
         if (customBackendConfig.isValid()) {
             Either.Right(customBackendConfig)
         } else Either.Left(InvalidBackendConfig)
 
-    fun updateCustomBackendConfig(configUrl: String, backendPrefResponse: CustomBackendPrefResponse) {
-        with(backendPreferences) {
+    fun updateCustomBackendConfig(configUrl: String, backendPreferences: CustomBackendPreferences) {
+        with(this.backendPreferences) {
             customConfigUrl = configUrl
-            environment = backendPrefResponse.title
-            baseUrl = backendPrefResponse.prefEndpoints.backendUrl
-            blacklistUrl = backendPrefResponse.prefEndpoints.blacklistUrl
-            accountsUrl = backendPrefResponse.prefEndpoints.accountsUrl
-            teamsUrl = backendPrefResponse.prefEndpoints.teamsUrl
-            websiteUrl = backendPrefResponse.prefEndpoints.websiteUrl
+            environment = backendPreferences.title
+            baseUrl = backendPreferences.prefEndpoints.backendUrl
+            blacklistUrl = backendPreferences.prefEndpoints.blacklistUrl
+            accountsUrl = backendPreferences.prefEndpoints.accountsUrl
+            teamsUrl = backendPreferences.prefEndpoints.teamsUrl
+            websiteUrl = backendPreferences.prefEndpoints.websiteUrl
         }
     }
 }

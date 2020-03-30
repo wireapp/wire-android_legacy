@@ -1,7 +1,7 @@
 package com.waz.zclient.core.backend.mapper
 
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefEndpoints
-import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefResponse
+import com.waz.zclient.core.backend.datasources.local.CustomBackendPreferences
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponse
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponseEndpoints
 import com.waz.zclient.core.backend.CustomBackend
@@ -24,7 +24,7 @@ class BackendMapper {
             websiteUrl = endpointResponse.websiteUrl
         )
 
-    fun toCustomBackend(backendResponse: CustomBackendPrefResponse) = CustomBackend(
+    fun toCustomBackend(backendResponse: CustomBackendPreferences) = CustomBackend(
         title = backendResponse.title,
         endpoints = toCustomBackendEndpoint(backendResponse.prefEndpoints)
     )
@@ -38,7 +38,7 @@ class BackendMapper {
             websiteUrl = endpointResponse.websiteUrl
         )
 
-    fun toCustomPrefBackend(customBackend: CustomBackend) = CustomBackendPrefResponse(
+    fun toCustomPrefBackend(customBackend: CustomBackend) = CustomBackendPreferences(
         title = customBackend.title,
         prefEndpoints = toCustomPrefEndpoints(customBackend.endpoints)
     )
