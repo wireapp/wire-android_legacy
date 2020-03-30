@@ -1,14 +1,12 @@
 package com.waz.zclient.core.backend.di
 
-import com.waz.zclient.core.backend.BackendClient
-import com.waz.zclient.core.backend.BackendDataSource
-import com.waz.zclient.core.backend.datasources.BackendRepository
+import com.waz.zclient.core.backend.items.BackendClient
+import com.waz.zclient.core.backend.datasources.BackendDataSource
+import com.waz.zclient.core.backend.BackendRepository
 import com.waz.zclient.core.backend.datasources.local.BackendPrefsDataSource
-import com.waz.zclient.core.backend.datasources.remote.BackendApi
 import com.waz.zclient.core.backend.datasources.remote.BackendApiService
 import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
 import com.waz.zclient.core.backend.mapper.BackendMapper
-import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.storage.pref.backend.BackendPreferences
 import org.koin.core.module.Module
 import org.koin.dsl.module

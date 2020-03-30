@@ -1,6 +1,6 @@
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.core.backend.Backend
-import com.waz.zclient.core.backend.BackendItem
+import com.waz.zclient.core.backend.items.Backend
+import com.waz.zclient.core.backend.items.BackendItem
 
 class ProductionBackendItem : BackendItem() {
 

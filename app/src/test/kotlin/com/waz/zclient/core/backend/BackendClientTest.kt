@@ -2,6 +2,10 @@ package com.waz.zclient.core.backend
 
 import ProductionBackendItem
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.backend.items.Backend
+import com.waz.zclient.core.backend.items.BackendClient
+import com.waz.zclient.core.backend.items.QaBackendItem
+import com.waz.zclient.core.backend.items.StagingBackendItem
 import com.waz.zclient.core.extension.empty
 import org.junit.Test
 

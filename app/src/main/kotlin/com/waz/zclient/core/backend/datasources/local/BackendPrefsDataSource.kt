@@ -26,12 +26,14 @@ class BackendPrefsDataSource(private val backendPreferences: BackendPreferences)
         } else Either.Left(InvalidBackendConfig)
 
     fun updateCustomBackendConfig(configUrl: String, backendPrefResponse: CustomBackendPrefResponse) {
-        backendPreferences.customConfigUrl = configUrl
-        backendPreferences.environment = backendPrefResponse.title
-        backendPreferences.baseUrl = backendPrefResponse.prefEndpoints.backendUrl
-        backendPreferences.blacklistUrl = backendPrefResponse.prefEndpoints.blacklistUrl
-        backendPreferences.accountsUrl = backendPrefResponse.prefEndpoints.accountsUrl
-        backendPreferences.teamsUrl = backendPrefResponse.prefEndpoints.teamsUrl
-        backendPreferences.websiteUrl = backendPrefResponse.prefEndpoints.websiteUrl
+        with(backendPreferences) {
+            customConfigUrl = configUrl
+            environment = backendPrefResponse.title
+            baseUrl = backendPrefResponse.prefEndpoints.backendUrl
+            blacklistUrl = backendPrefResponse.prefEndpoints.blacklistUrl
+            accountsUrl = backendPrefResponse.prefEndpoints.accountsUrl
+            teamsUrl = backendPrefResponse.prefEndpoints.teamsUrl
+            websiteUrl = backendPrefResponse.prefEndpoints.websiteUrl
+        }
     }
 }

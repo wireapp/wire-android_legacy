@@ -1,4 +1,4 @@
-package com.waz.zclient.core.backend
+package com.waz.zclient.core.backend.items
 
 class StagingBackendItem : BackendItem() {
 

@@ -1,4 +1,4 @@
-package com.waz.zclient.core.backend.usecase
+package com.waz.zclient.core.backend
 
 data class CustomBackend(
     val title: String,

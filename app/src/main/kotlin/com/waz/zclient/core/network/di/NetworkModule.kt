@@ -3,7 +3,7 @@
 package com.waz.zclient.core.network.di
 
 import com.waz.zclient.BuildConfig
-import com.waz.zclient.core.backend.BackendItem
+import com.waz.zclient.core.backend.items.BackendItem
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.RetrofitClient

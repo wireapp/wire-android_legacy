@@ -1,4 +1,4 @@
-package com.waz.zclient.core.backend
+package com.waz.zclient.core.backend.items
 
 import ProductionBackendItem
 import com.waz.zclient.BuildConfig
