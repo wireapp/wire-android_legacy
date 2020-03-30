@@ -20,7 +20,6 @@ val backendModule: Module = module {
     factory { BackendClient() }
     factory { BackendRemoteDataSource(get()) }
     factory { BackendApiService(get(), get()) }
-    factory { get<NetworkClient>().create(BackendApi::class.java) }
     factory { BackendPrefsDataSource(get()) }
     factory { BackendMapper() }
 }

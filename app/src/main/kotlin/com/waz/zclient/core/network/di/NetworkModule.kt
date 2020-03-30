@@ -56,29 +56,27 @@ object NetworkDependencyProvider {
         customBackendInterceptor: CustomBackendInterceptor,
         backendItem: BackendItem
     ): OkHttpClient =
-        defaultHttpClient(backendItem, userAgentInterceptor, customBackendInterceptor)
+        defaultHttpClient(backendItem, userAgentInterceptor)
             .addInterceptor(accessTokenInterceptor)
+            .addInterceptor(customBackendInterceptor)
             .authenticator(accessTokenAuthenticator)
             .build()
 
     fun createHttpClientForToken(
         userAgentInterceptor: UserAgentInterceptor,
-        customBackendInterceptor: CustomBackendInterceptor,
         backendItem: BackendItem
     ): OkHttpClient =
-        defaultHttpClient(backendItem, userAgentInterceptor, customBackendInterceptor)
+        defaultHttpClient(backendItem, userAgentInterceptor)
             .build()
 
     private fun defaultHttpClient(
         backendItem: BackendItem,
-        userAgentInterceptor: UserAgentInterceptor,
-        customBackendInterceptor: CustomBackendInterceptor
+        userAgentInterceptor: UserAgentInterceptor
     ): OkHttpClient.Builder =
         OkHttpClient.Builder()
             .certificatePinner(CertificatePinnerFactory.create(backendItem.pinningCertificate()))
             .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(userAgentInterceptor)
-            .addInterceptor(customBackendInterceptor)
             .proxy(HttpProxyFactory.create())
             .addLoggingInterceptor()
 
@@ -108,7 +106,7 @@ val networkModule: Module = module {
     //Token manipulation
     val networkClientForToken = "NETWORK_CLIENT_FOR_TOKEN"
     single<NetworkClient>(named(networkClientForToken)) {
-        RetrofitClient(retrofit(createHttpClientForToken(get(), get(), get()), get()))
+        RetrofitClient(retrofit(createHttpClientForToken(get(), get()), get()))
     }
     single { get<NetworkClient>(named(networkClientForToken)).create(TokenApi::class.java) }
     single { TokenService(get(), get()) }
