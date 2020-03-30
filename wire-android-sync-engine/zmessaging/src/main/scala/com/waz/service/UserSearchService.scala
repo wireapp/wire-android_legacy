@@ -62,8 +62,8 @@ class UserSearchService(selfUserId:           UserId,
   import com.waz.service.UserSearchService._
   import timeouts.search._
 
-  private val exactMatchUser = new SourceSignal[Option[UserData]]()
-  private val userSearchResult = new SourceSignal[IndexedSeq[UserData]]()
+  private val exactMatchUser = Signal(Option.empty[UserData])
+  private val userSearchResult = Signal(IndexedSeq.empty[UserData])
 
   private lazy val isExternal = userPrefs(SelfPermissions).apply()
     .map(decodeBitmask)
@@ -193,6 +193,10 @@ class UserSearchService(selfUserId:           UserId,
     exactMatchUser ! None // reset the exact match to None on any query change
     userSearchResult ! IndexedSeq.empty[UserData]
 
+    if (!query.isEmpty) {
+      sync.syncSearchQuery(query)
+    }
+
     val topUsers: Signal[IndexedSeq[UserData]] =
       if (query.isEmpty && teamId.isEmpty) topPeople.map(_.filter(!_.isWireBot)) else Signal.const(IndexedSeq.empty)
 
@@ -216,14 +220,9 @@ class UserSearchService(selfUserId:           UserId,
 
     val directorySearch: Signal[IndexedSeq[UserData]] =
       for {
-           _               <- if (!query.isEmpty) {
-                                  Signal.future(sync.syncSearchQuery(query))
-                              } else Signal.const(Unit)
-
            localSearch     <- if (!query.isEmpty) {
                                   Signal.future(localSearch(query).flatMap(filterForExternal(query, _)))
                               } else Signal.const(IndexedSeq.empty[UserData])
-
            remoteSearch    <- userSearchResult
            combinedResults = (localSearch ++ remoteSearch).distinctBy(_.id).toIndexedSeq
            filteredResults = combinedResults.filter(u => !u.isWireBot && u.expiresAt.isEmpty)
@@ -247,9 +246,8 @@ class UserSearchService(selfUserId:           UserId,
     } yield SearchResults(top, local, convs, dir)
   }
 
-  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
+  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
     userSearchResult ! unapply(results).map(UserData.apply).toIndexedSeq
-    Future.successful(Unit)
   }
 
   def updateExactMatch(result: UserSearchResponse.User): Unit = {

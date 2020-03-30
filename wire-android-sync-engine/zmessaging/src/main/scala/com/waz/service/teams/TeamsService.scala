@@ -46,7 +46,7 @@ trait TeamsService {
 
   val selfTeam: Signal[Option[TeamData]]
 
-  def onTeamSynced(team: TeamData): Future[Unit]
+  def onTeamSynced(team: TeamData, roles: Set[ConversationRole]): Future[Unit]
 
   def onMemberSynced(member: TeamMember): Future[Unit]
 
@@ -160,11 +160,12 @@ class TeamsServiceImpl(selfUser:           UserId,
     }
   }
 
-  override def onTeamSynced(team: TeamData): Future[Unit] = {
+  override def onTeamSynced(team: TeamData, roles: Set[ConversationRole]): Future[Unit] = {
     verbose(l"onTeamSynced: team: $team")
     for {
-      result         <- teamStorage.insert(team)
-    } yield Future.successful(result)
+      _           <- teamStorage.insert(team)
+      _           <- rolesService.setDefaultRoles(roles)
+    } yield {}
   }
 
   override def onMemberSynced(member: TeamMember) = member match {
