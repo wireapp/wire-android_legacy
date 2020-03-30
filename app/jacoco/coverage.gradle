@@ -26,14 +26,14 @@ task jacocoTestReport(type: JacocoReport) {
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
     def kotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/devDebug/com/waz/zclient", excludes: fileFilter)
-    def javaScalaTree =fileTree(dir: "$project.buildDir/intermediates/javac/devDebug/compileDevDebugJavaWithJavac/classes/com/waz", excludes: fileFilter)
+    def javaScalaTree = fileTree(dir: "$project.buildDir/intermediates/javac/devDebug/compileDevDebugJavaWithJavac/classes/com/waz", excludes: fileFilter)
 
     def kotlinSrc = "$project.projectDir/src/main/kotlin"
     def scalaSrc = "$project.projectDir/src/main/scala"
     def javaSrc = "$project.projectDir/src/main/java"
 
-    sourceDirectories = files([kotlinSrc,scalaSrc,javaSrc])
-    classDirectories = files([kotlinTree,javaScalaTree])
+    sourceDirectories = files([kotlinSrc, scalaSrc, javaSrc])
+    classDirectories = files([kotlinTree, javaScalaTree])
     executionData = fileTree(dir: project.buildDir, includes: [
         'jacoco/testDevDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
     ])
