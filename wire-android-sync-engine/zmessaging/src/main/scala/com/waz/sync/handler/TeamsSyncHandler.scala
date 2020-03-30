@@ -47,10 +47,13 @@ class TeamsSyncHandlerImpl(userId:    UserId,
 
   override def syncTeam(): Future[SyncResult] = teamId match {
     case Some(id) => client.getTeamData(id).future.flatMap {
-      case Right(data) => service.onTeamSynced(data).map(_ => SyncResult.Success)
+      case Right(data) => client.getTeamRoles(id).future.flatMap {
+        case Right(roles) => service.onTeamSynced(data, roles).map(_ => SyncResult.Success)
+        case Left(error)  => Future.successful(SyncResult(error))
+      }
       case Left(error) => Future.successful(SyncResult(error))
     }
-    case None => Future.successful(SyncResult.Success)
+    case None     => Future.successful(SyncResult.Success)
   }
 
   override def syncMember(uId: UserId) = teamId match {

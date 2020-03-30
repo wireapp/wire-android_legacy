@@ -39,7 +39,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
     client.getContacts(query).future flatMap {
       case Right(results) =>
         userSearch.updateSearchResults(query, results)
-          .map(_ => SyncResult.Success)
+        successful(SyncResult.Success)
       case Left(error) =>
         successful(SyncResult(error))
     }
