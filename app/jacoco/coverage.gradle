@@ -17,7 +17,7 @@
  */
 apply plugin: 'jacoco'
 
-task jacocoTestReport(type: JacocoReport, dependsOn: ['testDevDebugUnitTest']) {
+task jacocoTestReport(type: JacocoReport) {
 
     reports {
         xml.enabled = true

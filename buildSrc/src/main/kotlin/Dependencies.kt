@@ -12,6 +12,7 @@ object Versions {
 
     //plugins
     const val DETEKT = "1.2.2"
+    const val JACOCO = "0.8.5"
 
     //build
     const val COROUTINES = "1.3.2"
