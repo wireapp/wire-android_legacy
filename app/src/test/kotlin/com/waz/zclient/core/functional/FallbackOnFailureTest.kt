@@ -22,7 +22,7 @@ class FallbackOnFailureTest : UnitTest() {
 
         suspend fun fallbackAction(): Either<Failure, Unit>
 
-        suspend fun fallbackSuccessAction(unit: Unit)
+        suspend fun fallbackSuccessAction()
     }
 
     @Mock
@@ -32,13 +32,13 @@ class FallbackOnFailureTest : UnitTest() {
 
     private lateinit var fallbackAction: suspend () -> Either<Failure, Unit>
 
-    private lateinit var fallbackSuccessAction: suspend (Unit) -> Any
+    private lateinit var fallbackSuccessAction: suspend () -> Unit
 
     @Before
     fun setUp() {
         primaryAction = suspendHelper::primaryAction
         fallbackAction = suspendHelper::fallbackAction
-        fallbackSuccessAction = { suspendHelper.fallbackSuccessAction(it) }
+        fallbackSuccessAction = suspendHelper::fallbackSuccessAction
     }
 
     @Test
@@ -87,7 +87,7 @@ class FallbackOnFailureTest : UnitTest() {
 
             verify(suspendHelper).primaryAction()
             verify(suspendHelper).fallbackAction()
-            verify(suspendHelper).fallbackSuccessAction(Unit)
+            verify(suspendHelper).fallbackSuccessAction()
         }
     }
 

@@ -13,16 +13,16 @@ import kotlinx.coroutines.runBlocking
  * If a [fallbackSuccessAction] is provided, it also invokes the action upon successful [fallbackAction].
  */
 data class FallbackOnFailure<R>(
-    private val primaryAction: suspend () -> Either<Failure, R>,
+    private val primaryAction: suspend () -> Either<Failure, Rx>,
     private val fallbackAction: suspend () -> Either<Failure, R>,
-    private var fallbackSuccessAction: (suspend (R) -> Any)? = null
+    private var fallbackSuccessAction: (suspend () -> Any)? = null
 ) {
 
     /**
      * Adds an optional [action] to be performed upon a successful [fallbackAction]. If [primaryAction] is
      * successful, and [fallbackAction] is never called, this [action] won't be called too.
      */
-    fun finally(action: suspend (R) -> Any): FallbackOnFailure<R> = apply {
+    fun finally(action: suspend () -> Any): FallbackOnFailure<R> = apply {
         fallbackSuccessAction = action
     }
 
@@ -33,7 +33,7 @@ data class FallbackOnFailure<R>(
         primaryAction().foldSuspendable({
             fallbackAction().onSuccess {
                 runBlocking {
-                    fallbackSuccessAction?.invoke(it)
+                    fallbackSuccessAction?.invoke()
                 }
             }
         }) { Either.Right(it) }!!
