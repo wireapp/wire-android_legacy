@@ -106,11 +106,12 @@ case class MessageData(override val id:   MessageId              = MessageId(),
     copy(quote = Some(QuoteContent(quoteId, validity = true, None)), protos = newProtos)
   }
 
-  def isLocal = state == Message.Status.DEFAULT || state == Message.Status.PENDING || state == Message.Status.FAILED || state == Message.Status.FAILED_READ
+  lazy val isLocal: Boolean = state == Message.Status.DEFAULT || state == Message.Status.PENDING || state == Message.Status.FAILED || state == Message.Status.FAILED_READ
+  lazy val isDeleted: Boolean = msgType == Message.Type.RECALLED
+  lazy val isFailed: Boolean = state == Message.Status.FAILED || state == Message.Status.FAILED_READ
+  lazy val isEdited: Boolean = !editTime.isEpoch
 
-  def isDeleted = msgType == Message.Type.RECALLED
-
-  lazy val mentions = content.flatMap(_.mentions)
+  lazy val mentions: Seq[Mention] = content.flatMap(_.mentions)
 
   def hasMentionOf(userId: UserId): Boolean = mentions.exists(_.userId.forall(_ == userId)) // a mention with userId == None is a "mention" of everyone, so it counts
 

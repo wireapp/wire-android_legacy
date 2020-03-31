@@ -1,4 +1,4 @@
-package com.waz.zclient.features.settings.main
+package com.waz.zclient.core.ui.backgroundasset
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,14 +10,17 @@ import com.waz.zclient.user.profile.ProfilePictureAsset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
-class SettingsMainViewModel(private val getUserProfilePictureUseCase: GetUserProfilePictureUseCase) : ViewModel() {
+class BackgroundAssetViewModel(private val getUserProfilePictureUseCase: GetUserProfilePictureUseCase) : ViewModel(),
+    BackgroundAssetOwner {
 
     private val _backgroundAsset = MutableLiveData<ProfilePictureAsset>()
-    var backgroundAsset: LiveData<ProfilePictureAsset> = _backgroundAsset
+    override val backgroundAsset: LiveData<*> = _backgroundAsset
 
-    fun fetchBackgroundImage() {
+    override fun fetchBackgroundAsset() {
         getUserProfilePictureUseCase(viewModelScope, Unit) {
-            it.onSuccess { _backgroundAsset.value = it }
+            it.onSuccess {
+                _backgroundAsset.value = it
+            }
         }
     }
 }
