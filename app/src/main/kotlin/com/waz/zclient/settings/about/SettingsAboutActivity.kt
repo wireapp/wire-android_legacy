@@ -7,19 +7,27 @@ import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.createScope
 import com.waz.zclient.core.extension.replaceFragment
+import com.waz.zclient.core.ui.backgroundasset.ActivityBackgroundAssetObserver
+import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetObserver
+import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import com.waz.zclient.features.settings.about.SettingsAboutFragment
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE
 import com.waz.zclient.features.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.activity_settings_about.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
+import org.koin.android.viewmodel.ext.android.viewModel
 
-class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about) {
+@ExperimentalCoroutinesApi
+class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about),
+    BackgroundAssetObserver<AppCompatActivity> by ActivityBackgroundAssetObserver() {
 
     private val scope = createScope(
         scopeId = SETTINGS_SCOPE_ID,
         scopeName = SETTINGS_SCOPE
     )
+
+    private val viewModel by viewModel<BackgroundAssetViewModel>()
 
     @ExperimentalCoroutinesApi
     @InternalCoroutinesApi
@@ -29,6 +37,7 @@ class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         replaceFragment(R.id.activitySettingsAboutLayoutContainer, SettingsAboutFragment.newInstance(), false)
         overridePendingTransition(R.anim.slide_in_left, 0)
+        loadBackground(this, viewModel, activitySettingsAboutConstraintLayout)
     }
 
     override fun onSupportNavigateUp(): Boolean {

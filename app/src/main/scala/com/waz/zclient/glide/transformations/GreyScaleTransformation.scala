@@ -49,5 +49,5 @@ class GreyScaleTransformation extends BitmapTransformation with DerivedLogTag {
 
   override def hashCode(): Int = Tag.hashCode
 
-  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[BlurTransformation]
+  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[GreyScaleTransformation]
 }
