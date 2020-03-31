@@ -144,6 +144,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(selfUserId))
       )
 
+      (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)))
+      )
       (content.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
         Future.successful(Some(convData))
       }
@@ -178,6 +181,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), UserId(), Seq(selfUserId))
       )
 
+      (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(ConversationMemberData(selfUserId, convId, ConversationRole.AdminRole)))
+      )
       (content.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
         Future.successful(Some(convData))
       }
@@ -206,10 +212,14 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         muted = MuteSet.AllMuted
       )
 
+      val otherUserId = UserId()
       val events = Seq(
-        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(UserId()))
+        MemberLeaveEvent(rConvId, RemoteInstant.ofEpochSec(10000), selfUserId, Seq(otherUserId))
       )
 
+      (membersStorage.getByUsers _).expects(Set(selfUserId)).anyNumberOfTimes().returning(
+        Future.successful(IndexedSeq(ConversationMemberData(otherUserId, convId, ConversationRole.MemberRole)))
+      )
       (content.convByRemoteId _).expects(*).anyNumberOfTimes().onCall { id: RConvId =>
         Future.successful(Some(convData))
       }
@@ -238,6 +248,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.remove _).expects(convId).once().returning(Future.successful(()))
+      (membersStorage.getActiveUsers _).expects(convId).once().returning(Future.successful(Seq.empty))
 
       val dummyUserId = UserId()
       val events = Seq(
@@ -268,10 +279,10 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
+      (membersStorage.getActiveUsers _).expects(convId).once().returning(Future.successful(Seq.empty))
 
       //EXPECT
       (convsStorage.remove _).expects(convId).once().returning(Future.successful(()))
-      (membersStorage.delete _).expects(convId).once()
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -298,6 +309,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (receiptStorage.removeAllForMessages _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (folders.removeConversationFromAll _).expects(convId, false).anyNumberOfTimes().returning(Future.successful(()))
       (rolesService.rolesByConvId _).expects(convId).anyNumberOfTimes().returning(Signal.const(Set.empty))
+      (membersStorage.getActiveUsers _).expects(convId).once().returning(Future.successful(Seq.empty))
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -323,6 +335,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       //EXPECT
       (messages.getAssetIds _).expects(Set(messageId)).once().returning(Future.successful(Set(assetId)))
       (assets.deleteAll _).expects(Set(assetId)).once()
+      (membersStorage.getActiveUsers _).expects(convId).once().returning(Future.successful(Seq.empty))
 
       // WHEN
       result(service.convStateEventProcessingStage.apply(rConvId, events))
@@ -354,6 +367,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(messageId)))
       (msgStorage.findMessageIds _).expects(convId).atLeastOnce().returning(Future.successful(Set(messageId)))
       (buttons.deleteAllForMessage _).expects(messageId).atLeastOnce().returning(Future.successful(()))
+      (membersStorage.getActiveUsers _).expects(convId).once().returning(Future.successful(Seq.empty))
 
       //EXPECT
       (receiptStorage.removeAllForMessages _).expects(Set(messageId)).once().returning(Future.successful(()))
@@ -491,6 +505,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (content.convsByRemoteId _).expects(*).returning(Future.successful(Map()))
 
       (membersStorage.setAll _).expects(*).returning(Future.successful(()))
+      (membersStorage.getActiveUsers2 _).expects(Set(convId)).anyNumberOfTimes().returning(
+        Future.successful(Map(convId -> Set(account1Id, from)))
+      )
 
       (users.syncIfNeeded _).expects(*, *).returning(Future.successful(Option(SyncId())))
 

@@ -114,7 +114,7 @@ class UserServiceImpl(selfUserId:        UserId,
       .flatMap(_ => shouldSyncUsers := false)
     }
 
-  val currentConvMembers = for {
+  override val currentConvMembers = for {
     Some(convId) <- selectedConv.selectedConversationId
     membersIds   <- membersStorage.activeMembers(convId)
   } yield membersIds
