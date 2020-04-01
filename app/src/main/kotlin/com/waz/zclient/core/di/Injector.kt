@@ -1,16 +1,17 @@
 package com.waz.zclient.core.di
 
 import android.content.Context
-import com.waz.zclient.accounts.di.accountsModule
-import com.waz.zclient.assets.di.assetsModule
-import com.waz.zclient.clients.di.clientsModule
+import com.waz.zclient.shared.accounts.di.accountsModule
+import com.waz.zclient.shared.assets.di.assetsModule
+import com.waz.zclient.shared.clients.di.clientsModule
 import com.waz.zclient.core.backend.di.backendModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
-import com.waz.zclient.features.auth.registration.di.registrationModules
-import com.waz.zclient.features.settings.di.settingsModules
+import com.waz.zclient.feature.auth.registration.di.registrationModules
+import com.waz.zclient.feature.settings.di.settingsModules
+import com.waz.zclient.shared.activation.di.activationModule
 import com.waz.zclient.storage.di.storageModule
-import com.waz.zclient.user.di.usersModule
+import com.waz.zclient.shared.user.di.usersModule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import org.koin.android.ext.koin.androidContext
@@ -29,21 +30,22 @@ object Injector {
     )
 
     /**
-     * High level feature modules should contain dependencies that can
+     * Shared modules should contain dependencies that can
      * build up multiple features
      */
-    private val highLevelFeatureModules: List<Module> = listOf(
+    private val sharedModules: List<Module> = listOf(
         usersModule,
         clientsModule,
         accountsModule,
-        assetsModule
+        assetsModule,
+        activationModule
     )
 
     /**
-     * Low level feature modules should contain dependencies that build up specific
+     * Feature modules should contain dependencies that build up specific
      * features and don't tend to live outside of that feature
      */
-    private val lowLevelFeatureModules: List<Module> = listOf(
+    private val featureModules: List<Module> = listOf(
         registrationModules,
         settingsModules
     ).flatten()
@@ -54,8 +56,8 @@ object Injector {
             androidContext(context)
             modules(listOf(
                 coreModules,
-                highLevelFeatureModules,
-                lowLevelFeatureModules
+                sharedModules,
+                featureModules
             ).flatten())
         }
     }

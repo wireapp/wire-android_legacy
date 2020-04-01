@@ -28,9 +28,9 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.views.FlatWireButton
+import com.waz.zclient.feature.settings.about.SettingsAboutActivity
+import com.waz.zclient.feature.settings.support.SettingsSupportActivity
 import com.waz.zclient.preferences.views.TextButton
-import com.waz.zclient.settings.about.SettingsAboutActivity
-import com.waz.zclient.settings.support.SettingsSupportActivity
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
 
 trait SettingsView {
