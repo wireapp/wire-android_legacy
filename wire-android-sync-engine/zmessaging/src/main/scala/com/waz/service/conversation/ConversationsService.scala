@@ -120,6 +120,19 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case None => //
   }
 
+  if (teamId.isDefined)
+    for {
+      removeTeamMembers <- userPrefs.preference(UserPreferences.RemoveUncontactedTeamMembers).apply()
+    } if (removeTeamMembers)
+      for {
+        members  <- membersStorage.contents.map(_.keys.map(_._1)).head
+        users    <- usersStorage.contents.map(_.keys).head
+        toRemove =  users.toSet -- members.toSet
+        _        <- if (toRemove.nonEmpty) usersStorage.removeAll(toRemove) else Future.successful(())
+        _        <- userPrefs.setValue(UserPreferences.RemoveUncontactedTeamMembers, false)
+        _        =  verbose(l"Uncontacted team members removed for the team $teamId")
+      } yield ()
+
   val convStateEventProcessingStage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
@@ -202,24 +215,15 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield ()
 
     case MemberLeaveEvent(_, time, from, userIds) =>
-      verbose(l"member leave event, conv.id: ${conv.id}")
       for {
         _              <- deleteMembers(conv.id, userIds.toSet)
-        _ = verbose(l"1")
         selfUserLeaves =  userIds.contains(selfUserId)
-        _ = verbose(l"2")
         _              <- if (selfUserLeaves) content.setConvActive(conv.id, active = false) else Future.successful(())
                           // if the user removed themselves from another device, archived on this device
-        _              <- if (selfUserLeaves && from.equals(selfUserId)) {
-          verbose(l"3.1, time: $time, content: ${Option(content)}")
-          val convState = ConversationState(Option(true), Option(time))
-          verbose(l"3.1.1, convState: $convState")
-                            content.updateConversationState(conv.id, convState)
-        } else {
-          verbose(l"3.2")
+        _              <- if (selfUserLeaves && from.equals(selfUserId))
+                            content.updateConversationState(conv.id, ConversationState(Option(true), Option(time)))
+                          else
                             Future.successful(None)
-        }
-        _ = verbose(l"member leave event done")
       } yield ()
 
     case MemberUpdateEvent(_, _, userId, state) =>
