@@ -1,10 +1,23 @@
 package com.waz.zclient.core.backend.di
 
-import com.waz.zclient.core.backend.BackendConfig
+import com.waz.zclient.core.backend.items.BackendClient
+import com.waz.zclient.core.backend.datasources.BackendDataSource
+import com.waz.zclient.core.backend.BackendRepository
+import com.waz.zclient.core.backend.datasources.local.BackendLocalDataSource
+import com.waz.zclient.core.backend.datasources.remote.BackendApiService
+import com.waz.zclient.core.backend.datasources.remote.BackendRemoteDataSource
+import com.waz.zclient.core.backend.mapper.BackendMapper
+import com.waz.zclient.storage.pref.backend.BackendPreferences
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val backendModule: Module = module {
-    factory { get<BackendConfig>().currentBackend() }
-    factory { BackendConfig() }
+    single { BackendDataSource(get(), get(), get()) as BackendRepository }
+
+    factory { get<BackendClient>().get(get<BackendPreferences>().environment) }
+    factory { BackendClient() }
+    factory { BackendRemoteDataSource(get()) }
+    factory { BackendApiService(get(), get()) }
+    factory { BackendLocalDataSource(get()) }
+    factory { BackendMapper() }
 }

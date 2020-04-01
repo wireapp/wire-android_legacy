@@ -1,6 +1,7 @@
 package com.waz.zclient.core.functional
 
 import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.extension.foldSuspendable
 import kotlinx.coroutines.runBlocking
 
 /**

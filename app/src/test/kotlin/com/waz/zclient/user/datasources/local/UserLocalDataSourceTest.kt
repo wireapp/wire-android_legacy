@@ -5,7 +5,7 @@ import com.waz.zclient.eq
 import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
-import com.waz.zclient.storage.pref.GlobalPreferences
+import com.waz.zclient.storage.pref.global.GlobalPreferences
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
