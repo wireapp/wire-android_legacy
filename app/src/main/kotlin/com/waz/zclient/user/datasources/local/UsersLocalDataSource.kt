@@ -5,7 +5,7 @@ import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestDatabase
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
-import com.waz.zclient.storage.pref.GlobalPreferences
+import com.waz.zclient.storage.pref.global.GlobalPreferences
 import kotlinx.coroutines.flow.Flow
 
 class UsersLocalDataSource constructor(

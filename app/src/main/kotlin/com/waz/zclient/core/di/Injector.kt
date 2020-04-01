@@ -4,6 +4,7 @@ import android.content.Context
 import com.waz.zclient.accounts.di.accountsModule
 import com.waz.zclient.assets.di.assetsModule
 import com.waz.zclient.clients.di.clientsModule
+import com.waz.zclient.core.backend.di.backendModule
 import com.waz.zclient.core.config.configModule
 import com.waz.zclient.core.network.di.networkModule
 import com.waz.zclient.features.auth.registration.di.registrationModules
@@ -21,23 +22,40 @@ import org.koin.core.module.Module
 object Injector {
 
     private val coreModules: List<Module> = listOf(
-        usersModule,
-        clientsModule,
         storageModule,
         networkModule,
-        accountsModule,
         configModule,
+        backendModule
+    )
+
+    /**
+     * High level feature modules should contain dependencies that can
+     * build up multiple features
+     */
+    private val highLevelFeatureModules: List<Module> = listOf(
+        usersModule,
+        clientsModule,
+        accountsModule,
         assetsModule
     )
+
+    /**
+     * Low level feature modules should contain dependencies that build up specific
+     * features and don't tend to live outside of that feature
+     */
+    private val lowLevelFeatureModules: List<Module> = listOf(
+        registrationModules,
+        settingsModules
+    ).flatten()
 
     @JvmStatic
     fun start(context: Context) {
         startKoin {
             androidContext(context)
             modules(listOf(
-                registrationModules,
-                settingsModules,
-                coreModules
+                coreModules,
+                highLevelFeatureModules,
+                lowLevelFeatureModules
             ).flatten())
         }
     }
