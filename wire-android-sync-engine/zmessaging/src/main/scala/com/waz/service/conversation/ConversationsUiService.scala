@@ -281,10 +281,13 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
 
   override def addConversationMembers(conv: ConvId, users: Set[UserId], defaultRole: ConversationRole): Future[Option[SyncId]] =
     (for {
-      true   <- canModifyMembers(conv)
-      added  <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
-      _      <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
-      syncId <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
+      true      <- canModifyMembers(conv)
+      contacted <- members.getByUsers(users)
+      toSync    =  users -- contacted.map(_.userId).toSet
+      _         <- sync.syncUsers(toSync) // data of users found through Search UI is not yet in db
+      added     <- members.updateOrCreateAll(conv, users.map(_ -> defaultRole).toMap) if added.nonEmpty
+      _         <- messages.addMemberJoinMessage(conv, selfUserId, added.map(_.userId))
+      syncId    <- sync.postConversationMemberJoin(conv, added.map(_.userId), defaultRole)
     } yield Option(syncId))
       .recover {
         case NonFatal(e) =>
@@ -294,10 +297,13 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
 
   override def removeConversationMember(conv: ConvId, user: UserId) = {
     (for {
-      true    <- canModifyMembers(conv)
-      Some(_) <- members.remove(conv, user)
-      _       <- messages.addMemberLeaveMessage(conv, selfUserId, user)
-      syncId  <- sync.postConversationMemberLeave(conv, user)
+      true     <- canModifyMembers(conv)
+      Some(_)  <- members.remove(conv, user)
+      toDelete <- if (user != selfUserId) members.getByUsers(Set(user)).map(_.isEmpty)
+                  else Future.successful(false)
+      _        <- if (toDelete) usersStorage.remove(user) else Future.successful(())
+      _        <- messages.addMemberLeaveMessage(conv, selfUserId, user)
+      syncId   <- sync.postConversationMemberLeave(conv, user)
     } yield Option(syncId))
       .recover {
         case NonFatal(e) =>
