@@ -22,7 +22,7 @@ import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import com.waz.api.ContentSearchQuery
-import com.waz.content.MessageIndexStorage
+import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
@@ -60,7 +60,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
   setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getResources.getDimensionPixelSize(R.dimen.search__result__height)))
   setOrientation(LinearLayout.HORIZONTAL)
 
-  private lazy val messagesIndexStorage     = inject[Signal[MessageIndexStorage]]
+  private lazy val messagesStorage          = inject[Signal[MessagesStorage]]
   private lazy val accentColorController    = inject[AccentColorController]
   private lazy val usersController          = inject[UsersController]
 
@@ -70,11 +70,11 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
   private lazy val resultsCount    = ViewUtils.getView(this, R.id.search_result_count).asInstanceOf[TypefaceTextView]
 
   (for {
-    mis      <- messagesIndexStorage
+    storage  <- messagesStorage
     color    <- accentColorController.accentColor
     m        <- message
     q        <- searchedQuery if q.toString().nonEmpty
-    nContent <- Signal.future(mis.getNormalizedContentForMessage(m.id))
+    nContent <- Signal.future(storage.getNormalizedContentForMessage(m.id))
   } yield (m, q, color, nContent)).onUi {
     case (msg, query, color, Some(normalizedContent)) =>
       val spannableString = CollectionUtils.getHighlightedSpannableString(msg.contentString, normalizedContent, query.elements, ColorUtils.injectAlpha(0.5f, color.color), StartEllipsisThreshold)

@@ -62,5 +62,7 @@ class GlyphOverlayTransformation(glyph: String) extends BitmapTransformation wit
 
   override def hashCode(): Int = Tag.hashCode
 
-  override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[BlurTransformation]
+  override def equals(obj: scala.Any): Boolean =
+    obj.isInstanceOf[GlyphOverlayTransformation] &&
+      obj.asInstanceOf[GlyphOverlayTransformation].Tag == this.Tag
 }

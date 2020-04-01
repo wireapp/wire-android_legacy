@@ -48,7 +48,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migratePhoneNumbersTable(database)
         migrateMessageDeletionTable(database)
         migrateEditHistoryTable(database)
-        migrateMessageContentIndexTable(database)
         migratePushNotificationEvents(database)
         migrateReadRecieptsTable(database)
         migratePropertiesTable(database)
@@ -511,36 +510,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             tempTableName = tempTableName,
             createTempTable = createTempTable
         )
-    }
-
-    private fun migrateMessageContentIndexTable(database: SupportSQLiteDatabase) {
-        val tempTableName = "MessageContentIndexTemp"
-        val originalTableName = "MessageContentIndex"
-        val messageId = "message_id"
-        val convId = "conv_id"
-        val content = "content"
-        val time = "time"
-        val rowId = "rowid"
-        val createTempTable = """
-             CREATE VIRTUAL TABLE $tempTableName using fts3(
-             $messageId TEXT NOT NULL,
-             $convId TEXT NOT NULL,
-             $content TEXT NOT NULL,
-             $time INTEGER NOT NULL,
-             $rowId INTEGER PRIMARY KEY NOT NULL 
-             )""".trimIndent()
-
-        val copyAll = """INSERT INTO $tempTableName ($messageId, $convId, $content, $time, $rowId)
-        SELECT $messageId, $convId, $content, $time, $rowId FROM $originalTableName""".trimIndent()
-
-        val dropOldTable = "DROP TABLE $originalTableName"
-        val renameTableBack = "ALTER TABLE $tempTableName RENAME TO $originalTableName"
-        with(database) {
-            execSQL(createTempTable)
-            execSQL(copyAll)
-            execSQL(dropOldTable)
-            execSQL(renameTableBack)
-        }
     }
 
     private fun migratePushNotificationEvents(database: SupportSQLiteDatabase) {

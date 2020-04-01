@@ -251,8 +251,8 @@ class CursorController(implicit inj: Injector, ctx: Context, evc: EventContext)
   def onApproveEditMessage(): Unit =
     for {
       cId <- conversationController.currentConvId.head
-      cs <- zms.head.map(_.convsUi)
-      m <- editingMsg.head if m.isDefined
+      cs  <- zms.head.map(_.convsUi)
+      m   <- editingMsg.head if m.isDefined
       msg = m.get
       (CursorText(text, mentions), _) <- enteredText.head
     } {

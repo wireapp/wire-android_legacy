@@ -7,19 +7,10 @@ import com.waz.zclient.storage.pref.backend.BackendPreferences
 
 object InvalidBackendConfig : FeatureFailure()
 
-class BackendLocalDataSource(private val backendPreferences: BackendPreferences) {
-
-    private val customBackendConfig = CustomBackendPreferences(
-        backendPreferences.environment,
-        CustomBackendPrefEndpoints(
-            backendPreferences.baseUrl,
-            backendPreferences.blacklistUrl,
-            backendPreferences.teamsUrl,
-            backendPreferences.accountsUrl,
-            backendPreferences.websiteUrl
-        )
-    )
-
+class BackendLocalDataSource(
+    private val backendPreferences: BackendPreferences,
+    private val customBackendConfig: CustomBackendPreferences
+) {
     fun getCustomBackendConfig(): Either<Failure, CustomBackendPreferences> =
         if (customBackendConfig.isValid()) {
             Either.Right(customBackendConfig)

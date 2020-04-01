@@ -1,15 +1,13 @@
 package com.waz.zclient.storage.userdatabase.messages
 
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
-import com.waz.zclient.storage.di.StorageModule.getUserDatabase
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NAME, 126) {
+class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
 
     @Test
     fun givenMessageInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
@@ -63,7 +61,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NA
             assetId = assetId,
             openHelper = testOpenHelper)
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allMessages()[0]) {
@@ -106,7 +104,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NA
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allMessageDeletions()[0]) {
@@ -133,7 +131,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NA
             openHelper = testOpenHelper
         )
 
-        validateMigration()
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
 
         runBlocking {
             with(allLikes()[0]) {
@@ -145,32 +143,11 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(TEST_DB_NA
         }
     }
 
-    private fun validateMigration() =
-        testHelper.validateMigration(
-            TEST_DB_NAME,
-            127,
-            true,
-            USER_DATABASE_MIGRATION_126_TO_127
-        )
-
-    private fun getUserDb() =
-        getUserDatabase(
-            getApplicationContext(),
-            TEST_DB_NAME,
-            UserDatabase.migrations
-        )
-
     private suspend fun allMessages() =
-        getUserDb().messagesDao().allMessages()
-
+        getDatabase().messagesDao().allMessages()
 
     private suspend fun allMessageDeletions() =
-        getUserDb().messagesDeletionDao().allMessageDeletions()
+        getDatabase().messagesDeletionDao().allMessageDeletions()
 
-    private suspend fun allLikes() =
-        getUserDb().likesDao().allLikes()
-
-    companion object {
-        private const val TEST_DB_NAME = "userDatabase.db"
-    }
+    private suspend fun allLikes() = getDatabase().likesDao().allLikes()
 }

@@ -205,7 +205,7 @@ object MessageBottomSheetDialog {
     case object Edit extends MessageAction(R.id.message_bottom_menu_item_edit, R.string.glyph__edit, R.string.message_bottom_menu_action_edit) {
       override def enabled(msg: MessageData, zms: ZMessaging, p: Params, assets: AssetsController): Signal[Boolean] =
         msg.msgType match {
-          case TEXT_EMOJI_ONLY | TEXT | RICH_MEDIA if !msg.isEphemeral && msg.userId == zms.selfUserId =>
+          case TEXT_EMOJI_ONLY | TEXT | RICH_MEDIA if !msg.isEphemeral && msg.userId == zms.selfUserId && !msg.isFailed =>
             if (p.collection) Signal const false
             else isMemberOfConversation(msg.convId, zms)
           case _ =>
