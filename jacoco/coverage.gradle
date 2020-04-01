@@ -1,0 +1,51 @@
+/**
+ * Wire
+ * Copyright (C) 2020 Wire Swiss GmbH
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+subprojects {
+
+    apply plugin: 'jacoco'
+
+    task coverage(type: JacocoReport) {
+
+        def buildVariant
+        if (project.name == 'app') buildVariant = "DevDebug" else buildVariant = 'Debug'
+
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+
+        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+        def kotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/$buildVariant/com/waz/zclient", excludes: fileFilter)
+        def javaScalaTree = fileTree(dir: "$project.buildDir/intermediates/javac/$buildVariant/compile" + buildVariant + "JavaWithJavac/classes/com/waz", excludes: fileFilter)
+
+        def kotlinSrc = "$project.projectDir/src/main/kotlin"
+        def scalaSrc = "$project.projectDir/src/main/scala"
+        def javaSrc = "$project.projectDir/src/main/java"
+
+        sourceDirectories = files([kotlinSrc, scalaSrc, javaSrc])
+        classDirectories = files([kotlinTree, javaScalaTree])
+        executionData = fileTree(dir: project.buildDir, includes: [
+            "jacoco/test" + buildVariant + "UnitTest.exec", 'outputs/code-coverage/connected/*coverage.ec'
+        ])
+    }
+}
+
+task jacocoTestReport()
+
+subprojects { project -> jacocoTestReport.dependsOn("${project.path}:coverage") }
