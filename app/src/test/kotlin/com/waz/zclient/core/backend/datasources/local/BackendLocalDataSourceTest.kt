@@ -9,7 +9,7 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 
-class BackendPrefsDataSourceTest : UnitTest() {
+class BackendLocalDataSourceTest : UnitTest() {
 
     private lateinit var backendPrefsDataSource: BackendLocalDataSource
 
