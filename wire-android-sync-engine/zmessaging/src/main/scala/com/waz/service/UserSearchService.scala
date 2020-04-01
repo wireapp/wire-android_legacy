@@ -304,7 +304,7 @@ object UserSearchService {
                       Name(name),
                       accent_id,
                       handle.fold(Handle.Empty)(Handle(_)),
-                      team_id.map(TeamId.apply))
+                      team.map(TeamId.apply))
     }
   }
 

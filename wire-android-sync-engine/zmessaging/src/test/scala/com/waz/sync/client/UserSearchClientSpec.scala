@@ -21,7 +21,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
           |     "handle": "ma75",
           |     "name": "ma",
           |     "id": "d9700541-9b05-47b5-b85f-4a195593af71",
-          |     "team_id": "399a5fd1-9a2b-4339-a005-09518baba91b"
+          |     "team": "399a5fd1-9a2b-4339-a005-09518baba91b"
           |   },
           |   {
           |     "name": "MA",
@@ -44,7 +44,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         name = "ma",
         handle = Some("ma75"),
         accent_id = None,
-        team_id = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
+        team = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
         assets = None
       )
 
@@ -53,7 +53,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         name = "MA",
         handle = None,
         accent_id = Some(0),
-        team_id = None,
+        team = None,
         assets = None
       )
 
@@ -78,7 +78,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
           |      "type": "image"
           |    }
           |  ],
-          |  "team_id": "399a5fd1-9a2b-4339-a005-09518baba91b",
+          |  "team": "399a5fd1-9a2b-4339-a005-09518baba91b",
           |  "name": "aaa",
           |  "accent_id": 2,
           |  "handle": "aaa"
@@ -100,7 +100,7 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
         name = "aaa",
         handle = Some("aaa"),
         accent_id = Some(2),
-        team_id = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
+        team = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
         assets = Some(Seq(asset))
       )
 

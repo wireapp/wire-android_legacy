@@ -23,7 +23,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
     name = "ma",
     handle = Some("ma75"),
     accent_id = None,
-    team_id = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
+    team = Some("399a5fd1-9a2b-4339-a005-09518baba91b"),
     assets = None
   )
 
