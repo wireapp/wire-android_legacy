@@ -229,20 +229,6 @@ import org.threeten.bp.Instant
 
   }
 
-  scenario("Populate MessageContentIndex in 83") {
-    implicit val db = loadDb("/db/zmessaging_60.db")
-    dbHelper.onUpgrade(db, 60, 83)
-
-    val msgs = MessageDataDao.list.filter(m => MessageContentIndex.TextMessageTypes(m.msgType)).sortBy(_.time)
-    val index = MessageContentIndexDao.list.sortBy(_.time)
-    msgs should not be empty
-    index should have size msgs.size
-
-    msgs.zip(index) foreach { case (msg, idx) =>
-      idx.time shouldEqual msg.time
-      idx.content shouldEqual ContentSearchQuery.transliterated(msg.contentString)
-    }
-  }
 
   def countUsers(implicit db: DB) = db.query("SELECT * FROM Users").getCount.toLong
 }
