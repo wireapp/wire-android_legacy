@@ -44,7 +44,7 @@ import com.waz.permissions.PermissionsService
 import com.waz.service._
 import com.waz.service.assets.{AssetDetailsService, AssetPreviewService, AssetService, AssetStorage, UriHelper}
 import com.waz.service.call.GlobalCallingService
-import com.waz.service.conversation.{ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, ConversationsUiService, FoldersService, SelectedConversationService}
 import com.waz.service.messages.MessagesService
 import com.waz.service.teams.TeamsService
 import com.waz.service.tracking.TrackingService
@@ -173,6 +173,7 @@ object WireApplication extends DerivedLogTag {
 
     // services  and storages of the current zms
     bind [Signal[ConversationsService]]          to inject[Signal[ZMessaging]].map(_.conversations)
+    bind [Signal[ConversationsContentUpdater]]   to inject[Signal[ZMessaging]].map(_.convsContent)
     bind [Signal[SelectedConversationService]]   to inject[Signal[ZMessaging]].map(_.selectedConv)
     bind [Signal[ConversationsUiService]]        to inject[Signal[ZMessaging]].map(_.convsUi)
     bind [Signal[UserService]]                   to inject[Signal[ZMessaging]].map(_.users)
