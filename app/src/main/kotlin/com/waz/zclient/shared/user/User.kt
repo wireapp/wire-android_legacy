@@ -1,0 +1,31 @@
+package com.waz.zclient.shared.user
+
+data class User(
+    val id: String,
+    val teamId: String? = null,
+    val name: String,
+    val email: String? = null,
+    val phone: String? = null,
+    val trackingId: String? = null,
+    val picture: String? = null,
+    val accentId: Int? = null,
+    val sKey: String? = null,
+    val connection: String? = null,
+    val connectionTimestamp: Int? = null,
+    val connectionMessage: String? = null,
+    val conversation: String? = null,
+    val relation: String? = null,
+    val timestamp: Int? = null,
+    val verified: String? = null,
+    val deleted: Boolean? = null,
+    val availability: Int? = null,
+    val handle: String? = null,
+    val providerId: String? = null,
+    val integrationId: String? = null,
+    val expiresAt: Int? = null,
+    val managedBy: String? = null,
+    val selfPermission: Int? = null,
+    val copyPermission: Int? = null,
+    val createdBy: String? = null,
+    var locale: String? = null
+)

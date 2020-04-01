@@ -2,8 +2,8 @@ package com.waz.zclient.core.ui.backgroundasset
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.framework.livedata.observeOnce
-import com.waz.zclient.user.profile.GetUserProfilePictureUseCase
-import com.waz.zclient.user.profile.ProfilePictureAsset
+import com.waz.zclient.shared.user.profile.GetUserProfilePictureUseCase
+import com.waz.zclient.shared.user.profile.ProfilePictureAsset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.collect
