@@ -36,7 +36,7 @@ class UserLocalDataSourceTest : UnitTest() {
 
     @Before
     fun setup() {
-        lenient().`when`(userDatabase.userDbService()).thenReturn(userDao)
+        lenient().`when`(userDatabase.userDao()).thenReturn(userDao)
         `when`(globalPreferences.activeUserId).thenReturn(TEST_USER_ID)
         usersLocalDataSource = UsersLocalDataSource(userDao, globalPreferences)
     }

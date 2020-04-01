@@ -20,7 +20,7 @@ package com.waz.znet2
 import java.io.{ByteArrayInputStream, InputStream}
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
-import java.net.Proxy
+import java.net.{Proxy, UnknownServiceException}
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
@@ -63,6 +63,9 @@ class HttpClientOkHttpImpl(client: OkHttpClient)(implicit protected val ec: Exec
         CancellableFuture.lift(
           future = Future { okCall.execute() }
             .recoverWith {
+              case ex: UnknownServiceException =>
+                error(l"failure while getting okHttp response, unknown service.", ex)
+                Future.failed(UnknownServiceError(ex))
               case err =>
                 error(l"failure while getting okHttp response.", err)
                 Future.failed(ConnectionError(err))

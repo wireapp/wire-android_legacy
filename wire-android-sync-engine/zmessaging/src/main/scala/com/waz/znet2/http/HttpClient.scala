@@ -17,6 +17,8 @@
  */
 package com.waz.znet2.http
 
+import java.net.UnknownServiceException
+
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.threading.CancellableFuture
@@ -67,6 +69,7 @@ object HttpClient {
   case class EncodingError(err: Throwable)                                extends HttpClientError
   case class DecodingError(err: Throwable, response: Response[EmptyBody]) extends HttpClientError
   case class ConnectionError(err: Throwable)                              extends HttpClientError
+  case class UnknownServiceError(ex: UnknownServiceException)             extends HttpClientError
   case class UnknownError(err: Throwable)                                 extends HttpClientError
 
   trait CustomErrorConstructor[E] {

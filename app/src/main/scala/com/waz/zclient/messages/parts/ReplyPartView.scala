@@ -111,7 +111,7 @@ abstract class ReplyPartView(context: Context, attrs: AttributeSet, style: Int)
     .map(getTimeStamp)
     .onUi(timestamp.setText)
 
-  quotedMessage.map(!_.editTime.isEpoch).onUi { edited =>
+  quotedMessage.map(_.isEdited).onUi { edited =>
     name.setEndCompoundDrawable(if (edited) Some(WireStyleKit.drawEdit) else None)
   }
 

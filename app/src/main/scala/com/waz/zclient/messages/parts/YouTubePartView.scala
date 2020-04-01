@@ -30,8 +30,8 @@ import com.waz.service.messages.MessageAndLikes
 import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.common.controllers.BrowserController
+import com.waz.zclient.core.images.transformations.DarkenTransformation
 import com.waz.zclient.glide.WireGlide
-import com.waz.zclient.glide.transformations.DarkenTransformation
 import com.waz.zclient.messages.MessageView.MsgBindOptions
 import com.waz.zclient.messages.{ClickableViewPart, MsgPart}
 import com.waz.zclient.ui.text.GlyphTextView
@@ -71,7 +71,7 @@ class YouTubePartView(context: Context, attrs: AttributeSet, style: Int)
   image.onUi { id =>
     WireGlide(context)
       .load(id)
-      .apply(new RequestOptions().transform(new DarkenTransformation((alphaOverlay * 255).toInt)))
+      .apply(new RequestOptions().transform(new DarkenTransformation((alphaOverlay * 255).toInt, 1)))
       .into(previewImage)
   }
 
