@@ -55,7 +55,6 @@ class UserServiceSpec extends AndroidFreeSpec {
   val assetsStorage   = mock[AssetStorage]
   val credentials     = mock[CredentialsUpdateClient]
   val selectedConv    = mock[SelectedConversationService]
-  val teamSize        = mock[TeamSizeThreshold]
   val userPrefs       = new TestUserPreferences
 
   (usersStorage.optSignal _).expects(*).anyNumberOfTimes().onCall((id: UserId) => Signal.const(users.find(_.id == id)))
@@ -72,7 +71,7 @@ class UserServiceSpec extends AndroidFreeSpec {
     new UserServiceImpl(
       users.head.id, None, accountsService, accountsStrg, usersStorage, membersStorage,
       userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
-      teamSize, selectedConv
+      selectedConv
     )
   }
 
@@ -94,7 +93,7 @@ class UserServiceSpec extends AndroidFreeSpec {
       val userService = new UserServiceImpl(
         users.head.id, someTeamId, accountsService, accountsStrg, usersStorage, membersStorage,
         userPrefs, pushService, assetService, usersClient, sync, assetsStorage, credentials,
-        teamSize, selectedConv
+        selectedConv
       )
 
       //expect
@@ -107,31 +106,9 @@ class UserServiceSpec extends AndroidFreeSpec {
       }
 
       (sync.postAvailability _).expects(after.availability).returning(Future.successful(SyncId()))
-      (teamSize.runIfBelowStatusPropagationThreshold _).expects(*).onCall(completionHandlerThatExecutesFunction)
 
       //when
       result(userService.updateAvailability(Availability.Busy))
-    }
-
-    scenario("it does not propagate activity status the team is above the threshold") {
-
-      //given
-      val id = me.id
-      val teamId = TeamId("Wire")
-      val availability = me.availability
-      availability should not equal Availability.Busy
-
-      //expect
-      val before = me.copy()
-      val after = me.copy(availability = Availability.Busy)
-      (usersStorage.update _).expects(id, *).once().onCall { (_, updater) =>
-        updater(before) shouldEqual after
-        Future.successful(Some((before, after)))
-      }
-      (teamSize.runIfBelowStatusPropagationThreshold _).expects(*).onCall(completionHandlerThatDoesNotExecuteFunction)
-
-      //when
-      result(getService.updateAvailability(Availability.Busy))
     }
   }
 

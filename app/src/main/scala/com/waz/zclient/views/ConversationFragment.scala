@@ -23,11 +23,11 @@ import android.Manifest.permission.{CAMERA, READ_EXTERNAL_STORAGE, RECORD_AUDIO,
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
-import androidx.annotation.Nullable
 import android.text.TextUtils
 import android.view._
 import android.view.animation.Animation
 import android.widget.{AbsListView, FrameLayout, TextView}
+import androidx.annotation.Nullable
 import androidx.appcompat.widget.{ActionMenuView, Toolbar}
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.waz.api.ErrorType
@@ -35,8 +35,8 @@ import com.waz.content.{GlobalPreferences, UsersStorage}
 import com.waz.model.ConversationData.ConversationType
 import com.waz.model.{AccentColor, MessageContent => _, _}
 import com.waz.permissions.PermissionsService
+import com.waz.service.ZMessaging
 import com.waz.service.assets.{Content, ContentForUpload}
-import com.waz.service.{TeamSizeThreshold, ZMessaging}
 import com.waz.service.call.CallingService
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.events.{EventStreamWithAuxSignal, Signal}
@@ -162,8 +162,6 @@ class ConversationFragment extends FragmentHelper {
   private lazy val mentionsList = view[RecyclerView](R.id.mentions_list)
   private lazy val replyView = view[ReplyView](R.id.reply_view)
 
-  private var hideUserStatus = false
-
   private def showMentionsList(visible: Boolean): Unit = {
     mentionsList.foreach(_.setVisible(visible))
     messagesOpacity.foreach(_.setVisible(visible))
@@ -205,10 +203,6 @@ class ConversationFragment extends FragmentHelper {
     zms.flatMap(_.errors.getErrors).onUi { _.foreach(handleSyncError) }
 
     convController.currentConvName.onUi { updateTitle }
-
-    TeamSizeThreshold.shouldHideStatus(accountsController.teamId, usersStorage).foreach { hide =>
-      hideUserStatus = hide
-    }(Threading.Ui)
 
     cancelPreviewOnChange.onUi {
       case (change, Some(true)) if !change.noChange => imagePreviewCallback.onCancelPreview()
@@ -421,7 +415,7 @@ class ConversationFragment extends FragmentHelper {
 
       subs += Signal(v.mentionSearchResults, accountsController.teamId, inject[ThemeController].currentTheme).onUi {
         case (data, teamId, theme) =>
-          mentionCandidatesAdapter.setData(data, teamId, theme, hideUserStatus)
+          mentionCandidatesAdapter.setData(data, teamId, theme)
           mentionsList.foreach(_.scrollToPosition(data.size - 1))
       }
 

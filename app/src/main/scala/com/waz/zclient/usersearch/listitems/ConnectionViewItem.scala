@@ -39,7 +39,6 @@ case class ConnectionViewItem(data: ConnectionViewModel) extends SearchViewItem 
 case class ConnectionViewModel(indexVal:              Int,
                                idVal:                 Long,
                                isConnected:           Boolean,
-                               shouldHideUserStatus:  Boolean,
                                results:               Seq[UserData],
                                name:                  Name = Name.Empty,
                                team:                  Option[TeamData])
