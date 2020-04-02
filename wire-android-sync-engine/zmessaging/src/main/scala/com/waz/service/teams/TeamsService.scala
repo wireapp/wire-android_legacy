@@ -22,7 +22,6 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.ConversationData.ConversationDataDao
 import com.waz.model._
 import com.waz.service.EventScheduler.Stage
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
@@ -32,10 +31,12 @@ import com.waz.sync.{SyncRequestService, SyncServiceHandle}
 import com.waz.threading.{CancellableFuture, SerialDispatchQueue}
 import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.waz.utils.events.{AggregatingSignal, EventStream, RefreshingSignal, Signal}
-import com.waz.utils.{ContentChange, RichFuture}
+import com.waz.utils.{ContentChange, RichFuture, RichInstant}
+import org.threeten.bp.Instant
 
 import scala.collection.Seq
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 //TODO - return Signals of the search results for UI??
 trait TeamsService {
@@ -76,13 +77,16 @@ class TeamsServiceImpl(selfUser:           UserId,
   private implicit val dispatcher = SerialDispatchQueue()
 
   private val shouldSyncTeam = userPrefs.preference(UserPreferences.ShouldSyncTeam)
+  private val lastTeamUpdate = userPrefs.preference(UserPreferences.LastTeamUpdate)
 
-  for {
-    shouldSync <- shouldSyncTeam()
-  } if (shouldSync && teamId.isDefined) {
-    verbose(l"Syncing the team $teamId")
-    sync.syncTeam().flatMap(_ => shouldSyncTeam := false)
-  }
+  if (teamId.isDefined)
+    for {
+      shouldSync <- shouldSyncTeam()
+      lastUpdate <- lastTeamUpdate()
+    } if (shouldSync || lastUpdate.isBefore(Instant.now() - 24.hours)) {
+      verbose(l"Syncing the team $teamId")
+      sync.syncTeam().flatMap(_ => shouldSyncTeam := false) // lastTeamUpdate is refreshed in onTeamSynced
+    }
 
   override val eventsProcessingStage: Stage.Atomic = EventScheduler.Stage[TeamEvent] { (_, events) =>
     verbose(l"Handling events: $events")
@@ -163,8 +167,9 @@ class TeamsServiceImpl(selfUser:           UserId,
   override def onTeamSynced(team: TeamData, roles: Set[ConversationRole]): Future[Unit] = {
     verbose(l"onTeamSynced: team: $team")
     for {
-      _           <- teamStorage.insert(team)
-      _           <- rolesService.setDefaultRoles(roles)
+      _ <- teamStorage.insert(team)
+      _ <- rolesService.setDefaultRoles(roles)
+      _ <- lastTeamUpdate := Instant.now()
     } yield {}
   }
 
@@ -194,6 +199,8 @@ class TeamsServiceImpl(selfUser:           UserId,
     teamStorage.update(id, team => team.copy (
       name    = name.getOrElse(team.name),
       icon    = icon)
+    ).map(_ =>
+      lastTeamUpdate := Instant.now()
     )
   }
 
@@ -245,7 +252,7 @@ class TeamsServiceImpl(selfUser:           UserId,
   private def getTeamConversations = teamId match {
     case None => Future.successful(Set.empty)
     case Some(id) => verbose(l"searchTeamConversations: team: $teamId")
-      import ConversationDataDao._
+      import com.waz.model.ConversationData.ConversationDataDao._
       convsStorage.find(_.team.contains(id), db => iterating(find(Team, Some(id))(db)), identity).map(_.toSet)
   }
 
