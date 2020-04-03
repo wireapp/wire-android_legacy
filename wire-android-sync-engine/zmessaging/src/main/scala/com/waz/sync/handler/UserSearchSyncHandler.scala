@@ -26,7 +26,6 @@ import com.waz.sync.client.UserSearchClient
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
-import scala.concurrent.Future.successful
 
 class UserSearchSyncHandler(userSearch: UserSearchService,
                             client: UserSearchClient,
@@ -45,11 +44,11 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
     }
   }
 
-  def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.flatMap {
+  def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.map {
     case Right(Some(user)) =>
       debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
       userSearch.updateExactMatch(user)
-      successful(SyncResult.Success)
-    case Left(error)       => successful(SyncResult(error))
+      SyncResult.Success
+    case Left(error)       => SyncResult(error)
   }
 }
