@@ -7,20 +7,35 @@ import com.waz.zclient.storage.pref.backend.BackendPreferences
 
 object InvalidBackendConfig : FeatureFailure()
 
-class BackendLocalDataSource(
-    private val backendPreferences: BackendPreferences,
-    private val customBackendConfig: CustomBackendPreferences
-) {
-    fun getCustomBackendConfig(): Either<Failure, CustomBackendPreferences> =
-        if (customBackendConfig.isValid()) {
-            Either.Right(customBackendConfig)
-        } else Either.Left(InvalidBackendConfig)
+class BackendLocalDataSource(private val backendPreferences: BackendPreferences) {
 
-    fun updateCustomBackendConfig(configUrl: String, backendPreferences: CustomBackendPreferences) {
+    fun environment() = backendPreferences.environment
+
+    private fun readCustomBackendConfig(): CustomBackendPreferences = with(backendPreferences) {
+        CustomBackendPreferences(
+            title = environment,
+            prefEndpoints = CustomBackendPrefEndpoints(
+                backendUrl = baseUrl,
+                websocketUrl = websocketUrl,
+                blacklistUrl = blacklistUrl,
+                teamsUrl = teamsUrl,
+                accountsUrl = accountsUrl,
+                websiteUrl = websiteUrl
+            ))
+    }
+
+    fun backendConfig(): Either<Failure, CustomBackendPreferences> =
+        readCustomBackendConfig().let {
+            if (it.isValid()) Either.Right(it)
+            else Either.Left(InvalidBackendConfig)
+        }
+
+    fun updateBackendConfig(configUrl: String, backendPreferences: CustomBackendPreferences) {
         with(this.backendPreferences) {
             customConfigUrl = configUrl
             environment = backendPreferences.title
             baseUrl = backendPreferences.prefEndpoints.backendUrl
+            websocketUrl = backendPreferences.prefEndpoints.websocketUrl
             blacklistUrl = backendPreferences.prefEndpoints.blacklistUrl
             accountsUrl = backendPreferences.prefEndpoints.accountsUrl
             teamsUrl = backendPreferences.prefEndpoints.teamsUrl
