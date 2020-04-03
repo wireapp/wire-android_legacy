@@ -35,7 +35,8 @@ case class SectionViewItem(data: SectionViewModel) extends SearchViewItem {
 
 case class SectionViewModel(section:  Int,
                             indexVal: Int,
-                            name:     Name = Name.Empty)
+                            name:     Name = Name.Empty,
+                            title: Int = 0)
 
 object SectionViewItem {
   val TopUsersSection           = 0

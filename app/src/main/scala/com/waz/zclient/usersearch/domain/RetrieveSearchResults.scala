@@ -29,7 +29,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.usersearch.listitems._
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.collection.mutable
 
@@ -129,7 +129,13 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
     def addContacts(): Unit = {
       if (localResults.nonEmpty) {
-        val contactsSectionHeader = new SectionViewItem(SectionViewModel(ContactsSection, 0, teamName))
+        val contactsSectionTitle = if (searchController.filter.currentValue.forall(_.isEmpty)) {
+            R.string.people_picker__search_result_connections_non_searched_header_title
+        } else {
+            R.string.people_picker__search_result_connections_searched_header_title
+        }
+
+        val contactsSectionHeader = new SectionViewItem(SectionViewModel(ContactsSection, 0, teamName, contactsSectionTitle))
         mergedResult = mergedResult ++ Seq(contactsSectionHeader)
         var contactsSection = Seq[SearchViewItem]()
 
