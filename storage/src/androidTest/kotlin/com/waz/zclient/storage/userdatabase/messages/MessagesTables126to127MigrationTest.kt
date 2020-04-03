@@ -143,6 +143,34 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
         }
     }
 
+    @Test
+    fun givenMessageContentIndexInsertedIntoMessageContentIndexTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+
+        val messageId = "testMessageId"
+        val conversationId = "testConversationId"
+        val content = "content"
+        val timestamp = 1584710479
+
+        MessageContentIndexTableTestHelper.insertMessageContentIndex(
+            messageId = messageId,
+            conversationId = conversationId,
+            content = content,
+            timestamp = timestamp,
+            openHelper = testOpenHelper
+        )
+
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+
+        runBlocking {
+            with(allMessageContentIndexes()[0]) {
+                assert(this.messageId == messageId)
+                assert(this.convId == conversationId)
+                assert(this.content == content)
+                assert(this.timestamp == timestamp)
+            }
+        }
+    }
+
     private suspend fun allMessages() =
         getDatabase().messagesDao().allMessages()
 
@@ -150,4 +178,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
         getDatabase().messagesDeletionDao().allMessageDeletions()
 
     private suspend fun allLikes() = getDatabase().likesDao().allLikes()
+
+    private suspend fun allMessageContentIndexes() =
+        getDatabase().messageContentIndexDao().allMessageContentIndexes()
 }

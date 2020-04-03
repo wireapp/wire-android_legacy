@@ -30,9 +30,8 @@ case class ContentSearchQuery(originalString: String){
       .map(transliterated)
       .toSet
 
-  lazy val query = toString
-
   override def toString = elements.mkString(" ")
+  def toFtsQuery = elements.map(_ + "*").mkString(" ")
 
   def isEmpty = elements.isEmpty
 }
