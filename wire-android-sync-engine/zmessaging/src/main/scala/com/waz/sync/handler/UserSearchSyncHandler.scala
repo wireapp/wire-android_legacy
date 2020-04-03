@@ -36,12 +36,12 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
 
   def syncSearchQuery(query: SearchQuery): Future[SyncResult] = {
     debug(l"starting sync for: $query")
-    client.getContacts(query).future flatMap {
+    client.getContacts(query).future.map {
       case Right(results) =>
         userSearch.updateSearchResults(query, results)
-        successful(SyncResult.Success)
-      case Left(error) =>
-        successful(SyncResult(error))
+        SyncResult.Success
+      case Left(error)    =>
+        SyncResult(error)
     }
   }
 
@@ -50,6 +50,6 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
       debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
       userSearch.updateExactMatch(user)
       successful(SyncResult.Success)
-    case Left(error) => successful(SyncResult(error))
+    case Left(error)       => successful(SyncResult(error))
   }
 }
