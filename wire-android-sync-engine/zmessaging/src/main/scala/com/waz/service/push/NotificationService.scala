@@ -73,6 +73,8 @@ class NotificationServiceImpl(selfUserId:      UserId,
                               clock:           Clock) extends NotificationService {
 
   import Threading.Implicits.Background
+  import EventContext.Implicits.global
+
   implicit lazy val logTag: LogTag = accountTag[NotificationService](selfUserId)
 
   private val schedulePushNotificationsToUi = Signal(false)
@@ -81,15 +83,15 @@ class NotificationServiceImpl(selfUserId:      UserId,
     case (true, false) =>
       pushNotificationsToUi().map { _ => schedulePushNotificationsToUi ! false }
     case _ =>
-  }(EventContext.Global)
+  }
 
   uiController.notificationsSourceVisible { sources =>
     sources.get(selfUserId).map(Some(_)).foreach(dismissNotifications)
-  } (EventContext.Global) //TODO account event context
+  }
 
   /**
-    * Removes all notifications that are being displayed for the given set of input conversations and updates the UI
-    * with all remaining notifications
+    * Removes from storage all notifications that are being displayed for the given set of input conversations.
+    * The notifications in UI are cleared separately, in MessageNotificationsController.
     *
     * @param forConvs the conversations for which to remove notifications, or None if all notifications should be cleared.
     */
@@ -102,7 +104,6 @@ class NotificationServiceImpl(selfUserId:      UserId,
         case Some(convs) => nots.filter(n => convs.contains(n.conv))
       }
       _ <- storage.removeAll(toRemove.map(_.id))
-      _ =  if (toRemove.nonEmpty) schedulePushNotificationsToUi ! true
     } yield {}
   }
 
