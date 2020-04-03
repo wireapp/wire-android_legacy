@@ -136,3 +136,6 @@
   **[] $VALUES;
   public *;
 }
+
+# Coroutines
+-keep class kotlinx.coroutines.experimental.android.AndroidExceptionPreHandler { *; }
