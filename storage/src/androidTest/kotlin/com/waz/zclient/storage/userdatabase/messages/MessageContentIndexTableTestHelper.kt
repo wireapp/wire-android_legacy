@@ -8,20 +8,17 @@ class MessageContentIndexTableTestHelper private constructor() {
 
     companion object {
         private const val MESSAGES_CONTENT_INDEX_TABLE_NAME = "MessageContentIndex"
-        private const val MESSAGES_CONTENT_INDEX_ROW_ID_COL = "rowid"
         private const val MESSAGES_CONTENT_INDEX_MESSAGE_ID_COL = "message_id"
         private const val MESSAGES_CONTENT_INDEX_CONV_ID_COL = "conv_id"
         private const val MESSAGES_CONTENT_INDEX_CONTENT_COL = "content"
         private const val MESSAGES_CONTENT_INDEX_TIME_COL = "time"
 
-        fun insertMessageContentIndex(rowId: Int,
-                                      messageId: String,
+        fun insertMessageContentIndex(messageId: String,
                                       conversationId: String,
                                       content: String,
                                       timestamp: Int, openHelper: DbSQLiteOpenHelper) {
 
             val contentValues = ContentValues().also {
-                it.put(MESSAGES_CONTENT_INDEX_ROW_ID_COL, rowId)
                 it.put(MESSAGES_CONTENT_INDEX_MESSAGE_ID_COL, messageId)
                 it.put(MESSAGES_CONTENT_INDEX_CONV_ID_COL, conversationId)
                 it.put(MESSAGES_CONTENT_INDEX_CONTENT_COL, content)

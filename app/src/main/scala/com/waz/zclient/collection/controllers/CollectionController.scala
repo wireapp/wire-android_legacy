@@ -66,7 +66,7 @@ class CollectionController(implicit injector: Injector)
     convId <- convController.currentConvId
     query <- contentSearchQuery
     res <- if (query.isEmpty) Signal.const(Set.empty[MessageId])
-           else Signal future z.messagesIndexStorage.matchingMessages(query, Some(convId))
+    else Signal future z.messagesIndexStorage.matchingMessages(query, Some(convId))
   } yield res
 
   def openCollection() = observers foreach { _.openCollection() }

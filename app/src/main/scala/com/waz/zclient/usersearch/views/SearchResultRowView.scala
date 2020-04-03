@@ -53,7 +53,7 @@ class TextSearchResultRowView(context: Context, attrs: AttributeSet, style: Int)
 
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null, 0)
-  
+
   override val tpe: MsgPart = Text
 
   inflate(R.layout.search_text_result_row)

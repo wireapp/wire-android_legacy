@@ -33,9 +33,11 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId, users: UsersStorage,
-                        convs: ConversationStorage, msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
-                        tracking: TrackingService, filter: Option[MessageFilter] = None) { self =>
+class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId,
+                        users: UsersStorage, convs: ConversationStorage,
+                        msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
+                        tracking: TrackingService, filter: Option[MessageFilter] = None) {
+  self =>
 
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
 

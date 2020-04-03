@@ -37,7 +37,7 @@ import com.waz.zclient.BuildConfig.ACCOUNT_CREATION_ENABLED
 import com.waz.zclient._
 import com.waz.zclient.appentry.AppEntryActivity
 import com.waz.zclient.common.controllers.{BrowserController, UserAccountsController}
-import com.waz.zclient.features.settings.main.SettingsMainActivity
+import com.waz.zclient.feature.settings.main.SettingsMainActivity
 import com.waz.zclient.glide.WireGlide
 import com.waz.zclient.messages.UsersController
 import com.waz.zclient.preferences.pages.ProfileViewController.MaxAccountsCount

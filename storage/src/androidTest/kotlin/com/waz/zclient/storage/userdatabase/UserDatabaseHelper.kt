@@ -18,7 +18,6 @@ class UserDatabaseHelper {
     private val contactsOnWireTableQuery = """CREATE TABLE IF NOT EXISTS ContactsOnWire (user TEXT , contact TEXT , PRIMARY KEY (user, contact))""".trimIndent()
     private val clientsTableQuery = """CREATE TABLE IF NOT EXISTS Clients (_id TEXT PRIMARY KEY, data TEXT )""".trimIndent()
     private val likingsTableQuery = """CREATE TABLE IF NOT EXISTS Likings (message_id TEXT , user_id TEXT , timestamp INTEGER , action INTEGER , PRIMARY KEY (message_id, user_id))""".trimIndent()
-    private val clientTableQuery = """CREATE TABLE IF NOT EXISTS 'client' ('id' TEXT NOT NULL,'time' TEXT NOT NULL, 'label' TEXT NOT NULL, 'type' TEXT NOT NULL, 'class' TEXT NOT NULL, 'model' TEXT NOT NULL, 'lat' REAL NOT NULL, 'lon' REAL NOT NULL, 'locationName' TEXT, 'verification' TEXT NOT NULL, 'encKey' TEXT NOT NULL, 'macKey' TEXT NOT NULL, PRIMARY KEY('id'))""".trimIndent()
     private val contactsTableQuery = """CREATE TABLE IF NOT EXISTS Contacts (_id TEXT PRIMARY KEY, name TEXT , name_source INTEGER , sort_key TEXT , search_key TEXT )""".trimIndent()
     private val emailAddressesTableQuery = """CREATE TABLE IF NOT EXISTS EmailAddresses (contact TEXT , email_address TEXT )""".trimIndent()
     private val phoneNumbersTableQuery = """CREATE TABLE IF NOT EXISTS PhoneNumbers (contact TEXT , phone_number TEXT )""".trimIndent()
@@ -35,14 +34,14 @@ class UserDatabaseHelper {
     private val foldersTableQuery = """CREATE TABLE IF NOT EXISTS Folders (_id TEXT PRIMARY KEY, name TEXT , type INTEGER )""".trimIndent()
     private val conversationFoldersTableQuery = """CREATE TABLE IF NOT EXISTS ConversationFolders (conv_id TEXT , folder_id TEXT , PRIMARY KEY (conv_id, folder_id))""".trimIndent()
     private val conversationRoleActionTableQuery = """CREATE TABLE IF NOT EXISTS ConversationRoleAction (label TEXT , action TEXT , conv_id TEXT , PRIMARY KEY (label, action, conv_id))""".trimIndent()
-    private val messageContentIndexQuery = """CREATE VIRTUAL TABLE MessageContentIndex using fts3( message_id TEXT PRIMARY KEY, conv_id TEXT, content TEXT, time INTEGER)""".trimIndent()
+    private val messageContentIndexQuery = """CREATE VIRTUAL TABLE MessageContentIndex using fts4(message_id TEXT, conv_id TEXT, content TEXT, time INTEGER)""".trimIndent()
 
     private val createQueries = arrayOf(
         userTableQuery, assetsTableQuery, conversationsTableQuery,
         conversationMembersTableQuery, messagesTableQuery, keyValuesTableQuery,
         syncJobsTableQuery, errorsTableQuery, notificationDataTableQuery,
         contactHashesTableQuery, contactsOnWireTableQuery, contactsOnWireTableQuery,
-        clientsTableQuery, likingsTableQuery, clientTableQuery, contactsTableQuery, emailAddressesTableQuery,
+        clientsTableQuery, likingsTableQuery, contactsTableQuery, emailAddressesTableQuery,
         phoneNumbersTableQuery, msgDeletionTableQuery, editHistoryTableQuery,
         pushNotificationEventsTableQuery, readReceiptsTableQuery, propertiesTableQuery,
         uploadAssetsTableQuery, downloadAssetsTableQuery, assets2TableQuery,

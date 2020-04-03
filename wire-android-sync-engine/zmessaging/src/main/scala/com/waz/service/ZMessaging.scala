@@ -359,11 +359,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
 
     tempFiles
     recordAndPlay
-
     messagesIndexStorage
-
     verificationUpdater
-
     propertiesService
 
     rolesService.ensureDefaultRoles()

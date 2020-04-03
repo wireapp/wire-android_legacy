@@ -23,6 +23,7 @@ buildscript {
         classpath 'org.ajoberstar.grgit:grgit-core:3.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
+        classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
     }
 }
 
@@ -51,6 +52,7 @@ allprojects {
 }
 
 apply from: "./detekt/setup.gradle"
+apply from: "./jacoco/coverage.gradle"
 
 // FIXME: License header is disabled because it breaks compilation
 //task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {

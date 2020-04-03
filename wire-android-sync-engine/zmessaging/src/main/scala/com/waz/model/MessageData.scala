@@ -494,7 +494,6 @@ object MessageData extends
       db.rawQuery(q)
     }
   }
-
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
 
   def messageContent(message: String, mentions: Seq[Mention], links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
@@ -513,7 +512,7 @@ object MessageData extends
           case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
           case _ => (Message.Type.RICH_MEDIA, ct)
         }
-        
+
       } else {
         // apply links
         def linkEnd(offset: Int) = {

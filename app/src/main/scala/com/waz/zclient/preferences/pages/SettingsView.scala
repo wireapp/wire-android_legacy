@@ -1,6 +1,6 @@
 /**
  * Wire
- * Copyright (C) 2018 Wire Swiss GmbH
+ * Copyright (C) 2020 Wire Swiss GmbH
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,9 @@ import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, EventStream, Signal}
 import com.waz.zclient._
 import com.waz.zclient.common.views.FlatWireButton
+import com.waz.zclient.feature.settings.about.SettingsAboutActivity
+import com.waz.zclient.feature.settings.support.SettingsSupportActivity
 import com.waz.zclient.preferences.views.TextButton
-import com.waz.zclient.settings.about.SettingsAboutActivity
-import com.waz.zclient.settings.support.SettingsSupportActivity
 import com.waz.zclient.utils.{BackStackKey, BackStackNavigator, IntentUtils, RichView, StringUtils, UiStorage, UserSignal}
 
 trait SettingsView {
@@ -60,12 +60,24 @@ class SettingsViewImpl(context: Context, attrs: AttributeSet, style: Int) extend
   val avsButton = findById[TextButton](R.id.settings_avs)
   val inviteButton = findById[FlatWireButton](R.id.profile_invite)
 
-  accountButton.onClickEvent.on(Threading.Ui) { _ =>navigator.goTo(AccountBackStackKey())}
+  accountButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AccountBackStackKey()) }
   devicesButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevicesBackStackKey())}
   optionsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(OptionsBackStackKey()) }
   advancedButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AdvancedBackStackKey()) }
-  supportButton.onClickEvent.on(Threading.Ui) { _ => context.startActivity(SettingsSupportActivity.newIntent(context))}
-  aboutButton.onClickEvent.on(Threading.Ui) { _ => context.startActivity(SettingsAboutActivity.newIntent(context)) }
+  supportButton.onClickEvent.on(Threading.Ui) { _ =>
+    if (BuildConfig.KOTLIN_SETTINGS) {
+      context.startActivity(SettingsSupportActivity.newIntent(context))
+    } else {
+      navigator.goTo(SupportBackStackKey())
+    }
+  }
+  aboutButton.onClickEvent.on(Threading.Ui) { _ =>
+    if (BuildConfig.KOTLIN_SETTINGS) {
+      context.startActivity(SettingsAboutActivity.newIntent(context))
+    } else {
+      navigator.goTo(AboutBackStackKey())
+    }
+  }
   devButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(DevSettingsBackStackKey()) }
   avsButton.onClickEvent.on(Threading.Ui) { _ => navigator.goTo(AvsBackStackKey()) }
 
