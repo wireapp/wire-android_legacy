@@ -576,12 +576,11 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val conv1 = ConversationData()
       val conv2 = ConversationData()
 
+      val not1 = NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant))
+      val not2 = NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant))
+      val not3 = NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = RemoteInstant.apply(clock.instant)) //a different conv!
       //prefil notification storage
-      val previousNots = Set(
-        NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant)),
-        NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant)),
-        NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = RemoteInstant.apply(clock.instant)) //a different conv!
-      )
+      val previousNots = Set(not1, not2, not3)
       storedNotifications ! previousNots
 
       processing ! true
@@ -594,13 +593,6 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         eventTime    = None
       )
 
-      (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
-        Future {
-          nots.size shouldEqual 1
-          nots.head.conv shouldEqual conv2.id
-        }
-      }
-
       getService
 
       notificationsSourceVisible ! Map(account1Id -> Set(conv1.id))
@@ -608,6 +600,8 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       processing ! false
 
       awaitAllTasks
+
+      result(storedNotifications.head) shouldEqual Set(not3)
     }
   }
 }
