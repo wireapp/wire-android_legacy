@@ -23,7 +23,7 @@ import java.nio.charset.Charset
 
 import android.database.sqlite.SQLiteQueryBuilder
 import com.waz.api.Message.Type._
-import com.waz.api.{ContentSearchQuery, Message, TypeFilter}
+import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -493,18 +493,7 @@ object MessageData extends
         null, limit.fold[String](null)(_.toString))
       db.rawQuery(q)
     }
-
-    private val MaxSearchResults = 1024.toString // don't want to read whole db on common search query
-
-    def findContent(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId])(implicit db: DB): DBCursor =
-      convId match {
-        case Some(conv) =>
-          db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Content.name} LIKE '%${contentSearchQuery.query}%'", null, null, null, s"${Time.name} DESC", MaxSearchResults)
-        case _ =>
-          db.query(table.name, IndexColumns, s"${Content.name} LIKE '%${contentSearchQuery.query}%'", null, null, null, s"${Time.name} DESC", MaxSearchResults)
-      }
   }
-
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
 
   def messageContent(message: String, mentions: Seq[Mention], links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
@@ -523,7 +512,7 @@ object MessageData extends
           case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
           case _ => (Message.Type.RICH_MEDIA, ct)
         }
-        
+
       } else {
         // apply links
         def linkEnd(offset: Int) = {

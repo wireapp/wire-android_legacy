@@ -33,15 +33,11 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ConvMessagesIndex(convId:      ConvId,
-                        messages:    MessagesStorage,
-                        selfUserId:  UserId,
-                        users:       UsersStorage,
-                        convs:       ConversationStorage,
-                        msgAndLikes: MessageAndLikesStorage,
-                        storage:     ZmsDatabase,
-                        tracking:    TrackingService,
-                        filter:      Option[MessageFilter] = None) { self =>
+class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId,
+                        users: UsersStorage, convs: ConversationStorage,
+                        msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
+                        tracking: TrackingService, filter: Option[MessageFilter] = None) {
+  self =>
 
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
 
@@ -117,7 +113,7 @@ class ConvMessagesIndex(convId:      ConvId,
     storage.read { implicit db =>
       val (cursor, order) = filter match {
         //TODO: this ignores other filter types if the content query is on. they should all be considered...
-        case Some(MessageFilter(_, Some(query), _)) => (MessageDataDao.findContent(query, Some(convId)), MessagesCursor.Descending)
+        case Some(MessageFilter(_, Some(query), _)) => (MessageContentIndexDao.findContent(query, Some(convId)), MessagesCursor.Descending)
         case Some(MessageFilter(Some(types), _, limit)) => (MessageDataDao.msgIndexCursorFiltered(convId, types, limit), MessagesCursor.Descending)
         case _ => (MessageDataDao.msgIndexCursor(convId), MessagesCursor.Ascending)
       }

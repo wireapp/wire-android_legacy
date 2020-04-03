@@ -59,6 +59,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateFoldersTable(database)
         migrateConversationFoldersTable(database)
         migrateConversationRoleActionTable(database)
+        migrateMessageContentIndexTable(database)
 
         //TODO Move this to 127 - 128 Migration when finished with migration bug
         createButtonsTable(database)
@@ -750,6 +751,29 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             tempTableName,
             createTempTable,
             conversationIdIndex
+        )
+    }
+
+    private fun migrateMessageContentIndexTable(database: SupportSQLiteDatabase) {
+        val tempTableName = "MessageContentIndexTemp"
+        val originalTableName = "MessageContentIndex"
+        val messageId = "message_id"
+        val convId = "conv_id"
+        val content = "content"
+        val time = "time"
+        val createTempTable = """
+              CREATE VIRTUAL TABLE $tempTableName using fts4(
+              $messageId TEXT NOT NULL,
+              $convId TEXT NOT NULL,
+              $content TEXT NOT NULL,
+              $time INTEGER NOT NULL,
+              )""".trimIndent()
+
+        executeSimpleMigration(
+            database = database,
+            originalTableName = originalTableName,
+            tempTableName = tempTableName,
+            createTempTable = createTempTable
         )
     }
 
