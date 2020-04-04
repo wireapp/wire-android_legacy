@@ -207,7 +207,7 @@ class TeamsServiceImpl(selfUser:           UserId,
       for {
         members <- convMemberStorage.getByUsers(userIds)
         _       <- convMemberStorage.removeAll(members.map(_.id))
-        _       <- userStorage.removeAll(userIds)
+        _       <- userStorage.updateAll2(userIds, _.copy(deleted = true))
       } yield {}
     }
   }
