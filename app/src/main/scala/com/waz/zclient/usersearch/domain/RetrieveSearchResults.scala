@@ -128,7 +128,12 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     }
 
     def addContacts(): Unit = {
-      if (localResults.nonEmpty) {
+      val directoryTeamMembers = currentUser.map(_.teamId) match {
+        case Some(teamId) => directoryResults.filter(_.teamId == teamId)
+        case None => Nil
+      }
+      val contactsList = localResults ++ directoryTeamMembers
+      if (contactsList.nonEmpty) {
         val contactsSectionTitle = if (searchController.filter.currentValue.forall(_.isEmpty)) {
             R.string.people_picker__search_result_connections_non_searched_header_title
         } else {
@@ -139,8 +144,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         mergedResult = mergedResult ++ Seq(contactsSectionHeader)
         var contactsSection = Seq[SearchViewItem]()
 
-        contactsSection = contactsSection ++ localResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).name, team))
+        contactsSection = contactsSection ++ contactsList.indices.map { i =>
+          ConnectionViewItem(ConnectionViewModel(i, contactsList(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, contactsList, contactsList(i).name, team))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -149,7 +154,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
         mergedResult = mergedResult ++ contactsSection
         if (shouldCollapse) {
-          val expandViewItem = ExpandViewItem(ExpandViewModel(ContactsSection, 0, localResults.size))
+          val expandViewItem = ExpandViewItem(ExpandViewModel(ContactsSection, 0, contactsList.size))
           mergedResult = mergedResult ++ Seq(expandViewItem)
         }
       }
