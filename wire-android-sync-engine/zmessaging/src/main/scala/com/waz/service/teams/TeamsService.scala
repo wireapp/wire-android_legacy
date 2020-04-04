@@ -92,17 +92,13 @@ class TeamsServiceImpl(selfUser:           UserId,
     verbose(l"Handling events: $events")
     import TeamEvent._
 
-    val membersJoined  = events.collect { case MemberJoin(_, u)    => u }.toSet
     val membersLeft    = events.collect { case MemberLeave(_, u)   => u }.toSet
     val membersUpdated = events.collect { case MemberUpdate(_, u)  => u }.toSet
 
-    val convsCreated = events.collect { case ConversationCreate(_, id) => id }.toSet
     for {
       _ <- RichFuture.traverseSequential(events.collect { case e:Update => e}) { case Update(id, name, icon) => onTeamUpdated(id, name, icon) }
-      _ <- onMembersJoined(membersJoined -- membersLeft)
-      _ <- onMembersLeft(membersLeft -- membersJoined)
+      _ <- onMembersLeft(membersLeft)
       _ <- onMembersUpdated(membersUpdated)
-      _ <- onConversationsCreated(convsCreated)
     } yield {}
   }
 
@@ -145,14 +141,12 @@ class TeamsServiceImpl(selfUser:           UserId,
       new RefreshingSignal(CancellableFuture.lift(teamStorage.get(id)), teamStorage.onChanged.map(_.map(_.id)))
   }
 
+  // TODO: change to AggregatingSignal for better performance
   override lazy val guests: Signal[Set[UserId]] = {
-    def load(id: TeamId): Future[Set[UserId]] = for {
-      convs       <- getTeamConversations.map(_.map(_.id))
-      allUsers    <- convMemberStorage.getByConvs(convs).map(_.map(_.userId).toSet)
-      teamMembers <- userStorage.getByTeam(Set(id)).map(_.map(_.id))
-    } yield allUsers -- teamMembers
+    def load(id: TeamId): Future[Set[UserId]] =
+      userStorage.contents.map(_.filter(_._2.teamId.contains(id)).keySet).head
 
-    val allChanges = {
+    lazy val allChanges = {
       val ev1 = convMemberStorage.onUpdated.map(_.map(_._2.userId))
       val ev2 = convMemberStorage.onDeleted.map(_.map(_._1))
       EventStream.union(ev1, ev2)
@@ -204,15 +198,6 @@ class TeamsServiceImpl(selfUser:           UserId,
     )
   }
 
-  private def onMembersJoined(members: Set[UserId]) = {
-    verbose(l"onMembersJoined: members: $members")
-    for {
-      _ <- sync.syncUsers(members).flatMap(syncRequestService.await)
-      _ <- sync.syncTeam().flatMap(syncRequestService.await)
-      _ <- userStorage.updateAll2(members, _.copy(teamId = teamId, deleted = false))
-    } yield {}
-  }
-
   private def onMembersLeft(userIds: Set[UserId]) = {
     verbose(l"onTeamMembersLeft: users: $userIds")
     if (userIds.contains(selfUser)) {
@@ -220,48 +205,24 @@ class TeamsServiceImpl(selfUser:           UserId,
       Future.successful {}
     } else {
       for {
-        _ <- userStorage.updateAll2(userIds, _.copy(deleted = true))
-        _ <- removeUsersFromTeamConversations(userIds)
+        members <- convMemberStorage.getByUsers(userIds)
+        _       <- convMemberStorage.removeAll(members.map(_.id))
+        _       <- userStorage.updateAll2(userIds, _.copy(deleted = true))
       } yield {}
     }
   }
-
+  
   //So far, a member update just means we need to check the permissions for that user, and we only care about permissions
   //for the self user.
   private def onMembersUpdated(userIds: Set[UserId]) =
     if (userIds.contains(selfUser)) sync.syncTeamMember(selfUser) else Future.successful({})
-
-  private def removeUsersFromTeamConversations(users: Set[UserId]) = {
-    for {
-      convs           <- getTeamConversations.map(_.map(_.id))
-      membersToRemove = for (u <- users; c <- convs) yield (u, c)
-      _               <- convMemberStorage.removeAll(membersToRemove)
-    } yield {}
-  }
-
-  private def onConversationsCreated(convs: Set[RConvId]) = {
-    verbose(l"onConversationsCreated: convs: $convs")
-    if (convs.nonEmpty)
-      for {
-        convs <- convsContent.convsByRemoteId(convs)
-        _     <- sync.syncConversations(convs.values.map(_.id).toSet)
-      } yield {}
-    else Future.successful({})
-  }
-
-  private def getTeamConversations = teamId match {
-    case None => Future.successful(Set.empty)
-    case Some(id) => verbose(l"searchTeamConversations: team: $teamId")
-      import com.waz.model.ConversationData.ConversationDataDao._
-      convsStorage.find(_.team.contains(id), db => iterating(find(Team, Some(id))(db)), identity).map(_.toSet)
-  }
 
   override def onGroupConversationDeleteError(err: ErrorResponse, rConvId: RConvId): Future[Unit] = {
     convsContent.convByRemoteId(rConvId).map { data =>
       Future.successful(errorsService.addErrorWhenActive(
         data match {
           case Some(convData) => ErrorData(ErrorType.CANNOT_DELETE_GROUP_CONVERSATION, err, convData.id)
-          case None => ErrorData(ErrorType.CANNOT_DELETE_GROUP_CONVERSATION, err)
+          case None           => ErrorData(ErrorType.CANNOT_DELETE_GROUP_CONVERSATION, err)
         }
       ))
     }

@@ -126,9 +126,10 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     } if (removeTeamMembers)
       for {
         members  <- membersStorage.contents.map(_.keys.map(_._1)).head
-        users    <- usersStorage.contents.map(_.keys).head
+        users    <- usersStorage.contents.map(_.withFilter(!_._2.deleted).map(_._1)).head
         toRemove =  users.toSet -- members.toSet
-        _        <- if (toRemove.nonEmpty) usersStorage.removeAll(toRemove) else Future.successful(())
+        _        <- if (toRemove.nonEmpty) usersStorage.updateAll2(toRemove, _.copy(deleted = true))
+                    else Future.successful(())
         _        <- userPrefs.setValue(UserPreferences.RemoveUncontactedTeamMembers, false)
         _        =  verbose(l"Uncontacted team members removed for the team $teamId")
       } yield ()
@@ -352,7 +353,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _             <- membersStorage.setAll(toUpdate)
       usersLeft     <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
       usersToDelete =  userIds -- usersLeft
-      _             <- if (usersToDelete.nonEmpty) usersStorage.removeAll(usersToDelete)
+      _             <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                        else Future.successful(())
     } yield ()
 
@@ -367,7 +368,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _              <- membersStorage.remove(convId, userIds)
       usersLeft      <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
       usersToDelete  =  userIds -- usersLeft
-      _              <- if (usersToDelete.nonEmpty) usersStorage.removeAll(usersToDelete)
+      _              <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
                         else Future.successful(())
     } yield ()
 
