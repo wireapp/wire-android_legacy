@@ -95,7 +95,8 @@ class TeamsSyncHandlerImpl(userId:    UserId,
           case Left(error) =>
             service.onGroupConversationDeleteError(error, convId)
             Future.successful(SyncResult(error))
-          case Right(_) => Future.successful(SyncResult.Success) //already deleted
+          case Right(_) =>
+            Future.successful(SyncResult.Success) //already deleted
         }
       case _ => Future.successful(SyncResult.Success)
     }
