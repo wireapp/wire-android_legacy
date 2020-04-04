@@ -20,8 +20,6 @@ package com.waz.zclient.usersearch.domain
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.TeamSizeThreshold
-import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
@@ -98,11 +96,6 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       updateMergedResults()
   }
 
-  private var shouldHideUserStatus = false
-  TeamSizeThreshold.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
-    shouldHideUserStatus = hide
-  }(Threading.Ui)
-
   def expandGroups(): Unit = {
     collapsedGroups = false
     updateMergedResults()
@@ -145,7 +138,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         var contactsSection = Seq[SearchViewItem]()
 
         contactsSection = contactsSection ++ contactsList.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, contactsList(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, contactsList, contactsList(i).name, team))
+          ConnectionViewItem(ConnectionViewModel(i, contactsList(i).id.str.hashCode, isConnected = true, contactsList, contactsList(i).name, team))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -186,7 +179,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
         val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults, team = team))
+          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, directoryResults, team = team))
         }
       }
     }
