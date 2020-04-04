@@ -33,15 +33,13 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
 
   import Threading.Implicits.Background
 
-  def syncSearchQuery(query: SearchQuery): Future[SyncResult] = {
-    debug(l"starting sync for: $query")
-    client.getContacts(query).future.map {
-      case Right(results) =>
-        userSearch.updateSearchResults(query, results)
-        SyncResult.Success
-      case Left(error)    =>
-        SyncResult(error)
-    }
+  def syncSearchQuery(query: SearchQuery): Future[SyncResult] = client.getContacts(query).future.map {
+    case Right(results) =>
+      debug(l"syncSearchQuery got: ${results.documents.foreach{_.team.get.toString}}")
+      userSearch.updateSearchResults(query, results)
+      SyncResult.Success
+    case Left(error)    =>
+      SyncResult(error)
   }
 
   def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.map {

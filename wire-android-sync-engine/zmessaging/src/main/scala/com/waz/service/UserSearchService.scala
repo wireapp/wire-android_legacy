@@ -190,8 +190,8 @@ class UserSearchService(selfUserId:           UserId,
     verbose(l"search($queryStr)")
     val query = SearchQuery(queryStr)
 
-    exactMatchUser ! None // reset the exact match to None on any query change
     userSearchResult ! IndexedSeq.empty[UserData]
+    exactMatchUser ! None // reset the exact match to None on any query change
 
     if (!query.isEmpty) {
       sync.syncSearchQuery(query)
@@ -218,18 +218,16 @@ class UserSearchService(selfUserId:           UserId,
           }
       else Signal.const(IndexedSeq.empty)
 
+    verbose(l"user search results ${userSearchResult.head.value.get.toString}")
+
     val directorySearch: Signal[IndexedSeq[UserData]] =
       for {
-           localSearch     <- if (!query.isEmpty) {
-                                  Signal.future(localSearch(query).flatMap(filterForExternal(query, _)))
-                              } else Signal.const(IndexedSeq.empty[UserData])
-           remoteSearch    <- userSearchResult
-           combinedResults = (localSearch ++ remoteSearch).distinctBy(_.id).toIndexedSeq
-           filteredResults = combinedResults.filter(u => !u.isWireBot && u.expiresAt.isEmpty)
-           dir             = sortUsers(filteredResults, query)
-           _               = verbose(l"directory search results: $dir")
-           exact           <- exactMatchUser.orElse(Signal.const(None))
-           _               = verbose(l"exact match: $exact")
+        dir   <- if (!query.isEmpty) {
+          userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
+        } else Signal.const(IndexedSeq.empty[UserData])
+        _     =  verbose(l"directory search results: $dir")
+        exact <- exactMatchUser.orElse(Signal.const(None))
+        _     =  verbose(l"exact match: $exact")
       } yield
         (dir, exact) match {
           case (_, None)           => dir
@@ -247,7 +245,8 @@ class UserSearchService(selfUserId:           UserId,
   }
 
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
-    userSearchResult ! unapply(results).map(UserData.apply).toIndexedSeq
+    val users = unapply(results)
+    userSearchResult ! users.map(UserData.apply).toIndexedSeq
   }
 
   def updateExactMatch(result: UserSearchResponse.User): Unit = {
