@@ -99,18 +99,20 @@ class UserSearchService(selfUserId:           UserId,
   private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
     searchResults.flatMap(res => Signal.future(filterForExternal(query, res)))
 
-  def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[IndexedSeq[UserData]] =
-    filterForExternal(
-      query,
-      searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
-    )
-
-  def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[IndexedSeq[UserData]] =
+  def usersForNewConversation(query: SearchQuery, teamOnly: Boolean) =
     for {
-      curr <- membersStorage.activeMembers(toConv)
-      conv <- convsStorage.signal(toConv)
-      res  <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
-    } yield res
+      localResults      <- filterForExternal(query, searchLocal(query)
+                          .map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
+      remoteResults     <- getDirectoryResults(query)
+    } yield SearchResults(local = localResults, dir = remoteResults)
+
+  def usersToAddToConversation(query: SearchQuery, toConv: ConvId) =
+    for {
+      curr              <- membersStorage.activeMembers(toConv)
+      conv              <- convsStorage.signal(toConv)
+      localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
+      remoteResults     <- getDirectoryResults(query)
+    } yield SearchResults(local = localResults, dir = remoteResults)
 
   def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
@@ -193,9 +195,7 @@ class UserSearchService(selfUserId:           UserId,
     userSearchResult ! IndexedSeq.empty[UserData]
     exactMatchUser ! None // reset the exact match to None on any query change
 
-    if (!query.isEmpty) {
-      sync.syncSearchQuery(query)
-    }
+    syncSearchResults(query)
 
     val topUsers: Signal[IndexedSeq[UserData]] =
       if (query.isEmpty && teamId.isEmpty) topPeople.map(_.filter(!_.isWireBot)) else Signal.const(IndexedSeq.empty)
@@ -220,7 +220,25 @@ class UserSearchService(selfUserId:           UserId,
 
     verbose(l"user search results ${userSearchResult.head.value.get.toString}")
 
-    val directorySearch: Signal[IndexedSeq[UserData]] =
+    val directorySearch = getDirectoryResults(query)
+
+    for {
+      top        <- topUsers
+      local      <- filterForExternal(query, searchLocal(query, showBlockedUsers = true))
+      convs      <- conversations
+      isExternal <- Signal.future(isExternal)
+      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
+      _ = verbose(l"dir results: $dir")
+    } yield SearchResults(top, local, convs, dir)
+  }
+
+  def syncSearchResults(query: SearchQuery): Unit = {
+    if (!query.isEmpty) {
+      sync.syncSearchQuery(query)
+    }
+  }
+
+  def getDirectoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
       for {
         dir   <- if (!query.isEmpty) {
           userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
@@ -233,16 +251,6 @@ class UserSearchService(selfUserId:           UserId,
           case (_, None)           => dir
           case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
         }
-
-    for {
-      top        <- topUsers
-      local      <- filterForExternal(query, searchLocal(query, showBlockedUsers = true))
-      convs      <- conversations
-      isExternal <- Signal.future(isExternal)
-      dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
-      _ = verbose(l"dir results: $dir")
-    } yield SearchResults(top, local, convs, dir)
-  }
 
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
     val users = unapply(results)
