@@ -139,9 +139,9 @@ class UserSearchService(selfUserId:           UserId,
         cmpHandle(_, _.contains(filter))
       )
 
-      rules.foldLeft[(Set[UserId],IndexedSeq[UserData])]((Set.empty, IndexedSeq())){ case ((found, results), rule) =>
+      rules.foldLeft((Set.empty[UserId], IndexedSeq.empty[UserData])){ case ((found, results), rule) =>
         val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.name.toLowerCase)
-        (found ++ matches.map(_.id).toSet, results ++: matches)
+        (found ++ matches.map(_.id).toSet, results ++ matches)
       }._2
     }
 
@@ -217,8 +217,6 @@ class UserSearchService(selfUserId:           UserId,
             Signal.future(Future.sequence(gConvs).map(_.flatten)) //TODO avoid using Signal.future - will not update...
           }
       else Signal.const(IndexedSeq.empty)
-
-    verbose(l"user search results ${userSearchResult.head.value.get.toString}")
 
     val directorySearch = getDirectoryResults(query)
 
