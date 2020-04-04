@@ -130,14 +130,14 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     def addContacts(): Unit = {
       val directoryTeamMembers = currentUser.map(_.teamId) match {
         case Some(teamId) => directoryResults.filter(_.teamId == teamId)
-        case None => Nil
+        case None         => Nil
       }
-      val contactsList = localResults ++ directoryTeamMembers
+      val contactsList = (localResults ++ directoryTeamMembers).distinctBy(_.id)
       if (contactsList.nonEmpty) {
         val contactsSectionTitle = if (searchController.filter.currentValue.forall(_.isEmpty)) {
-            R.string.people_picker__search_result_connections_non_searched_header_title
+          R.string.people_picker__search_result_connections_non_searched_header_title
         } else {
-            R.string.people_picker__search_result_connections_searched_header_title
+          R.string.people_picker__search_result_connections_searched_header_title
         }
 
         val contactsSectionHeader = new SectionViewItem(SectionViewModel(ContactsSection, 0, teamName, contactsSectionTitle))
@@ -178,7 +178,11 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     }
 
     def addConnections(): Unit = {
-      if (directoryResults.nonEmpty) {
+      val directoryExternalMembers = currentUser.map(_.teamId) match {
+        case Some(teamId) => directoryResults.filterNot(_.teamId == teamId)
+        case None => Nil
+      }
+      if (directoryExternalMembers.nonEmpty) {
         val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
