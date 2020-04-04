@@ -254,19 +254,10 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
     res           <- searchResults
     currentUser   <- currentUserController.currentUser
     usersSelected <- usersSelected
-<<<<<<< HEAD
     _teamId       <- teamId
     servsSelected <- servicesSelected
-    hideStatus    <- Signal.future(TeamSizeThreshold.shouldHideStatus(teamId, usersStorage))
-
-  } yield (_teamId, res, usersSelected, servsSelected, hideStatus, currentUser)).onUi {
-    case (teamId, res, usersSelected, servsSelected, hideStatus, currentUser) =>
-=======
-    teamId        <- teamId
-    servsSelected <- servicesSelected
-  } yield (teamId, res, usersSelected, servsSelected)).onUi {
-    case (teamId, res, usersSelected, servsSelected) =>
->>>>>>> Large Teams: Update users on conversation members join/leave/update events (#2737)
+  } yield (_teamId, res, usersSelected, servsSelected, currentUser)).onUi {
+    case (teamId, res, usersSelected, servsSelected, currentUser) =>
       team = teamId
       val prev = this.results
 
