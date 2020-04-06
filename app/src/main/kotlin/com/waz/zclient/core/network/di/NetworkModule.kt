@@ -22,6 +22,7 @@ import com.waz.zclient.core.network.connection.ConnectionSpecsFactory
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClient
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.createHttpClientForToken
 import com.waz.zclient.core.network.di.NetworkDependencyProvider.retrofit
+import com.waz.zclient.core.network.logger.RedactedMessageLogger
 import com.waz.zclient.core.network.pinning.CertificatePinnerFactory
 import com.waz.zclient.core.network.proxy.HttpProxyFactory
 import com.waz.zclient.core.network.useragent.UserAgentConfig
@@ -83,7 +84,7 @@ object NetworkDependencyProvider {
 
     private fun OkHttpClient.Builder.addLoggingInterceptor() = this.apply {
         if (BuildConfig.DEBUG) {
-            addInterceptor(HttpLoggingInterceptor().setLevel(Level.BODY))
+            addInterceptor(HttpLoggingInterceptor(RedactedMessageLogger()).setLevel(Level.BODY))
         }
     }
 }
