@@ -19,7 +19,6 @@ class SendEmailActivationCodeUseCase(private val activationRepository: Activatio
                     else -> Either.Left(it)
                 }
             }) { Either.Right(it) }!!
-
 }
 
 data class SendEmailActivationCodeParams(val email: String)
