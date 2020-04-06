@@ -47,7 +47,11 @@ trait OtrSyncHandler {
                      enforceIgnoreMissing: Boolean = false
                     ): Future[Either[ErrorResponse, RemoteInstant]]
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
-  def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, RemoteInstant]]
+  def broadcastMessage(message: GenericMessage,
+                       retry: Int = 0,
+                       previous: EncryptedContent = EncryptedContent.Empty,
+                       recipients: Option[Set[UserId]] = None
+                      ): Future[Either[ErrorResponse, RemoteInstant]]
 }
 
 class OtrSyncHandlerImpl(teamId:             Option[TeamId],
@@ -116,26 +120,43 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
     }.mapRight(_.mismatch.time)
   }
 
-  override def broadcastMessage(message: GenericMessage, retry: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): Future[Either[ErrorResponse, RemoteInstant]] =
+  override def broadcastMessage(message:    GenericMessage,
+                                retry:      Int = 0,
+                                previous:   EncryptedContent = EncryptedContent.Empty,
+                                recipients: Option[Set[UserId]] = None
+                               ): Future[Either[ErrorResponse, RemoteInstant]] =
     push.waitProcessing.flatMap { _ =>
-      def broadcastRecipients = for {
-        acceptedOrBlocked <- users.acceptedOrBlockedUsers.head
-        myTeam <- teamId.fold(Future.successful(Set.empty[UserData]))(id => usersStorage.getByTeam(Set(id)))
-        myTeamIds = myTeam.map(_.id)
-      } yield acceptedOrBlocked.keySet ++ myTeamIds
+      val broadcastRecipients = recipients match {
+        case Some(recp) => Future.successful(recp)
+        case None =>
+          for {
+            acceptedOrBlocked <- users.acceptedOrBlockedUsers.head
+            myTeam            <- teamId.fold(Future.successful(Set.empty[UserData]))(id => usersStorage.getByTeam(Set(id)))
+            myTeamIds         =  myTeam.map(_.id)
+          } yield acceptedOrBlocked.keySet ++ myTeamIds
+      }
 
       broadcastRecipients.flatMap { recp =>
         verbose(l"recipients: $recp")
         for {
-          content <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
-          r <- otrClient.broadcastMessage(OtrMessage(selfClientId, content), ignoreMissing = retry > 1, recp).future
-          res <- loopIfMissingClients(r, retry, () => broadcastMessage(message, retry + 1, content))
+          content  <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
+          response <- otrClient.broadcastMessage(OtrMessage(selfClientId, content), ignoreMissing = retry > 1, recp).future
+          res      <- loopIfMissingClients(
+                       response,
+                       retry,
+                       recp,
+                       (rs: Set[UserId]) => broadcastMessage(message, retry + 1, content, Some(rs))
+                      )
         } yield res
       }
     }
 
-  private def loopIfMissingClients(arg: Either[ErrorResponse, MessageResponse], retry: Int, fn: () => Future[Either[ErrorResponse, RemoteInstant]]): Future[Either[ErrorResponse, RemoteInstant]] =
-    arg match {
+  private def loopIfMissingClients(response: Either[ErrorResponse, MessageResponse],
+                                   retry: Int,
+                                   currentRecipients: Set[UserId],
+                                   onRetry: (Set[UserId]) => Future[Either[ErrorResponse, RemoteInstant]]
+                                  ): Future[Either[ErrorResponse, RemoteInstant]] =
+    response match {
       case Right(MessageResponse.Success(ClientMismatch(_, _, deleted, time))) =>
         // XXX: we are ignoring redundant clients, we rely on members list to encrypt messages, so if user left the conv then we won't use his clients on next message
         service.deleteClients(deleted).map(_ => Right(time))
@@ -145,10 +166,10 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
             successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries: $missing")))
           else
             clientsSyncHandler.syncSessions(missing).flatMap {
-              case None => fn()
+              case None => onRetry(missing.keySet)
               case Some(err) if retry < 3 =>
                 error(l"syncSessions for missing clients failed: $err")
-                fn()
+                onRetry(currentRecipients)
               case Some(err) =>
                 successful(Left(err))
             }

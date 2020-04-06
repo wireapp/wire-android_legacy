@@ -34,12 +34,12 @@ import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
 
-class UsersSyncHandler(userService: UserService,
+class UsersSyncHandler(userService:  UserService,
                        usersStorage: UsersStorage,
-                       assets: AssetService,
-                       usersClient: UsersClient,
-                       otrSync: OtrSyncHandler) extends DerivedLogTag {
-
+                       assets:       AssetService,
+                       usersClient:  UsersClient,
+                       otrSync:      OtrSyncHandler) extends DerivedLogTag {
+  import UsersSyncHandler._
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
@@ -96,8 +96,14 @@ class UsersSyncHandler(userService: UserService,
 
   def postAvailability(availability: Availability): Future[SyncResult] = {
     verbose(l"postAvailability($availability)")
-    otrSync.broadcastMessage(GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability)))
-      .map(SyncResult(_))
+    val gm = GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability))
+    for {
+      Some(self)     <- userService.getSelfUser
+      users          <- userService.acceptedOrBlockedUsers.head
+      (team, others) = users.values.partition(_.isInTeam(self.teamId))
+      recipients     = (List(self.id) ++ team.map(_.id).toList.sorted ++ others.map(_.id).toList.sorted).take(AvailabilityBroadcastLimit).toSet
+      result         <- otrSync.broadcastMessage(gm, recipients = Some(recipients))
+    } yield SyncResult(result)
   }
 
   def deleteAccount(): Future[SyncResult] =
@@ -105,4 +111,8 @@ class UsersSyncHandler(userService: UserService,
 
   private def updatedSelfToSyncResult(updatedSelf: Future[Either[ErrorResponse, Unit]]): Future[SyncResult] =
     updatedSelf.map(SyncResult(_))
+}
+
+object UsersSyncHandler {
+  val AvailabilityBroadcastLimit = 500
 }
