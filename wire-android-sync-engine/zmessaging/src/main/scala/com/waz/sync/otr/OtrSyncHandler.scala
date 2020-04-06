@@ -47,9 +47,9 @@ trait OtrSyncHandler {
                      enforceIgnoreMissing: Boolean = false
                     ): Future[Either[ErrorResponse, RemoteInstant]]
   def postSessionReset(convId: ConvId, user: UserId, client: ClientId): Future[SyncResult]
-  def broadcastMessage(message: GenericMessage,
-                       retry: Int = 0,
-                       previous: EncryptedContent = EncryptedContent.Empty,
+  def broadcastMessage(message:    GenericMessage,
+                       retry:      Int = 0,
+                       previous:   EncryptedContent = EncryptedContent.Empty,
                        recipients: Option[Set[UserId]] = None
                       ): Future[Either[ErrorResponse, RemoteInstant]]
 }
@@ -75,7 +75,8 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                               message:              GenericMessage,
                               recipients:           Option[Set[UserId]] = None,
                               nativePush:           Boolean = true,
-                              enforceIgnoreMissing: Boolean = false): Future[Either[ErrorResponse, RemoteInstant]] = {
+                              enforceIgnoreMissing: Boolean = false
+                             ): Future[Either[ErrorResponse, RemoteInstant]] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
     def encryptAndSend(msg: GenericMessage, external: Option[Array[Byte]] = None, retries: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): ErrorOr[MessageResponse] =
@@ -151,22 +152,26 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       }
     }
 
-  private def loopIfMissingClients(response: Either[ErrorResponse, MessageResponse],
-                                   retry: Int,
+  private def loopIfMissingClients(response:          Either[ErrorResponse, MessageResponse],
+                                   retry:             Int,
                                    currentRecipients: Set[UserId],
-                                   onRetry: (Set[UserId]) => Future[Either[ErrorResponse, RemoteInstant]]
+                                   onRetry:           (Set[UserId]) => Future[Either[ErrorResponse, RemoteInstant]]
                                   ): Future[Either[ErrorResponse, RemoteInstant]] =
     response match {
       case Right(MessageResponse.Success(ClientMismatch(_, _, deleted, time))) =>
-        // XXX: we are ignoring redundant clients, we rely on members list to encrypt messages, so if user left the conv then we won't use his clients on next message
+        // XXX: we are ignoring redundant clients, we rely on members list to encrypt messages,
+        // so if user left the conv then we won't use his clients on next message
         service.deleteClients(deleted).map(_ => Right(time))
       case Right(MessageResponse.Failure(ClientMismatch(_, missing, deleted, _))) =>
-        service.deleteClients(deleted).flatMap { _ =>
-          if (retry > 2)
-            successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries: $missing")))
-          else
+        service.deleteClients(deleted).flatMap {
+          case _ if retry > 2 =>
+            successful(Left(internalError(
+              s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries: $missing"
+            )))
+          case _ =>
             clientsSyncHandler.syncSessions(missing).flatMap {
-              case None => onRetry(missing.keySet)
+              case None =>
+                onRetry(missing.keySet)
               case Some(err) if retry < 3 =>
                 error(l"syncSessions for missing clients failed: $err")
                 onRetry(currentRecipients)
