@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2020 Wire Swiss GmbH
@@ -29,7 +28,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/create_personal_account_text_input_layout_margin_top"
-        android:background="@color/white"
         app:hintEnabled="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -50,7 +48,6 @@
         style="@style/Button.Authentication"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithEmailTextInputLayout"
         app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithEmailTextInputLayout"
         app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithEmailTextInputLayout" />
 

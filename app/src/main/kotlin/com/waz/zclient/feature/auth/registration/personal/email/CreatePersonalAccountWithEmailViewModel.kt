@@ -9,7 +9,6 @@ import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.shared.activation.usecase.EmailBlackListed
 import com.waz.zclient.shared.activation.usecase.EmailInUse
-import com.waz.zclient.shared.activation.usecase.InvalidEmail
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeParams
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.ValidateEmailError
@@ -58,8 +57,6 @@ class CreatePersonalAccountWithEmailViewModel(
 
     private fun sendActivationCodeFailure(failure: Failure) {
         when (failure) {
-            is InvalidEmail -> _sendActivationCodeErrorLiveData.postValue(
-                EmailErrorMessage(R.string.create_personal_account_with_email_invalid_email_error))
             is EmailBlackListed -> _sendActivationCodeErrorLiveData.postValue(
                 EmailErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error))
             is EmailInUse -> _sendActivationCodeErrorLiveData.postValue(

@@ -6,7 +6,6 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
@@ -55,7 +54,7 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
         with(createPersonalAccountViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
                 showEmailVerificationScreen()
-                showEmailError(String.empty())
+                showEmailError(null)
             }
             sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
                 showEmailError(getString(it.errorMessage))
@@ -70,7 +69,7 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
             EmailVerificationFragment.newInstance(email))
     }
 
-    private fun showEmailError(errorMessage: String) {
+    private fun showEmailError(errorMessage: String?) {
         createPersonalAccountWithEmailTextInputLayout.error = errorMessage
     }
 
