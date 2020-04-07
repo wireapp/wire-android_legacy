@@ -57,10 +57,10 @@ class CreatePersonalAccountWithEmailViewModel(
 
     private fun sendActivationCodeFailure(failure: Failure) {
         when (failure) {
-            is EmailBlacklisted -> _sendActivationCodeErrorLiveData.postValue(
-                    EmailErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error))
-            is EmailInUse -> _sendActivationCodeErrorLiveData.postValue(
-                    EmailErrorMessage(R.string.create_personal_account_with_email_email_in_use_error))
+            is EmailBlacklisted -> _sendActivationCodeErrorLiveData.value =
+                    EmailErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error)
+            is EmailInUse -> _sendActivationCodeErrorLiveData.value =
+                    EmailErrorMessage(R.string.create_personal_account_with_email_email_in_use_error)
         }
     }
 }

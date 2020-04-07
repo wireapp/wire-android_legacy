@@ -47,9 +47,10 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
             verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
 
             response.isLeft shouldBe true
-            response.map {
+
+            response.fold({
                 it shouldBe EmailBlacklisted
-            }
+            }) { assert(false) }
         }
 
     @Test
@@ -63,9 +64,9 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
             verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
 
             response.isLeft shouldBe true
-            response.map {
+            response.fold({
                 it shouldBe EmailInUse
-            }
+            }) { assert(false) }
         }
 
     @Test
@@ -79,9 +80,9 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
             verify(activationRepository).sendEmailActivationCode(eq(TEST_EMAIL))
 
             response.isLeft shouldBe true
-            response.map {
+            response.fold({
                 it shouldBe InternalServerError
-            }
+            }) { assert(false) }
         }
 
     @Test
