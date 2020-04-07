@@ -24,19 +24,16 @@ data class MessagesEntity(
     val userId: String,
 
     @ColumnInfo(name = "content")
-    val content: String?,
+    val content: String,
 
-    //TODO: override equals/hashcode?
-    @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB) val protos: ByteArray?,
+    @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB)
+    val protos: ByteArray?,
 
     @ColumnInfo(name = "time")
     val time: Int,
 
-    @ColumnInfo(name = "local_time")
-    val localTime: Int,
-
     @ColumnInfo(name = "first_msg")
-    val firstMessage: Int,
+    val firstMessage: Boolean,
 
     @ColumnInfo(name = "members")
     val members: String?,
@@ -56,6 +53,9 @@ data class MessagesEntity(
     @ColumnInfo(name = "content_size")
     val contentSize: Int,
 
+    @ColumnInfo(name = "local_time")
+    val localTime: Int,
+
     @ColumnInfo(name = "edit_time")
     val editTime: Int,
 
@@ -66,7 +66,7 @@ data class MessagesEntity(
     val expiryTime: Int?,
 
     @ColumnInfo(name = "expired")
-    val expired: Int,
+    val expired: Boolean,
 
     @ColumnInfo(name = "duration")
     val duration: Int?,

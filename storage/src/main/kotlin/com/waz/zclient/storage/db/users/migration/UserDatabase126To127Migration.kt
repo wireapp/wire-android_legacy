@@ -137,7 +137,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 CREATE TABLE $tempTableName (
                 _id TEXT PRIMARY KEY NOT NULL,
                 remote_id TEXT NOT NULL,
-                name TEXT ,
+                name TEXT,
                 creator TEXT NOT NULL,
                 conv_type INTEGER NOT NULL,
                 team TEXT,
@@ -191,7 +191,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 $userId TEXT NOT NULL, 
                 $convid TEXT NOT NULL, 
                 role TEXT NOT NULL,
-                PRIMARY KEY (user_id, conv_id));
+                PRIMARY KEY ($userId, $convid));
                 )""".trimIndent()
 
         val conversationIdIndex = "CREATE INDEX IF NOT EXISTS ConversationMembers_conv on $originalTableName ($convid)"
@@ -218,7 +218,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 $convId TEXT NOT NULL,
                 msg_type TEXT NOT NULL, 
                 user_id TEXT NOT NULL,
-                content TEXT,
+                content TEXT NOT NULL,
                 protos BLOB, 
                 $time INTEGER NOT NULL, 
                 local_time INTEGER NOT NULL, 
