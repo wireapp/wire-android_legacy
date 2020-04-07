@@ -49,7 +49,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateMessageDeletionTable(database)
         migrateEditHistoryTable(database)
         migratePushNotificationEvents(database)
-        migrateReadRecieptsTable(database)
+        migrateReadReceiptsTable(database)
         migratePropertiesTable(database)
         migrateUploadAssetTable(database)
         migrateDownloadAssetTable(database)
@@ -433,8 +433,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              $contact TEXT NOT NULL, 
-             $emailAddress TEXT NOT NULL,
-             PRIMARY KEY (contact, email_address)
+             $emailAddress TEXT NOT NULL
              )""".trimIndent()
 
         val contactIndex = "CREATE INDEX IF NOT EXISTS EmailAddresses_contact on EmailAddresses ($contact)"
@@ -458,8 +457,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              $contact TEXT NOT NULL, 
-             $phoneNumber TEXT NOT NULL,
-             PRIMARY KEY (contact, phone_number)
+             $phoneNumber TEXT NOT NULL
              )""".trimIndent()
 
         val contactIndex = "CREATE INDEX IF NOT EXISTS PhoneNumbers_contact on $originalTableName ($contact)"
@@ -534,7 +532,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         )
     }
 
-    private fun migrateReadRecieptsTable(database: SupportSQLiteDatabase) {
+    private fun migrateReadReceiptsTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ReadReceiptsTemp"
         val originalTableName = "ReadReceipts"
         val createTempTable = """
@@ -611,7 +609,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               _id TEXT NOT NULL, 
               mime TEXT NOT NULL, 
               name TEXT NOT NULL , 
-              preview TEXT NOT NULL, 
+              preview TEXT, 
               details TEXT NOT NULL, 
               downloaded INTEGER NOT NULL, 
               size INTEGER NOT NULL, 
@@ -737,7 +735,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                label TEXT NOT NULL, 
                action TEXT NOT NULL, 
                $convId TEXT NOT NULL, 
-               PRIMARY KEY (label, action, conv_id)
+               PRIMARY KEY (label, action, $convId)
                )""".trimIndent()
 
         val conversationIdIndex = """

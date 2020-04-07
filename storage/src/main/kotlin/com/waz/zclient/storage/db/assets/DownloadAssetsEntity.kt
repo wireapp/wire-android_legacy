@@ -23,7 +23,7 @@ data class DownloadAssetsEntity(
     val name: String,
 
     @ColumnInfo(name = "preview")
-    val preview: String,
+    val preview: String?,
 
     @ColumnInfo(name = "details")
     val details: String,

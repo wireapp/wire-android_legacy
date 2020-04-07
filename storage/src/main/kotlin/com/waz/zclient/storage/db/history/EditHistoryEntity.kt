@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "EditHistory")
-class EditHistoryEntity(
+data class EditHistoryEntity(
     @PrimaryKey
     @ColumnInfo(name = "original_id")
     val originalId: String,
