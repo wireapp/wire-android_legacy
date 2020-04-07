@@ -587,6 +587,7 @@
     <dimen name="authentication_confirmation_button_padding">8dp</dimen>
     <dimen name="authentication_confirmation_button_margin_end">16dp</dimen>
     <dimen name="authentication_confirmation_button_margin_top">8dp</dimen>
+    <dimen name="authentication_input_layout_error_text_size">12sp</dimen>
 
     <!-- Create Account screen -->
     <dimen name="create_account_layout_container_margin">16dp</dimen>

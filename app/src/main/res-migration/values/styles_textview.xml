@@ -77,7 +77,7 @@
 
     <style name="TextView.Authentication.Error" parent="TextView.RobotoRegular">
         <item name="android:textColor">@color/teams_error_red</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">@dimen/authentication_input_layout_error_text_size</item>
     </style>
 
 </resources>
