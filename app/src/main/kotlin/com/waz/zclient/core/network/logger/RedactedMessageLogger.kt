@@ -8,6 +8,7 @@ class RedactedMessageLogger(
     private val defaultLogger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
 ) : HttpLoggingInterceptor.Logger {
 
+    @Suppress("TooGenericExceptionCaught")
     override fun log(message: String) {
         try {
             //TODO: only searches in direct children. should we convert to recursive?
