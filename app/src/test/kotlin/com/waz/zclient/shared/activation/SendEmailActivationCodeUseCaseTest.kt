@@ -7,7 +7,7 @@ import com.waz.zclient.core.exception.InternalServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
-import com.waz.zclient.shared.activation.usecase.EmailBlackListed
+import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeParams
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
@@ -48,7 +48,7 @@ class SendEmailActivationCodeUseCaseTest : UnitTest() {
 
             response.isLeft shouldBe true
             response.map {
-                it shouldBe EmailBlackListed
+                it shouldBe EmailBlacklisted
             }
         }
 

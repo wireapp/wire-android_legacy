@@ -6,16 +6,19 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_create_personal_account_with_email.*
+import kotlinx.android.synthetic.main.fragment_create_personal_account_with_email.confirmationButton
+import kotlinx.android.synthetic.main.fragment_create_personal_account_with_email.createPersonalAccountWithEmailEditText
+import kotlinx.android.synthetic.main.fragment_create_personal_account_with_email.createPersonalAccountWithEmailTextInputLayout
 
 class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create_personal_account_with_email) {
 
     //TODO handle no internet connections status
     private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
-        by viewModel(REGISTRATION_SCOPE_ID)
+            by viewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -54,7 +57,7 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
         with(createPersonalAccountViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
                 showEmailVerificationScreen()
-                showEmailError(null)
+                showEmailError(String.empty())
             }
             sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
                 showEmailError(getString(it.errorMessage))
@@ -65,11 +68,12 @@ class CreatePersonalAccountWithEmailFragment : Fragment(R.layout.fragment_create
     private fun showEmailVerificationScreen() {
         val email = createPersonalAccountWithEmailEditText.text.toString()
         replaceFragment(
-            R.id.activityCreateAccountLayoutContainer,
-            EmailVerificationFragment.newInstance(email))
+                R.id.activityCreateAccountLayoutContainer,
+                EmailVerificationFragment.newInstance(email)
+        )
     }
 
-    private fun showEmailError(errorMessage: String?) {
+    private fun showEmailError(errorMessage: String) {
         createPersonalAccountWithEmailTextInputLayout.error = errorMessage
     }
 

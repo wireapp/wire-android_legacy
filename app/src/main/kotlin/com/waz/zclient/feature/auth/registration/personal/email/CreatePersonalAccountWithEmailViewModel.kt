@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.shared.activation.usecase.EmailBlackListed
+import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeParams
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
@@ -17,8 +17,8 @@ import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountWithEmailViewModel(
-    private val validateEmailUseCase: ValidateEmailUseCase,
-    private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
+        private val validateEmailUseCase: ValidateEmailUseCase,
+        private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
 ) : ViewModel() {
 
     private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
@@ -57,10 +57,10 @@ class CreatePersonalAccountWithEmailViewModel(
 
     private fun sendActivationCodeFailure(failure: Failure) {
         when (failure) {
-            is EmailBlackListed -> _sendActivationCodeErrorLiveData.postValue(
-                EmailErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error))
+            is EmailBlacklisted -> _sendActivationCodeErrorLiveData.postValue(
+                    EmailErrorMessage(R.string.create_personal_account_with_email_email_blacklisted_error))
             is EmailInUse -> _sendActivationCodeErrorLiveData.postValue(
-                EmailErrorMessage(R.string.create_personal_account_with_email_email_in_use_error))
+                    EmailErrorMessage(R.string.create_personal_account_with_email_email_in_use_error))
         }
     }
 }
