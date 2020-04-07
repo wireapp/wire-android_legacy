@@ -34,7 +34,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
-import com.waz.zclient.storage.db.{GlobalDatabase, UserDatabase}
+import com.waz.zclient.storage.db.{GlobalDatabase}
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
   extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, DbVersion, daos, ZGlobalDB.migrations, tracking)
