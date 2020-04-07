@@ -19,7 +19,7 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.Handle
+import com.waz.model.{Handle, UserId}
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UserSearchClient

@@ -20,7 +20,7 @@ package com.waz.service
 import com.waz.content.UserPreferences.SelfPermissions
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{info, _}
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model.UserPermissions.{ExternalPermissions, decodeBitmask}
 import com.waz.model._
@@ -63,7 +63,7 @@ class UserSearchService(selfUserId:           UserId,
   import timeouts.search._
 
   private val exactMatchUser = Signal(Option.empty[UserData])
-  private val userSearchResult = Signal(IndexedSeq.empty[UserData])
+  val userSearchResult = Signal(IndexedSeq.empty[UserData])
 
   private lazy val isExternal = userPrefs(SelfPermissions).apply()
     .map(decodeBitmask)
@@ -252,7 +252,16 @@ class UserSearchService(selfUserId:           UserId,
 
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
     val users = unapply(results)
+    debug(l"update search results got: ${users.map(_.id)}")
+
     userSearchResult ! users.map(UserData.apply).toIndexedSeq
+
+    sync.syncSearchResults(users.map(_.id).toSet)
+  }
+
+  def updateResults(info: Seq[UserInfo]) = {
+    verbose(l"updateResultHasBeenCalled${info.map(_.picture.map(_.head))}")
+    userSearchResult.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
   }
 
   def updateExactMatch(result: UserSearchResponse.User): Unit = {

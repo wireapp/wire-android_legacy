@@ -17,6 +17,7 @@
  */
 package com.waz.model.sync
 
+import android.util.Log
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
@@ -104,6 +105,26 @@ object SyncRequest {
 
   case class DeletePushToken(token: PushToken) extends BaseRequest(Cmd.DeletePushToken) {
     override val mergeKey: Any = (cmd, token)
+  }
+
+  case class SyncSearchResults(users: Set[UserId]) extends BaseRequest(Cmd.SyncSearchResults) {
+
+    override def toString = s"SyncSearchResults(${users.size} users: ${users.take(5)}...)"
+
+    override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncSearchResults] = mergeHelper[SyncSearchResults](req) { other =>
+      if (other.users.subsetOf(users)) Merged(this)
+      else {
+        val union = users ++ other.users
+        if (union.size <= UsersClient.IdsCountThreshold) Merged(SyncSearchResults(union))
+        else if (union.size == users.size + other.users.size) Unchanged
+        else Updated(other.copy(other.users -- users))
+      }
+    }
+
+    override def isDuplicateOf(req: SyncRequest): Boolean = req match {
+      case SyncSearchResults(us) => users.subsetOf(us)
+      case _ => false
+    }
   }
 
   case class SyncSearchQuery(query: SearchQuery) extends BaseRequest(Cmd.SyncSearchQuery) {
@@ -353,12 +374,15 @@ object SyncRequest {
       def users = decodeUserIdSeq('users).toSet
       val cmd = js.getString("cmd")
 
+      Log.e("SyncRequest", js.toString())
+
       try {
         SyncCommand.fromName(cmd) match {
           case Cmd.SyncUser                  => SyncUser(users)
           case Cmd.SyncConversation          => SyncConversation(decodeConvIdSeq('convs).toSet)
           case Cmd.SyncConvLink              => SyncConvLink('conv)
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
+          case Cmd.SyncSearchResults         => SyncSearchResults(users)
           case Cmd.ExactMatchHandle          => ExactMatchHandle(Handle(decodeString('handle)))
           case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
@@ -435,6 +459,7 @@ object SyncRequest {
 
       req match {
         case SyncUser(users)                  => o.put("users", arrString(users.toSeq map (_.str)))
+        case SyncSearchResults(users)         => o.put("users", arrString(users.toSeq map (_.str)))
         case SyncConversation(convs)          => o.put("convs", arrString(convs.toSeq map (_.str)))
         case SyncConvLink(conv)               => o.put("conv", conv.str)
         case SyncSearchQuery(queryCacheKey)   => o.put("queryCacheKey", queryCacheKey.cacheKey)

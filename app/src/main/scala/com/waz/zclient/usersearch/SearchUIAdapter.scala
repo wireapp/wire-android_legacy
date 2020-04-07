@@ -43,7 +43,7 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
   import SearchUIAdapter._
   import SearchViewItem._
 
-  private var results = mutable.ListBuffer[SearchViewItem]()
+  private val results = mutable.ListBuffer[SearchViewItem]()
 
   setHasStableIds(true)
 
@@ -111,7 +111,8 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
   }
 
   def updateResults(results: mutable.ListBuffer[SearchViewItem]): Unit = {
-    this.results = results
+    this.results.clear()
+    this.results.insertAll(0, results)
     notifyDataSetChanged()
   }
 

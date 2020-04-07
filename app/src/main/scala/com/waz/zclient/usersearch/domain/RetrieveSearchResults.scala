@@ -17,12 +17,10 @@
   */
 package com.waz.zclient.usersearch.domain
 
-import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
@@ -38,7 +36,6 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   import SectionViewItem._
 
   private val userAccountsController    = inject[UserAccountsController]
-  private val convController            = inject[ConversationController]
   private val searchController          = inject[SearchController]
 
   private var mergedResult              = mutable.ListBuffer[SearchViewItem]()
@@ -54,8 +51,6 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private var currentUser               = Option.empty[UserData]
   private var currentUserCanAddServices = false
   private var noServices                = false
-
-  private lazy val usersStorage      = inject[Signal[UsersStorage]]
 
   val resultsData = Signal(mergedResult)
 
@@ -222,6 +217,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       addGroupConversations()
       addConnections()
     }
+
+    verbose(l"Merged results have been updated ${mergedResult.map(_.name)}")
     resultsData ! mergedResult
   }
 }
