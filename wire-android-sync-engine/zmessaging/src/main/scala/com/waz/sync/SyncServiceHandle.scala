@@ -138,7 +138,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] =
     service.addRequest(account, req, priority, dependsOn, forceRetry, delay)
 
-  def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users), priority = Priority.High)
+  def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
   def exactMatchHandle(handle: Handle) = addRequest(ExactMatchHandle(handle), priority = Priority.High)

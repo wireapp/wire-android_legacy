@@ -17,7 +17,6 @@
  */
 package com.waz.model.sync
 
-import android.util.Log
 import com.waz.api.IConversation.{Access, AccessRole}
 import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
@@ -373,8 +372,6 @@ object SyncRequest {
       def teamId = decodeId[TeamId]('teamId)
       def users = decodeUserIdSeq('users).toSet
       val cmd = js.getString("cmd")
-
-      Log.e("SyncRequest", js.toString())
 
       try {
         SyncCommand.fromName(cmd) match {

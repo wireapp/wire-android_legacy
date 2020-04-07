@@ -106,7 +106,7 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
   def setUserData(userData:       UserData,
                   teamId:         Option[TeamId],
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
-    chathead.loadUser(userData.id)
+    chathead.setUserData(userData, userData.isInTeam(teamId))
     setTitle(userData.name, userData.isSelf)
     setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
     setVerified(userData.isVerified)
