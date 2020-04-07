@@ -17,8 +17,8 @@ import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountWithEmailViewModel(
-        private val validateEmailUseCase: ValidateEmailUseCase,
-        private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
+    private val validateEmailUseCase: ValidateEmailUseCase,
+    private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
 ) : ViewModel() {
 
     private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
