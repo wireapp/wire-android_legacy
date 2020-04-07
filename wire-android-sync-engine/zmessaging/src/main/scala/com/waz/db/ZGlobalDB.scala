@@ -34,6 +34,7 @@ import com.waz.service.tracking.TrackingService
 import com.waz.sync.client.AuthenticationManager.AccessToken
 import com.waz.utils.wrappers.DB
 import com.waz.utils.{JsonDecoder, JsonEncoder, Resource}
+import com.waz.zclient.storage.db.{GlobalDatabase, UserDatabase}
 
 class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingService)
   extends DaoDB(context.getApplicationContext, DbName + dbNameSuffix, DbVersion, daos, ZGlobalDB.migrations, tracking)
@@ -53,7 +54,7 @@ class ZGlobalDB(context: Context, dbNameSuffix: String = "", tracking: TrackingS
 
 object ZGlobalDB {
   val DbName = "ZGlobal.db"
-  val DbVersion = 24
+  val DbVersion =  GlobalDatabase.VERSION
 
   lazy val daos = Seq(AccountDataDao, CacheEntryDao, TeamDataDao)
 
