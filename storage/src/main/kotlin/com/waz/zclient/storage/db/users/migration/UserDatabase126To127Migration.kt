@@ -218,7 +218,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 $convId TEXT NOT NULL,
                 msg_type TEXT NOT NULL, 
                 user_id TEXT NOT NULL,
-                content TEXT NOT NULL,
+                content TEXT,
                 protos BLOB, 
                 $time INTEGER NOT NULL, 
                 local_time INTEGER NOT NULL, 

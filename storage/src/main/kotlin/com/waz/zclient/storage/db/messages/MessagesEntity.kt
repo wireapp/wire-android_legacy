@@ -24,7 +24,7 @@ data class MessagesEntity(
     val userId: String,
 
     @ColumnInfo(name = "content")
-    val content: String,
+    val content: String?,
 
     @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB)
     val protos: ByteArray?,
