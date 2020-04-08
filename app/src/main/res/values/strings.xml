@@ -1510,6 +1510,7 @@
     <string name="email_verification_description">Enter the verification code we sent to %s</string>
     <string name="email_verification_resend_code">RESEND CODE</string>
     <string name="email_verification_change_email">CHANGE EMAIL</string>
+    <string name="email_verification_invalid_code_error">Please enter a valid code</string>
 
     <!-- Composite Message -->
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>

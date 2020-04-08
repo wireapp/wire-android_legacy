@@ -44,6 +44,7 @@
         <item name="android:cursorVisible">false</item>
         <item name="android:focusableInTouchMode">true</item>
         <item name="android:focusable">true</item>
+        <item name="android:clickable">false</item>
     </style>
 
 </resources>
