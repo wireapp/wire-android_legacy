@@ -3,12 +3,11 @@ package com.waz.zclient.feature.auth.registration.personal
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.shared.activation.usecase.EmailBlackListed
-import com.waz.zclient.shared.activation.usecase.EmailInUse
-import com.waz.zclient.shared.activation.usecase.InvalidEmail
-import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
+import com.waz.zclient.shared.activation.usecase.EmailInUse
+import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
@@ -75,28 +74,15 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             }
         }
 
-
-    @Test
-    fun `given sendActivationCode is called, when the email is invalid then the activation code is not sent`() =
-        runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(InvalidEmail))
-
-            createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
-
-            createPersonalAccountWithEmailViewModel.sendActivationCodeSuccessLiveData.observeOnce {
-                it shouldBe InvalidEmail
-            }
-        }
-
     @Test
     fun `given sendActivationCode is called, when the email is blacklisted then the activation code is not sent`() =
         runBlockingTest {
-            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlackListed))
+            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(EmailBlacklisted))
 
             createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
 
             createPersonalAccountWithEmailViewModel.sendActivationCodeErrorLiveData.observeOnce {
-                it shouldBe EmailBlackListed
+                it shouldBe EmailBlacklisted
             }
         }
 
