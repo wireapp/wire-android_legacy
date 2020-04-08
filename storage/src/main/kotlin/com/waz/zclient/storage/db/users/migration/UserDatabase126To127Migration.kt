@@ -434,7 +434,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              $contact TEXT NOT NULL, 
-             $emailAddress TEXT NOT NULL
+             $emailAddress TEXT NOT NULL,
+             PRIMARY KEY (contact, email_address)
              )""".trimIndent()
 
         val contactIndex = "CREATE INDEX IF NOT EXISTS EmailAddresses_contact on EmailAddresses ($contact)"
@@ -458,7 +459,8 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              $contact TEXT NOT NULL, 
-             $phoneNumber TEXT NOT NULL
+             $phoneNumber TEXT NOT NULL,
+             PRIMARY KEY (contact, phone_number)
              )""".trimIndent()
 
         val contactIndex = "CREATE INDEX IF NOT EXISTS PhoneNumbers_contact on $originalTableName ($contact)"
