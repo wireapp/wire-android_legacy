@@ -32,13 +32,13 @@ data class ConversationsEntity(
     val team: String?,
 
     @ColumnInfo(name = "is_managed")
-    val managed: Int?,
+    val managed: Boolean?,
 
     @ColumnInfo(name = "last_event_time")
     val lastEventTime: Int,
 
     @ColumnInfo(name = "is_active")
-    val active: Int,
+    val active: Boolean,
 
     @ColumnInfo(name = "last_read")
     val lastRead: Int,
@@ -50,7 +50,7 @@ data class ConversationsEntity(
     val muteTime: Int,
 
     @ColumnInfo(name = "archived")
-    val archived: Int,
+    val archived: Boolean,
 
     @ColumnInfo(name = "archive_time")
     val archiveTime: Int,
@@ -71,7 +71,7 @@ data class ConversationsEntity(
     val unsentCount: Int,
 
     @ColumnInfo(name = "hidden")
-    val hidden: Int,
+    val hidden: Boolean,
 
     @ColumnInfo(name = "missed_call")
     val missedCall: String?,

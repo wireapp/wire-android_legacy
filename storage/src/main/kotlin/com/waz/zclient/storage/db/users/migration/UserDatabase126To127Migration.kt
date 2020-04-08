@@ -49,7 +49,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         migrateMessageDeletionTable(database)
         migrateEditHistoryTable(database)
         migratePushNotificationEvents(database)
-        migrateReadRecieptsTable(database)
+        migrateReadReceiptsTable(database)
         migratePropertiesTable(database)
         migrateUploadAssetTable(database)
         migrateDownloadAssetTable(database)
@@ -138,7 +138,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 CREATE TABLE $tempTableName (
                 _id TEXT PRIMARY KEY NOT NULL,
                 remote_id TEXT NOT NULL,
-                name TEXT ,
+                name TEXT,
                 creator TEXT NOT NULL,
                 conv_type INTEGER NOT NULL,
                 team TEXT,
@@ -192,7 +192,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 $userId TEXT NOT NULL, 
                 $convid TEXT NOT NULL, 
                 role TEXT NOT NULL,
-                PRIMARY KEY (user_id, conv_id));
+                PRIMARY KEY ($userId, $convid));
                 )""".trimIndent()
 
         val conversationIdIndex = "CREATE INDEX IF NOT EXISTS ConversationMembers_conv on $originalTableName ($convid)"
@@ -535,7 +535,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         )
     }
 
-    private fun migrateReadRecieptsTable(database: SupportSQLiteDatabase) {
+    private fun migrateReadReceiptsTable(database: SupportSQLiteDatabase) {
         val tempTableName = "ReadReceiptsTemp"
         val originalTableName = "ReadReceipts"
         val createTempTable = """
@@ -738,7 +738,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                label TEXT NOT NULL, 
                action TEXT NOT NULL, 
                $convId TEXT NOT NULL, 
-               PRIMARY KEY (label, action, conv_id)
+               PRIMARY KEY (label, action, $convId)
                )""".trimIndent()
 
         val conversationIdIndex = """
