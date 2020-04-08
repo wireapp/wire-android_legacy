@@ -609,7 +609,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               _id TEXT NOT NULL, 
               mime TEXT NOT NULL, 
               name TEXT NOT NULL , 
-              preview TEXT, 
+              preview TEXT NOT NULL, 
               details TEXT NOT NULL, 
               downloaded INTEGER NOT NULL, 
               size INTEGER NOT NULL, 
@@ -750,7 +750,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             conversationIdIndex
         )
     }
-
+    
     private fun executeSimpleMigration(
         database: SupportSQLiteDatabase,
         originalTableName: String,
