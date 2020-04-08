@@ -27,7 +27,7 @@ object Versions {
     const val ANDROIDX_CARD_VIEW = "1.0.0"
     const val ANDROIDX_GRID_LAYOUT = "1.0.0"
     const val ANDROIDX_CONSTRAINT_LAYOUT = "1.1.3"
-    const val ANDROIDX_PAGING_RUNTIME = "2.1.1"
+    const val ANDROIDX_PAGING_RUNTIME = "2.1.2"
     const val ANDROIDX_EXIF_INTERFACE = "1.0.0"
     const val ANDROIDX_MEDIA = "1.0.0"
     const val ANDROIDX_LIFECYCLE = "2.2.0-rc03"
