@@ -1,53 +1,48 @@
 package com.waz.zclient.core.backend.mapper
 
+import com.waz.zclient.core.backend.BackendItem
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPrefEndpoints
 import com.waz.zclient.core.backend.datasources.local.CustomBackendPreferences
 import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponse
-import com.waz.zclient.core.backend.datasources.remote.CustomBackendResponseEndpoints
-import com.waz.zclient.core.backend.CustomBackend
-import com.waz.zclient.core.backend.CustomBackendEndpoint
 
 class BackendMapper {
 
-    fun toCustomBackend(backendResponse: CustomBackendResponse) = CustomBackend(
-        title = backendResponse.title,
-        endpoints = toCustomBackendEndpoint(backendResponse.endpoints)
-    )
+    fun toBackendItem(backendPreferences: CustomBackendPreferences): BackendItem =
+        with(backendPreferences.prefEndpoints) {
+            BackendItem(
+                environment = backendPreferences.title,
+                baseUrl = backendUrl,
+                websocketUrl = websocketUrl,
+                blacklistHost = blacklistUrl,
+                teamsUrl = teamsUrl,
+                accountsUrl = accountsUrl,
+                websiteUrl = websiteUrl
+            )
+        }
 
-    private fun toCustomBackendEndpoint(endpointResponse: CustomBackendResponseEndpoints) =
-        CustomBackendEndpoint(
-            backendUrl = endpointResponse.backendUrl,
-            backendWsUrl = endpointResponse.backendWsUrl,
-            blacklistUrl = endpointResponse.blacklistUrl,
-            teamsUrl = endpointResponse.teamsUrl,
-            accountsUrl = endpointResponse.accountsUrl,
-            websiteUrl = endpointResponse.websiteUrl
+    fun toBackendItem(response: CustomBackendResponse): BackendItem = with(response.endpoints) {
+        BackendItem(
+            environment = response.title,
+            baseUrl = backendUrl,
+            websocketUrl = backendWsUrl,
+            blacklistHost = blacklistUrl,
+            teamsUrl = teamsUrl,
+            accountsUrl = accountsUrl,
+            websiteUrl = websiteUrl
         )
+    }
 
-    fun toCustomBackend(backendResponse: CustomBackendPreferences) = CustomBackend(
-        title = backendResponse.title,
-        endpoints = toCustomBackendEndpoint(backendResponse.prefEndpoints)
-    )
-
-    private fun toCustomBackendEndpoint(endpointResponse: CustomBackendPrefEndpoints) =
-        CustomBackendEndpoint(
-            backendUrl = endpointResponse.backendUrl,
-            blacklistUrl = endpointResponse.blacklistUrl,
-            teamsUrl = endpointResponse.teamsUrl,
-            accountsUrl = endpointResponse.accountsUrl,
-            websiteUrl = endpointResponse.websiteUrl
+    fun toPreference(backendItem: BackendItem): CustomBackendPreferences = with(backendItem) {
+        CustomBackendPreferences(
+            title = environment,
+            prefEndpoints = CustomBackendPrefEndpoints(
+                backendUrl = baseUrl,
+                websocketUrl = websocketUrl,
+                blacklistUrl = blacklistHost,
+                teamsUrl = teamsUrl,
+                accountsUrl = accountsUrl,
+                websiteUrl = websiteUrl
+            )
         )
-
-    fun toCustomPrefBackend(customBackend: CustomBackend) = CustomBackendPreferences(
-        title = customBackend.title,
-        prefEndpoints = toCustomPrefEndpoints(customBackend.endpoints)
-    )
-
-    private fun toCustomPrefEndpoints(endpoints: CustomBackendEndpoint) = CustomBackendPrefEndpoints(
-        backendUrl = endpoints.backendUrl,
-        blacklistUrl = endpoints.blacklistUrl,
-        teamsUrl = endpoints.teamsUrl,
-        accountsUrl = endpoints.accountsUrl,
-        websiteUrl = endpoints.websiteUrl
-    )
+    }
 }

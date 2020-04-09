@@ -45,13 +45,13 @@ class BackendPreferences(context: Context) {
         set(value) = sharedPreferences.putString(WEBSITE_URL_PREF, value)
 
     companion object {
-        const val ENVIRONMENT_PREF = "CUSTOM_BACKEND_ENVIRONMENT"
-        const val BASE_URL_PREF = "CUSTOM_BACKEND_BASE_URL"
-        const val WEBSOCKET_URL_PREF = "CUSTOM_BACKEND_WEBSOCKET_URL"
-        const val BLACKLIST_HOST_PREF = "CUSTOM_BACKEND_BLACKLIST_HOST"
-        const val TEAMS_URL_PREF = "CUSTOM_BACKEND_TEAMS_URL"
-        const val ACCOUNTS_URL_PREF = "CUSTOM_BACKEND_ACCOUNTS_URL"
-        const val WEBSITE_URL_PREF = "CUSTOM_BACKEND_WEBSITE_URL"
-        const val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
+        private const val ENVIRONMENT_PREF = "CUSTOM_BACKEND_ENVIRONMENT"
+        private const val BASE_URL_PREF = "CUSTOM_BACKEND_BASE_URL"
+        private const val WEBSOCKET_URL_PREF = "CUSTOM_BACKEND_WEBSOCKET_URL"
+        private const val BLACKLIST_HOST_PREF = "CUSTOM_BACKEND_BLACKLIST_HOST"
+        private const val TEAMS_URL_PREF = "CUSTOM_BACKEND_TEAMS_URL"
+        private const val ACCOUNTS_URL_PREF = "CUSTOM_BACKEND_ACCOUNTS_URL"
+        private const val WEBSITE_URL_PREF = "CUSTOM_BACKEND_WEBSITE_URL"
+        private const val CONFIG_URL_PREF = "CUSTOM_BACKEND_CONFIG_URL"
     }
 }
