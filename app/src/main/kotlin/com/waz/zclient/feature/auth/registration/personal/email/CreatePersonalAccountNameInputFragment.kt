@@ -7,11 +7,11 @@ import com.waz.zclient.R
 
 class CreatePersonalAccountNameInputFragment : Fragment(R.layout.fragment_create_personal_account_name_input) {
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
-	}
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+    }
 
-	companion object {
-		fun newInstance() = CreatePersonalAccountNameInputFragment()
-	}
+    companion object {
+        fun newInstance() = CreatePersonalAccountNameInputFragment()
+    }
 }
