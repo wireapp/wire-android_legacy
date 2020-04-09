@@ -4,6 +4,7 @@ import com.waz.zclient.core.backend.BackendClient
 import com.waz.zclient.core.backend.BackendItem
 import com.waz.zclient.core.backend.BackendRepository
 import com.waz.zclient.core.backend.datasources.local.BackendLocalDataSource
+import com.waz.zclient.core.backend.di.BackendConfigScopeManager
 import com.waz.zclient.core.backend.di.BackendRemoteDataSourceProvider
 import com.waz.zclient.core.backend.mapper.BackendMapper
 import com.waz.zclient.core.exception.Failure
@@ -14,17 +15,18 @@ class BackendDataSource(
     private val remoteDataSourceProvider: BackendRemoteDataSourceProvider,
     private val localDataSource: BackendLocalDataSource,
     private val backendClient: BackendClient,
-    private val backendMapper: BackendMapper
+    private val backendMapper: BackendMapper,
+    private val scopeManager: BackendConfigScopeManager
 ) : BackendRepository {
 
     private val remoteDataSource
         get() = remoteDataSourceProvider.backendRemoteDataSource()
 
-    //TODO: detect if the config changed during app lifetime
-    override fun configuredUrl(): String? = null
+    override fun configuredUrl(): String? = if (scopeManager.isDefaultConfig()) null else backendConfig().baseUrl
 
-    //TODO: lazy access
-    override fun backendConfig(): BackendItem =
+    override fun backendConfig(): BackendItem = scopeManager.backendItem()
+
+    override fun fetchBackendConfig(): BackendItem =
         localDataSource.backendConfig().fold({
             backendClient.get(localDataSource.environment())
         }) {
@@ -35,6 +37,7 @@ class BackendDataSource(
         remoteDataSource.getCustomBackendConfig(url).map {
             val backendItem = backendMapper.toBackendItem(it)
             localDataSource.updateBackendConfig(url, backendMapper.toPreference(backendItem))
+            scopeManager.onConfigChanged(backendItem.environment)
             backendItem
         }
 }

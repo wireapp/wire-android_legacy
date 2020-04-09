@@ -13,7 +13,7 @@ interface BackendRepository {
      * Returns the base url that should be used for network requests in the future, overriding Retrofit's base url.
      *
      * Note that, if the app is running on a custom backend which is configured before, this method also returns null,
-     * since [backendConfig] returns that backend as the default config.
+     * since custom backend is fetched as the default config when app starts.
      *
      * @return the new url if configured during app's lifetime, null o/w
      */
@@ -23,4 +23,9 @@ interface BackendRepository {
      * Returns the current [BackendItem] encapsulating the endpoints to be used to perform network requests.
      */
     fun backendConfig(): BackendItem
+
+    /**
+     * Fetches a new instance of the [BackendItem] from data sources.
+     */
+    fun fetchBackendConfig(): BackendItem
 }
