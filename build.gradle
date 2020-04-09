@@ -91,7 +91,7 @@ ext {
 
     //Update kotlinCore flag as well when adding new kotlin features
     kotlinSettings = false
-    kotlinRegistration = true
+    kotlinRegistration = false
     kotlinCore = kotlinSettings || kotlinRegistration
 }
 
