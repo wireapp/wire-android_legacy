@@ -431,7 +431,7 @@ object ConversationListRow {
           members.headOption.flatMap(_.handle).map(_.string).fold("")(StringUtils.formatHandle)
         case Message.Type.MEMBER_JOIN if members.exists(_.id == selfId) =>
           getString(R.string.conversation_list__added_you, senderName)
-        case Message.Type.MEMBER_JOIN if members.length > 1=>
+        case Message.Type.MEMBER_JOIN if members.length > 1 =>
           getString(R.string.conversation_list__added, memberName)
         case Message.Type.MEMBER_JOIN =>
           getString(R.string.conversation_list__added, memberName)

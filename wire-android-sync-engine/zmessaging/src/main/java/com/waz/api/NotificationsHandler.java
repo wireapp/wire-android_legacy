@@ -28,8 +28,6 @@ public interface NotificationsHandler {
         VIDEO_ASSET,
         AUDIO_ASSET,
         TEXT,
-        MEMBER_JOIN,
-        MEMBER_LEAVE,
         RENAME,
         KNOCK,
         MISSED_CALL,
