@@ -541,7 +541,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         time    = lastEventTime
       )
 
-      processing ! false
+      processing ! true
 
       setup(
         availability = Availability.Available,
