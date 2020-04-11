@@ -567,6 +567,8 @@
     <dimen name="empty_likes_reads_text_width">224dp</dimen>
     <dimen name="create_conv_options_height">64dp</dimen>
 
+    <!-- Global -->
+    <dimen name="back_button_margin">16dp</dimen>
 
     <!-- Settings account screen -->
     <dimen name="settings_account_edit_phone_margin_top">20dp</dimen>
@@ -584,6 +586,8 @@
     <dimen name="authentication_edit_text_text_size">14sp</dimen>
     <dimen name="authentication_confirmation_button_padding">8dp</dimen>
     <dimen name="authentication_confirmation_button_margin_end">16dp</dimen>
+    <dimen name="authentication_confirmation_button_margin_top">8dp</dimen>
+    <dimen name="authentication_input_layout_error_text_size">12sp</dimen>
 
     <!-- Create Account screen -->
     <dimen name="create_account_layout_container_margin">16dp</dimen>
@@ -617,7 +621,7 @@
     <dimen name="pin_code_digit_padding_top">8dp</dimen>
     <dimen name="pin_code_digit_padding_bottom">8dp</dimen>
     <dimen name="pin_code_digit_text_size">32dp</dimen>
-    
+
     <!-- Composite Message -->
     <dimen name="composite_message_button_layout_margin_top">16dp</dimen>
     <dimen name="composite_message_buttonitemview_gap">8dp</dimen>

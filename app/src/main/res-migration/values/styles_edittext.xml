@@ -29,6 +29,7 @@
         <item name="android:textColorHint">@color/heather</item>
         <item name="android:textSize">@dimen/authentication_edit_text_text_size</item>
         <item name="android:background">@color/white</item>
+        <item name="errorTextAppearance">@style/TextView.Authentication.Error</item>
     </style>
 
     <style name="EditText.PinCodeDigit" parent="@style/EditText.RobotoRegular">

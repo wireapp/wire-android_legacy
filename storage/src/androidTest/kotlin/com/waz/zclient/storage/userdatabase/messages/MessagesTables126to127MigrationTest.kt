@@ -19,7 +19,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
         val content = "testContent"
         val proto = ByteArray(5)
         val time = 1584710479
-        val message = 303037372
+        val message = false
         val members = "testMembers"
         val recipient = "testRecipient"
         val email = "test@wire.com"
@@ -27,7 +27,7 @@ class MessagesTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
         val messageState = "delivered"
         val contentSize = 5000
         val ephemeral = 40
-        val expired = 1
+        val expired = true
         val duration = 5050505
         val quote = "testQuote"
         val quoteValidity = 9000
