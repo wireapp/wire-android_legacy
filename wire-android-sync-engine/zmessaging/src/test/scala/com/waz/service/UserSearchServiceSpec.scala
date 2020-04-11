@@ -17,7 +17,6 @@
  */
 package com.waz.service
 
-import android.util.Log
 import com.waz.api.ConnectionStatus
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -27,7 +26,6 @@ import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestUserPreferences
-import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.Managed
 import com.waz.utils.events.{EventStream, Signal, SourceSignal}
 import com.waz.utils.wrappers.DB
@@ -35,7 +33,6 @@ import com.waz.utils.wrappers.DB
 import scala.collection.breakOut
 import scala.collection.generic.CanBuild
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
@@ -238,11 +235,9 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("search for local results"){
       val expected = ids('g, 'h)
       val query = SearchQuery("fr")
-      val querySignal = new SourceSignal[Option[Vector[UserId]]]()
-      val queryResults = Vector.empty[UserId]
+      val querySignal = new SourceSignal[Option[IndexedSeq[UserData]]]()
+      val queryResults = IndexedSeq.empty[UserData]
 
-      (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
-        .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
@@ -254,11 +249,6 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
           SyncId()
         }
       }
-
-      (usersStorage.listSignal _).expects(*).never()
-      (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserData]]())
-      (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
-      (usersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserId]]())
 
       val res = getService(false, id('me)).search("fr").map(_.local.map(_.id).toSet)
 
