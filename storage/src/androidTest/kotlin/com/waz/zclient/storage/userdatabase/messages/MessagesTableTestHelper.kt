@@ -36,9 +36,9 @@ class MessagesTableTestHelper private constructor() {
 
         fun insertMessage(id: String, conversationId: String, messageType: String, userId: String,
                           content: String?, protos: ByteArray?, time: Int, localTime: Int,
-                          firstMessage: Int, members: String?, recipient: String?,
+                          firstMessage: Boolean, members: String?, recipient: String?,
                           email: String?, name: String?, messageState: String, contentSize: Int,
-                          editTime: Int, ephemeral: Int?, expiryTime: Int?, expired: Int,
+                          editTime: Int, ephemeral: Int?, expiryTime: Int?, expired: Boolean,
                           duration: Int?, quote: String?, quoteValidity: Int, forceReadReceipts: Int?,
                           assetId: String?, openHelper: DbSQLiteOpenHelper) {
 

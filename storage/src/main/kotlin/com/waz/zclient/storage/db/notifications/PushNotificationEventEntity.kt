@@ -19,7 +19,7 @@ data class PushNotificationEventEntity(
     @ColumnInfo(name = "event")
     val eventJson: String,
 
-    @ColumnInfo(name = "plain")
+    @ColumnInfo(name = "plain", typeAffinity = ColumnInfo.BLOB)
     val plain: ByteArray?,
 
     @ColumnInfo(name = "transient")

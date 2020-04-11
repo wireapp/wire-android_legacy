@@ -7,6 +7,7 @@ data class CustomBackendPreferences(
     fun isValid() =
         title.isNotEmpty() &&
             prefEndpoints.backendUrl.isNotEmpty() &&
+            prefEndpoints.websocketUrl.isNotEmpty() &&
             prefEndpoints.blacklistUrl.isNotEmpty() &&
             prefEndpoints.teamsUrl.isNotEmpty() &&
             prefEndpoints.accountsUrl.isNotEmpty() &&
@@ -15,6 +16,7 @@ data class CustomBackendPreferences(
 
 data class CustomBackendPrefEndpoints(
     val backendUrl: String,
+    val websocketUrl: String,
     val blacklistUrl: String,
     val teamsUrl: String,
     val accountsUrl: String,
