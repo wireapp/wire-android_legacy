@@ -3,8 +3,8 @@
 package com.waz.zclient.core.network.di
 
 import com.waz.zclient.BuildConfig
+import com.waz.zclient.core.backend.BackendItem
 import com.waz.zclient.core.backend.datasources.remote.BackendApi
-import com.waz.zclient.core.backend.items.BackendItem
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.core.network.NetworkHandler
 import com.waz.zclient.core.network.RetrofitClient
@@ -27,7 +27,6 @@ import com.waz.zclient.core.network.proxy.HttpProxyFactory
 import com.waz.zclient.core.network.useragent.UserAgentConfig
 import com.waz.zclient.core.network.useragent.UserAgentInterceptor
 import com.waz.zclient.storage.db.GlobalDatabase
-import com.waz.zclient.storage.pref.backend.BackendPreferences
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.HttpLoggingInterceptor.Level
@@ -45,7 +44,7 @@ object NetworkDependencyProvider {
         backendItem: BackendItem
     ): Retrofit =
         Retrofit.Builder()
-            .baseUrl(backendItem.baseUrl())
+            .baseUrl(backendItem.baseUrl)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -75,7 +74,7 @@ object NetworkDependencyProvider {
         userAgentInterceptor: UserAgentInterceptor
     ): OkHttpClient.Builder =
         OkHttpClient.Builder()
-            .certificatePinner(CertificatePinnerFactory.create(backendItem.pinningCertificate()))
+            .certificatePinner(CertificatePinnerFactory.create(backendItem.certificatePin()))
             .connectionSpecs(ConnectionSpecsFactory.create())
             .addInterceptor(userAgentInterceptor)
             .proxy(HttpProxyFactory.create())
@@ -97,7 +96,7 @@ val networkModule: Module = module {
     single { AccessTokenMapper() }
     single { RefreshTokenMapper() }
     single { UserAgentInterceptor(get()) }
-    single { CustomBackendInterceptor(get(), get<BackendPreferences>().customConfigUrl) }
+    single { CustomBackendInterceptor(get()) }
     factory { UserAgentConfig(get()) }
     single { AccessTokenRepository(get(), get(), get(), get()) }
     single { AccessTokenAuthenticator(get(), get()) }
