@@ -17,6 +17,7 @@
  */
 package com.waz.service
 
+import android.util.Log
 import com.waz.api.ConnectionStatus
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
@@ -216,54 +217,6 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
   def ids(s: Symbol*) = s.map(id)(breakOut).toSet
   def ud(s: Symbol) = users(id(s))
 
-  def verifySearch(prefix: String, matches: Set[UserId]) = {
-    val query = SearchQuery(prefix)
-    val expected = users.filterKeys(matches.contains).values.toVector
-
-    (usersStorage.find[UserData, Vector[UserData]](
-      _: UserData => Boolean,
-      _: DB => Managed[TraversableOnce[UserData]],
-      _: UserData => UserData
-    )(_: CanBuild[UserData, Vector[UserData]]))
-      .expects(*, *, *, *)
-      .once()
-      .returning(Future.successful(expected))
-    (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserData]]())
-    (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
-    (usersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserId]]())
-    (sync.syncSearchQuery _).expects(*).once().returning(Future.successful(SyncId()))
-    val resSignal = getService(false, id('me)).searchUserData(query).map(_.map(_.id)).disableAutowiring()
-
-    result(resSignal.map(_.toSet).filter(_ == matches).head)
-  }
-
-  feature("Recommended people search") {
-    scenario("Return search results for name") {
-      verifySearch("rel", ids('d, 'e))
-    }
-
-    scenario("Return no search results for name") {
-      verifySearch("relt", Set.empty[UserId])
-    }
-
-    scenario("Return search results for handle") {
-      verifySearch("@rel", ids('d, 'e))
-    }
-
-    scenario("Return no search results for handle") {
-      verifySearch("@relt", Set.empty[UserId])
-    }
-
-    scenario("Return no search results for team member when query matches only to email") {
-      verifySearch("a_member@wire.com", Set.empty[UserId])
-    }
-
-    scenario("Return no search results for personal account when query matches only to email") {
-      verifySearch("a_person@wire.com", Set.empty[UserId])
-    }
-
-  }
-
   feature("Search by searchState") {
     scenario("search for top people"){
       val expected = ids('g, 'h, 'i)
@@ -287,9 +240,7 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val query = SearchQuery("fr")
       val querySignal = new SourceSignal[Option[Vector[UserId]]]()
       val queryResults = Vector.empty[UserId]
-
-      (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
-        .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
+      
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
@@ -310,35 +261,6 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val res = getService(false, id('me)).search("fr").map(_.local.map(_.id).toSet)
 
       result(res.filter(_ == expected).head)
-    }
-
-    scenario("search for remote results") {
-      val expected = ids('a, 'b)
-      val query = SearchQuery("ot")
-      val queryStream = EventStream[Seq[UserData]]()
-      val queryResults = users.filterKeys(expected.contains).values.toSeq
-
-      (usersStorage.find(_: UserData => Boolean, _: DB => Managed[TraversableOnce[UserData]], _: UserData => UserData)(_: CanBuild[UserData, Vector[UserData]]))
-        .expects(*, *, *, *).once().returning(Future.successful(Vector.empty[UserData]))
-      (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(Map.empty[UserId, UserData]))
-
-      (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
-
-      (usersStorage.onAdded _).expects().anyNumberOfTimes().returning(queryStream)
-      (usersStorage.onUpdated _).expects().anyNumberOfTimes().returning(EventStream[Seq[(UserData, UserData)]]())
-      (usersStorage.onDeleted _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserId]]())
-
-      (sync.syncSearchQuery _).expects(query).once().onCall { _: SearchQuery =>
-        CancellableFuture.delay(500.millis).future.map { _ =>
-          println(s"results: $queryResults")
-          queryStream ! queryResults
-          SyncId()
-        }(Threading.Background)
-      }
-
-      val res = getService(false, id('me)).search("ot").map(_.dir.map(_.id).toSet)
-
-      result(res.filter(_.nonEmpty).head)
     }
   }
 

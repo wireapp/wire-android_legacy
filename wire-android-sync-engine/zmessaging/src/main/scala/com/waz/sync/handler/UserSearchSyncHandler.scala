@@ -26,7 +26,6 @@ import com.waz.sync.client.UserSearchClient
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
-import scala.concurrent.Future.successful
 
 class UserSearchSyncHandler(userSearch: UserSearchService,
                             client: UserSearchClient,
@@ -34,25 +33,20 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
 
   import Threading.Implicits.Background
 
-  def syncSearchQuery(query: SearchQuery): Future[SyncResult] = {
-    debug(l"starting sync for: $query")
-    client.getContacts(query).future flatMap {
-      case Right(results) =>
-        userSearch.updateSearchResults(query, results)
-          .map(_ => SyncResult.Success)
-      case Left(error) =>
-        successful(SyncResult(error))
-    }
+  def syncSearchQuery(query: SearchQuery): Future[SyncResult] = client.getContacts(query).future.map {
+    case Right(results) =>
+      debug(l"syncSearchQuery got: ${results.documents.map(_.team)}")
+      userSearch.updateSearchResults(query, results)
+      SyncResult.Success
+    case Left(error)    =>
+      SyncResult(error)
   }
 
-  def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.flatMap {
-    case Right(Some(userId)) =>
-      debug(l"exactMatchHandle, got: $userId for the handle $handle")
-      for {
-        _ <- usersSyncHandler.syncUsers(userId)
-        _ <- userSearch.updateExactMatch(userId)
-      } yield SyncResult.Success
-    case Right(None)         => successful(SyncResult.Success)
-    case Left(error)         => successful(SyncResult(error))
+  def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.map {
+    case Right(Some(user)) =>
+      debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
+      userSearch.updateExactMatch(user)
+      SyncResult.Success
+    case Left(error)       => SyncResult(error)
   }
 }

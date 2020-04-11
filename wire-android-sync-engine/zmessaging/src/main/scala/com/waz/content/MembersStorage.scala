@@ -137,11 +137,13 @@ class MembersStorageImpl(context: Context, storage: ZmsDatabase)
   override def updateOrCreate(conv: ConvId, user: UserId, role: ConversationRole): Future[Unit] =
     updateOrCreate((user, conv), _.copy(role = role.label), ConversationMemberData(user, conv, role)).map(_ => ())
 
-  override def isActiveMember(conv: ConvId, user: UserId) = get(user -> conv).map(_.nonEmpty)
+  override def isActiveMember(conv: ConvId, user: UserId): Future[Boolean] = get(user -> conv).map(_.nonEmpty)
 
-  def delete(conv: ConvId) = getByConv(conv) flatMap { users => removeAll(users.map(_.userId -> conv)) }
+  override def delete(conv: ConvId): Future[Unit] = getByConv(conv) flatMap { users => removeAll(users.map(_.userId -> conv)) }
 
-  override def getByUsers(users: Set[UserId]) = find(mem => users.contains(mem.userId), ConversationMemberDataDao.findForUsers(users)(_), identity)
+  override def getByUsers(users: Set[UserId]): Future[IndexedSeq[ConversationMemberData]] =
+    find(mem => users.contains(mem.userId), ConversationMemberDataDao.findForUsers(users)(_), identity)
 
-  override def getByConvs(convs: Set[ConvId]) = find(mem => convs.contains(mem.convId), ConversationMemberDataDao.findForConvs(convs)(_), identity)
+  override def getByConvs(convs: Set[ConvId]): Future[IndexedSeq[ConversationMemberData]] =
+    find(mem => convs.contains(mem.convId), ConversationMemberDataDao.findForConvs(convs)(_), identity)
 }

@@ -31,7 +31,7 @@ import com.waz.znet2.http._
 
 trait UserSearchClient {
   def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
-  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]]
+  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]]
 }
 
 class UserSearchClientImpl(implicit
@@ -59,13 +59,17 @@ class UserSearchClientImpl(implicit
   }
 
 
-  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
-    Request.Get(relativePath = handlesQuery(handle))
-      .withResultType[ExactHandleResponse]
+  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]] = {
+    Request
+      .Get(
+        relativePath = HandlesPath,
+        queryParameters = queryParameters("handles" -> Handle.stripSymbol(handle.string))
+      )
+      .withResultType[UserSearchResponse.User]
       .withErrorType[ErrorResponse]
       .executeSafe
       .map {
-        case Right(response) => Right(Some(UserId(response.user)))
+        case Right(user) => Right(Some(user))
         case Left(response) if response.code == ResponseCode.NotFound => Right(None)
         case Left(response) => Left(response)
       }
@@ -74,19 +78,16 @@ class UserSearchClientImpl(implicit
 
 object UserSearchClient extends DerivedLogTag {
   val ContactsPath = "/search/contacts"
-  val HandlesPath = "/users/handles"
+  val HandlesPath = "/users"
 
   val DefaultLimit = 10
 
-  def handlesQuery(handle: Handle): String =
-    UserSearchClient.HandlesPath + "/" + Handle.stripSymbol(handle.string)
-
   // Response types
 
-  case class ExactHandleResponse(user: String)
   case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int])
+    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team: Option[String], assets: Option[Seq[Asset]])
+    case class Asset(key: String, size: String, `type`: String)
   }
 }

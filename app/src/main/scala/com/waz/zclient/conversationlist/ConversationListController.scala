@@ -24,7 +24,7 @@ import com.waz.model.ConversationData.ConversationType
 import com.waz.model.ConversationData.ConversationType.{Self, Unknown}
 import com.waz.model._
 import com.waz.service.ZMessaging
-import com.waz.service.conversation.{ConversationsService, FoldersService}
+import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService, FoldersService}
 import com.waz.service.teams.TeamsService
 import com.waz.threading.{SerialDispatchQueue, Threading}
 import com.waz.utils._
@@ -223,7 +223,7 @@ class ConversationListController(implicit inj: Injector, ec: EventContext)
 
   def deleteConversation(teamId: TeamId, convId: ConvId): Future[Unit] = {
     val result = for {
-      contUpdater <- convService.head.map(_.content)
+      contUpdater <- inject[Signal[ConversationsContentUpdater]].head
       convOpt     <- contUpdater.convById(convId)
       service     <- inject[Signal[TeamsService]].head
     } yield convOpt match {

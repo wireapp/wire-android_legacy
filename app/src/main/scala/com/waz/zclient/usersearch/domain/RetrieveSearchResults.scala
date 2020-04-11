@@ -20,8 +20,6 @@ package com.waz.zclient.usersearch.domain
 import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.TeamSizeThreshold
-import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
 import com.waz.zclient.conversation.ConversationController
@@ -29,7 +27,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.usersearch.listitems._
-import com.waz.zclient.{Injectable, Injector}
+import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.collection.mutable
 
@@ -98,11 +96,6 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       updateMergedResults()
   }
 
-  private var shouldHideUserStatus = false
-  TeamSizeThreshold.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
-    shouldHideUserStatus = hide
-  }(Threading.Ui)
-
   def expandGroups(): Unit = {
     collapsedGroups = false
     updateMergedResults()
@@ -120,21 +113,32 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
     def addTopPeople(): Unit = {
       if (topUsers.nonEmpty) {
-        val topUserSectionHeader = new SectionViewItem(SectionViewModel(TopUsersSection, 0))
-        val topUsersListItem = new TopUserViewItem(TopUserViewModel(0, topUsers))
+        val topUserSectionHeader = SectionViewItem(SectionViewModel(TopUsersSection, 0))
+        val topUsersListItem = TopUserViewItem(TopUserViewModel(0, topUsers))
         mergedResult = mergedResult ++ Seq(topUserSectionHeader)
         mergedResult = mergedResult ++ Seq(topUsersListItem)
       }
     }
 
     def addContacts(): Unit = {
-      if (localResults.nonEmpty) {
-        val contactsSectionHeader = new SectionViewItem(SectionViewModel(ContactsSection, 0, teamName))
+      val directoryTeamMembers = currentUser.map(_.teamId) match {
+        case Some(teamId) => directoryResults.filter(_.teamId == teamId)
+        case None         => Nil
+      }
+      val contactsList = (localResults ++ directoryTeamMembers).distinctBy(_.id)
+      if (contactsList.nonEmpty) {
+        val contactsSectionTitle = if (searchController.filter.currentValue.forall(_.isEmpty)) {
+          R.string.people_picker__search_result_connections_non_searched_header_title
+        } else {
+          R.string.people_picker__search_result_connections_searched_header_title
+        }
+
+        val contactsSectionHeader = new SectionViewItem(SectionViewModel(ContactsSection, 0, teamName, contactsSectionTitle))
         mergedResult = mergedResult ++ Seq(contactsSectionHeader)
         var contactsSection = Seq[SearchViewItem]()
 
-        contactsSection = contactsSection ++ localResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).name, team))
+        contactsSection = contactsSection ++ contactsList.indices.map { i =>
+          ConnectionViewItem(ConnectionViewModel(i, contactsList(i).id.str.hashCode, isConnected = true, contactsList, contactsList(i).name, team))
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
@@ -143,7 +147,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
         mergedResult = mergedResult ++ contactsSection
         if (shouldCollapse) {
-          val expandViewItem = ExpandViewItem(ExpandViewModel(ContactsSection, 0, localResults.size))
+          val expandViewItem = ExpandViewItem(ExpandViewModel(ContactsSection, 0, contactsList.size))
           mergedResult = mergedResult ++ Seq(expandViewItem)
         }
       }
@@ -151,7 +155,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
 
     def addGroupConversations(): Unit = {
       if (conversations.nonEmpty) {
-        val groupConversationSectionHeader = new SectionViewItem(SectionViewModel(GroupConversationsSection, 0, teamName))
+        val groupConversationSectionHeader = SectionViewItem(SectionViewModel(GroupConversationsSection, 0, teamName))
         mergedResult = mergedResult ++ Seq(groupConversationSectionHeader)
 
         val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
@@ -167,11 +171,15 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
     }
 
     def addConnections(): Unit = {
-      if (directoryResults.nonEmpty) {
+      val directoryExternalMembers = currentUser.map(_.teamId) match {
+        case Some(teamId) => directoryResults.filterNot(_.teamId == teamId)
+        case None => Nil
+      }
+      if (directoryExternalMembers.nonEmpty) {
         val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
         mergedResult = mergedResult ++ Seq(directorySectionHeader)
         mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults, team = team))
+          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, directoryResults, team = team))
         }
       }
     }
