@@ -17,15 +17,15 @@
  */
 package com.waz.sync.handler
 
-import com.waz.log.LogSE._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UsersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.UserInfo.ProfilePicture
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.UserService
 import com.waz.service.assets.AssetService
+import com.waz.service.{UserSearchService, UserService}
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
@@ -36,6 +36,7 @@ import scala.concurrent.Future
 
 trait UsersSyncHandler {
   def syncUsers(ids: UserId*): Future[SyncResult]
+  def syncSearchResults(ids: UserId*): Future[SyncResult]
   def syncSelfUser(): Future[SyncResult]
   def postSelfName(name: Name): Future[SyncResult]
   def postSelfAccentColor(color: AccentColor): Future[SyncResult]
@@ -48,6 +49,7 @@ trait UsersSyncHandler {
 class UsersSyncHandlerImpl(userService:  UserService,
                            usersStorage: UsersStorage,
                            assets:       AssetService,
+                           searchService: UserSearchService,
                            usersClient:  UsersClient,
                            otrSync:      OtrSyncHandler)
   extends UsersSyncHandler with DerivedLogTag {
@@ -62,7 +64,15 @@ class UsersSyncHandlerImpl(userService:  UserService,
         Future.successful(SyncResult(error))
   }
 
-  override def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future.flatMap {
+  override def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.map {
+    case Right(users) =>
+      searchService.updateSearchResults(users)
+      SyncResult.Success
+    case Left(error)  =>
+      SyncResult(error)
+  }
+
+  def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>
       userService.updateSyncedUsers(IndexedSeq(user)).map(_ => SyncResult.Success)
     case Left(error) =>

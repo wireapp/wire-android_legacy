@@ -592,8 +592,8 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     }
   }
 
-  def getService(inTeam: Boolean, selfId: UserId) = {
-    new UserSearchService(
+  def getService(inTeam: Boolean, selfId: UserId): UserSearchService =
+    new UserSearchServiceImpl(
       selfId,
       if (inTeam) teamId else emptyTeamId,
       userService,
@@ -608,6 +608,5 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       convs,
       userPrefs
     )
-  }
 
 }
