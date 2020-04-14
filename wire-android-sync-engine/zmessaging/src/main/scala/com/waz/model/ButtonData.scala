@@ -34,6 +34,10 @@ object ButtonData {
     val Ordinal = int('ordinal).apply(_.ordinal)
     val StateId = int('state).apply(_.state.id)
 
+    override def onCreate(db: DB): Unit = {
+      println("ButtonData.onCreate called - we do nothing, the table will be created in Kotlin")
+    }
+
     override val idCol = (Message, Button)
 
     override val table = Table("Buttons", Message, Button, Title, Ordinal, StateId)
