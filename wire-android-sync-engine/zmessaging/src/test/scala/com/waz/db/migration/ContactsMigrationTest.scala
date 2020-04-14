@@ -19,7 +19,6 @@ class ContactsMigrationTest extends MigrationTest {
           contact.id.str, "name", 2, "", ""
         ))
       })
-      validateMigrationAndClose()
     }
   }
 }

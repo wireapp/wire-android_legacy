@@ -20,7 +20,6 @@ class AssetsMigrationTest extends MigrationTest {
           s"""{"sizeInBytes":0,"mime":"","id":"${assetData.id.str}","status":{"status":"NotStarted"}}"""
         ))
       })
-      validateMigrationAndClose()
     }
   }
 }
