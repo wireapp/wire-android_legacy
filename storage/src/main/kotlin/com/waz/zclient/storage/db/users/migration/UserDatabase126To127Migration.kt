@@ -5,6 +5,7 @@ package com.waz.zclient.storage.db.users.migration
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.BuildConfig
+import com.waz.zclient.storage.db.users.migration.MigrationUtils.executeSimpleMigration
 
 //Shared keys
 private const val CLIENT_ID_KEY = "id"
@@ -775,27 +776,6 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
             tempTableName = tempTableName,
             createTempTable = createTempTable
         )
-    }
-
-    private fun executeSimpleMigration(
-        database: SupportSQLiteDatabase,
-        originalTableName: String,
-        tempTableName: String,
-        createTempTable: String,
-        vararg indicesCalls: String
-    ) {
-        val copyAll = "INSERT INTO $tempTableName SELECT * FROM $originalTableName"
-        val dropOldTable = "DROP TABLE $originalTableName"
-        val renameTableBack = "ALTER TABLE $tempTableName RENAME TO $originalTableName"
-        with(database) {
-            execSQL(createTempTable)
-            execSQL(copyAll)
-            execSQL(dropOldTable)
-            execSQL(renameTableBack)
-            indicesCalls.forEach {
-                execSQL(it)
-            }
-        }
     }
 
     private fun createButtonsTable(database: SupportSQLiteDatabase) {
