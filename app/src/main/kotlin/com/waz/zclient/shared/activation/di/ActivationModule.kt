@@ -11,9 +11,9 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val activationModule: Module = module {
-	factory { SendEmailActivationCodeUseCase(get()) }
-	factory { ActivateEmailUseCase(get()) }
-	single { ActivationDataSource(get()) as ActivationRepository }
-	factory { ActivationRemoteDataSource(get(), get()) }
-	factory { get<NetworkClient>().create(ActivationApi::class.java) }
+    factory { SendEmailActivationCodeUseCase(get()) }
+    factory { ActivateEmailUseCase(get()) }
+    single { ActivationDataSource(get()) as ActivationRepository }
+    factory { ActivationRemoteDataSource(get(), get()) }
+    factory { get<NetworkClient>().create(ActivationApi::class.java) }
 }

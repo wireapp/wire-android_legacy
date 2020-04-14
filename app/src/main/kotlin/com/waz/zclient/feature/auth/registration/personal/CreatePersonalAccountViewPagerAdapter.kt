@@ -7,22 +7,22 @@ import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAc
 import com.waz.zclient.feature.auth.registration.personal.phone.CreatePersonalAccountWithPhoneFragment
 
 class CreatePersonalAccountViewPagerAdapter(fragmentActivity: FragmentActivity) :
-	FragmentStateAdapter(fragmentActivity) {
+    FragmentStateAdapter(fragmentActivity) {
 
-	override fun getItemCount(): Int = TAB_SIZE
+    override fun getItemCount(): Int = TAB_SIZE
 
-	override fun createFragment(position: Int): Fragment {
-		var fragment = Fragment()
-		when (position) {
-			EMAIL_TAB_POSITION -> fragment = CreatePersonalAccountEmailInputFragment.newInstance()
-			PHONE_TAB_POSITION -> fragment = CreatePersonalAccountWithPhoneFragment.newInstance()
-		}
-		return fragment
-	}
+    override fun createFragment(position: Int): Fragment {
+        var fragment = Fragment()
+        when (position) {
+            EMAIL_TAB_POSITION -> fragment = CreatePersonalAccountEmailInputFragment.newInstance()
+            PHONE_TAB_POSITION -> fragment = CreatePersonalAccountWithPhoneFragment.newInstance()
+        }
+        return fragment
+    }
 
-	companion object {
-		private const val EMAIL_TAB_POSITION = 0
-		private const val PHONE_TAB_POSITION = 1
-		private const val TAB_SIZE = 2
-	}
+    companion object {
+        private const val EMAIL_TAB_POSITION = 0
+        private const val PHONE_TAB_POSITION = 1
+        private const val TAB_SIZE = 2
+    }
 }

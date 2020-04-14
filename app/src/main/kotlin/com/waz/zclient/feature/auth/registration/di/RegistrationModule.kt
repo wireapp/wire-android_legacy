@@ -11,11 +11,11 @@ const val REGISTRATION_SCOPE_ID = "RegistrationScopeId"
 const val REGISTRATION_SCOPE = "RegistrationScope"
 
 val registrationModules: List<Module>
-	get() = listOf(createPersonalAccountModule)
+    get() = listOf(createPersonalAccountModule)
 
 val createPersonalAccountModule: Module = module {
-	scope(named(REGISTRATION_SCOPE)) {
-		viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get()) }
-		factory { ValidateEmailUseCase() }
-	}
+    scope(named(REGISTRATION_SCOPE)) {
+        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get()) }
+        factory { ValidateEmailUseCase() }
+    }
 }
