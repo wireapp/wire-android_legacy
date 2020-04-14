@@ -47,6 +47,10 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
       debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
       userSearch.updateExactMatch(user)
       SyncResult.Success
-    case Left(error)       => SyncResult(error)
+    case Right(None) =>
+      debug(l"exactMatchHandle, No user id for the handle $handle")
+      SyncResult.Success
+    case Left(error) =>
+      SyncResult(error)
   }
 }
