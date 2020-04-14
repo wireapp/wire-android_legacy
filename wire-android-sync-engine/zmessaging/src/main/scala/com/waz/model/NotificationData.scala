@@ -103,8 +103,6 @@ object NotificationData {
     case NotificationType.VIDEO_ASSET            => "VideoAsset"
     case NotificationType.AUDIO_ASSET            => "AudioAsset"
     case NotificationType.TEXT                   => "Text"
-    case NotificationType.MEMBER_JOIN            => "MemberJoin"
-    case NotificationType.MEMBER_LEAVE           => "MemberLeave"
     case NotificationType.RENAME                 => "Rename"
     case NotificationType.KNOCK                  => "Knock"
     case NotificationType.MISSED_CALL            => "MissedCall"
