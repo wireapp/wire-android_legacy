@@ -17,74 +17,74 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ActivateEmailUseCaseTest : UnitTest() {
 
-	private lateinit var activateEmailUseCase: ActivateEmailUseCase
+    private lateinit var activateEmailUseCase: ActivateEmailUseCase
 
-	@Mock
-	private lateinit var activationRepository: ActivationRepository
+    @Mock
+    private lateinit var activationRepository: ActivationRepository
 
-	@Mock
-	private lateinit var activateEmailParams: ActivateEmailParams
+    @Mock
+    private lateinit var activateEmailParams: ActivateEmailParams
 
-	@Before
-	fun setup() {
-		activateEmailUseCase = ActivateEmailUseCase(activationRepository)
-	}
+    @Before
+    fun setup() {
+        activateEmailUseCase = ActivateEmailUseCase(activationRepository)
+    }
 
-	@Test
-	fun `Given activate email use case is executed, when there is a Not found error then return InvalidCode`() =
-		runBlockingTest {
-			`when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
-			`when`(activateEmailParams.code).thenReturn(TEST_CODE)
-			`when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InvalidCode))
+    @Test
+    fun `Given activate email use case is executed, when there is a Not found error then return InvalidCode`() =
+        runBlockingTest {
+            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
+            `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InvalidCode))
 
-			val response = activateEmailUseCase.run(activateEmailParams)
+            val response = activateEmailUseCase.run(activateEmailParams)
 
-			verify(activationRepository).activateEmail(TEST_EMAIL, TEST_CODE)
+            verify(activationRepository).activateEmail(TEST_EMAIL, TEST_CODE)
 
-			response.isLeft shouldBe true
+            response.isLeft shouldBe true
 
-			response.fold({
-				it shouldBe InvalidCode
-			}) { assert(false) }
-		}
+            response.fold({
+                it shouldBe InvalidCode
+            }) { assert(false) }
+        }
 
-	@Test
-	fun `given  activate email use case is executed, there is any other type of error then return this error`() =
-		runBlockingTest {
-			`when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
-			`when`(activateEmailParams.code).thenReturn(TEST_CODE)
-			`when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InternalServerError))
+    @Test
+    fun `given  activate email use case is executed, there is any other type of error then return this error`() =
+        runBlockingTest {
+            `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+            `when`(activateEmailParams.code).thenReturn(TEST_CODE)
+            `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InternalServerError))
 
-			val response = activateEmailUseCase.run(activateEmailParams)
+            val response = activateEmailUseCase.run(activateEmailParams)
 
-			verify(activationRepository).activateEmail(TEST_EMAIL, TEST_CODE)
+            verify(activationRepository).activateEmail(TEST_EMAIL, TEST_CODE)
 
-			response.isLeft shouldBe true
-			response.fold({
-				it shouldBe InternalServerError
-			}) { assert(false) }
-		}
+            response.isLeft shouldBe true
+            response.fold({
+                it shouldBe InternalServerError
+            }) { assert(false) }
+        }
 
-	@Test
-	fun `given activate email use case is executed, when there is no error then the email is activated`() = runBlockingTest {
-		`when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
-		`when`(activateEmailParams.code).thenReturn(TEST_CODE)
-		`when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
+    @Test
+    fun `given activate email use case is executed, when there is no error then the email is activated`() = runBlockingTest {
+        `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
+        `when`(activateEmailParams.code).thenReturn(TEST_CODE)
+        `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
 
-		val response = activateEmailUseCase.run(activateEmailParams)
+        val response = activateEmailUseCase.run(activateEmailParams)
 
-		verify(activationRepository).activateEmail(TEST_EMAIL, TEST_CODE)
+        verify(activationRepository).activateEmail(TEST_EMAIL, TEST_CODE)
 
-		response.isRight shouldBe true
-		response.map {
-			it shouldBe Unit
-		}
-	}
+        response.isRight shouldBe true
+        response.map {
+            it shouldBe Unit
+        }
+    }
 
 
-	companion object {
-		private const val TEST_EMAIL = "test@wire"
-		private const val TEST_CODE = "000000"
-	}
+    companion object {
+        private const val TEST_EMAIL = "test@wire"
+        private const val TEST_CODE = "000000"
+    }
 
 }

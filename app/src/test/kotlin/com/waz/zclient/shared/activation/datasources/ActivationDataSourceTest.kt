@@ -18,65 +18,65 @@ import org.mockito.Mockito.verify
 @ExperimentalCoroutinesApi
 class ActivationDataSourceTest : UnitTest() {
 
-	private lateinit var activationRepository: ActivationRepository
+    private lateinit var activationRepository: ActivationRepository
 
-	@Mock
-	private lateinit var activationRemoteDataSource: ActivationRemoteDataSource
+    @Mock
+    private lateinit var activationRemoteDataSource: ActivationRemoteDataSource
 
-	@Before
-	fun setup() {
-		activationRepository = ActivationDataSource(activationRemoteDataSource)
-	}
+    @Before
+    fun setup() {
+        activationRepository = ActivationDataSource(activationRemoteDataSource)
+    }
 
-	@Test
-	fun `Given sendEmailActivationCode() is called and remote request fails then return failure`() = runBlockingTest {
+    @Test
+    fun `Given sendEmailActivationCode() is called and remote request fails then return failure`() = runBlockingTest {
 
-		`when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
+        `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Left(ServerError))
 
-		val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
-		verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
+        verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
 
-		response.isLeft shouldBe true
-	}
+        response.isLeft shouldBe true
+    }
 
-	@Test
-	fun `Given sendEmailActivationCode() is called and remote request is success, then return success`() = runBlockingTest {
-		`when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
+    @Test
+    fun `Given sendEmailActivationCode() is called and remote request is success, then return success`() = runBlockingTest {
+        `when`(activationRemoteDataSource.sendEmailActivationCode(TEST_EMAIL)).thenReturn(Either.Right(Unit))
 
-		val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
+        val response = activationRepository.sendEmailActivationCode(TEST_EMAIL)
 
-		verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
+        verify(activationRemoteDataSource).sendEmailActivationCode(eq(TEST_EMAIL))
 
-		response.isRight shouldBe true
-	}
+        response.isRight shouldBe true
+    }
 
-	@Test
-	fun `Given activateEmail() is called and remote request fails then return failure`() = runBlockingTest {
+    @Test
+    fun `Given activateEmail() is called and remote request fails then return failure`() = runBlockingTest {
 
-		`when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(ServerError))
+        `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(ServerError))
 
-		val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
+        val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
 
-		verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
+        verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
 
-		response.isLeft shouldBe true
-	}
+        response.isLeft shouldBe true
+    }
 
-	@Test
-	fun `Given activateEmail() is called and remote request is success, then return success`() = runBlockingTest {
-		`when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
+    @Test
+    fun `Given activateEmail() is called and remote request is success, then return success`() = runBlockingTest {
+        `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
 
-		val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
+        val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
 
-		verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
+        verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
 
-		response.isRight shouldBe true
-	}
+        response.isRight shouldBe true
+    }
 
-	companion object {
-		private const val TEST_EMAIL = "test@wire.com"
-		private const val TEST_CODE = "000000"
-	}
+    companion object {
+        private const val TEST_EMAIL = "test@wire.com"
+        private const val TEST_CODE = "000000"
+    }
 
 }
