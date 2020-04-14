@@ -163,7 +163,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 global_ephemeral INTEGER,
                 unread_call_count INTEGER NOT NULL,
                 unread_ping_count INTEGER NOT NULL,
-                access TEXT NOT NULL, 
+                access TEXT, 
                 access_role TEXT, 
                 link TEXT, 
                 unread_mentions_count INTEGER NOT NULL, 
@@ -332,7 +332,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              _id TEXT PRIMARY KEY NOT NULL, 
-             hashes TEXT NOT NULL
+             hashes TEXT
              )""".trimIndent()
 
         executeSimpleMigration(
