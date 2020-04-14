@@ -338,7 +338,7 @@ object OtrClient extends DerivedLogTag {
         if (!js.has(key.name) || js.isNull(key.name)) Map.empty
         else {
           val mapJs = js.getJSONObject(key.name)
-          mapJs.keys().asInstanceOf[java.util.Iterator[String]].asScala.map { key =>
+          mapJs.keys().asScala.map { key =>
             UserId(key) -> decodeStringSeq(Symbol(key))(mapJs).map(ClientId(_))
           }.toMap
         }

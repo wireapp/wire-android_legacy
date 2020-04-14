@@ -253,7 +253,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
   lazy val rolesService: ConversationRolesService     = wire[ConversationRolesServiceImpl]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
-  lazy val usersSync                                  = wire[UsersSyncHandler]
+  lazy val usersSync: UsersSyncHandler                = wire[UsersSyncHandlerImpl]
   lazy val conversationSync                           = wire[ConversationsSyncHandler]
   lazy val teamsSync:       TeamsSyncHandler          = wire[TeamsSyncHandlerImpl]
   lazy val connectionsSync                            = wire[ConnectionsSyncHandler]
