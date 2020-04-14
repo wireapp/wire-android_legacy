@@ -44,19 +44,30 @@ case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
   def isEmpty: Boolean = top.isEmpty && local.isEmpty && convs.isEmpty && dir.isEmpty
 }
 
-class UserSearchService(selfUserId:           UserId,
-                        teamId:               Option[TeamId],
-                        userService:          UserService,
-                        usersStorage:         UsersStorage,
-                        teamsService:         TeamsService,
-                        membersStorage:       MembersStorage,
-                        timeouts:             Timeouts,
-                        sync:                 SyncServiceHandle,
-                        messages:             MessagesStorage,
-                        convsStorage:         ConversationStorage,
-                        convsUi:              ConversationsUiService,
-                        conversationsService: ConversationsService,
-                        userPrefs:            UserPreferences) extends DerivedLogTag {
+trait UserSearchService {
+  def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults]
+  def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults]
+  def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]]
+  def search(queryStr: String = ""): Signal[SearchResults]
+  def syncSearchResults(query: SearchQuery): Unit
+  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit
+  def updateSearchResults(info: Seq[UserInfo]): Unit
+  def updateExactMatch(result: UserSearchResponse.User): Unit
+}
+
+class UserSearchServiceImpl(selfUserId:           UserId,
+                            teamId:               Option[TeamId],
+                            userService:          UserService,
+                            usersStorage:         UsersStorage,
+                            teamsService:         TeamsService,
+                            membersStorage:       MembersStorage,
+                            timeouts:             Timeouts,
+                            sync:                 SyncServiceHandle,
+                            messages:             MessagesStorage,
+                            convsStorage:         ConversationStorage,
+                            convsUi:              ConversationsUiService,
+                            conversationsService: ConversationsService,
+                            userPrefs:            UserPreferences) extends UserSearchService with DerivedLogTag {
 
   import Threading.Implicits.Background
   import com.waz.service.UserSearchService._
@@ -99,22 +110,22 @@ class UserSearchService(selfUserId:           UserId,
   private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
     searchResults.flatMap(res => Signal.future(filterForExternal(query, res)))
 
-  def usersForNewConversation(query: SearchQuery, teamOnly: Boolean) =
+  override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
       localResults      <- filterForExternal(query, searchLocal(query)
                           .map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
-      remoteResults     <- getDirectoryResults(query)
+      remoteResults     <- directoryResults(query)
     } yield SearchResults(local = localResults, dir = remoteResults)
 
-  def usersToAddToConversation(query: SearchQuery, toConv: ConvId) =
+  override def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults] =
     for {
       curr              <- membersStorage.activeMembers(toConv)
       conv              <- convsStorage.signal(toConv)
       localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
-      remoteResults     <- getDirectoryResults(query)
+      remoteResults     <- directoryResults(query)
     } yield SearchResults(local = localResults, dir = remoteResults)
 
-  def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
+  override def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       curr     <- membersStorage.activeMembers(convId)
       currData <- usersStorage.listSignal(curr)
@@ -188,7 +199,7 @@ class UserSearchService(selfUserId:           UserId,
     }
   }
 
-  def search(queryStr: String = ""): Signal[SearchResults] = {
+  override def search(queryStr: String = ""): Signal[SearchResults] = {
     verbose(l"search($queryStr)")
     val query = SearchQuery(queryStr)
 
@@ -218,7 +229,7 @@ class UserSearchService(selfUserId:           UserId,
           }
       else Signal.const(IndexedSeq.empty)
 
-    val directorySearch = getDirectoryResults(query)
+    val directorySearch = directoryResults(query)
 
     for {
       top        <- topUsers
@@ -235,7 +246,7 @@ class UserSearchService(selfUserId:           UserId,
     }
   }
 
-  def getDirectoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
+  private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
       for {
         dir   <- if (!query.isEmpty) {
           userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
@@ -249,18 +260,18 @@ class UserSearchService(selfUserId:           UserId,
           case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
         }
 
-  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
+  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
     val users = unapply(results)
     userSearchResult ! users.map(UserData.apply).toIndexedSeq
     sync.syncSearchResults(users.map(_.id).toSet)
   }
 
-  def updateSearchResults(info: Seq[UserInfo]): Unit = {
+  override def updateSearchResults(info: Seq[UserInfo]): Unit = {
     userSearchResult.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
     exactMatchUser.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
   }
 
-  def updateExactMatch(result: UserSearchResponse.User): Unit = {
+  override def updateExactMatch(result: UserSearchResponse.User): Unit = {
     verbose(l"updateExactMatch(${result.id})")
     val userData = UserData(UserSearchEntry(result))
     exactMatchUser ! Some(userData)

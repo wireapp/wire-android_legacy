@@ -36,6 +36,7 @@ import scala.concurrent.Future
 
 trait UsersSyncHandler {
   def syncUsers(ids: UserId*): Future[SyncResult]
+  def syncSearchResults(ids: UserId*): Future[SyncResult]
   def syncSelfUser(): Future[SyncResult]
   def postSelfName(name: Name): Future[SyncResult]
   def postSelfAccentColor(color: AccentColor): Future[SyncResult]
@@ -63,7 +64,7 @@ class UsersSyncHandlerImpl(userService:  UserService,
         Future.successful(SyncResult(error))
   }
 
-  def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.map {
+  override def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.map {
     case Right(users) =>
       searchService.updateSearchResults(users)
       SyncResult.Success

@@ -220,7 +220,7 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val reporting                                  = new ZmsReportingService(selfUserId, global.reporting)
   lazy val wsFactory                                  = new OkHttpWebSocketFactory(account.global.httpProxy)
   lazy val wsPushService: WSPushService               = wireWith(WSPushServiceImpl.apply _)
-  lazy val userSearch                                 = wire[UserSearchService]
+  lazy val userSearch: UserSearchService              = wire[UserSearchServiceImpl]
   lazy val users: UserService                         = wire[UserServiceImpl]
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]

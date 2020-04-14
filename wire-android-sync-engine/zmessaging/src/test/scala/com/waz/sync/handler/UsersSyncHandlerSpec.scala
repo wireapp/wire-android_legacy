@@ -3,7 +3,7 @@ package com.waz.sync.handler
 import com.waz.content.UsersStorage
 import com.waz.model.nano.Messages
 import com.waz.model._
-import com.waz.service.UserService
+import com.waz.service.{UserSearchService, UserService}
 import com.waz.service.assets.AssetService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.OtrClient.EncryptedContent
@@ -19,6 +19,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
   private val userService  = mock[UserService]
   private val usersStorage = mock[UsersStorage]
   private val assetService = mock[AssetService]
+  private val searchSevice = mock[UserSearchService]
   private val usersClient  = mock[UsersClient]
   private val otrSync      = mock[OtrSyncHandler]
 
@@ -26,7 +27,7 @@ class UsersSyncHandlerSpec extends AndroidFreeSpec {
   val teamId = TeamId()
 
   def handler: UsersSyncHandler = new UsersSyncHandlerImpl(
-    userService, usersStorage, assetService, usersClient, otrSync
+    userService, usersStorage, assetService, searchSevice, usersClient, otrSync
   )
 
   feature("Post availability status") {
