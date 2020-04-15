@@ -12,9 +12,9 @@ data class AccessTokenEntity(
 
 class AccessTokenConverter {
     @TypeConverter
-    fun fromStringToAccessToken(tokenString: String): AccessTokenEntity? =
+    fun fromStringToAccessToken(tokenString: String?): AccessTokenEntity? = tokenString?.let {
         try {
-            val json = JSONObject(tokenString)
+            val json = JSONObject(it)
             AccessTokenEntity(
                 token = json.getString(KEY_TOKEN),
                 tokenType = json.getString(KEY_TOKEN_TYPE),
@@ -23,6 +23,7 @@ class AccessTokenConverter {
         } catch (e: JSONException) {
             null
         }
+    }
 
     @TypeConverter
     fun accessTokenToString(entity: AccessTokenEntity): String =
