@@ -41,7 +41,7 @@ class CreatePersonalAccountEmailVerificationFragment :
 
     private fun initDescriptionTextView() {
         emailVerificationDescriptionTextView.text =
-            String.format(getString(R.string.email_verification_description), email)
+            getString(R.string.email_verification_description, email)
     }
 
     private fun initVerificationCodeInput() {
