@@ -3,7 +3,7 @@ package com.waz.zclient.storage.db.assets
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.*
+import java.util.Objects
 
 @Entity(tableName = "UploadAssets")
 data class UploadAssetsEntity(
@@ -56,6 +56,7 @@ data class UploadAssetsEntity(
     @ColumnInfo(name = "asset_id")
     val assetId: String?
 ) {
+    @Suppress("ComplexMethod")
     override fun equals(other: Any?): Boolean =
         (other === this) ||
             (other is UploadAssetsEntity &&
