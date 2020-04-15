@@ -16,7 +16,12 @@ import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 import com.waz.zclient.shared.user.phonenumber.Country
-import kotlinx.android.synthetic.main.fragment_edit_phone.*
+import kotlinx.android.synthetic.main.fragment_edit_phone.editPhoneCountryCodeTextInputEditText
+import kotlinx.android.synthetic.main.fragment_edit_phone.editPhoneDeletePhoneNumberTextView
+import kotlinx.android.synthetic.main.fragment_edit_phone.editPhoneFragmentCountryCodePicker
+import kotlinx.android.synthetic.main.fragment_edit_phone.editPhonePhoneNumberTextInputEditText
+import kotlinx.android.synthetic.main.fragment_edit_phone.editPhonePhoneNumberTextInputLayout
+import kotlinx.android.synthetic.main.fragment_edit_phone.editPhoneSavePhoneNumberTextView
 
 @SuppressWarnings("TooManyFunctions")
 class EditPhoneNumberFragment : Fragment(R.layout.fragment_edit_phone) {

@@ -4,9 +4,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import com.waz.zclient.R
-import com.waz.zclient.feature.auth.registration.personal.CreatePersonalAccountFragment
 import com.waz.zclient.core.extension.replaceFragment
-import kotlinx.android.synthetic.main.fragment_create_account.*
+import com.waz.zclient.feature.auth.registration.personal.CreatePersonalAccountFragment
+import kotlinx.android.synthetic.main.fragment_create_account.createPersonalAccountLayoutContainer
+import kotlinx.android.synthetic.main.fragment_create_account.createProAccountLayoutContainer
 
 class CreateAccountFragment : Fragment(R.layout.fragment_create_account) {
 

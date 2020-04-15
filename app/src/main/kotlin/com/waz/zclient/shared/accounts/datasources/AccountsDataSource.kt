@@ -1,12 +1,12 @@
 package com.waz.zclient.shared.accounts.datasources
 
-import com.waz.zclient.shared.accounts.AccountMapper
-import com.waz.zclient.shared.accounts.datasources.local.AccountsLocalDataSource
-import com.waz.zclient.shared.accounts.AccountsRepository
-import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.shared.accounts.AccountMapper
+import com.waz.zclient.shared.accounts.AccountsRepository
+import com.waz.zclient.shared.accounts.ActiveAccount
+import com.waz.zclient.shared.accounts.datasources.local.AccountsLocalDataSource
 import com.waz.zclient.shared.user.datasources.remote.UsersRemoteDataSource
 
 class AccountsDataSource(

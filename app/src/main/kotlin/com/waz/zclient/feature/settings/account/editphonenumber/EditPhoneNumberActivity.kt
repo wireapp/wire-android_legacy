@@ -6,7 +6,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
-import kotlinx.android.synthetic.main.activity_edit_phone.*
+import kotlinx.android.synthetic.main.activity_edit_phone.editPhoneActivityToolbar
 
 class EditPhoneNumberActivity : AppCompatActivity(R.layout.activity_edit_phone) {
 

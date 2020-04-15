@@ -7,9 +7,11 @@ import androidx.annotation.NonNull
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.ui.list.RecyclerViewItemClickListener
-import com.waz.zclient.feature.settings.devices.ClientItem
 import com.waz.zclient.core.utilities.DateAndTimeUtils
-import kotlinx.android.synthetic.main.item_view_devices.view.*
+import com.waz.zclient.feature.settings.devices.ClientItem
+import kotlinx.android.synthetic.main.item_view_devices.view.item_device_id
+import kotlinx.android.synthetic.main.item_view_devices.view.item_device_title
+import kotlinx.android.synthetic.main.item_view_devices.view.item_device_verification_icon
 
 class DevicesRecyclerViewAdapter : RecyclerView.Adapter<DevicesViewHolder>() {
 

@@ -10,7 +10,9 @@ import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.feature.settings.devices.ClientItem
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_device_detail.*
+import kotlinx.android.synthetic.main.fragment_device_detail.device_detail_activated
+import kotlinx.android.synthetic.main.fragment_device_detail.device_detail_id
+import kotlinx.android.synthetic.main.fragment_device_detail.device_detail_name
 
 class SettingsDeviceDetailFragment : Fragment(R.layout.fragment_device_detail) {
 

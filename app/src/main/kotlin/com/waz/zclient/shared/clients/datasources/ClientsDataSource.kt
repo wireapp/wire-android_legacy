@@ -1,14 +1,14 @@
 package com.waz.zclient.shared.clients.datasources
 
+import com.waz.zclient.core.exception.Failure
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.fallback
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientsRepository
 import com.waz.zclient.shared.clients.datasources.local.ClientsLocalDataSource
 import com.waz.zclient.shared.clients.datasources.remote.ClientsRemoteDataSource
 import com.waz.zclient.shared.clients.mapper.ClientMapper
-import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.fallback
-import com.waz.zclient.core.functional.map
 
 class ClientsDataSource constructor(
     private val remoteDataSource: ClientsRemoteDataSource,

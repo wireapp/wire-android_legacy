@@ -13,11 +13,20 @@ import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.visible
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
+import com.waz.zclient.feature.settings.account.deleteaccount.DeleteAccountDialogFragment
 import com.waz.zclient.feature.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.feature.settings.account.editphonenumber.EditPhoneNumberActivity
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
-import com.waz.zclient.feature.settings.account.deleteaccount.DeleteAccountDialogFragment
-import kotlinx.android.synthetic.main.fragment_settings_account.*
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountDeleteAccountButton
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountEmailContainerLinearLayout
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountEmailTitleTextView
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountHandleContainerLinearLayout
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountHandleTitleTextView
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountNameContainerLinearLayout
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountNameTitleTextView
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountPhoneContainerLinearLayout
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountPhoneTitleTextView
+import kotlinx.android.synthetic.main.fragment_settings_account.settingsAccountResetPasswordButton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 

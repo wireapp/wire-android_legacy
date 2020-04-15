@@ -3,6 +3,8 @@ package com.waz.zclient.shared.activation.datasources.remote
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.shared.activation.datasources.remote.ActivationApi
+import com.waz.zclient.shared.activation.datasources.remote.ActivationRemoteDataSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel

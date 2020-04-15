@@ -1,13 +1,13 @@
 package com.waz.zclient.shared.accounts.datasources
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.shared.accounts.AccountMapper
 import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.shared.accounts.datasources.local.AccountsLocalDataSource
-import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.map
-import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import com.waz.zclient.shared.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before

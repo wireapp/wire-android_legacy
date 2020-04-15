@@ -8,7 +8,8 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_settings_support.*
+import kotlinx.android.synthetic.main.fragment_settings_support.settingsSupportContactButton
+import kotlinx.android.synthetic.main.fragment_settings_support.settingsSupportWebsiteButton
 
 class SettingsSupportFragment : Fragment(R.layout.fragment_settings_support) {
 

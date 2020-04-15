@@ -1,16 +1,16 @@
 package com.waz.zclient.shared.clients.datasources
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.clients.ClientsRepository
-import com.waz.zclient.shared.clients.datasources.local.ClientsLocalDataSource
-import com.waz.zclient.shared.clients.datasources.remote.ClientResponse
-import com.waz.zclient.shared.clients.datasources.remote.ClientsRemoteDataSource
-import com.waz.zclient.shared.clients.mapper.ClientMapper
 import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.eq
+import com.waz.zclient.shared.clients.ClientsRepository
+import com.waz.zclient.shared.clients.datasources.local.ClientsLocalDataSource
+import com.waz.zclient.shared.clients.datasources.remote.ClientResponse
+import com.waz.zclient.shared.clients.datasources.remote.ClientsRemoteDataSource
+import com.waz.zclient.shared.clients.mapper.ClientMapper
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest

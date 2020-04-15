@@ -11,7 +11,11 @@ import com.waz.zclient.core.extension.getDeviceLocale
 import com.waz.zclient.core.extension.openUrl
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_settings_about.*
+import kotlinx.android.synthetic.main.fragment_settings_about.settingsAboutAboutWebsiteButton
+import kotlinx.android.synthetic.main.fragment_settings_about.settingsAboutAppVersionDetailsButton
+import kotlinx.android.synthetic.main.fragment_settings_about.settingsAboutPrivacyButton
+import kotlinx.android.synthetic.main.fragment_settings_about.settingsAboutTermsAndConditionsButton
+import kotlinx.android.synthetic.main.fragment_settings_about.settingsAboutThirdPartyLicensesButton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi

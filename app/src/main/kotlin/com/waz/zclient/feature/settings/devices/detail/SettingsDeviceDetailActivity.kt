@@ -6,7 +6,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
-import kotlinx.android.synthetic.main.activity_device_detail.*
+import kotlinx.android.synthetic.main.activity_device_detail.toolbar
 
 class SettingsDeviceDetailActivity : AppCompatActivity(R.layout.activity_device_detail) {
 

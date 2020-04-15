@@ -13,7 +13,8 @@ import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetObserver
 import com.waz.zclient.core.ui.backgroundasset.BackgroundAssetViewModel
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
-import kotlinx.android.synthetic.main.activity_settings.*
+import kotlinx.android.synthetic.main.activity_settings.activitySettingsMainConstraintLayout
+import kotlinx.android.synthetic.main.activity_settings.toolbar
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 

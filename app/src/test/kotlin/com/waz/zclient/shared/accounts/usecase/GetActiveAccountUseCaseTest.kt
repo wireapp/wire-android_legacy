@@ -1,11 +1,11 @@
 package com.waz.zclient.shared.accounts.usecase
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.accounts.AccountsRepository
-import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.shared.accounts.AccountsRepository
+import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.shared.user.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
