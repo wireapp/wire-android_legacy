@@ -9,6 +9,6 @@ class RegisterRemoteDataSource(
     private val activationApi: RegisterApi,
     override val networkHandler: NetworkHandler
 ) : ApiService() {
-    suspend fun register(name: String): Either<Failure, Unit> =
+    suspend fun register(name: String): Either<Failure, UserResponse> =
         request { activationApi.register(RegisterRequestBody(name = name)) }
 }
