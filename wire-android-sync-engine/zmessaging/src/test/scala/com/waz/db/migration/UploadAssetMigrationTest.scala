@@ -23,7 +23,7 @@ class UploadAssetMigrationTest extends MigrationTest {
           uploadAsset.id.str,
           "null",
           "name",
-          byteArray,
+          null,
           byteArray,
           "",
           "not_ready",

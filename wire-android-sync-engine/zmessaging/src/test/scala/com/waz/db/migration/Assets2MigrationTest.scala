@@ -22,7 +22,7 @@ class Assets2MigrationTest extends MigrationTest {
           "",
           "",
           Mime.Unknown.str,
-          new Array[Byte](3),
+          null,
           0,
           null,
           null,

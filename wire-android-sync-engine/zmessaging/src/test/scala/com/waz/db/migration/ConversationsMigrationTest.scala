@@ -43,7 +43,7 @@ class ConversationsMigrationTest extends MigrationTest {
           null,
           conversationData.unreadCount.call,
           conversationData.unreadCount.ping,
-          "",
+          null,
           null,
           null,
           conversationData.unreadCount.mentions,

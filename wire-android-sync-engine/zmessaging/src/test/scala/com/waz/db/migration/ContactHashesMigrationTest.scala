@@ -15,7 +15,7 @@ class ContactHashesMigrationTest extends MigrationTest {
       closeDB()
       withRoomDB({
         KotlinMigrationHelper.assertContactHashesEntity(_, new ContactHashesEntity(
-          contactHashes.id.str, ""
+          contactHashes.id.str, null
         ))
       })
     }
