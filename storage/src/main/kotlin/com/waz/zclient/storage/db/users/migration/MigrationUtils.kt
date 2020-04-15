@@ -11,7 +11,7 @@ object MigrationUtils {
             vararg indicesCalls: String
     ) {
         val dropTempTableIfExists = "DROP TABLE IF EXISTS $tempTableName"
-        val copyAll = "INSERT INTO $tempTableName SELECT * FROM $originalTableName"
+        val copyAll = "INSERT OR IGNORE INTO $tempTableName SELECT * FROM $originalTableName"
         val dropOldTable = "DROP TABLE $originalTableName"
         val renameTableBack = "ALTER TABLE $tempTableName RENAME TO $originalTableName"
         with(database) {

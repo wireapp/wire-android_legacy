@@ -10,18 +10,18 @@ data class PushNotificationEventEntity(
     @ColumnInfo(name = "event_index")
     val eventIndex: Int,
 
-    @ColumnInfo(name = "pushId")
+    @ColumnInfo(name = "pushId", defaultValue = "")
     val pushId: String,
 
-    @ColumnInfo(name = "decrypted")
+    @ColumnInfo(name = "decrypted", defaultValue = "0")
     val isDecrypted: Boolean,
 
-    @ColumnInfo(name = "event")
+    @ColumnInfo(name = "event", defaultValue = "")
     val eventJson: String,
 
     @ColumnInfo(name = "plain", typeAffinity = ColumnInfo.BLOB)
     val plain: ByteArray?,
 
-    @ColumnInfo(name = "transient")
+    @ColumnInfo(name = "transient", defaultValue = "0")
     val isTransient: Boolean
 )

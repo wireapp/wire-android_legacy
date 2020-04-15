@@ -10,6 +10,6 @@ data class MessageDeletionEntity(
     @ColumnInfo(name = "message_id")
     val messageId: String,
 
-    @ColumnInfo(name = "timestamp")
+    @ColumnInfo(name = "timestamp", defaultValue = "0")
     val timestamp: Int
 )

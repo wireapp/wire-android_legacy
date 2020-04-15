@@ -13,19 +13,19 @@ data class AssetsEntity(
     @ColumnInfo(name = "token")
     val token: String?,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
-    @ColumnInfo(name = "encryption")
+    @ColumnInfo(name = "encryption", defaultValue = "")
     val encryption: String,
 
-    @ColumnInfo(name = "mime")
+    @ColumnInfo(name = "mime", defaultValue = "")
     val mime: String,
 
     @ColumnInfo(name = "sha", typeAffinity = ColumnInfo.BLOB)
-    val sha: ByteArray,
+    val sha: ByteArray?,
 
-    @ColumnInfo(name = "size")
+    @ColumnInfo(name = "size", defaultValue = "0")
     val size: Int,
 
     @ColumnInfo(name = "source")
@@ -34,7 +34,7 @@ data class AssetsEntity(
     @ColumnInfo(name = "preview")
     val preview: String?,
 
-    @ColumnInfo(name = "details")
+    @ColumnInfo(name = "details", defaultValue = "")
     val details: String,
 
     @ColumnInfo(name = "conversation_id")

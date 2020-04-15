@@ -20,9 +20,9 @@ val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERS
         val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
             _id TEXT PRIMARY KEY NOT NULL, 
-            name TEXT NOT NULL, 
-            creator TEXT NOT NULL, 
-            icon TEXT NOT NULL)
+            name TEXT NOT NULL DEFAULT '', 
+            creator TEXT NOT NULL DEFAULT '', 
+            icon TEXT NOT NULL DEFAULT '')
             """.trimIndent()
         executeSimpleMigration(database, originalTableName, tempTableName, createTempTable)
     }
@@ -33,13 +33,13 @@ val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERS
         val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
             key TEXT PRIMARY KEY NOT NULL, 
-            file TEXT NOT NULL, 
+            file TEXT NOT NULL DEFAULT '', 
             data BLOB, 
-            lastUsed INTEGER NOT NULL, 
-            timeout INTEGER NOT NULL, 
+            lastUsed INTEGER NOT NULL DEFAULT 0, 
+            timeout INTEGER NOT NULL DEFAULT 0, 
             enc_key TEXT, 
             path TEXT, 
-            mime TEXT NOT NULL, 
+            mime TEXT NOT NULL DEFAULT '', 
             file_name TEXT,
             length INTEGER)
             """.trimIndent()
@@ -53,7 +53,7 @@ val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERS
             CREATE TABLE IF NOT EXISTS $tempTableName (
             `_id` TEXT PRIMARY KEY NOT NULL, 
             `team_id` TEXT, 
-            `cookie` TEXT NOT NULL, 
+            `cookie` TEXT NOT NULL DEFAULT '', 
             `access_token` TEXT, 
             `registered_push` TEXT,
             `sso_id` TEXT DEFAULT NULL)
@@ -68,11 +68,13 @@ val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERS
         createTempTable: String,
         primaryKey: String = "_id"
     ) {
+        val dropTempTableIfExists = "DROP TABLE IF EXISTS $tempTableName"
         val deleteNullValues = "DELETE FROM $originalTableName WHERE $primaryKey IS NULL"
-        val copyAll = "INSERT INTO $tempTableName SELECT * FROM $originalTableName"
+        val copyAll = "INSERT OR IGNORE INTO $tempTableName SELECT * FROM $originalTableName"
         val dropOldTable = "DROP TABLE $originalTableName"
         val renameTableBack = "ALTER TABLE $tempTableName RENAME TO $originalTableName"
         with(database) {
+            execSQL(dropTempTableIfExists)
             execSQL(createTempTable)
             execSQL(deleteNullValues)
             execSQL(copyAll)
