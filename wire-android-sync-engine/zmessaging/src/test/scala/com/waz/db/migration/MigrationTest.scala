@@ -1,22 +1,21 @@
 package com.waz.db.migration
 
-import com.waz.{DisabledTrackingService, KotlinMigrationHelper}
+import com.waz.DisabledTrackingService
 import com.waz.db.ZMessagingDB
-import com.waz.model.KeyValueData
-import com.waz.model.KeyValueData.KeyValueDataDao
-import com.waz.utils.wrappers.{DB, SQLiteDBWrapper}
+import com.waz.model.RemoteInstant
 import com.waz.zclient.storage.db.UserDatabase
-import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.di.StorageModule
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{BeforeAndAfter, FeatureSpec, Matchers, RobolectricTests}
 
+import scala.concurrent.duration.FiniteDuration
+
 @RunWith(classOf[JUnitRunner])
 class MigrationTest extends FeatureSpec with Matchers with BeforeAndAfter with RobolectricTests {
 
-  var zMessagingDB: ZMessagingDB = _
+  protected var zMessagingDB: ZMessagingDB = _
 
   before {
     zMessagingDB = new ZMessagingDB(Robolectric.application, "test_db", DisabledTrackingService)
@@ -26,20 +25,25 @@ class MigrationTest extends FeatureSpec with Matchers with BeforeAndAfter with R
     Robolectric.application.getDatabasePath(zMessagingDB.getDatabaseName).delete()
   }
 
-  def closeDB() = zMessagingDB.close()
+  protected def closeDB() = zMessagingDB.close()
 
-  def withRoomDB(action: UserDatabase => Unit): Unit = {
+  protected def withRoomDB(action: UserDatabase => Boolean): Unit = {
     val roomDb =
       StorageModule.getUserDatabase(Robolectric.application, zMessagingDB.getDatabaseName, UserDatabase.getMigrations)
-    action(roomDb)
+    val result = action(roomDb)
     roomDb.close()
     Robolectric.application.getDatabasePath(zMessagingDB.getDatabaseName).delete()
+    assert(result)
   }
 
-  scenario("KeyValue migration") {
-    implicit val db: DB = new SQLiteDBWrapper(zMessagingDB.getWritableDatabase)
-    KeyValueDataDao.insertOrReplace(KeyValueData("key", "value"))
-    closeDB()
-    withRoomDB({ KotlinMigrationHelper.assertKeyValue(_, new KeyValuesEntity("key","value"))})
+  protected def validateMigrationAndClose(): Unit = {
+    withRoomDB({ _ => true}) //no read/write validation. just let the migration happen./no read/write validation. just let the migration happen.
   }
+
+  protected def convertRemoteInstant(remoteInstant: RemoteInstant): Int =
+    java.lang.Long.valueOf(remoteInstant.toEpochMilli).toInt
+
+  protected def convertFiniteDuration(finiteDuration: Option[FiniteDuration]): Int =
+    finiteDuration.fold(null.asInstanceOf[Int]) { d => java.lang.Long.valueOf(d.toMillis).toInt }
+
 }
