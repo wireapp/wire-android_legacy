@@ -54,7 +54,7 @@ class CreatePersonalAccountWithEmailViewModel(
     }
 
     fun sendActivationCode(email: String) {
-        sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email), Dispatchers.Default) {
+        sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email)) {
             it.fold(::sendActivationCodeFailure) { sendActivationCodeSuccess() }
         }
     }
@@ -73,7 +73,7 @@ class CreatePersonalAccountWithEmailViewModel(
     }
 
     fun activateEmail(email: String, code: String) {
-        activateEmailUseCase(viewModelScope, ActivateEmailParams(email, code), Dispatchers.Default) {
+        activateEmailUseCase(viewModelScope, ActivateEmailParams(email, code)) {
             it.fold(::activateEmailFailure) { activateEmailSuccess() }
         }
     }
