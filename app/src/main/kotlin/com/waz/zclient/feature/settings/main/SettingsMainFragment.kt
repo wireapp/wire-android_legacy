@@ -15,7 +15,7 @@ import com.waz.zclient.feature.settings.main.list.SettingsMainListAdapter
 import com.waz.zclient.feature.settings.main.list.SettingsMainListItemsFactory
 import com.waz.zclient.feature.settings.options.SettingsOptionsFragment
 import com.waz.zclient.feature.settings.support.SettingsSupportFragment
-import kotlinx.android.synthetic.main.fragment_settings_main.settingsMainRecyclerView
+import kotlinx.android.synthetic.main.fragment_settings_main.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 

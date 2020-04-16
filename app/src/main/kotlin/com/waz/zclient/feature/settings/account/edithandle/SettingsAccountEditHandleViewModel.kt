@@ -20,7 +20,7 @@ import com.waz.zclient.shared.user.handle.usecase.ValidateHandleUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import java.util.*
+import java.util.Locale
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi

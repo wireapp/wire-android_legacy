@@ -7,7 +7,7 @@ import androidx.fragment.app.DialogFragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.withArgs
-import kotlinx.android.synthetic.main.dialog_fragment_edit_text.view.editTextDialogInputEditText
+import kotlinx.android.synthetic.main.dialog_fragment_edit_text.view.*
 
 class EditTextDialogFragment : DialogFragment() {
 

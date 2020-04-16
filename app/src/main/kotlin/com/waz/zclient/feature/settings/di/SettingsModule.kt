@@ -1,8 +1,6 @@
 package com.waz.zclient.feature.settings.di
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
-import com.waz.zclient.shared.clients.usecase.GetAllClientsUseCase
-import com.waz.zclient.shared.clients.usecase.GetClientUseCase
 import com.waz.zclient.feature.settings.about.SettingsAboutViewModel
 import com.waz.zclient.feature.settings.account.SettingsAccountViewModel
 import com.waz.zclient.feature.settings.account.deleteaccount.DeleteAccountUseCase
@@ -14,6 +12,8 @@ import com.waz.zclient.feature.settings.account.editphonenumber.SettingsAccountP
 import com.waz.zclient.feature.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.feature.settings.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.feature.settings.support.SettingsSupportViewModel
+import com.waz.zclient.shared.clients.usecase.GetAllClientsUseCase
+import com.waz.zclient.shared.clients.usecase.GetClientUseCase
 import com.waz.zclient.shared.user.email.ChangeEmailUseCase
 import com.waz.zclient.shared.user.handle.usecase.ChangeHandleUseCase
 import com.waz.zclient.shared.user.handle.usecase.CheckHandleExistsUseCase

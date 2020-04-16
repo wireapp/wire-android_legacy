@@ -6,8 +6,7 @@ import androidx.fragment.app.Fragment
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.feature.auth.registration.personal.CreatePersonalAccountFragment
-import kotlinx.android.synthetic.main.fragment_create_account.createPersonalAccountLayoutContainer
-import kotlinx.android.synthetic.main.fragment_create_account.createProAccountLayoutContainer
+import kotlinx.android.synthetic.main.fragment_create_account.*
 
 class CreateAccountFragment : Fragment(R.layout.fragment_create_account) {
 

@@ -18,10 +18,7 @@ import com.waz.zclient.shared.user.handle.HandleInvalid
 import com.waz.zclient.shared.user.handle.HandleTooShort
 import com.waz.zclient.shared.user.handle.UnknownError
 import com.waz.zclient.shared.user.handle.ValidateHandleError
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.editHandleDialogBackButton
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.editHandleDialogHandleEditText
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.editHandleDialogHandleTextInputLayout
-import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.editHandleDialogOkButton
+import kotlinx.android.synthetic.main.fragment_edit_handle_dialog.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 

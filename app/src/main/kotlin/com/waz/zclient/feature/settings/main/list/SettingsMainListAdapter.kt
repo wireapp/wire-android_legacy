@@ -7,8 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.ui.list.OnItemClickListener
 import com.waz.zclient.feature.settings.main.SettingsMainItem
-import kotlinx.android.synthetic.main.item_settings.view.settings_item_icon
-import kotlinx.android.synthetic.main.item_settings.view.settings_item_title
+import kotlinx.android.synthetic.main.item_settings.view.*
 
 class SettingsMainListAdapter(
     private val settingsItems: List<SettingsMainItem>,

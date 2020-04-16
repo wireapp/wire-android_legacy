@@ -9,7 +9,7 @@ import com.waz.zclient.core.extension.createScope
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.activity_create_account.activityCreateAccountBackButton
+import kotlinx.android.synthetic.main.activity_create_account.*
 
 class CreateAccountActivity : AppCompatActivity(R.layout.activity_create_account) {
 
