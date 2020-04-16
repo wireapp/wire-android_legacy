@@ -95,7 +95,7 @@ data class ConversationsEntity(
     val unreadPingCount: Int,
 
     @ColumnInfo(name = "access")
-    val access: String,
+    val access: String?,
 
     @ColumnInfo(name = "access_role")
     val accessRole: String?,

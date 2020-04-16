@@ -11,5 +11,5 @@ data class PropertiesEntity(
     val key: String,
 
     @ColumnInfo(name = "value")
-    var value: String
+    val value: String
 )

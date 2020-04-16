@@ -163,7 +163,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
                 global_ephemeral INTEGER,
                 unread_call_count INTEGER NOT NULL,
                 unread_ping_count INTEGER NOT NULL,
-                access TEXT NOT NULL, 
+                access TEXT, 
                 access_role TEXT, 
                 link TEXT, 
                 unread_mentions_count INTEGER NOT NULL, 
@@ -332,7 +332,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
         val createTempTable = """
              CREATE TABLE $tempTableName (
              _id TEXT PRIMARY KEY NOT NULL, 
-             hashes TEXT NOT NULL
+             hashes TEXT
              )""".trimIndent()
 
         executeSimpleMigration(
@@ -580,7 +580,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
              _id TEXT NOT NULL, 
              source TEXT NOT NULL, 
              name TEXT NOT NULL, 
-             sha BLOB NOT NULL, 
+             sha BLOB, 
              md5 BLOB NOT NULL, 
              mime TEXT NOT NULL, 
              preview TEXT NOT NULL, 
@@ -638,7 +638,7 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
               name TEXT NOT NULL, 
               encryption TEXT NOT NULL, 
               mime TEXT NOT NULL, 
-              sha BLOB NOT NULL, 
+              sha BLOB, 
               size INTEGER NOT NULL, 
               source TEXT, 
               preview TEXT, 
@@ -800,13 +800,13 @@ val USER_DATABASE_MIGRATION_126_TO_127 = object : Migration(126, 127) {
 
     private fun createButtonsTable(database: SupportSQLiteDatabase) {
         database.execSQL("""
-            CREATE TABLE IF NOT EXISTS `Buttons` (
-                `message_id` TEXT NOT NULL, 
-                `button_id` TEXT NOT NULL, 
-                `title` TEXT NOT NULL,
-                `ordinal` INTEGER NOT NULL,
-                `state` INTEGER NOT NULL, 
-                PRIMARY KEY(`message_id`, `button_id`)
+            CREATE TABLE IF NOT EXISTS Buttons (
+                message_id TEXT NOT NULL, 
+                button_id TEXT NOT NULL, 
+                title TEXT NOT NULL,
+                ordinal INTEGER NOT NULL,
+                state INTEGER NOT NULL, 
+                PRIMARY KEY (message_id, button_id)
             )""".trimIndent()
         )
     }

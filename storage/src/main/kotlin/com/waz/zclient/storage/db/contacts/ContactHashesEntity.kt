@@ -11,5 +11,5 @@ data class ContactHashesEntity(
     val id: String,
 
     @ColumnInfo(name = "hashes")
-    val hashes: String
+    val hashes: String?
 )

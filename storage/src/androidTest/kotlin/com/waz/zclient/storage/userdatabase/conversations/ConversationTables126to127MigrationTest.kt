@@ -193,7 +193,7 @@ class ConversationTables126to127MigrationTest : UserDatabaseMigrationTest(126, 1
         getDatabase().conversationFoldersDao().allConversationFolders()
 
     private suspend fun allConversationMembers() =
-        getDatabase().conversationMembersDao().allConversationMemebers()
+        getDatabase().conversationMembersDao().allConversationMembers()
 
     private suspend fun allConversationRoleActions() =
         getDatabase().conversationRoleActionDao().allConversationRoleActions()
