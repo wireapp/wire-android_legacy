@@ -5,8 +5,10 @@ import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
 import com.waz.zclient.shared.activation.usecase.EmailInUse
+import com.waz.zclient.shared.activation.usecase.InvalidCode
 import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
@@ -32,10 +34,13 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Mock
     private lateinit var sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase
 
+    @Mock
+    private lateinit var activateEmailUseCase: ActivateEmailUseCase
+
     @Before
     fun setup() {
         createPersonalAccountWithEmailViewModel = CreatePersonalAccountWithEmailViewModel(
-            validateEmailUseCase, sendEmailActivationCodeUseCase)
+            validateEmailUseCase, sendEmailActivationCodeUseCase, activateEmailUseCase)
     }
 
     @Test
@@ -110,8 +115,33 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             }
         }
 
+    @Test
+    fun `given activateEmail is called, when the code is invalid then the activation is not done`() =
+        runBlockingTest {
+            lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(InvalidCode))
+
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+
+            createPersonalAccountWithEmailViewModel.activateEmailErrorLiveData.observeOnce {
+                it shouldBe InvalidCode
+            }
+        }
+
+    @Test
+    fun `given activateEmail is called, when the code is valid then the activation is done`() =
+        runBlockingTest {
+            lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
+
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+
+            createPersonalAccountWithEmailViewModel.activateEmailSuccessLiveData.observeOnce {
+                it shouldBe Unit
+            }
+        }
+
 
     companion object {
         private const val TEST_EMAIL = "test@wire.com"
+        private const val TEST_CODE = "000000"
     }
 }

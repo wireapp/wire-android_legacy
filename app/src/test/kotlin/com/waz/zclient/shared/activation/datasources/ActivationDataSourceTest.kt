@@ -1,10 +1,10 @@
-package com.waz.zclient.shared.activation
+package com.waz.zclient.shared.activation.datasources
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.eq
-import com.waz.zclient.shared.activation.datasources.ActivationDataSource
+import com.waz.zclient.shared.activation.ActivationRepository
 import com.waz.zclient.shared.activation.datasources.remote.ActivationRemoteDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -51,8 +51,32 @@ class ActivationDataSourceTest : UnitTest() {
         response.isRight shouldBe true
     }
 
+    @Test
+    fun `Given activateEmail() is called and remote request fails then return failure`() = runBlockingTest {
+
+        `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(ServerError))
+
+        val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
+
+        verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
+
+        response.isLeft shouldBe true
+    }
+
+    @Test
+    fun `Given activateEmail() is called and remote request is success, then return success`() = runBlockingTest {
+        `when`(activationRemoteDataSource.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
+
+        val response = activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)
+
+        verify(activationRemoteDataSource).activateEmail(TEST_EMAIL, TEST_CODE)
+
+        response.isRight shouldBe true
+    }
+
     companion object {
         private const val TEST_EMAIL = "test@wire.com"
+        private const val TEST_CODE = "000000"
     }
 
 }
