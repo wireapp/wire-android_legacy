@@ -71,7 +71,7 @@ class ConversationsTableTestHelper private constructor() {
             globalEphemeral: Int?,
             unreadCallCount: Int,
             unreadPingCount: Int,
-            access: String,
+            access: String?,
             accessRole: String?,
             link: String?,
             unreadMentionsCount: Int,

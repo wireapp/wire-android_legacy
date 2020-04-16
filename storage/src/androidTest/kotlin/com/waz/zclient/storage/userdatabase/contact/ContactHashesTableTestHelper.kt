@@ -12,7 +12,7 @@ class ContactHashesTableTestHelper private constructor() {
         private const val CONTACT_HASHES_ID_COL = "_id"
         private const val CONTACT_HASHES_HASHES_COL = "hashes"
 
-        fun insertContactHashes(id: String, hashes: String, openHelper: DbSQLiteOpenHelper) {
+        fun insertContactHashes(id: String, hashes: String?, openHelper: DbSQLiteOpenHelper) {
 
             val contentValues = ContentValues().also {
                 it.put(CONTACT_HASHES_ID_COL, id)

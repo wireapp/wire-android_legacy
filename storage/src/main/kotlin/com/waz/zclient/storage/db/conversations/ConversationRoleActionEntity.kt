@@ -10,12 +10,12 @@ import androidx.room.Index
     indices = [Index(name = "ConversationRoleAction_convid", value = ["conv_id"])]
 )
 data class ConversationRoleActionEntity(
-    @ColumnInfo(name = "label")
+    @ColumnInfo(name = "label", defaultValue = "")
     val label: String,
 
-    @ColumnInfo(name = "action")
+    @ColumnInfo(name = "action", defaultValue = "")
     val action: String,
 
-    @ColumnInfo(name = "conv_id")
+    @ColumnInfo(name = "conv_id", defaultValue = "")
     val convId: String
 )

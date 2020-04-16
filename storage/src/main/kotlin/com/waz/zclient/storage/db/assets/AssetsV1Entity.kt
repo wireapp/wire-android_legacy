@@ -10,9 +10,9 @@ data class AssetsV1Entity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "asset_type")
+    @ColumnInfo(name = "asset_type", defaultValue = "")
     val assetType: String,
 
-    @ColumnInfo(name = "data")
+    @ColumnInfo(name = "data", defaultValue = "")
     val data: String
 )

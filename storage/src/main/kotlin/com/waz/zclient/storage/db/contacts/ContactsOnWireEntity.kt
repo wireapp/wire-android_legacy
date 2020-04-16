@@ -10,9 +10,9 @@ import androidx.room.Index
     indices = [Index(name = "ContactsOnWire_contact", value = ["contact"])]
 )
 data class ContactsOnWireEntity(
-    @ColumnInfo(name = "user")
+    @ColumnInfo(name = "user", defaultValue = "")
     val userId: String,
 
-    @ColumnInfo(name = "contact")
+    @ColumnInfo(name = "contact", defaultValue = "")
     val contactId: String
 )

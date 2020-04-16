@@ -14,13 +14,13 @@ data class MessagesEntity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "conv_id")
+    @ColumnInfo(name = "conv_id", defaultValue = "")
     val conversationId: String,
 
-    @ColumnInfo(name = "msg_type")
+    @ColumnInfo(name = "msg_type", defaultValue = "")
     val messageType: String,
 
-    @ColumnInfo(name = "user_id")
+    @ColumnInfo(name = "user_id", defaultValue = "")
     val userId: String,
 
     @ColumnInfo(name = "content")
@@ -29,10 +29,10 @@ data class MessagesEntity(
     @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB)
     val protos: ByteArray?,
 
-    @ColumnInfo(name = "time")
+    @ColumnInfo(name = "time", defaultValue = "0")
     val time: Int,
 
-    @ColumnInfo(name = "first_msg")
+    @ColumnInfo(name = "first_msg", defaultValue = "0")
     val firstMessage: Boolean,
 
     @ColumnInfo(name = "members")
@@ -47,16 +47,16 @@ data class MessagesEntity(
     @ColumnInfo(name = "name")
     val name: String?,
 
-    @ColumnInfo(name = "msg_state")
+    @ColumnInfo(name = "msg_state", defaultValue = "")
     val messageState: String,
 
-    @ColumnInfo(name = "content_size")
+    @ColumnInfo(name = "content_size", defaultValue = "0")
     val contentSize: Int,
 
-    @ColumnInfo(name = "local_time")
+    @ColumnInfo(name = "local_time", defaultValue = "0")
     val localTime: Int,
 
-    @ColumnInfo(name = "edit_time")
+    @ColumnInfo(name = "edit_time", defaultValue = "0")
     val editTime: Int,
 
     @ColumnInfo(name = "ephemeral")
@@ -65,7 +65,7 @@ data class MessagesEntity(
     @ColumnInfo(name = "expiry_time")
     val expiryTime: Int?,
 
-    @ColumnInfo(name = "expired")
+    @ColumnInfo(name = "expired", defaultValue = "0")
     val expired: Boolean,
 
     @ColumnInfo(name = "duration")
@@ -74,7 +74,7 @@ data class MessagesEntity(
     @ColumnInfo(name = "quote")
     val quote: String?,
 
-    @ColumnInfo(name = "quote_validity")
+    @ColumnInfo(name = "quote_validity", defaultValue = "0")
     val quoteValidity: Int,
 
     @ColumnInfo(name = "force_read_receipts")
