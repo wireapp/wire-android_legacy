@@ -10,9 +10,7 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.confirmationButton
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.createPersonalAccountWithEmailEditText
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.createPersonalAccountWithEmailTextInputLayout
+import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.*
 
 class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_create_personal_account_email_input) {
 

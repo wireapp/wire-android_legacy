@@ -2,6 +2,7 @@ package com.waz.zclient.shared.activation.usecase
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.InternalServerError
+import com.waz.zclient.core.exception.NotFound
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
 import com.waz.zclient.shared.activation.ActivationRepository
@@ -35,7 +36,7 @@ class ActivateEmailUseCaseTest : UnitTest() {
         runBlockingTest {
             `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
             `when`(activateEmailParams.code).thenReturn(TEST_CODE)
-            `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(InvalidCode))
+            `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Left(NotFound))
 
             val response = activateEmailUseCase.run(activateEmailParams)
 
@@ -66,7 +67,7 @@ class ActivateEmailUseCaseTest : UnitTest() {
         }
 
     @Test
-    fun `given activate email use case is executed, when there is no error then the email is activated`() = runBlockingTest {
+    fun `given activate email use case is executed, when there is no error then returns success`() = runBlockingTest {
         `when`(activateEmailParams.email).thenReturn(TEST_EMAIL)
         `when`(activateEmailParams.code).thenReturn(TEST_CODE)
         `when`(activationRepository.activateEmail(TEST_EMAIL, TEST_CODE)).thenReturn(Either.Right(Unit))
