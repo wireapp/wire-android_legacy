@@ -1,3 +1,4 @@
+@file:Suppress("MagicNumber", "TooManyFunctions", "LargeClass")
 package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration

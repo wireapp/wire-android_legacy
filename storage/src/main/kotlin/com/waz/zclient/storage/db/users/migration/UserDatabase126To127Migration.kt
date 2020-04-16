@@ -5,7 +5,6 @@ package com.waz.zclient.storage.db.users.migration
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.waz.zclient.storage.BuildConfig
-import com.waz.zclient.storage.db.users.migration.MigrationUtils.executeSimpleMigration
 
 //Shared keys
 private const val CLIENT_ID_KEY = "id"
