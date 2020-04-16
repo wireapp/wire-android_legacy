@@ -1,16 +1,17 @@
 package com.waz.zclient.storage.userdatabase.property
 
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) {
+class PropertyTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
     @Test
-    fun givenKeyValueInsertedIntoMessagesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenKeyValueInsertedIntoMessagesTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val key = "testKey"
         val value = "testValue"
@@ -20,7 +21,7 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
             value = value,
             openHelper = testOpenHelper)
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allKeyValues()[0]) {
@@ -31,7 +32,7 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
     }
 
     @Test
-    fun givenPropertyInsertedIntoPropertiesTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenPropertyInsertedIntoPropertiesTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
 
         val key = "testKey"
         val value = "testValue"
@@ -42,7 +43,7 @@ class PropertyTables126to127MigrationTest : UserDatabaseMigrationTest(126, 127) 
             openHelper = testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(allProperties()[0]) {

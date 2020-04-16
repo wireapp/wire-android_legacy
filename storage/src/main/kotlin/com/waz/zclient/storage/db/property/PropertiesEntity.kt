@@ -9,7 +9,7 @@ data class PropertiesEntity(
     @PrimaryKey
     @ColumnInfo(name = "key")
     val key: String,
-    
+
     @ColumnInfo(name = "value", defaultValue = "")
     val value: String
 )

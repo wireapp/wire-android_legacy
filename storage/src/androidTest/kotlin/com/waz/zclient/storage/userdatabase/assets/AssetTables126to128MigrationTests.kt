@@ -1,14 +1,15 @@
 package com.waz.zclient.storage.userdatabase.assets
 
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO_127
+import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
-class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
+class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
     @Test
-    fun givenV1AssetInsertedIntoAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenV1AssetInsertedIntoAssetsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetType = "IMAGE"
         val assetData = "data"
@@ -20,7 +21,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
             testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(getV1Assets()[0]) {
@@ -32,7 +33,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
     }
 
     @Test
-    fun givenV2AssetInsertedIntoAssetsV2TableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenV2AssetInsertedIntoAssetsV2TableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetToken = "084782999838_Aa--4777277_"
         val assetName = "IMAGE"
@@ -60,7 +61,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
             testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(getV2Assets()[0]) {
@@ -80,7 +81,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
     }
 
     @Test
-    fun givenDownloadAssetInsertedIntoDownloadAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenDownloadAssetInsertedIntoDownloadAssetsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val assetId = "i747749kk-77"
         val assetName = "IMAGE"
         val mime = "png"
@@ -103,7 +104,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
             testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(getDownloadAssets()[0]) {
@@ -120,7 +121,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
     }
 
     @Test
-    fun givenUploadAssetInsertedIntoUploadAssetsTableVersion126_whenMigratedToVersion127_thenAssertDataIsStillIntact() {
+    fun givenUploadAssetInsertedIntoUploadAssetsTableVersion126_whenMigratedToVersion128_thenAssertDataIsStillIntact() {
         val uploadAssetId = "1100"
         val assetId = "i747749kk-77"
         val assetToken = "084782999838_Aa--4777277_"
@@ -158,7 +159,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
             testOpenHelper
         )
 
-        validateMigration(USER_DATABASE_MIGRATION_126_TO_127)
+        validateMigration(USER_DATABASE_MIGRATION_126_TO_127, USER_DATABASE_MIGRATION_127_TO_128)
 
         runBlocking {
             with(getUploadAssets()[0]) {
@@ -168,7 +169,7 @@ class AssetTables126to127MigrationTests : UserDatabaseMigrationTest(126, 127) {
                 assert(this.encryption == encryption)
                 assert(this.mime == mime)
                 assert(this.sha?.contentEquals(sha) ?: false)
-                assert(this.md5.contentEquals(md5))
+                assert(this.md5?.contentEquals(md5) ?: false)
                 assert(this.size == size)
                 assert(this.source == source)
                 assert(this.preview == preview)
