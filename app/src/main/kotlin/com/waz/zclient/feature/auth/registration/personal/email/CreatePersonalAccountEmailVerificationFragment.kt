@@ -15,8 +15,9 @@ import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_email_verification.*
 
-class CreatePersonalAccountEmailVerificationFragment :
-    Fragment(R.layout.fragment_create_personal_account_email_verification) {
+class CreatePersonalAccountEmailVerificationFragment : Fragment(
+    R.layout.fragment_create_personal_account_email_verification
+) {
 
     //TODO handle no internet connections status
     private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
