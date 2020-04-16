@@ -8,7 +8,7 @@ import androidx.room.Query
 interface ConversationMembersDao {
 
     @Query("SELECT * FROM ConversationMembers")
-    suspend fun allConversationMemebers(): List<ConversationMembersEntity>
+    suspend fun allConversationMembers(): List<ConversationMembersEntity>
 
     @Insert
     suspend fun insertConversationMemeber(conversationMember: ConversationMembersEntity)

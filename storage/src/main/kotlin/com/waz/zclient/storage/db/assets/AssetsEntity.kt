@@ -23,7 +23,7 @@ data class AssetsEntity(
     val mime: String,
 
     @ColumnInfo(name = "sha", typeAffinity = ColumnInfo.BLOB)
-    val sha: ByteArray,
+    val sha: ByteArray?,
 
     @ColumnInfo(name = "size")
     val size: Int,
