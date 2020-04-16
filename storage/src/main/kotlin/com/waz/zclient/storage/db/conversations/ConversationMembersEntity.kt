@@ -13,12 +13,12 @@ import androidx.room.Index
     ]
 )
 data class ConversationMembersEntity(
-    @ColumnInfo(name = "user_id")
+    @ColumnInfo(name = "user_id", defaultValue = "")
     val userId: String,
 
-    @ColumnInfo(name = "conv_id")
+    @ColumnInfo(name = "conv_id", defaultValue = "")
     val conversationId: String,
 
-    @ColumnInfo(name = "role")
+    @ColumnInfo(name = "role", defaultValue = "")
     val role: String
 )

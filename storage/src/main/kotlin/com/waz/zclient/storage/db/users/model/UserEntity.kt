@@ -21,7 +21,7 @@ data class UserEntity(
     @ColumnInfo(name = "teamId")
     val teamId: String?,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
     @ColumnInfo(name = "email")
@@ -36,16 +36,16 @@ data class UserEntity(
     @ColumnInfo(name = "picture")
     val picture: String?,
 
-    @ColumnInfo(name = "accent")
+    @ColumnInfo(name = "accent", defaultValue = "0")
     val accentId: Int,
 
-    @ColumnInfo(name = "skey")
+    @ColumnInfo(name = "skey", defaultValue = "")
     val sKey: String,
 
-    @ColumnInfo(name = "connection")
+    @ColumnInfo(name = "connection", defaultValue = "")
     val connection: String,
 
-    @ColumnInfo(name = "conn_timestamp")
+    @ColumnInfo(name = "conn_timestamp", defaultValue = "0")
     val connectionTimestamp: Int,
 
     @ColumnInfo(name = "conn_msg")
@@ -54,19 +54,19 @@ data class UserEntity(
     @ColumnInfo(name = "conversation")
     val conversation: String?,
 
-    @ColumnInfo(name = "relation")
+    @ColumnInfo(name = "relation", defaultValue = "")
     val relation: String,
 
     @ColumnInfo(name = "timestamp")
     val timestamp: Int?,
 
     @ColumnInfo(name = "verified")
-    val verified: String,
+    val verified: String?,
 
-    @ColumnInfo(name = "deleted")
+    @ColumnInfo(name = "deleted", defaultValue = "0")
     val deleted: Boolean,
 
-    @ColumnInfo(name = "availability")
+    @ColumnInfo(name = "availability", defaultValue = "0")
     val availability: Int,
 
     @ColumnInfo(name = "handle")
@@ -84,10 +84,10 @@ data class UserEntity(
     @ColumnInfo(name = "managed_by")
     val managedBy: String?,
 
-    @ColumnInfo(name = "self_permissions")
+    @ColumnInfo(name = "self_permissions", defaultValue = "0")
     val selfPermission: Int,
 
-    @ColumnInfo(name = "copy_permissions")
+    @ColumnInfo(name = "copy_permissions", defaultValue = "0")
     val copyPermission: Int,
 
     @ColumnInfo(name = "created_by")

@@ -32,6 +32,7 @@ import com.waz.utils.{JsonDecoder, JsonEncoder, _}
 import org.json.JSONArray
 
 import scala.concurrent.duration._
+import scala.util.Try
 
 case class ConversationData(override val id:      ConvId                 = ConvId(),
                             remoteId:             RConvId                = RConvId(),
@@ -218,7 +219,7 @@ object ConversationData {
     val Hidden              = bool('hidden)(_.hidden)
     val MissedCall          = opt(id[MessageId]('missed_call))(_.missedCallMessage)
     val IncomingKnock       = opt(id[MessageId]('incoming_knock))(_.incomingKnockMessage)
-    val Verified            = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
+    val Verified            = text[Verification]('verified, _.name, getVerification)(_.verified)
     val LocalEphemeral      = opt(finiteDuration('ephemeral))(_.localEphemeral)
     val GlobalEphemeral     = opt(finiteDuration('global_ephemeral))(_.globalEphemeral)
     val Access              = set[Access]('access, JsonEncoder.encodeAccess(_).toString(), v => JsonDecoder.array[Access](new JSONArray(v), (arr: JSONArray, i: Int) => IConversation.Access.valueOf(arr.getString(i).toUpperCase)).toSet)(_.access)
@@ -227,6 +228,9 @@ object ConversationData {
     val UnreadMentionsCount = int('unread_mentions_count)(_.unreadCount.mentions)
     val UnreadQuotesCount   = int('unread_quote_count)(_.unreadCount.quotes)
     val ReceiptMode         = opt(int('receipt_mode))(_.receiptMode)
+
+    private def getVerification(name: String): Verification =
+      Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
 
     override val idCol = Id
     override val table = Table(

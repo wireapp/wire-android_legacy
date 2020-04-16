@@ -11,6 +11,6 @@ data class KeyValuesEntity(
     @PrimaryKey
     val key: String,
 
-    @ColumnInfo(name = "value")
+    @ColumnInfo(name = "value", defaultValue = "")
     val value: String
 )

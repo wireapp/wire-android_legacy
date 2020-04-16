@@ -13,7 +13,7 @@ data class ActiveAccountsEntity(
     @ColumnInfo(name = "team_id")
     val teamId: String?,
 
-    @ColumnInfo(name = "cookie")
+    @ColumnInfo(name = "cookie", defaultValue = "")
     val refreshToken: String,
 
     @ColumnInfo(name = "access_token")
