@@ -492,8 +492,8 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val originalTableName = "PushNotificationEvents"
         val createTempTable = """
              CREATE TABLE $tempTableName (
-             event_index INTEGER PRIMARY KEY NOT NULL, 
-             pushId TEXT NOT NULL DEFAULT '',
+             pushId TEXT PRIMARY KEY NOT NULL,
+             event_index INTEGER NOT NULL DEFAULT 0, 
              decrypted INTEGER NOT NULL DEFAULT 0, 
              event TEXT NOT NULL DEFAULT '', 
              plain BLOB, 

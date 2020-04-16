@@ -63,8 +63,8 @@ data class UploadAssetsEntity(
                 other.id == this.id &&
                 other.source == this.source &&
                 other.name == this.name &&
-                shaEquals(other) &&
-                other.md5.contentEquals(this.md5) &&
+                blobEquals(this.sha, other.sha) &&
+                blobEquals(this.md5, other.md5) &&
                 other.mime == this.mime &&
                 other.preview == this.preview &&
                 other.uploaded == this.uploaded &&
@@ -80,13 +80,13 @@ data class UploadAssetsEntity(
     override fun hashCode(): Int {
         var result = Objects.hash(id, source, name, mime, preview, uploaded, size, retention,
             isPublic, encryption, encryptionSalt, details, uploadStatus, assetId)
-        result = 31 * result + md5.contentHashCode()
+        result = 31 * result + (md5?.contentHashCode() ?: 0)
         result = 31 * result + (sha?.contentHashCode() ?: 0)
         return result
     }
 
-    private fun shaEquals(other: UploadAssetsEntity): Boolean {
-        return if (other.sha == null && this.sha == null) true
-        else other.sha != null && this.sha != null && other.sha.contentEquals(this.sha)
+    private fun blobEquals(blob1: ByteArray?, blob2: ByteArray?): Boolean {
+        return if (blob2 == null && blob1 == null) true
+        else blob2 != null && blob1 != null && blob2.contentEquals(blob1)
     }
 }

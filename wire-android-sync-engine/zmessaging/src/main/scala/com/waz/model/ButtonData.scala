@@ -43,11 +43,6 @@ object ButtonData {
 
     override def apply(implicit cursor: DBCursor): ButtonData = ButtonData(Message, Button, Title, Ordinal, buttonState(StateId))
 
-    override def onCreate(db: DB): Unit = {
-      //super.onCreate(db)
-      println("ButtonData.onCreate called - we do nothing, the table will be created in Kotlin")
-    }
-
     def findForMessage(id: MessageId)(implicit db: DB) = iterating(find(Message, id))
   }
 

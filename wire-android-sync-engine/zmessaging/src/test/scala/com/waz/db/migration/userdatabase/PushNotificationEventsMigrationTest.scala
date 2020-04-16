@@ -16,7 +16,7 @@ class PushNotificationEventsMigrationTest extends UserDatabaseMigrationTest {
       closeDB()
       withRoomDB({
         KotlinMigrationHelper.assertPushNotEventEntity(_, new PushNotificationEventEntity(
-          1, pushNotificationEvent.pushId.str, false, "{}", null, false
+          pushNotificationEvent.pushId.str, 1,  false, "{}", null, false
         ))
       })
     }

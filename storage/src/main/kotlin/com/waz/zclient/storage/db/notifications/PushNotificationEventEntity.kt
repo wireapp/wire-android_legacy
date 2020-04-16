@@ -7,11 +7,11 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "PushNotificationEvents")
 data class PushNotificationEventEntity(
     @PrimaryKey
-    @ColumnInfo(name = "event_index")
-    val eventIndex: Int,
-
-    @ColumnInfo(name = "pushId", defaultValue = "")
+    @ColumnInfo(name = "pushId")
     val pushId: String,
+
+    @ColumnInfo(name = "event_index", defaultValue = "0")
+    val eventIndex: Int,
 
     @ColumnInfo(name = "decrypted", defaultValue = "0")
     val isDecrypted: Boolean,
