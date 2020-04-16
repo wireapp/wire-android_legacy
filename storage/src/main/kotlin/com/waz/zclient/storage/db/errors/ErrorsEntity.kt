@@ -10,27 +10,27 @@ data class ErrorsEntity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "err_type")
+    @ColumnInfo(name = "err_type", defaultValue = "")
     val errorType: String,
 
-    @ColumnInfo(name = "users")
+    @ColumnInfo(name = "users", defaultValue = "")
     val users: String,
 
-    @ColumnInfo(name = "messages")
+    @ColumnInfo(name = "messages", defaultValue = "")
     val messages: String,
 
     @ColumnInfo(name = "conv_id")
     val conversationId: String?,
 
-    @ColumnInfo(name = "res_code")
+    @ColumnInfo(name = "res_code", defaultValue = "0")
     val responseCode: Int,
 
-    @ColumnInfo(name = "res_msg")
+    @ColumnInfo(name = "res_msg", defaultValue = "")
     val responseMessage: String,
 
-    @ColumnInfo(name = "res_label")
+    @ColumnInfo(name = "res_label", defaultValue = "")
     val responseLabel: String,
 
-    @ColumnInfo(name = "time")
+    @ColumnInfo(name = "time", defaultValue = "0")
     val time: Int
 )
