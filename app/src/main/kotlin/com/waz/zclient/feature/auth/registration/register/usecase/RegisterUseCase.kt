@@ -13,7 +13,7 @@ import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 class RegisterUseCase(private val registerRepository: RegisterRepository) :
     UseCase<Unit, RegisterParams>() {
     override suspend fun run(params: RegisterParams): Either<Failure, Unit> =
-        registerRepository.register(params.name)
+        registerRepository.register(params.name, params.email, params.password)
             .fold({
                 when (it) {
                     is BadRequest -> Either.Left(InvalidActivationCode)
@@ -25,7 +25,7 @@ class RegisterUseCase(private val registerRepository: RegisterRepository) :
             }) { Either.Right(it) }!!
 }
 
-data class RegisterParams(val name: String)
+data class RegisterParams(val name: String, val email: String, val password: String)
 
 object InvalidActivationCode : RegisterFailure()
 object UnauthorizedEmailOrPhone : RegisterFailure()

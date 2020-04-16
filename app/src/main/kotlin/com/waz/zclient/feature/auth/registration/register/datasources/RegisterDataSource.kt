@@ -8,6 +8,6 @@ import com.waz.zclient.feature.auth.registration.register.datasources.remote.Reg
 
 class RegisterDataSource(private val registerRemoteDataSource: RegisterRemoteDataSource) : RegisterRepository {
 
-    override suspend fun register(name: String): Either<Failure, Unit> =
-        registerRemoteDataSource.register(name).map { Unit }
+    override suspend fun register(name: String, email: String, password: String): Either<Failure, Unit> =
+        registerRemoteDataSource.register(name, email, password).map { Unit }
 }

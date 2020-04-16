@@ -7,11 +7,9 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
-import com.waz.zclient.core.extension.viewModel
-import com.waz.zclient.core.extension.withArgs
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_email_verification.*
 
@@ -21,20 +19,22 @@ class CreatePersonalAccountEmailVerificationFragment : Fragment(
 
     //TODO handle no internet connections status
     private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
-        by viewModel(REGISTRATION_SCOPE_ID)
-
-    private val email: String by lazy {
-        arguments?.getString(EMAIL_BUNDLE_KEY, String.empty()) ?: String.empty()
-    }
+        by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initDescriptionTextView()
+        observeEmailValue()
         initVerificationCodeInput()
         observeActivateEmailData()
     }
 
-    private fun initDescriptionTextView() {
+    private fun observeEmailValue() {
+        createPersonalAccountViewModel.emailLiveData.observe(viewLifecycleOwner) {
+            initDescriptionTextView(it)
+        }
+    }
+
+    private fun initDescriptionTextView(email: String) {
         emailVerificationDescriptionTextView.text =
             getString(R.string.email_verification_description, email)
     }
@@ -59,7 +59,7 @@ class CreatePersonalAccountEmailVerificationFragment : Fragment(
             emailVerificationSixthDigitEditText.requestFocus()
         }
         emailVerificationSixthDigitEditText.doAfterTextChanged {
-            createPersonalAccountViewModel.activateEmail(email, verificationCode())
+            createPersonalAccountViewModel.activateEmail(verificationCode())
         }
     }
 
@@ -95,9 +95,6 @@ class CreatePersonalAccountEmailVerificationFragment : Fragment(
         .show()
 
     companion object {
-        private const val EMAIL_BUNDLE_KEY = "emailBundleKey"
-
         fun newInstance(email: String) = CreatePersonalAccountEmailVerificationFragment()
-            .withArgs { putString(EMAIL_BUNDLE_KEY, email) }
     }
 }
