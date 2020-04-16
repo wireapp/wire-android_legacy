@@ -10,9 +10,9 @@ data class FoldersEntity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
-    @ColumnInfo(name = "type")
+    @ColumnInfo(name = "type", defaultValue = "0")
     val type: Int
 )

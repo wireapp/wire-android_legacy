@@ -37,9 +37,6 @@ class CreatePersonalAccountWithEmailViewModel(
     val activateEmailSuccessLiveData: LiveData<Unit> = _activateEmailSuccessLiveData
     val activateEmailErrorLiveData: LiveData<ErrorMessage> = _activateEmailErrorLiveData
 
-    private val emailLiveData = MutableLiveData<String>()
-    private val nameLiveData = MutableLiveData<String>()
-
     fun validateEmail(email: String) {
         validateEmailUseCase(viewModelScope, ValidateEmailParams(email), Dispatchers.Default) {
             it.fold(::handleValidateEmailFailure) { updateConfirmationStatus(true) }
@@ -57,7 +54,6 @@ class CreatePersonalAccountWithEmailViewModel(
     }
 
     fun sendActivationCode(email: String) {
-        emailLiveData.value = email
         sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email)) {
             it.fold(::sendActivationCodeFailure) { sendActivationCodeSuccess() }
         }

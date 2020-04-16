@@ -13,9 +13,9 @@ import androidx.room.Index
     ]
 )
 data class EmailAddressesEntity(
-    @ColumnInfo(name = "contact")
+    @ColumnInfo(name = "contact", defaultValue = "")
     val contactId: String,
 
-    @ColumnInfo(name = "email_address")
+    @ColumnInfo(name = "email_address", defaultValue = "")
     val emailAddress: String
 )

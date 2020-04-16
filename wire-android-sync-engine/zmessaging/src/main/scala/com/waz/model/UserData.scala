@@ -32,6 +32,7 @@ import com.waz.utils._
 import com.waz.utils.wrappers.{DB, DBCursor}
 
 import scala.concurrent.duration._
+import scala.util.Try
 
 case class UserData(override val id:       UserId,
                     teamId:                Option[TeamId]         = None,
@@ -199,7 +200,7 @@ object UserData {
     val Conversation = opt(id[RConvId]('conversation))(_.conversation)
     val Rel = text[Relation]('relation, _.name, Relation.valueOf)(_.relation)
     val Timestamp = opt(localTimestamp('timestamp))(_.syncTimestamp)
-    val Verified = text[Verification]('verified, _.name, Verification.valueOf)(_.verified)
+    val Verified = text[Verification]('verified, _.name, getVerification)(_.verified)
     val Deleted = bool('deleted)(_.deleted)
     val AvailabilityStatus = int[Availability]('availability, _.id, Availability.apply)(_.availability)
     val Handle = opt(handle('handle))(_.handle)
@@ -210,6 +211,9 @@ object UserData {
     val SelfPermissions = long('self_permissions)(_.permissions._1)
     val CopyPermissions = long('copy_permissions)(_.permissions._2)
     val CreatedBy = opt(id[UserId]('created_by))(_.createdBy)
+
+    private def getVerification(name: String): Verification =
+      Try(Verification.valueOf(name)).getOrElse(Verification.UNKNOWN)
 
     override val idCol = Id
     override val table = Table(

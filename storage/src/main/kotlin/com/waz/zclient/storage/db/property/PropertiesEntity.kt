@@ -10,6 +10,6 @@ data class PropertiesEntity(
     @ColumnInfo(name = "key")
     val key: String,
 
-    @ColumnInfo(name = "value")
-    var value: String
+    @ColumnInfo(name = "value", defaultValue = "")
+    val value: String
 )

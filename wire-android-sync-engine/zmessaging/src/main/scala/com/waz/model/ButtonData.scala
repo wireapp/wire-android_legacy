@@ -3,7 +3,6 @@ package com.waz.model
 import com.waz.db.Dao2
 import com.waz.utils.Identifiable
 import com.waz.utils.wrappers.{DB, DBCursor}
-
 import com.waz.model.ButtonData._
 
 case class ButtonData(messageId: MessageId,
@@ -33,6 +32,10 @@ object ButtonData {
     val Title   = text('title).apply(_.title)
     val Ordinal = int('ordinal).apply(_.ordinal)
     val StateId = int('state).apply(_.state.id)
+
+    override def onCreate(db: DB): Unit = {
+      println("ButtonData.onCreate called - we do nothing, the table will be created in Kotlin")
+    }
 
     override val idCol = (Message, Button)
 

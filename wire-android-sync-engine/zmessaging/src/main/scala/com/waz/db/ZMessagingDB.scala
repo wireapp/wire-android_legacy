@@ -75,7 +75,7 @@ object ZMessagingDB {
     PhoneNumbersDao, MsgDeletionDao, EditHistoryDao,
     PushNotificationEventsDao, ReadReceiptDao, PropertiesDao, UploadAssetDao, DownloadAssetDao,
     AssetDao, FCMNotificationsDao, FCMNotificationStatsDao, FolderDataDao, ConversationFolderDataDao,
-    ConversationRoleActionDao, ButtonDataDao,MessageContentIndexDao
+    ConversationRoleActionDao, ButtonDataDao, MessageContentIndexDao
   )
 
   lazy val migrations = Seq(

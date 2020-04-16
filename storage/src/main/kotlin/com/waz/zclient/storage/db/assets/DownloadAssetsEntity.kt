@@ -10,24 +10,24 @@ data class DownloadAssetsEntity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "mime")
+    @ColumnInfo(name = "mime", defaultValue = "")
     val mime: String,
 
-    @ColumnInfo(name = "downloaded")
+    @ColumnInfo(name = "downloaded", defaultValue = "0")
     val downloaded: Long,
 
-    @ColumnInfo(name = "size")
+    @ColumnInfo(name = "size", defaultValue = "0")
     val size: Long,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
-    @ColumnInfo(name = "preview")
+    @ColumnInfo(name = "preview", defaultValue = "")
     val preview: String,
 
-    @ColumnInfo(name = "details")
+    @ColumnInfo(name = "details", defaultValue = "")
     val details: String,
 
-    @ColumnInfo(name = "status")
+    @ColumnInfo(name = "status", defaultValue = "0")
     val status: Int
 )
