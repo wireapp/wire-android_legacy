@@ -363,7 +363,13 @@ class RefreshingSignal[A](loader: => CancellableFuture[A], refreshEvent: EventSt
     val p = Promise[Unit]
     val thisReload = CancellableFuture.lift(p.future)
     loadFuture = thisReload
-    loader.onComplete(t => if (loadFuture eq thisReload) p.tryComplete(t.map(v => set(Some(v), Some(Threading.Background)))))(queue)
+    loader
+      .recoverWith({ case ex: Throwable =>
+        import com.waz.log.LogSE._
+        error(l"Error while loading RefreshingSignal", ex)
+        throw ex
+      })(queue, LogTag("RefreshingSignal"))
+      .onComplete(t => if (loadFuture eq thisReload) p.tryComplete(t.map(v => set(Some(v), Some(Threading.Background)))))(queue)
   }
 
   override protected def onWire(): Unit = {
