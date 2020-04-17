@@ -21,12 +21,12 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.threading.CancellableFuture
 import com.waz.threading.CancellableFuture.delayed
 import com.waz.threading.Threading.Background
-import org.threeten.bp.{Clock, Instant}
-import org.threeten.bp.Instant.now
 import com.waz.utils._
+import org.threeten.bp.Instant.now
+import org.threeten.bp.{Clock, Instant}
+import com.waz.log.LogSE._
 
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.duration._
+import scala.concurrent.duration.{FiniteDuration, _}
 
 case class ClockSignal(interval: FiniteDuration, clock: Clock = Clock.systemUTC())
   extends SourceSignal[Instant](Some(now(clock))) with DerivedLogTag {
@@ -37,6 +37,8 @@ case class ClockSignal(interval: FiniteDuration, clock: Clock = Clock.systemUTC(
     publish(now(clock))
     delay.cancel()
     delay = delayed(interval)(refresh)(Background)
+  } else {
+    info(l"Cannot publish ClockSignal value: not wired")
   }
 
   //To force a refresh in tests when clock is advanced
