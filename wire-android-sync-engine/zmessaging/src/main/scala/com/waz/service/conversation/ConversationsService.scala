@@ -45,11 +45,9 @@ import scala.concurrent.Future.successful
 import scala.util.control.{NoStackTrace, NonFatal}
 
 trait ConversationsService {
-  def content: ConversationsContentUpdater
   def convStateEventProcessingStage: EventScheduler.Stage
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
-  def getSelfConversation: Future[Option[ConversationData]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
@@ -83,7 +81,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
                                usersStorage:    UsersStorage,
                                membersStorage:  MembersStorage,
                                convsStorage:    ConversationStorage,
-                               val content:     ConversationsContentUpdater,
+                               content:         ConversationsContentUpdater,
                                sync:            SyncServiceHandle,
                                errors:          ErrorsService,
                                messages:        MessagesService,
@@ -122,6 +120,20 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case None => //
   }
 
+  if (teamId.isDefined)
+    for {
+      removeTeamMembers <- userPrefs.preference(UserPreferences.RemoveUncontactedTeamMembers).apply()
+    } if (removeTeamMembers)
+      for {
+        members  <- membersStorage.contents.map(_.keys.map(_._1)).head
+        users    <- usersStorage.contents.map(_.withFilter(!_._2.deleted).map(_._1)).head
+        toRemove =  users.toSet -- members.toSet
+        _        <- if (toRemove.nonEmpty) usersStorage.updateAll2(toRemove, _.copy(deleted = true))
+                    else Future.successful(())
+        _        <- userPrefs.setValue(UserPreferences.RemoveUncontactedTeamMembers, false)
+        _        =  verbose(l"Uncontacted team members removed for the team $teamId")
+      } yield ()
+
   val convStateEventProcessingStage = EventScheduler.Stage[ConversationStateEvent] { (_, events) =>
     RichFuture.traverseSequential(events)(processConversationEvent(_, selfUserId))
   }
@@ -145,7 +157,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
-      updateConversations(Seq(data)).flatMap { case (_, created) => Future.traverse(created) { created =>
+      updateConversation(data).flatMap { case (_, created) => Future.traverse(created) { created =>
         messages.addConversationStartMessage(created.id, from, (data.members.keySet + selfUserId).filter(_ != from), created.name, readReceiptsAllowed = created.readReceiptsAllowed, time = Some(time))
       }}
 
@@ -163,7 +175,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
               // this happens when we are added to group conversation
               for {
                 conv       <- convsStorage.insert(ConversationData(ConvId(), rConvId, None, from, ConversationType.Group, lastEventTime = time))
-                ms         <- membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
+                _          <- membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole) ++ membersWithRoles)
                 sId        <- sync.syncConversations(Set(conv.id))
                 _          <- syncReqService.await(sId)
                 Some(conv) <- convsStorage.get(conv.id)
@@ -204,25 +216,27 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       } yield ()
 
     case MemberLeaveEvent(_, time, from, userIds) =>
-      membersStorage.remove(conv.id, userIds) flatMap { _ =>
-        if (userIds.contains(selfUserId)) {
-          content.setConvActive(conv.id, active = false).map { _ =>
-            // if the user removed themselves from another device, archived on this device
-            if (from.equals(selfUserId) && userIds.contains(selfUserId)) {
-              content.updateConversationState(conv.id, ConversationState(Some(true), Some(time)))
-            }
-          }
-        }
-        else successful(())
-      }
+      for {
+        _              <- deleteMembers(conv.id, userIds.toSet)
+        selfUserLeaves =  userIds.contains(selfUserId)
+        _              <- if (selfUserLeaves) content.setConvActive(conv.id, active = false) else Future.successful(())
+                          // if the user removed themselves from another device, archived on this device
+        _              <- if (selfUserLeaves && from.equals(selfUserId))
+                            content.updateConversationState(conv.id, ConversationState(Option(true), Option(time)))
+                          else
+                            Future.successful(None)
+      } yield ()
 
     case MemberUpdateEvent(_, _, userId, state) =>
-      content.updateConversationState(conv.id, state).map { _ =>
-        (state.target, state.conversationRole) match {
-          case (Some(id), Some(role)) => membersStorage.updateOrCreate(conv.id, id, role)
-          case _ =>
-        }
-      }
+      for {
+        _      <- content.updateConversationState(conv.id, state)
+        _      <- (state.target, state.conversationRole) match {
+                    case (Some(id), Some(role)) => membersStorage.updateOrCreate(conv.id, id, role)
+                    case _                      => Future.successful(())
+                  }
+        syncId <- users.syncIfNeeded(Set(userId))
+        _      <- syncId.fold(Future.successful(()))(sId => syncReqService.await(sId).map(_ => ()))
+      } yield ()
 
     case ConnectRequestEvent(_, _, from, _, recipient, _, _) =>
       membersStorage.updateOrCreateAll(conv.id, Map(from -> ConversationRole.AdminRole, recipient -> ConversationRole.AdminRole)).flatMap { added =>
@@ -241,7 +255,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     case ConversationReceiptModeEvent(_, _, _, receiptMode) =>
       content.updateReceiptMode(conv.id, receiptMode = receiptMode)
 
-    case MessageTimerEvent(_, time, from, duration) =>
+    case MessageTimerEvent(_, _, _, duration) =>
       convsStorage.update(conv.id, _.copy(globalEphemeral = duration))
 
     case _ => successful(())
@@ -264,103 +278,112 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     )
   }
 
-  def getSelfConversation = {
-    val selfConvId = ConvId(selfUserId.str)
-    content.convById(selfConvId).flatMap {
-      case Some(c) => successful(Some(c))
-      case _ =>
-        for {
-          user  <- usersStorage.get(selfUserId)
-          conv  =  ConversationData(ConvId(selfUserId.str), RConvId(selfUserId.str), None, selfUserId, ConversationType.Self, generatedName = user.map(_.name).getOrElse(Name.Empty))
-          saved <- convsStorage.getOrCreate(selfConvId, conv).map(Some(_))
-        } yield saved
-    }
-  }
-
-  def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
+  override def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
     for {
       (_, created) <- updateConversations(conversations, roles)
       _            <- messages.addDeviceStartMessages(created, selfUserId)
     } yield {}
 
   // ask the backend for the roles and only then update the conversations
-  private def updateConversations(responses: Seq[ConversationResponse]): Future[(Seq[ConversationData], Seq[ConversationData])] =
-    client.loadConversationRoles(responses.map(_.id).toSet).flatMap(roles => updateConversations(responses, roles))
+  private def updateConversation(response: ConversationResponse): Future[(Seq[ConversationData], Seq[ConversationData])] =
+    client.loadConversationRoles(Set(response.id)).flatMap(roles => updateConversations(Seq(response), roles))
 
-  private def updateConversations(responses: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[(Seq[ConversationData], Seq[ConversationData])] = {
+  private def findExistingId(responses: Seq[ConversationResponse]): Future[Seq[(ConvId, ConversationResponse)]] = convsStorage { convsById =>
+    def byRemoteId(id: RConvId) = convsById.values.find(_.remoteId == id)
 
-    def updateConversationData(): Future[(Set[ConversationData], Seq[ConversationData])] = {
-      def findExistingId: Future[Seq[(ConvId, ConversationResponse)]] = convsStorage { convsById =>
-        def byRemoteId(id: RConvId) = convsById.values.find(_.remoteId == id)
+    responses.map { resp =>
+      val newId =
+        if (isOneToOne(resp.convType))
+          resp.members.keys.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str))
+        else
+          ConvId(resp.id.str)
 
-        responses.map { resp =>
-          val newId = if (isOneToOne(resp.convType)) resp.members.keys.find(_ != selfUserId).fold(ConvId())(m => ConvId(m.str)) else ConvId(resp.id.str)
-
-          val matching = byRemoteId(resp.id).orElse {
-            convsById.get(newId).orElse {
-              if (isOneToOne(resp.convType)) None
-              else byRemoteId(ConversationsService.generateTempConversationId(resp.members.keySet + selfUserId))
-            }
-          }
-
-          val r = (matching.fold(newId)(_.id), resp)
-          verbose(l"Returning conv id pair $r, isOneToOne: ${isOneToOne(resp.convType)}")
-          r
+      val matching = byRemoteId(resp.id).orElse {
+        convsById.get(newId).orElse {
+          if (isOneToOne(resp.convType)) None
+          else byRemoteId(ConversationsService.generateTempConversationId(resp.members.keySet + selfUserId))
         }
       }
 
-      var created = new mutable.HashSet[ConversationData]
-
-      def updateOrCreate(newLocalId: ConvId, resp: ConversationResponse): (Option[ConversationData] => ConversationData) = { prev =>
-        returning(prev.getOrElse(ConversationData(id = newLocalId, hidden = isOneToOne(resp.convType) && resp.members.size <= 1))
-          .copy(
-            remoteId        = resp.id,
-            name            = resp.name.filterNot(_.isEmpty),
-            creator         = resp.creator,
-            convType        = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
-            team            = resp.team,
-            muted           = if (resp.muted == MuteSet.OnlyMentionsAllowed && teamId.isEmpty) MuteSet.AllMuted else resp.muted,
-            muteTime        = resp.mutedTime,
-            archived        = resp.archived,
-            archiveTime     = resp.archivedTime,
-            access          = resp.access,
-            accessRole      = resp.accessRole,
-            link            = resp.link,
-            globalEphemeral = resp.messageTimer,
-            receiptMode     = resp.receiptMode
-
-          ))(c => if (prev.isEmpty) created += c)
+      returning((matching.fold(newId)(_.id), resp)) { r =>
+        verbose(l"Returning conv id pair $r, isOneToOne: ${isOneToOne(resp.convType)}")
       }
-
-      for {
-        withId <- findExistingId
-        convs  <- convsStorage.updateOrCreateAll(withId.map { case (localId, resp) => localId -> updateOrCreate(localId, resp) } (breakOut))
-      } yield (convs, created.toSeq)
     }
+  }
 
-    def updateMembers() =
-      content.convsByRemoteId(responses.map(_.id).toSet).flatMap { convs =>
-        val toUpdate = responses.map(c => (c.id, c.members)).flatMap {
-          case (remoteId, members) => convs.get(remoteId).map(c => c.id -> (members + (c.creator -> ConversationRole.AdminRole)))
-        }.toMap
-        membersStorage.setAll(toUpdate)
-      }
+  private def updateOrCreate(newLocalId: ConvId, resp: ConversationResponse, created: mutable.ArrayBuffer[ConversationData]) = { prev: Option[ConversationData] =>
+    returning(prev.getOrElse(ConversationData(id = newLocalId, hidden = isOneToOne(resp.convType) && resp.members.size <= 1))
+      .copy(
+        remoteId        = resp.id,
+        name            = resp.name.filterNot(_.isEmpty),
+        creator         = resp.creator,
+        convType        = prev.map(_.convType).filter(oldType => isOneToOne(oldType) && resp.convType != ConversationType.OneToOne).getOrElse(resp.convType),
+        team            = resp.team,
+        muted           = if (resp.muted == MuteSet.OnlyMentionsAllowed && teamId.isEmpty) MuteSet.AllMuted else resp.muted,
+        muteTime        = resp.mutedTime,
+        archived        = resp.archived,
+        archiveTime     = resp.archivedTime,
+        access          = resp.access,
+        accessRole      = resp.accessRole,
+        link            = resp.link,
+        globalEphemeral = resp.messageTimer,
+        receiptMode     = resp.receiptMode
 
-    def syncUsers() = users.syncIfNeeded(responses.flatMap(_.members.keys).toSet)
+      ))(c => if (prev.isEmpty) created += c)
+  }
 
-    def updateRoles(convIds: Map[ConvId, RConvId]): Future[Unit] =
-      Future.sequence(convIds.collect {
-        case (cId, rId) if roles.contains(rId) => rolesService.createOrUpdate(cId, roles(rId))
-      }).map(_ => ())
+  private def updateConversationData(responses: Seq[ConversationResponse]): Future[(Set[ConversationData], Seq[ConversationData])] = {
+    val created = mutable.ArrayBuffer[ConversationData]()
 
     for {
-      (convs, created) <- updateConversationData()
-      _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap)
-      _                <- updateMembers()
-      _                <- syncUsers()
-    } yield
-      (convs.toSeq, created)
+      withId <- findExistingId(responses)
+      convs  <- convsStorage.updateOrCreateAll(withId.map {
+                  case (localId, resp) => localId -> updateOrCreate(localId, resp, created)
+                } (breakOut))
+    } yield (convs, created)
   }
+
+  private def updateMembers(responses: Seq[ConversationResponse]): Future[Unit] =
+    for {
+      convs         <- content.convsByRemoteId(responses.map(_.id).toSet)
+      toUpdate      =  responses.map(c => (c.id, c.members)).flatMap {
+                         case (remoteId, members) => convs.get(remoteId).map(c => c.id -> (members + (c.creator -> ConversationRole.AdminRole)))
+                       }.toMap
+      userIds       <- membersStorage.getActiveUsers2(convs.map(_._2.id).toSet).map(_.flatMap(_._2).toSet)
+      _             <- membersStorage.setAll(toUpdate)
+      usersLeft     <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
+      usersToDelete =  userIds -- usersLeft
+      _             <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
+                       else Future.successful(())
+    } yield ()
+
+  private def deleteMembers(convId: ConvId): Future[Unit] =
+    for {
+      userIds <- membersStorage.getActiveUsers(convId).map(_.toSet)
+      _       <- deleteMembers(convId, userIds)
+    } yield ()
+
+  private def deleteMembers(convId: ConvId, userIds: Set[UserId]): Future[Unit] =
+    for {
+      _              <- membersStorage.remove(convId, userIds)
+      usersLeft      <- membersStorage.getByUsers(userIds).map(_.map(_.userId).toSet)
+      usersToDelete  =  userIds -- usersLeft
+      _              <- if (usersToDelete.nonEmpty) usersStorage.updateAll2(usersToDelete, _.copy(deleted = true))
+                        else Future.successful(())
+    } yield ()
+
+  private def updateRoles(convIds: Map[ConvId, RConvId], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
+    Future.sequence(convIds.collect {
+      case (cId, rId) if roles.contains(rId) => rolesService.createOrUpdate(cId, roles(rId))
+    }).map(_ => ())
+
+  private def updateConversations(responses: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[(Seq[ConversationData], Seq[ConversationData])] =
+    for {
+      (convs, created) <- updateConversationData(responses)
+      _                <- updateRoles(convs.map(data => data.id -> data.remoteId).toMap, roles)
+      _                <- updateMembers(responses)
+      _                <- users.syncIfNeeded(responses.flatMap(_.members.keys).toSet)
+    } yield (convs.toSeq, created)
 
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit] =
     convsStorage.update(id, c => c.copy(remoteId = remoteId)).map(_ => ())
@@ -381,7 +404,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   private def deleteTempConversation(convId: ConvId) = for {
     _ <- convsStorage.remove(convId)
-    _ <- membersStorage.delete(convId)
+    _ <- deleteMembers(convId)
     _ <- msgContent.deleteMessagesForConversation(convId)
     _ <- rolesService.removeByConvId(convId)
   } yield ()
@@ -401,7 +424,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       assetIds       <- messages.getAssetIds(convMessageIds)
       _              <- assetService.deleteAll(assetIds)
       _              <- convsStorage.remove(convId)
-      _              <- membersStorage.delete(convId)
+      _              <- deleteMembers(convId)
       _              <- msgContent.deleteMessagesForConversation(convId)
       _              <- receiptsStorage.removeAllForMessages(convMessageIds)
       _              <- checkCurrentConversationDeleted(convId)

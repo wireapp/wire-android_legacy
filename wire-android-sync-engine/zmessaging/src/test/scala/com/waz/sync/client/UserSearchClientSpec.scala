@@ -109,7 +109,6 @@ class UserSearchClientSpec extends AndroidFreeSpec with CirceJSONSupport {
       val searchResult = result.right.get
       searchResult shouldEqual user
     }
-
   }
 
 }

@@ -19,7 +19,7 @@ package com.waz.sync.handler
 
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.Handle
+import com.waz.model.{Handle, UserId}
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UserSearchClient
@@ -35,7 +35,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
 
   def syncSearchQuery(query: SearchQuery): Future[SyncResult] = client.getContacts(query).future.map {
     case Right(results) =>
-      debug(l"syncSearchQuery got: ${results.documents.foreach{_.team.get.toString}}")
+      debug(l"syncSearchQuery got: ${results.documents.map(_.team)}")
       userSearch.updateSearchResults(query, results)
       SyncResult.Success
     case Left(error)    =>
@@ -47,6 +47,10 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
       debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
       userSearch.updateExactMatch(user)
       SyncResult.Success
-    case Left(error)       => SyncResult(error)
+    case Right(None) =>
+      debug(l"exactMatchHandle, No user id for the handle $handle")
+      SyncResult.Success
+    case Left(error) =>
+      SyncResult(error)
   }
 }

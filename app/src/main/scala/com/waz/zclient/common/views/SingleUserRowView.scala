@@ -103,13 +103,12 @@ class SingleUserRowView(context: Context, attrs: AttributeSet, style: Int)
     videoIndicator.setVisible(user.isVideoEnabled)
   }
 
-  def setUserData(userData: UserData,
-                  teamId: Option[TeamId],
-                  hideStatus: Boolean,
+  def setUserData(userData:       UserData,
+                  teamId:         Option[TeamId],
                   createSubtitle: (UserData) => String = SingleUserRowView.defaultSubtitle): Unit = {
-    chathead.loadUser(userData.id)
+    chathead.setUserData(userData, userData.isInTeam(teamId))
     setTitle(userData.name, userData.isSelf)
-    setAvailability(if (teamId.isDefined && !hideStatus) userData.availability else Availability.None)
+    setAvailability(if (teamId.isDefined) userData.availability else Availability.None)
     setVerified(userData.isVerified)
     setSubtitle(createSubtitle(userData))
     setIsGuest(userData.isGuest(teamId) && !userData.isWireBot)

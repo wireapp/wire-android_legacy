@@ -20,15 +20,11 @@ package com.waz.zclient.usersearch.listitems
 import com.waz.model.Name
 
 trait SearchViewItem {
-
   def section: Int
-
   def index: Int
-
   def itemType: Int
 
   def id: Long = itemType + section + index
-
   def name: Name = Name.Empty
 }
 
