@@ -15,6 +15,7 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_email_inp
 class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_create_personal_account_email_input) {
 
     //TODO handle no internet connections status
+    //TODO Add loading status
     private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 

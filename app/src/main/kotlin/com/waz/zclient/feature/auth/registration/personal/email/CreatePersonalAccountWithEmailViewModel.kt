@@ -7,12 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.feature.auth.registration.register.usecase.ActivationCodeNotFound
-import com.waz.zclient.feature.auth.registration.register.usecase.EmailOrPhoneInUse
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
 import com.waz.zclient.feature.auth.registration.register.usecase.RegistrationParams
-import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmailOrPhone
+import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
 import com.waz.zclient.shared.activation.usecase.ActivateEmailParams
 import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
@@ -133,14 +131,12 @@ class CreatePersonalAccountWithEmailViewModel(
 
     private fun registerFailure(failure: Failure) {
         when (failure) {
+            is UnauthorizedEmail -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_unauthorized_email_error)
             is InvalidActivationCode -> _registerErrorLiveData.value =
-                ErrorMessage(R.string.email_verification_invalid_code_error)
-            is UnauthorizedEmailOrPhone -> _registerErrorLiveData.value =
-                ErrorMessage(R.string.email_verification_invalid_code_error)
-            is ActivationCodeNotFound -> _registerErrorLiveData.value =
-                ErrorMessage(R.string.email_verification_invalid_code_error)
-            is EmailOrPhoneInUse -> _registerErrorLiveData.value =
-                ErrorMessage(R.string.email_verification_invalid_code_error)
+                ErrorMessage(R.string.create_personal_account_invalid_activation_code_error)
+            is EmailInUse -> _registerErrorLiveData.value =
+                ErrorMessage(R.string.create_personal_account_email_in_use_error)
         }
     }
 }

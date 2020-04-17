@@ -1,6 +1,5 @@
 package com.waz.zclient.feature.auth.registration.register.usecase
 
-import com.waz.zclient.core.exception.BadRequest
 import com.waz.zclient.core.exception.Conflict
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.FeatureFailure
@@ -21,10 +20,9 @@ class RegisterPersonalAccountWithEmailUseCase(private val registerRepository: Re
         )
             .fold({
                 when (it) {
-                    is BadRequest -> Either.Left(InvalidActivationCode)
-                    is Forbidden -> Either.Left(UnauthorizedEmailOrPhone)
-                    is NotFound -> Either.Left(ActivationCodeNotFound)
-                    is Conflict -> Either.Left(EmailOrPhoneInUse)
+                    is Forbidden -> Either.Left(UnauthorizedEmail)
+                    is NotFound -> Either.Left(InvalidActivationCode)
+                    is Conflict -> Either.Left(EmailInUse)
                     else -> Either.Left(it)
                 }
             }) { Either.Right(it) }!!
@@ -37,9 +35,8 @@ data class RegistrationParams(
     val activationCode: String
 )
 
-object InvalidActivationCode : RegistrationFailure()
-object UnauthorizedEmailOrPhone : RegistrationFailure()
-object ActivationCodeNotFound : RegistrationFailure()
-object EmailOrPhoneInUse : RegistrationFailure()
+object UnauthorizedEmail : RegisterPersonalAccountWithEmailFailure()
+object InvalidActivationCode : RegisterPersonalAccountWithEmailFailure()
+object EmailInUse : RegisterPersonalAccountWithEmailFailure()
 
-sealed class RegistrationFailure : FeatureFailure()
+sealed class RegisterPersonalAccountWithEmailFailure : FeatureFailure()
