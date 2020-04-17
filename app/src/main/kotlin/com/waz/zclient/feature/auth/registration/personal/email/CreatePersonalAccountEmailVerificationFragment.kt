@@ -60,6 +60,7 @@ class CreatePersonalAccountEmailVerificationFragment : Fragment(
         }
         emailVerificationSixthDigitEditText.doAfterTextChanged {
             createPersonalAccountViewModel.activateEmail(verificationCode())
+            createPersonalAccountViewModel.saveActivationCode(verificationCode())
         }
     }
 
