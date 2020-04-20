@@ -36,7 +36,8 @@ class CreatePersonalAccountPasswordInputFragment : Fragment(R.layout.fragment_cr
         with(createPersonalAccountViewModel) {
             registerSuccessLiveData.observe(viewLifecycleOwner) {
                 //TODO move the new registered user to right scala activity/fragment
-                Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation), Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation),
+                    Toast.LENGTH_LONG).show()
             }
             registerErrorLiveData.observe(viewLifecycleOwner) {
                 //TODO show correctly registration error messages

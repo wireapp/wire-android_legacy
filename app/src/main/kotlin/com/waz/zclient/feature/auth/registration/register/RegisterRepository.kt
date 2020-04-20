@@ -5,5 +5,9 @@ import com.waz.zclient.core.functional.Either
 
 interface RegisterRepository {
     suspend fun registerPersonalAccountWithEmail(
-        name: String, email: String, password: String, activationCode: String): Either<Failure, Unit>
+        name: String,
+        email: String,
+        password: String,
+        activationCode: String
+    ): Either<Failure, Unit>
 }
