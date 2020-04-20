@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.exception.Failure
 
-class LogoutDialogViewModel(private val logoutUseCase: LogoutUseCase) : ViewModel() {
+class LogoutViewModel(private val logoutUseCase: LogoutUseCase) : ViewModel() {
 
     private var _logoutLiveData = MutableLiveData<Boolean>()
     private var _errorLiveData = MutableLiveData<Failure>()

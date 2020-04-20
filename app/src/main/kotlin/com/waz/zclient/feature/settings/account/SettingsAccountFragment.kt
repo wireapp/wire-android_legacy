@@ -3,6 +3,7 @@ package com.waz.zclient.feature.settings.account
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import android.widget.Toast.LENGTH_LONG
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
@@ -10,6 +11,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.invisible
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.visible
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
@@ -17,6 +19,7 @@ import com.waz.zclient.feature.settings.account.deleteaccount.DeleteAccountDialo
 import com.waz.zclient.feature.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.feature.settings.account.editphonenumber.EditPhoneNumberActivity
 import com.waz.zclient.feature.settings.account.logout.LogoutDialogFragment
+import com.waz.zclient.feature.settings.account.logout.LogoutViewModel
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,6 +32,8 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
 
     private val settingsAccountViewModel by viewModel<SettingsAccountViewModel>(SETTINGS_SCOPE_ID)
 
+    private val logoutViewModel by sharedViewModel<LogoutViewModel>(SETTINGS_SCOPE_ID)
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
@@ -40,12 +45,20 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         initAccountEmail()
         initAccountPhoneNumber()
         initResetPassword()
-        initLogoutButton()
+        initLogout()
         initDeleteAccountButton()
         loadProfile()
     }
 
-    private fun initLogoutButton() {
+    private fun initLogout() {
+        with(logoutViewModel) {
+            logoutLiveData.observe(viewLifecycleOwner) {
+                Toast.makeText(requireContext(), "Logged out", LENGTH_LONG).show()
+            }
+            errorLiveData.observe(viewLifecycleOwner) {
+                Toast.makeText(requireContext(), "Failed with $it", LENGTH_LONG).show()
+            }
+        }
         settingsAccountLogoutButton.setOnClickListener {
             showLogoutDialog()
         }
