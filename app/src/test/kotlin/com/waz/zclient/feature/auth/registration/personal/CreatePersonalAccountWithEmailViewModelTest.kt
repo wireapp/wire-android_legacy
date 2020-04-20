@@ -4,6 +4,9 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
+import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
+import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
+import com.waz.zclient.feature.auth.registration.register.usecase.UnauthorizedEmail
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.activation.usecase.ActivateEmailUseCase
 import com.waz.zclient.shared.activation.usecase.EmailBlacklisted
@@ -37,10 +40,17 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Mock
     private lateinit var activateEmailUseCase: ActivateEmailUseCase
 
+    @Mock
+    private lateinit var registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
+
     @Before
     fun setup() {
         createPersonalAccountWithEmailViewModel = CreatePersonalAccountWithEmailViewModel(
-            validateEmailUseCase, sendEmailActivationCodeUseCase, activateEmailUseCase)
+            validateEmailUseCase,
+            sendEmailActivationCodeUseCase,
+            activateEmailUseCase,
+            registerPersonalAccountWithEmailUseCase
+        )
     }
 
     @Test
@@ -56,7 +66,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onOkButtonClicked is called, when the validation fails with EmailTooShortError then ok button should be disabled`() =
+    fun `given validateEmail is called, when the validation fails with EmailTooShortError then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailTooShort))
 
@@ -68,7 +78,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         }
 
     @Test
-    fun `given onOkButtonClicked is called, when the validation fails with EmailInvalidError then ok button should be disabled`() =
+    fun `given validateEmail is called, when the validation fails with EmailInvalidError then ok button should be disabled`() =
         runBlockingTest {
             lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Left(EmailInvalid))
 
@@ -120,7 +130,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(InvalidCode))
 
-            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.activateEmailErrorLiveData.observeOnce {
                 it shouldBe InvalidCode
@@ -132,16 +142,64 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.activateEmailSuccessLiveData.observeOnce {
                 it shouldBe Unit
             }
         }
 
+    @Test
+    fun `given register is called, when the email is unauthorized then the registration is not done`() =
+        runBlockingTest {
+            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
+
+            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+
+            createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
+                it shouldBe UnauthorizedEmail
+            }
+        }
+
+    @Test
+    fun `given register is called, when the activation code is invalid then the registration is not done`() =
+        runBlockingTest {
+            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidActivationCode))
+
+            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+
+            createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
+                it shouldBe InvalidActivationCode
+            }
+        }
+
+    @Test
+    fun `given register is called, when the email is in use then the registration is not done`() =
+        runBlockingTest {
+            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
+
+            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+
+            createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
+                it shouldBe EmailInUse
+            }
+        }
+
+    @Test
+    fun `given register is called, when there is no error then the registration is done`() =
+        runBlockingTest {
+            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
+
+            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+
+            createPersonalAccountWithEmailViewModel.registerSuccessLiveData.observeOnce {
+                it shouldBe Unit
+            }
+        }
 
     companion object {
         private const val TEST_EMAIL = "test@wire.com"
         private const val TEST_CODE = "000000"
+        private const val TEST_PASSWORD = "testPass"
     }
 }
