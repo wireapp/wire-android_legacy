@@ -45,15 +45,19 @@ class TeamsSyncHandlerImpl(userId:    UserId,
 
   import Threading.Implicits.Background
 
+  // TODO: rewrite with for/yield
   override def syncTeam(): Future[SyncResult] = teamId match {
     case Some(id) => client.getTeamData(id).future.flatMap {
-      case Right(data) => client.getTeamRoles(id).future.flatMap {
-        case Right(roles) => service.onTeamSynced(data, roles).map(_ => SyncResult.Success)
-        case Left(error)  => Future.successful(SyncResult(error))
+      case Right(data) => client.getTeamMembers(id).future.flatMap {
+        case Right(members) => client.getTeamRoles(id).future.flatMap {
+          case Right(roles) => service.onTeamSynced(data, members, roles).map(_ => SyncResult.Success)
+          case Left(error) => Future.successful(SyncResult(error))
+        }
+        case Left(error) => Future.successful(SyncResult(error))
       }
       case Left(error) => Future.successful(SyncResult(error))
     }
-    case None     => Future.successful(SyncResult.Success)
+    case None => Future.successful(SyncResult.Success)
   }
 
   override def syncMember(uId: UserId) = teamId match {

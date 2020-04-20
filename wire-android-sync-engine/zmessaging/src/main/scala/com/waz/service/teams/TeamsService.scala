@@ -47,7 +47,7 @@ trait TeamsService {
 
   val selfTeam: Signal[Option[TeamData]]
 
-  def onTeamSynced(team: TeamData, roles: Set[ConversationRole]): Future[Unit]
+  def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit]
 
   def onMemberSynced(member: TeamMember): Future[Unit]
 
@@ -158,12 +158,19 @@ class TeamsServiceImpl(selfUser:           UserId,
     }
   }
 
-  override def onTeamSynced(team: TeamData, roles: Set[ConversationRole]): Future[Unit] = {
-    verbose(l"onTeamSynced: team: $team")
+  override def onTeamSynced(team: TeamData, members: Seq[TeamMember], roles: Set[ConversationRole]): Future[Unit] = {
+    verbose(l"onTeamSynced: team: $team \nmembers: $members\n roles: $roles")
+
+    val memberIds = members.map(_.user).toSet
+
     for {
-      _ <- teamStorage.insert(team)
-      _ <- rolesService.setDefaultRoles(roles)
-      _ <- lastTeamUpdate := Instant.now()
+      _          <- teamStorage.insert(team)
+      oldMembers <- userStorage.getByTeam(Set(team.id))
+      _          <- userStorage.updateAll2(oldMembers.map(_.id) -- memberIds, _.copy(deleted = true))
+      _          <- sync.syncUsers(memberIds).flatMap(syncRequestService.await)
+      _          <- userStorage.updateAll2(memberIds, _.copy(teamId = teamId, deleted = false))
+      _          <- Future.sequence(members.map(onMemberSynced))
+      _          <- rolesService.setDefaultRoles(roles)
     } yield {}
   }
 

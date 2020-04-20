@@ -18,7 +18,7 @@
 package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model._
+import com.waz.model.{AssetId, ConversationRole, TeamData, TeamId, UserId}
 import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
@@ -41,29 +41,21 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
       val teamId = TeamId()
       val teamData = TeamData(teamId, "name", UserId(), AssetId())
+      val members = Seq(
+        TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
+        TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
+      )
 
       (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
+      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(members)))
       (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
-      (service.onTeamSynced _).expects(teamData,  ConversationRole.defaultRoles).once().returning(Future.successful({}))
+      (service.onTeamSynced _).expects(teamData, members, ConversationRole.defaultRoles).once().returning(Future.successful({}))
 
       result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
 
     }
 
-    scenario("Failed data download should fail entire sync") {
-
-      val teamId = TeamId()
-      val teamData = TeamData(teamId, "name", UserId(), AssetId())
-
-      val timeoutError = ErrorResponse(ErrorResponse.ConnectionErrorCode, s"Request failed with timeout", "connection-error")
-
-      (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Left(timeoutError)))
-      (service.onTeamSynced _).expects(*, *).never().returning(Future.successful({}))
-
-      result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult(timeoutError)
-    }
-
-    scenario("Success data download, but, failed role download should fail sync") {
+    scenario("Failed members download should fail entire sync") {
 
       val teamId = TeamId()
       val teamData = TeamData(teamId, "name", UserId(), AssetId())
@@ -71,11 +63,11 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
       val timeoutError = ErrorResponse(ErrorResponse.ConnectionErrorCode, s"Request failed with timeout", "connection-error")
 
       (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
-      (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Left(timeoutError)))
-      (service.onTeamSynced _).expects(*, *).never().returning(Future.successful({}))
+      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Left(timeoutError)))
+
+      (service.onTeamSynced _).expects(*, *, *).never().returning(Future.successful({}))
 
       result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult(timeoutError)
-
     }
   }
 
