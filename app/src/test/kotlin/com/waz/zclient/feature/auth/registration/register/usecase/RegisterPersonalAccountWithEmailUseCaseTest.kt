@@ -31,15 +31,15 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
     @Before
     fun setup() {
         registerPersonalAccountWithEmailUseCase = RegisterPersonalAccountWithEmailUseCase(activationRepository)
-    }
-
-    @Test
-    fun `Given register personal account with email use case is executed, when there is a Forbidden error then return UnauthorizedEmail`() = runBlockingTest {
 
         `when`(registrationParams.name).thenReturn(TEST_NAME)
         `when`(registrationParams.email).thenReturn(TEST_EMAIL)
         `when`(registrationParams.password).thenReturn(TEST_PASSWORD)
         `when`(registrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
+    }
+
+    @Test
+    fun `Given register personal account with email use case is executed, when there is a Forbidden error then return UnauthorizedEmail`() = runBlockingTest {
 
         `when`(activationRepository.registerPersonalAccountWithEmail(
             TEST_NAME,
@@ -67,11 +67,6 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
     @Test
     fun `Given register personal account with email use case is executed, when there is a NotFound error then return InvalidActivationCode`() = runBlockingTest {
 
-        `when`(registrationParams.name).thenReturn(TEST_NAME)
-        `when`(registrationParams.email).thenReturn(TEST_EMAIL)
-        `when`(registrationParams.password).thenReturn(TEST_PASSWORD)
-        `when`(registrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
-
         `when`(activationRepository.registerPersonalAccountWithEmail(
             TEST_NAME,
             TEST_EMAIL,
@@ -97,11 +92,6 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `Given register personal account with email use case is executed, when there is a Conflict error then return EmailInUse`() = runBlockingTest {
-
-        `when`(registrationParams.name).thenReturn(TEST_NAME)
-        `when`(registrationParams.email).thenReturn(TEST_EMAIL)
-        `when`(registrationParams.password).thenReturn(TEST_PASSWORD)
-        `when`(registrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
 
         `when`(activationRepository.registerPersonalAccountWithEmail(
             TEST_NAME,
@@ -129,11 +119,6 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
     @Test
     fun `given register personal account with email  use case is executed, there is any other type of error then return this error`() = runBlockingTest {
 
-        `when`(registrationParams.name).thenReturn(TEST_NAME)
-        `when`(registrationParams.email).thenReturn(TEST_EMAIL)
-        `when`(registrationParams.password).thenReturn(TEST_PASSWORD)
-        `when`(registrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
-
         `when`(activationRepository.registerPersonalAccountWithEmail(
             TEST_NAME,
             TEST_EMAIL,
@@ -158,12 +143,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
     @Test
     fun `given activate email use case is executed, when there is no error then returns success`() = runBlockingTest {
-
-        `when`(registrationParams.name).thenReturn(TEST_NAME)
-        `when`(registrationParams.email).thenReturn(TEST_EMAIL)
-        `when`(registrationParams.password).thenReturn(TEST_PASSWORD)
-        `when`(registrationParams.activationCode).thenReturn(TEST_ACTIVATION_CODE)
-
+        
         `when`(activationRepository.registerPersonalAccountWithEmail(
             TEST_NAME,
             TEST_EMAIL,
