@@ -37,41 +37,12 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
   feature("Sync all teams") {
 
-    scenario("Basic single team with members less than 1500 sync") {
-
-      val teamId = TeamId()
-      val teamData = TeamData(teamId, "name", UserId(), AssetId())
-      val members = Seq(
-        TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
-        TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
-      )
-      val teamMembersData = TeamMembers(members, has_more = false)
-
-      (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
-      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(teamMembersData)))
-      (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
-      (service.onTeamSynced _).expects(teamData, members, ConversationRole.defaultRoles).once().returning(Future.successful({}))
-
-      result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
-
+    scenario("Basic single team with members that has less than 1500 sync") {
+      verifyTeamSync(has_more = false)
     }
 
-    scenario("Basic single team with members over 2000 sync") {
-
-      val teamId = TeamId()
-      val teamData = TeamData(teamId, "name", UserId(), AssetId())
-      val members = Seq(
-        TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
-        TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
-      )
-      val teamMembersData = TeamMembers(members, has_more = true)
-
-      (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
-      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(teamMembersData)))
-      (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
-      (service.onTeamSynced _).expects(teamData, Seq.empty[TeamMember], ConversationRole.defaultRoles).once().returning(Future.successful({}))
-
-      result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
+    scenario("Basic single team with members that has more than 1500 sync") {
+      verifyTeamSync(has_more = true)
 
     }
 
@@ -114,6 +85,24 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
       result(initHandler(Some(teamId)).syncMember(userId)) shouldEqual SyncResult(timeoutError)
     }
+  }
+
+
+  private def verifyTeamSync(has_more: Boolean) {
+    val teamId = TeamId()
+    val teamData = TeamData(teamId, "name", UserId(), AssetId())
+    val members = Seq(
+      TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
+      TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
+    )
+    val teamMembersData = TeamMembers(members, has_more)
+
+    (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
+    (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(teamMembersData)))
+    (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
+    (service.onTeamSynced _).expects(teamData, if (has_more) Seq.empty[TeamMember] else members, ConversationRole.defaultRoles).once().returning(Future.successful({}))
+
+    result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
   }
 
   def initHandler(teamId: Option[TeamId]) = new TeamsSyncHandlerImpl(account1Id, prefs, teamId, client, service)
