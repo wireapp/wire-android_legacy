@@ -1,12 +1,17 @@
+
 package com.waz.zclient.storage.db.accountdata
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-const val START_VERSION = 24
-const val END_VERSION = 25
+@Suppress("MagicNumber")
+val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(24, 25) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+    }
+}
 
-val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERSION) {
+@Suppress("MagicNumber")
+val GLOBAL_DATABASE_MIGRATION_25_26 = object : Migration(25, 26) {
 
     override fun migrate(database: SupportSQLiteDatabase) {
         migrateActiveAccounts(database)
@@ -51,12 +56,12 @@ val GLOBAL_DATABASE_MIGRATION_24_25 = object : Migration(START_VERSION, END_VERS
         val originalTableName = "ActiveAccounts"
         val createTempTable = """
             CREATE TABLE IF NOT EXISTS $tempTableName (
-            `_id` TEXT PRIMARY KEY NOT NULL, 
-            `team_id` TEXT, 
-            `cookie` TEXT NOT NULL DEFAULT '', 
-            `access_token` TEXT, 
-            `registered_push` TEXT,
-            `sso_id` TEXT DEFAULT NULL)
+            _id TEXT PRIMARY KEY NOT NULL, 
+            team_id TEXT, 
+            cookie TEXT NOT NULL DEFAULT '', 
+            access_token TEXT, 
+            registered_push TEXT,
+            sso_id TEXT DEFAULT NULL)
             """.trimIndent()
         executeSimpleMigration(database, originalTableName, tempTableName, createTempTable)
     }
