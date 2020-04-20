@@ -50,20 +50,6 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         loadProfile()
     }
 
-    private fun initLogout() {
-        with(logoutViewModel) {
-            logoutLiveData.observe(viewLifecycleOwner) {
-                Toast.makeText(requireContext(), "Logged out", LENGTH_LONG).show()
-            }
-            errorLiveData.observe(viewLifecycleOwner) {
-                Toast.makeText(requireContext(), "Failed with $it", LENGTH_LONG).show()
-            }
-        }
-        settingsAccountLogoutButton.setOnClickListener {
-            showLogoutDialog()
-        }
-    }
-
     //TODO Will need changing to a phone dialog
     private fun initSsoButtons() {
         settingsAccountViewModel.isSsoAccountLiveData.observe(viewLifecycleOwner) {
@@ -132,6 +118,20 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         }
     }
 
+    private fun initLogout() {
+        with(logoutViewModel) {
+            logoutLiveData.observe(viewLifecycleOwner) {
+                Toast.makeText(requireContext(), "Logged out", LENGTH_LONG).show()
+            }
+            errorLiveData.observe(viewLifecycleOwner) {
+                Toast.makeText(requireContext(), "Failed with $it", LENGTH_LONG).show()
+            }
+        }
+        settingsAccountLogoutButton.setOnClickListener {
+            showLogoutDialog()
+        }
+    }
+
     private fun initDeleteAccountButton() {
         settingsAccountViewModel.deleteAccountDialogLiveData.observe(viewLifecycleOwner) {
             showDeleteAccountDialog(it.email, it.number)
@@ -178,12 +178,11 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
     }
 
     private fun showErrorMessage(errorMessage: String) =
-        Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), errorMessage, LENGTH_LONG).show()
 
-    private fun showLogoutDialog() {
+    private fun showLogoutDialog() =
         LogoutDialogFragment.newInstance()
             .show(requireActivity().supportFragmentManager, String.empty())
-    }
 
     private fun showEditHandleDialog() =
         EditHandleDialogFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())
