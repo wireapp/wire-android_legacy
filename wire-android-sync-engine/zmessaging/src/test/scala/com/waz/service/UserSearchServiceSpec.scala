@@ -235,16 +235,10 @@ class UserSearchServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     scenario("search for local results"){
       val expected = ids('g, 'h)
       val query = SearchQuery("fr")
-<<<<<<< HEAD
-      val querySignal = new SourceSignal[Option[IndexedSeq[UserData]]]()
-      val queryResults = IndexedSeq.empty[UserData]
-
-=======
 
       val querySignal = new SourceSignal[Option[IndexedSeq[UserData]]]()
       val queryResults = IndexedSeq.empty[UserData]
 
->>>>>>> feat: Large Teams
       (userService.acceptedOrBlockedUsers _).expects().once().returning(Signal.const(expected.map(key => key -> users(key)).toMap))
 
       (convsStorage.findGroupConversations _).expects(*, *, *, *).returns(Future.successful(IndexedSeq.empty[ConversationData]))
