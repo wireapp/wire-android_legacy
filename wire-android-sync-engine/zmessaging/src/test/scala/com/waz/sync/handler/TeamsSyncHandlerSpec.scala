@@ -23,7 +23,7 @@ import com.waz.service.teams.TeamsService
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
 import com.waz.sync.client.TeamsClient
-import com.waz.sync.client.TeamsClient.{Permissions, TeamMember}
+import com.waz.sync.client.TeamsClient.{Permissions, TeamMember, TeamMembers}
 import com.waz.testutils.TestUserPreferences
 import com.waz.threading.CancellableFuture
 
@@ -37,7 +37,7 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
   feature("Sync all teams") {
 
-    scenario("Basic single team with some members sync") {
+    scenario("Basic single team with members less than 1500 sync") {
 
       val teamId = TeamId()
       val teamData = TeamData(teamId, "name", UserId(), AssetId())
@@ -45,11 +45,31 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
         TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
         TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
       )
+      val teamMembersData = TeamMembers(members, has_more = false)
 
       (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
-      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(members)))
+      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(teamMembersData)))
       (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
       (service.onTeamSynced _).expects(teamData, members, ConversationRole.defaultRoles).once().returning(Future.successful({}))
+
+      result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
+
+    }
+
+    scenario("Basic single team with members over 2000 sync") {
+
+      val teamId = TeamId()
+      val teamData = TeamData(teamId, "name", UserId(), AssetId())
+      val members = Seq(
+        TeamMember(UserId(), Option(Permissions(0L, 0L)), None),
+        TeamMember(UserId(), Option(Permissions(0L, 0L)), None)
+      )
+      val teamMembersData = TeamMembers(members, has_more = true)
+
+      (client.getTeamData(_: TeamId)).expects(teamId).once().returning(CancellableFuture.successful(Right(teamData)))
+      (client.getTeamMembers _).expects(teamId).once().returning(CancellableFuture.successful(Right(teamMembersData)))
+      (client.getTeamRoles _).expects(teamId).once().returning(CancellableFuture.successful(Right(ConversationRole.defaultRoles)))
+      (service.onTeamSynced _).expects(teamData, Seq.empty[TeamMember], ConversationRole.defaultRoles).once().returning(Future.successful({}))
 
       result(initHandler(Some(teamId)).syncTeam()) shouldEqual SyncResult.Success
 
