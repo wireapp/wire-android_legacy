@@ -20,14 +20,14 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserPermissions.PermissionsMasks
 import com.waz.model._
-import com.waz.sync.client.TeamsClient.TeamMember
+import com.waz.sync.client.TeamsClient.{TeamMember, TeamMembers}
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
 
 trait TeamsClient {
-  def getTeamMembers(id: TeamId): ErrorOrResponse[Seq[TeamMember]]
+  def getTeamMembers(id: TeamId): ErrorOrResponse[TeamMembers]
   def getTeamData(id: TeamId): ErrorOrResponse[TeamData]
   def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]]
   def getTeamMember(teamId: TeamId, userId: UserId): ErrorOrResponse[TeamMember]
@@ -45,11 +45,11 @@ class TeamsClientImpl(implicit
   import TeamsClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def getTeamMembers(id: TeamId): ErrorOrResponse[Seq[TeamMember]] = {
+  override def getTeamMembers(id: TeamId): ErrorOrResponse[TeamMembers] = {
     Request.Get(relativePath = teamMembersPath(id))
       .withResultType[TeamMembers]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.members)
+      .executeSafe
   }
 
   override def getTeamData(id: TeamId): ErrorOrResponse[TeamData] = {
@@ -108,7 +108,7 @@ object TeamsClient {
 
   def teamConversationPath(id: TeamId, cid: RConvId): String = s"$TeamsPath/${id.str}/conversations/${cid.str}"
 
-  case class TeamMembers(members: Seq[TeamMember])
+  case class TeamMembers(members: Seq[TeamMember], has_more: Boolean)
 
   case class TeamMember(user: UserId, permissions: Option[Permissions], created_by: Option[UserId])
 

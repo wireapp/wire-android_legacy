@@ -24,6 +24,7 @@ import com.waz.model._
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncResult
 import com.waz.sync.client.TeamsClient
+import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
@@ -49,8 +50,10 @@ class TeamsSyncHandlerImpl(userId:    UserId,
   override def syncTeam(): Future[SyncResult] = teamId match {
     case Some(id) => client.getTeamData(id).future.flatMap {
       case Right(data) => client.getTeamMembers(id).future.flatMap {
-        case Right(members) => client.getTeamRoles(id).future.flatMap {
-          case Right(roles) => service.onTeamSynced(data, members, roles).map(_ => SyncResult.Success)
+        case Right(membersData) => client.getTeamRoles(id).future.flatMap {
+          case Right(roles) =>
+            val members = if (membersData.has_more) Seq.empty[TeamMember] else membersData.members
+            service.onTeamSynced(data, members, roles).map(_ => SyncResult.Success)
           case Left(error) => Future.successful(SyncResult(error))
         }
         case Left(error) => Future.successful(SyncResult(error))
