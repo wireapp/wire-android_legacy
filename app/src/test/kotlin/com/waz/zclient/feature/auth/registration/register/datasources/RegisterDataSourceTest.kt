@@ -52,7 +52,8 @@ class RegisterDataSourceTest : UnitTest() {
             TEST_NAME,
             TEST_EMAIL,
             TEST_PASSWORD,
-            TEST_ACTIVATION_CODE)
+            TEST_ACTIVATION_CODE
+        )
 
         response.isLeft shouldBe true
     }

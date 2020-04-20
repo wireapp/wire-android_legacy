@@ -17,15 +17,14 @@ class RegisterPersonalAccountWithEmailUseCase(private val registerRepository: Re
             params.email,
             params.password,
             params.activationCode
-        )
-            .fold({
-                when (it) {
-                    is Forbidden -> Either.Left(UnauthorizedEmail)
-                    is NotFound -> Either.Left(InvalidActivationCode)
-                    is Conflict -> Either.Left(EmailInUse)
-                    else -> Either.Left(it)
-                }
-            }) { Either.Right(it) }!!
+        ).fold({
+            when (it) {
+                is Forbidden -> Either.Left(UnauthorizedEmail)
+                is NotFound -> Either.Left(InvalidActivationCode)
+                is Conflict -> Either.Left(EmailInUse)
+                else -> Either.Left(it)
+            }
+        }) { Either.Right(it) }!!
 }
 
 data class RegistrationParams(

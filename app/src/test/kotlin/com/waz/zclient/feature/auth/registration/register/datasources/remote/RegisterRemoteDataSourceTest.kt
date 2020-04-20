@@ -1,7 +1,7 @@
 package com.waz.zclient.feature.auth.registration.register.datasources.remote
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.any
+import com.waz.zclient.capture
 import com.waz.zclient.core.network.NetworkHandler
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,6 +11,8 @@ import kotlinx.coroutines.runBlocking
 import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
@@ -34,6 +36,9 @@ class RegisterRemoteDataSourceTest : UnitTest() {
     @Mock
     private lateinit var userResponse: UserResponse
 
+    @Captor
+    private lateinit var registerRequestBodyCapture: ArgumentCaptor<RegisterRequestBody>
+
     @Before
     fun setUp() {
         `when`(networkHandler.isConnected).thenReturn(true)
@@ -46,11 +51,16 @@ class RegisterRemoteDataSourceTest : UnitTest() {
         `when`(response.body()).thenReturn(userResponse)
         `when`(response.isSuccessful).thenReturn(true)
 
-        `when`(registerApi.register(any())).thenReturn(response)
+        `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
 
         val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-        verify(registerApi).register(any())
+        verify(registerApi).register(capture(registerRequestBodyCapture))
+
+        registerRequestBodyCapture.value.name shouldBe TEST_NAME
+        registerRequestBodyCapture.value.email shouldBe TEST_EMAIL
+        registerRequestBodyCapture.value.password shouldBe TEST_PASSWORD
+        registerRequestBodyCapture.value.emailCode shouldBe TEST_ACTIVATION_CODE
 
         response.isRight shouldBe true
     }
@@ -59,11 +69,16 @@ class RegisterRemoteDataSourceTest : UnitTest() {
     fun `Given registerPersonalAccountWithEmail() is called, when api response failed, then return an error`() = runBlocking {
 
         `when`(response.isSuccessful).thenReturn(false)
-        `when`(registerApi.register(any())).thenReturn(response)
+        `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
 
         val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-        verify(registerApi).register(any())
+        verify(registerApi).register(capture(registerRequestBodyCapture))
+
+        registerRequestBodyCapture.value.name shouldBe TEST_NAME
+        registerRequestBodyCapture.value.email shouldBe TEST_EMAIL
+        registerRequestBodyCapture.value.password shouldBe TEST_PASSWORD
+        registerRequestBodyCapture.value.emailCode shouldBe TEST_ACTIVATION_CODE
 
         response.isLeft shouldBe true
     }
@@ -73,14 +88,19 @@ class RegisterRemoteDataSourceTest : UnitTest() {
 
         `when`(response.body()).thenReturn(userResponse)
         `when`(response.isSuccessful).thenReturn(true)
-        `when`(registerApi.register(any())).thenReturn(response)
+        `when`(registerApi.register(capture(registerRequestBodyCapture))).thenReturn(response)
 
         val response = registerRemoteDataSource.registerPersonalAccountWithEmail(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_ACTIVATION_CODE)
 
-        verify(registerApi).register(any())
+        verify(registerApi).register(capture(registerRequestBodyCapture))
 
         cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
         delay(CANCELLATION_DELAY)
+
+        registerRequestBodyCapture.value.name shouldBe TEST_NAME
+        registerRequestBodyCapture.value.email shouldBe TEST_EMAIL
+        registerRequestBodyCapture.value.password shouldBe TEST_PASSWORD
+        registerRequestBodyCapture.value.emailCode shouldBe TEST_ACTIVATION_CODE
 
         response.isLeft shouldBe true
     }

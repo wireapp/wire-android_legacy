@@ -61,7 +61,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
         response.fold({
             it shouldBe UnauthorizedEmail
-        }) { assert(false) }
+        }) {}
     }
 
     @Test
@@ -87,7 +87,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
         response.fold({
             it shouldBe InvalidActivationCode
-        }) { assert(false) }
+        }) { }
     }
 
     @Test
@@ -113,7 +113,7 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
 
         response.fold({
             it shouldBe EmailInUse
-        }) { assert(false) }
+        }) { }
     }
 
     @Test
@@ -138,12 +138,12 @@ class RegisterPersonalAccountWithEmailUseCaseTest : UnitTest() {
         response.isLeft shouldBe true
         response.fold({
             it shouldBe InternalServerError
-        }) { assert(false) }
+        }) {}
     }
 
     @Test
     fun `given activate email use case is executed, when there is no error then returns success`() = runBlockingTest {
-        
+
         `when`(activationRepository.registerPersonalAccountWithEmail(
             TEST_NAME,
             TEST_EMAIL,
