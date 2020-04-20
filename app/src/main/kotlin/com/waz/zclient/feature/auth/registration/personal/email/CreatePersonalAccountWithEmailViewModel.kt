@@ -80,12 +80,8 @@ class CreatePersonalAccountWithEmailViewModel(
 
     fun sendActivationCode(email: String) {
         sendEmailActivationCodeUseCase(viewModelScope, SendEmailActivationCodeParams(email)) {
-            it.fold(::sendActivationCodeFailure) { sendActivationCodeSuccess() }
+            it.fold(::sendActivationCodeFailure) { _sendActivationCodeSuccessLiveData.postValue(Unit) }
         }
-    }
-
-    private fun sendActivationCodeSuccess() {
-        _sendActivationCodeSuccessLiveData.postValue(Unit)
     }
 
     private fun sendActivationCodeFailure(failure: Failure) {
@@ -99,12 +95,8 @@ class CreatePersonalAccountWithEmailViewModel(
 
     fun activateEmail(code: String) {
         activateEmailUseCase(viewModelScope, ActivateEmailParams(_emailLiveData.value.toString(), code)) {
-            it.fold(::activateEmailFailure) { activateEmailSuccess() }
+            it.fold(::activateEmailFailure) { _activateEmailSuccessLiveData.postValue(Unit) }
         }
-    }
-
-    private fun activateEmailSuccess() {
-        _activateEmailSuccessLiveData.postValue(Unit)
     }
 
     private fun activateEmailFailure(failure: Failure) {
@@ -121,12 +113,8 @@ class CreatePersonalAccountWithEmailViewModel(
             password,
             _activationCodeLiveData.value.toString()
         )) {
-            it.fold(::registerFailure) { registerSuccess() }
+            it.fold(::registerFailure) { _registerSuccessLiveData.postValue(Unit) }
         }
-    }
-
-    private fun registerSuccess() {
-        _registerSuccessLiveData.postValue(Unit)
     }
 
     private fun registerFailure(failure: Failure) {
