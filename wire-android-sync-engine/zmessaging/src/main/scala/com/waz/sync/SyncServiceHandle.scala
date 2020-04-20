@@ -92,6 +92,7 @@ trait SyncServiceHandle {
   def postProperty(key: PropertyKey, value: Int): Future[SyncId]
   def postProperty(key: PropertyKey, value: String): Future[SyncId]
   def postFolders(): Future[SyncId]
+  def postButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId): Future[SyncId]
 
   def registerPush(token: PushToken): Future[SyncId]
   def deletePushToken(token: PushToken): Future[SyncId]
@@ -186,6 +187,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postReceipt(conv: ConvId, messages: Seq[MessageId], user: UserId, tpe: ReceiptType): Future[SyncId] = addRequest(PostReceipt(conv, messages, user, tpe), priority = Priority.Optional)
   def postAddBot(cId: ConvId, pId: ProviderId, iId: IntegrationId) = addRequest(PostAddBot(cId, pId, iId))
   def postRemoveBot(cId: ConvId, botId: UserId) = addRequest(PostRemoveBot(cId, botId))
+  def postButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId): Future[SyncId] = addRequest(PostButtonAction(messageId, buttonId, senderId), forceRetry = true)
   def postProperty(key: PropertyKey, value: Boolean): Future[SyncId] = addRequest(PostBoolProperty(key, value), forceRetry = true)
   def postProperty(key: PropertyKey, value: Int): Future[SyncId] = addRequest(PostIntProperty(key, value), forceRetry = true)
   def postProperty(key: PropertyKey, value: String): Future[SyncId] = addRequest(PostStringProperty(key, value), forceRetry = true)
@@ -282,6 +284,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostLiking(convId, liking)                      => zms.reactionsSync.postReaction(convId, liking)
           case PostAddBot(cId, pId, iId)                       => zms.integrationsSync.addBot(cId, pId, iId)
           case PostRemoveBot(cId, botId)                       => zms.integrationsSync.removeBot(cId, botId)
+          case PostButtonAction(messageId, buttonId, senderId) => zms.messagesSync.postButtonAction(messageId, buttonId, senderId)
           case PostDeleted(convId, msgId)                      => zms.messagesSync.postDeleted(convId, msgId)
           case PostLastRead(convId, time)                      => zms.lastReadSync.postLastRead(convId, time)
           case PostOpenGraphMeta(conv, msg, time)              => zms.openGraphSync.postMessageMeta(conv, msg, time)

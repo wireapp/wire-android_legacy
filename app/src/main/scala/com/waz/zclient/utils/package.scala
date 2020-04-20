@@ -30,6 +30,7 @@ import android.view.{View, ViewGroup}
 import android.widget.{EditText, SeekBar, TextView}
 import androidx.preference.Preference
 import androidx.preference.Preference.{OnPreferenceChangeListener, OnPreferenceClickListener}
+import com.waz.log.BasicLogging.LogTag
 import com.waz.model.otr.Client
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
@@ -313,8 +314,11 @@ package object utils {
   }
 
   implicit class RichEditText(val et: EditText) extends AnyVal {
+    import com.waz.zclient.log.LogUI._
     def afterTextChangedSignal(withInitialValue: Boolean = true): Signal[String] = new Signal[String]() {
       if (withInitialValue) publish(et.getText.toString)
+      else info(l"Did not publish RichEditText value")(LogTag("RichEditText"))
+
       private val textWatcher = new TextWatcher {
         override def onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int): Unit = ()
         override def afterTextChanged(editable: Editable): Unit = publish(editable.toString)

@@ -63,16 +63,17 @@ class ConversationServiceSpec extends AndroidFreeSpec {
   private lazy val network        = mock[NetworkModeService]
   private lazy val properties     = mock[PropertiesService]
   private lazy val deletions      = mock[MsgDeletionStorage]
+  private lazy val buttons        = mock[ButtonsStorage]
   private lazy val rolesService   = mock[ConversationRolesService]
+  private lazy val buttonsStorage = mock[ButtonsStorage]
 
   private lazy val globalPrefs    = new TestGlobalPreferences()
   private lazy val userPrefs      = new TestUserPreferences()
-  private lazy val msgUpdater     = new MessagesContentUpdater(msgStorage, convsStorage, deletions, globalPrefs)
+  private lazy val msgUpdater     = new MessagesContentUpdater(msgStorage, convsStorage, deletions, buttons, globalPrefs)
 
   private val selfUserId = UserId("user1")
   private val convId = ConvId("conv_id1")
   private val rConvId = RConvId("r_conv_id1")
-  private val convsInStorage = Signal[Map[ConvId, ConversationData]]()
 
   private lazy val service = new ConversationsServiceImpl(
     None,
@@ -236,6 +237,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (messages.findMessageIds _).expects(convId).once().returning(Future.successful(Set.empty))
       (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
+      (convsStorage.remove _).expects(convId).once().returning(Future.successful(()))
 
       val dummyUserId = UserId()
       val events = Seq(
@@ -262,6 +264,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
       (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
+      (msgStorage.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
       (messages.getAssetIds _).expects(*).returning(Future.successful(Set.empty))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (msgStorage.deleteAll _).expects(convId).anyNumberOfTimes().returning(Future.successful(()))
@@ -286,6 +289,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (notifications.displayNotificationForDeletingConversation _).expects(*, *, *).anyNumberOfTimes()
         .returning(Future.successful(()))
       (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
+      (msgStorage.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[MessageId]()))
       (messages.getAssetIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set[GeneralAssetId]()))
       (assets.deleteAll _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
       (convsStorage.remove _).expects(*).anyNumberOfTimes().returning(Future.successful(()))
@@ -338,7 +342,6 @@ class ConversationServiceSpec extends AndroidFreeSpec {
         .returning(Future.successful(()))
 
       val messageId = MessageId()
-      (messages.findMessageIds _).expects(convId).anyNumberOfTimes().returning(Future.successful(Set(messageId)))
       (messages.getAssetIds _).expects(Set(messageId)).anyNumberOfTimes()
         .returning(Future.successful(Set[GeneralAssetId]()))
 
@@ -348,6 +351,9 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (msgStorage.deleteAll _).expects(convId).once().returning(Future.successful(()))
       (folders.removeConversationFromAll _).expects(convId, false).once().returning(Future.successful(()))
       (rolesService.removeByConvId _).expects(convId).once().returning(Future.successful(()))
+      (messages.findMessageIds _).expects(*).anyNumberOfTimes().returning(Future.successful(Set(messageId)))
+      (msgStorage.findMessageIds _).expects(convId).atLeastOnce().returning(Future.successful(Set(messageId)))
+      (buttons.deleteAllForMessage _).expects(messageId).atLeastOnce().returning(Future.successful(()))
 
       //EXPECT
       (receiptStorage.removeAllForMessages _).expects(Set(messageId)).once().returning(Future.successful(()))

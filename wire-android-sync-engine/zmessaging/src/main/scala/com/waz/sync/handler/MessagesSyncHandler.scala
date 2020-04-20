@@ -25,7 +25,7 @@ import com.waz.content.{MembersStorage, MessagesStorage}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model.AssetData.{ProcessingTaskKey, UploadTaskKey}
-import com.waz.model.GenericContent.{Ephemeral, Knock, Location, MsgEdit}
+import com.waz.model.GenericContent.{ButtonAction, Ephemeral, Knock, Location, MsgEdit}
 import com.waz.model.GenericMessage.TextMessage
 import com.waz.model._
 import com.waz.model.errors._
@@ -79,7 +79,6 @@ class MessagesSyncHandler(selfUserId: UserId,
         successful(Failure("conversation not found"))
     }
 
-
   def postRecalled(convId: ConvId, msgId: MessageId, recalled: MessageId): Future[SyncResult] =
     convs.convById(convId) flatMap {
       case Some(conv) =>
@@ -109,6 +108,19 @@ class MessagesSyncHandler(selfUserId: UserId,
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
+    }
+
+  def postButtonAction(messageId: MessageId, buttonId: ButtonId, senderId: UserId): Future[SyncResult] =
+    storage.get(messageId).flatMap {
+      case None      => successful(Failure("message not found"))
+      case Some(msg) => for {
+        result <- otrSync.postOtrMessage(
+                    msg.convId,
+                    GenericMessage(Uid(), ButtonAction(buttonId.str, messageId.str)),
+                    recipients = Option(Set(senderId)),
+                    enforceIgnoreMissing = true)
+        _      <- result.fold(_ => service.setButtonError(messageId, buttonId), _ => Future.successful(()))
+      } yield SyncResult(result)
     }
 
   def postMessage(convId: ConvId, id: MessageId, editTime: RemoteInstant)(implicit info: RequestInfo): Future[SyncResult] =

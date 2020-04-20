@@ -10,30 +10,30 @@ data class CacheEntryEntity(
     @ColumnInfo(name = "key")
     val key: String,
 
-    @ColumnInfo(name = "file")
+    @ColumnInfo(name = "file", defaultValue = "")
     val fileId: String,
 
     @ColumnInfo(name = "data", typeAffinity = ColumnInfo.BLOB)
-    var data: ByteArray?,
+    val data: ByteArray?,
 
-    @ColumnInfo(name = "lastUsed")
+    @ColumnInfo(name = "lastUsed", defaultValue = "0")
     val lastUsed: Long,
 
-    @ColumnInfo(name = "timeout")
+    @ColumnInfo(name = "timeout", defaultValue = "0")
     val timeout: Long,
 
     @ColumnInfo(name = "path")
-    var filePath: String?,
+    val filePath: String?,
 
     @ColumnInfo(name = "file_name")
-    var fileName: String?,
+    val fileName: String?,
 
-    @ColumnInfo(name = "mime")
+    @ColumnInfo(name = "mime", defaultValue = "")
     val mime: String,
 
     @ColumnInfo(name = "enc_key")
-    var encKey: String?,
+    val encKey: String?,
 
     @ColumnInfo(name = "length")
-    var length: Long?
+    val length: Long?
 )

@@ -36,7 +36,7 @@ import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.RichFuture.traverseSequential
 import com.waz.utils._
 import com.waz.utils.crypto.ReplyHashing
-import com.waz.utils.events.{EventContext, EventStream}
+import com.waz.utils.events.{EventContext, EventStream, RefreshingSignal, Signal}
 
 import scala.collection.breakOut
 import scala.concurrent.Future
@@ -90,19 +90,24 @@ trait MessagesService {
   def findMessageIds(convId: ConvId): Future[Set[MessageId]]
 
   def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]]
+
+  def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]]
+  def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit]
+  def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit]
 }
 
-class MessagesServiceImpl(selfUserId:   UserId,
-                          teamId:       Option[TeamId],
-                          replyHashing: ReplyHashing,
-                          storage:      MessagesStorage,
-                          updater:      MessagesContentUpdater,
-                          edits:        EditHistoryStorage,
-                          convs:        ConversationsContentUpdater,
-                          network:      NetworkModeService,
-                          members:      MembersStorage,
-                          usersStorage: UsersStorage,
-                          sync:         SyncServiceHandle) extends MessagesService with DerivedLogTag {
+class MessagesServiceImpl(selfUserId:      UserId,
+                          teamId:          Option[TeamId],
+                          replyHashing:    ReplyHashing,
+                          storage:         MessagesStorage,
+                          updater:         MessagesContentUpdater,
+                          edits:           EditHistoryStorage,
+                          convs:           ConversationsContentUpdater,
+                          network:         NetworkModeService,
+                          members:         MembersStorage,
+                          usersStorage:    UsersStorage,
+                          buttonsStorage:  ButtonsStorage,
+                          sync:            SyncServiceHandle) extends MessagesService with DerivedLogTag {
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
@@ -449,7 +454,7 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def addSuccessfulCallMessage(convId: ConvId, from: UserId, time: RemoteInstant, duration: FiniteDuration) =
     updater.addMessage(MessageData(MessageId(), convId, Message.Type.SUCCESSFUL_CALL, from, time = time, duration = Some(duration)))
 
-  def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]] =
+  override def messageDeliveryFailed(convId: ConvId, msg: MessageData, error: ErrorResponse): Future[Option[MessageData]] =
     updateMessageState(convId, msg.id, Message.Status.FAILED) andThen {
       case Success(Some(m)) => storage.onMessageFailed ! (m, error)
     }
@@ -495,4 +500,24 @@ class MessagesServiceImpl(selfUserId:   UserId,
   override def findMessageIds(convId: ConvId): Future[Set[MessageId]] = storage.findMessageIds(convId)
 
   override def getAssetIds(messageIds: Set[MessageId]): Future[Set[GeneralAssetId]] = storage.getAssetIds(messageIds)
+
+  override def buttonsForMessage(msgId: MessageId): Signal[Seq[ButtonData]] = RefreshingSignal[Seq[ButtonData]](
+    loader       = CancellableFuture.lift(buttonsStorage.findByMessage(msgId).map(_.sortBy(_.ordinal))),
+    refreshEvent = EventStream.union(buttonsStorage.onChanged.map(_.map(_.id)), buttonsStorage.onDeleted)
+  )
+
+  override def clickButton(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
+    for {
+      Some(msg)      <- storage.get(messageId)
+      isSenderActive <- members.isActiveMember(msg.convId, msg.userId)
+      _              <- if (isSenderActive)
+                          buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonWaiting))
+                        else
+                          setButtonError(messageId, buttonId)
+      _              <- if (isSenderActive) sync.postButtonAction(messageId, buttonId, msg.userId) else Future.successful(())
+    } yield ()
+
+  override def setButtonError(messageId: MessageId, buttonId: ButtonId): Future[Unit] =
+    buttonsStorage.update((messageId, buttonId), _.copy(state = ButtonData.ButtonError))
+      .flatMap(_ => Future.successful(()))
 }

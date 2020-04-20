@@ -17,14 +17,15 @@
  */
 package com.waz.service.messages
 
+import com.waz.api.Message
 import com.waz.api.Message.Type._
 import com.waz.content.MessagesStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, Calling, Cleared, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
+import com.waz.model.GenericContent.{Asset, ButtonAction, ButtonActionConfirmation, Calling, Cleared, Composite, DeliveryReceipt, Ephemeral, Knock, LastRead, LinkPreview, Location, MsgDeleted, MsgEdit, MsgRecall, Reaction, Text}
 import com.waz.model.{GenericContent, _}
 import com.waz.service.EventScheduler
-import com.waz.service.assets.{AssetService, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2, AssetStatus}
+import com.waz.service.assets.{AssetService, AssetStatus, DownloadAsset, DownloadAssetStatus, DownloadAssetStorage, GeneralAsset, Asset => Asset2}
 import com.waz.service.conversation.{ConversationsContentUpdater, ConversationsService}
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
@@ -68,101 +69,139 @@ class MessageEventProcessor(selfUserId:           UserId,
     }
 
     for {
-      eventData     <- Future.traverse(toProcess)(localDataForEvent)
-      modifications =  createModifications(eventData, conv, isGroup)
-      msgs          <- checkReplyHashes(modifications.collect { case m if m.message != MessageData.Empty => m.message })
-      _             <- addUnexpectedMembers(conv.id, events)
-      res           <- contentUpdater.addMessages(conv.id, msgs)
-      _             <- Future.traverse(modifications.flatMap(_.assets))(assets.save)
-      _             <- updateLastReadFromOwnMessages(conv.id, msgs)
-      _             <- deleteCancelled(modifications)
-      _             <- applyRecalls(conv.id, toProcess)
-      _             <- applyEdits(conv.id, toProcess)
+      eventsWithAssets <- Future.traverse(toProcess)(ev => assetForEvent(ev).map(ev -> _))
+      richMessages     =  createRichMessages(eventsWithAssets, conv, isGroup)
+      msgs             <- checkReplyHashes(richMessages.collect { case m if !m.empty => m.message })
+      _                <- addButtons(richMessages)
+      _                <- addUnexpectedMembers(conv.id, events)
+      res              <- contentUpdater.addMessages(conv.id, msgs)
+      _                <- Future.traverse(richMessages.flatMap(_.assets))(assets.save)
+      _                <- updateLastReadFromOwnMessages(conv.id, msgs)
+      _                <- deleteCancelled(richMessages)
+      _                <- applyRecalls(conv.id, toProcess)
+      _                <- applyEdits(conv.id, toProcess)
     } yield res
   }
 
-  private def createModifications(eventData: Seq[(MessageEvent, Option[DownloadAsset])],
-                                  conversationData: ConversationData,
-                                  isGroup: Boolean): Seq[EventModifications] = {
+  private def createRichMessages(eventsWithAssets:  Seq[(MessageEvent, Option[DownloadAsset])],
+                                 conversationData:  ConversationData,
+                                 isGroup: Boolean): Seq[RichMessage] = {
 
-    eventData.foldLeft(List.empty[EventModifications]) { (acc, next) =>
+    eventsWithAssets.foldLeft(List.empty[RichMessage]) { (acc, next) =>
       val (event, downloadAsset) = next
-      val modification = createModification(acc, conversationData, isGroup, event, downloadAsset)
-      modification :: acc
+      createMessage(conversationData, isGroup, event, downloadAsset, acc) :: acc
     }
   }
 
-  private def createModification(temporaryModifications: List[EventModifications],
-                                  conv: ConversationData,
-                                  isGroup: Boolean,
-                                  event: MessageEvent,
-                                  downloadAsset: Option[DownloadAsset]): EventModifications = {
+  private def createMessage(conv:          ConversationData,
+                            isGroup:       Boolean,
+                            event:         MessageEvent,
+                            downloadAsset: Option[DownloadAsset],
+                            acc:           List[RichMessage]): RichMessage = {
     lazy val id = MessageId()
     event match {
       case ConnectRequestEvent(_, time, from, text, recipient, name, email) =>
-        EventModifications(MessageData(id, conv.id, CONNECT_REQUEST, from, MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, CONNECT_REQUEST, from, MessageData.textContent(text), recipient = Some(recipient), email = email, name = Some(name), time = time, localTime = event.localTime))
       case RenameConversationEvent(_, time, from, name) =>
-        EventModifications(MessageData(id, conv.id, RENAME, from, name = Some(name), time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, RENAME, from, name = Some(name), time = time, localTime = event.localTime))
       case MessageTimerEvent(_, time, from, duration) =>
-        EventModifications(MessageData(id, conv.id, MESSAGE_TIMER, from, time = time, duration = duration, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, MESSAGE_TIMER, from, time = time, duration = duration, localTime = event.localTime))
       case MemberJoinEvent(_, time, from, userIds, users, firstEvent) =>
-        EventModifications(MessageData(id, conv.id, MEMBER_JOIN, from, members = (users.map(_._1) ++ userIds).toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
+        RichMessage(MessageData(id, conv.id, MEMBER_JOIN, from, members = (users.keys ++ userIds).toSet, time = time, localTime = event.localTime, firstMessage = firstEvent))
       case ConversationReceiptModeEvent(_, time, from, 0) =>
-        EventModifications(MessageData(id, conv.id, READ_RECEIPTS_OFF, from, time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, READ_RECEIPTS_OFF, from, time = time, localTime = event.localTime))
       case ConversationReceiptModeEvent(_, time, from, receiptMode) if receiptMode > 0 =>
-        EventModifications(MessageData(id, conv.id, READ_RECEIPTS_ON, from, time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, READ_RECEIPTS_ON, from, time = time, localTime = event.localTime))
       case MemberLeaveEvent(_, time, from, userIds) =>
-        EventModifications(MessageData(id, conv.id, MEMBER_LEAVE, from, members = userIds.toSet, time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, MEMBER_LEAVE, from, members = userIds.toSet, time = time, localTime = event.localTime))
       case OtrErrorEvent(_, time, from, IdentityChangedError(_, _)) =>
-        EventModifications(MessageData(id, conv.id, OTR_IDENTITY_CHANGED, from, time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, OTR_IDENTITY_CHANGED, from, time = time, localTime = event.localTime))
       case OtrErrorEvent(_, time, from, _) =>
-        EventModifications(MessageData(id, conv.id, OTR_ERROR, from, time = time, localTime = event.localTime))
+        RichMessage(MessageData(id, conv.id, OTR_ERROR, from, time = time, localTime = event.localTime))
       case GenericMessageEvent(_, time, from, proto) =>
         verbose(l"generic message event")
         val GenericMessage(uid, msgContent) = proto
-        content(temporaryModifications, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
+        content(acc, MessageId(uid.str), conv.id, msgContent, from, event.localTime, time, conv.receiptMode.filter(_ => isGroup), downloadAsset, proto)
       case _: CallMessageEvent =>
-        EventModifications.Empty
+        RichMessage.Empty
       case _ =>
         warn(l"Unexpected event for addMessage: $event")
-        EventModifications.Empty
+        RichMessage.Empty
     }
   }
 
-  private def content(temporaryModifications: List[EventModifications],
-                      id: MessageId,
-                      convId: ConvId,
-                      msgContent: Any,
-                      from: UserId,
-                      localTime: LocalInstant,
-                      time: RemoteInstant,
+  private def content(acc:               List[RichMessage],
+                      id:                MessageId,
+                      convId:            ConvId,
+                      msgContent:        Any,
+                      from:              UserId,
+                      localTime:         LocalInstant,
+                      time:              RemoteInstant,
                       forceReadReceipts: Option[Int],
-                      downloadAsset: Option[DownloadAsset],
-                      proto: GenericMessage
-                     ): EventModifications = msgContent match {
+                      downloadAsset:     Option[DownloadAsset],
+                      proto:             GenericMessage
+                     ): RichMessage = msgContent match {
     case Ephemeral(expiry, ct) =>
-      val modifications = content(temporaryModifications, id, convId, ct, from, localTime, time, forceReadReceipts, downloadAsset, proto)
-      modifications.copy(message = modifications.message.copy(ephemeral = expiry))
+      val messageWithAsset = content(acc, id, convId, ct, from, localTime, time, forceReadReceipts, downloadAsset, proto)
+      messageWithAsset.copy(message = messageWithAsset.message.copy(ephemeral = expiry))
     case Text(text, mentions, links, quote) =>
-      textEventModifications(id, convId, text, mentions, links, quote, from, localTime, time, forceReadReceipts, proto)
+      textMessage(id, convId, text, mentions, links, quote, from, localTime, time, forceReadReceipts, proto)
     case asset: Asset =>
-      assetEventModifications(temporaryModifications, id, convId, asset, from, localTime, time, forceReadReceipts, downloadAsset, proto)
+      assetMessage(acc, id, convId, asset, from, localTime, time, forceReadReceipts, downloadAsset, proto)
     case _: Knock =>
-      EventModifications(MessageData(id, convId, KNOCK, from, time = time, localTime = localTime, protos = Seq(proto), forceReadReceipts = forceReadReceipts))
+      RichMessage(MessageData(id, convId, KNOCK, from, time = time, localTime = localTime, protos = Seq(proto), forceReadReceipts = forceReadReceipts))
     case _: Location =>
-      EventModifications(MessageData(id, convId, LOCATION, from, time = time, localTime = localTime, protos = Seq(proto), forceReadReceipts = forceReadReceipts))
-    case _: Reaction                   => EventModifications.Empty
-    case _: LastRead                   => EventModifications.Empty
-    case _: Cleared                    => EventModifications.Empty
-    case _: MsgDeleted                 => EventModifications.Empty
-    case _: MsgRecall                  => EventModifications.Empty
-    case _: MsgEdit                    => EventModifications.Empty
-    case DeliveryReceipt(_)            => EventModifications.Empty
-    case GenericContent.ReadReceipt(_) => EventModifications.Empty
-    case _: Calling                    => EventModifications.Empty
+      RichMessage(MessageData(id, convId, LOCATION, from, time = time, localTime = localTime, protos = Seq(proto), forceReadReceipts = forceReadReceipts))
+    case Composite(compositeData) =>
+      compositeMessage(id, convId, compositeData, from, localTime, time, proto)
+    case _: Reaction                   => RichMessage.Empty
+    case _: LastRead                   => RichMessage.Empty
+    case _: Cleared                    => RichMessage.Empty
+    case _: MsgDeleted                 => RichMessage.Empty
+    case _: MsgRecall                  => RichMessage.Empty
+    case _: MsgEdit                    => RichMessage.Empty
+    case DeliveryReceipt(_)            => RichMessage.Empty
+    case GenericContent.ReadReceipt(_) => RichMessage.Empty
+    case _: Calling                    => RichMessage.Empty
+    case _: ButtonAction               => RichMessage.Empty
+    case _: ButtonActionConfirmation   => RichMessage.Empty
     case _ =>
       // TODO: this message should be processed again after app update, maybe future app version will understand it
-      EventModifications(MessageData(id, convId, UNKNOWN, from, time = time, localTime = localTime, protos = Seq(proto)))
+      RichMessage(MessageData(id, convId, UNKNOWN, from, time = time, localTime = localTime, protos = Seq(proto)))
+  }
+
+  private def compositeMessage(id:            MessageId,
+                               convId:        ConvId,
+                               compositeData: CompositeData,
+                               from:          UserId,
+                               localTime:     LocalInstant,
+                               time:          RemoteInstant,
+                               proto:         GenericMessage): RichMessage = {
+    val readReceipts = compositeData.expectsReadConfirmation.map { if (_) 1 else 0 }
+
+    val textParts = compositeData.items.collect {
+      case TextItem(Text(text, mentions, links, quote)) =>
+        textMessage(id, convId, text, mentions, links, quote, from, localTime, time, readReceipts, proto)
+    }
+
+    val buttons =
+      compositeData.items
+        .collect { case ButtonItem(button) => button }
+        .zipWithIndex
+        .map { case (button, ord) => ButtonData(id, ButtonId(button.id), button.text, ord) }
+
+    val msg =
+      if (textParts.isEmpty) RichMessage.Empty
+      else if (textParts.size == 1) textParts.head
+      else textParts.reduce[RichMessage] { case (acc, next) =>
+        val message = acc.message.copy(
+          content = acc.message.content ++ next.message.content,
+          protos  = acc.message.protos  ++ next.message.protos
+        )
+        acc.copy(message = message)
+      }
+
+    msg.copy(message = msg.message.copy(msgType = Message.Type.COMPOSITE), buttons = buttons)
   }
 
   /**
@@ -173,17 +212,17 @@ class MessageEventProcessor(selfUserId:           UserId,
     * inline, and will cause memory problems.
     * We may need to do more involved checks in future.
     */
-  private def textEventModifications(id:                MessageId,
-                                     convId:            ConvId,
-                                     originalText:      String,
-                                     mentions:          Seq[Mention],
-                                     linkPreviews:      Seq[LinkPreview],
-                                     quote:             Option[GenericContent.Quote],
-                                     from:              UserId,
-                                     localTime:         LocalInstant,
-                                     time:              RemoteInstant,
-                                     forceReadReceipts: Option[Int],
-                                     proto:             GenericMessage): EventModifications = {
+  private def textMessage(id:                MessageId,
+                          convId:            ConvId,
+                          originalText:      String,
+                          mentions:          Seq[Mention],
+                          linkPreviews:      Seq[LinkPreview],
+                          quote:             Option[GenericContent.Quote],
+                          from:              UserId,
+                          localTime:         LocalInstant,
+                          time:              RemoteInstant,
+                          forceReadReceipts: Option[Int],
+                          proto:             GenericMessage): RichMessage = {
     val (text, links) =
       if (originalText.length > MaxTextContentLength)
         (originalText.take(MaxTextContentLength), linkPreviews.filter(p => p.url.length + p.urlOffset <= MaxTextContentLength))
@@ -201,20 +240,20 @@ class MessageEventProcessor(selfUserId:           UserId,
       id, convId, tpe, from, content, time = time, localTime = localTime, protos = Seq(proto),
       quote = quoteContent, forceReadReceipts = forceReadReceipts, assetId = asset.map(_.id)
     )
-    EventModifications(messageData.adjustMentions(false).getOrElse(messageData), asset.map((_, None)))
+    RichMessage(messageData.adjustMentions(false).getOrElse(messageData), asset.map((_, None)))
   }
 
-  private def assetEventModifications(temporaryModifications: List[EventModifications],
-                                      id: MessageId,
-                                      convId: ConvId,
-                                      asset: Asset,
-                                      from: UserId,
-                                      localTime: LocalInstant,
-                                      time: RemoteInstant,
-                                      forceReadReceipts: Option[Int],
-                                      downloadAsset: Option[DownloadAsset],
-                                      proto: GenericMessage): EventModifications =
-    if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) EventModifications.Empty else {
+  private def assetMessage(acc:               List[RichMessage],
+                           id:                MessageId,
+                           convId:            ConvId,
+                           asset:             Asset,
+                           from:              UserId,
+                           localTime:         LocalInstant,
+                           time:              RemoteInstant,
+                           forceReadReceipts: Option[Int],
+                           downloadAsset:     Option[DownloadAsset],
+                           proto:             GenericMessage): RichMessage =
+    if (DownloadAsset.getStatus(asset) == DownloadAssetStatus.Cancelled) RichMessage.Empty else {
       val tpe = Option(asset.original) match {
         case None                      => UNKNOWN
         case Some(org) if org.hasVideo => VIDEO_ASSET
@@ -227,7 +266,7 @@ class MessageEventProcessor(selfUserId:           UserId,
         if (asset.hasUploaded) {
           val preview = Option(asset.preview).map(Asset2.create)
 
-          lazy val previouslyProcessedDownloadAsset = temporaryModifications
+          lazy val previouslyProcessedDownloadAsset = acc
             .find(_.message.id == id)
             .flatMap(_.assets.headOption)
             .map(_.asInstanceOf[DownloadAsset])
@@ -262,7 +301,7 @@ class MessageEventProcessor(selfUserId:           UserId,
           Some((asset2, preview))
         }
 
-      EventModifications(
+      RichMessage(
         MessageData(
           id, convId, tpe, from, time = time, localTime = localTime, protos = Seq(proto),
           forceReadReceipts = forceReadReceipts, assetId = assetAndPreview.map(_._1.id)
@@ -286,7 +325,7 @@ class MessageEventProcessor(selfUserId:           UserId,
     } yield standard ++ updatedQuotes
   }
 
-  private def localDataForEvent(event: MessageEvent) = {
+  private def assetForEvent(event: MessageEvent) = {
     for {
       message <- event match {
         case GenericMessageEvent(_, _, _, c) => storage.get(MessageId(c.messageId))
@@ -296,7 +335,14 @@ class MessageEventProcessor(selfUserId:           UserId,
         case Some(dId: DownloadAssetId) => downloadAssetStorage.find(dId)
         case _                          => Future.successful(None)
       }
-    } yield (event, asset)
+    } yield asset
+  }
+
+  private def addButtons(richMessages: Seq[RichMessage]) = {
+    val msgsWithButtons = richMessages.filter(_.buttons.nonEmpty)
+    if (msgsWithButtons.nonEmpty)
+      Future.sequence(msgsWithButtons.map(m => contentUpdater.addButtons(m.buttons)))
+    else Future.successful(())
   }
 
   private def addUnexpectedMembers(convId: ConvId, events: Seq[MessageEvent]) = {
@@ -331,8 +377,8 @@ class MessageEventProcessor(selfUserId:           UserId,
     }
   }
 
-  private def deleteCancelled(modifications: Seq[EventModifications]): Future[Unit] = {
-    val toRemove = modifications.filter {
+  private def deleteCancelled(richMessages: Seq[RichMessage]): Future[Unit] = {
+    val toRemove = richMessages.filter {
       _.assetWithPreview match {
         case Some((asset: DownloadAsset, _)) => asset.status == DownloadAssetStatus.Cancelled
         case _ => false
@@ -352,17 +398,20 @@ class MessageEventProcessor(selfUserId:           UserId,
 object MessageEventProcessor {
   val MaxTextContentLength = 8192
 
-  case class EventModifications(message: MessageData,
-                                assetWithPreview: Option[(GeneralAsset, Option[GeneralAsset])] = None) {
+  case class RichMessage(message:          MessageData,
+                         assetWithPreview: Option[(GeneralAsset, Option[GeneralAsset])] = None,
+                         buttons:          Seq[ButtonData] = Nil) {
 
     lazy val assets: List[GeneralAsset] = assetWithPreview match {
       case Some((asset, Some(preview))) => List(asset, preview)
       case Some((asset, None))          => List(asset)
       case None                         => Nil
     }
+
+    lazy val empty: Boolean = message == MessageData.Empty
   }
 
-  object EventModifications {
-    val Empty = EventModifications(MessageData.Empty)
+  object RichMessage {
+    val Empty = RichMessage(MessageData.Empty)
   }
 }

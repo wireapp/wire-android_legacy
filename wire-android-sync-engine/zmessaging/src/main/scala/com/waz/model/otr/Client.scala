@@ -80,15 +80,15 @@ object Location {
  * @param signalingKey - will only be set for current device
  * @param verified - client verification state, updated when user verifies client fingerprint
  */
-case class Client(id: ClientId,
-                  label: String,
-                  model: String = "",
-                  regTime: Option[Instant] = None,
-                  regLocation: Option[Location] = None,
-                  regIpAddress: Option[String] = None,
-                  signalingKey: Option[SignalingKey] = None,
-                  verified: Verification = Verification.UNKNOWN,
-                  devType: OtrClientType = OtrClientType.PHONE) {
+case class Client(override val id: ClientId,
+                  label:           String,
+                  model:           String = "",
+                  regTime:         Option[Instant] = None,
+                  regLocation:     Option[Location] = None,
+                  regIpAddress:    Option[String] = None,
+                  signalingKey:    Option[SignalingKey] = None,
+                  verified:        Verification = Verification.UNKNOWN,
+                  devType:         OtrClientType = OtrClientType.PHONE) extends Identifiable[ClientId] {
 
   def isVerified = verified == Verification.VERIFIED
 

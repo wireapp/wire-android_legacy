@@ -11,6 +11,6 @@ data class UserClientsEntity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "data")
+    @ColumnInfo(name = "data", defaultValue = "")
     val data: String
 )

@@ -5,14 +5,16 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.UserDatabase
-import com.waz.zclient.storage.pref.GlobalPreferences
-import com.waz.zclient.storage.pref.UserPreferences
+import com.waz.zclient.storage.pref.backend.BackendPreferences
+import com.waz.zclient.storage.pref.global.GlobalPreferences
+import com.waz.zclient.storage.pref.user.UserPreferences
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
 val storageModule: Module = module {
     single { GlobalPreferences(androidContext()) }
+    single { BackendPreferences(androidContext()) }
     factory {
         StorageModule.getUserDatabase(androidContext(), get<GlobalPreferences>().activeUserId, UserDatabase.migrations)
     }

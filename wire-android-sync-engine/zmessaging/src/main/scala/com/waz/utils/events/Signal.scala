@@ -29,6 +29,7 @@ import com.waz.utils.events.Events.Subscriber
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.ref.WeakReference
+import scala.util.{Failure, Success}
 
 object Signal {
   def apply[A]() = new SourceSignal[A] with NoAutowiring
@@ -358,12 +359,21 @@ class RefreshingSignal[A](loader: => CancellableFuture[A], refreshEvent: EventSt
   @volatile private var loadFuture = CancellableFuture.cancelled[Unit]()
   @volatile private var subscription = Option.empty[Subscription]
 
-  private def reload() = subscription foreach { _ =>
+  private def reload() = subscription.foreach { _ =>
     loadFuture.cancel()(tag)
     val p = Promise[Unit]
     val thisReload = CancellableFuture.lift(p.future)
     loadFuture = thisReload
-    loader.onComplete(t => if (loadFuture eq thisReload) p.tryComplete(t.map(v => set(Some(v), Some(Threading.Background)))))(queue)
+
+    loader.onComplete {
+      case Success(v) if loadFuture eq thisReload =>
+        p.success(set(Some(v), Some(Threading.Background)))
+      case Failure(ex) if loadFuture eq thisReload =>
+        import com.waz.log.LogSE._
+        error(l"Error while loading RefreshingSignal", ex)
+        p.failure(ex)
+      case _ =>
+    }(queue)
   }
 
   override protected def onWire(): Unit = {

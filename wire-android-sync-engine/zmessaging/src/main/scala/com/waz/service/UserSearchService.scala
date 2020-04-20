@@ -309,7 +309,7 @@ class UserSearchService(selfUserId:           UserId,
 
   private def recommendedPredicate(prefix: String): UserData => Boolean = {
     val key = SearchKey(prefix)
-    u => ! u.deleted && ! u.isConnected && (key.isAtTheStartOfAnyWordIn(u.searchKey) || u.email.exists(_.str == prefix) || u.handle.exists(_.startsWithQuery(prefix)))
+    u => ! u.deleted && ! u.isConnected && (key.isAtTheStartOfAnyWordIn(u.searchKey) || u.handle.exists(_.startsWithQuery(prefix)))
   }
 
   private def recommendedHandlePredicate(prefix: String): UserData => Boolean = {

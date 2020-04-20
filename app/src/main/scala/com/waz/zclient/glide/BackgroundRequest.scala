@@ -20,22 +20,16 @@ package com.waz.zclient.glide
 import android.content.Context
 import android.graphics.drawable.Drawable
 import com.bumptech.glide.RequestBuilder
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import com.waz.model.Picture
-import com.waz.zclient.glide.transformations.{BlurTransformation, DarkenTransformation, ScaleTransformation}
+import com.waz.zclient.core.images.transformations.AppBackgroundTransformations
 
 object BackgroundRequest {
 
-  val ScaleValue = 1.4f
-
   def apply(picture: Picture)(implicit context: Context): RequestBuilder[Drawable] = {
     val opt = new RequestOptions()
-    opt.transform(new CenterCrop(),
-      new ScaleTransformation(ScaleValue),
-      new BlurTransformation(),
-      new DarkenTransformation(148, 2f))
+    opt.transform(AppBackgroundTransformations.transformations(context):_*)
 
     WireGlide(context).load(picture).apply(opt).transition(DrawableTransitionOptions.withCrossFade())
   }

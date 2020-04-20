@@ -21,16 +21,14 @@ import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 
-import android.database.DatabaseUtils.queryNumEntries
 import android.database.sqlite.SQLiteQueryBuilder
-import androidx.sqlite.db.{SupportSQLiteQuery, SupportSQLiteQueryBuilder}
 import com.waz.api.Message.Type._
 import com.waz.api.{Message, TypeFilter}
 import com.waz.db.Col._
 import com.waz.db.Dao
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model.GenericContent.{Asset, ImageAsset, Knock, LinkPreview, Location, MsgEdit, Quote, Text}
+import com.waz.model.GenericContent.{Asset, Composite, ImageAsset, Knock, LinkPreview, Location, MsgEdit, Quote, Text}
 import com.waz.model.GenericMessage.{GenericMessageContent, TextMessage}
 import com.waz.model.MessageData.MessageState
 import com.waz.model.messages.media.{MediaAssetData, MediaAssetDataProtocol}
@@ -40,44 +38,40 @@ import com.waz.service.media.{MessageContentBuilder, RichMediaContentParser}
 import com.waz.sync.client.OpenGraphClient.OpenGraphData
 import com.waz.utils.wrappers.{DB, DBCursor, URI}
 import com.waz.utils.{EnumCodec, Identifiable, JsonDecoder, JsonEncoder, returning}
-import com.waz.{api, db, model}
+import com.waz.{api, model}
 import org.json.{JSONArray, JSONObject}
 import org.threeten.bp.Instant.now
 
 import scala.collection.breakOut
 import scala.concurrent.duration._
 
-case class MessageData(override val id: MessageId              = MessageId(),
-                       convId:          ConvId                 = ConvId(),
-                       msgType:         Message.Type           = Message.Type.TEXT,
-                       userId:          UserId                 = UserId(),
-                       content:         Seq[MessageContent]    = Seq.empty,
-                       protos:          Seq[GenericMessage]    = Seq.empty,
-                       firstMessage:    Boolean                = false,
-                       members:         Set[UserId]            = Set.empty[UserId],
-                       recipient:       Option[UserId]         = None,
-                       email:           Option[String]         = None,
-                       name:            Option[Name]           = None,
-                       state:           MessageState           = Message.Status.SENT,
-                       time:            RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
-                       localTime:       LocalInstant           = LocalInstant.Epoch,
-                       editTime:        RemoteInstant          = RemoteInstant.Epoch,
-                       ephemeral:       Option[FiniteDuration] = None,
-                       expiryTime:      Option[LocalInstant]   = None, // local expiration time
-                       expired:         Boolean                = false,
-                       duration:        Option[FiniteDuration] = None, //for successful calls and message_timer changes
-                       assetId:         Option[GeneralAssetId] = None,
+case class MessageData(override val id:   MessageId              = MessageId(),
+                       convId:            ConvId                 = ConvId(),
+                       msgType:           Message.Type           = Message.Type.TEXT,
+                       userId:            UserId                 = UserId(),
+                       content:           Seq[MessageContent]    = Seq.empty,
+                       protos:            Seq[GenericMessage]    = Seq.empty,
+                       firstMessage:      Boolean                = false,
+                       members:           Set[UserId]            = Set.empty[UserId],
+                       recipient:         Option[UserId]         = None,
+                       email:             Option[String]         = None,
+                       name:              Option[Name]           = None,
+                       state:             MessageState           = Message.Status.SENT,
+                       time:              RemoteInstant          = RemoteInstant(now(clock)), //TODO: now is local...
+                       localTime:         LocalInstant           = LocalInstant.Epoch,
+                       editTime:          RemoteInstant          = RemoteInstant.Epoch,
+                       ephemeral:         Option[FiniteDuration] = None,
+                       expiryTime:        Option[LocalInstant]   = None, // local expiration time
+                       expired:           Boolean                = false,
+                       duration:          Option[FiniteDuration] = None, //for successful calls and message_timer changes
+                       assetId:           Option[GeneralAssetId] = None,
                        quote:             Option[QuoteContent]   = None,
-                       forceReadReceipts: Option[Int]    = None
+                       forceReadReceipts: Option[Int]            = None
                       ) extends Identifiable[MessageId] with DerivedLogTag {
-  def getContent(index: Int) = {
-    if (index == 0) content.headOption.getOrElse(MessageContent.Empty)
-    else content.drop(index).headOption.getOrElse(MessageContent.Empty)
-  }
-
   lazy val contentString = protos.lastOption match {
     case Some(TextMessage(ct, _, _, _, _)) => ct
     case _ if msgType == api.Message.Type.RICH_MEDIA => content.map(_.content).mkString(" ")
+    case _ if msgType == api.Message.Type.COMPOSITE => content.map(_.content).mkString("\n")
     case _ => content.headOption.fold("")(_.content)
   }
 
@@ -96,6 +90,7 @@ case class MessageData(override val id: MessageId              = MessageId(),
     case GenericMessage(_, a @ Knock())              => a.expectsReadConfirmation
     case GenericMessage(_, a @ Location(_, _, _, _)) => a.expectsReadConfirmation
     case GenericMessage(_, a @ Asset(_, _))          => a.expectsReadConfirmation
+    case GenericMessage(_, a @ Composite(_))         => a.expectsReadConfirmation
     case _ => false
   }
 
@@ -111,11 +106,12 @@ case class MessageData(override val id: MessageId              = MessageId(),
     copy(quote = Some(QuoteContent(quoteId, validity = true, None)), protos = newProtos)
   }
 
-  def isLocal = state == Message.Status.DEFAULT || state == Message.Status.PENDING || state == Message.Status.FAILED || state == Message.Status.FAILED_READ
+  lazy val isLocal: Boolean = state == Message.Status.DEFAULT || state == Message.Status.PENDING || state == Message.Status.FAILED || state == Message.Status.FAILED_READ
+  lazy val isDeleted: Boolean = msgType == Message.Type.RECALLED
+  lazy val isFailed: Boolean = state == Message.Status.FAILED || state == Message.Status.FAILED_READ
+  lazy val isEdited: Boolean = !editTime.isEpoch
 
-  def isDeleted = msgType == Message.Type.RECALLED
-
-  lazy val mentions = content.flatMap(_.mentions)
+  lazy val mentions: Seq[Mention] = content.flatMap(_.mentions)
 
   def hasMentionOf(userId: UserId): Boolean = mentions.exists(_.userId.forall(_ == userId)) // a mention with userId == None is a "mention" of everyone, so it counts
 
@@ -332,6 +328,7 @@ object MessageData extends
     case Message.Type.UNKNOWN              => "Unknown"
     case Message.Type.RECALLED             => "Recalled"
     case Message.Type.MESSAGE_TIMER        => "MessageTimer"
+    case Message.Type.COMPOSITE            => "Composite"
   }
 
   implicit object MessageDataDao extends Dao[MessageData, MessageId] with StorageCodecs {
@@ -497,7 +494,6 @@ object MessageData extends
       db.rawQuery(q)
     }
   }
-
   case class MessageEntry(id: MessageId, user: UserId, tpe: Message.Type = Message.Type.TEXT, state: Message.Status = Message.Status.DEFAULT, contentSize: Int = 1)
 
   def messageContent(message: String, mentions: Seq[Mention], links: Seq[LinkPreview] = Nil, weblinkEnabled: Boolean = false): (Message.Type, Seq[MessageContent]) =
@@ -516,7 +512,7 @@ object MessageData extends
           case (1, Message.Part.Type.TEXT_EMOJI_ONLY) => (Message.Type.TEXT_EMOJI_ONLY, ct)
           case _ => (Message.Type.RICH_MEDIA, ct)
         }
-        
+
       } else {
         // apply links
         def linkEnd(offset: Int) = {

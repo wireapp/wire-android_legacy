@@ -1,20 +1,20 @@
 /*
- * Wire
- * Copyright (C) 2016 Wire Swiss GmbH
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+  * Wire
+  * Copyright (C) 2016 Wire Swiss GmbH
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
 package com.waz.model
 
 import com.waz.api.{ContentSearchQuery, Message}
@@ -49,18 +49,14 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
   private val IndexColumns = Array(MessageId.name, Time.name)
 
   def findContent(contentSearchQuery: ContentSearchQuery, convId: Option[ConvId])(implicit db: DB): DBCursor ={
-    if (UsingFTS) {
-      findContentFts(contentSearchQuery.toFtsQuery, convId)
-    } else {
-      findContentSimple(contentSearchQuery.elements, convId)
-    }
+    findContentFts(contentSearchQuery.toFtsQuery, convId)
   }
 
   def deleteForConv(id: ConvId)(implicit db: DB) = delete(Conv, id)
 
   def deleteUpTo(id: ConvId, upTo: RemoteInstant)(implicit db: DB) = db.delete(table.name, s"${Conv.name} = '${id.str}' AND ${Time.name} <= ${Time(upTo)}", null)
 
-  def findContentFts(queryText: String, convId: Option[ConvId])(implicit db: DB): DBCursor ={
+  def findContentFts(queryText: String, convId: Option[ConvId])(implicit db: DB): DBCursor = {
     convId match {
       case Some(conv) =>
         db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND ${Content.name} MATCH '$queryText'", null, null, null, s"${Time.name} DESC", SearchLimit)
@@ -68,21 +64,10 @@ object MessageContentIndexDao extends Dao[MessageContentIndexEntry, MessageId] {
         db.query(table.name, IndexColumns, s"${Content.name} MATCH '$queryText'", null, null, null, s"${Time.name} DESC", SearchLimit)
     }
   }
-
-  def findContentSimple(queries: Set[String], convId: Option[ConvId])(implicit db: DB): DBCursor ={
-    val likeQuery = queries.map(q => s"${Content.name} LIKE '%$q%'").mkString("(", " AND ", ")")
-    convId match {
-      case Some(conv) =>
-        db.query(table.name, IndexColumns, s"${Conv.name} = '$conv' AND $likeQuery", null, null, null, s"${Time.name} DESC", SearchLimit)
-      case _ =>
-        db.query(table.name, IndexColumns, s"$likeQuery", null, null, null, s"${Time.name} DESC", SearchLimit)
-    }
-  }
 }
 
 object MessageContentIndex {
   val MaxSearchResults = 1024 // don't want to read whole db on common search query
   val SearchLimit = MaxSearchResults.toString
-  val UsingFTS = true
-  val TextMessageTypes = Set(Message.Type.TEXT, Message.Type.TEXT_EMOJI_ONLY, Message.Type.RICH_MEDIA)
+  val TextMessageTypes = Set(Message.Type.TEXT, Message.Type.TEXT_EMOJI_ONLY, Message.Type.RICH_MEDIA, Message.Type.COMPOSITE)
 }

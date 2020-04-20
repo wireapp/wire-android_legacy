@@ -196,7 +196,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                      messages.addAssetMessage(convId, messageId, rawAsset, rr, exp)
                    }
       _         <- updateLastRead(msgs.toList.maxBy(_.time))
-      msgMap    =  msgs.map(m => m.id -> m).toMap
+      msgMap    =  msgs.toIdMap
       _         <- Future.traverse(assetMap) { case (messageId, rawAsset) =>
                      val message = msgMap(messageId)
                      checkSize(convId, rawAsset, message, confirmation).flatMap {
@@ -216,8 +216,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     } yield Some(msg)
   }
 
-  override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] = {
-    verbose(l"updateMessage($convId, $id, $mentions")
+  override def updateMessage(convId: ConvId, id: MessageId, text: String, mentions: Seq[Mention] = Nil): Future[Option[MessageData]] =
     messagesStorage.update(id, {
       case m if m.convId == convId && m.userId == selfUserId =>
         val (tpe, ct) = MessageData.messageContent(text, mentions, weblinkEnabled = true)
@@ -236,7 +235,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
       case Some((_, m)) => sync.postMessage(m.id, m.convId, m.editTime) map { _ => Some(m) } // using PostMessage sync request to use the same logic for failures and retrying
       case None => Future successful None
     }
-  }
 
   override def deleteMessage(convId: ConvId, id: MessageId): Future[Unit] = for {
     _ <- messagesContent.deleteOnUserRequest(Seq(id))

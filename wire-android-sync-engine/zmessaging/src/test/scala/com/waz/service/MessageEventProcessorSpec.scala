@@ -22,8 +22,7 @@ import com.waz.api.Message.Type._
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model.ConversationData.ConversationType
-import com.waz.model.GenericContent.Text
-import com.waz.model.GenericContent.Asset
+import com.waz.model.GenericContent.{Composite, Text}
 import com.waz.model._
 import com.waz.model.nano.Messages
 import com.waz.model.otr.UserClients
@@ -54,6 +53,7 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
   val convs             = mock[ConversationsContentUpdater]
   val convsService      = mock[ConversationsService]
   val downloadStorage   = mock[DownloadAssetStorage]
+  val buttonsStorage    = mock[ButtonsStorage]
   val prefs             = new TestGlobalPreferences()
 
   val messagesInStorage = Signal[Seq[MessageData]](Seq.empty)
@@ -234,11 +234,47 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
           m.assetId              shouldEqual Some(remoteAssetId)
       }
     }
+
+    scenario("Process a composite event") {
+      val senderId = UserId("sender")
+      val messageId = MessageId("uid")
+      val messageText = "hello"
+      val button1Id = ButtonId("1")
+      val button1Text = "button1"
+      val button2Id = ButtonId("2")
+      val button2Text = "button2"
+
+      val conv = ConversationData(ConvId("conv"), RConvId("r_conv"), None, UserId("creator"), ConversationType.OneToOne)
+
+      clock.advance(5.seconds)
+      val messageEvent = event(conv.remoteId, senderId, messageId.str, composite(text(messageText), button(button1Id.str, button1Text), button(button2Id.str, button2Text)))
+      (storage.updateOrCreate _).expects(*, *, *).anyNumberOfTimes().onCall { (_, _, creator) => Future.successful(creator)}
+      (storage.get _).expects(*).anyNumberOfTimes().returns(Future.successful(None))
+
+      val expectedButtons = Set(
+        ButtonData(messageId, button1Id, button1Text, 0),
+        ButtonData(messageId, button2Id, button2Text, 1)
+      )
+
+      (buttonsStorage.updateOrCreateAll2 _).expects(expectedButtons.map(_.id), *).atLeastOnce().returning(Future.successful((expectedButtons)))
+
+      val processor = getProcessor
+      inside(result(processor.processEvents(conv, isGroup = false, Seq(messageEvent))).head) {
+        case m =>
+          m.msgType              shouldEqual COMPOSITE
+          m.convId               shouldEqual conv.id
+          m.userId               shouldEqual senderId
+          m.content              shouldEqual MessageData.textContent(messageText)
+          m.time                 shouldEqual messageEvent.time
+          m.localTime            shouldEqual messageEvent.localTime
+          m.state                shouldEqual Status.SENT
+          m.protos.head.toString shouldEqual messageEvent.asInstanceOf[GenericMessageEvent].content.toString
+      }
+    }
   }
 
-
   def getProcessor = {
-    val content = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
+    val content = new MessagesContentUpdater(storage, convsStorage, deletions, buttonsStorage, prefs)
 
     //TODO make VerificationStateUpdater mockable
     (otrClientsStorage.onAdded _).expects().anyNumberOfTimes().returning(EventStream[Seq[UserClients]]())
@@ -251,4 +287,22 @@ class MessageEventProcessorSpec extends AndroidFreeSpec with Inside with Derived
     new MessageEventProcessor(selfUserId, storage, content, assets, replyHashing, msgsService, convsService, convs, downloadStorage)
   }
 
+  // if we need those utility methods in other specs, we can think of turning them into `apply` methods in GenericContent
+  private def button(id: String, text: String) = returning(new Messages.Composite.Item) { item =>
+    item.setButton(returning(new Messages.Button) { button =>
+      button.id = id
+      button.text = text
+    })
+  }
+
+  private def text(text: String) = returning(new Messages.Composite.Item) { item => item.setText(Text(text)) }
+
+  private def composite(items: Messages.Composite.Item*) = returning(new Composite) { composite =>
+    composite.expectsReadConfirmation = false
+    composite.legalHoldStatus = 0
+    composite.items = items.toArray
+  }
+
+  private def event(convId: RConvId, sender: UserId, uid: String, composite: Composite) =
+    GenericMessageEvent(convId, RemoteInstant(clock.instant()), sender, GenericMessage(Uid(uid), composite))
 }

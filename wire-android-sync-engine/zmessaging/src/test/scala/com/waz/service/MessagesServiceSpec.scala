@@ -21,6 +21,8 @@ import com.waz.api.Message
 import com.waz.api.Message.Status
 import com.waz.api.Message.Type._
 import com.waz.content._
+import com.waz.log.BasicLogging
+import com.waz.model.ButtonData.{ButtonError, ButtonNotClicked, ButtonWaiting}
 import com.waz.model.GenericContent.{MsgEdit, Text}
 import com.waz.model._
 import com.waz.service.conversation.ConversationsContentUpdater
@@ -30,6 +32,7 @@ import com.waz.sync.SyncServiceHandle
 import com.waz.testutils.TestGlobalPreferences
 import com.waz.threading.Threading
 import com.waz.utils.crypto.ReplyHashing
+import com.waz.utils.events.{EventStream, Signal}
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -45,13 +48,14 @@ class MessagesServiceSpec extends AndroidFreeSpec {
   val sync =          mock[SyncServiceHandle]
   val deletions =     mock[MsgDeletionStorage]
   val members =       mock[MembersStorage]
+  val buttons =       mock[ButtonsStorage]
   val users =         mock[UsersStorage]
   val replyHashing =  mock[ReplyHashing]
   lazy val prefs =         new TestGlobalPreferences()
 
   def getService = {
-    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, prefs)
-    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, sync)
+    val updater = new MessagesContentUpdater(storage, convsStorage, deletions, buttons, prefs)
+    new MessagesServiceImpl(selfUserId, None, replyHashing, storage, updater, edits, convs, network, members, users, buttons, sync)
   }
 
   scenario("Add local memberJoinEvent with no previous member change events") {
@@ -125,6 +129,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
     (deletions.insertAll _).expects(Seq(deletion)).returning(Future.successful(Set(deletion)))
     (storage.removeAll _).expects(Seq(messageId)).returning(Future.successful(()))
+    (buttons.deleteAllForMessage _).expects(messageId).atLeastOnce().returning(Future.successful(()))
 
     val recalledMessage = Await.result(service.recallMessage(convId, messageId, selfUserId, time = now), 1.second)
 
@@ -161,6 +166,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
     (deletions.insertAll _).expects(Seq(deletion)).returning(Future.successful(Set(deletion)))
     (storage.removeAll _).expects(Seq(messageId)).returning(Future.successful(()))
+    (buttons.deleteAllForMessage _).expects(messageId).returning(Future.successful(()))
 
     val recalledMessage = Await.result(service.recallMessage(convId, messageId, selfUserId, time = now), 1.second)
 
@@ -197,6 +203,7 @@ class MessagesServiceSpec extends AndroidFreeSpec {
     val editHistory = EditHistory(messageId, messageId2, now)
 
     (storage.getMessage _).expects(messageId).returning(Future.successful(Some(msg)))
+    (buttons.deleteAllForMessage _).expects(messageId).returning(Future.successful(Nil))
     (edits.insert _).expects(editHistory).returning(Future.successful(editHistory))
     (deletions.getAll _).expects(Seq(messageId2)).returning(Future.successful(Seq(None)))
     (storage.updateOrCreate _).expects(*, *, *).onCall { (_, updater, _) => Future.successful(updater(msg)) }
@@ -266,5 +273,98 @@ class MessagesServiceSpec extends AndroidFreeSpec {
 
     // Then
     actual shouldBe Some((msgId, convId, RENAME, Some(newName)))
+  }
+
+  scenario("Get sorted buttons") {
+    implicit val logTag = BasicLogging.LogTag("MessagesServiceSpec")
+
+    val msgId = MessageId()
+    val button1Id = ButtonId()
+    val title1 = "Title 1"
+    val button0Id = ButtonId()
+    val title0 = "Title 0"
+
+    val expectedButtons = Seq(
+      ButtonData(msgId, button1Id, title1, 1),
+      ButtonData(msgId, button0Id, title0, 0)
+    )
+
+    val onChanged = EventStream[Seq[ButtonData]]()
+
+    (buttons.onChanged _).expects().anyNumberOfTimes().returning(onChanged)
+    (buttons.onDeleted _).expects().anyNumberOfTimes().returning(EventStream())
+
+    (buttons.findByMessage _).expects(msgId).anyNumberOfTimes().onCall { _: MessageId => Future.successful(expectedButtons) }
+
+    val service = getService
+    val res = result(service.buttonsForMessage(msgId).head)
+
+    res.size shouldEqual 2
+
+    res.head shouldEqual ButtonData(msgId, button0Id, title0, 0, ButtonNotClicked)
+    res(1)   shouldEqual ButtonData(msgId, button1Id, title1, 1, ButtonNotClicked)
+  }
+
+  scenario("Include the sender id in the button action") {
+    import Threading.Implicits.Background
+    implicit val logTag = BasicLogging.LogTag("MessagesServiceSpec")
+
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+    val convId = ConvId()
+    val senderId = UserId()
+
+    val message = MessageData(messageId, msgType = Message.Type.COMPOSITE, convId = convId, userId = senderId)
+    val button = Signal(ButtonData(messageId, buttonId, "button", 0, ButtonNotClicked))
+
+    (storage.get _).expects(messageId).atLeastOnce().returning(Future.successful(Some(message)))
+    (members.isActiveMember _).expects(convId, senderId).anyNumberOfTimes().returning(Future.successful(true))
+    (buttons.update _).expects((messageId, buttonId), *).anyNumberOfTimes().onCall { (_, updater) =>
+      button.head.map { b =>
+        val newB = updater(b)
+        button ! newB
+        Option((b, newB))
+      }
+    }
+    (sync.postButtonAction _).expects(messageId, buttonId, senderId).atLeastOnce().returning(Future.successful(SyncId()))
+
+    val service = getService
+
+    result(service.clickButton(messageId, buttonId))
+    val res = result(button.filter(_.state == ButtonWaiting).head)
+
+    res.messageId shouldEqual messageId
+    res.buttonId shouldEqual buttonId
+  }
+
+  scenario("Set button error if the poll's sender is not in the conversation") {
+    import Threading.Implicits.Background
+    implicit val logTag = BasicLogging.LogTag("MessagesServiceSpec")
+
+    val messageId = MessageId()
+    val buttonId = ButtonId()
+    val convId = ConvId()
+    val senderId = UserId()
+
+    val message = MessageData(messageId, msgType = Message.Type.COMPOSITE, convId = convId, userId = senderId)
+    val button = Signal(ButtonData(messageId, buttonId, "button", 0, ButtonNotClicked))
+
+    (storage.get _).expects(messageId).atLeastOnce().returning(Future.successful(Some(message)))
+    (members.isActiveMember _).expects(convId, senderId).anyNumberOfTimes().returning(Future.successful(false))
+    (buttons.update _).expects((messageId, buttonId), *).anyNumberOfTimes().onCall { (_, updater) =>
+      button.head.map { b =>
+        val newB = updater(b)
+        button ! newB
+        Option((b, newB))
+      }
+    }
+
+    val service = getService
+
+    result(service.clickButton(messageId, buttonId))
+    val res = result(button.filter(_.state == ButtonError).head)
+
+    res.messageId shouldEqual messageId
+    res.buttonId shouldEqual buttonId
   }
 }

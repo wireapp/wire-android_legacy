@@ -513,6 +513,7 @@ object GenericContent {
 
   type MsgEdit = Messages.MessageEdit
 
+  //TODO: BUTTONS - add Composite here
   implicit object MsgEdit extends GenericContent[MsgEdit] {
     override def set(msg: GenericMessage) = msg.setEdited
 
@@ -781,4 +782,39 @@ object GenericContent {
     }
   }
 
+  type ButtonActionConfirmation = Messages.ButtonActionConfirmation
+
+  implicit object ButtonActionConfirmation extends GenericContent[ButtonActionConfirmation] {
+    override def set(msg: GenericMessage): ButtonActionConfirmation => GenericMessage = msg.setButtonActionConfirmation
+
+    def unapply(proto: ButtonActionConfirmation): Option[(MessageId, Option[ButtonId])] =
+      Some(MessageId(proto.referenceMessageId), Option(proto.buttonId).map(ButtonId(_)))
+  }
+
+  type ButtonAction = Messages.ButtonAction
+
+  implicit object ButtonAction extends GenericContent[ButtonAction] {
+    override def set(msg: GenericMessage): ButtonAction => GenericMessage = msg.setButtonAction
+
+    def apply(buttonId: String, referenceMsgId: String)= returning(new Messages.ButtonAction) { action =>
+      action.buttonId = buttonId
+      action.referenceMessageId = referenceMsgId
+    }
+  }
+
+  type Composite = Messages.Composite
+  type Button = Messages.Button
+
+  implicit object Composite extends GenericContent[Composite] {
+    override def set(msg: GenericMessage): Composite => GenericMessage = msg.setComposite
+
+    def unapply(proto: Composite): Option[CompositeData] = {
+      val items = proto.items.map { protoItem =>
+        if (protoItem.hasText) TextItem(protoItem.getText)
+        else if (protoItem.hasButton) ButtonItem(protoItem.getButton)
+        else UnknownItem
+      }
+      Some(CompositeData(items, Option(proto.expectsReadConfirmation), Option(proto.legalHoldStatus)))
+    }
+  }
 }

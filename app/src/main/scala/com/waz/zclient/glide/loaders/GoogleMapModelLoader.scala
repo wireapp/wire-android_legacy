@@ -18,6 +18,7 @@
 package com.waz.zclient.glide.loaders
 
 import java.io.InputStream
+
 import android.content.Context
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.{ModelLoader, ModelLoaderFactory, MultiModelLoaderFactory}
@@ -26,8 +27,9 @@ import com.waz.api.MessageContent.Location
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.ZMessaging
 import com.waz.utils.events.Signal
+import com.waz.zclient.core.images.AssetKey
 import com.waz.zclient.{Injectable, Injector, WireContext}
-import com.waz.zclient.glide.{AssetKey, GoogleMapRequest, ImageAssetFetcher}
+import com.waz.zclient.glide.{GoogleMapRequest, ImageAssetFetcher}
 import com.waz.zclient.log.LogUI._
 
 class GoogleMapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location, InputStream]
@@ -35,7 +37,7 @@ class GoogleMapModelLoader(zms: Signal[ZMessaging]) extends ModelLoader[Location
 
   override def buildLoadData(model: Location, width: Int, height: Int, options: Options): ModelLoader.LoadData[InputStream] = {
     val request = GoogleMapRequest(model)
-    val key = AssetKey(request.toString, width, height, options)
+    val key = new AssetKey(request.toString, width, height, options)
     verbose(l"key: $key")
     new LoadData[InputStream](key, new ImageAssetFetcher(request, zms))
   }

@@ -29,7 +29,7 @@ import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.preferences.views.SwitchPreference
-import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
+import com.waz.service.tracking.TrackingService.analyticsPrefKey
 import com.waz.zclient.tracking.GlobalTrackingController
 import com.waz.zclient.utils.{BackStackKey, ContextUtils}
 import com.waz.zclient.{R, ViewHelper}

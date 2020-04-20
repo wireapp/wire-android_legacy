@@ -49,11 +49,13 @@ class ConversationsUiServiceSpec extends AndroidFreeSpec {
   val assetService =    mock[AssetService]
   val network =         mock[NetworkModeService]
   val properties =      mock[PropertiesService]
+  val buttons =         mock[ButtonsStorage]
+
 
   val prefs = new TestGlobalPreferences()
 
   private def getService(teamId: Option[TeamId] = None): ConversationsUiService = {
-    val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, prefs)
+    val msgContent = new MessagesContentUpdater(messagesStorage, convsStorage, deletions, buttons, prefs)
     new ConversationsUiServiceImpl(selfUserId, teamId, assetService, usersStorage, messages, messagesStorage,
       msgContent, members, content, convsStorage, network, convsService, sync, client,
       accounts, tracking, errors, properties)

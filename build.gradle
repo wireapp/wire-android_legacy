@@ -23,6 +23,7 @@ buildscript {
         classpath 'org.ajoberstar.grgit:grgit-core:3.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.DETEKT}"
+        classpath "org.jacoco:org.jacoco.core:${Versions.JACOCO}"
     }
 }
 
@@ -51,6 +52,7 @@ allprojects {
 }
 
 apply from: "./detekt/setup.gradle"
+apply from: "./jacoco/coverage.gradle"
 
 // FIXME: License header is disabled because it breaks compilation
 //task licenseFormatAndroid(type: nl.javadude.gradle.plugins.license.License) {
@@ -88,7 +90,7 @@ ext {
     project.logger.quiet("Build time configuration is: ${JsonOutput.prettyPrint(JsonOutput.toJson(buildtimeConfiguration.configuration))}")
 
     //Update kotlinCore flag as well when adding new kotlin features
-    kotlinSettings = false
+    kotlinSettings = true
     kotlinRegistration = false
     kotlinCore = kotlinSettings || kotlinRegistration
 }

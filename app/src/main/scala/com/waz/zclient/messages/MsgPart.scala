@@ -48,6 +48,7 @@ object MsgPart {
   case object WifiWarning extends MsgPart
   case object MessageTimer extends MsgPart
   case object ReadReceipts extends MsgPart
+  case object Composite extends MsgPart
   case object Empty extends MsgPart
   case object Unknown extends MsgPart
 
@@ -91,7 +92,8 @@ object MsgPart {
       case RICH_MEDIA => Empty // RICH_MEDIA will be handled separately
       case MESSAGE_TIMER => MessageTimer
       case READ_RECEIPTS_ON | READ_RECEIPTS_OFF => if (isOneToOne) Empty else ReadReceipts
-      case UNKNOWN => Unknown
+      case COMPOSITE => Composite
+      case _ => Unknown
     }
   }
 

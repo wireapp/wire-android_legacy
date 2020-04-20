@@ -7,36 +7,33 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Messages",
-    indices = [Index(value = ["conv_id", "time"])]
+    indices = [Index(name = "Messages_conv_time", value = ["conv_id", "time"])]
 )
 data class MessagesEntity(
     @PrimaryKey
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "conv_id")
+    @ColumnInfo(name = "conv_id", defaultValue = "")
     val conversationId: String,
 
-    @ColumnInfo(name = "msg_type")
+    @ColumnInfo(name = "msg_type", defaultValue = "")
     val messageType: String,
 
-    @ColumnInfo(name = "user_id")
+    @ColumnInfo(name = "user_id", defaultValue = "")
     val userId: String,
 
     @ColumnInfo(name = "content")
     val content: String?,
 
-    //TODO: override equals/hashcode?
-    @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB) val protos: ByteArray?,
+    @ColumnInfo(name = "protos", typeAffinity = ColumnInfo.BLOB)
+    val protos: ByteArray?,
 
-    @ColumnInfo(name = "time")
+    @ColumnInfo(name = "time", defaultValue = "0")
     val time: Int,
 
-    @ColumnInfo(name = "local_time")
-    val localTime: Int,
-
-    @ColumnInfo(name = "first_msg")
-    val firstMessage: Int,
+    @ColumnInfo(name = "first_msg", defaultValue = "0")
+    val firstMessage: Boolean,
 
     @ColumnInfo(name = "members")
     val members: String?,
@@ -50,14 +47,17 @@ data class MessagesEntity(
     @ColumnInfo(name = "name")
     val name: String?,
 
-    @ColumnInfo(name = "msg_state")
+    @ColumnInfo(name = "msg_state", defaultValue = "")
     val messageState: String,
 
-    @ColumnInfo(name = "content_size")
-    val contentSize: String,
+    @ColumnInfo(name = "content_size", defaultValue = "0")
+    val contentSize: Int,
 
-    @ColumnInfo(name = "edit_time")
-    val editTime: String,
+    @ColumnInfo(name = "local_time", defaultValue = "0")
+    val localTime: Int,
+
+    @ColumnInfo(name = "edit_time", defaultValue = "0")
+    val editTime: Int,
 
     @ColumnInfo(name = "ephemeral")
     val ephemeral: Int?,
@@ -65,8 +65,8 @@ data class MessagesEntity(
     @ColumnInfo(name = "expiry_time")
     val expiryTime: Int?,
 
-    @ColumnInfo(name = "expired")
-    val expired: Int,
+    @ColumnInfo(name = "expired", defaultValue = "0")
+    val expired: Boolean,
 
     @ColumnInfo(name = "duration")
     val duration: Int?,
@@ -74,8 +74,8 @@ data class MessagesEntity(
     @ColumnInfo(name = "quote")
     val quote: String?,
 
-    @ColumnInfo(name = "quote_validity")
-    val quoteValidity: Int?,
+    @ColumnInfo(name = "quote_validity", defaultValue = "0")
+    val quoteValidity: Int,
 
     @ColumnInfo(name = "force_read_receipts")
     val forceReadReceipts: Int?,

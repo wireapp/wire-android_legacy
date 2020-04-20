@@ -33,9 +33,11 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId, users: UsersStorage,
-                        convs: ConversationStorage, msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
-                        tracking: TrackingService, filter: Option[MessageFilter] = None) { self =>
+class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserId: UserId,
+                        users: UsersStorage, convs: ConversationStorage,
+                        msgAndLikes: MessageAndLikesStorage, storage: ZmsDatabase,
+                        tracking: TrackingService, filter: Option[MessageFilter] = None) {
+  self =>
 
   private implicit val tag: LogTag = LogTag(s"ConvMessagesIndex_$convId")
 
@@ -102,6 +104,9 @@ class ConvMessagesIndex(convId: ConvId, messages: MessagesStorageImpl, selfUserI
       Signal(signals.unreadCount, signals.failedCount, signals.lastMissedCall, signals.incomingKnock).throttle(500.millis) { case (unread, failed, missed, knock) =>
         convs.update(convId, _.copy(incomingKnockMessage = knock, missedCallMessage = missed, unreadCount = unread, failedCount = failed))
       }
+    }.recoverWith { case exception =>
+      error(l"Error while reading conversation messages from storage: $exception")
+      Future.failed(exception)
     }
   }.recoverWithLog()
   def updateLastRead(c: ConversationData) = lastReadTime.mutateOrDefault(_ max c.lastRead, c.lastRead)

@@ -2,7 +2,7 @@ package com.waz.zclient.core.network.accesstoken
 
 import com.waz.zclient.storage.db.accountdata.AccessTokenEntity
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsDao
-import com.waz.zclient.storage.pref.GlobalPreferences
+import com.waz.zclient.storage.pref.global.GlobalPreferences
 
 class AccessTokenLocalDataSource(
     private val globalPreferences: GlobalPreferences,

@@ -71,7 +71,12 @@ object Preferences {
 
     def apply(): Future[A] = prefs.getValue(key)
 
-    def update(value: A): Future[Unit] = prefs.setValue(key, value).map { _ => signal.publish(value, Threading.Background) }
+    def update(value: A): Future[Unit] = prefs.setValue(key, value)
+      .map { _ => signal.publish(value, Threading.Background) }
+      .recoverWith { case exception =>
+        error(l"Error while updating signal preference $key to value $value. Exception is: $exception")
+        Future.failed(exception)
+      }
 
     def :=(value: A): Future[Unit] = update(value)
 
@@ -85,7 +90,7 @@ object Preferences {
           s.publish(v, Threading.Background)
         }.recoverWith { case exception =>
           error(l"Error while getting signal with preference key $key. Exception is: $exception")
-          throw exception
+          Future.failed(exception)
         }
       }
     }

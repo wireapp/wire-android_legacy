@@ -56,9 +56,9 @@ import com.waz.zclient.pages.main.conversationpager.ConversationPagerFragment
 import com.waz.zclient.pages.main.pickuser.controller.IPickUserController
 import com.waz.zclient.participants.ParticipantsController
 import com.waz.zclient.participants.ParticipantsController.ParticipantRequest
-import com.waz.zclient.shortcuts.Shortcuts
+import com.waz.zclient.feature.shortcuts.Shortcuts
 import com.waz.zclient.tracking.GlobalTrackingController
-import com.waz.zclient.tracking.GlobalTrackingController.analyticsPrefKey
+import com.waz.service.tracking.TrackingService.analyticsPrefKey
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.views.menus.ConfirmationMenu
 

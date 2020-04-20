@@ -323,4 +323,14 @@ package object utils {
     def :&(k: String, v: String): URIBuilder = :?(k, v)
     def :&(k: String, v: Option[String]): URIBuilder = :?(k, v)
   }
+
+  trait Identifiable[K] {
+    def id: K
+  }
+
+  object Identifiable {
+    implicit class RichIdentifiable[V](val idfs: Iterable[V]) extends AnyVal {
+      def toIdMap[K](implicit ev: V <:< Identifiable[K]): Map[K, V] = idfs.map(idf => idf.id -> idf).toMap
+    }
+  }
 }

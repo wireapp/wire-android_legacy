@@ -40,30 +40,123 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
+
+  import Threading.Implicits.Background
+
   import ConversationRole._
 
   val messages      = mock[MessagesStorage]
   val storage       = mock[NotificationStorage]
-  val convs         = mock[ConversationStorage]
+  val conversations = mock[ConversationStorage]
   val pushService   = mock[PushService]
   val uiController  = mock[NotificationUiController]
   val userService   = mock[UserService]
 
-  var self = UserData(account1Id, "")
-
-  val beDrift = Signal(Duration.ZERO)
-  val uiNotificationsSourceVisible = Signal(Map.empty[UserId, Set[ConvId]])
-
-  val notificationsDispatcher = new SerialDispatchQueue()
-  val storedNotifications = Signal(Set.empty[NotificationData])
+  private val storedNotifications = Signal(Set.empty[NotificationData])
+  private val processing = Signal(true)
 
   private def lastEventTime = RemoteInstant.apply(clock.instant())
-  val rConvId = RConvId("r-conv")
-  val convId = ConvId("conv")
-  val conv = ConversationData(remoteId = rConvId, id = convId)
-  val content = TextMessage("abc")
-  val from = UserId("User1")
-  lazy val event = GenericMessageEvent(rConvId, lastEventTime, from, content)
+
+  private val self       = UserData(account1Id, "")
+  private val beDrift    = Signal(Duration.ZERO)
+  private val rConvId    = RConvId("r-conv")
+  private val convId     = ConvId("conv")
+  private val conv       = ConversationData(remoteId = rConvId, id = convId)
+  private val content    = TextMessage("abc")
+  private val from       = UserId("User1")
+  private lazy val event = GenericMessageEvent(rConvId, lastEventTime, from, content)
+
+  private val msg = MessageData(
+    MessageId(content.messageId),
+    conv.id,
+    msgType = Message.Type.TEXT,
+    protos  = Seq(content),
+    userId  = from,
+    time    = lastEventTime
+  )
+
+  private val compositeMsg = MessageData(
+    MessageId(content.messageId),
+    conv.id,
+    msgType = Message.Type.COMPOSITE,
+    protos  = Seq(content),
+    userId  = from,
+    time    = lastEventTime
+  )
+
+  (pushService.processing _).expects().anyNumberOfTimes().onCall(_ => processing)
+
+  (storage.list _).expects().anyNumberOfTimes().onCall { _ => storedNotifications.head.map(_.toSeq) }
+  (storage.removeAll _).expects(*).anyNumberOfTimes().onCall { toRemove: Iterable[NotId] =>
+    Future.successful[Unit] { storedNotifications.mutate { _.filterNot(n => toRemove.toSet.contains(n.id)) }; }
+  }
+  (storage.insertAll _).expects(*).anyNumberOfTimes().onCall { toAdd: Traversable[NotificationData] =>
+    Future.successful {
+      storedNotifications.mutate { _ ++ toAdd }
+      Set.empty[NotificationData] //return not important
+    }
+  }
+
+  (pushService.beDrift _).expects().anyNumberOfTimes().returning(beDrift)
+
+  private val notificationsSourceVisible = Signal(Map.empty[UserId, Set[ConvId]])
+  (uiController.notificationsSourceVisible _).expects().anyNumberOfTimes().returning(notificationsSourceVisible)
+
+  private def getService =
+    new NotificationServiceImpl(account1Id, messages, storage, conversations, pushService, uiController, userService, clock)
+
+  private def setup(availability: Availability,
+                    msgs:         Seq[MessageData],
+                    findMsgsFrom: Seq[MessageData],
+                    convs:        Seq[ConversationData],
+                    eventTime:    Option[RemoteInstant]
+                   ): Unit = {
+    val convsMap = convs.toIdMap
+    val rConvsMap = convs.map(c => c.remoteId -> c).toMap
+    (messages.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(msgs.map(Option(_))))
+    (conversations.getByRemoteId _).expects(*).anyNumberOfTimes().onCall { rId: RConvId => Future.successful(rConvsMap.get(rId)) }
+
+    eventTime match {
+      case Some(t) =>
+        (messages.findMessagesFrom _).expects(*, t).anyNumberOfTimes().onCall { (cId: ConvId, _: RemoteInstant) =>
+          Future.successful(findMsgsFrom.filter(_.convId == cId).toIndexedSeq)
+        }
+      case None =>
+        (messages.findMessagesFrom _).expects(*, *).anyNumberOfTimes().onCall { (cId: ConvId, _: RemoteInstant) =>
+          Future.successful(findMsgsFrom.filter(_.convId == cId).toIndexedSeq)
+        }
+    }
+
+    // in pushNotificationToUI
+    (userService.getSelfUser _).expects().anyNumberOfTimes().returning(
+      Future.successful(Some(self.copy(availability = availability)))
+    )
+    (conversations.get _).expects(*).anyNumberOfTimes().onCall { cId: ConvId => Future.successful(convsMap.get(cId)) }
+  }
+
+  private def testCompositeMessageNotificationShown(availability: Availability): Unit = {
+    processing ! true
+
+    setup(
+      availability = Availability.Available,
+      msgs         = Seq(msg),
+      findMsgsFrom = Seq(compositeMsg),
+      convs        = Seq(conv),
+      eventTime    = Some(lastEventTime)
+    )
+
+    (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
+      nots.size shouldEqual 1
+      nots.head.msgType shouldEqual NotificationType.COMPOSITE
+      Future.successful({})
+    }
+
+    result(getService.messageNotificationEventsStage(rConvId, Vector(event)))
+
+    processing ! false
+
+    awaitAllTasks
+  }
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -75,19 +168,16 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
   feature("Message events") {
     scenario("Process basic text message notifications") {
-      setup()
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(
-          MessageData(
-            MessageId(content.messageId),
-            conv.id,
-            msgType = Message.Type.TEXT,
-            protos = Seq(content),
-            userId = from,
-            time   = lastEventTime
-          )
-        )
-      ))
+      processing ! true
+
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(msg),
+        findMsgsFrom = Seq(msg),
+        convs        = Seq(conv),
+        eventTime    = Some(lastEventTime)
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 1
         nots.head.msg shouldEqual "abc"
@@ -95,78 +185,90 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      val service = getService
+
+      result(service.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
-    scenario("Don't push notifications to UI when the user is away") {
-      setup(userAvailability = Availability.Away)
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(
-          MessageData(
-            MessageId(content.messageId),
-            conv.id,
-            msgType = Message.Type.TEXT,
-            protos = Seq(content),
-            userId = from,
-            time   = lastEventTime
-          )
-        )
-      ))
+    scenario("Don't push standard notifications to UI when the user is away") {
+      processing ! true
+
+      setup(
+        availability = Availability.Away,
+        msgs         = Seq(msg),
+        findMsgsFrom = Seq(msg),
+        convs        = Seq(conv),
+        eventTime    = Some(lastEventTime)
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 0
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
-    scenario("Don't push notifications to UI when the user is busy and the message is not a reply/mention") {
-      setup(userAvailability = Availability.Busy)
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(
-          MessageData(
-            MessageId(content.messageId),
-            conv.id,
-            msgType = Message.Type.TEXT,
-            protos = Seq(content),
-            userId = from,
-            time   = lastEventTime
-          )
-        )
-      ))
+    scenario("Don't push standard notifications to UI when the user is busy and the message is not a reply/mention") {
+      processing ! true
+
+      setup(
+        availability = Availability.Busy,
+        msgs         = Seq(msg),
+        findMsgsFrom = Seq(msg),
+        convs        = Seq(conv),
+        eventTime    = Some(lastEventTime)
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 0
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
     scenario("Push notifications to UI when the user is busy and the message is a reply/mention") {
-      val origMsg =
-        MessageData(
-          MessageId("orig"),
-          conv.id,
-          msgType = Message.Type.TEXT,
-          protos = Seq(content),
-          userId = self.id,
-          time = lastEventTime
-        )
-      val reply =
-        MessageData(
-          MessageId(content.messageId),
-          conv.id,
-          msgType = Message.Type.TEXT,
-          protos = Seq(content),
-          userId = from,
-          time   = lastEventTime,
-          quote = Some(QuoteContent(origMsg.id, validity = true, hash = None))
-        )
+      processing ! true
 
-      setup(msg = Some(origMsg), userAvailability = Availability.Busy)
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(origMsg, reply)
-      ))
+      val origMsg = MessageData(
+        MessageId("orig"),
+        conv.id,
+        msgType = Message.Type.TEXT,
+        protos  = Seq(content),
+        userId  = self.id,
+        time    = lastEventTime
+      )
+      val reply = MessageData(
+        MessageId(content.messageId),
+        conv.id,
+        msgType = Message.Type.TEXT,
+        protos  = Seq(content),
+        userId  = from,
+        time    = lastEventTime,
+        quote   = Some(QuoteContent(origMsg.id, validity = true, hash = None))
+      )
+
+      setup(
+        availability = Availability.Busy,
+        msgs         = Seq(origMsg),
+        findMsgsFrom = Seq(origMsg, reply),
+        convs        = Seq(conv),
+        eventTime    = Some(lastEventTime)
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 1
         nots.head.msg shouldEqual "abc"
@@ -174,7 +276,19 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
+    }
+
+    scenario("Push composite message notifications to UI even when the user is away") {
+      testCompositeMessageNotificationShown(Availability.Away)
+    }
+
+    scenario("Push composite message notifications to UI even when the user is busy") {
+      testCompositeMessageNotificationShown(Availability.Busy)
     }
 
     scenario("Notifications are only pushed to UI for conversations with correct mute states") {
@@ -191,27 +305,28 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       )
       storedNotifications ! previousNots
 
-      setup(Seq((conv, true), (conv2, false)))
+      processing ! true
 
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(
-          MessageData(
-            MessageId(content.messageId),
-            conv.id,
-            msgType = Message.Type.TEXT,
-            protos = Seq(content),
-            userId = from,
-            time   = lastEventTime
-          )
-        )
-      ))
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(msg),
+        findMsgsFrom = Seq(msg),
+        convs        = Seq(conv, conv2),
+        eventTime    = Some(lastEventTime)
+      )
 
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 2
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      val service = getService
+
+      result(service.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
     scenario("Previous notifications that have not been dismissed are passed with notifications from new events") {
@@ -222,19 +337,16 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       )
       storedNotifications ! previousNots
 
-      setup()
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(
-          MessageData(
-            MessageId(content.messageId),
-            conv.id,
-            msgType = Message.Type.TEXT,
-            protos = Seq(content),
-            userId = from,
-            time   = lastEventTime
-          )
-        )
-      ))
+      processing ! true
+
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(msg),
+        findMsgsFrom = Seq(msg),
+        convs        = Seq(conv),
+        eventTime    = Some(lastEventTime)
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 3
         nots.exists(_.msg == "abc") shouldEqual true
@@ -244,7 +356,13 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      val service = getService
+
+      result(service.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
     scenario("Apply multiple message edit events to previous notifications") {
@@ -263,19 +381,27 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val editEvent2 = GenericMessageEvent(rConvId, edit2EventTime, from, editContent2)
 
       val originalNotification = NotificationData(
-        id = NotId(originalContent.messageId),
-        msg = "abc",
-        conv = conv.id,
-        user = from,
-        msgType = NotificationType.TEXT,
-        time = origEventTime,
+        id               = NotId(originalContent.messageId),
+        msg              = "abc",
+        conv             = conv.id,
+        user             = from,
+        msgType          = NotificationType.TEXT,
+        time             = origEventTime,
         hasBeenDisplayed = true
       )
 
       storedNotifications ! Set(originalNotification)
 
-      setup(Seq((conv, true)))
-      (messages.findMessagesFrom _).expects(conv.id, edit1EventTime).returning(Future.successful(IndexedSeq.empty))
+      processing ! true
+
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(msg),
+        findMsgsFrom = Nil,
+        convs        = Seq(conv),
+        eventTime    = Some(edit1EventTime)
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         val not = nots.head
         not.id shouldEqual NotId(editContent2.messageId)
@@ -283,7 +409,11 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(editEvent1, editEvent2)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(editEvent1, editEvent2)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
     scenario("Apply delete and recall (hide and delete) events to previous notifications in storage and stream") {
@@ -298,6 +428,8 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       )
       storedNotifications ! previousNots
 
+      processing ! true
+
       val from = UserId("User1")
       val msgContent = GenericMessage(Uid("messageId"), Text("abc"))
       val msgEvent = GenericMessageEvent(rConvId, RemoteInstant(clock.instant()), from, msgContent)
@@ -308,8 +440,13 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val deleteContent2 = GenericMessage(Uid(), MsgRecall(MessageId(msgContent.messageId)))
       val deleteEvent2 = GenericMessageEvent(rConvId, RemoteInstant.apply(clock.instant()), from, deleteContent2)
 
-      setup()
-      (messages.findMessagesFrom _).expects(conv.id, *).returning(Future.successful(IndexedSeq.empty))
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(msg),
+        findMsgsFrom = Nil,
+        convs        = Seq(conv),
+        eventTime    = None
+      )
 
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         Future.successful {
@@ -318,7 +455,11 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         }
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(msgEvent, deleteEvent1, deleteEvent2)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(msgEvent, deleteEvent1, deleteEvent2)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
     scenario("Multiple alternative likes and unlikes only ever apply the last event") {
@@ -355,8 +496,15 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
           time   = messageTime
         )
 
-      setup(msg = Some(originalMessage))
-      (messages.findMessagesFrom _).expects(conv.id, like1EventTime).returning(Future.successful(IndexedSeq.empty))
+      processing ! true
+
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(originalMessage),
+        findMsgsFrom = Nil,
+        convs        = Seq(conv),
+        eventTime    = None
+      )
 
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 2
@@ -368,7 +516,11 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(like1Event, unlikeEvent, otherLikeEvent, like2Event)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(like1Event, unlikeEvent, otherLikeEvent, like2Event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
   }
 
@@ -382,19 +534,24 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Map(account1Id -> MemberRole, from -> AdminRole), None
       ))
 
-      setup()
+      val memberJoinMsg = MessageData(
+        generatedMessageId,
+        conv.id,
+        msgType = Message.Type.MEMBER_JOIN,
+        userId  = from,
+        time    = lastEventTime
+      )
 
-      (messages.findMessagesFrom _).expects(conv.id, lastEventTime).returning(Future.successful(
-        IndexedSeq(
-          MessageData(
-            generatedMessageId,
-            conv.id,
-            msgType = Message.Type.MEMBER_JOIN,
-            userId = from,
-            time   = lastEventTime
-          )
-        )
-      ))
+      processing ! true
+
+      setup(
+        availability = Availability.Available,
+        msgs         = Seq(memberJoinMsg),
+        findMsgsFrom = Seq(memberJoinMsg),
+        convs        = Seq(conv),
+        eventTime    = None
+      )
+
       (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
         nots.size shouldEqual 1
         nots.head.msg shouldEqual ""
@@ -403,7 +560,11 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         Future.successful({})
       }
 
-      result(getService().messageNotificationEventsStage(rConvId, Vector(event)))
+      result(getService.messageNotificationEventsStage(rConvId, Vector(event)))
+
+      processing ! false
+
+      awaitAllTasks
     }
 
   }
@@ -415,95 +576,32 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
       val conv1 = ConversationData()
       val conv2 = ConversationData()
 
+      val not1 = NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant))
+      val not2 = NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant))
+      val not3 = NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = RemoteInstant.apply(clock.instant)) //a different conv!
       //prefil notification storage
-      val previousNots = Set(
-        NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant)),
-        NotificationData(hasBeenDisplayed = true, conv = conv1.id, time = RemoteInstant.apply(clock.instant)),
-        NotificationData(hasBeenDisplayed = true, conv = conv2.id, time = RemoteInstant.apply(clock.instant)) //a different conv!
-      )
+      val previousNots = Set(not1, not2, not3)
       storedNotifications ! previousNots
 
-      setup(Seq((conv1, true), (conv2, true)))
+      processing ! true
 
-      val uiNotified = Signal(false)
-      (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
-        Future {
-          nots.size shouldEqual 1
-          nots.head.conv shouldEqual conv2.id
-          uiNotified ! true
-        } (Threading.Background)
-      }
-
-      getService()
-
-      uiNotificationsSourceVisible ! Map(account1Id -> Set(conv1.id))
-      result(uiNotified.filter(identity(_)).head)
-    }
-
-  }
-
-  def getService() = {
-
-    (pushService.beDrift _).expects().anyNumberOfTimes().returning(beDrift)
-    (uiController.notificationsSourceVisible _).expects().anyNumberOfTimes().returning(uiNotificationsSourceVisible)
-
-    implicit val ec = notificationsDispatcher
-    (storage.insertAll _).expects(*).anyNumberOfTimes().onCall { (toAdd: Traversable[NotificationData]) =>
-      notificationsDispatcher {
-        storedNotifications.mutate { nots =>
-          nots ++ toAdd
-        }
-        Set.empty[NotificationData] //return not important
-      }.future
-    }
-
-    (storage.removeAll _).expects(*).anyNumberOfTimes().onCall { (toRemove: Iterable[NotId]) =>
-      notificationsDispatcher {
-        storedNotifications.mutate { nots =>
-          nots.filterNot(n => toRemove.toSet.contains(n.id))
-        }
-      }.future.map(_ => {})
-    }
-
-    (storage.list _).expects().anyNumberOfTimes().onCall { _ =>
-      storedNotifications.head.map(_.toSeq)
-    }
-
-    (userService.getSelfUser _).expects().anyNumberOfTimes().returning(Future.successful(Option(self)))
-
-    new NotificationServiceImpl(account1Id, messages, storage, convs, pushService, uiController, userService, clock)
-  }
-
-  private def setup(cs: Seq[(ConversationData, Boolean)] = Seq((conv, true)),
-                    msg: Option[MessageData] = None,
-                    userAvailability: Availability = Availability.Available
-                   ) = {
-    self = self.copy(availability = userAvailability)
-    cs.collect { case (c, true) => c }
-      .foreach(conv =>
-        (convs.getByRemoteId _)
-          .expects(conv.remoteId)
-          .anyNumberOfTimes()
-          .returning(Future.successful(Some(conv)))
+      setup(
+        availability = Availability.Available,
+        msgs         = Nil,
+        findMsgsFrom = Nil,
+        convs        = Seq(conv1, conv2),
+        eventTime    = None
       )
 
-    val conversations = cs.map { case (c, _) => c.id -> c }.toMap
+      getService
 
+      notificationsSourceVisible ! Map(account1Id -> Set(conv1.id))
 
-    import Threading.Implicits.Background
+      processing ! false
 
-    (convs.getAll _)
-      .expects(*)
-      .anyNumberOfTimes()
-      .onCall { ids: Traversable[ConvId] => Future { ids.toSeq.map(conversations.get) } }
+      awaitAllTasks
 
-    (convs.get _).expects(*).anyNumberOfTimes().onCall { id: ConvId => Future { conversations.get(id) } }
-
-    if (msg.isEmpty) {
-      (messages.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
-    } else if (msg.isDefined) msg.foreach { msg =>
-      (messages.getAll _).expects(Set(msg.id)).anyNumberOfTimes().returning(Future.successful(Seq(Some(msg))))
-      (messages.getAll _).expects(*).anyNumberOfTimes().returning(Future.successful(Seq.empty))
+      result(storedNotifications.head) shouldEqual Set(not3)
     }
   }
 }

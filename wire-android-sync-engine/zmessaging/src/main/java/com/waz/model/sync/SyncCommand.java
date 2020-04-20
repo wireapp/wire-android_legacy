@@ -46,6 +46,7 @@ public enum SyncCommand {
     PostSelfName("post-name"),
     PostSelfAccentColor("post-accent-color"),
     PostAvailability("post-availability"),
+    PostButtonAction("post-button-action"),
     PostMessage("post-message"),
     PostDeleted("post-deleted"),
     PostRecalled("post-recalled"),

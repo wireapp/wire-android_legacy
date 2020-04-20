@@ -83,7 +83,7 @@ class FoldersServiceImpl(foldersStorage: FoldersStorage,
       newFolders      <- Future.sequence(folders.map { case RemoteFolderData(data, rConvIds) =>
         conversationStorage.getByRemoteIds(rConvIds).map(ids => data.id -> (data, ids.toSet))
       }).map(_.toMap)
-      currentFolders  <- foldersStorage.list().map(_.map(folder => folder.id -> folder).toMap)
+      currentFolders  <- foldersStorage.list().map(_.toIdMap)
       foldersToDelete =  currentFolders.keySet -- newFolders.keySet
       _               <- Future.sequence(foldersToDelete.map(removeFolder(_, false)))
       foldersToAdd    =  newFolders.filterKeys(id => !currentFolders.contains(id)).values

@@ -34,8 +34,8 @@ import com.waz.utils.wrappers.{URI => URIWrapper}
 import com.waz.zclient.common.controllers.global.AccentColorController
 import com.waz.zclient.controllers.drawing.IDrawingController
 import com.waz.zclient.conversation.ConversationController
+import com.waz.zclient.core.images.transformations.ScaleTransformation
 import com.waz.zclient.glide.WireGlide
-import com.waz.zclient.glide.transformations.ScaleTransformation
 import com.waz.zclient.pages.main.profile.views.{ConfirmationMenu, ConfirmationMenuListener}
 import com.waz.zclient.ui.theme.OptionsDarkTheme
 import com.waz.zclient.utils.RichView

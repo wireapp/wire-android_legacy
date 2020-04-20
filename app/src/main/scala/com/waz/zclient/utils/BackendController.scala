@@ -24,6 +24,7 @@ import android.preference.PreferenceManager
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.service.{BackendConfig, GlobalModule}
 import com.waz.sync.client.CustomBackendClient.BackendConfigResponse
+import com.waz.zclient.core.backend.di.BackendModule
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.{Backend, BuildConfig}
 
@@ -48,7 +49,7 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     val teamsUrl = getStringPreference(TEAMS_URL_PREF)
     val accountsUrl = getStringPreference(ACCOUNTS_URL_PREF)
     val websiteUrl = getStringPreference(WEBSITE_URL_PREF)
-    
+
     (environment, baseUrl, websocketUrl, blackListHost, teamsUrl, accountsUrl, websiteUrl) match {
       case (Some(env), Some(base), Some(web), Some(black), Some(teams), Some(accounts), Some(website)) =>
         info(l"Retrieved stored backend config for environment: ${redactedString(env)}")
@@ -91,6 +92,8 @@ class BackendController(implicit context: Context) extends DerivedLogTag {
     setStoredBackendConfig(globalModule.backend)
 
     prefs.edit().putString(CONFIG_URL_PREF, configUrl.toString).commit()
+
+    BackendModule.getBackendConfigScopeManager.onConfigChanged(configResponse.title)
   }
 
   def shouldShowBackendSelector: Boolean =

@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-android'
 apply plugin: 'jp.leafytree.android-scala'
 apply from: 'deflake.gradle'
 
@@ -76,12 +78,15 @@ dependencies {
 
     implementation project(ModuleDependencies.storage)
 
+    implementation BuildDependencies.kotlin.standardLibrary
+    implementation BuildDependencies.androidX.coreKtx
+
     api "org.scala-lang.modules:scala-async_${LegacyDependencies.SCALA_MAJOR_VERSION}:0.9.7"
     implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
     // should match okhttp3's mockserver version (see test dependencies)
     implementation BuildDependencies.libPhoneNumber
     implementation "com.wire:cryptobox-android:1.1.2"
-    api "com.wire:generic-message-proto:1.23.0"
+    api "com.wire:generic-message-proto:1.24.2"
     implementation "com.wire:backend-api-proto:1.1"
     implementation "io.circe:circe-core_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
     implementation "io.circe:circe-generic_${LegacyDependencies.SCALA_MAJOR_VERSION}:$versions.circe"
@@ -124,6 +129,7 @@ dependencies {
     testImplementation "androidx.legacy:legacy-support-v4:1.0.0"
     testImplementation BuildDependencies.threetenbpJava
     testImplementation "net.java.dev.jna:jna:4.4.0@aar"
+    testImplementation TestDependencies.kotlin.coroutinesTest
 
     implementation "androidx.sqlite:sqlite:2.0.1"
     implementation "androidx.sqlite:sqlite-framework:2.0.1"

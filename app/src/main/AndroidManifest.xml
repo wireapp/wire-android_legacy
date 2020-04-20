@@ -91,7 +91,7 @@
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 
         <activity
-            android:name="com.waz.zclient.settings.main.SettingsMainActivity"
+            android:name="com.waz.zclient.feature.settings.main.SettingsMainActivity"
             android:hardwareAccelerated="true"
             android:theme="@style/Theme.Dark.Preferences"
             android:launchMode="singleTask"
@@ -226,22 +226,21 @@
         <activity
             android:name=".conversation.folders.moveto.MoveToFolderActivity"
             android:screenOrientation="portrait" />
-        <activity android:name=".settings.devices.detail.SettingsDeviceDetailActivity" />
-
+        <activity android:name="com.waz.zclient.feature.settings.devices.detail.SettingsDeviceDetailActivity" />
         <activity
-            android:name=".settings.account.editphonenumber.EditPhoneNumberActivity"
+            android:name="com.waz.zclient.feature.settings.account.editphonenumber.EditPhoneNumberActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark.Preferences" />
         <activity
-            android:name=".settings.about.SettingsAboutActivity"
+            android:name=".feature.settings.about.SettingsAboutActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark.Preferences" />
         <activity
-            android:name=".settings.support.SettingsSupportActivity"
+            android:name=".feature.settings.support.SettingsSupportActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark.Preferences" />
         <activity
-            android:name=".auth.registration.CreateAccountActivity"
+            android:name="com.waz.zclient.feature.auth.registration.CreateAccountActivity"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Light"
             android:screenOrientation="portrait"

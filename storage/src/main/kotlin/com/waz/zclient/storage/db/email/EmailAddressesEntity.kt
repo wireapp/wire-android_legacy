@@ -7,12 +7,15 @@ import androidx.room.Index
 @Entity(
     tableName = "EmailAddresses",
     primaryKeys = ["contact", "email_address"],
-    indices = [Index(value = ["contact", "email_address"])]
+    indices = [
+        Index(name = "EmailAddresses_contact", value = ["contact"]),
+        Index(name = "EmailAddresses_email", value = ["email_address"])
+    ]
 )
 data class EmailAddressesEntity(
-    @ColumnInfo(name = "contact")
+    @ColumnInfo(name = "contact", defaultValue = "")
     val contactId: String,
 
-    @ColumnInfo(name = "email_address")
+    @ColumnInfo(name = "email_address", defaultValue = "")
     val emailAddress: String
 )

@@ -1,6 +1,6 @@
 package com.waz.zclient.core.network.accesstoken
 
-import com.waz.zclient.core.functional.foldSuspendable
+import com.waz.zclient.core.extension.foldSuspendable
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -18,11 +18,6 @@ class AccessTokenAuthenticator(
     private val repository: AccessTokenRepository,
     private val refreshTokenMapper: RefreshTokenMapper
 ) : Authenticator {
-
-    companion object {
-        const val AUTH_HEADER = "Authorization"
-        const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
-    }
 
     /**
      * This authenticate() method is called when server returns 401 Unauthorized.
@@ -55,4 +50,9 @@ class AccessTokenAuthenticator(
                 repository.updateRefreshToken(newRefreshToken)
             }
         }
+
+    companion object {
+        const val AUTH_HEADER = "Authorization"
+        const val AUTH_HEADER_TOKEN_TYPE = "Bearer"
+    }
 }

@@ -150,4 +150,8 @@
     <declare-styleable name="CallParticipantsView">
         <attr name="isScrollable" default="true" format="boolean" />
     </declare-styleable>
+
+    <declare-styleable name="ButtonWithConfirmation">
+        <attr name="state_confirmed" format="boolean"/>
+    </declare-styleable>
 </resources>

@@ -84,7 +84,6 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
   lazy val pagedListData: Signal[(MessageAdapterData, PagedListWrapper[MessageAndLikes], Option[MessageId])] = for {
     z                       <- zms
-    false                   <- z.push.processing
     (cId, cTeam, teamOnly)  <- convController.currentConv.map(c => (c.id, c.team, c.isTeamOnly))
     isGroup                 <- Signal.future(z.conversations.isGroupConversation(cId))
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
@@ -98,10 +97,14 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
 
 object MessagePagedListController {
   case class PagedListConfig(pageSize: Int, initialLoadSizeHint: Int, prefetchDistance: Int) {
+    /**
+     * The reason why placeholders are disabled is taken from this Stackoverflow answer to a bug:
+     * https://stackoverflow.com/a/56873666/2975925
+     */
     lazy val config = new PagedList.Config.Builder()
       .setPageSize(pageSize)
       .setInitialLoadSizeHint(initialLoadSizeHint)
-      .setEnablePlaceholders(true)
+      .setEnablePlaceholders(false)
       .setPrefetchDistance(prefetchDistance)
       .build()
   }

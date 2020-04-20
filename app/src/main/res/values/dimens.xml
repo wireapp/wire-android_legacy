@@ -567,6 +567,8 @@
     <dimen name="empty_likes_reads_text_width">224dp</dimen>
     <dimen name="create_conv_options_height">64dp</dimen>
 
+    <!-- Global -->
+    <dimen name="back_button_margin">16dp</dimen>
 
     <!-- Settings account screen -->
     <dimen name="settings_account_edit_phone_margin_top">20dp</dimen>
@@ -584,6 +586,8 @@
     <dimen name="authentication_edit_text_text_size">14sp</dimen>
     <dimen name="authentication_confirmation_button_padding">8dp</dimen>
     <dimen name="authentication_confirmation_button_margin_end">16dp</dimen>
+    <dimen name="authentication_confirmation_button_margin_top">8dp</dimen>
+    <dimen name="authentication_input_layout_error_text_size">12sp</dimen>
 
     <!-- Create Account screen -->
     <dimen name="create_account_layout_container_margin">16dp</dimen>
@@ -592,12 +596,11 @@
     <dimen name="create_account_description_text_size">16sp</dimen>
     <dimen name="create_account_description_padding">32dp</dimen>
 
-    <!-- Create Personal Account screen -->
+    <!-- Create Personal Account - Main screen -->
     <dimen name="create_personal_account_title_text_size">32sp</dimen>
     <dimen name="create_personal_account_text_input_layout_margin_top">14dp</dimen>
-    <dimen name="create_personal_account_edit_text_height">56dp</dimen>
 
-    <!-- Email Verification screen -->
+    <!-- Create Personal Account - Email Verification screen -->
     <dimen name="email_verification_title_text_size">40sp</dimen>
     <dimen name="email_verification_description_text_size">16sp</dimen>
     <dimen name="email_verification_description_text_margin_top">24dp</dimen>
@@ -617,4 +620,22 @@
     <dimen name="pin_code_digit_padding_top">8dp</dimen>
     <dimen name="pin_code_digit_padding_bottom">8dp</dimen>
     <dimen name="pin_code_digit_text_size">32dp</dimen>
+
+    <!-- Create Personal Account - Name Input screen -->
+    <dimen name="create_personal_account_name_input_title_text_size">32sp</dimen>
+    <dimen name="create_personal_account_name_input_input_layout_margin_top">64dp</dimen>
+
+    <!-- Create Personal Account - Password Input screen -->
+    <dimen name="create_personal_account_password_input_title_text_size">32sp</dimen>
+    <dimen name="create_personal_account_password_input_input_layout_margin_top">64dp</dimen>
+
+    <!-- Composite Message -->
+    <dimen name="composite_message_button_layout_margin_top">16dp</dimen>
+    <dimen name="composite_message_buttonitemview_gap">8dp</dimen>
+    <dimen name="composite_message_button_progressbar_size">48dp</dimen>
+    <dimen name="composite_message_button_progressbar_elevation">3dp</dimen>
+    <dimen name="composite_message_button_progressbar_padding">16dp</dimen>
+    <dimen name="composite_message_button_padding">16dp</dimen>
+    <dimen name="composite_message_button_text_size">12sp</dimen>
+    <dimen name="composite_message_button_error_text_size">12sp</dimen>
 </resources>

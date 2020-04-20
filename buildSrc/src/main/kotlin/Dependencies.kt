@@ -2,7 +2,7 @@
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.45."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.47."
 
     //core
     const val KOTLIN = "1.3.60"
@@ -12,6 +12,7 @@ object Versions {
 
     //plugins
     const val DETEKT = "1.2.2"
+    const val JACOCO = "0.8.5"
 
     //build
     const val COROUTINES = "1.3.2"
@@ -26,7 +27,7 @@ object Versions {
     const val ANDROIDX_CARD_VIEW = "1.0.0"
     const val ANDROIDX_GRID_LAYOUT = "1.0.0"
     const val ANDROIDX_CONSTRAINT_LAYOUT = "1.1.3"
-    const val ANDROIDX_PAGING_RUNTIME = "2.0.0"
+    const val ANDROIDX_PAGING_RUNTIME = "2.1.2"
     const val ANDROIDX_EXIF_INTERFACE = "1.0.0"
     const val ANDROIDX_MEDIA = "1.0.0"
     const val ANDROIDX_LIFECYCLE = "2.2.0-rc03"
@@ -155,7 +156,8 @@ object TestDependencies {
         "testCore" to "androidx.arch.core:core-testing:${Versions.ANDROIDX_TEST_CORE}",
         "testJunit" to "androidx.test.ext:junit:${Versions.ANDROIDX_TEST_JUNIT}",
         "testRules" to "androidx.test:rules:${Versions.ANDROIDX_TEST_JUNIT}",
-        "testWorkManager" to "androidx.work:work-testing:${Versions.WORK_MANAGER}"
+        "testWorkManager" to "androidx.work:work-testing:${Versions.WORK_MANAGER}",
+        "testRoom" to "androidx.room:room-testing:${Versions.ANDROIDX_ROOM}"
     ))
     val okHttpMockWebServer = "com.squareup.okhttp3:mockwebserver:${Versions.OKHTTP}"
     val robolectric = "org.robolectric:android-all:${Versions.ROBOLECTRIC}"

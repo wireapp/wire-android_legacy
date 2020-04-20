@@ -7,22 +7,22 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "Contacts",
-    indices = [Index(value = ["sort_key"])]
+    indices = [Index(name = "Contacts_sorting", value = ["sort_key"])]
 )
 data class ContactsEntity(
     @PrimaryKey
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
-    @ColumnInfo(name = "name_source")
+    @ColumnInfo(name = "name_source", defaultValue = "0")
     val nameType: Int,
 
-    @ColumnInfo(name = "sort_key")
+    @ColumnInfo(name = "sort_key", defaultValue = "")
     val sortKey: String,
 
-    @ColumnInfo(name = "search_key")
+    @ColumnInfo(name = "search_key", defaultValue = "")
     val searchKey: String
 )
