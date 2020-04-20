@@ -25,7 +25,7 @@ import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.usersearch.listitems._
-import com.waz.zclient.{Injectable, Injector, R}
+import com.waz.zclient.{Injectable, Injector}
 
 import scala.collection.mutable
 
