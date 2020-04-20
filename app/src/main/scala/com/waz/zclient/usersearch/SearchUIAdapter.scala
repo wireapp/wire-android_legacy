@@ -284,7 +284,7 @@ object SearchUIAdapter {
         case TopUsersSection                                => getString(R.string.people_picker__top_users_header_title)
         case GroupConversationsSection if item.name.isEmpty => getString(R.string.people_picker__search_result_conversations_header_title)
         case GroupConversationsSection                      => getString(R.string.people_picker__search_result_team_conversations_header_title, item.name)
-        case ContactsSection                                => getString(item.title)
+        case ContactsSection                                => getString(R.string.people_picker__search_result_connections_non_searched_header_title)
         case DirectorySection                               => getString(R.string.people_picker__search_result_others_header_title)
         case IntegrationsSection                            => getString(R.string.integrations_picker__section_title)
       }

@@ -21,18 +21,12 @@ import com.waz.model.Name
 
 case class SectionViewItem(override val section: Int,
                            override val index:   Int,
-                           override val name:    Name = Name.Empty,
-                           title:                Int = 0)
+                           override val name:    Name = Name.Empty)
   extends SearchViewItem {
   import SearchViewItem._
 
   override val itemType: Int = SectionHeader
 }
-
-case class SectionViewModel(section:  Int,
-                            indexVal: Int,
-                            name:     Name = Name.Empty,
-                            title: Int = 0)
 
 object SectionViewItem {
   val TopUsersSection           = 0

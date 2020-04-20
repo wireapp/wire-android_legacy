@@ -117,13 +117,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       }
       val contactsList = (localResults ++ directoryTeamMembers).distinctBy(_.id)
       if (contactsList.nonEmpty) {
-        val contactsSectionTitle = if (searchController.filter.currentValue.forall(_.isEmpty)) {
-          R.string.people_picker__search_result_connections_non_searched_header_title
-        } else {
-          R.string.people_picker__search_result_connections_searched_header_title
-        }
-
-        mergedResult += SectionViewItem(ContactsSection, 0, teamName, contactsSectionTitle)
+        mergedResult += SectionViewItem(ContactsSection, 0, teamName)
 
         val contactsSection = contactsList.zipWithIndex.map { case (user, index) =>
           ConnectionViewItem(index, user, team.map(_.id), connected = true)
