@@ -1,9 +1,9 @@
 package com.waz.zclient.shared.user.mapper
 
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.datasources.remote.UserResponse
+import com.waz.zclient.storage.db.users.model.UserEntity
 
 class UserMapper {
 

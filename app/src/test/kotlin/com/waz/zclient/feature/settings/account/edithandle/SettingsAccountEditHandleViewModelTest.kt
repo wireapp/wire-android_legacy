@@ -6,7 +6,13 @@ import com.waz.zclient.core.exception.DatabaseError
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
-import com.waz.zclient.shared.user.handle.*
+import com.waz.zclient.shared.user.handle.HandleAlreadyExists
+import com.waz.zclient.shared.user.handle.HandleInvalid
+import com.waz.zclient.shared.user.handle.HandleIsAvailable
+import com.waz.zclient.shared.user.handle.HandleSameAsCurrent
+import com.waz.zclient.shared.user.handle.HandleTooLong
+import com.waz.zclient.shared.user.handle.HandleTooShort
+import com.waz.zclient.shared.user.handle.UnknownError
 import com.waz.zclient.shared.user.handle.usecase.ChangeHandleUseCase
 import com.waz.zclient.shared.user.handle.usecase.CheckHandleExistsParams
 import com.waz.zclient.shared.user.handle.usecase.CheckHandleExistsUseCase

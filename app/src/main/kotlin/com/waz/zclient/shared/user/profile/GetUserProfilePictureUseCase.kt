@@ -1,7 +1,7 @@
 package com.waz.zclient.shared.user.profile
 
-import com.waz.zclient.shared.assets.usecase.PublicAsset
 import com.waz.zclient.core.usecase.ObservableUseCase
+import com.waz.zclient.shared.assets.usecase.PublicAsset
 import com.waz.zclient.shared.user.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

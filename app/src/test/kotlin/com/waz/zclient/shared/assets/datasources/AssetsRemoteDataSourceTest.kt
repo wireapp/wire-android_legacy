@@ -1,8 +1,8 @@
 package com.waz.zclient.shared.assets.datasources
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.assets.AssetsApi
 import com.waz.zclient.core.network.NetworkHandler
+import com.waz.zclient.shared.assets.AssetsApi
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test

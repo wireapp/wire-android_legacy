@@ -1,11 +1,11 @@
 package com.waz.zclient.shared.assets
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.exception.ServerError
+import com.waz.zclient.core.functional.Either
 import com.waz.zclient.shared.assets.datasources.AssetsDataSource
 import com.waz.zclient.shared.assets.datasources.AssetsRemoteDataSource
 import com.waz.zclient.shared.assets.mapper.AssetMapper
-import com.waz.zclient.core.exception.ServerError
-import com.waz.zclient.core.functional.Either
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import okhttp3.ResponseBody
