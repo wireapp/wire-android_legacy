@@ -1,13 +1,14 @@
 package com.waz.zclient.shared.accounts.datasources
 
 import com.waz.zclient.UnitTest
+import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.shared.accounts.AccountMapper
 import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.shared.accounts.datasources.local.AccountsLocalDataSource
-import com.waz.zclient.core.functional.Either
-import com.waz.zclient.core.functional.map
-import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
+import com.waz.zclient.shared.accounts.datasources.remote.AccountsRemoteDataSource
 import com.waz.zclient.shared.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
@@ -29,14 +30,19 @@ class AccountsDataSourceTest : UnitTest() {
     private lateinit var accountMapper: AccountMapper
 
     @Mock
-    private lateinit var remoteDataSource: UsersRemoteDataSource
+    private lateinit var usersRemoteDataSource: UsersRemoteDataSource
+
+    @Mock
+    private lateinit var remoteDataSource: AccountsRemoteDataSource
 
     @Mock
     private lateinit var localDataSource: AccountsLocalDataSource
 
     @Before
     fun setup() {
-        accountsDataSource = AccountsDataSource(accountMapper, remoteDataSource, localDataSource)
+        accountsDataSource = AccountsDataSource(
+            accountMapper, remoteDataSource, usersRemoteDataSource, localDataSource
+        )
     }
 
     @Test
@@ -63,17 +69,28 @@ class AccountsDataSourceTest : UnitTest() {
 
         verify(localDataSource).removeAccount(accountMapper.toEntity(account))
         verifyNoMoreInteractions(localDataSource)
-        verifyNoInteractions(remoteDataSource)
+        verifyNoInteractions(usersRemoteDataSource)
     }
 
     @Test
     fun `given deleteAccountPermanently is called, then remote data source should request removal`() = runBlockingTest {
         accountsDataSource.deleteAccountPermanently()
 
-        verify(remoteDataSource).deleteAccountPermanently()
-        verifyNoMoreInteractions(remoteDataSource)
+        verify(usersRemoteDataSource).deleteAccountPermanently()
+        verifyNoMoreInteractions(usersRemoteDataSource)
         verifyNoInteractions(localDataSource)
     }
+
+    @Test
+    fun `given refresh and access tokens, when logout is called, calls remoteDataSource's logout method`() =
+        runBlockingTest {
+            val refreshToken = "refreshToken"
+            val accessToken = "accessToken"
+
+            accountsDataSource.logout(refreshToken, accessToken)
+
+            verify(remoteDataSource).logout(refreshToken, accessToken)
+        }
 
     private fun mockActiveAccount() = mock(ActiveAccount::class.java)
 

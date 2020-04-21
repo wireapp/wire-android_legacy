@@ -15,8 +15,9 @@ class LogoutUseCase(
     private val accessTokenRepository: AccessTokenRepository
 ) : UseCase<Unit, Unit>() {
 
-    override suspend fun run(params: Unit): Either<Failure, Unit> =
-        accessTokenRepository.logout()
+    override suspend fun run(params: Unit): Either<Failure, Unit> = with(accessTokenRepository) {
+        accountsRepository.logout(refreshToken().token, accessToken().token)
+    }
 
     private fun updateActiveAccounts(activeAccounts: List<ActiveAccount>) = runBlocking {
         val currentAccount = activeAccounts.first { it.id == globalPreferences.activeUserId }

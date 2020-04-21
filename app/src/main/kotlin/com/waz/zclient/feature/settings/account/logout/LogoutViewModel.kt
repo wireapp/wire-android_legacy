@@ -27,5 +27,4 @@ class LogoutViewModel(private val logoutUseCase: LogoutUseCase) : ViewModel() {
     private fun logoutFailed(failure: Failure) {
         _errorLiveData.postValue(failure)
     }
-
 }

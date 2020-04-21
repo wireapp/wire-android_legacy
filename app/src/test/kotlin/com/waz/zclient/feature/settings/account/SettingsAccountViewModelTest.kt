@@ -1,11 +1,11 @@
 package com.waz.zclient.feature.settings.account
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.email.ChangeEmailParams
 import com.waz.zclient.shared.user.email.ChangeEmailUseCase
