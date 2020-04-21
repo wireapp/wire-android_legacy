@@ -45,12 +45,10 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
 
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
-
         confirmationButton.setOnClickListener {
-            val email = createPersonalAccountWithEmailEditText.text.toString()
             with(createPersonalAccountViewModel) {
-                sendActivationCode(email)
-                saveEmail(email)
+                sendActivationCode(createPersonalAccountWithEmailEditText.text.toString())
+
             }
         }
     }
@@ -58,6 +56,7 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
     private fun observeActivationCodeData() {
         with(createPersonalAccountViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
+                saveEmail(createPersonalAccountWithEmailEditText.text.toString())
                 showEmailVerificationScreen()
                 showEmailError(String.empty())
             }
@@ -68,10 +67,9 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
     }
 
     private fun showEmailVerificationScreen() {
-        val email = createPersonalAccountWithEmailEditText.text.toString()
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
-            CreatePersonalAccountEmailVerificationFragment.newInstance(email)
+            CreatePersonalAccountPinCodeFragment.newInstance()
         )
     }
 

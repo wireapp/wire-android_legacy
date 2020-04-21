@@ -420,6 +420,7 @@ dependencies {
     implementation BuildDependencies.rebound
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
+    implementation BuildDependencies.pinEditText
 
     // Unit Tests
     testImplementation TestDependencies.jUnit
