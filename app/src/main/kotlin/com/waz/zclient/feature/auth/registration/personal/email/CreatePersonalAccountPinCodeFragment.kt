@@ -9,7 +9,6 @@ import com.poovam.pinedittextfield.PinField.OnTextCompleteListener
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
-import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_pin_code.*
 
@@ -18,50 +17,48 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
 ) {
 
     //TODO handle no internet connections status
-    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
-        by viewModel(REGISTRATION_SCOPE_ID)
-
-    private val emailCredentialsViewModel: EmailCredentialsViewModel
+    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
-
-    private val email: String
-        get() = emailCredentialsViewModel.email()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        observeEmailValue()
         observeActivateEmailData()
-        initChangeMailListener()
-        initDescriptionTextView()
-        initResendCodeListener()
         initPinCodeListener()
+        initChangeMailListener()
     }
 
-    private fun initDescriptionTextView() {
+    private fun observeEmailValue() {
+        createPersonalAccountViewModel.emailLiveData.observe(viewLifecycleOwner) {
+            initDescriptionTextView(it)
+            initResendCodeListener(it)
+        }
+    }
+
+    private fun initDescriptionTextView(email: String) {
         createPersonalAccountPinCodeDescriptionTextView.text =
             getString(R.string.email_verification_description, email)
     }
 
-    private fun initResendCodeListener() {
+    private fun initResendCodeListener(email: String) {
         createPersonalAccountPinCodeResendCodeTextView.setOnClickListener {
-            createPersonalAccountWithEmailViewModel.sendActivationCode(email)
+            createPersonalAccountViewModel.sendActivationCode(email)
         }
     }
 
     private fun initPinCodeListener() {
         createPersonalAccountPinCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
-            override fun onTextComplete(code: String): Boolean {
-                createPersonalAccountWithEmailViewModel.activateEmail(email, code)
+            override fun onTextComplete(enteredText: String): Boolean {
+                createPersonalAccountViewModel.activateEmail(enteredText)
                 return true
             }
         }
     }
 
     private fun observeActivateEmailData() {
-        with(createPersonalAccountWithEmailViewModel) {
+        with(createPersonalAccountViewModel) {
             activateEmailSuccessLiveData.observe(viewLifecycleOwner) {
-                emailCredentialsViewModel.saveActivationCode(
-                    createPersonalAccountPinCodePinEditText.text.toString()
-                )
+                createPersonalAccountViewModel.saveActivationCode(createPersonalAccountPinCodePinEditText.text.toString())
                 showEnterNameScreen()
             }
             activateEmailErrorLiveData.observe(viewLifecycleOwner) {
@@ -74,7 +71,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     private fun showEnterNameScreen() {
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
-            CreatePersonalAccountNameFragment.newInstance()
+            CreatePersonalAccountNameInputFragment.newInstance()
         )
     }
 
