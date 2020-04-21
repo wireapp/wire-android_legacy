@@ -1,8 +1,8 @@
 package com.waz.zclient.shared.clients.mapper
 
-import com.waz.zclient.shared.clients.datasources.remote.ClientResponse
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientLocation
+import com.waz.zclient.shared.clients.datasources.remote.ClientResponse
 import com.waz.zclient.storage.db.clients.model.ClientEntity
 
 class ClientMapper {

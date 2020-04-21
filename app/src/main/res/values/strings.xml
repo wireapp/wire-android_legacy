@@ -1520,6 +1520,11 @@
     <string name="create_personal_account_password_input_title">Set Password</string>
     <string name="create_personal_account_password_input_edit_text_hint">PASSWORD</string>
 
+    <!-- Create Personal Account - Registration errors -->
+    <string name="create_personal_account_unauthorized_email_error">Unauthorized e-mail address.</string>
+    <string name="create_personal_account_invalid_activation_code_error">Invalid activation code.</string>
+    <string name="create_personal_account_email_in_use_error">The given e-mail address is in use.</string>
+
     <!-- Composite Message -->
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>

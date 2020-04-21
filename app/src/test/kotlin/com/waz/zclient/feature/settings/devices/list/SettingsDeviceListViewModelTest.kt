@@ -4,10 +4,10 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.shared.clients.usecase.GetAllClientsUseCase
+import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.clients.Client
 import com.waz.zclient.shared.clients.ClientLocation
-import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.shared.clients.usecase.GetAllClientsUseCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule

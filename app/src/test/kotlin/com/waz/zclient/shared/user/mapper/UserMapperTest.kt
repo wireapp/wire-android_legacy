@@ -1,9 +1,9 @@
 package com.waz.zclient.shared.user.mapper
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.datasources.remote.UserResponse
+import com.waz.zclient.storage.db.users.model.UserEntity
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 import org.mockito.Mock

@@ -747,6 +747,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
     }
 
     private fun createButtonsTable(database: SupportSQLiteDatabase) {
+        database.execSQL("DROP TABLE IF EXISTS Buttons")
         database.execSQL("""
             CREATE TABLE IF NOT EXISTS Buttons (
                 message_id TEXT NOT NULL DEFAULT '', 

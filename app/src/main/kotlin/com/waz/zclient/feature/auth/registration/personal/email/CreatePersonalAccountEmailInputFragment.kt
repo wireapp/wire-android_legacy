@@ -8,15 +8,16 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
-import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.*
 
 class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_create_personal_account_email_input) {
 
     //TODO handle no internet connections status
+    //TODO Add loading status
     private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
-        by viewModel(REGISTRATION_SCOPE_ID)
+        by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -47,7 +48,10 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
 
         confirmationButton.setOnClickListener {
             val email = createPersonalAccountWithEmailEditText.text.toString()
-            createPersonalAccountViewModel.sendActivationCode(email)
+            with(createPersonalAccountViewModel) {
+                sendActivationCode(email)
+                saveEmail(email)
+            }
         }
     }
 

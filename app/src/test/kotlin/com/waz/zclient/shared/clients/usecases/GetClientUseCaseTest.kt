@@ -2,8 +2,8 @@ package com.waz.zclient.shared.clients.usecases
 
 import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
-import com.waz.zclient.shared.clients.ClientsRepository
 import com.waz.zclient.shared.clients.Client
+import com.waz.zclient.shared.clients.ClientsRepository
 import com.waz.zclient.shared.clients.usecase.GetClientUseCase
 import com.waz.zclient.shared.clients.usecase.GetSpecificClientParams
 import kotlinx.coroutines.CancellationException

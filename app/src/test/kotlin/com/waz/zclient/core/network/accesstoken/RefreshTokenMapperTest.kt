@@ -5,7 +5,7 @@ import org.amshove.kluent.shouldBe
 import org.junit.Before
 import org.junit.Test
 
-class RefreshTokenMapperTest: UnitTest() {
+class RefreshTokenMapperTest : UnitTest() {
 
     private lateinit var refreshTokenMapper: RefreshTokenMapper
 

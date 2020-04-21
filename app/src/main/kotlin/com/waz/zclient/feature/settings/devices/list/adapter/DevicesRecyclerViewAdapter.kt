@@ -7,8 +7,8 @@ import androidx.annotation.NonNull
 import androidx.recyclerview.widget.RecyclerView
 import com.waz.zclient.R
 import com.waz.zclient.core.ui.list.RecyclerViewItemClickListener
-import com.waz.zclient.feature.settings.devices.ClientItem
 import com.waz.zclient.core.utilities.DateAndTimeUtils
+import com.waz.zclient.feature.settings.devices.ClientItem
 import kotlinx.android.synthetic.main.item_view_devices.view.*
 
 class DevicesRecyclerViewAdapter : RecyclerView.Adapter<DevicesViewHolder>() {

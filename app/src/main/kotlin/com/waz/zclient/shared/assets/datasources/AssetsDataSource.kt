@@ -1,10 +1,10 @@
 package com.waz.zclient.shared.assets.datasources
 
-import com.waz.zclient.shared.assets.AssetsRepository
-import com.waz.zclient.shared.assets.mapper.AssetMapper
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.map
+import com.waz.zclient.shared.assets.AssetsRepository
+import com.waz.zclient.shared.assets.mapper.AssetMapper
 import java.io.InputStream
 
 class AssetsDataSource(

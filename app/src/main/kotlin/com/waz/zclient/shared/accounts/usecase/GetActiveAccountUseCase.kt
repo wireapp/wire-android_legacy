@@ -1,13 +1,13 @@
 package com.waz.zclient.shared.accounts.usecase
 
-import com.waz.zclient.shared.accounts.AccountsRepository
-import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.functional.getOrElse
 import com.waz.zclient.core.usecase.UseCase
+import com.waz.zclient.shared.accounts.AccountsRepository
+import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.shared.user.UsersRepository
 import kotlinx.coroutines.runBlocking
 

@@ -1,8 +1,8 @@
 package com.waz.zclient.shared.user.handle.usecase
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.user.UsersRepository
 import com.waz.zclient.shared.user.User
+import com.waz.zclient.shared.user.UsersRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

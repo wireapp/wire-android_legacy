@@ -4,8 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.core.functional.onSuccess
-import com.waz.zclient.core.permissions.result.PermissionDenied
 import com.waz.zclient.core.permissions.result.PermissionContinued
+import com.waz.zclient.core.permissions.result.PermissionDenied
 import org.amshove.kluent.shouldBe
 import org.junit.Test
 
