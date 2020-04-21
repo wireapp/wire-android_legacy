@@ -23,34 +23,52 @@
     android:layout_height="match_parent"
     android:background="@color/athens_gray_light">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/topGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.228" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/createPersonalAccountNameTitleTextView"
+        style="@style/TextView.RobotoLight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/create_personal_account_name_input_title"
+        android:textColor="@color/black"
+        android:textSize="@dimen/create_personal_account_name_input_title_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
+
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/createPersonalAccountWithPhoneTextInputLayout"
+        android:id="@+id/createPersonalAccountNameTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/create_personal_account_text_input_layout_margin_top"
-        android:background="@color/white"
+        android:layout_marginTop="@dimen/create_personal_account_name_input_input_layout_margin_top"
         app:hintEnabled="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountNameTitleTextView">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/createPersonalAccountWithPhoneEditText"
+            android:id="@+id/createPersonalAccountNameEditText"
             style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/create_personal_account_with_phone_edit_text_hint"
-            android:inputType="phone" />
+            android:hint="@string/create_personal_account_name_input_edit_text_hint"
+            android:inputType="textEmailAddress" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/confirmationButton"
+        android:id="@+id/createPersonalAccountNameConfirmationButton"
         style="@style/Button.Authentication"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountWithPhoneTextInputLayout"
-        app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithPhoneTextInputLayout"
-        app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithPhoneTextInputLayout" />
+        app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountNameTextInputLayout"
+        app:layout_constraintTop_toTopOf="@+id/createPersonalAccountNameTextInputLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

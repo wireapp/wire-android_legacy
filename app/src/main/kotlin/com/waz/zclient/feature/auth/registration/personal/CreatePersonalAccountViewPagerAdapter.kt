@@ -3,8 +3,8 @@ package com.waz.zclient.feature.auth.registration.personal
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailInputFragment
-import com.waz.zclient.feature.auth.registration.personal.phone.CreatePersonalAccountWithPhoneFragment
+import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountEmailFragment
+import com.waz.zclient.feature.auth.registration.personal.phone.CreatePersonalAccountPhoneFragment
 
 class CreatePersonalAccountViewPagerAdapter(fragmentActivity: FragmentActivity) :
     FragmentStateAdapter(fragmentActivity) {
@@ -14,8 +14,8 @@ class CreatePersonalAccountViewPagerAdapter(fragmentActivity: FragmentActivity) 
     override fun createFragment(position: Int): Fragment {
         var fragment = Fragment()
         when (position) {
-            EMAIL_TAB_POSITION -> fragment = CreatePersonalAccountEmailInputFragment.newInstance()
-            PHONE_TAB_POSITION -> fragment = CreatePersonalAccountWithPhoneFragment.newInstance()
+            EMAIL_TAB_POSITION -> fragment = CreatePersonalAccountEmailFragment.newInstance()
+            PHONE_TAB_POSITION -> fragment = CreatePersonalAccountPhoneFragment.newInstance()
         }
         return fragment
     }

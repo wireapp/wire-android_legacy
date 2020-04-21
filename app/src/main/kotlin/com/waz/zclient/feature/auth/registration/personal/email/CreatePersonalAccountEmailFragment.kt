@@ -10,9 +10,9 @@ import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.*
+import kotlinx.android.synthetic.main.fragment_create_personal_account_email.*
 
-class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_create_personal_account_email_input) {
+class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_personal_account_email) {
 
     //TODO handle no internet connections status
     //TODO Add loading status
@@ -34,20 +34,20 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
     }
 
     private fun updateConfirmationButtonStatus(enabled: Boolean) {
-        confirmationButton.isEnabled = enabled
+        createPersonalAccountEmailConfirmationButton.isEnabled = enabled
     }
 
     private fun initEmailChangedListener() {
-        createPersonalAccountWithEmailEditText.doAfterTextChanged {
+        createPersonalAccountEmailEditText.doAfterTextChanged {
             createPersonalAccountViewModel.validateEmail(it.toString())
         }
     }
 
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
-        confirmationButton.setOnClickListener {
+        createPersonalAccountEmailConfirmationButton.setOnClickListener {
             with(createPersonalAccountViewModel) {
-                sendActivationCode(createPersonalAccountWithEmailEditText.text.toString())
+                sendActivationCode(createPersonalAccountEmailEditText.text.toString())
             }
         }
     }
@@ -55,7 +55,7 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
     private fun observeActivationCodeData() {
         with(createPersonalAccountViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
-                saveEmail(createPersonalAccountWithEmailEditText.text.toString())
+                saveEmail(createPersonalAccountEmailEditText.text.toString())
                 showEmailVerificationScreen()
                 showEmailError(String.empty())
             }
@@ -73,10 +73,10 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
     }
 
     private fun showEmailError(errorMessage: String) {
-        createPersonalAccountWithEmailTextInputLayout.error = errorMessage
+        createPersonalAccountEmailTextInputLayout.error = errorMessage
     }
 
     companion object {
-        fun newInstance() = CreatePersonalAccountEmailInputFragment()
+        fun newInstance() = CreatePersonalAccountEmailFragment()
     }
 }

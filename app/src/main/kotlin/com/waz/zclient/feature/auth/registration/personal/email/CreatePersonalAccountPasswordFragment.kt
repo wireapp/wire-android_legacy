@@ -8,10 +8,9 @@ import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.confirmationButton
-import kotlinx.android.synthetic.main.fragment_create_personal_account_password_input.*
+import kotlinx.android.synthetic.main.fragment_create_personal_account_password.*
 
-class CreatePersonalAccountPasswordInputFragment : Fragment(R.layout.fragment_create_personal_account_password_input) {
+class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_personal_account_password) {
 
     private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
@@ -23,13 +22,13 @@ class CreatePersonalAccountPasswordInputFragment : Fragment(R.layout.fragment_cr
     }
 
     private fun initConfirmationButton() {
-        confirmationButton.setOnClickListener {
+        createPersonalAccountPasswordConfirmationButton.setOnClickListener {
             registerNewUser()
         }
     }
 
     private fun registerNewUser() {
-        createPersonalAccountViewModel.register(createPersonalAccountPasswordInputEditText.text.toString())
+        createPersonalAccountViewModel.register(createPersonalAccountPasswordEditText.text.toString())
     }
 
     private fun observeRegistrationData() {
@@ -47,6 +46,6 @@ class CreatePersonalAccountPasswordInputFragment : Fragment(R.layout.fragment_cr
     }
 
     companion object {
-        fun newInstance() = CreatePersonalAccountPasswordInputFragment()
+        fun newInstance() = CreatePersonalAccountPasswordFragment()
     }
 }
