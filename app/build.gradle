@@ -91,7 +91,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode System.getenv("BUILD_NUMBER") as Integer ?: 99999
-        versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode
+        versionName = (System.getenv("CLIENT_VERSION") ?: Versions.ANDROID_CLIENT_MAJOR_VERSION) + android.defaultConfig.versionCode
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
 
@@ -209,7 +209,7 @@ android {
     productFlavors {
         dev {
             applicationId "com.waz.zclient.dev"
-            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-dev"
+            versionName android.defaultConfig.versionName + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_dev",
                                     sharedUserId           : "",
@@ -221,7 +221,7 @@ android {
 
         candidate {
             applicationId "com.wire.candidate"
-            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-candidate"
+            versionName android.defaultConfig.versionName + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_candidate",
                                     sharedUserId           : "",
@@ -246,7 +246,7 @@ android {
 
         internal {
             applicationId "com.wire.internal"
-            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-internal"
+            versionName android.defaultConfig.versionName + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
                                     applicationIcon  : "@mipmap/ic_launcher_wire_internal",
                                     sharedUserId     : "",
@@ -259,7 +259,7 @@ android {
 
         experimental {
             applicationId "com.wire.x"
-            versionName Versions.ANDROID_CLIENT_MAJOR_VERSION + android.defaultConfig.versionCode + "-exp"
+            versionName android.defaultConfig.versionName + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_playground",
                                     sharedUserId           : "",
@@ -486,9 +486,9 @@ android.applicationVariants.all { variant ->
     variant.outputs.each { output ->
         def newApkName
         if(buildtimeConfiguration.isCustomBuild()) {
-            newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${Versions.ANDROID_CLIENT_MAJOR_VERSION}${android.defaultConfig.versionCode}.apk"
+            newApkName = "${appName}-${buildtimeConfiguration.configuration.applicationId}-${output.baseName}-${android.defaultConfig.versionName}.apk"
         } else {
-            newApkName = "${appName}-${output.baseName}-${Versions.ANDROID_CLIENT_MAJOR_VERSION}${android.defaultConfig.versionCode}.apk"
+            newApkName = "${appName}-${output.baseName}-${android.defaultConfig.versionName}.apk"
         }
         output.outputFileName = new File("../..", newApkName)
     }

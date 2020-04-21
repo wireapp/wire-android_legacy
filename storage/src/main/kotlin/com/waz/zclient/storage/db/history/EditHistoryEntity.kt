@@ -10,9 +10,9 @@ data class EditHistoryEntity(
     @ColumnInfo(name = "original_id")
     val originalId: String,
 
-    @ColumnInfo(name = "updated_id")
+    @ColumnInfo(name = "updated_id", defaultValue = "")
     val updatedId: String,
 
-    @ColumnInfo(name = "timestamp")
+    @ColumnInfo(name = "timestamp", defaultValue = "0")
     val timestamp: Int
 )

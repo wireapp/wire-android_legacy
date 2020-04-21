@@ -11,4 +11,7 @@ class ActivationRemoteDataSource(
 ) : ApiService() {
     suspend fun sendEmailActivationCode(email: String): Either<Failure, Unit> =
         request { activationApi.sendActivationCode(SendActivationCodeRequest(email = email)) }
+
+    suspend fun activateEmail(email: String, code: String): Either<Failure, Unit> =
+        request { activationApi.activate(ActivationRequest(email = email, code = code, dryrun = true)) }
 }

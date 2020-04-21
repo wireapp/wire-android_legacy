@@ -36,6 +36,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
   def syncSearchQuery(query: SearchQuery): Future[SyncResult] = client.getContacts(query).future.map {
     case Right(results) =>
       debug(l"syncSearchQuery got: ${results.documents.map(_.team)}")
+
       userSearch.updateSearchResults(query, results)
       SyncResult.Success
     case Left(error)    =>

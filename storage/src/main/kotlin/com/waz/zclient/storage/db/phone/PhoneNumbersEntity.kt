@@ -13,9 +13,9 @@ import androidx.room.Index
     ]
 )
 data class PhoneNumbersEntity(
-    @ColumnInfo(name = "contact")
+    @ColumnInfo(name = "contact", defaultValue = "")
     val contactId: String,
 
-    @ColumnInfo(name = "phone_number")
+    @ColumnInfo(name = "phone_number", defaultValue = "")
     val phoneNumber: String
 )

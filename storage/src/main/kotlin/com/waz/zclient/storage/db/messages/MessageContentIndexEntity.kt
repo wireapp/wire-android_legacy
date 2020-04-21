@@ -8,15 +8,15 @@ import androidx.room.Fts4
 @Entity(tableName = "MessageContentIndex")
 data class MessageContentIndexEntity(
 
-    @ColumnInfo(name = "message_id")
+    @ColumnInfo(name = "message_id", defaultValue = "")
     val messageId: String,
 
-    @ColumnInfo(name = "conv_id")
+    @ColumnInfo(name = "conv_id", defaultValue = "")
     val convId: String,
 
-    @ColumnInfo(name = "content")
+    @ColumnInfo(name = "content", defaultValue = "")
     val content: String,
 
-    @ColumnInfo(name = "time")
+    @ColumnInfo(name = "time", defaultValue = "0")
     val timestamp: Int
 )

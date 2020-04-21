@@ -1499,18 +1499,27 @@
     <string name="authentication_tab_layout_title_email">EMAIL</string>
     <string name="authentication_tab_layout_title_phone">PHONE</string>
 
-    <!-- Create Personal Account screen -->
+    <!-- Create Personal Account - Main screen -->
     <string name="create_personal_account_title">Create an account</string>
     <string name="create_personal_account_with_email_edit_text_hint">EMAIL</string>
     <string name="create_personal_account_with_phone_edit_text_hint">PHONE NUMBER</string>
     <string name="create_personal_account_with_email_email_blacklisted_error">This email address is not allowed.</string>
     <string name="create_personal_account_with_email_email_in_use_error">This email address you used is already linked to an account.\nUse another email address or try to login if you own this account.</string>
 
-    <!-- Email Verification screen -->
+    <!-- Create Personal Account - Email Verification screen -->
     <string name="email_verification_title">You\'ve got mail</string>
     <string name="email_verification_description">Enter the verification code we sent to %s</string>
     <string name="email_verification_resend_code">RESEND CODE</string>
     <string name="email_verification_change_email">CHANGE EMAIL</string>
+    <string name="email_verification_invalid_code_error">Please enter a valid code</string>
+
+    <!-- Create Personal Account - Name screen -->
+    <string name="create_personal_account_name_input_title">Your name</string>
+    <string name="create_personal_account_name_input_edit_text_hint">FULL NAME</string>
+
+    <!-- Create Personal Account - Password screen -->
+    <string name="create_personal_account_password_input_title">Set Password</string>
+    <string name="create_personal_account_password_input_edit_text_hint">PASSWORD</string>
 
     <!-- Composite Message -->
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>

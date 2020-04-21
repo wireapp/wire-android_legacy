@@ -87,7 +87,6 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
     }
   }
 
-
   private def verifyTeamSync(has_more: Boolean) {
     val teamId = TeamId()
     val teamData = TeamData(teamId, "name", UserId(), AssetId())

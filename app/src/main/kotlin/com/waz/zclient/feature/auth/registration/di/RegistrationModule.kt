@@ -15,7 +15,7 @@ val registrationModules: List<Module>
 
 val createPersonalAccountModule: Module = module {
     scope(named(REGISTRATION_SCOPE)) {
-        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get()) }
+        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get()) }
         factory { ValidateEmailUseCase() }
     }
 }

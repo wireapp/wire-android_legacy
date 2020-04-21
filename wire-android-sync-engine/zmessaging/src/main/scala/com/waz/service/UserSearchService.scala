@@ -246,19 +246,19 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     }
   }
 
+
   private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
-      for {
-        dir   <- if (!query.isEmpty) {
-          userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
-        } else Signal.const(IndexedSeq.empty[UserData])
-        _     =  verbose(l"directory search results: $dir")
-        exact <- exactMatchUser.orElse(Signal.const(None))
-        _     =  verbose(l"exact match: $exact")
-      } yield
-        (dir, exact) match {
-          case (_, None)           => dir
-          case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
-        }
+    for {
+      dir   <- if (!query.isEmpty)
+                 userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
+               else Signal.const(IndexedSeq.empty[UserData])
+      _     =  verbose(l"directory search results: $dir")
+      exact <- exactMatchUser.orElse(Signal.const(None))
+      _     =  verbose(l"exact match: $exact")
+    } yield (dir, exact) match {
+      case (_, None)           => dir
+      case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
+    }
 
   override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
     val users = unapply(results)

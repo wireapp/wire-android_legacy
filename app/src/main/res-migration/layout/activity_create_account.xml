@@ -30,6 +30,7 @@
         android:layout_margin="@dimen/back_button_margin"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="?attr/homeAsUpIndicator"
+        android:tint="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

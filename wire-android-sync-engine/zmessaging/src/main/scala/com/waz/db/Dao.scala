@@ -118,17 +118,33 @@ abstract class BaseDao[T] extends Reader[T] with DerivedLogTag {
 
   def iteratingMultiple(cursors: => Seq[DBCursor]): Managed[Iterator[T]] = iteratingMultipleWithReader(this)(cursors)
 
-  def single(c: DBCursor, close: Boolean = true): Option[T] = try { if (c.moveToFirst()) Option(apply(c)) else None } finally { if (close) c.close() }
+  def single(c: DBCursor, close: Boolean = true): Option[T] =
+    try { if (c.moveToFirst()) Option(apply(c)) else None }
+    catch { case ex: Throwable =>
+      error(l"Error in db operation", ex)
+      throw ex
+    }
+    finally { if (close) c.close() }
 
   def list(c: DBCursor, close: Boolean = true, filter: T => Boolean = { _ => true }): Vector[T] =
     CursorIterator.list[T](c, close, filter)(this)
 
   def foreach(c: DBCursor, f: T => Unit): Unit =
-    try { new CursorIterator(c)(this).foreach(f) } finally { c.close() }
+    try { new CursorIterator(c)(this).foreach(f) }
+    catch { case ex: Throwable =>
+      error(l"Error in db operation", ex)
+      throw ex
+    }
+    finally { c.close() }
 
   def foreach(f: T => Unit)(implicit db: DB): Unit = {
     val c = listCursor
-    try { new CursorIterator(c)(this).foreach(f) } finally { c.close() }
+    try { new CursorIterator(c)(this).foreach(f) }
+    catch { case ex: Throwable =>
+      error(l"Error in db operation", ex)
+      throw ex
+    }
+    finally { c.close() }
   }
 
   def find[A](col: Column[A], value: A)(implicit db: DB): DBCursor = db.query(table.name, null, s"${col.name} = ?", Array(col(value)), null, null, null)

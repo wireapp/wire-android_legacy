@@ -52,7 +52,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
             _           <- Signal(search.syncSearchResults(query))
             convId      <- createConvController.convId
             teamOnly    <- createConvController.teamOnly
-            results     <- convId match {
+            results <- convId match {
               case Some(cId) => search.usersToAddToConversation(query, cId)
               case None => search.usersForNewConversation(query, teamOnly)
             }

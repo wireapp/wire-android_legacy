@@ -14,15 +14,15 @@ data class ContactsEntity(
     @ColumnInfo(name = "_id")
     val id: String,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", defaultValue = "")
     val name: String,
 
-    @ColumnInfo(name = "name_source")
+    @ColumnInfo(name = "name_source", defaultValue = "0")
     val nameType: Int,
 
-    @ColumnInfo(name = "sort_key")
+    @ColumnInfo(name = "sort_key", defaultValue = "")
     val sortKey: String,
 
-    @ColumnInfo(name = "search_key")
+    @ColumnInfo(name = "search_key", defaultValue = "")
     val searchKey: String
 )
