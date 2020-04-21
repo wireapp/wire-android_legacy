@@ -73,7 +73,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     private fun showEnterNameScreen() {
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
-            CreatePersonalAccountNameInputFragment.newInstance()
+            CreatePersonalAccountNameFragment.newInstance()
         )
     }
 
