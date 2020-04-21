@@ -1,11 +1,12 @@
 package com.waz.zclient.feature.settings.account
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.observeOnce
+import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.email.ChangeEmailParams
 import com.waz.zclient.shared.user.email.ChangeEmailUseCase
@@ -20,15 +21,20 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.lenient
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class SettingsAccountViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var viewModel: SettingsAccountViewModel
 
@@ -149,16 +155,18 @@ class SettingsAccountViewModelTest : UnitTest() {
 
     @Test
     fun `given account name is updated and fails with HttpError, then error observer is notified`() {
-        val changeNameParams = mock(ChangeNameParams::class.java)
+        val changeNameParams = ChangeNameParams(TEST_NAME)
 
         runBlockingTest {
-            lenient().`when`(changeNameUseCase.run(changeNameParams)).thenReturn(Either.Left(ServerError))
-        }
+            `when`(changeNameUseCase.run(changeNameParams)).thenReturn(Either.Left(ServerError))
 
-        viewModel.updateName(TEST_NAME)
+            viewModel.updateName(TEST_NAME)
 
-        viewModel.errorLiveData.observeOnce {
-            it shouldBe "Failure: $ServerError"
+            verify(changeNameUseCase).run(changeNameParams)
+
+            viewModel.errorLiveData.observeOnce {
+                assert(it == "Failure: $ServerError")
+            }
         }
 
     }

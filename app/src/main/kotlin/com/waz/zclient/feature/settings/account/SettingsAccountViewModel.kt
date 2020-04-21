@@ -5,11 +5,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.waz.zclient.shared.accounts.ActiveAccount
-import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.core.usecase.runUseCase
+import com.waz.zclient.shared.accounts.ActiveAccount
+import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
 import com.waz.zclient.shared.user.email.ChangeEmailParams
 import com.waz.zclient.shared.user.email.ChangeEmailUseCase
@@ -75,7 +76,7 @@ class SettingsAccountViewModel(
     }
 
     fun updateName(name: String) {
-        changeNameUseCase(viewModelScope, ChangeNameParams(name)) {
+        viewModelScope.runUseCase(changeNameUseCase, ChangeNameParams(name)) {
             it.fold(::handleError) {}
         }
     }

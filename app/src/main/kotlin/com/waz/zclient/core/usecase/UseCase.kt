@@ -12,6 +12,7 @@ abstract class UseCase<out Type, in Params> where Type : Any {
 
     abstract suspend fun run(params: Params): Either<Failure, Type>
 
+    //All the references to this will be replaced by runUseCase
     open operator fun invoke(
         scope: CoroutineScope,
         params: Params,
@@ -21,4 +22,14 @@ abstract class UseCase<out Type, in Params> where Type : Any {
         val backgroundJob = scope.async(dispatcher) { run(params) }
         scope.launch { onResult(backgroundJob.await()) }
     }
+}
+
+fun <T, P> CoroutineScope.runUseCase(
+    useCase: UseCase<T, P>,
+    params: P, dispatcher:
+    CoroutineDispatcher = Dispatchers.IO,
+    onResult: ((Either<Failure, T>) -> Unit) = {}) where T: Any {
+
+    val backgroundJob = async(dispatcher) { useCase.run(params) }
+    launch { onResult(backgroundJob.await()) }
 }
