@@ -5,7 +5,6 @@ import com.waz.zclient.core.network.accesstoken.AccessToken
 import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.network.accesstoken.RefreshToken
 import com.waz.zclient.shared.accounts.AccountsRepository
-import com.waz.zclient.storage.pref.global.GlobalPreferences
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.mock
@@ -19,9 +18,6 @@ import org.mockito.Mockito.verify
 class LogoutUseCaseTest : UnitTest() {
 
     @Mock
-    private lateinit var globalPreferences: GlobalPreferences
-
-    @Mock
     private lateinit var accountsRepository: AccountsRepository
 
     @Mock
@@ -31,7 +27,7 @@ class LogoutUseCaseTest : UnitTest() {
 
     @Before
     fun setUp() {
-        logoutUseCase = LogoutUseCase(globalPreferences, accountsRepository, accessTokenRepository)
+        logoutUseCase = LogoutUseCase(accountsRepository, accessTokenRepository)
     }
 
     @Test
