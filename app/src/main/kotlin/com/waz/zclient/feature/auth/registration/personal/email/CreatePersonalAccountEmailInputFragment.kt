@@ -48,7 +48,6 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
         confirmationButton.setOnClickListener {
             with(createPersonalAccountViewModel) {
                 sendActivationCode(createPersonalAccountWithEmailEditText.text.toString())
-
             }
         }
     }

@@ -58,7 +58,9 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     private fun observeActivateEmailData() {
         with(createPersonalAccountViewModel) {
             activateEmailSuccessLiveData.observe(viewLifecycleOwner) {
-                createPersonalAccountViewModel.saveActivationCode(createPersonalAccountPinCodePinEditText.text.toString())
+                createPersonalAccountViewModel.saveActivationCode(
+                    createPersonalAccountPinCodePinEditText.text.toString()
+                )
                 showEnterNameScreen()
             }
             activateEmailErrorLiveData.observe(viewLifecycleOwner) {
