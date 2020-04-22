@@ -20,5 +20,5 @@ class TokenService(
 
     private fun generateTokenQuery(accessToken: String) = mapOf("access_token" to accessToken)
 
-    private fun generateCookieHeader(refreshToken: String) = mapOf("cookie" to "zuid=$refreshToken")
+    private fun generateCookieHeader(refreshToken: String) = mapOf("Cookie" to "zuid=$refreshToken")
 }

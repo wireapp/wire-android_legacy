@@ -8,14 +8,11 @@ import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 class AccountsRemoteDataSourceTest : UnitTest() {
-
-    @Mock
-    private lateinit var networkHandler: NetworkHandler
 
     @Mock
     private lateinit var tokenService: TokenService
@@ -24,8 +21,7 @@ class AccountsRemoteDataSourceTest : UnitTest() {
 
     @Before
     fun setUp() {
-        `when`(networkHandler.isConnected).thenReturn(true)
-        accountsRemoteDataSource = AccountsRemoteDataSource(tokenService, networkHandler)
+        accountsRemoteDataSource = AccountsRemoteDataSource(tokenService, mock(NetworkHandler::class.java))
     }
 
     @Test
