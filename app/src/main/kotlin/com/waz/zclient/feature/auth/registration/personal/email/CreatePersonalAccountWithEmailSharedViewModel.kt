@@ -16,6 +16,7 @@ class CreatePersonalAccountWithEmailSharedViewModel : ViewModel() {
         it.email
     }
 
+    //TODO Using SavedStateHandle with Koin to save the data
     fun saveEmail(email: String) {
         _credentialsLiveData.value?.email = email
     }
