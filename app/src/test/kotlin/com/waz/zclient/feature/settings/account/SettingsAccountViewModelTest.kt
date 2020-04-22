@@ -165,7 +165,7 @@ class SettingsAccountViewModelTest : UnitTest() {
             verify(changeNameUseCase).invoke(changeNameParams)
 
             viewModel.errorLiveData.observeOnce {
-//              assert(it == "sdfsf") fails here, as it should be
+//              assert(it == "sdfsf") //fails here, as it should be
                 assert(it == "Failure: $ServerError")
             }
         }
