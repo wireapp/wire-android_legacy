@@ -24,6 +24,7 @@ import com.waz.model._
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncResult
 import com.waz.sync.client.TeamsClient
+import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
@@ -45,19 +46,24 @@ class TeamsSyncHandlerImpl(userId:    UserId,
 
   import Threading.Implicits.Background
 
-  // TODO: rewrite with for/yield
   override def syncTeam(): Future[SyncResult] = teamId match {
-    case Some(id) => client.getTeamData(id).future.flatMap {
-      case Right(data) => client.getTeamMembers(id).future.flatMap {
-        case Right(members) => client.getTeamRoles(id).future.flatMap {
-          case Right(roles) => service.onTeamSynced(data, members, roles).map(_ => SyncResult.Success)
-          case Left(error) => Future.successful(SyncResult(error))
-        }
-        case Left(error) => Future.successful(SyncResult(error))
+    case None     => Future.successful(SyncResult.Success)
+    case Some(id) =>
+
+      def flatten[T](res: Future[Either[ErrorResponse, T]]): Future[T] = res.flatMap {
+        case Left(err) => Future.failed(err)
+        case Right(t)  => Future.successful(t)
       }
-      case Left(error) => Future.successful(SyncResult(error))
-    }
-    case None => Future.successful(SyncResult.Success)
+
+      (for {
+        data        <- flatten(client.getTeamData(id))
+        membersData <- flatten(client.getTeamMembers(id))
+        roles       <- flatten(client.getTeamRoles(id))
+        members     =  if (membersData.has_more) Seq.empty[TeamMember] else membersData.members
+        _           <- service.onTeamSynced(data, members, roles)
+      } yield SyncResult.Success).recover {
+        case err: ErrorResponse => SyncResult(err)
+      }
   }
 
   override def syncMember(uId: UserId) = teamId match {
