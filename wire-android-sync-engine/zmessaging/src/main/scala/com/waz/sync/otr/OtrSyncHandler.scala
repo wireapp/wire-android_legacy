@@ -79,45 +79,52 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
                              ): Future[Either[ErrorResponse, RemoteInstant]] = {
     import com.waz.utils.{RichEither, RichFutureEither}
 
-    def encryptAndSend(msg: GenericMessage, external: Option[Array[Byte]] = None, retries: Int = 0, previous: EncryptedContent = EncryptedContent.Empty): ErrorOr[MessageResponse] =
+    def encryptAndSend(msg:      GenericMessage,
+                       external: Option[Array[Byte]] = None,
+                       retries:  Int = 0,
+                       previous: EncryptedContent = EncryptedContent.Empty
+                      ): ErrorOr[MessageResponse] =
       for {
         _          <- push.waitProcessing
         Some(conv) <- convStorage.get(convId)
-        _ = if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
-        us      <- recipients.fold(members.getActiveUsers(convId).map(_.toSet))(rs => Future.successful(rs))
-        content <- service.encryptForUsers(us, msg, retries > 0, previous)
-        resp    <-
-          if (content.estimatedSize < MaxContentSize)
-            msgClient.postMessage(conv.remoteId, OtrMessage(selfClientId, content, external, nativePush), ignoreMissing = enforceIgnoreMissing || retries > 1, recipients).future
-          else {
-            verbose(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
-            val key = AESKey()
-            val (sha, data) = AESUtils.encrypt(key, GenericMessage.toByteArray(msg))
-            val newMessage  = GenericMessage(Uid(msg.messageId), Proto.External(key, sha))
-            encryptAndSend(newMessage, Some(data)) //abandon retries and previous EncryptedContent
-          }
-        _ <- resp.map(_.deleted).mapFuture(service.deleteClients)
-        _ <- resp.map(_.missing.keySet).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
-        retry <- resp.flatMapFuture {
-          case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
-            clientsSyncHandler.syncSessions(missing).flatMap { err =>
-              if (err.isDefined)
-                error(l"syncSessions for missing clients failed: $err")
-              encryptAndSend(msg, external, retries + 1, content)
-            }
-          case _: MessageResponse.Failure =>
-            successful(Left(internalError(s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries")))
-          case resp => Future.successful(Right(resp))
-        }
+        _          =  if (conv.verified == Verification.UNVERIFIED) throw UnverifiedException
+        us         <- recipients.fold(members.getActiveUsers(convId).map(_.toSet))(rs => Future.successful(rs))
+        content    <- service.encryptForUsers(us, msg, retries > 0, previous)
+        resp       <- if (content.estimatedSize < MaxContentSize)
+                        msgClient.postMessage(
+                          conv.remoteId,
+                          OtrMessage(selfClientId, content, external, nativePush, recipients),
+                          ignoreMissing = enforceIgnoreMissing || retries > 1
+                        ).future
+                      else {
+                        verbose(l"Message content too big, will post as External. Estimated size: ${content.estimatedSize}")
+                        val key = AESKey()
+                        val (sha, data) = AESUtils.encrypt(key, GenericMessage.toByteArray(msg))
+                        val newMessage  = GenericMessage(Uid(msg.messageId), Proto.External(key, sha))
+                        encryptAndSend(newMessage, Some(data)) //abandon retries and previous EncryptedContent
+                      }
+        _          <- resp.map(_.deleted).mapFuture(service.deleteClients)
+        _          <- resp.map(_.missing.keySet).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
+        retry      <- resp.flatMapFuture {
+                        case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
+                          clientsSyncHandler.syncSessions(missing).flatMap { err =>
+                            if (err.isDefined) error(l"syncSessions for missing clients failed: $err")
+                            encryptAndSend(msg, external, retries + 1, content)
+                          }
+                        case _: MessageResponse.Failure =>
+                          successful(Left(internalError(
+                            s"postEncryptedMessage/broadcastMessage failed with missing clients after several retries"
+                          )))
+                        case resp => Future.successful(Right(resp))
+                      }
       } yield retry
 
     encryptAndSend(message).recover {
       case UnverifiedException =>
-        if (!message.hasCalling)
-          errors.addConvUnverifiedError(convId, MessageId(message.messageId))
-
+        if (!message.hasCalling) errors.addConvUnverifiedError(convId, MessageId(message.messageId))
         Left(ErrorResponse.Unverified)
-      case NonFatal(e) => Left(ErrorResponse.internalError(e.getMessage))
+      case NonFatal(e) =>
+        Left(ErrorResponse.internalError(e.getMessage))
     }.mapRight(_.mismatch.time)
   }
 
@@ -141,7 +148,10 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         verbose(l"recipients: $recp")
         for {
           content  <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
-          response <- otrClient.broadcastMessage(OtrMessage(selfClientId, content), ignoreMissing = retry > 1, recp).future
+          response <- otrClient.broadcastMessage(
+                        OtrMessage(selfClientId, content, report_missing = Some(recp)),
+                        ignoreMissing = retry > 1
+                      ).future
           res      <- loopIfMissingClients(
                        response,
                        retry,
@@ -221,7 +231,11 @@ object OtrSyncHandler {
 
   case object UnverifiedException extends Exception
 
-  case class OtrMessage(sender: ClientId, recipients: EncryptedContent, external: Option[Array[Byte]] = None, nativePush: Boolean = true)
+  case class OtrMessage(sender:         ClientId,
+                        recipients:     EncryptedContent,
+                        external:       Option[Array[Byte]] = None,
+                        nativePush:     Boolean = true,
+                        report_missing: Option[Set[UserId]] = None)
 
   val MaxInlineSize  = 10 * 1024
   val MaxContentSize = 256 * 1024 // backend accepts 256KB for otr messages, but we would prefer to send less
