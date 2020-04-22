@@ -6,7 +6,7 @@ import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import com.waz.zclient.core.extension.empty
 
-class CreatePersonalAccountWithEmailSharedViewModel() : ViewModel() {
+class CreatePersonalAccountWithEmailSharedViewModel : ViewModel() {
 
     private val _credentialsLiveData = MutableLiveData<Credentials>().apply { setValue(Credentials()) }
 
