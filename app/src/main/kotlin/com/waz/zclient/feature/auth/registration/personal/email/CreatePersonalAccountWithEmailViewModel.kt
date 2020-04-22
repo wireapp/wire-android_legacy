@@ -30,7 +30,6 @@ class CreatePersonalAccountWithEmailViewModel(
     private val registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 ) : ViewModel() {
 
-
     private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
     private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()
     private val _sendActivationCodeErrorLiveData = MutableLiveData<ErrorMessage>()

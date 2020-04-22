@@ -11,7 +11,6 @@ import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_password.*
 
-
 class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_personal_account_password) {
 
     private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
@@ -49,8 +48,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
 
     private fun observeRegistrationData() {
         with(createPersonalAccountWithEmailViewModel) {
-            registerSuccessLiveData.observe(viewLifecycleOwner)
-            {
+            registerSuccessLiveData.observe(viewLifecycleOwner) {
                 //TODO move the new registered user to right scala activity/fragment
                 Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation),
                     Toast.LENGTH_LONG).show()
@@ -61,7 +59,6 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
             }
         }
     }
-
 
     companion object {
         fun newInstance() = CreatePersonalAccountPasswordFragment()
