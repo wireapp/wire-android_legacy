@@ -7,33 +7,50 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.sharedViewModel
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_password.*
 
+
 class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_personal_account_password) {
 
-    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
+        by viewModel(REGISTRATION_SCOPE_ID)
+
+    private val createPersonalAccountWithEmailSharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        initConfirmationButton()
+        observeCredentials()
         observeRegistrationData()
     }
 
-    private fun initConfirmationButton() {
-        createPersonalAccountPasswordConfirmationButton.setOnClickListener {
-            registerNewUser()
+    private fun observeCredentials() {
+        createPersonalAccountWithEmailSharedViewModel.credentialsLiveData.observe(viewLifecycleOwner) {
+            initConfirmationButton(it)
         }
     }
 
-    private fun registerNewUser() {
-        createPersonalAccountViewModel.register(createPersonalAccountPasswordEditText.text.toString())
+    private fun initConfirmationButton(credentials: Credentials) {
+        createPersonalAccountPasswordConfirmationButton.setOnClickListener {
+            registerNewUser(credentials)
+        }
+    }
+
+    private fun registerNewUser(credentials: Credentials) {
+        createPersonalAccountWithEmailViewModel.register(
+            name = credentials.name,
+            email = credentials.email,
+            activationCode = credentials.activationCode,
+            password = createPersonalAccountPasswordEditText.text.toString()
+        )
     }
 
     private fun observeRegistrationData() {
-        with(createPersonalAccountViewModel) {
-            registerSuccessLiveData.observe(viewLifecycleOwner) {
+        with(createPersonalAccountWithEmailViewModel) {
+            registerSuccessLiveData.observe(viewLifecycleOwner)
+            {
                 //TODO move the new registered user to right scala activity/fragment
                 Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation),
                     Toast.LENGTH_LONG).show()
@@ -44,6 +61,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
             }
         }
     }
+
 
     companion object {
         fun newInstance() = CreatePersonalAccountPasswordFragment()
