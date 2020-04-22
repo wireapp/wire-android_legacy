@@ -31,7 +31,7 @@ class ChangeNameUseCaseTest : UnitTest() {
     fun `Given update name use case is executed, then the repository should update name`() = runBlockingTest {
         `when`(changeNameParams.newName).thenReturn(TEST_NAME)
 
-        changeNameUseCase.run(changeNameParams)
+        changeNameUseCase(changeNameParams)
 
         verify(userRepository).changeName(eq(TEST_NAME))
     }

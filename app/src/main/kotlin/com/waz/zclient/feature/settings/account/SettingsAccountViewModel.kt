@@ -16,7 +16,9 @@ import com.waz.zclient.shared.user.email.ChangeEmailUseCase
 import com.waz.zclient.shared.user.name.ChangeNameParams
 import com.waz.zclient.shared.user.name.ChangeNameUseCase
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 
 @ExperimentalCoroutinesApi
 class SettingsAccountViewModel(
@@ -75,8 +77,8 @@ class SettingsAccountViewModel(
     }
 
     fun updateName(name: String) {
-        changeNameUseCase(viewModelScope, ChangeNameParams(name)) {
-            it.fold(::handleError) {}
+        viewModelScope.launch(Dispatchers.IO) {
+            changeNameUseCase(ChangeNameParams((name))).fold(::handleError) {}
         }
     }
 

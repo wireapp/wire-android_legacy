@@ -22,3 +22,7 @@ abstract class UseCase<out Type, in Params> where Type : Any {
         scope.launch { onResult(backgroundJob.await()) }
     }
 }
+
+abstract class UseCaseTemp<out Type, in Params> where Type : Any {
+    abstract suspend operator fun invoke(params: Params): Either<Failure, Type>
+}
