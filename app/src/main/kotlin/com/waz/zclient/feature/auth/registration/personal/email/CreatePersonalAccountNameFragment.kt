@@ -11,7 +11,7 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_name.*
 
 class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
 
-    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountWithEmailSharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -34,7 +34,7 @@ class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_pers
     }
 
     private fun saveName() {
-        createPersonalAccountViewModel.saveName(createPersonalAccountNameEditText.text.toString())
+        createPersonalAccountWithEmailSharedViewModel.saveName(createPersonalAccountNameEditText.text.toString())
     }
 
     companion object {
