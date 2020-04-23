@@ -24,33 +24,31 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
+    private val email: String by lazy {
+        sharedViewModel.email()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeEmailValue()
         observeActivateEmailData()
         initChangeMailListener()
+        initDescriptionTextView()
+        initResendCodeListener()
+        initPinCodeListener()
     }
 
-    private fun observeEmailValue() {
-        sharedViewModel.emailLiveData.observe(viewLifecycleOwner) {
-            initDescriptionTextView(it)
-            initResendCodeListener(it)
-            initPinCodeListener(it)
-        }
-    }
-
-    private fun initDescriptionTextView(email: String) {
+    private fun initDescriptionTextView() {
         createPersonalAccountPinCodeDescriptionTextView.text =
             getString(R.string.email_verification_description, email)
     }
 
-    private fun initResendCodeListener(email: String) {
+    private fun initResendCodeListener() {
         createPersonalAccountPinCodeResendCodeTextView.setOnClickListener {
             viewModel.sendActivationCode(email)
         }
     }
 
-    private fun initPinCodeListener(email: String) {
+    private fun initPinCodeListener() {
         createPersonalAccountPinCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
             override fun onTextComplete(code: String): Boolean {
                 viewModel.activateEmail(email, code)
