@@ -3,7 +3,7 @@ package com.waz.zclient.feature.auth.registration.personal.email
 import androidx.lifecycle.ViewModel
 import com.waz.zclient.core.extension.empty
 
-class CreatePersonalAccountWithEmailSharedViewModel : ViewModel() {
+class EmailCredentialsViewModel : ViewModel() {
 
     //TODO Using SavedStateHandle with Koin to save the data
     private val credentials = Credentials()

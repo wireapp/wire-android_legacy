@@ -17,10 +17,10 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     //TODO handle no internet connections status
     //TODO Add loading status
-    private val viewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private val emailCredentialsViewModel: EmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -32,7 +32,7 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
     }
 
     private fun observeConfirmationData() {
-        viewModel.confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) {
+        createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }
@@ -43,23 +43,23 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     private fun initEmailChangedListener() {
         createPersonalAccountEmailEditText.doAfterTextChanged {
-            viewModel.validateEmail(it.toString())
+            createPersonalAccountWithEmailViewModel.validateEmail(it.toString())
         }
     }
 
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
         createPersonalAccountEmailConfirmationButton.setOnClickListener {
-            viewModel.sendActivationCode(
+            createPersonalAccountWithEmailViewModel.sendActivationCode(
                 createPersonalAccountEmailEditText.text.toString()
             )
         }
     }
 
     private fun observeActivationCodeData() {
-        with(viewModel) {
+        with(createPersonalAccountWithEmailViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
-                sharedViewModel.saveEmail(
+                emailCredentialsViewModel.saveEmail(
                     createPersonalAccountEmailEditText.text.toString()
                 )
                 showEmailVerificationScreen()

@@ -1,7 +1,7 @@
 package com.waz.zclient.feature.auth.registration.personal
 
 import com.waz.zclient.UnitTest
-import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailSharedViewModel
+import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -11,13 +11,13 @@ import org.junit.Test
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
-class CreatePersonalAccountWithEmailSharedViewModelTest : UnitTest() {
+class EmailCredentialsViewModelTest : UnitTest() {
 
-    private lateinit var createPersonalAccountWithEmailSharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private lateinit var createPersonalAccountWithEmailSharedViewModel: EmailCredentialsViewModel
 
     @Before
     fun setup() {
-        createPersonalAccountWithEmailSharedViewModel = CreatePersonalAccountWithEmailSharedViewModel()
+        createPersonalAccountWithEmailSharedViewModel = EmailCredentialsViewModel()
     }
 
     @Test

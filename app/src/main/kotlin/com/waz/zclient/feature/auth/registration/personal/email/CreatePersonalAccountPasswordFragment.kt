@@ -13,23 +13,20 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_password.
 
 class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_personal_account_password) {
 
-    private val viewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private val emailCredentialsViewModel: EmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
-    private val name: String by lazy {
-        sharedViewModel.name()
-    }
+    private val name: String
+        get() = emailCredentialsViewModel.name()
 
-    private val email: String by lazy {
-        sharedViewModel.email()
-    }
+    private val email: String
+        get() = emailCredentialsViewModel.email()
 
-    private val activationCode: String by lazy {
-        sharedViewModel.activationCode()
-    }
+    private val activationCode: String
+        get() = emailCredentialsViewModel.activationCode()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,7 +41,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun registerNewUser() {
-        viewModel.register(
+        createPersonalAccountWithEmailViewModel.register(
             name = name,
             email = email,
             activationCode = activationCode,
@@ -53,7 +50,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun observeRegistrationData() {
-        with(viewModel) {
+        with(createPersonalAccountWithEmailViewModel) {
             registerSuccessLiveData.observe(viewLifecycleOwner) {
                 //TODO move the new registered user to right scala activity/fragment
                 Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation),
