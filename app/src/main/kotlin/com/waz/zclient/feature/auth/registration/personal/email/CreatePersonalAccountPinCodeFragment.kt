@@ -18,15 +18,14 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
 ) {
 
     //TODO handle no internet connections status
-    private val viewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private val emailCredentialsViewModel: EmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
-    private val email: String by lazy {
-        sharedViewModel.email()
-    }
+    private val email: String
+        get() = emailCredentialsViewModel.email()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,23 +43,23 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
 
     private fun initResendCodeListener() {
         createPersonalAccountPinCodeResendCodeTextView.setOnClickListener {
-            viewModel.sendActivationCode(email)
+            createPersonalAccountWithEmailViewModel.sendActivationCode(email)
         }
     }
 
     private fun initPinCodeListener() {
         createPersonalAccountPinCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
             override fun onTextComplete(code: String): Boolean {
-                viewModel.activateEmail(email, code)
+                createPersonalAccountWithEmailViewModel.activateEmail(email, code)
                 return true
             }
         }
     }
 
     private fun observeActivateEmailData() {
-        with(viewModel) {
+        with(createPersonalAccountWithEmailViewModel) {
             activateEmailSuccessLiveData.observe(viewLifecycleOwner) {
-                sharedViewModel.saveActivationCode(
+                emailCredentialsViewModel.saveActivationCode(
                     createPersonalAccountPinCodePinEditText.text.toString()
                 )
                 showEnterNameScreen()
