@@ -27,6 +27,7 @@ import com.waz.model._
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -51,7 +52,7 @@ trait UserSearchService {
   def search(queryStr: String = ""): Signal[SearchResults]
   def syncSearchResults(query: SearchQuery): Unit
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit
-  def updateSearchResults(info: Seq[UserInfo]): Unit
+  def updateSearchResults(userInfo: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
   def updateExactMatch(result: UserSearchResponse.User): Unit
 }
 
@@ -266,9 +267,14 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     sync.syncSearchResults(users.map(_.id).toSet)
   }
 
-  override def updateSearchResults(info: Seq[UserInfo]): Unit = {
-    userSearchResult.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
-    exactMatchUser.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
+  override def updateSearchResults(userInfo: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
+    val userUpdate = (user: UserData) => userInfo.get(user.id).fold(user) {
+      case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
+      case (info, None)         => user.updated(info)
+    }
+
+    userSearchResult.mutate(_.map(userUpdate))
+    exactMatchUser.mutate(_.map(userUpdate))
   }
 
   override def updateExactMatch(result: UserSearchResponse.User): Unit = {

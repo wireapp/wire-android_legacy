@@ -16,18 +16,19 @@ import scala.concurrent.Future
 class UsersSyncHandlerSpec extends AndroidFreeSpec {
   import UserData.ConnectionStatus._
 
-  private val userService  = mock[UserService]
-  private val usersStorage = mock[UsersStorage]
-  private val assetService = mock[AssetService]
-  private val searchSevice = mock[UserSearchService]
-  private val usersClient  = mock[UsersClient]
-  private val otrSync      = mock[OtrSyncHandler]
+  private val userService      = mock[UserService]
+  private val usersStorage     = mock[UsersStorage]
+  private val assetService     = mock[AssetService]
+  private val searchSevice     = mock[UserSearchService]
+  private val usersClient      = mock[UsersClient]
+  private val otrSync          = mock[OtrSyncHandler]
+  private val teamsSyncHandler = mock[TeamsSyncHandler]
 
   val self = UserData("self")
   val teamId = TeamId()
 
   def handler: UsersSyncHandler = new UsersSyncHandlerImpl(
-    userService, usersStorage, assetService, searchSevice, usersClient, otrSync
+    userService, usersStorage, assetService, searchSevice, usersClient, otrSync, Some(teamId), teamsSyncHandler
   )
 
   feature("Post availability status") {

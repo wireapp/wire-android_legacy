@@ -46,12 +46,14 @@ trait UsersSyncHandler {
   def deleteAccount(): Future[SyncResult]
 }
 
-class UsersSyncHandlerImpl(userService:  UserService,
-                           usersStorage: UsersStorage,
-                           assets:       AssetService,
-                           searchService: UserSearchService,
-                           usersClient:  UsersClient,
-                           otrSync:      OtrSyncHandler)
+class UsersSyncHandlerImpl(userService:      UserService,
+                           usersStorage:     UsersStorage,
+                           assets:           AssetService,
+                           searchService:    UserSearchService,
+                           usersClient:      UsersClient,
+                           otrSync:          OtrSyncHandler,
+                           teamId:           Option[TeamId],
+                           teamsSyncHandler: TeamsSyncHandler)
   extends UsersSyncHandler with DerivedLogTag {
   import UsersSyncHandler._
   import Threading.Implicits.Background
@@ -64,12 +66,17 @@ class UsersSyncHandlerImpl(userService:  UserService,
         Future.successful(SyncResult(error))
   }
 
-  override def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.map {
+  override def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.flatMap {
+    case Right(users) if teamId.isEmpty =>
+      searchService.updateSearchResults(users.map(u => u.id -> (u, None)).toMap)
+      Future.successful(SyncResult.Success)
     case Right(users) =>
-      searchService.updateSearchResults(users)
-      SyncResult.Success
+      teamsSyncHandler.getMembers(users.filter(_.teamId == teamId).map(_.id)).map { members =>
+        searchService.updateSearchResults(users.map(u => u.id -> (u, members.find(_.user == u.id))).toMap)
+        SyncResult.Success
+      }
     case Left(error)  =>
-      SyncResult(error)
+      Future.successful(SyncResult(error))
   }
 
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
