@@ -2,7 +2,6 @@ package com.waz.zclient.feature.auth.registration.personal
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailSharedViewModel
-import com.waz.zclient.framework.livedata.observeOnce
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -27,9 +26,7 @@ class CreatePersonalAccountWithEmailSharedViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailSharedViewModel.saveEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailSharedViewModel.credentialsLiveData.observeOnce {
-                it.email shouldBe TEST_EMAIL
-            }
+            createPersonalAccountWithEmailSharedViewModel.email() shouldBe TEST_EMAIL
         }
 
     @Test
@@ -38,9 +35,7 @@ class CreatePersonalAccountWithEmailSharedViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailSharedViewModel.saveActivationCode(TEST_CODE)
 
-            createPersonalAccountWithEmailSharedViewModel.credentialsLiveData.observeOnce {
-                it.activationCode shouldBe TEST_CODE
-            }
+            createPersonalAccountWithEmailSharedViewModel.activationCode() shouldBe TEST_CODE
         }
 
     @Test
@@ -49,15 +44,12 @@ class CreatePersonalAccountWithEmailSharedViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailSharedViewModel.saveName(TEST_NAME)
 
-            createPersonalAccountWithEmailSharedViewModel.credentialsLiveData.observeOnce {
-                it.name shouldBe TEST_NAME
-            }
+            createPersonalAccountWithEmailSharedViewModel.name() shouldBe TEST_NAME
         }
 
     companion object {
         private const val TEST_NAME = "testName"
         private const val TEST_EMAIL = "test@wire.com"
-        private const val TEST_PASSWORD = "testPass"
         private const val TEST_CODE = "000000"
     }
 }
