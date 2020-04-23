@@ -18,10 +18,10 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
 ) {
 
     //TODO handle no internet connections status
-    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
+    private val viewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val createPersonalAccountWithEmailSharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -32,7 +32,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     }
 
     private fun observeEmailValue() {
-        createPersonalAccountWithEmailSharedViewModel.emailLiveData.observe(viewLifecycleOwner) {
+        sharedViewModel.emailLiveData.observe(viewLifecycleOwner) {
             initDescriptionTextView(it)
             initResendCodeListener(it)
             initPinCodeListener(it)
@@ -46,23 +46,23 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
 
     private fun initResendCodeListener(email: String) {
         createPersonalAccountPinCodeResendCodeTextView.setOnClickListener {
-            createPersonalAccountWithEmailViewModel.sendActivationCode(email)
+            viewModel.sendActivationCode(email)
         }
     }
 
     private fun initPinCodeListener(email: String) {
         createPersonalAccountPinCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
             override fun onTextComplete(code: String): Boolean {
-                createPersonalAccountWithEmailViewModel.activateEmail(email, code)
+                viewModel.activateEmail(email, code)
                 return true
             }
         }
     }
 
     private fun observeActivateEmailData() {
-        with(createPersonalAccountWithEmailViewModel) {
+        with(viewModel) {
             activateEmailSuccessLiveData.observe(viewLifecycleOwner) {
-                createPersonalAccountWithEmailSharedViewModel.saveActivationCode(
+                sharedViewModel.saveActivationCode(
                     createPersonalAccountPinCodePinEditText.text.toString()
                 )
                 showEnterNameScreen()

@@ -10,7 +10,7 @@ class CreatePersonalAccountWithEmailSharedViewModel : ViewModel() {
 
     private val _credentialsLiveData = MutableLiveData<Credentials>().apply { setValue(Credentials()) }
 
-    val credentialsLiveData = _credentialsLiveData
+    val credentialsLiveData: LiveData<Credentials> = _credentialsLiveData
 
     val emailLiveData: LiveData<String> = Transformations.map(_credentialsLiveData) {
         it.email
