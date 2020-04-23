@@ -8,7 +8,6 @@ import com.waz.zclient.feature.auth.registration.register.datasources.RegisterDa
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.RegisterApi
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.RegisterRemoteDataSource
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
-import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
 import org.koin.core.qualifier.named
