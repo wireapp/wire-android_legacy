@@ -19,29 +19,35 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
+    private val name: String by lazy {
+        sharedViewModel.name()
+    }
+
+    private val email: String by lazy {
+        sharedViewModel.email()
+    }
+
+    private val activationCode: String by lazy {
+        sharedViewModel.activationCode()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeCredentials()
         observeRegistrationData()
+        initConfirmationButton()
     }
 
-    private fun observeCredentials() {
-        sharedViewModel.credentialsLiveData.observe(viewLifecycleOwner) {
-            initConfirmationButton(it)
-        }
-    }
-
-    private fun initConfirmationButton(credentials: Credentials) {
+    private fun initConfirmationButton() {
         createPersonalAccountPasswordConfirmationButton.setOnClickListener {
-            registerNewUser(credentials)
+            registerNewUser()
         }
     }
 
-    private fun registerNewUser(credentials: Credentials) {
+    private fun registerNewUser() {
         viewModel.register(
-            name = credentials.name,
-            email = credentials.email,
-            activationCode = credentials.activationCode,
+            name = name,
+            email = email,
+            activationCode = activationCode,
             password = createPersonalAccountPasswordEditText.text.toString()
         )
     }
