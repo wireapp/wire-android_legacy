@@ -13,10 +13,10 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_password.
 
 class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_personal_account_password) {
 
-    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
+    private val viewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val createPersonalAccountWithEmailSharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -26,7 +26,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun observeCredentials() {
-        createPersonalAccountWithEmailSharedViewModel.credentialsLiveData.observe(viewLifecycleOwner) {
+        sharedViewModel.credentialsLiveData.observe(viewLifecycleOwner) {
             initConfirmationButton(it)
         }
     }
@@ -38,7 +38,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun registerNewUser(credentials: Credentials) {
-        createPersonalAccountWithEmailViewModel.register(
+        viewModel.register(
             name = credentials.name,
             email = credentials.email,
             activationCode = credentials.activationCode,
@@ -47,7 +47,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun observeRegistrationData() {
-        with(createPersonalAccountWithEmailViewModel) {
+        with(viewModel) {
             registerSuccessLiveData.observe(viewLifecycleOwner) {
                 //TODO move the new registered user to right scala activity/fragment
                 Toast.makeText(requireContext(), getString(R.string.alert_dialog__confirmation),

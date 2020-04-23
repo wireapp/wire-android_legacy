@@ -17,10 +17,10 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     //TODO handle no internet connections status
     //TODO Add loading status
-    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
+    private val viewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val createPersonalAccountWithEmailSharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
+    private val sharedViewModel: CreatePersonalAccountWithEmailSharedViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -32,7 +32,7 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
     }
 
     private fun observeConfirmationData() {
-        createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) {
+        viewModel.confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }
@@ -43,23 +43,23 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     private fun initEmailChangedListener() {
         createPersonalAccountEmailEditText.doAfterTextChanged {
-            createPersonalAccountWithEmailViewModel.validateEmail(it.toString())
+            viewModel.validateEmail(it.toString())
         }
     }
 
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
         createPersonalAccountEmailConfirmationButton.setOnClickListener {
-            createPersonalAccountWithEmailViewModel.sendActivationCode(
+            viewModel.sendActivationCode(
                 createPersonalAccountEmailEditText.text.toString()
             )
         }
     }
 
     private fun observeActivationCodeData() {
-        with(createPersonalAccountWithEmailViewModel) {
+        with(viewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
-                createPersonalAccountWithEmailSharedViewModel.saveEmail(
+                sharedViewModel.saveEmail(
                     createPersonalAccountEmailEditText.text.toString()
                 )
                 showEmailVerificationScreen()
