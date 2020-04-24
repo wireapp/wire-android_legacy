@@ -53,6 +53,7 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
             createPersonalAccountWithEmailViewModel.sendActivationCode(
                 createPersonalAccountEmailEditText.text.toString()
             )
+        }
     }
 
     private fun observeActivationCodeData() {
