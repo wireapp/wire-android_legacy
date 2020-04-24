@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.waz.zclient.R
+import com.waz.zclient.core.config.PasswordLengthConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
 import com.waz.zclient.feature.auth.registration.register.usecase.RegisterPersonalAccountWithEmailUseCase
@@ -24,6 +25,9 @@ import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import com.waz.zclient.shared.user.name.ValidateNameFailure
 import com.waz.zclient.shared.user.name.ValidateNameParams
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
+import com.waz.zclient.shared.user.password.ValidatePasswordFailure
+import com.waz.zclient.shared.user.password.ValidatePasswordParams
+import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountWithEmailViewModel(
@@ -31,6 +35,8 @@ class CreatePersonalAccountWithEmailViewModel(
     private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase,
     private val activateEmailUseCase: ActivateEmailUseCase,
     private val validateNameUseCase: ValidateNameUseCase,
+    private val validatePasswordCase: ValidatePasswordUseCase,
+    private val passwordLengthConfig: PasswordLengthConfig,
     private val registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 ) : ViewModel() {
 
@@ -40,6 +46,7 @@ class CreatePersonalAccountWithEmailViewModel(
     private val _activateEmailSuccessLiveData = MutableLiveData<Unit>()
     private val _activateEmailErrorLiveData = MutableLiveData<ErrorMessage>()
     private val _isValidNameLiveData = MutableLiveData<Boolean>()
+    private val _isValidPasswordLiveData = MutableLiveData<Boolean>()
     private val _registerSuccessLiveData = MutableLiveData<Unit>()
     private val _registerErrorLiveData = MutableLiveData<ErrorMessage>()
 
@@ -49,6 +56,7 @@ class CreatePersonalAccountWithEmailViewModel(
     val activateEmailSuccessLiveData: LiveData<Unit> = _activateEmailSuccessLiveData
     val activateEmailErrorLiveData: LiveData<ErrorMessage> = _activateEmailErrorLiveData
     val isValidNameLiveData: LiveData<Boolean> = _isValidNameLiveData
+    val isValidPasswordLiveData: LiveData<Boolean> = _isValidPasswordLiveData
     val registerSuccessLiveData: LiveData<Unit> = _registerSuccessLiveData
     val registerErrorLiveData: LiveData<ErrorMessage> = _registerErrorLiveData
 
@@ -110,6 +118,25 @@ class CreatePersonalAccountWithEmailViewModel(
 
     private fun updateNameValidationStatus(status: Boolean) =
         _isValidNameLiveData.postValue(status)
+
+    fun validatePassword(password: String) {
+        validatePasswordCase(viewModelScope, ValidatePasswordParams(
+            password,
+            passwordLengthConfig.minLength,
+            passwordLengthConfig.maxLength
+        ), Dispatchers.Default) {
+            it.fold(::handleValidatePasswordFailure) { updatePasswordValidationStatus(true) }
+        }
+    }
+
+    private fun handleValidatePasswordFailure(failure: Failure) {
+        if (failure is ValidatePasswordFailure) {
+            updatePasswordValidationStatus(false)
+        }
+    }
+
+    private fun updatePasswordValidationStatus(status: Boolean) =
+        _isValidPasswordLiveData.postValue(status)
 
     fun register(name: String, email: String, password: String, activationCode: String) {
         registerPersonalAccountWithEmailUseCase(

@@ -14,6 +14,8 @@ object Config {
     fun websiteUrl() = BuildConfig.WEBSITE_URL
     fun accountsUrl() = BuildConfig.ACCOUNTS_URL
     fun allowSso() = BuildConfig.ALLOW_SSO
+    fun passwordMinimumLength() = BuildConfig.NEW_PASSWORD_MINIMUM_LENGTH
+    fun passwordMaximumLength() = BuildConfig.NEW_PASSWORD_MAXIMUM_LENGTH
 }
 
 val configModule: Module = module {
@@ -22,6 +24,7 @@ val configModule: Module = module {
     factory { AppDetailsConfig("${Config.versionCode()} ${Config.versionName()}") }
     factory { AccountUrlConfig(Config.accountsUrl()) }
     factory { DeveloperOptionsConfig(Config.developerSettingsEnabled()) }
+    factory { PasswordLengthConfig(Config.passwordMinimumLength(), Config.passwordMaximumLength()) }
 }
 
 data class DeveloperOptionsConfig(val isDeveloperSettingsEnabled: Boolean) : ConfigItem()
@@ -29,4 +32,5 @@ data class AppVersionNameConfig(val versionName: String) : ConfigItem()
 data class AppDetailsConfig(val versionDetails: String) : ConfigItem()
 data class AccountUrlConfig(val url: String) : ConfigItem()
 data class HostUrlConfig(val url: String) : ConfigItem()
+data class PasswordLengthConfig(val minLength: Int, val maxLength: Int) : ConfigItem()
 sealed class ConfigItem
