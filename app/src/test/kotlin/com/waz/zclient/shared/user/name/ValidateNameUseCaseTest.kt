@@ -30,12 +30,14 @@ class ValidateNameUseCaseTest : UnitTest() {
         runBlockingTest {
             val name = "t"
             `when`(validateNameParams.name).thenReturn(name)
-            validationNameUseCase.run(validateNameParams).isLeft shouldBe true
+            val response = validationNameUseCase.run(validateNameParams)
+            response.isLeft shouldBe true
+            response.fold({ it shouldBe NameTooShort }) {}
         }
     }
 
     @Test
-    fun `Given run is executed, when email matches regex and email fits requirements then return success`() {
+    fun `Given run is executed, when name fits requirements then return success`() {
         runBlockingTest {
             val name = "testName"
             `when`(validateNameParams.name).thenReturn(name)
