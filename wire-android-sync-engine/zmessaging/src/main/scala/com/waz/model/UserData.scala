@@ -28,7 +28,6 @@ import com.waz.model.UserPermissions._
 import com.waz.service.{SearchKey, SearchQuery}
 import com.waz.service.UserSearchService.UserSearchEntry
 import com.waz.service.assets.StorageCodecs
-import com.waz.sync.client.TeamsClient.Permissions
 import com.waz.utils._
 import com.waz.utils.wrappers.{DB, DBCursor}
 
@@ -93,9 +92,6 @@ case class UserData(override val id:       UserId,
     },
     permissions = permissions
   )
-
-  def updatePermissions(permissions: Option[Permissions]): UserData =
-    copy(permissions = permissions.fold((0L, 0L))(_.toMasks))
 
   def updated(user: UserSearchEntry): UserData = copy(
     name      = user.name,

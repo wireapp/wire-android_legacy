@@ -51,8 +51,8 @@ trait UserSearchService {
   def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]]
   def search(queryStr: String = ""): Signal[SearchResults]
   def syncSearchResults(query: SearchQuery): Unit
-  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit
-  def updateSearchResults(userInfo: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
+  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit]
+  def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
   def updateExactMatch(result: UserSearchResponse.User): Unit
 }
 
@@ -157,7 +157,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       }._2
     }
 
-  private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] = {
+  private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       connected <- userService.acceptedOrBlockedUsers.map(_.values)
       members   <- teamId.fold(Signal.const(Set.empty[UserData]))(_ => teamsService.searchTeamMembers(query))
@@ -174,7 +174,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
       sortUsers(included, query)
     }
-  }
 
   private def sortUsers(results: IndexedSeq[UserData], query: SearchQuery): IndexedSeq[UserData] = {
     def toLower(str: String) = Locales.transliteration.transliterate(str).trim.toLowerCase
@@ -241,12 +240,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     } yield SearchResults(top, local, convs, dir)
   }
 
-  def syncSearchResults(query: SearchQuery): Unit = {
-    if (!query.isEmpty) {
-      sync.syncSearchQuery(query)
-    }
-  }
-
+  def syncSearchResults(query: SearchQuery): Unit = if (!query.isEmpty) sync.syncSearchQuery(query)
 
   private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
     for {
@@ -261,14 +255,18 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
     }
 
-  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
-    val users = unapply(results)
-    userSearchResult ! users.map(UserData.apply).toIndexedSeq
-    sync.syncSearchResults(users.map(_.id).toSet)
-  }
+  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] =
+    usersStorage.contents.head.flatMap { usersInStorage =>
+      val (local, remote) = unapply(results).partition(u => usersInStorage.contains(u.id))
+      userSearchResult ! (local.map(u => usersInStorage(u.id)) ++  remote.map(UserData.apply)).toIndexedSeq
+      if (remote.nonEmpty)
+        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+      else
+        Future.successful(())
+    }
 
-  override def updateSearchResults(userInfo: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
-    val userUpdate = (user: UserData) => userInfo.get(user.id).fold(user) {
+  override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
+    val userUpdate = (user: UserData) => remoteUsers.get(user.id).fold(user) {
       case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
       case (info, None)         => user.updated(info)
     }

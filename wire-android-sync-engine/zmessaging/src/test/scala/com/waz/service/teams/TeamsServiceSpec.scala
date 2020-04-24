@@ -210,8 +210,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     // GIVEN
     val permissions = TeamsClient.Permissions(123, 890)
     val service = createService
-    val teamMember = TeamMember(selfUser, Some(permissions), null)
-    (userStorage.update _).stubs(selfUser, *).returning(Future.successful(null))
+    val teamMember = TeamMember(selfUser, Some(permissions), None)
+    (userStorage.update _).stubs(selfUser, *).returning(Future.successful(None))
 
     // WHEN
     service.onMemberSynced(teamMember)
@@ -226,8 +226,8 @@ class TeamsServiceSpec extends AndroidFreeSpec with DerivedLogTag {
     // GIVEN
     val permissions = TeamsClient.Permissions(123, 890)
     val service = createService
-    val teamMember = TeamMember(id('who), Some(permissions), null)
-    (userStorage.update _).stubs(*, *).returning(Future.successful(null))
+    val teamMember = TeamMember(id('who), Some(permissions), None)
+    (userStorage.update _).stubs(*, *).returning(Future.successful(None))
 
     // WHEN
     service.onMemberSynced(teamMember)
