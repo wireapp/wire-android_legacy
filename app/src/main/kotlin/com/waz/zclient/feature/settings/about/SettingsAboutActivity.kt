@@ -34,7 +34,7 @@ class SettingsAboutActivity : AppCompatActivity(R.layout.activity_settings_about
         super.onCreate(savedInstanceState)
         setSupportActionBar(settingsAboutToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        replaceFragment(R.id.activitySettingsAboutLayoutContainer, SettingsAboutFragment.newInstance(), false)
+        replaceFragment(R.id.settingsAboutLayoutContainer, SettingsAboutFragment.newInstance(), false)
         overridePendingTransition(R.anim.slide_in_left, 0)
         loadBackground(this, viewModel, settingsAboutLayoutContainer)
     }
