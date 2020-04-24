@@ -8,6 +8,7 @@ import com.waz.zclient.storage.db.cache.CacheEntryEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -44,15 +45,15 @@ class CacheEntryDaoTest : IntegrationTest() {
         assert(roomActiveAccounts[1].key == TEST_CACHE_ENTRY_SECOND_ID)
         assert(roomActiveAccounts.size == 2)
         roomActiveAccounts.map {
-            assert(it.fileId == TEST_CACHE_ENTRY_FILE_ID)
-            assert(it.data == null)
-            assert(it.lastUsed == TEST_CACHE_ENTRY_LAST_USED)
-            assert(it.timeout == TEST_CACHE_ENTRY_TIME_OUT)
-            assert(it.filePath == TEST_CACHE_ENTRY_FILE_PATH)
-            assert(it.fileName == TEST_CACHE_ENTRY_FILE_NAME)
-            assert(it.mime == TEST_CACHE_ENTRY_MIME)
-            assert(it.encKey == TEST_CACHE_ENTRY_ENC_KEY)
-            assert(it.length == TEST_CACHE_ENTRY_LENGTH)
+            assertEquals(it.fileId, TEST_CACHE_ENTRY_FILE_ID)
+            assertEquals(it.data, null)
+            assertEquals(it.lastUsed, TEST_CACHE_ENTRY_LAST_USED)
+            assertEquals(it.timeout, TEST_CACHE_ENTRY_TIME_OUT)
+            assertEquals(it.filePath, TEST_CACHE_ENTRY_FILE_PATH)
+            assertEquals(it.fileName, TEST_CACHE_ENTRY_FILE_NAME)
+            assertEquals(it.mime, TEST_CACHE_ENTRY_MIME)
+            assertEquals(it.encKey, TEST_CACHE_ENTRY_ENC_KEY)
+            assertEquals(it.length, TEST_CACHE_ENTRY_LENGTH)
         }
         Unit
     }

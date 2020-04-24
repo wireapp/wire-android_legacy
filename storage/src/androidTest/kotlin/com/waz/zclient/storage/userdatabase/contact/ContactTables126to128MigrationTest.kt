@@ -5,6 +5,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -31,10 +32,10 @@ class ContactTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(allContacts()[0]) {
-                assert(this.id == id)
-                assert(this.name == name)
-                assert(this.sortKey == sortKey)
-                assert(this.searchKey == searchKey)
+                assertEquals(this.id, id)
+                assertEquals(this.name, name)
+                assertEquals(this.sortKey, sortKey)
+                assertEquals(this.searchKey, searchKey)
             }
         }
     }
@@ -55,8 +56,8 @@ class ContactTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(allContactOnWire()[0]) {
-                assert(this.userId == userId)
-                assert(this.contactId == contactId)
+                assertEquals(this.userId, userId)
+                assertEquals(this.contactId, contactId)
             }
         }
     }
@@ -77,8 +78,8 @@ class ContactTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(allContactHashes()[0]) {
-                assert(this.id == id)
-                assert(this.hashes == hashes)
+                assertEquals(this.id, id)
+                assertEquals(this.hashes, hashes)
             }
         }
     }

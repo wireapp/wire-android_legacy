@@ -5,6 +5,8 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -25,10 +27,10 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
 
         runBlocking {
             with(allCloudNotificationStats()[0]) {
-                assert(this.stage == stage)
-                assert(this.firstBucket == firstBucket)
-                assert(this.secondBucket == secondBucket)
-                assert(this.thirdBucket == thirdBucket)
+                assertEquals(this.stage, stage)
+                assertEquals(this.firstBucket, firstBucket)
+                assertEquals(this.secondBucket, secondBucket)
+                assertEquals(this.thirdBucket, thirdBucket)
             }
         }
     }
@@ -48,9 +50,9 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
 
         runBlocking {
             with(allCloudNotifications()[0]) {
-                assert(this.id == id)
-                assert(this.stage == stage)
-                assert(this.stageStartTime == stageStartTime)
+                assertEquals(this.id, id)
+                assertEquals(this.stage, stage)
+                assertEquals(this.stageStartTime, stageStartTime)
             }
         }
     }
@@ -71,8 +73,8 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
 
         runBlocking {
             with(allNotificationsData()[0]) {
-                assert(this.id == id)
-                assert(this.data == data)
+                assertEquals(this.id, id)
+                assertEquals(this.data, data)
             }
         }
     }
@@ -102,12 +104,12 @@ class NotificationsTables126to128MigrationTest : UserDatabaseMigrationTest(126, 
 
         runBlocking {
             with(allPushNotificationEvents()[0]) {
-                assert(this.eventIndex == eventIndex)
-                assert(this.pushId == pushId)
-                assert(this.isDecrypted == isDecrypted)
-                assert(this.eventJson == eventJson)
-                this.plain?.let { assert(it.contentEquals(plain)) }
-                assert(this.isTransient == isTransient)
+                assertEquals(this.eventIndex, eventIndex)
+                assertEquals(this.pushId, pushId)
+                assertEquals(this.isDecrypted, isDecrypted)
+                assertEquals(this.eventJson, eventJson)
+                this.plain?.let { assertTrue(it.contentEquals(plain)) }
+                assertEquals(this.isTransient, isTransient)
             }
         }
     }

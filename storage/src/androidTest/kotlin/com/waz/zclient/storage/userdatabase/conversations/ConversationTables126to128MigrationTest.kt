@@ -4,6 +4,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
@@ -23,8 +24,8 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
 
         runBlocking {
             with(allConversationFolders()[0]) {
-                assert(this.convId == conversationId)
-                assert(this.folderId == folderId)
+                assertEquals(this.convId, conversationId)
+                assertEquals(this.folderId, folderId)
             }
         }
     }
@@ -46,9 +47,9 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
 
         runBlocking {
             with(allConversationMembers()[0]) {
-                assert(this.userId == userId)
-                assert(this.conversationId == convId)
-                assert(this.role == roleId)
+                assertEquals(this.userId, userId)
+                assertEquals(this.conversationId, convId)
+                assertEquals(this.role, roleId)
             }
         }
     }
@@ -70,9 +71,9 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
 
         runBlocking {
             with(allConversationRoleActions()[0]) {
-                assert(this.convId == convId)
-                assert(this.label == label)
-                assert(this.action == action)
+                assertEquals(this.convId, convId)
+                assertEquals(this.label, label)
+                assertEquals(this.action, action)
             }
         }
     }
@@ -153,39 +154,39 @@ class ConversationTables126to128MigrationTest : UserDatabaseMigrationTest(126, 1
 
         runBlocking {
             with(allConversations()[0]) {
-                assert(this.id == convId)
-                assert(this.remoteId == remoteId)
-                assert(this.name == name)
-                assert(this.creator == creator)
-                assert(this.conversationType == conversationType)
-                assert(this.team == team)
-                assert(this.managed == managed)
-                assert(this.lastEventTime == lastEventTime)
-                assert(this.active == active)
-                assert(this.lastRead == lastRead)
-                assert(this.mutedStatus == mutedStatus)
-                assert(this.muteTime == muteTime)
-                assert(this.archived == archived)
-                assert(this.archiveTime == archiveTime)
-                assert(this.cleared == cleared)
-                assert(this.generatedName == generatedName)
-                assert(this.searchKey == searchKey)
-                assert(this.unreadCount == unreadCount)
-                assert(this.unsentCount == unsentCount)
-                assert(this.hidden == hidden)
-                assert(this.missedCall == missedCall)
-                assert(this.incomingKnock == incomingKnock)
-                assert(this.verified == verified)
-                assert(this.ephemeral == ephemeral)
-                assert(this.globalEphemeral == globalEphemeral)
-                assert(this.unreadCallCount == unreadCallCount)
-                assert(this.unreadPingCount == unreadPingCount)
-                assert(this.access == access)
-                assert(this.accessRole == accessRole)
-                assert(this.link == null)
-                assert(this.unreadMentionsCount == unreadMentionsCount)
-                assert(this.unreadQuoteCount == unreadQuoteCount)
-                assert(this.receiptMode == receiptMode)
+                assertEquals(this.id, convId)
+                assertEquals(this.remoteId, remoteId)
+                assertEquals(this.name, name)
+                assertEquals(this.creator, creator)
+                assertEquals(this.conversationType, conversationType)
+                assertEquals(this.team, team)
+                assertEquals(this.managed, managed)
+                assertEquals(this.lastEventTime, lastEventTime)
+                assertEquals(this.active, active)
+                assertEquals(this.lastRead, lastRead)
+                assertEquals(this.mutedStatus, mutedStatus)
+                assertEquals(this.muteTime, muteTime)
+                assertEquals(this.archived, archived)
+                assertEquals(this.archiveTime, archiveTime)
+                assertEquals(this.cleared, cleared)
+                assertEquals(this.generatedName, generatedName)
+                assertEquals(this.searchKey, searchKey)
+                assertEquals(this.unreadCount, unreadCount)
+                assertEquals(this.unsentCount, unsentCount)
+                assertEquals(this.hidden, hidden)
+                assertEquals(this.missedCall, missedCall)
+                assertEquals(this.incomingKnock, incomingKnock)
+                assertEquals(this.verified, verified)
+                assertEquals(this.ephemeral, ephemeral)
+                assertEquals(this.globalEphemeral, globalEphemeral)
+                assertEquals(this.unreadCallCount, unreadCallCount)
+                assertEquals(this.unreadPingCount, unreadPingCount)
+                assertEquals(this.access, access)
+                assertEquals(this.accessRole, accessRole)
+                assertEquals(this.link, null)
+                assertEquals(this.unreadMentionsCount, unreadMentionsCount)
+                assertEquals(this.unreadQuoteCount, unreadQuoteCount)
+                assertEquals(this.receiptMode, receiptMode)
             }
         }
     }

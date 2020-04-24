@@ -5,6 +5,8 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -66,29 +68,29 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
 
         runBlocking {
             with(allMessages()[0]) {
-                assert(this.id == id)
-                assert(this.conversationId == conversationId)
-                assert(this.messageType == messageType)
-                assert(this.userId == userId)
-                assert(this.content == content)
-                assert(this.protos!!.contentEquals(protos!!))
-                assert(this.time == time)
-                assert(firstMessage == message)
-                assert(this.members == members)
-                assert(this.recipient == recipient)
-                assert(this.email == email)
-                assert(this.name == name)
-                assert(this.messageState == messageState)
-                assert(this.contentSize == contentSize)
-                assert(this.editTime == editTime)
-                assert(this.ephemeral == ephemeral)
-                assert(this.expiryTime == expiryTime)
-                assert(this.expired == expired)
-                assert(this.duration == duration)
-                assert(this.quote == quote)
-                assert(this.quoteValidity == quoteValidity)
-                assert(this.forceReadReceipts == forceReadReceipts)
-                assert(this.assetId == assetId)
+                assertEquals(this.id, id)
+                assertEquals(this.conversationId, conversationId)
+                assertEquals(this.messageType, messageType)
+                assertEquals(this.userId, userId)
+                assertEquals(this.content, content)
+                assertTrue(this.protos!!.contentEquals(protos!!))
+                assertEquals(this.time, time)
+                assertEquals(firstMessage, message)
+                assertEquals(this.members, members)
+                assertEquals(this.recipient, recipient)
+                assertEquals(this.email, email)
+                assertEquals(this.name, name)
+                assertEquals(this.messageState, messageState)
+                assertEquals(this.contentSize, contentSize)
+                assertEquals(this.editTime, editTime)
+                assertEquals(this.ephemeral, ephemeral)
+                assertEquals(this.expiryTime, expiryTime)
+                assertEquals(this.expired, expired)
+                assertEquals(this.duration, duration)
+                assertEquals(this.quote, quote)
+                assertEquals(this.quoteValidity, quoteValidity)
+                assertEquals(this.forceReadReceipts, forceReadReceipts)
+                assertEquals(this.assetId, assetId)
             }
         }
     }
@@ -109,8 +111,8 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
 
         runBlocking {
             with(allMessageDeletions()[0]) {
-                assert(this.messageId == messageId)
-                assert(this.timestamp == timestamp)
+                assertEquals(this.messageId, messageId)
+                assertEquals(this.timestamp, timestamp)
             }
         }
     }
@@ -136,10 +138,10 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
 
         runBlocking {
             with(allLikes()[0]) {
-                assert(this.messageId == messageId)
-                assert(this.userId == userId)
-                assert(this.timeStamp == timestamp)
-                assert(this.action == action)
+                assertEquals(this.messageId, messageId)
+                assertEquals(this.userId, userId)
+                assertEquals(this.timeStamp, timestamp)
+                assertEquals(this.action, action)
             }
         }
     }
@@ -164,10 +166,10 @@ class MessagesTables126to128MigrationTest : UserDatabaseMigrationTest(126, 128) 
 
         runBlocking {
             with(allMessageContentIndexes()[0]) {
-                assert(this.messageId == messageId)
-                assert(this.convId == conversationId)
-                assert(this.content == content)
-                assert(this.timestamp == timestamp)
+                assertEquals(this.messageId, messageId)
+                assertEquals(this.convId, conversationId)
+                assertEquals(this.content, content)
+                assertEquals(this.timestamp, timestamp)
             }
         }
     }

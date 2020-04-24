@@ -5,6 +5,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -74,32 +75,32 @@ class UserTable126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(getAllUsers()[0]) {
-                assert(this.id == id)
-                assert(this.teamId == teamId)
-                assert(this.name == name)
-                assert(this.email == email)
-                assert(this.phone == phone)
-                assert(this.trackingId == trackingId)
-                assert(this.picture == picture)
-                assert(this.accentId == accentId)
-                assert(this.sKey == sKey)
-                assert(this.connection == connection)
-                assert(this.connectionTimestamp == connectionTimestamp)
-                assert(this.connectionMessage == connectionMessage)
-                assert(this.conversation == conversation)
-                assert(this.relation == relation)
-                assert(this.timestamp == timestamp)
-                assert(this.verified == verified)
-                assert(this.deleted == deleted)
-                assert(this.availability == availability)
-                assert(this.handle == handle)
-                assert(this.providerId == providerId)
-                assert(this.integrationId == integrationId)
-                assert(this.expiresAt == expiresAt)
-                assert(this.managedBy == managedBy)
-                assert(this.selfPermission == selfPermission)
-                assert(this.copyPermission == copyPermission)
-                assert(this.createdBy == createdBy)
+                assertEquals(this.id, id)
+                assertEquals(this.teamId, teamId)
+                assertEquals(this.name, name)
+                assertEquals(this.email, email)
+                assertEquals(this.phone, phone)
+                assertEquals(this.trackingId, trackingId)
+                assertEquals(this.picture, picture)
+                assertEquals(this.accentId, accentId)
+                assertEquals(this.sKey, sKey)
+                assertEquals(this.connection, connection)
+                assertEquals(this.connectionTimestamp, connectionTimestamp)
+                assertEquals(this.connectionMessage, connectionMessage)
+                assertEquals(this.conversation, conversation)
+                assertEquals(this.relation, relation)
+                assertEquals(this.timestamp, timestamp)
+                assertEquals(this.verified, verified)
+                assertEquals(this.deleted, deleted)
+                assertEquals(this.availability, availability)
+                assertEquals(this.handle, handle)
+                assertEquals(this.providerId, providerId)
+                assertEquals(this.integrationId, integrationId)
+                assertEquals(this.expiresAt, expiresAt)
+                assertEquals(this.managedBy, managedBy)
+                assertEquals(this.selfPermission, selfPermission)
+                assertEquals(this.copyPermission, copyPermission)
+                assertEquals(this.createdBy, createdBy)
             }
         }
     }
