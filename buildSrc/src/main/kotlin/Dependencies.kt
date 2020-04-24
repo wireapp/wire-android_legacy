@@ -53,6 +53,7 @@ object Versions {
     const val COMMON_MARK = "0.11.0"
     const val JNA = "4.4.0@aar"
     const val LIB_PHONE_NUMBER = "7.1.1" // 7.2.x breaks protobuf
+    const val PIN_EDITTEXT = "1.2.1"
 
     //testing
     const val JUNIT = "4.12"
@@ -135,6 +136,7 @@ object BuildDependencies {
     val commonMark = "com.atlassian.commonmark:commonmark:${Versions.COMMON_MARK}"
     val jna = "net.java.dev.jna:jna:${Versions.JNA}"
     val libPhoneNumber = "com.googlecode.libphonenumber:libphonenumber:${Versions.LIB_PHONE_NUMBER}"
+    val pinEditText = "com.poovam:pin-edittext-field:${Versions.PIN_EDITTEXT}"
 }
 
 object ModuleDependencies {

@@ -30,9 +30,6 @@ class CreatePersonalAccountWithEmailViewModel(
     private val registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 ) : ViewModel() {
 
-    private val _nameLiveData = MutableLiveData<String>()
-    private val _emailLiveData = MutableLiveData<String>()
-    private val _activationCodeLiveData = MutableLiveData<String>()
     private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
     private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()
     private val _sendActivationCodeErrorLiveData = MutableLiveData<ErrorMessage>()
@@ -41,7 +38,6 @@ class CreatePersonalAccountWithEmailViewModel(
     private val _registerSuccessLiveData = MutableLiveData<Unit>()
     private val _registerErrorLiveData = MutableLiveData<ErrorMessage>()
 
-    val emailLiveData: LiveData<String> = _emailLiveData
     val confirmationButtonEnabledLiveData: LiveData<Boolean> = _confirmationButtonEnabledLiveData
     val sendActivationCodeSuccessLiveData: LiveData<Unit> = _sendActivationCodeSuccessLiveData
     val sendActivationCodeErrorLiveData: LiveData<ErrorMessage> = _sendActivationCodeErrorLiveData
@@ -49,18 +45,6 @@ class CreatePersonalAccountWithEmailViewModel(
     val activateEmailErrorLiveData: LiveData<ErrorMessage> = _activateEmailErrorLiveData
     val registerSuccessLiveData: LiveData<Unit> = _registerSuccessLiveData
     val registerErrorLiveData: LiveData<ErrorMessage> = _registerErrorLiveData
-
-    fun saveEmail(email: String) {
-        _emailLiveData.value = email
-    }
-
-    fun saveName(name: String) {
-        _nameLiveData.value = name
-    }
-
-    fun saveActivationCode(activationCode: String) {
-        _activationCodeLiveData.value = activationCode
-    }
 
     fun validateEmail(email: String) {
         validateEmailUseCase(viewModelScope, ValidateEmailParams(email), Dispatchers.Default) {
@@ -93,8 +77,8 @@ class CreatePersonalAccountWithEmailViewModel(
         }
     }
 
-    fun activateEmail(code: String) {
-        activateEmailUseCase(viewModelScope, ActivateEmailParams(_emailLiveData.value.toString(), code)) {
+    fun activateEmail(email: String, code: String) {
+        activateEmailUseCase(viewModelScope, ActivateEmailParams(email, code)) {
             it.fold(::activateEmailFailure) { _activateEmailSuccessLiveData.postValue(Unit) }
         }
     }
@@ -106,13 +90,11 @@ class CreatePersonalAccountWithEmailViewModel(
         }
     }
 
-    fun register(password: String) {
-        registerPersonalAccountWithEmailUseCase(viewModelScope, RegistrationParams(
-            _nameLiveData.value.toString(),
-            _emailLiveData.value.toString(),
-            password,
-            _activationCodeLiveData.value.toString()
-        )) {
+    fun register(name: String, email: String, password: String, activationCode: String) {
+        registerPersonalAccountWithEmailUseCase(
+            viewModelScope,
+            RegistrationParams(name, email, password, activationCode)
+        ) {
             it.fold(::registerFailure) { _registerSuccessLiveData.postValue(Unit) }
         }
     }
