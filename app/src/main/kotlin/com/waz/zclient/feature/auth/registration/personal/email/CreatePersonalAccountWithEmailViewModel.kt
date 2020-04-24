@@ -108,9 +108,9 @@ class CreatePersonalAccountWithEmailViewModel(
         }
     }
 
-    private fun updateNameValidationStatus(enabled: Boolean) {
-        _isValidNameLiveData.postValue(enabled)
-    }
+    private fun updateNameValidationStatus(status: Boolean) =
+        _isValidNameLiveData.postValue(status)
+
 
     fun register(name: String, email: String, password: String, activationCode: String) {
         registerPersonalAccountWithEmailUseCase(
