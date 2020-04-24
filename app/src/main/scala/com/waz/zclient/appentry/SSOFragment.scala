@@ -136,7 +136,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
           showInlineSsoError(getString(R.string.enterprise_signin_email_multiple_servers_not_supported))
         else {
           dismissSsoDialog()
-          Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
+          Future.successful(activity.loadBackendConfig(new URL(configFileUrl)))
         }
       case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
       case Left(err) => handleVerificationError(err)
@@ -150,7 +150,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     case error => showInlineSsoError(getString(R.string.sso_signin_error_try_again_message, error.code.toString))
   }
 
-  private def dismissSsoDialog() = getSsoDialog.foreach(_.dismiss())
+  protected def dismissSsoDialog() = getSsoDialog.foreach(_.dismiss())
 
   private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
 

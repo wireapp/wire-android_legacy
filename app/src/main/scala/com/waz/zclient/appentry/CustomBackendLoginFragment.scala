@@ -16,7 +16,7 @@ import scala.concurrent.Future
 
 class CustomBackendLoginFragment extends SSOFragment {
 
-  val onEmailLoginClick = EventStream[Unit]
+  val onEmailLoginClick = EventStream[Unit]()
 
   private lazy val backendController = inject[BackendController]
 
@@ -63,7 +63,7 @@ class CustomBackendLoginFragment extends SSOFragment {
     super.onPause()
     activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
-  
+
   private def fetchSsoToken(): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
