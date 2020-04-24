@@ -8,7 +8,6 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import kotlinx.android.synthetic.main.activity_settings_device_detail.*
 
-
 class SettingsDeviceDetailActivity : AppCompatActivity(R.layout.activity_settings_device_detail) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
