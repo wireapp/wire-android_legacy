@@ -45,7 +45,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun updateConfirmationButtonStatus(status: Boolean) {
-        createPersonalAccountNameConfirmationButton.isEnabled = status
+        createPersonalAccountPasswordConfirmationButton.isEnabled = status
     }
 
     private fun initPasswordChangedListener() {
@@ -57,6 +57,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
     }
 
     private fun initConfirmationButton() {
+        updateConfirmationButtonStatus(false)
         createPersonalAccountPasswordConfirmationButton.setOnClickListener {
             registerNewUser()
         }
