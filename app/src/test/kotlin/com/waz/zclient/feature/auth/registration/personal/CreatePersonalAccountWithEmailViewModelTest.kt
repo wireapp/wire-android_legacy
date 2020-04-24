@@ -154,6 +154,8 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             }
         }
 
+    //TODO add missing tests for validateName() once we agree on valid test solution for false positives
+
     @Test
     fun `given register is called, when the email is unauthorized then the registration is not done`() =
         runBlockingTest {
