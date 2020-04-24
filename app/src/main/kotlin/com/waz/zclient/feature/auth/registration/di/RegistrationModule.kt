@@ -2,6 +2,7 @@ package com.waz.zclient.feature.auth.registration.di
 
 import com.waz.zclient.core.network.NetworkClient
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
+import com.waz.zclient.feature.auth.registration.personal.email.EmailCredentialsViewModel
 import com.waz.zclient.feature.auth.registration.register.RegisterRepository
 import com.waz.zclient.feature.auth.registration.register.datasources.RegisterDataSource
 import com.waz.zclient.feature.auth.registration.register.datasources.remote.RegisterApi
@@ -22,6 +23,7 @@ val registrationModules: List<Module>
 val createPersonalAccountModule: Module = module {
     scope(named(REGISTRATION_SCOPE)) {
         viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get(), get()) }
+        viewModel { EmailCredentialsViewModel() }
         factory { ValidateEmailUseCase() }
     }
 }

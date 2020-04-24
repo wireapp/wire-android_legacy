@@ -7,12 +7,11 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.confirmationButton
-import kotlinx.android.synthetic.main.fragment_create_personal_account_name_input.*
+import kotlinx.android.synthetic.main.fragment_create_personal_account_name.*
 
-class CreatePersonalAccountNameInputFragment : Fragment(R.layout.fragment_create_personal_account_name_input) {
+class CreatePersonalAccountNameFragment : Fragment(R.layout.fragment_create_personal_account_name) {
 
-    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
+    private val emailCredentialsViewModel: EmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -21,7 +20,7 @@ class CreatePersonalAccountNameInputFragment : Fragment(R.layout.fragment_create
     }
 
     private fun initConfirmationButton() {
-        confirmationButton.setOnClickListener {
+        createPersonalAccountNameConfirmationButton.setOnClickListener {
             saveName()
             showPasswordInputScreen()
         }
@@ -30,15 +29,15 @@ class CreatePersonalAccountNameInputFragment : Fragment(R.layout.fragment_create
     private fun showPasswordInputScreen() {
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
-            CreatePersonalAccountPasswordInputFragment.newInstance()
+            CreatePersonalAccountPasswordFragment.newInstance()
         )
     }
 
     private fun saveName() {
-        createPersonalAccountViewModel.saveName(createPersonalAccountNameInputEditText.text.toString())
+        emailCredentialsViewModel.saveName(createPersonalAccountNameEditText.text.toString())
     }
 
     companion object {
-        fun newInstance() = CreatePersonalAccountNameInputFragment()
+        fun newInstance() = CreatePersonalAccountNameFragment()
     }
 }
