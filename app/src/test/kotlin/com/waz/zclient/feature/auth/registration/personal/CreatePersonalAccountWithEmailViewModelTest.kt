@@ -71,7 +71,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Test
     fun `given validateEmail is called, when the validation succeeds then ok button should be enabled`() =
         runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(TEST_EMAIL))
+            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
