@@ -7,7 +7,7 @@ import com.waz.zclient.core.usecase.UseCase
 
 class ValidatePasswordUseCase : UseCase<Any, ValidatePasswordParams>() {
 
-    override suspend fun run(params: ValidatePasswordParams): Either<Failure, Any> =
+    override suspend fun run(params: ValidatePasswordParams): Either<Failure, Unit> =
         when {
             isPasswordTooShort(params.password, params.minLength) -> Either.Left(PasswordTooShort)
             isPasswordTooLong(params.password, params.maxLength) -> Either.Left(PasswordTooLong)

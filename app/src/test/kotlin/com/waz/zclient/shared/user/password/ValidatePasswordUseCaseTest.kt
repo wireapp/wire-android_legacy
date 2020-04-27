@@ -95,8 +95,6 @@ class ValidatePasswordUseCaseTest : UnitTest() {
         runBlockingTest {
             val password = "testPassword8@"
             `when`(validatePasswordParams.password).thenReturn(password)
-            `when`(validatePasswordParams.minLength).thenReturn(TEST_MIN_LENGTH)
-            `when`(validatePasswordParams.maxLength).thenReturn(TEST_MAX_LENGTH)
             validatePasswordUseCase.run(validatePasswordParams).isRight shouldBe true
         }
 
