@@ -21,45 +21,51 @@ import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.ValidateEmailError
 import com.waz.zclient.shared.user.email.ValidateEmailParams
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
+import com.waz.zclient.shared.user.name.ValidateNameFailure
+import com.waz.zclient.shared.user.name.ValidateNameParams
+import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.Dispatchers
 
 class CreatePersonalAccountWithEmailViewModel(
     private val validateEmailUseCase: ValidateEmailUseCase,
     private val sendEmailActivationCodeUseCase: SendEmailActivationCodeUseCase,
     private val activateEmailUseCase: ActivateEmailUseCase,
+    private val validateNameUseCase: ValidateNameUseCase,
     private val registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 ) : ViewModel() {
 
-    private val _confirmationButtonEnabledLiveData = MutableLiveData<Boolean>()
+    private val _isValidEmailLiveData = MutableLiveData<Boolean>()
     private val _sendActivationCodeSuccessLiveData = MutableLiveData<Unit>()
     private val _sendActivationCodeErrorLiveData = MutableLiveData<ErrorMessage>()
     private val _activateEmailSuccessLiveData = MutableLiveData<Unit>()
     private val _activateEmailErrorLiveData = MutableLiveData<ErrorMessage>()
+    private val _isValidNameLiveData = MutableLiveData<Boolean>()
     private val _registerSuccessLiveData = MutableLiveData<Unit>()
     private val _registerErrorLiveData = MutableLiveData<ErrorMessage>()
 
-    val confirmationButtonEnabledLiveData: LiveData<Boolean> = _confirmationButtonEnabledLiveData
+    val isValidEmailLiveData: LiveData<Boolean> = _isValidEmailLiveData
     val sendActivationCodeSuccessLiveData: LiveData<Unit> = _sendActivationCodeSuccessLiveData
     val sendActivationCodeErrorLiveData: LiveData<ErrorMessage> = _sendActivationCodeErrorLiveData
     val activateEmailSuccessLiveData: LiveData<Unit> = _activateEmailSuccessLiveData
     val activateEmailErrorLiveData: LiveData<ErrorMessage> = _activateEmailErrorLiveData
+    val isValidNameLiveData: LiveData<Boolean> = _isValidNameLiveData
     val registerSuccessLiveData: LiveData<Unit> = _registerSuccessLiveData
     val registerErrorLiveData: LiveData<ErrorMessage> = _registerErrorLiveData
 
     fun validateEmail(email: String) {
         validateEmailUseCase(viewModelScope, ValidateEmailParams(email), Dispatchers.Default) {
-            it.fold(::handleValidateEmailFailure) { updateConfirmationStatus(true) }
+            it.fold(::handleValidateEmailFailure) { updateEmailValidationStatus(true) }
         }
     }
 
     private fun handleValidateEmailFailure(failure: Failure) {
         if (failure is ValidateEmailError) {
-            updateConfirmationStatus(false)
+            updateEmailValidationStatus(false)
         }
     }
 
-    private fun updateConfirmationStatus(enabled: Boolean) {
-        _confirmationButtonEnabledLiveData.postValue(enabled)
+    private fun updateEmailValidationStatus(enabled: Boolean) {
+        _isValidEmailLiveData.postValue(enabled)
     }
 
     fun sendActivationCode(email: String) {
@@ -89,6 +95,21 @@ class CreatePersonalAccountWithEmailViewModel(
                 ErrorMessage(R.string.email_verification_invalid_code_error)
         }
     }
+
+    fun validateName(name: String) {
+        validateNameUseCase(viewModelScope, ValidateNameParams(name), Dispatchers.Default) {
+            it.fold(::handleValidateNameFailure) { updateNameValidationStatus(true) }
+        }
+    }
+
+    private fun handleValidateNameFailure(failure: Failure) {
+        if (failure is ValidateNameFailure) {
+            updateNameValidationStatus(false)
+        }
+    }
+
+    private fun updateNameValidationStatus(status: Boolean) =
+        _isValidNameLiveData.postValue(status)
 
     fun register(name: String, email: String, password: String, activationCode: String) {
         registerPersonalAccountWithEmailUseCase(

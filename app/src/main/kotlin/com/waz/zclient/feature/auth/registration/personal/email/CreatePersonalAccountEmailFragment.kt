@@ -25,14 +25,14 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeConfirmationData()
+        observeEmailValidationData()
         observeActivationCodeData()
         initEmailChangedListener()
         initConfirmationButton()
     }
 
-    private fun observeConfirmationData() {
-        createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) {
+    private fun observeEmailValidationData() {
+        createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observe(viewLifecycleOwner) {
             updateConfirmationButtonStatus(it)
         }
     }

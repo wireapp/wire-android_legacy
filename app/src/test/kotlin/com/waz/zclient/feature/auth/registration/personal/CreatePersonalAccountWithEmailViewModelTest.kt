@@ -16,6 +16,7 @@ import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
+import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -41,6 +42,9 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     private lateinit var activateEmailUseCase: ActivateEmailUseCase
 
     @Mock
+    private lateinit var validateNameUseCase: ValidateNameUseCase
+
+    @Mock
     private lateinit var registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 
     @Before
@@ -49,6 +53,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             validateEmailUseCase,
             sendEmailActivationCodeUseCase,
             activateEmailUseCase,
+            validateNameUseCase,
             registerPersonalAccountWithEmailUseCase
         )
     }
@@ -60,7 +65,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observeOnce {
+            createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
                 it shouldBe true
             }
         }
@@ -72,7 +77,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observeOnce {
+            createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -84,7 +89,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observeOnce {
+            createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -148,6 +153,8 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
                 it shouldBe Unit
             }
         }
+
+    //TODO add missing tests for validateName() once we agree on valid test solution for false positives
 
     @Test
     fun `given register is called, when the email is unauthorized then the registration is not done`() =

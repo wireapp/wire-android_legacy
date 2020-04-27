@@ -7,9 +7,11 @@ import com.waz.zclient.shared.user.datasources.UsersDataSource
 import com.waz.zclient.shared.user.datasources.local.UsersLocalDataSource
 import com.waz.zclient.shared.user.datasources.remote.UsersApi
 import com.waz.zclient.shared.user.datasources.remote.UsersRemoteDataSource
+import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import com.waz.zclient.shared.user.handle.UserHandleDataSource
 import com.waz.zclient.shared.user.handle.UserHandleRepository
 import com.waz.zclient.shared.user.mapper.UserMapper
+import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberDataSource
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberRepository
 import com.waz.zclient.shared.user.profile.GetUserProfilePictureUseCase
@@ -36,4 +38,7 @@ val usersModule: Module = module {
     factory { GetUserProfileUseCase(get()) }
     factory { ProfilePictureMapper() }
     factory { GetUserProfilePictureUseCase(get(), get()) }
+
+    factory { ValidateEmailUseCase() }
+    factory { ValidateNameUseCase() }
 }
