@@ -106,18 +106,15 @@ class CreatePersonalAccountWithEmailViewModel(
 
     fun validateName(name: String) {
         validateNameUseCase(viewModelScope, ValidateNameParams(name), Dispatchers.Default) {
-            it.fold(::handleValidateNameFailure) { updateNameValidationStatus(true) }
+            it.fold(::handleValidateNameFailure) { _isValidNameLiveData.postValue(true) }
         }
     }
 
     private fun handleValidateNameFailure(failure: Failure) {
         if (failure is ValidateNameFailure) {
-            updateNameValidationStatus(false)
+            _isValidNameLiveData.postValue(false)
         }
     }
-
-    private fun updateNameValidationStatus(status: Boolean) =
-        _isValidNameLiveData.postValue(status)
 
     fun validatePassword(password: String) {
         validatePasswordCase(viewModelScope, ValidatePasswordParams(
@@ -125,18 +122,15 @@ class CreatePersonalAccountWithEmailViewModel(
             passwordLengthConfig.minLength,
             passwordLengthConfig.maxLength
         ), Dispatchers.Default) {
-            it.fold(::handleValidatePasswordFailure) { updatePasswordValidationStatus(true) }
+            it.fold(::handleValidatePasswordFailure) { _isValidPasswordLiveData.postValue(true) }
         }
     }
 
     private fun handleValidatePasswordFailure(failure: Failure) {
         if (failure is ValidatePasswordFailure) {
-            updatePasswordValidationStatus(false)
+            _isValidPasswordLiveData.postValue(false)
         }
     }
-
-    private fun updatePasswordValidationStatus(status: Boolean) =
-        _isValidPasswordLiveData.postValue(status)
 
     fun register(name: String, email: String, password: String, activationCode: String) {
         registerPersonalAccountWithEmailUseCase(
