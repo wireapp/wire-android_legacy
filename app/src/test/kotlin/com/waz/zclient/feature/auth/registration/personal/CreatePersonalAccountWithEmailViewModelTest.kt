@@ -16,6 +16,7 @@ import com.waz.zclient.shared.activation.usecase.SendEmailActivationCodeUseCase
 import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
+import com.waz.zclient.shared.user.name.ValidateNameUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -41,6 +42,9 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     private lateinit var activateEmailUseCase: ActivateEmailUseCase
 
     @Mock
+    private lateinit var validateNameUseCase: ValidateNameUseCase
+
+    @Mock
     private lateinit var registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 
     @Before
@@ -49,6 +53,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             validateEmailUseCase,
             sendEmailActivationCodeUseCase,
             activateEmailUseCase,
+            validateNameUseCase,
             registerPersonalAccountWithEmailUseCase
         )
     }
@@ -60,7 +65,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observeOnce {
+            createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
                 it shouldBe true
             }
         }
@@ -72,7 +77,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observeOnce {
+            createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -84,7 +89,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
-            createPersonalAccountWithEmailViewModel.confirmationButtonEnabledLiveData.observeOnce {
+            createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observeOnce {
                 it shouldBe false
             }
         }
@@ -130,7 +135,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(InvalidCode))
 
-            createPersonalAccountWithEmailViewModel.activateEmail(TEST_CODE)
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.activateEmailErrorLiveData.observeOnce {
                 it shouldBe InvalidCode
@@ -142,19 +147,21 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountWithEmailViewModel.activateEmail(TEST_CODE)
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.activateEmailSuccessLiveData.observeOnce {
                 it shouldBe Unit
             }
         }
 
+    //TODO add missing tests for validateName() once we agree on valid test solution for false positives
+
     @Test
     fun `given register is called, when the email is unauthorized then the registration is not done`() =
         runBlockingTest {
             lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(UnauthorizedEmail))
 
-            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+            createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
                 it shouldBe UnauthorizedEmail
@@ -166,7 +173,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(InvalidActivationCode))
 
-            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+            createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
                 it shouldBe InvalidActivationCode
@@ -178,7 +185,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(EmailInUse))
 
-            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+            createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerErrorLiveData.observeOnce {
                 it shouldBe EmailInUse
@@ -190,7 +197,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         runBlockingTest {
             lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
-            createPersonalAccountWithEmailViewModel.register(TEST_PASSWORD)
+            createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
 
             createPersonalAccountWithEmailViewModel.registerSuccessLiveData.observeOnce {
                 it shouldBe Unit
@@ -198,8 +205,9 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         }
 
     companion object {
+        private const val TEST_NAME = "testName"
         private const val TEST_EMAIL = "test@wire.com"
-        private const val TEST_CODE = "000000"
         private const val TEST_PASSWORD = "testPass"
+        private const val TEST_CODE = "000000"
     }
 }

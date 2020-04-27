@@ -32,19 +32,17 @@
         <item name="errorTextAppearance">@style/TextView.Authentication.Error</item>
     </style>
 
-    <style name="EditText.PinCodeDigit" parent="@style/EditText.RobotoRegular">
-        <item name="android:paddingStart">@dimen/pin_code_digit_padding_start</item>
-        <item name="android:paddingEnd">@dimen/pin_code_digit_padding_end</item>
-        <item name="android:paddingTop">@dimen/pin_code_digit_padding_top</item>
-        <item name="android:paddingBottom">@dimen/pin_code_digit_padding_bottom</item>
+    <style name="EditText.Pin" parent="@style/EditText.RobotoRegular">
         <item name="android:inputType">number</item>
-        <item name="android:background">@color/white</item>
+        <item name="android:padding">@dimen/pin_code_digit_padding</item>
         <item name="android:textSize">@dimen/pin_code_digit_text_size</item>
-        <item name="android:maxLength">1</item>
-        <item name="android:cursorVisible">false</item>
-        <item name="android:focusableInTouchMode">true</item>
-        <item name="android:focusable">true</item>
-        <item name="android:clickable">false</item>
+        <item name="android:background">@color/white</item>
+        <item name="fieldColor">@color/white</item>
+        <item name="fieldBgColor">@color/white</item>
+        <item name="highlightColor">@color/white</item>
+        <item name="noOfFields">6</item>
+        <item name="lineThickness">0dp</item>
+        <item name="cornerRadius">@dimen/pin_code_digit_corner_radius</item>
     </style>
 
 </resources>

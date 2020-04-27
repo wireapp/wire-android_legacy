@@ -5,6 +5,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -28,9 +29,9 @@ class FoldersTable126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(allFolders()[0]) {
-                assert(this.id == id)
-                assert(this.name == name)
-                assert(this.type == type)
+                assertEquals(this.id, id)
+                assertEquals(this.name, name)
+                assertEquals(this.type, type)
             }
         }
     }

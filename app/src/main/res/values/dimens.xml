@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
 
     Wire
     Copyright (C) 2020 Wire Swiss GmbH
@@ -612,14 +611,10 @@
     <dimen name="email_verification_last_digit_edit_text_margin_end">16dp</dimen>
     <dimen name="email_verification_digit_edit_text_margin_top">60dp</dimen>
 
-    <!-- PIN Code Digit (Shared dimensions between email verification and phone verification screens) -->
-    <dimen name="pin_code_digit_width">50dp</dimen>
-    <dimen name="pin_code_digit_height">56dp</dimen>
-    <dimen name="pin_code_digit_padding_start">16dp</dimen>
-    <dimen name="pin_code_digit_padding_end">16dp</dimen>
-    <dimen name="pin_code_digit_padding_top">8dp</dimen>
-    <dimen name="pin_code_digit_padding_bottom">8dp</dimen>
-    <dimen name="pin_code_digit_text_size">32dp</dimen>
+    <!-- PIN Code (Shared dimensions between email verification and phone verification screens) -->
+    <dimen name="pin_code_digit_padding">8dp</dimen>
+    <dimen name="pin_code_digit_text_size">32sp</dimen>
+    <dimen name="pin_code_digit_corner_radius">2dp</dimen>
 
     <!-- Create Personal Account - Name Input screen -->
     <dimen name="create_personal_account_name_input_title_text_size">32sp</dimen>

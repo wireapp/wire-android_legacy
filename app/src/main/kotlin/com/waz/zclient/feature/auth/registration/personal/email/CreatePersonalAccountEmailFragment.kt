@@ -9,55 +9,59 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
+import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
-import kotlinx.android.synthetic.main.fragment_create_personal_account_email_input.*
+import kotlinx.android.synthetic.main.fragment_create_personal_account_email.*
 
-class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_create_personal_account_email_input) {
+class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_personal_account_email) {
 
     //TODO handle no internet connections status
     //TODO Add loading status
-    private val createPersonalAccountViewModel: CreatePersonalAccountWithEmailViewModel
+    private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
+        by viewModel(REGISTRATION_SCOPE_ID)
+
+    private val emailCredentialsViewModel: EmailCredentialsViewModel
         by sharedViewModel(REGISTRATION_SCOPE_ID)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeConfirmationData()
+        observeEmailValidationData()
         observeActivationCodeData()
         initEmailChangedListener()
         initConfirmationButton()
     }
 
-    private fun observeConfirmationData() {
-        with(createPersonalAccountViewModel) {
-            confirmationButtonEnabledLiveData.observe(viewLifecycleOwner) { updateConfirmationButtonStatus(it) }
+    private fun observeEmailValidationData() {
+        createPersonalAccountWithEmailViewModel.isValidEmailLiveData.observe(viewLifecycleOwner) {
+            updateConfirmationButtonStatus(it)
         }
     }
 
     private fun updateConfirmationButtonStatus(enabled: Boolean) {
-        confirmationButton.isEnabled = enabled
+        createPersonalAccountEmailConfirmationButton.isEnabled = enabled
     }
 
     private fun initEmailChangedListener() {
-        createPersonalAccountWithEmailEditText.doAfterTextChanged {
-            createPersonalAccountViewModel.validateEmail(it.toString())
+        createPersonalAccountEmailEditText.doAfterTextChanged {
+            createPersonalAccountWithEmailViewModel.validateEmail(it.toString())
         }
     }
 
     private fun initConfirmationButton() {
         updateConfirmationButtonStatus(false)
-
-        confirmationButton.setOnClickListener {
-            val email = createPersonalAccountWithEmailEditText.text.toString()
-            with(createPersonalAccountViewModel) {
-                sendActivationCode(email)
-                saveEmail(email)
-            }
+        createPersonalAccountEmailConfirmationButton.setOnClickListener {
+            createPersonalAccountWithEmailViewModel.sendActivationCode(
+                createPersonalAccountEmailEditText.text.toString()
+            )
         }
     }
 
     private fun observeActivationCodeData() {
-        with(createPersonalAccountViewModel) {
+        with(createPersonalAccountWithEmailViewModel) {
             sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
+                emailCredentialsViewModel.saveEmail(
+                    createPersonalAccountEmailEditText.text.toString()
+                )
                 showEmailVerificationScreen()
                 showEmailError(String.empty())
             }
@@ -68,18 +72,17 @@ class CreatePersonalAccountEmailInputFragment : Fragment(R.layout.fragment_creat
     }
 
     private fun showEmailVerificationScreen() {
-        val email = createPersonalAccountWithEmailEditText.text.toString()
         replaceFragment(
             R.id.activityCreateAccountLayoutContainer,
-            CreatePersonalAccountEmailVerificationFragment.newInstance(email)
+            CreatePersonalAccountPinCodeFragment.newInstance()
         )
     }
 
     private fun showEmailError(errorMessage: String) {
-        createPersonalAccountWithEmailTextInputLayout.error = errorMessage
+        createPersonalAccountEmailTextInputLayout.error = errorMessage
     }
 
     companion object {
-        fun newInstance() = CreatePersonalAccountEmailInputFragment()
+        fun newInstance() = CreatePersonalAccountEmailFragment()
     }
 }
