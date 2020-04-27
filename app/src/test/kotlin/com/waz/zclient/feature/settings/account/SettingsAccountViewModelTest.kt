@@ -4,9 +4,11 @@ import com.waz.zclient.UnitTest
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.framework.coroutines.CoroutinesTestRule
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
+import com.waz.zclient.shared.user.UsersRepository
 import com.waz.zclient.shared.user.email.ChangeEmailParams
 import com.waz.zclient.shared.user.email.ChangeEmailUseCase
 import com.waz.zclient.shared.user.name.ChangeNameParams
@@ -19,16 +21,24 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.lenient
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.verify
 
 @ExperimentalCoroutinesApi
 @InternalCoroutinesApi
 class SettingsAccountViewModelTest : UnitTest() {
+
+    @get:Rule
+    val coroutinesTestRule = CoroutinesTestRule()
 
     private lateinit var viewModel: SettingsAccountViewModel
 
@@ -36,6 +46,8 @@ class SettingsAccountViewModelTest : UnitTest() {
     private lateinit var getUserProfileUseCase: GetUserProfileUseCase
 
     @Mock
+    private lateinit var usersRepository: UsersRepository
+
     private lateinit var changeNameUseCase: ChangeNameUseCase
 
     @Mock
@@ -54,6 +66,8 @@ class SettingsAccountViewModelTest : UnitTest() {
 
     @Before
     fun setup() {
+        changeNameUseCase = spy(ChangeNameUseCase(usersRepository))
+
         viewModel = SettingsAccountViewModel(
             getUserProfileUseCase,
             changeNameUseCase,
@@ -149,16 +163,19 @@ class SettingsAccountViewModelTest : UnitTest() {
 
     @Test
     fun `given account name is updated and fails with HttpError, then error observer is notified`() {
-        val changeNameParams = mock(ChangeNameParams::class.java)
+        val changeNameParams = ChangeNameParams(TEST_NAME)
 
         runBlockingTest {
-            lenient().`when`(changeNameUseCase.run(changeNameParams)).thenReturn(Either.Left(ServerError))
-        }
+            doReturn(Either.Left(ServerError)).`when`(changeNameUseCase).run(changeNameParams)
 
-        viewModel.updateName(TEST_NAME)
+            viewModel.updateName(TEST_NAME)
 
-        viewModel.errorLiveData.observeOnce {
-            it shouldBe "Failure: $ServerError"
+            verify(changeNameUseCase).run(changeNameParams)
+
+            viewModel.errorLiveData.observeOnce {
+//              assertEquals(it, "sdfsf") fails here, as it should be
+                assertEquals(it, "Failure: $ServerError")
+            }
         }
 
     }
