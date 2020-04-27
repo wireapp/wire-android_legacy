@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -165,8 +166,8 @@ class SettingsAccountViewModelTest : UnitTest() {
             verify(changeNameUseCase).invoke(changeNameParams)
 
             viewModel.errorLiveData.observeOnce {
-//              assert(it == "sdfsf") //fails here, as it should be
-                assert(it == "Failure: $ServerError")
+//              assertEquals(it, "sdfsf") //fails here, as it should be
+                assertEquals(it, "Failure: $ServerError")
             }
         }
     }
