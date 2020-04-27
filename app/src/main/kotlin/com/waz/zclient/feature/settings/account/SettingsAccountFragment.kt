@@ -119,18 +119,25 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
     }
 
     private fun initLogout() {
+        observeLogoutData()
+        initLogoutButtonListener()
+    }
+
+    private fun observeLogoutData() {
         with(logoutViewModel) {
-            logoutLiveData.observe(viewLifecycleOwner) {
+            successLiveData.observe(viewLifecycleOwner) {
                 Toast.makeText(requireContext(), "Logged out", LENGTH_LONG).show()
             }
             errorLiveData.observe(viewLifecycleOwner) {
                 Toast.makeText(requireContext(), "Failed with $it", LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun initLogoutButtonListener() =
         settingsAccountLogoutButton.setOnClickListener {
             showLogoutDialog()
         }
-    }
 
     private fun initDeleteAccountButton() {
         settingsAccountViewModel.deleteAccountDialogLiveData.observe(viewLifecycleOwner) {
