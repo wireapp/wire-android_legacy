@@ -10,6 +10,8 @@ import com.waz.zclient.storage.db.accountdata.SsoIdEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -40,9 +42,9 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         activeAccountsDao.insertActiveAccount(activeAccount)
 
         val accessToken = activeAccountsDao.accessToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        assert(accessToken?.token == TEST_ACTIVE_ACCOUNT_COOKIE)
-        assert(accessToken?.tokenType == TEST_ACCESS_TOKEN_TYPE)
-        assert(accessToken?.expiresInMillis == TEST_ACCESS_TOKEN_EXPIRATION_TIME)
+        assertEquals(accessToken?.token, TEST_ACTIVE_ACCOUNT_COOKIE)
+        assertEquals(accessToken?.tokenType, TEST_ACCESS_TOKEN_TYPE)
+        assertEquals(accessToken?.expiresInMillis, TEST_ACCESS_TOKEN_EXPIRATION_TIME)
     }
 
     @Test
@@ -51,7 +53,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         activeAccountsDao.insertActiveAccount(activeAccount)
 
         val accessToken = activeAccountsDao.accessToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        assert(accessToken == null)
+        assertEquals(accessToken, null)
     }
 
     @Test
@@ -67,9 +69,9 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         )
 
         val accessToken = activeAccountsDao.accessToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        assert(accessToken?.token == TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
-        assert(accessToken?.tokenType == TEST_ACCESS_TOKEN_TYPE)
-        assert(accessToken?.expiresInMillis == TEST_ACCESS_TOKEN_EXPIRATION_TIME)
+        assertEquals(accessToken?.token, TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
+        assertEquals(accessToken?.tokenType, TEST_ACCESS_TOKEN_TYPE)
+        assertEquals(accessToken?.expiresInMillis, TEST_ACCESS_TOKEN_EXPIRATION_TIME)
     }
 
     @Test
@@ -84,7 +86,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
             )
 
             val refreshToken = activeAccountsDao.refreshToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-            assert(refreshToken == TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
+            assertEquals(refreshToken, TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
         }
 
     @Test
@@ -95,13 +97,13 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         }
 
         val roomActiveAccounts = activeAccountsDao.activeAccounts()
-        assert(roomActiveAccounts.size == 2)
+        assertEquals(roomActiveAccounts.size, 2)
 
         val firstAccount = roomActiveAccounts[0]
-        assert(firstAccount.id == TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+        assertEquals(firstAccount.id, TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
 
         val secondAccount = roomActiveAccounts[1]
-        assert(secondAccount.id == TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
+        assertEquals(secondAccount.id, TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
     }
 
     @Test
@@ -116,7 +118,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
             activeAccountsDao.removeAccount(it)
         }
 
-        assert(activeAccountsDao.activeAccounts().isEmpty())
+        assertTrue(activeAccountsDao.activeAccounts().isEmpty())
     }
 
     private fun createActiveAccount(

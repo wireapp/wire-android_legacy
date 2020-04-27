@@ -8,6 +8,7 @@ import com.waz.zclient.storage.db.teams.TeamsEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -40,13 +41,13 @@ class TeamsDaoTest : IntegrationTest() {
         }
 
         val roomActiveAccounts = teamsDao.allTeams()
-        assert(roomActiveAccounts[0].teamId == TEST_TEAM_FIRST_ID)
-        assert(roomActiveAccounts[1].teamId == TEST_TEAM_SECOND_ID)
-        assert(roomActiveAccounts.size == 2)
+        assertEquals(roomActiveAccounts[0].teamId, TEST_TEAM_FIRST_ID)
+        assertEquals(roomActiveAccounts[1].teamId, TEST_TEAM_SECOND_ID)
+        assertEquals(roomActiveAccounts.size, 2)
         roomActiveAccounts.map {
-            assert(it.teamName == TEST_TEAM_NAME)
-            assert(it.creatorId == TEST_TEAM_CREATOR)
-            assert(it.iconId == TEST_TEAM_ICON)
+            assertEquals(it.teamName, TEST_TEAM_NAME)
+            assertEquals(it.creatorId, TEST_TEAM_CREATOR)
+            assertEquals(it.iconId, TEST_TEAM_ICON)
         }
         Unit
     }

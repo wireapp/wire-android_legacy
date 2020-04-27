@@ -6,11 +6,11 @@ import com.waz.zclient.storage.MigrationTestHelper
 import com.waz.zclient.storage.db.GlobalDatabase
 import com.waz.zclient.storage.db.accountdata.GLOBAL_DATABASE_MIGRATION_24_25
 import com.waz.zclient.storage.di.StorageModule.getGlobalDatabase
-import junit.framework.Assert.assertNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -59,12 +59,12 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         runBlocking {
             val activeAccounts = getActiveAccounts()
             with(activeAccounts[0]) {
-                assert(id == testActiveAccountId)
-                assert(teamId == null)
-                assert(accessToken?.token == testActiveAccountCookie)
-                assert(accessToken?.tokenType == testAccessTokenType)
-                assert(accessToken?.expiresInMillis == 1582896705028)
-                assert(refreshToken == testActiveAccountCookie)
+                assertEquals(id, testActiveAccountId)
+                assertEquals(teamId, null)
+                assertEquals(accessToken?.token, testActiveAccountCookie)
+                assertEquals(accessToken?.tokenType, testAccessTokenType)
+                assertEquals(accessToken?.expiresInMillis, 1582896705028)
+                assertEquals(refreshToken, testActiveAccountCookie)
             }
         }
     }
@@ -89,10 +89,10 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         runBlocking {
             val teams = getTeams()
             with(teams[0]) {
-                assert(teamId == testTeamId)
-                assert(creatorId == testTeamCreator)
-                assert(iconId == testTeamIcon)
-                assert(teamName == testTeamName)
+                assertEquals(teamId, testTeamId)
+                assertEquals(creatorId, testTeamCreator)
+                assertEquals(iconId, testTeamIcon)
+                assertEquals(teamName, testTeamName)
             }
         }
     }
@@ -129,15 +129,15 @@ class GlobalDatabase24to25MigrationTest : IntegrationTest() {
         runBlocking {
             val cachedEntries = getCacheEntries()
             with(cachedEntries[0]) {
-                assert(key == testCacheEntryId)
-                assert(fileId == testCacheEntryFileId)
-                assertNull(data)
-                assert(lastUsed == testCacheEntryLastUsed)
-                assert(timeout == testCacheEntryTimeout)
-                assert(filePath == testCacheEntryFilePath)
-                assert(mime == testCacheEntryMime)
-                assert(encKey == testCacheEntryEncKey)
-                assert(length == testCacheEntryLength)
+                assertEquals(key, testCacheEntryId)
+                assertEquals(fileId, testCacheEntryFileId)
+                assertEquals(data, null)
+                assertEquals(lastUsed, testCacheEntryLastUsed)
+                assertEquals(timeout, testCacheEntryTimeout)
+                assertEquals(filePath, testCacheEntryFilePath)
+                assertEquals(mime, testCacheEntryMime)
+                assertEquals(encKey, testCacheEntryEncKey)
+                assertEquals(length, testCacheEntryLength)
             }
         }
     }
