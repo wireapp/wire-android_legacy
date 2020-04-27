@@ -5,9 +5,9 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 
-class ValidateEmailUseCase : UseCase<Any, ValidateEmailParams>() {
+class ValidateEmailUseCase : UseCase<Unit, ValidateEmailParams>() {
 
-    override suspend fun run(params: ValidateEmailParams): Either<Failure, Any> =
+    override suspend fun run(params: ValidateEmailParams): Either<Failure, Unit> =
         when {
             !emailCharactersValid(params.email) -> Either.Left(EmailInvalid)
             isEmailTooShort(params.email) -> Either.Left(EmailTooShort)

@@ -1,7 +1,6 @@
 package com.waz.zclient.shared.user.di
 
 import com.waz.zclient.core.network.NetworkClient
-import com.waz.zclient.storage.db.UserDatabase
 import com.waz.zclient.shared.user.UsersRepository
 import com.waz.zclient.shared.user.datasources.UsersDataSource
 import com.waz.zclient.shared.user.datasources.local.UsersLocalDataSource
@@ -12,11 +11,13 @@ import com.waz.zclient.shared.user.handle.UserHandleDataSource
 import com.waz.zclient.shared.user.handle.UserHandleRepository
 import com.waz.zclient.shared.user.mapper.UserMapper
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
+import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberDataSource
 import com.waz.zclient.shared.user.phonenumber.PhoneNumberRepository
 import com.waz.zclient.shared.user.profile.GetUserProfilePictureUseCase
 import com.waz.zclient.shared.user.profile.GetUserProfileUseCase
 import com.waz.zclient.shared.user.profile.ProfilePictureMapper
+import com.waz.zclient.storage.db.UserDatabase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -41,4 +42,5 @@ val usersModule: Module = module {
 
     factory { ValidateEmailUseCase() }
     factory { ValidateNameUseCase() }
+    factory { ValidatePasswordUseCase() }
 }

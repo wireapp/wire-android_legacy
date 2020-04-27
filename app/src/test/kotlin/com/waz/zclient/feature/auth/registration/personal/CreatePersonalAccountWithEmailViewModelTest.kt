@@ -2,6 +2,7 @@ package com.waz.zclient.feature.auth.registration.personal
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
+import com.waz.zclient.core.config.PasswordLengthConfig
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
@@ -17,6 +18,7 @@ import com.waz.zclient.shared.user.email.EmailInvalid
 import com.waz.zclient.shared.user.email.EmailTooShort
 import com.waz.zclient.shared.user.email.ValidateEmailUseCase
 import com.waz.zclient.shared.user.name.ValidateNameUseCase
+import com.waz.zclient.shared.user.password.ValidatePasswordUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
@@ -45,6 +47,12 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     private lateinit var validateNameUseCase: ValidateNameUseCase
 
     @Mock
+    private lateinit var validatePasswordUseCase: ValidatePasswordUseCase
+
+    @Mock
+    private lateinit var passwordLengthConfig: PasswordLengthConfig
+
+    @Mock
     private lateinit var registerPersonalAccountWithEmailUseCase: RegisterPersonalAccountWithEmailUseCase
 
     @Before
@@ -54,6 +62,8 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             sendEmailActivationCodeUseCase,
             activateEmailUseCase,
             validateNameUseCase,
+            validatePasswordUseCase,
+            passwordLengthConfig,
             registerPersonalAccountWithEmailUseCase
         )
     }
@@ -61,7 +71,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
     @Test
     fun `given validateEmail is called, when the validation succeeds then ok button should be enabled`() =
         runBlockingTest {
-            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(TEST_EMAIL))
+            lenient().`when`(validateEmailUseCase.run(any())).thenReturn(Either.Right(Unit))
 
             createPersonalAccountWithEmailViewModel.validateEmail(TEST_EMAIL)
 
@@ -154,7 +164,7 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
             }
         }
 
-    //TODO add missing tests for validateName() once we agree on valid test solution for false positives
+    //TODO add missing tests for validateName()/validatePassword() once we agree on valid test solution for false positives
 
     @Test
     fun `given register is called, when the email is unauthorized then the registration is not done`() =

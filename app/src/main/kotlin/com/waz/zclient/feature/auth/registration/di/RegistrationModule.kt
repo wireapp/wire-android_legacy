@@ -21,7 +21,7 @@ val registrationModules: List<Module>
 
 val createPersonalAccountModule: Module = module {
     scope(named(REGISTRATION_SCOPE)) {
-        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get(), get(), get()) }
+        viewModel { CreatePersonalAccountWithEmailViewModel(get(), get(), get(), get(), get(), get(), get()) }
         viewModel { EmailCredentialsViewModel() }
     }
 }

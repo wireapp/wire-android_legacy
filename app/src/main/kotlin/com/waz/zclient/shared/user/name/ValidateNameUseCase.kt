@@ -5,9 +5,9 @@ import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.usecase.UseCase
 
-class ValidateNameUseCase : UseCase<Any, ValidateNameParams>() {
+class ValidateNameUseCase : UseCase<Unit, ValidateNameParams>() {
 
-    override suspend fun run(params: ValidateNameParams): Either<Failure, Any> =
+    override suspend fun run(params: ValidateNameParams): Either<Failure, Unit> =
         when {
             isNameTooShort(params.name) -> Either.Left(NameTooShort)
             else -> Either.Right(Unit)
