@@ -255,22 +255,27 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
     }
 
-  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] =
+  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
     usersStorage.contents.head.flatMap { usersInStorage =>
-      val (local, remote) = unapply(results).partition(u => usersInStorage.contains(u.id))
-      userSearchResult ! (local.map(u => usersInStorage(u.id)) ++  remote.map(UserData.apply)).toIndexedSeq
+      val (local, remote) = unapply(results).partition { u =>
+        // a bit hacky way to check if all steps of fetching data were already performed for that user
+        usersInStorage.contains(u.id) &&
+          usersInStorage(u.id).name != Name.Empty &&
+          usersInStorage(u.id).picture.isDefined
+      }
+      userSearchResult ! (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData.apply)).toIndexedSeq
       if (remote.nonEmpty)
         sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
       else
         Future.successful(())
     }
+  }
 
   override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
     val userUpdate = (user: UserData) => remoteUsers.get(user.id).fold(user) {
       case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
       case (info, None)         => user.updated(info)
     }
-
     userSearchResult.mutate(_.map(userUpdate))
     exactMatchUser.mutate(_.map(userUpdate))
   }

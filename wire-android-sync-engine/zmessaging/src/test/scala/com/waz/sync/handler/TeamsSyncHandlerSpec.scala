@@ -85,10 +85,26 @@ class TeamsSyncHandlerSpec extends AndroidFreeSpec {
 
       result(initHandler(Some(teamId)).syncMember(userId)) shouldEqual SyncResult(timeoutError)
     }
+
+    scenario("Retrieve team members from the backend") {
+      val teamId = TeamId()
+      val handler = initHandler(Some(teamId))
+      val teamMembers =
+        Seq(UserId(), UserId())
+          .map(userId => userId -> TeamMember(userId, Option(Permissions(0L, 0L)), None))
+          .toMap
+      (client.getTeamMembersWithPost _)
+        .expects(teamId, *)
+        .anyNumberOfTimes()
+        .onCall { (_: TeamId, userIds: Seq[UserId]) =>
+          CancellableFuture.successful(Right(teamMembers.filterKeys(userIds.contains).values.toSeq))
+        }
+
+      result(handler.getMembers(teamMembers.keys.toSeq)).sortBy(_.user) shouldEqual teamMembers.values.toSeq.sortBy(_.user)
+    }
   }
 
-
-  private def verifyTeamSync(has_more: Boolean) {
+  private def verifyTeamSync(has_more: Boolean) = {
     val teamId = TeamId()
     val teamData = TeamData(teamId, "name", UserId(), AssetId())
     val members = Seq(
