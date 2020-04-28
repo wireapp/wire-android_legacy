@@ -45,7 +45,7 @@ class CustomBackendLoginFragment extends SSOFragment {
     })
 
     emailLoginButton.setOnClickListener(new View.OnClickListener {
-      override def onClick(v: View): Unit = onEmailLoginClick ! ()
+      override def onClick(v: View): Unit = onEmailLoginClick ! (())
     })
     ssoLoginButton.setOnClickListener(new View.OnClickListener {
       override def onClick(v: View): Unit = fetchSsoToken()
