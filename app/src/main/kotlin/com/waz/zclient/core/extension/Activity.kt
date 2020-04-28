@@ -6,7 +6,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.waz.zclient.utils.DeprecationUtils
-import java.util.*
+import java.util.Locale
 
 fun AppCompatActivity.addFragment(frameId: Int, fragment: Fragment) =
     supportFragmentManager.doTransaction { add(frameId, fragment) }
