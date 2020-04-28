@@ -20,16 +20,16 @@ package com.waz.service
 import com.waz.content.UserPreferences.SelfPermissions
 import com.waz.content._
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.log.LogSE._
+import com.waz.log.LogSE.{info, _}
 import com.waz.model.UserData.{ConnectionStatus, UserDataDao}
 import com.waz.model.UserPermissions.{ExternalPermissions, decodeBitmask}
 import com.waz.model._
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.threading.Threading
-import com.waz.utils.ContentChange.{Added, Removed, Updated}
 import com.waz.utils._
 import com.waz.utils.events._
 
@@ -45,25 +45,37 @@ case class SearchResults(top:   IndexedSeq[UserData]         = IndexedSeq.empty,
   def isEmpty: Boolean = top.isEmpty && local.isEmpty && convs.isEmpty && dir.isEmpty
 }
 
-class UserSearchService(selfUserId:           UserId,
-                        teamId:               Option[TeamId],
-                        userService:          UserService,
-                        usersStorage:         UsersStorage,
-                        teamsService:         TeamsService,
-                        membersStorage:       MembersStorage,
-                        timeouts:             Timeouts,
-                        sync:                 SyncServiceHandle,
-                        messages:             MessagesStorage,
-                        convsStorage:         ConversationStorage,
-                        convsUi:              ConversationsUiService,
-                        conversationsService: ConversationsService,
-                        userPrefs:            UserPreferences) extends DerivedLogTag {
+trait UserSearchService {
+  def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults]
+  def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults]
+  def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]]
+  def search(queryStr: String = ""): Signal[SearchResults]
+  def syncSearchResults(query: SearchQuery): Unit
+  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit]
+  def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
+  def updateExactMatch(result: UserSearchResponse.User): Unit
+}
+
+class UserSearchServiceImpl(selfUserId:           UserId,
+                            teamId:               Option[TeamId],
+                            userService:          UserService,
+                            usersStorage:         UsersStorage,
+                            teamsService:         TeamsService,
+                            membersStorage:       MembersStorage,
+                            timeouts:             Timeouts,
+                            sync:                 SyncServiceHandle,
+                            messages:             MessagesStorage,
+                            convsStorage:         ConversationStorage,
+                            convsUi:              ConversationsUiService,
+                            conversationsService: ConversationsService,
+                            userPrefs:            UserPreferences) extends UserSearchService with DerivedLogTag {
 
   import Threading.Implicits.Background
   import com.waz.service.UserSearchService._
   import timeouts.search._
 
-  private val exactMatchUser = new SourceSignal[Option[UserData]]()
+  private val exactMatchUser = Signal(Option.empty[UserData])
+  private val userSearchResult = Signal(IndexedSeq.empty[UserData])
 
   private lazy val isExternal = userPrefs(SelfPermissions).apply()
     .map(decodeBitmask)
@@ -99,20 +111,22 @@ class UserSearchService(selfUserId:           UserId,
   private def filterForExternal(query: SearchQuery, searchResults: Signal[IndexedSeq[UserData]]): Signal[IndexedSeq[UserData]] =
     searchResults.flatMap(res => Signal.future(filterForExternal(query, res)))
 
-  def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[IndexedSeq[UserData]] =
-    filterForExternal(
-      query,
-      searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
-    )
-
-  def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[IndexedSeq[UserData]] =
+  override def usersForNewConversation(query: SearchQuery, teamOnly: Boolean): Signal[SearchResults] =
     for {
-      curr <- membersStorage.activeMembers(toConv)
-      conv <- convsStorage.signal(toConv)
-      res  <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
-    } yield res
+      localResults      <- filterForExternal(query, searchLocal(query)
+                          .map(_.filter(u => !(u.isGuest(teamId) && teamOnly))))
+      remoteResults     <- directoryResults(query)
+    } yield SearchResults(local = localResults, dir = remoteResults)
 
-  def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
+  override def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults] =
+    for {
+      curr              <- membersStorage.activeMembers(toConv)
+      conv              <- convsStorage.signal(toConv)
+      localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
+      remoteResults     <- directoryResults(query)
+    } yield SearchResults(local = localResults, dir = remoteResults)
+
+  override def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       curr     <- membersStorage.activeMembers(convId)
       currData <- usersStorage.listSignal(curr)
@@ -137,13 +151,13 @@ class UserSearchService(selfUserId:           UserId,
         cmpHandle(_, _.contains(filter))
       )
 
-      rules.foldLeft[(Set[UserId],IndexedSeq[UserData])]((Set.empty, IndexedSeq())){ case ((found, results), rule) =>
+      rules.foldLeft((Set.empty[UserId], IndexedSeq.empty[UserData])){ case ((found, results), rule) =>
         val matches = included.filter(rule).filter(u => !found.contains(u.id)).sortBy(_.name.toLowerCase)
-        (found ++ matches.map(_.id).toSet, results ++: matches)
+        (found ++ matches.map(_.id).toSet, results ++ matches)
       }._2
     }
 
-  private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] = {
+  private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       connected <- userService.acceptedOrBlockedUsers.map(_.values)
       members   <- teamId.fold(Signal.const(Set.empty[UserData]))(_ => teamsService.searchTeamMembers(query))
@@ -160,7 +174,6 @@ class UserSearchService(selfUserId:           UserId,
 
       sortUsers(included, query)
     }
-  }
 
   private def sortUsers(results: IndexedSeq[UserData], query: SearchQuery): IndexedSeq[UserData] = {
     def toLower(str: String) = Locales.transliteration.transliterate(str).trim.toLowerCase
@@ -186,11 +199,14 @@ class UserSearchService(selfUserId:           UserId,
     }
   }
 
-  def search(queryStr: String = ""): Signal[SearchResults] = {
+  override def search(queryStr: String = ""): Signal[SearchResults] = {
     verbose(l"search($queryStr)")
     val query = SearchQuery(queryStr)
 
+    userSearchResult ! IndexedSeq.empty[UserData]
     exactMatchUser ! None // reset the exact match to None on any query change
+
+    syncSearchResults(query)
 
     val topUsers: Signal[IndexedSeq[UserData]] =
       if (query.isEmpty && teamId.isEmpty) topPeople.map(_.filter(!_.isWireBot)) else Signal.const(IndexedSeq.empty)
@@ -213,19 +229,7 @@ class UserSearchService(selfUserId:           UserId,
           }
       else Signal.const(IndexedSeq.empty)
 
-    val directorySearch: Signal[IndexedSeq[UserData]] =
-      for {
-        dir   <- if (!query.isEmpty) {
-                   searchUserData(query).map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
-                 } else Signal.const(IndexedSeq.empty[UserData])
-        _     =  verbose(l"directory search results: $dir")
-        exact <- exactMatchUser.orElse(Signal.const(None))
-        _     =  verbose(l"exact match: $exact")
-      } yield
-        (dir, exact) match {
-          case (_, None)           => dir
-          case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
-        }
+    val directorySearch = directoryResults(query)
 
     for {
       top        <- topUsers
@@ -233,67 +237,59 @@ class UserSearchService(selfUserId:           UserId,
       convs      <- conversations
       isExternal <- Signal.future(isExternal)
       dir        <- filterForExternal(query, if (isExternal) Signal.const(IndexedSeq.empty[UserData]) else directorySearch)
-      _ = verbose(l"dir results: $dir")
     } yield SearchResults(top, local, convs, dir)
   }
 
-  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
-    val users = unapply(results)
+  def syncSearchResults(query: SearchQuery): Unit = if (!query.isEmpty) sync.syncSearchQuery(query)
 
-    verbose(l"updateSearchResults($query), users: ${users.map(u => (u.name, u.handle))}")
-
-    if (!users.map(_.handle).exists(_.exactMatchQuery(query.str))) {
-      sync.exactMatchHandle(Handle(query.str))
+  private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
+    for {
+      dir   <- if (!query.isEmpty)
+                 userSearchResult.map(_.filter(u => !u.isWireBot && u.expiresAt.isEmpty)).map(sortUsers(_, query))
+               else Signal.const(IndexedSeq.empty[UserData])
+      _     =  verbose(l"directory search results: $dir")
+      exact <- exactMatchUser.orElse(Signal.const(None))
+      _     =  verbose(l"exact match: $exact")
+    } yield (dir, exact) match {
+      case (_, None)           => dir
+      case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
     }
 
-    for {
-      updated <- userService.updateUsers(users)
-      _       <- userService.syncIfNeeded(updated.map(_.id), Duration.Zero)
-    } yield ()
+  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
+    usersStorage.contents.head.flatMap { usersInStorage =>
+      val (local, remote) = unapply(results).partition { u =>
+        // a bit hacky way to check if all steps of fetching data were already performed for that user
+        usersInStorage.contains(u.id) &&
+          usersInStorage(u.id).name != Name.Empty &&
+          usersInStorage(u.id).picture.isDefined
+      }
+      userSearchResult ! (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData.apply)).toIndexedSeq
+      if (remote.nonEmpty)
+        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+      else
+        Future.successful(())
+    }
   }
 
-  def updateExactMatch(userId: UserId): Future[Unit] = {
-    verbose(l"updateExactMatch($userId)")
-
-    usersStorage.get(userId).collect {
-      case Some(user) => verbose(l"exact match found: $user"); exactMatchUser ! Some(user)
-    }.map(_ => ())
+  override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
+    val userUpdate = (user: UserData) => remoteUsers.get(user.id).fold(user) {
+      case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
+      case (info, None)         => user.updated(info)
+    }
+    userSearchResult.mutate(_.map(userUpdate))
+    exactMatchUser.mutate(_.map(userUpdate))
   }
 
-  // not private for tests
-  def searchUserData(query: SearchQuery): Signal[IndexedSeq[UserData]] = {
-    verbose(l"searchUserData($query)")
-    sync.syncSearchQuery(query)
-    val changesStream = EventStream.union[Seq[ContentChange[UserId, UserData]]](
-      usersStorage.onAdded.map(_.map(d => Added(d.id, d))),
-      usersStorage.onUpdated.map(_.map { case (prv, curr) => Updated(prv.id, prv, curr) }),
-      usersStorage.onDeleted.map(_.map(Removed(_)))
-    )
-
-    def load = localSearch(query).flatMap(filterForExternal(query, _))
-
-    new AggregatingSignal[Seq[ContentChange[UserId, UserData]], IndexedSeq[UserData]](changesStream, load, { (current, changes) =>
-      val added = changes.collect {
-        case Added(_, data)      => data
-        case Updated(_, _, data) => data
-      }.toSet
-
-      val removed = changes.collect {
-        case Removed(id)       => id
-        case Updated(id, _, _) => id
-      }.toSet
-
-      current.filterNot(d => removed.contains(d.id) || added.exists(_.id == d.id)) ++ added
-    })
-  }
-
-  private def localSearch(query: SearchQuery) = {
-    val predicate = if (query.handleOnly) recommendedHandlePredicate(query.str) else recommendedPredicate(query.str)
-    usersStorage.find[UserData, Vector[UserData]](predicate, db => UserDataDao.recommendedPeople(query.str)(db), identity)
+  override def updateExactMatch(result: UserSearchResponse.User): Unit = {
+    verbose(l"updateExactMatch(${result.id})")
+    val userData = UserData(UserSearchEntry(result))
+    exactMatchUser ! Some(userData)
+    sync.syncSearchResults(Set(userData.id))
   }
 
   private def topPeople = {
-    def messageCount(u: UserData) = messages.countLaterThan(ConvId(u.id.str), LocalInstant.Now.toRemote(Duration.Zero) - topPeopleMessageInterval)
+    def messageCount(u: UserData) =
+      messages.countLaterThan(ConvId(u.id.str), LocalInstant.Now.toRemote(Duration.Zero) - topPeopleMessageInterval)
 
     val loadTopUsers = (for {
       conns         <- usersStorage.find[UserData, Vector[UserData]](topPeoplePredicate, db => UserDataDao.topPeople(db), identity)
@@ -306,16 +302,6 @@ class UserSearchService(selfUserId:           UserId,
   }
 
   private val topPeoplePredicate: UserData => Boolean = u => ! u.deleted && u.connection == ConnectionStatus.Accepted
-
-  private def recommendedPredicate(prefix: String): UserData => Boolean = {
-    val key = SearchKey(prefix)
-    u => ! u.deleted && ! u.isConnected && (key.isAtTheStartOfAnyWordIn(u.searchKey) || u.handle.exists(_.startsWithQuery(prefix)))
-  }
-
-  private def recommendedHandlePredicate(prefix: String): UserData => Boolean = {
-    u => ! u.deleted && ! u.isConnected && u.handle.exists(_.startsWithQuery(prefix))
-  }
-
 }
 
 object UserSearchService {
@@ -326,12 +312,16 @@ object UserSearchService {
   /**
     * Model object extracted from `UserSearchResponse`.
     */
-  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle)
+  case class UserSearchEntry(id: UserId, name: Name, colorId: Option[Int], handle: Handle, teamId: Option[TeamId])
 
   object UserSearchEntry {
     def apply(searchUser: UserSearchResponse.User): UserSearchEntry = {
       import searchUser._
-      UserSearchEntry(UserId(id), Name(name), accent_id, handle.fold(Handle.Empty)(Handle(_)))
+      UserSearchEntry(UserId(id),
+                      Name(name),
+                      accent_id,
+                      handle.fold(Handle.Empty)(Handle(_)),
+                      team.map(TeamId.apply))
     }
   }
 

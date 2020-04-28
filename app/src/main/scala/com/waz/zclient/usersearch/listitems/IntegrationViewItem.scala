@@ -19,20 +19,13 @@ package com.waz.zclient.usersearch.listitems
 
 import com.waz.model.IntegrationData
 
-case class IntegrationViewItem(data: IntegrationViewModel) extends SearchViewItem {
-
+case class IntegrationViewItem(override val index: Int, integration: IntegrationData)
+  extends SearchViewItem {
   import SearchViewItem._
   import SectionViewItem._
 
-  override def section: Int = IntegrationsSection
-
-  override def index: Int = data.indexVal
-
-  override def itemType: Int = Integration
-
-  override def id: Long = data.idVal
+  override val id: Long      = integration.id.str.hashCode
+  override val section: Int  = IntegrationsSection
+  override val itemType: Int = Integration
 }
 
-case class IntegrationViewModel(indexVal:     Int,
-                                idVal:        Long,
-                                integrations: Seq[IntegrationData])

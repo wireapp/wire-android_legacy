@@ -181,6 +181,7 @@ object Generators {
       arbitrary[RequestForUser],
       arbitrary[RequestForConversation],
       arbitrary[SyncUser],
+      arbitrary[SyncSearchResults],
       arbitrary[SyncConversation],
       arbitrary[SyncSearchQuery],
       arbitrary[SyncRichMedia],
@@ -210,6 +211,7 @@ object Generators {
     lazy val arbSimpleSyncRequest: Arbitrary[SyncRequest] = Arbitrary(oneOf(SyncSelf, DeleteAccount, SyncConversations, SyncConnections))
 
     implicit lazy val arbUsersSyncRequest: Arbitrary[SyncUser] = Arbitrary(listOf(arbitrary[UserId]) map { u => SyncUser(u.toSet) })
+    implicit lazy val arbSearchResultSyncRequest: Arbitrary[SyncSearchResults] = Arbitrary(listOf(arbitrary[UserId]) map { u => SyncSearchResults(u.toSet) })
     implicit lazy val arbConvsSyncRequest: Arbitrary[SyncConversation] = Arbitrary(listOf(arbitrary[ConvId]) map { c => SyncConversation(c.toSet) })
     implicit lazy val arbSearchSyncRequest: Arbitrary[SyncSearchQuery] = Arbitrary(resultOf(SyncSearchQuery))
     implicit lazy val arbSelfPictureSyncRequest: Arbitrary[PostSelfPicture] = Arbitrary(resultOf(PostSelfPicture))

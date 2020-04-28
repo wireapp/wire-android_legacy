@@ -19,7 +19,6 @@ package com.waz.zclient.participants
 
 import android.content.Context
 import android.graphics.Color
-import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import android.text.Selection
 import android.view.inputmethod.EditorInfo
 import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
@@ -28,8 +27,12 @@ import android.widget.TextView.OnEditorActionListener
 import android.widget.{CompoundButton, ImageView, TextView}
 import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.waz.api.Verification
+import com.waz.content.UsersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
+import com.waz.service.SearchQuery
 import com.waz.utils.events._
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.ThemeController
@@ -37,6 +40,7 @@ import com.waz.zclient.common.controllers.ThemeController.Theme
 import com.waz.zclient.common.views.SingleUserRowView
 import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversation.ConversationController.getEphemeralDisplayString
+import com.waz.zclient.log.LogUI._
 import com.waz.zclient.paintcode._
 import com.waz.zclient.ui.text.TypefaceEditText.OnSelectionChangedListener
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceEditText, TypefaceTextView}
@@ -45,11 +49,6 @@ import com.waz.zclient.utils.{RichView, ViewUtils}
 import com.waz.zclient.{Injectable, Injector, R}
 
 import scala.concurrent.duration._
-import com.waz.content.UsersStorage
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.service.{SearchQuery, TeamSizeThreshold}
-import com.waz.threading.Threading
-import com.waz.zclient.log.LogUI._
 
 class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]],
                           maxParticipants: Option[Int] = None,
@@ -59,7 +58,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
                          )(implicit context: Context, injector: Injector, eventContext: EventContext)
   extends RecyclerView.Adapter[ViewHolder] with Injectable with DerivedLogTag {
   import ParticipantsAdapter._
-  import Threading.Implicits.Ui
 
   protected lazy val usersStorage           = inject[Signal[UsersStorage]]
   protected lazy val team                   = inject[Signal[Option[TeamId]]]
@@ -146,13 +144,6 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
     notifyDataSetChanged()
   }
 
-  private var hideUserStatus = false
-
-  TeamSizeThreshold.shouldHideStatus(team, usersStorage).foreach { hide =>
-    hideUserStatus = hide
-    notifyDataSetChanged()
-  }
-
   (for {
     conv  <- convController.currentConv
     name  =  conv.displayName
@@ -222,10 +213,10 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
       h.bind(membersCount + adminsCount)
     case (Left(userData), h: ParticipantRowViewHolder) if userData.isAdmin =>
       val lastRow = maxParticipants.forall(n => if (userData.isAdmin) adminsCount <= n else membersCount <= n) && items.lift(position + 1).forall(_.isRight)
-      h.bind(userData, teamId, lastRow, createSubtitle, hideUserStatus, showArrow)
+      h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
     case (Left(userData), h: ParticipantRowViewHolder) =>
       val lastRow = maxParticipants.forall(membersCount <= _) && items.lift(position + 1).forall(_.isRight)
-      h.bind(userData, teamId, lastRow, createSubtitle, hideUserStatus, showArrow)
+      h.bind(userData, teamId, lastRow, createSubtitle, showArrow)
     case (Right(ReadReceipts), h: ReadReceiptsViewHolder) =>
       h.bind(readReceiptsEnabled)
     case (Right(ConversationName), h: ConversationNameViewHolder) =>
@@ -369,7 +360,6 @@ object ParticipantsAdapter {
              teamId:         Option[TeamId],
              lastRow:        Boolean,
              createSubtitle: Option[UserData => String],
-             hideStatus:     Boolean,
              showArrow:      Boolean): Unit = {
       if (participant.isSelf) {
         view.showArrow(false)
@@ -380,8 +370,8 @@ object ParticipantsAdapter {
         userId = Some(participant.userData.id)
       }
       createSubtitle match {
-        case Some(f) => view.setUserData(participant.userData, teamId, hideStatus, createSubtitle = f)
-        case None    => view.setUserData(participant.userData, teamId, hideStatus)
+        case Some(f) => view.setUserData(participant.userData, teamId, createSubtitle = f)
+        case None    => view.setUserData(participant.userData, teamId)
       }
       view.setSeparatorVisible(!lastRow)
       view.setContentDescription(s"${if (participant.isAdmin) "Admin" else "Member"}: ${participant.userData.name}")

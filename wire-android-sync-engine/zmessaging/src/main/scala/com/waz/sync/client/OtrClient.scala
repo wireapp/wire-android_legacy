@@ -50,7 +50,7 @@ trait OtrClient {
   def postClient(userId: UserId, client: Client, lastKey: PreKey, keys: Seq[PreKey], password: Option[Password]): ErrorOrResponse[Client]
   def postClientLabel(id: ClientId, label: String): ErrorOrResponse[Unit]
   def updateKeys(id: ClientId, prekeys: Option[Seq[PreKey]] = None, lastKey: Option[PreKey] = None, sigKey: Option[SignalingKey] = None): ErrorOrResponse[Unit]
-  def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean, receivers: Set[UserId] = Set.empty): ErrorOrResponse[MessageResponse]
+  def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
 }
 
 class OtrClientImpl(implicit
@@ -173,11 +173,11 @@ class OtrClientImpl(implicit
       .executeSafe
   }
 
-  override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean, receivers: Set[UserId] = Set.empty): ErrorOrResponse[MessageResponse] = {
+  override def broadcastMessage(content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] = {
     Request
       .Post(
         relativePath = BroadcastPath,
-        queryParameters = queryParameters("ignore_missing" -> ignoreMissing, "report_missing" -> receivers.mkString(",")),
+        queryParameters = queryParameters("ignore_missing" -> ignoreMissing),
         body = content
       )
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
@@ -338,7 +338,7 @@ object OtrClient extends DerivedLogTag {
         if (!js.has(key.name) || js.isNull(key.name)) Map.empty
         else {
           val mapJs = js.getJSONObject(key.name)
-          mapJs.keys().asInstanceOf[java.util.Iterator[String]].asScala.map { key =>
+          mapJs.keys().asScala.map { key =>
             UserId(key) -> decodeStringSeq(Symbol(key))(mapJs).map(ClientId(_))
           }.toMap
         }

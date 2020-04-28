@@ -17,15 +17,15 @@
  */
 package com.waz.sync.handler
 
-import com.waz.log.LogSE._
 import com.waz.api.impl.ErrorResponse
 import com.waz.content.UsersStorage
+import com.waz.log.BasicLogging.LogTag.DerivedLogTag
+import com.waz.log.LogSE._
 import com.waz.model.AssetMetaData.Image.Tag
 import com.waz.model.UserInfo.ProfilePicture
-import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.UserService
 import com.waz.service.assets.AssetService
+import com.waz.service.{UserSearchService, UserService}
 import com.waz.sync.SyncResult
 import com.waz.sync.client.UsersClient
 import com.waz.sync.otr.OtrSyncHandler
@@ -34,75 +34,112 @@ import com.waz.utils.events.EventContext
 
 import scala.concurrent.Future
 
-class UsersSyncHandler(userService: UserService,
-                       usersStorage: UsersStorage,
-                       assets: AssetService,
-                       usersClient: UsersClient,
-                       otrSync: OtrSyncHandler) extends DerivedLogTag {
+trait UsersSyncHandler {
+  def syncUsers(ids: UserId*): Future[SyncResult]
+  def syncSearchResults(ids: UserId*): Future[SyncResult]
+  def syncSelfUser(): Future[SyncResult]
+  def postSelfName(name: Name): Future[SyncResult]
+  def postSelfAccentColor(color: AccentColor): Future[SyncResult]
+  def postSelfUser(info: UserInfo): Future[SyncResult]
+  def postSelfPicture(assetId: UploadAssetId): Future[SyncResult]
+  def postAvailability(availability: Availability, limit: Int = UsersSyncHandler.AvailabilityBroadcastLimit): Future[SyncResult]
+  def deleteAccount(): Future[SyncResult]
+}
 
+class UsersSyncHandlerImpl(userService:      UserService,
+                           usersStorage:     UsersStorage,
+                           assets:           AssetService,
+                           searchService:    UserSearchService,
+                           usersClient:      UsersClient,
+                           otrSync:          OtrSyncHandler,
+                           teamId:           Option[TeamId],
+                           teamsSyncHandler: TeamsSyncHandler)
+  extends UsersSyncHandler with DerivedLogTag {
+  import UsersSyncHandler._
   import Threading.Implicits.Background
   private implicit val ec = EventContext.Global
 
-  def syncUsers(ids: UserId*): Future[SyncResult] =
-    usersClient.loadUsers(ids).future flatMap {
-      case Right(users) =>
-        userService
-          .updateSyncedUsers(users)
-          .map(_ => SyncResult.Success)
-      case Left(error) =>
+  override def syncUsers(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.flatMap {
+    case Right(users) =>
+        userService.updateSyncedUsers(users).map(_ => SyncResult.Success)
+    case Left(error) =>
         Future.successful(SyncResult(error))
-    }
+  }
+
+  override def syncSearchResults(ids: UserId*): Future[SyncResult] = usersClient.loadUsers(ids).future.flatMap {
+    case Right(users) if teamId.isEmpty =>
+      searchService.updateSearchResults(users.map(u => u.id -> (u, None)).toMap)
+      Future.successful(SyncResult.Success)
+    case Right(users) =>
+      teamsSyncHandler.getMembers(users.filter(_.teamId == teamId).map(_.id)).map { members =>
+        searchService.updateSearchResults(users.map(u => u.id -> (u, members.find(_.user == u.id))).toMap)
+        SyncResult.Success
+      }
+    case Left(error)  =>
+      Future.successful(SyncResult(error))
+  }
 
   def syncSelfUser(): Future[SyncResult] = usersClient.loadSelf().future flatMap {
     case Right(user) =>
-      userService
-        .updateSyncedUsers(IndexedSeq(user))
-        .map(_ => SyncResult.Success)
+      userService.updateSyncedUsers(IndexedSeq(user)).map(_ => SyncResult.Success)
     case Left(error) =>
       Future.successful(SyncResult(error))
   }
 
-  def postSelfName(name: Name): Future[SyncResult] = usersClient.loadSelf().future flatMap {
+  override def postSelfName(name: Name): Future[SyncResult] = usersClient.loadSelf().future.flatMap {
     case Right(user) =>
       updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, name = Some(name))))
     case Left(error) =>
       Future.successful(SyncResult(error))
   }
 
-  def postSelfAccentColor(color: AccentColor): Future[SyncResult] = usersClient.loadSelf().future flatMap {
+  override def postSelfAccentColor(color: AccentColor): Future[SyncResult] = usersClient.loadSelf().future.flatMap {
     case Right(user) =>
       updatedSelfToSyncResult(usersClient.updateSelf(UserInfo(user.id, accentId = Some(color.id))))
     case Left(error) =>
       Future.successful(SyncResult(error))
   }
 
-  def postSelfUser(info: UserInfo): Future[SyncResult] =
+  override def postSelfUser(info: UserInfo): Future[SyncResult] =
     updatedSelfToSyncResult(usersClient.updateSelf(info))
 
-  def postSelfPicture(assetId: UploadAssetId): Future[SyncResult] =
-    userService.getSelfUser flatMap {
-      case Some(userData) =>
-        verbose(l"postSelfPicture($assetId)")
-        for {
-          uploadedPicId <- assets.uploadAsset(assetId).map(r => r.id).future
-          updateInfo    =  UserInfo(userData.id,
-                                    picture = Some(Seq(ProfilePicture(uploadedPicId, Tag.Medium), ProfilePicture(uploadedPicId, Tag.Preview)))
-                                   )
-          _             <- usersStorage.update(userData.id, _.updated(updateInfo))
-          _             <- usersClient.updateSelf(updateInfo)
-        } yield SyncResult.Success
-      case _ => Future.successful(SyncResult.Retry())
-    }
-
-  def postAvailability(availability: Availability): Future[SyncResult] = {
-    verbose(l"postAvailability($availability)")
-    otrSync.broadcastMessage(GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability)))
-      .map(SyncResult(_))
+  override def postSelfPicture(assetId: UploadAssetId): Future[SyncResult] = userService.getSelfUser.flatMap {
+    case Some(userData) =>
+      verbose(l"postSelfPicture($assetId)")
+      for {
+        uploadedPicId <- assets.uploadAsset(assetId).map(r => r.id).future
+        updateInfo    =  UserInfo(userData.id,
+                                  picture = Some(Seq(ProfilePicture(uploadedPicId, Tag.Medium), ProfilePicture(uploadedPicId, Tag.Preview)))
+                                 )
+        _             <- usersStorage.update(userData.id, _.updated(updateInfo))
+        _             <- usersClient.updateSelf(updateInfo)
+      } yield SyncResult.Success
+    case _ =>
+      Future.successful(SyncResult.Retry())
   }
 
-  def deleteAccount(): Future[SyncResult] =
+  override def postAvailability(availability: Availability, limit: Int = AvailabilityBroadcastLimit): Future[SyncResult] = {
+    verbose(l"postAvailability($availability)")
+    val gm = GenericMessage(Uid(), GenericContent.AvailabilityStatus(availability))
+    for {
+      Some(self)     <- userService.getSelfUser
+      users          <- usersStorage.list()
+      (team, others) = users.filterNot(u => u.deleted || u.isWireBot).partition(_.isInTeam(self.teamId))
+      recipients     = (List(self.id) ++
+                        team.filter(_.id != self.id).map(_.id).toList.sorted ++
+                        others.filter(_.isConnected).map(_.id).toList.sorted
+                       ).take(limit).toSet
+      result         <- otrSync.broadcastMessage(gm, recipients = Some(recipients))
+    } yield SyncResult(result)
+  }
+
+  override def deleteAccount(): Future[SyncResult] =
     usersClient.deleteAccount().map(SyncResult(_))
 
   private def updatedSelfToSyncResult(updatedSelf: Future[Either[ErrorResponse, Unit]]): Future[SyncResult] =
     updatedSelf.map(SyncResult(_))
+}
+
+object UsersSyncHandler {
+  val AvailabilityBroadcastLimit = 500
 }
