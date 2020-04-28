@@ -9,6 +9,7 @@ import com.poovam.pinedittextfield.PinField.OnTextCompleteListener
 import com.waz.zclient.R
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
+import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_pin_code.*
@@ -34,6 +35,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         initDescriptionTextView()
         initResendCodeListener()
         initPinCodeListener()
+        showKeyboard()
     }
 
     private fun initDescriptionTextView() {
@@ -67,6 +69,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
             activateEmailErrorLiveData.observe(viewLifecycleOwner) {
                 showInvalidCodeError(getString(it.errorMessage))
                 clearPinCode()
+                showKeyboard()
             }
         }
     }
