@@ -53,5 +53,8 @@ class StartSSOFragment extends SSOFragment {
 }
 
 object StartSSOFragment {
+
+  def newInstance() = new StartSSOFragment
+
   val TAG = "StartSSOFragment"
 }

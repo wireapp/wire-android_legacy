@@ -200,7 +200,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     }
   }
 
-  def showStartSSOScreen() = showFragment(new StartSSOFragment, StartSSOFragment.TAG, animated = false)
+  def showStartSSOScreen() = showFragment(StartSSOFragment.newInstance(), StartSSOFragment.TAG, animated = false)
 
   def loadBackendConfig(configUrl: URL) = {
     enableProgress(true)
