@@ -14,18 +14,14 @@ import scala.concurrent.Future
 
 class StartSSOFragment extends SSOFragment {
 
-  private var loadSSO: Boolean = true
+  import com.waz.threading.Threading.Implicits.Ui
 
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View =
     inflater.inflate(R.layout.fragment_start_sso, container, false)
 
   override def onStart() = {
     super.onStart()
-    if (loadSSO) {
-      fetchSsoToken()
-    } else {
-      activity.getSupportFragmentManager.popBackStack()
-    }
+    fetchSsoToken()
   }
 
   private def fetchSsoToken(): Unit =
@@ -34,34 +30,11 @@ class StartSSOFragment extends SSOFragment {
       case None =>
         ssoService.fetchSSO().flatMap {
           case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode)
-          case Right(_) => showSsoDialogFuture
+          case Right(_)                 => showSsoDialogFuture()
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(_) => showSsoDialogFuture
-        }(Threading.Ui)
-    } (Threading.Ui)
-
-  def goToSsoWebView(token: String) = {
-    dismissSsoDialog()
-    loadSSO = false
-    showSsoWebView(token)
-  }
-
-  private def startSsoFlow(ssoCode: String) =
-    ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
-      onVerifyingToken(true)
-      ssoService.verifyToken(token).flatMap { result =>
-        onVerifyingToken(false)
-        userAccountsController.ssoToken ! None
-        result match {
-          case Right(true) =>
-            goToSsoWebView(token.toString)
-          case Right(false) => showSsoDialogFuture
-          case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
-            showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(_) => showSsoDialogFuture
+          case Left(_)                  => showSsoDialogFuture()
         }
-      }(Threading.Ui)
     }
 
   override def verifySsoCode(input: String): Future[Unit] =
@@ -71,15 +44,12 @@ class StartSSOFragment extends SSOFragment {
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
         result match {
-          case Right(true) =>
-            goToSsoWebView(token.toString)
+          case Right(true)  => goToSsoWebView(token.toString)
           case Right(false) => Future.successful(activity.showCustomBackendLoginScreen())
-          case Left(_) => Future.successful(activity.showCustomBackendLoginScreen())
+          case Left(_)      => Future.successful(activity.showCustomBackendLoginScreen())
         }
       }(Threading.Ui)
     }
-
-  protected def showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
 }
 
 object StartSSOFragment {
