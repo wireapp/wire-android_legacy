@@ -37,5 +37,8 @@
   "block_on_password_policy": false,
   "wipe_on_cookie_invalid": false,
   "force_private_keyboard": false,
-  "password_max_attempts": 0
+  "password_max_attempts": 0,
+  "developer_features_enabled": false,
+  "logging_enabled": false,
+  "safe_logging": false
 }

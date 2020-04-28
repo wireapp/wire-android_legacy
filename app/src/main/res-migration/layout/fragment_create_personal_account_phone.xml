@@ -24,31 +24,33 @@
     android:background="@color/athens_gray_light">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/createPersonalAccountWithEmailTextInputLayout"
+        android:id="@+id/createPersonalAccountPhoneTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/create_personal_account_text_input_layout_margin_top"
+        android:background="@color/white"
         app:hintEnabled="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/createPersonalAccountWithEmailEditText"
+            android:id="@+id/createPersonalAccountPhoneEditText"
             style="@style/EditText.Authentication"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/create_personal_account_with_email_edit_text_hint"
-            android:inputType="textEmailAddress" />
+            android:hint="@string/create_personal_account_with_phone_edit_text_hint"
+            android:inputType="phone" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/confirmationButton"
+        android:id="@+id/createPersonalAccountPhoneConfirmationButton"
         style="@style/Button.Authentication"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountWithEmailTextInputLayout"
-        app:layout_constraintTop_toTopOf="@+id/createPersonalAccountWithEmailTextInputLayout" />
+        app:layout_constraintBottom_toBottomOf="@+id/createPersonalAccountPhoneTextInputLayout"
+        app:layout_constraintEnd_toEndOf="@+id/createPersonalAccountPhoneTextInputLayout"
+        app:layout_constraintTop_toTopOf="@+id/createPersonalAccountPhoneTextInputLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

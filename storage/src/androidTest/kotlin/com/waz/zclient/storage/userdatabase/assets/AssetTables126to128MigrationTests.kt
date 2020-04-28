@@ -4,6 +4,8 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_126_TO
 import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO_128
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
@@ -25,9 +27,9 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(getV1Assets()[0]) {
-                assert(this.id == assetId)
-                assert(this.assetType == assetType)
-                assert(this.data == assetData)
+                assertEquals(this.id, assetId)
+                assertEquals(this.assetType, assetType)
+                assertEquals(this.data, assetData)
             }
         }
     }
@@ -65,17 +67,17 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(getV2Assets()[0]) {
-                assert(this.id == assetId)
-                assert(this.token == assetToken)
-                assert(this.name == assetName)
-                assert(this.encryption == encryption)
-                assert(this.mime == mime)
-                assert(this.sha?.contentEquals(sha) ?: false)
-                assert(this.size == size)
-                assert(this.source == source)
-                assert(this.preview == preview)
-                assert(this.details == details)
-                assert(this.conversationId == conversationId)
+                assertEquals(this.id, assetId)
+                assertEquals(this.token, assetToken)
+                assertEquals(this.name, assetName)
+                assertEquals(this.encryption, encryption)
+                assertEquals(this.mime, mime)
+                assertTrue(this.sha?.contentEquals(sha) ?: false)
+                assertEquals(this.size, size)
+                assertEquals(this.source, source)
+                assertEquals(this.preview, preview)
+                assertEquals(this.details, details)
+                assertEquals(this.conversationId, conversationId)
             }
         }
     }
@@ -108,14 +110,14 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(getDownloadAssets()[0]) {
-                assert(this.id == assetId)
-                assert(this.mime == mime)
-                assert(this.downloaded == downloaded)
-                assert(this.size == size)
-                assert(this.name == assetName)
-                assert(this.preview == preview)
-                assert(this.details == details)
-                assert(this.status == status)
+                assertEquals(this.id, assetId)
+                assertEquals(this.mime, mime)
+                assertEquals(this.downloaded, downloaded)
+                assertEquals(this.size, size)
+                assertEquals(this.name, name)
+                assertEquals(this.preview, preview)
+                assertEquals(this.details, details)
+                assertEquals(this.status, status)
             }
         }
     }
@@ -163,23 +165,23 @@ class AssetTables126to128MigrationTests : UserDatabaseMigrationTest(126, 128) {
 
         runBlocking {
             with(getUploadAssets()[0]) {
-                assert(this.id == uploadAssetId)
-                assert(this.source == assetToken)
-                assert(this.name == assetName)
-                assert(this.encryption == encryption)
-                assert(this.mime == mime)
-                assert(this.sha?.contentEquals(sha) ?: false)
-                assert(this.md5?.contentEquals(md5) ?: false)
-                assert(this.size == size)
-                assert(this.source == source)
-                assert(this.preview == preview)
-                assert(this.details == details)
-                assert(this.uploadStatus == uploadStatus)
-                assert(this.isPublic == isPublic)
-                assert(this.uploaded == uploaded)
-                assert(this.retention == retention)
-                assert(this.assetId == assetId)
-                assert(this.encryptionSalt == null)
+                assertEquals(this.id, uploadAssetId)
+                assertEquals(this.source, source)
+                assertEquals(this.name, assetName)
+                assertEquals(this.encryption, encryption)
+                assertEquals(this.mime, mime)
+                assertTrue(this.sha?.contentEquals(sha) ?: false)
+                assertTrue(this.md5?.contentEquals(md5) ?: false)
+                assertEquals(this.size, size)
+                assertEquals(this.source, source)
+                assertEquals(this.preview, preview)
+                assertEquals(this.details, details)
+                assertEquals(this.uploadStatus, uploadStatus)
+                assertEquals(this.isPublic, isPublic)
+                assertEquals(this.uploaded, uploaded)
+                assertEquals(this.retention, retention)
+                assertEquals(this.assetId, assetId)
+                assertEquals(this.encryptionSalt, null)
             }
         }
     }

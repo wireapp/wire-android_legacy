@@ -5,6 +5,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -28,9 +29,9 @@ class ReadReceiptsTable126to128MigrationTest : UserDatabaseMigrationTest(126, 12
 
         runBlocking {
             with(allReceipts()[0]) {
-                assert(this.messageId == messageId)
-                assert(this.userId == userId)
-                assert(this.timestamp == timestamp)
+                assertEquals(this.messageId, messageId)
+                assertEquals(this.userId, userId)
+                assertEquals(this.timestamp, timestamp)
             }
         }
     }

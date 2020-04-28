@@ -95,7 +95,12 @@ android {
         applicationId "com.waz.zclient"
         testInstrumentationRunner "com.waz.background.TestRunner"
 
-        manifestPlaceholders = [customURLScheme: buildtimeConfiguration.configuration.custom_url_scheme]
+        manifestPlaceholders = [
+            customURLScheme   : buildtimeConfiguration.configuration.custom_url_scheme,
+            applicationLabel  : "Wire Dev",
+            applicationIcon   : "@mipmap/ic_launcher_wire_dev",
+            sharedUserId      : ""
+        ]
 
         buildConfigField 'Integer', 'MAX_ACCOUNTS',                  "$buildtimeConfiguration.configuration.maxAccounts"
         buildConfigField 'String',  'BACKEND_URL',                   "\"$buildtimeConfiguration.configuration.backendUrl\""
@@ -129,6 +134,9 @@ android {
         buildConfigField 'boolean', 'WIPE_ON_COOKIE_INVALID',        "$buildtimeConfiguration.configuration.wipe_on_cookie_invalid"
         buildConfigField 'boolean', 'FORCE_PRIVATE_KEYBOARD',        "$buildtimeConfiguration.configuration.force_private_keyboard"
         buildConfigField 'Integer', 'PASSWORD_MAX_ATTEMPTS',         "$buildtimeConfiguration.configuration.password_max_attempts"
+        buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    "$buildtimeConfiguration.configuration.developer_features_enabled"
+        buildConfigField 'boolean', 'LOGGING_ENABLED',               "$buildtimeConfiguration.configuration.logging_enabled"
+        buildConfigField 'boolean', 'SAFE_LOGGING',                  "$buildtimeConfiguration.configuration.safe_logging"
 
         //Kotlin Feature Flags
         buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
@@ -212,8 +220,7 @@ android {
             versionName android.defaultConfig.versionName + "-dev"
             manifestPlaceholders = [applicationLabel       : "Wire Dev",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_dev",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+                                    sharedUserId           : ""]
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
             buildConfigField 'boolean', 'SAFE_LOGGING',     'false'
@@ -224,8 +231,7 @@ android {
             versionName android.defaultConfig.versionName + "-candidate"
             manifestPlaceholders = [applicationLabel       : "Wire Candidate",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_candidate",
-                                    sharedUserId           : "",
-                                    internal_features      : "false"]
+                                    sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
@@ -236,8 +242,7 @@ android {
             applicationId buildtimeConfiguration.configuration.applicationId
             manifestPlaceholders = [applicationLabel       : buildtimeConfiguration.configuration.appName,
                                     applicationIcon        : "@mipmap/ic_launcher_wire",
-                                    sharedUserId           : buildtimeConfiguration.configuration.userId,
-                                    internal_features      : "false"]
+                                    sharedUserId           : buildtimeConfiguration.configuration.userId]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'false'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        "$buildtimeConfiguration.configuration.loggingEnabled"
@@ -249,8 +254,7 @@ android {
             versionName android.defaultConfig.versionName + "-internal"
             manifestPlaceholders = [applicationLabel : "Wire Internal",
                                     applicationIcon  : "@mipmap/ic_launcher_wire_internal",
-                                    sharedUserId     : "",
-                                    internal_features: "true"]
+                                    sharedUserId     : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED',    'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
@@ -262,8 +266,7 @@ android {
             versionName android.defaultConfig.versionName + "-exp"
             manifestPlaceholders = [applicationLabel       : "Wire Exp",
                                     applicationIcon        : "@mipmap/ic_launcher_wire_playground",
-                                    sharedUserId           : "",
-                                    internal_features      : "true"]
+                                    sharedUserId           : ""]
 
             buildConfigField 'boolean', 'DEVELOPER_FEATURES_ENABLED', 'true'
             buildConfigField 'boolean', 'LOGGING_ENABLED',        'true'
@@ -420,6 +423,7 @@ dependencies {
     implementation BuildDependencies.rebound
     implementation BuildDependencies.commonMark
     implementation BuildDependencies.jna
+    implementation BuildDependencies.pinEditText
 
     // Unit Tests
     testImplementation TestDependencies.jUnit

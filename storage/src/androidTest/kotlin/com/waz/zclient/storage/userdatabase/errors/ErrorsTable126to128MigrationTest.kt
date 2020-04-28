@@ -5,6 +5,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -41,15 +42,15 @@ class ErrorsTable126to128MigrationTest : UserDatabaseMigrationTest(126, 128) {
         runBlocking {
             val syncJob = allErrors()[0]
             with(syncJob) {
-                assert(this.id == id)
-                assert(this.errorType == type)
-                assert(this.users == users)
-                assert(this.messages == message)
-                assert(this.conversationId == conversationId)
-                assert(this.responseCode == resCode)
-                assert(this.responseMessage == resMessage)
-                assert(this.responseLabel == resLabel)
-                assert(this.time == timestamp)
+                assertEquals(this.id, id)
+                assertEquals(this.errorType, type)
+                assertEquals(this.users, users)
+                assertEquals(this.messages, message)
+                assertEquals(this.conversationId, conversationId)
+                assertEquals(this.responseCode, resCode)
+                assertEquals(this.responseMessage, resMessage)
+                assertEquals(this.responseLabel, resLabel)
+                assertEquals(this.time, timestamp)
             }
         }
     }

@@ -5,6 +5,7 @@ import com.waz.zclient.storage.db.users.migration.USER_DATABASE_MIGRATION_127_TO
 import com.waz.zclient.storage.userdatabase.UserDatabaseMigrationTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -28,9 +29,9 @@ class EditHistoryTable126to128MigrationTest : UserDatabaseMigrationTest(126, 128
 
         runBlocking {
             with(allHistory()[0]) {
-                assert(this.originalId == originalId)
-                assert(this.updatedId == updatedId)
-                assert(this.timestamp == timestamp)
+                assertEquals(this.originalId, originalId)
+                assertEquals(this.updatedId, updatedId)
+                assertEquals(this.timestamp, timestamp)
             }
         }
     }
