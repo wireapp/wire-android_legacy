@@ -20,7 +20,7 @@ class GetActiveAccountUseCase(
 ) : UseCase<ActiveAccount, Unit>() {
 
     override suspend fun run(params: Unit): Either<Failure, ActiveAccount> =
-        userRepository.currentUserId().flatMap {
+        userRepository.currentUserId().let {
             if (it == String.empty()) Either.Left(CannotFindActiveAccount)
             else activeAccountById(it)
         }

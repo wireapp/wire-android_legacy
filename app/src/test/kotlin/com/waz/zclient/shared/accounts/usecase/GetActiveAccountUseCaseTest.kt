@@ -39,7 +39,7 @@ class GetActiveAccountUseCaseTest : UnitTest() {
     @Test
     fun `given use-case is executed, when currentUserId is empty, then returns CannotFindActiveAccount directly`() =
         runBlockingTest {
-            `when`(userRepository.currentUserId()).thenReturn(Either.Right(String.empty()))
+            `when`(userRepository.currentUserId()).thenReturn(String.empty())
 
             val result = getActiveAccountUseCase.run(Unit)
 
@@ -55,7 +55,7 @@ class GetActiveAccountUseCaseTest : UnitTest() {
         runBlockingTest {
             val activeAccount = mock(ActiveAccount::class)
 
-            `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_USER_ID))
+            `when`(userRepository.currentUserId()).thenReturn(TEST_USER_ID)
             `when`(accountsRepository.activeAccountById(TEST_USER_ID)).thenReturn(Either.Right(activeAccount))
 
             val result = getActiveAccountUseCase.run(Unit)
@@ -70,7 +70,7 @@ class GetActiveAccountUseCaseTest : UnitTest() {
     @Test
     fun `given use-case is executed, when no active account with id exists in database, then return CannotFindActiveAccount`() =
         runBlockingTest {
-            `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_USER_ID))
+            `when`(userRepository.currentUserId()).thenReturn(TEST_USER_ID)
             `when`(accountsRepository.activeAccountById(TEST_USER_ID)).thenReturn(Either.Right(null))
 
             val result = getActiveAccountUseCase.run(Unit)
@@ -86,7 +86,7 @@ class GetActiveAccountUseCaseTest : UnitTest() {
     fun `given use-case is executed, when failure is returned from data layer, then return failure`() =
         runBlockingTest {
             val failure = mock(Failure::class)
-            `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_USER_ID))
+            `when`(userRepository.currentUserId()).thenReturn(TEST_USER_ID)
             `when`(accountsRepository.activeAccountById(TEST_USER_ID)).thenReturn(Either.Left(failure))
 
             val result = getActiveAccountUseCase.run(Unit)

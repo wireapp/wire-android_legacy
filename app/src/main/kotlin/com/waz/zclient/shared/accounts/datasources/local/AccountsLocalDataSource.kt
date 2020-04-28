@@ -18,8 +18,8 @@ class AccountsLocalDataSource(private val activeAccountsDao: ActiveAccountsDao) 
             activeAccountsDao.activeAccountById(accountId)
         }
 
-    suspend fun removeAccount(account: ActiveAccountsEntity) =
+    suspend fun removeAccount(accountId: String) =
         requestDatabase {
-            activeAccountsDao.removeAccount(account)
+            activeAccountsDao.removeAccount(accountId)
         }
 }
