@@ -36,6 +36,7 @@ trait TeamsSyncHandler {
   def syncMember(id: UserId): Future[SyncResult]
   def syncSelfPermissions(): Future[SyncResult]
   def deleteConversations(tId: TeamId, convId: RConvId): Future[SyncResult]
+  def getMembers(userIds: Seq[UserId]): Future[Seq[TeamMember]]
 }
 
 class TeamsSyncHandlerImpl(userId:    UserId,
@@ -77,6 +78,15 @@ class TeamsSyncHandlerImpl(userId:    UserId,
           Future.successful(SyncResult(e))
       }
     case _ => Future.successful(SyncResult.Success)
+  }
+
+  override def getMembers(userIds: Seq[UserId]): Future[Seq[TeamMember]] = teamId match {
+    case Some(tId) if userIds.nonEmpty =>
+      client.getTeamMembersWithPost(tId, userIds).future.map {
+        case Right(members) => members
+        case _              => Nil
+      }
+    case _ => Future.successful(Nil)
   }
 
   override def syncSelfPermissions() =

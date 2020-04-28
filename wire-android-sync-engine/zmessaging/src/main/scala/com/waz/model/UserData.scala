@@ -70,8 +70,8 @@ case class UserData(override val id:       UserId,
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
-  def updated(user: UserInfo): UserData = updated(user, withSearchKey = true)
-  def updated(user: UserInfo, withSearchKey: Boolean): UserData = copy(
+  def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)
+  def updated(user: UserInfo, withSearchKey: Boolean, permissions: PermissionsMasks): UserData = copy(
     name          = user.name.getOrElse(name),
     email         = user.email.orElse(email),
     phone         = user.phone.orElse(phone),
@@ -89,7 +89,8 @@ case class UserData(override val id:       UserId,
     handle        = user.handle match {
       case Some(h) if !h.toString.isEmpty => Some(h)
       case _ => handle
-    }
+    },
+    permissions = permissions
   )
 
   def updated(user: UserSearchEntry): UserData = copy(
@@ -183,7 +184,8 @@ object UserData {
 
   def apply(user: UserInfo): UserData = apply(user, withSearchKey = true)
 
-  def apply(user: UserInfo, withSearchKey: Boolean): UserData = UserData(user.id, user.name.getOrElse(Name.Empty)).updated(user, withSearchKey)
+  def apply(user: UserInfo, withSearchKey: Boolean): UserData =
+    UserData(user.id, user.name.getOrElse(Name.Empty)).updated(user, withSearchKey, permissions = (0L, 0L))
 
   implicit object UserDataDao extends Dao[UserData, UserId] with StorageCodecs {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)

@@ -16,7 +16,6 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
 
   private val userSearch       = mock[UserSearchService]
   private val userSearchClient = mock[UserSearchClient]
-  private val userSyncHandler  = mock[UsersSyncHandler]
 
   private val dummyUser = User(
     id = "d9700541-9b05-47b5-b85f-4a195593af71",
@@ -72,6 +71,6 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
     }
   }
 
-  def initHandler() = new UserSearchSyncHandler(userSearch, userSearchClient, userSyncHandler)
+  def initHandler() = new UserSearchSyncHandler(userSearch, userSearchClient)
 
 }

@@ -174,20 +174,18 @@ class TeamsServiceImpl(selfUser:           UserId,
     } yield {}
   }
 
-  override def onMemberSynced(member: TeamMember) = member match {
-    case TeamMember(userId, permissions, createdBy) =>
+  override def onMemberSynced(member: TeamMember): Future[Unit] =  {
+    if (member.user == selfUser) member.permissions.foreach { ps =>
+      import UserPreferences._
+      for {
+        _ <- userPrefs(SelfPermissions) := ps.self
+        _ <- userPrefs(CopyPermissions) := ps.copy
+      } yield ()
+    }
 
-      if (userId == selfUser) permissions.foreach { ps =>
-        import UserPreferences._
-        for {
-          _ <- userPrefs(SelfPermissions) := ps.self
-          _ <- userPrefs(CopyPermissions) := ps.copy
-        } yield ()
-      }
-
-      userStorage
-        .update(userId, _.copy(permissions = permissions.fold((0L, 0L))(p => (p.self, p.copy)), createdBy = createdBy))
-        .map(_ => ())
+    userStorage
+      .update(member.user, _.copy(permissions = member.permissionMasks, createdBy = member.created_by))
+      .map(_ => ())
   }
 
   override def deleteGroupConversation(tid: TeamId, rConvId: RConvId) = for {

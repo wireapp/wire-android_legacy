@@ -27,6 +27,7 @@ import com.waz.model._
 import com.waz.service.conversation.{ConversationsService, ConversationsUiService}
 import com.waz.service.teams.TeamsService
 import com.waz.sync.SyncServiceHandle
+import com.waz.sync.client.TeamsClient.TeamMember
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.threading.Threading
 import com.waz.utils._
@@ -50,8 +51,8 @@ trait UserSearchService {
   def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]]
   def search(queryStr: String = ""): Signal[SearchResults]
   def syncSearchResults(query: SearchQuery): Unit
-  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit
-  def updateSearchResults(info: Seq[UserInfo]): Unit
+  def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit]
+  def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
   def updateExactMatch(result: UserSearchResponse.User): Unit
 }
 
@@ -156,7 +157,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       }._2
     }
 
-  private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] = {
+  private def searchLocal(query: SearchQuery, excluded: Set[UserId] = Set.empty, showBlockedUsers: Boolean = false): Signal[IndexedSeq[UserData]] =
     for {
       connected <- userService.acceptedOrBlockedUsers.map(_.values)
       members   <- teamId.fold(Signal.const(Set.empty[UserData]))(_ => teamsService.searchTeamMembers(query))
@@ -173,7 +174,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
       sortUsers(included, query)
     }
-  }
 
   private def sortUsers(results: IndexedSeq[UserData], query: SearchQuery): IndexedSeq[UserData] = {
     def toLower(str: String) = Locales.transliteration.transliterate(str).trim.toLowerCase
@@ -240,12 +240,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     } yield SearchResults(top, local, convs, dir)
   }
 
-  def syncSearchResults(query: SearchQuery): Unit = {
-    if (!query.isEmpty) {
-      sync.syncSearchQuery(query)
-    }
-  }
-
+  def syncSearchResults(query: SearchQuery): Unit = if (!query.isEmpty) sync.syncSearchQuery(query)
 
   private def directoryResults(query: SearchQuery): Signal[IndexedSeq[UserData]] =
     for {
@@ -260,15 +255,29 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
     }
 
-  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Unit = {
-    val users = unapply(results)
-    userSearchResult ! users.map(UserData.apply).toIndexedSeq
-    sync.syncSearchResults(users.map(_.id).toSet)
+  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
+    usersStorage.contents.head.flatMap { usersInStorage =>
+      val (local, remote) = unapply(results).partition { u =>
+        // a bit hacky way to check if all steps of fetching data were already performed for that user
+        usersInStorage.contains(u.id) &&
+          usersInStorage(u.id).name != Name.Empty &&
+          usersInStorage(u.id).picture.isDefined
+      }
+      userSearchResult ! (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData.apply)).toIndexedSeq
+      if (remote.nonEmpty)
+        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+      else
+        Future.successful(())
+    }
   }
 
-  override def updateSearchResults(info: Seq[UserInfo]): Unit = {
-    userSearchResult.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
-    exactMatchUser.mutate(_.map(user => info.find(_.id == user.id).fold(user)(user.updated)))
+  override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
+    val userUpdate = (user: UserData) => remoteUsers.get(user.id).fold(user) {
+      case (info, Some(member)) => user.updated(info, withSearchKey = true, permissions = member.permissionMasks)
+      case (info, None)         => user.updated(info)
+    }
+    userSearchResult.mutate(_.map(userUpdate))
+    exactMatchUser.mutate(_.map(userUpdate))
   }
 
   override def updateExactMatch(result: UserSearchResponse.User): Unit = {
