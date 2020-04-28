@@ -34,7 +34,6 @@ object Versions {
     const val ANDROIDX_ROOM = "2.2.2"
     const val ANDROIDX_BIOMETRIC = "1.0.1"
     const val ANDROIDX_ANNOTATION = "1.0.0"
-    const val ANDROIDX_VIEW_PAGER_2 = "1.0.0"
     const val PLAY_SERVICES = "17.0.0"
     const val PLAY_SERVICES_BASE = "17.1.0"
     const val FIREBASE_MESSAGING = "20.1.0"
