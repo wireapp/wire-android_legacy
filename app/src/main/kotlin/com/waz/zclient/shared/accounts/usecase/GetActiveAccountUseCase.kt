@@ -1,10 +1,10 @@
 package com.waz.zclient.shared.accounts.usecase
 
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.FeatureFailure
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
-import com.waz.zclient.core.functional.getOrElse
 import com.waz.zclient.core.usecase.UseCase
 import com.waz.zclient.shared.accounts.AccountsRepository
 import com.waz.zclient.shared.accounts.ActiveAccount
@@ -19,14 +19,16 @@ class GetActiveAccountUseCase(
     private val userRepository: UsersRepository
 ) : UseCase<ActiveAccount, Unit>() {
 
-    override suspend fun run(params: Unit) =
-        accountsRepository.activeAccounts().flatMap { activeAccounts ->
-            activeAccounts.firstOrNull {
-                filterActiveId(it)
-            }?.let { Either.Right(it) } ?: Either.Left(CannotFindActiveAccount)
+    override suspend fun run(params: Unit): Either<Failure, ActiveAccount> =
+        userRepository.currentUserId().flatMap {
+            if (it == String.empty()) Either.Left(CannotFindActiveAccount)
+            else activeAccountById(it)
         }
 
-    private fun filterActiveId(account: ActiveAccount): Boolean = runBlocking {
-        account.id == userRepository.currentUserId().getOrElse(String.empty())
+    private fun activeAccountById(id: String): Either<Failure, ActiveAccount> = runBlocking {
+        accountsRepository.activeAccountById(id).flatMap { account ->
+            account?.let { Either.Right(it) }
+                ?: Either.Left(CannotFindActiveAccount)
+        }
     }
 }

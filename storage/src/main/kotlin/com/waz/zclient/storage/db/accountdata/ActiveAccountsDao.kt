@@ -24,6 +24,9 @@ interface ActiveAccountsDao {
     @Query("SELECT * from ActiveAccounts")
     suspend fun activeAccounts(): List<ActiveAccountsEntity>
 
+    @Query("SELECT * from ActiveAccounts WHERE _id = :id LIMIT 1")
+    suspend fun activeAccountById(id: String): ActiveAccountsEntity?
+
     @Insert
     suspend fun insertActiveAccount(activeAccountsEntity: ActiveAccountsEntity)
 
