@@ -12,9 +12,9 @@ class LogoutUseCase(
     private val accountsRepository: AccountsRepository,
     private val accessTokenRepository: AccessTokenRepository,
     private val usersRepository: UsersRepository
-) : UseCase<Unit, Unit>() {
+) : UseCase<LogoutStatus, Unit>() {
 
-    override suspend fun run(params: Unit): Either<Failure, Unit> {
+    override suspend fun run(params: Unit): Either<Failure, LogoutStatus> {
         logout()
         return deleteLoggedOutAccountData()
     }
@@ -25,21 +25,32 @@ class LogoutUseCase(
         accountsRepository.logout(refreshToken, accessToken)
     }
 
-    private suspend fun deleteLoggedOutAccountData(): Either<Failure, Unit> =
+    private suspend fun deleteLoggedOutAccountData(): Either<Failure, LogoutStatus> =
         usersRepository.currentUserId().let {
             accountsRepository.deleteAccountFromDevice(it) //TODO should we log failure somehow?
             updateCurrentUserId(it)
         }
 
-    private suspend fun updateCurrentUserId(loggedOutUserId: String): Either<Failure, Unit> =
+    private suspend fun updateCurrentUserId(loggedOutUserId: String): Either<Failure, LogoutStatus> =
         accountsRepository.activeAccounts().fold({
             clearCurrentUserId()
-            Either.Right(Unit) //TODO should we log failure somehow?
+            Either.Right(CouldNotReadRemainingAccounts)
         }) {
             val remainingAccountId = it.firstOrNull { it.id != loggedOutUserId }?.id
-            remainingAccountId?.let { usersRepository.setCurrentUserId(it) } ?: clearCurrentUserId()
-            Either.Right(Unit)
+            val status = if (remainingAccountId == null) {
+                clearCurrentUserId()
+                NoAccountsLeft
+            } else {
+                usersRepository.setCurrentUserId(remainingAccountId)
+                AnotherAccountExists
+            }
+            Either.Right(status)
         }!!
 
     private fun clearCurrentUserId() = usersRepository.setCurrentUserId(String.empty())
 }
+
+sealed class LogoutStatus
+object NoAccountsLeft : LogoutStatus()
+object AnotherAccountExists : LogoutStatus()
+object CouldNotReadRemainingAccounts : LogoutStatus()

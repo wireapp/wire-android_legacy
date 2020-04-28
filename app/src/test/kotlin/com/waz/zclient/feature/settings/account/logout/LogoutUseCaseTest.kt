@@ -7,6 +7,7 @@ import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.Forbidden
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
 import com.waz.zclient.core.network.accesstoken.AccessToken
 import com.waz.zclient.core.network.accesstoken.AccessTokenRepository
 import com.waz.zclient.core.network.accesstoken.RefreshToken
@@ -110,18 +111,19 @@ class LogoutUseCaseTest : UnitTest() {
         }
 
     @Test
-    fun `given account is deleted and there's no accounts left, then clears currentUserId and returns success`() =
+    fun `given account is deleted and there's no accounts left, then clears currentUserId and returns NoAccountsLeft`() =
         runBlockingTest {
             `when`(accountsRepository.activeAccounts()).thenReturn(Either.Right(emptyList()))
 
             val result = logoutUseCase.run(Unit)
 
             result.isRight shouldBe true
+            result.map { it shouldBe NoAccountsLeft }
             verify(usersRepository).setCurrentUserId(String.empty())
         }
 
     @Test
-    fun `given account is deleted and there's another account left, then updates currentUserId with new id and returns success`() =
+    fun `given account is deleted and there's another account left, then updates currentUserId with new id and returns AnotherAccountExists`() =
         runBlockingTest {
             val id = "otherAccountId"
             val otherAccount = mockAccount(id)
@@ -130,11 +132,12 @@ class LogoutUseCaseTest : UnitTest() {
             val result = logoutUseCase.run(Unit)
 
             result.isRight shouldBe true
+            result.map { it shouldBe AnotherAccountExists }
             verify(usersRepository).setCurrentUserId(id)
         }
 
     @Test
-    fun `given account deletion fails and the account still exists, when there's no other account, then clears currentUserId and returns success`() =
+    fun `given account deletion fails and the account still exists, when there's no other account, then clears currentUserId and returns NoAccountsLeft`() =
         runBlockingTest {
             val activeAccount = mockAccount(TEST_USER_ID)
             `when`(accountsRepository.activeAccounts()).thenReturn(Either.Right(listOf(activeAccount)))
@@ -142,11 +145,12 @@ class LogoutUseCaseTest : UnitTest() {
             val result = logoutUseCase.run(Unit)
 
             result.isRight shouldBe true
+            result.map { it shouldBe NoAccountsLeft }
             verify(usersRepository).setCurrentUserId(String.empty())
         }
 
     @Test
-    fun `given account deletion fails and the account still exists, when there's another account, then updates currentUserId with other's id`() =
+    fun `given account deletion fails and the account still exists, when there's another account, then updates currentUserId and returns AnotherAccountExists`() =
         runBlockingTest {
             val loggedOutAccount = mockAccount(TEST_USER_ID)
             val newId = "newActiveId"
@@ -156,11 +160,12 @@ class LogoutUseCaseTest : UnitTest() {
             val result = logoutUseCase.run(Unit)
 
             result.isRight shouldBe true
+            result.map { it shouldBe AnotherAccountExists }
             verify(usersRepository).setCurrentUserId(newId)
         }
 
     @Test
-    fun `given remaining active accounts check fails, then clears current user id and returns success`() =
+    fun `given remaining active accounts check fails, then clears current user id and returns CouldNotReadRemainingAccounts`() =
         runBlockingTest {
             val failure = mock(Failure::class.java)
             `when`(accountsRepository.activeAccounts()).thenReturn(Either.Left(failure))
@@ -168,6 +173,7 @@ class LogoutUseCaseTest : UnitTest() {
             val result = logoutUseCase.run(Unit)
 
             result.isRight shouldBe true
+            result.map { it shouldBe CouldNotReadRemainingAccounts }
             verify(usersRepository).setCurrentUserId(String.empty())
         }
 
