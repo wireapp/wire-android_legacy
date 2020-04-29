@@ -31,7 +31,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
-import com.waz.content.UserPreferences
+import com.waz.content.{UserPreferences, UsersStorage}
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.permissions.PermissionsService
@@ -81,6 +81,8 @@ class SearchUIFragment extends BaseFragment[Container]
   private implicit def context: Context = getContext
 
   private lazy val zms                    = inject[Signal[ZMessaging]]
+  private lazy val usersStorage           = inject[Signal[UsersStorage]]
+  private lazy val teamId                 = inject[Signal[Option[TeamId]]]
   private lazy val self                   = zms.flatMap(z => UserSignal(z.selfUserId))
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
@@ -345,38 +347,46 @@ class SearchUIFragment extends BaseFragment[Container]
     }
     else false
 
-  override def onUserClicked(userId: UserId): Unit = zms.head.foreach { z =>
-    z.usersStorage.get(userId).foreach {
-      case Some(user) =>
-        import ConnectionStatus._
-        keyboard.hideKeyboardIfVisible()
-        if (user.connection == Accepted || (user.connection == Unconnected && z.teamId.isDefined && z.teamId == user.teamId)) {
-          conversationCreationInProgress.head.foreach {
-            case false =>
+  override def onUserClicked(user: UserData): Unit = {
+    def checkStorageAndThen(doStuff: => Unit) = for {
+      storage <- usersStorage.head
+      _       <- storage.getOrCreate(user.id, user)
+    } yield doStuff
+
+    import ConnectionStatus._
+    keyboard.hideKeyboardIfVisible()
+    teamId.head.map {
+      case Some(tId) if user.connection == Accepted || (user.connection == Unconnected && user.teamId.contains(tId)) =>
+        conversationCreationInProgress.head.foreach {
+          case false =>
+            checkStorageAndThen {
               spinner.showSpinner(true)
               conversationCreationInProgress ! true
               userAccountsController
-                .getOrCreateAndOpenConvFor(userId)
+                .getOrCreateAndOpenConvFor(user.id)
                 .onComplete { _ =>
                   spinner.hideSpinner()
                   conversationCreationInProgress ! false
                 }
-            case _ =>
-          }
-        } else {
-          user.connection match {
-            case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
-              conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-              pickUserController.showUserProfile(userId, false)
-            case ConnectionStatus.PendingFromOther =>
-              getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
-            case _ =>
-          }
+            }
+          case _ =>
         }
       case _ =>
+        user.connection match {
+          case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
+            conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
+            checkStorageAndThen {
+              pickUserController.showUserProfile(user.id, false)
+            }
+          case PendingFromOther =>
+            checkStorageAndThen {
+              getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
+            }
+          case _ =>
+            warn(l"shouldn't get here")
+        }
     }
   }
-
 
   override def onConversationClicked(conversationData: ConversationData): Unit = {
     keyboard.hideKeyboardIfVisible()

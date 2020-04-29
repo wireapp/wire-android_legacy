@@ -20,10 +20,9 @@ package com.waz.zclient.conversationlist.adapters
 import android.content.Context
 import android.view.{View, ViewGroup}
 import androidx.recyclerview.widget.{DiffUtil, RecyclerView}
-import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, FolderId, TeamId}
-import com.waz.utils.events.{EventContext, EventStream, Signal, SourceStream}
+import com.waz.model.{ConvId, ConversationData, FolderId}
+import com.waz.utils.events.{EventContext, EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
 import com.waz.zclient.conversationlist.views.{ConversationFolderListRow, ConversationListRow, IncomingConversationListRow, NormalConversationListRow}
@@ -40,9 +39,6 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
     with Injectable {
 
   setHasStableIds(true)
-
-  private lazy val usersStorage = inject[Signal[UsersStorage]]
-  private lazy val teamId = inject[Signal[Option[TeamId]]]
 
   val onConversationClick: SourceStream[ConvId] = EventStream[ConvId]()
   val onConversationLongClick: SourceStream[ConversationData] = EventStream[ConversationData]()
