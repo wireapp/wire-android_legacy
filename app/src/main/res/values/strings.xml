@@ -1472,7 +1472,7 @@
     <!-- SSO Login -->
     <string name="sso_login_dialog_title">Enterprise Login</string>
     <string name="sso_login_dialog_message">Please enter your SSO code:</string>
-    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server:</string>
+    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
 
     <!-- Welcome -->
     <string name="welcome_to_wire">Welcome to Wire</string>
