@@ -29,13 +29,13 @@ class CreatePersonalAccountViewPagerAdapterTest : UnitTest() {
     }
 
     @Test
-    fun `given getCount() is called, then return the size of the adapter`() = runBlockingTest {
+    fun `given getCount() is called, then return the size of the adapter`() {
         `when`(titles.size).thenReturn(TEST_SIZE)
         assertEquals(TEST_SIZE, createPersonalAccountViewPagerAdapter.count)
     }
 
     @Test
-    fun `given getPageTitle(position) is called, then return the title to show for the given position`() = runBlockingTest {
+    fun `given getPageTitle(position) is called, then return the title to show for the given position`() {
         `when`(titles[0]).thenReturn(TEST_TITLE_EMAIL)
         `when`(titles[1]).thenReturn(TEST_TITLE_PHONE)
 
