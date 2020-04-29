@@ -77,7 +77,7 @@ class TeamsClientSpec extends AndroidFreeSpec with CirceJSONSupport {
               "user":"f3f4f763-ccee-4b3d-b450-582e2c99f8be"
             }
           ],
-          "has_more": false
+          "hasMore": false
         }"""
 
       // when
