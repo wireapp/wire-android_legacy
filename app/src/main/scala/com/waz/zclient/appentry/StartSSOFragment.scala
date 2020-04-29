@@ -29,7 +29,7 @@ class StartSSOFragment extends SSOFragment {
       case Some(token) => verifyCode(token)
       case None =>
         ssoService.fetchSSO().flatMap {
-          case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode)
+          case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode, fromStart = true)
           case Right(_)                 => Future.successful(activity.showCustomBackendLoginScreen())
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
@@ -44,7 +44,7 @@ class StartSSOFragment extends SSOFragment {
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
         result match {
-          case Right(true)  => goToSsoWebView(token.toString)
+          case Right(true)  => goToSsoWebView(token.toString, fromStart = true)
           case Right(false) => Future.successful(activity.showCustomBackendLoginScreen())
           case Left(_)      => Future.successful(activity.showCustomBackendLoginScreen())
         }

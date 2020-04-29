@@ -112,14 +112,14 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         .setListener(dialogListener)
         .show(getChildFragmentManager, SSODialogTag)
 
-  protected def startSsoFlow(ssoCode: String) =
+  protected def startSsoFlow(ssoCode: String, fromStart: Boolean = false) =
     ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
       onVerifyingToken(true)
       ssoService.verifyToken(token).flatMap { result =>
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
         result match {
-          case Right(true)  => goToSsoWebView(token.toString)
+          case Right(true)  => goToSsoWebView(token.toString, fromStart)
           case Right(false) => showSsoDialogFuture()
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
@@ -172,8 +172,10 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
 
-  protected def showSsoWebView(token: String) = {
-    getActivity.getSupportFragmentManager.popBackStack()
+  protected def showSsoWebView(token: String, fromStart: Boolean) = {
+    if (fromStart) {
+      getActivity.getSupportFragmentManager.popBackStack()
+    }
     getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
   }
@@ -183,9 +185,9 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
   protected def onVerifyingToken(verifying: Boolean): Unit =
     inject[SpinnerController].showSpinner(verifying)
 
-  protected def goToSsoWebView(token: String) = {
+  protected def goToSsoWebView(token: String, fromStart: Boolean = false) = {
     dismissSsoDialog()
-    showSsoWebView(token)
+    showSsoWebView(token, fromStart)
   }
 }
 
