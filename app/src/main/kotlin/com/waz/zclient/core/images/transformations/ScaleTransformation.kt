@@ -7,6 +7,7 @@ import android.graphics.Paint
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import java.security.MessageDigest
+import java.util.Objects
 
 data class ScaleTransformation(
     private val scaleX: Float,
@@ -35,6 +36,14 @@ data class ScaleTransformation(
 
         return bitmap
     }
+
+    override fun hashCode(): Int = Objects.hash(scaleX, scaleY)
+
+    override fun equals(other: Any?): Boolean =
+        other === this ||
+            (other is ScaleTransformation &&
+                other.scaleX == this.scaleX &&
+                other.scaleY == this.scaleY)
 
     companion object {
         private const val SCALE_HALF = 0.5F
