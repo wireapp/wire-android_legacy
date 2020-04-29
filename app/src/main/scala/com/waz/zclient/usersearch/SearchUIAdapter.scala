@@ -129,7 +129,7 @@ object SearchUIAdapter {
 
     def onGroupsExpanded(): Unit
 
-    def onUserClicked(userId: UserId): Unit
+    def onUserClicked(user: UserData): Unit
 
     def onIntegrationClicked(data: IntegrationData): Unit
 
@@ -212,7 +212,7 @@ object SearchUIAdapter {
     class TopUserViewHolder(view: TopUserChathead, callback: Callback) extends RecyclerView.ViewHolder(view) {
       private var user = Option.empty[UserData]
 
-      view.onClick(user.map(_.id).foreach(callback.onUserClicked))
+      view.onClick(user.foreach(callback.onUserClicked))
 
       def bind(user: UserData): Unit = {
         this.user = Some(user)
@@ -225,7 +225,7 @@ object SearchUIAdapter {
   class UserViewHolder(view: SingleUserRowView, callback: Callback) extends RecyclerView.ViewHolder(view) {
     private var userData = Option.empty[UserData]
 
-    view.onClick(userData.map(_.id).foreach(callback.onUserClicked))
+    view.onClick(userData.foreach(callback.onUserClicked))
     view.showArrow(false)
     view.showCheckbox(false)
     view.setTheme(Theme.Dark, background = false)
