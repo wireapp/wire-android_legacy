@@ -383,7 +383,7 @@ class SearchUIFragment extends BaseFragment[Container]
               getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
             }
           case _ =>
-            warn(l"shouldn't get here")
+            warn(l"Unhandled connection type (possibly Self?). The UI shouldn't display such entry.")
         }
     }
   }
