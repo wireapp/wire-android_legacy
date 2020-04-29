@@ -26,18 +26,18 @@ class StartSSOFragment extends SSOFragment {
 
   private def fetchSsoToken(): Unit =
     userAccountsController.ssoToken.head.foreach {
-      case Some(token) => verifySsoCode(token)
+      case Some(token) => verifyCode(token)
       case None =>
         ssoService.fetchSSO().flatMap {
           case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode)
-          case Right(_)                 => showSsoDialogFuture()
+          case Right(_)                 => Future.successful(activity.showCustomBackendLoginScreen())
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(_)                  => showSsoDialogFuture()
+          case Left(_)                  => Future.successful(activity.showCustomBackendLoginScreen())
         }
     }
 
-  override def verifySsoCode(input: String): Future[Unit] =
+  private def verifyCode(input: String): Future[Unit] =
     ssoService.extractUUID(input).fold(Future.successful(())) { token =>
       onVerifyingToken(true)
       ssoService.verifyToken(token).flatMap { result =>
