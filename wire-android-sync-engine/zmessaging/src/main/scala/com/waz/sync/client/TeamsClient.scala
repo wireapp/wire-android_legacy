@@ -122,7 +122,7 @@ object TeamsClient {
 
   def teamConversationPath(id: TeamId, cid: RConvId): String = s"$TeamsPath/${id.str}/conversations/${cid.str}"
 
-  case class TeamMembers(members: Seq[TeamMember], has_more: Boolean)
+  case class TeamMembers(members: Seq[TeamMember], hasMore: Boolean)
 
   case class TeamMember(user: UserId, permissions: Option[Permissions], created_by: Option[UserId]) {
     lazy val permissionMasks: PermissionsMasks = permissions.fold((0L, 0L))(_.toMasks)
