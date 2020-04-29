@@ -578,9 +578,9 @@
     <!-- Authentication (Shared dimensions between create account and login screens) -->
     <dimen name="authentication_tab_layout_indicator_height">1dp</dimen>
     <dimen name="authentication_tab_layout_title_text_size">12sp</dimen>
-    <dimen name="authentication_tab_layout_margin_top">24dp</dimen>
-    <dimen name="authentication_tab_layout_view_pager_margin_start">16dp</dimen>
-    <dimen name="authentication_tab_layout_view_pager_margin_end">16dp</dimen>
+    <dimen name="authentication_view_pager_margin_top">24dp</dimen>
+    <dimen name="authentication_view_pager_margin_start">16dp</dimen>
+    <dimen name="authentication_view_pager_margin_end">16dp</dimen>
     <dimen name="authentication_edit_text_padding">16dp</dimen>
     <dimen name="authentication_edit_text_text_size">14sp</dimen>
     <dimen name="authentication_confirmation_button_padding">8dp</dimen>

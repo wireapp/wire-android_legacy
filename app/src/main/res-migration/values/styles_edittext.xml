@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="EditText" parent="@android:style/Widget.EditText">
-        <item name="android:focusable">true</item>
-        <item name="android:focusableInTouchMode">true</item>
-    </style>
-
+    <style name="EditText" parent="@android:style/Widget.EditText" />
 
     <style name="EditText.RobotoThin">
         <item name="android:fontFamily">sans-serif-thin</item>
