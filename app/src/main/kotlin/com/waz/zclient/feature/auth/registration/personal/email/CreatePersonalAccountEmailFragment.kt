@@ -15,13 +15,12 @@ import kotlinx.android.synthetic.main.fragment_create_personal_account_email.*
 
 class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_personal_account_email) {
 
-    //TODO handle no internet connections status
     //TODO Add loading status
     private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
-    private val emailCredentialsViewModel: EmailCredentialsViewModel
-        by sharedViewModel(REGISTRATION_SCOPE_ID)
+    private val emailCredentialsViewModel: EmailCredentialsViewModel by sharedViewModel(REGISTRATION_SCOPE_ID)
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

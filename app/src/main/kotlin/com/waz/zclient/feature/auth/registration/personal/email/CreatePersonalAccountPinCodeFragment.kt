@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.auth.registration.personal.email
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
@@ -7,6 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.poovam.pinedittextfield.PinField.OnTextCompleteListener
 import com.waz.zclient.R
+import com.waz.zclient.core.extension.display
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
@@ -18,7 +21,6 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     R.layout.fragment_create_personal_account_pin_code
 ) {
 
-    //TODO handle no internet connections status
     private val createPersonalAccountWithEmailViewModel: CreatePersonalAccountWithEmailViewModel
         by viewModel(REGISTRATION_SCOPE_ID)
 
@@ -81,11 +83,14 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         )
     }
 
-    private fun showInvalidCodeError(errorMessage: String) = AlertDialog.Builder(requireActivity())
-        .setMessage(errorMessage)
-        .setPositiveButton(android.R.string.ok) { dialog, _ -> dialog.dismiss() }
-        .create()
-        .show()
+    private fun showInvalidCodeError(errorMessage: String) =
+        AlertDialog.Builder(requireContext()).display(
+            title = String.empty(),
+            message = errorMessage,
+            positiveText = getString(android.R.string.ok),
+            positiveAction = DialogInterface.OnClickListener { dialog, _ -> dialog.dismiss() }
+        )
+
 
     private fun clearPinCode() = createPersonalAccountPinCodePinEditText.text?.clear()
 
