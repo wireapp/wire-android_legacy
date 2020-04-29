@@ -60,7 +60,7 @@ class TeamsSyncHandlerImpl(userId:    UserId,
         data        <- flatten(client.getTeamData(id))
         membersData <- flatten(client.getTeamMembers(id))
         roles       <- flatten(client.getTeamRoles(id))
-        members     =  if (membersData.has_more) Seq.empty[TeamMember] else membersData.members
+        members     =  if (membersData.hasMore) Seq.empty[TeamMember] else membersData.members
         _           <- service.onTeamSynced(data, members, roles)
       } yield SyncResult.Success).recover {
         case err: ErrorResponse => SyncResult(err)
