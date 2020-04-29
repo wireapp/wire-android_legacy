@@ -120,10 +120,10 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         userAccountsController.ssoToken ! None
         result match {
           case Right(true)  => goToSsoWebView(token.toString)
-          case Right(false) => showSsoDialogFuture
+          case Right(false) => showSsoDialogFuture()
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(_)      => showSsoDialogFuture
+          case Left(_)      => showSsoDialogFuture()
         }
       }(Threading.Ui)
     }
@@ -136,9 +136,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
         result match {
-          case Right(true) =>
-            dismissSsoDialog()
-            showSsoWebView(token.toString)
+          case Right(true) => goToSsoWebView(token.toString)
           case Right(false) => showInlineSsoError(getString(R.string.sso_signin_wrong_code_message))
           case Left(errorResponse) => handleVerificationError(errorResponse)
         }
