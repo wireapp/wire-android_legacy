@@ -1452,6 +1452,7 @@
     <!-- No Internet Connection -->
     <string name="no_internet_connection_title">No Internet Connection</string>
     <string name="no_internet_connection_message">Please check your Internet connection and try again</string>
+    <string name="no_internet_connection_ok">OK</string>
 
     <!-- Shortcuts -->
     <string name="shortcut_create_group_label">Create Group</string>
