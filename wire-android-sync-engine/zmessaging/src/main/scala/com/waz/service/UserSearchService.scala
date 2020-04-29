@@ -263,11 +263,16 @@ class UserSearchServiceImpl(selfUserId:           UserId,
           usersInStorage(u.id).name != Name.Empty &&
           usersInStorage(u.id).picture.isDefined
       }
-      userSearchResult ! (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData.apply)).toIndexedSeq
-      if (remote.nonEmpty)
-        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
-      else
-        Future.successful(())
+      val allUsers = (local.map(u => usersInStorage(u.id)) ++ remote.map(UserData.apply)).toIndexedSeq
+
+      val handle = Handle(query.str)
+      if (!allUsers.exists(_.handle.contains(handle)))
+        sync.exactMatchHandle(handle)
+
+      userSearchResult ! allUsers
+
+      if (remote.nonEmpty) sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+      else Future.successful(())
     }
   }
 

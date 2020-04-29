@@ -25,7 +25,7 @@ import com.waz.log.LogSE._
 case class SearchQuery private (str: String, handleOnly: Boolean) {
   val isEmpty: Boolean = str.isEmpty
 
-  lazy val cacheKey = (if (handleOnly) SearchQuery.recommendedHandlePrefix else SearchQuery.recommendedPrefix) + str
+  lazy val cacheKey: String = (if (handleOnly) SearchQuery.recommendedHandlePrefix else SearchQuery.recommendedPrefix) + str
 }
 
 object SearchQuery {

@@ -61,10 +61,7 @@ class UserSearchClientImpl(implicit
 
   override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]] = {
     Request
-      .Get(
-        relativePath = HandlesPath,
-        queryParameters = queryParameters("handles" -> Handle.stripSymbol(handle.string))
-      )
+      .Get(relativePath = handlesPath(handle))
       .withResultType[UserSearchResponse.User]
       .withErrorType[ErrorResponse]
       .executeSafe
@@ -78,7 +75,9 @@ class UserSearchClientImpl(implicit
 
 object UserSearchClient extends DerivedLogTag {
   val ContactsPath = "/search/contacts"
-  val HandlesPath = "/users"
+  val HandlesPath = "/users/handles"
+
+  def handlesPath(handle: Handle): String = s"$HandlesPath/${Handle.stripSymbol(handle.string)}"
 
   val DefaultLimit = 10
 
