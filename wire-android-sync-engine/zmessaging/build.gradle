@@ -18,6 +18,7 @@ android {
         }
 
         buildConfigField 'boolean', 'KOTLIN_CORE', "$rootProject.ext.kotlinCore"
+        buildConfigField 'boolean', 'KOTLIN_SETTINGS', "$rootProject.ext.kotlinSettings"
     }
 
     externalNativeBuild {
