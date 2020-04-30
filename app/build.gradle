@@ -376,7 +376,6 @@ dependencies {
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
-    implementation BuildDependencies.androidX.viewPager2
 
     // Play services
     implementation BuildDependencies.playServices.base

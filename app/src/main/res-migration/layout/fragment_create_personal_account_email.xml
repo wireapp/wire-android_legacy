@@ -39,7 +39,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/create_personal_account_with_email_edit_text_hint"
-            android:inputType="textEmailAddress" />
+            android:inputType="textEmailAddress">
+
+            <requestFocus />
+        </com.google.android.material.textfield.TextInputEditText>
 
     </com.google.android.material.textfield.TextInputLayout>
 

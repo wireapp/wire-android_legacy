@@ -40,7 +40,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/create_personal_account_with_phone_edit_text_hint"
-            android:inputType="phone" />
+            android:inputType="phone">
+
+            <requestFocus />
+        </com.google.android.material.textfield.TextInputEditText>
 
     </com.google.android.material.textfield.TextInputLayout>
 
