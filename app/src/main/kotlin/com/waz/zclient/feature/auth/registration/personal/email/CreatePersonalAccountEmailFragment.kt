@@ -42,7 +42,6 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     private fun initEmailChangedListener() {
         createPersonalAccountEmailEditText.doAfterTextChanged {
-            showEmailError(String.empty())
             createPersonalAccountWithEmailViewModel.validateEmail(it.toString())
         }
     }

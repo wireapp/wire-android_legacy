@@ -54,7 +54,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         createPersonalAccountPinCodePinEditText.onTextCompleteListener = object : OnTextCompleteListener {
             override fun onTextComplete(code: String): Boolean {
                 createPersonalAccountWithEmailViewModel.activateEmail(email, code)
-                return true
+                return false
             }
         }
     }
@@ -70,6 +70,7 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
             activateEmailErrorLiveData.observe(viewLifecycleOwner) {
                 Alert.showError(requireContext(), getString(it.message))
                 clearPinCode()
+                showKeyboard()
             }
         }
     }
@@ -81,8 +82,6 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
             }
             sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
                 Alert.showError(requireContext(), getString(it.message))
-                clearPinCode()
-                showKeyboard()
             }
         }
     }
@@ -105,7 +104,6 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     private fun observeNetworkConnectionError() {
         createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
             Alert.showNetworkConnectionError(requireContext())
-            clearPinCode()
         }
     }
 
