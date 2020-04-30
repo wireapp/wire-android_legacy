@@ -8,8 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.poovam.pinedittextfield.PinField.OnTextCompleteListener
 import com.waz.zclient.R
-import com.waz.zclient.core.extension.display
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
