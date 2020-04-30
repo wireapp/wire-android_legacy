@@ -21,7 +21,6 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     private val emailCredentialsViewModel: EmailCredentialsViewModel by sharedViewModel(REGISTRATION_SCOPE_ID)
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeEmailValidationData()
