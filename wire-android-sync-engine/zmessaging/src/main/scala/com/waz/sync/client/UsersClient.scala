@@ -69,7 +69,10 @@ class UsersClientImpl(implicit
   }
 
   override def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]] = {
-    Request.Get(relativePath = UsersPath, queryParameters = queryParameters("handles" -> handle))
+    Request.Get(
+      relativePath = UsersPath,
+      queryParameters = queryParameters("handles" -> handle.string.toLowerCase)
+    )
       .withResultType[Seq[UserInfo]]
       .withErrorType[ErrorResponse]
       .execute

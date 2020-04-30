@@ -59,7 +59,6 @@ import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.usersearch.SearchUIFragment.{Container, PERFORM_SEARCH_DELAY, SHOW_KEYBOARD_THRESHOLD, TAG}
 import com.waz.zclient.usersearch.domain.RetrieveSearchResults
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
@@ -69,6 +68,8 @@ import com.waz.zclient.views._
 import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
+
+import com.waz.zclient.usersearch.SearchUIFragment._
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
@@ -353,38 +354,42 @@ class SearchUIFragment extends BaseFragment[Container]
       _       <- storage.getOrCreate(user.id, user)
     } yield doStuff
 
+    def tryOpenConversation() = conversationCreationInProgress.head.foreach {
+      case false =>
+        checkStorageAndThen {
+          spinner.showSpinner(true)
+          conversationCreationInProgress ! true
+          userAccountsController
+            .getOrCreateAndOpenConvFor(user.id)
+            .onComplete { _ =>
+              spinner.hideSpinner()
+              conversationCreationInProgress ! false
+            }
+        }
+      case true =>
+    }
+
     import ConnectionStatus._
     keyboard.hideKeyboardIfVisible()
-    teamId.head.map {
-      case Some(tId) if user.connection == Accepted || (user.connection == Unconnected && user.teamId.contains(tId)) =>
-        conversationCreationInProgress.head.foreach {
-          case false =>
-            checkStorageAndThen {
-              spinner.showSpinner(true)
-              conversationCreationInProgress ! true
-              userAccountsController
-                .getOrCreateAndOpenConvFor(user.id)
-                .onComplete { _ =>
-                  spinner.hideSpinner()
-                  conversationCreationInProgress ! false
-                }
-            }
-          case _ =>
+    teamId.head.map((_, user.connection)).foreach {
+      case (Some(_), Accepted) =>
+        tryOpenConversation()
+      case (Some(tId), Unconnected) if user.teamId.contains(tId) =>
+        tryOpenConversation()
+      case (None, Accepted) =>
+        tryOpenConversation()
+      case (None, PendingFromOther) =>
+        checkStorageAndThen {
+          getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
         }
-      case _ =>
-        user.connection match {
-          case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
-            conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-            checkStorageAndThen {
-              pickUserController.showUserProfile(user.id, false)
-            }
-          case PendingFromOther =>
-            checkStorageAndThen {
-              getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
-            }
-          case _ =>
-            warn(l"Unhandled connection type (possibly Self?). The UI shouldn't display such entry.")
+      case (_, connection) if connectionsForOpenProfile.contains(connection) =>
+        conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
+        checkStorageAndThen {
+          pickUserController.showUserProfile(user.id, false)
         }
+
+      case (teamId, connection) =>
+        warn(l"Unhandled connection type. The UI shouldn't display such entry. teamId: $teamId, connection type: $connection")
     }
   }
 
@@ -508,6 +513,9 @@ object SearchUIFragment {
 
   private val SHOW_KEYBOARD_THRESHOLD: Int = 10
   private val PERFORM_SEARCH_DELAY = 500.millis
+
+  import ConnectionStatus._
+  private val connectionsForOpenProfile = Set(PendingFromUser, Blocked, Ignored, Cancelled, Unconnected)
 
   def newInstance(): SearchUIFragment = new SearchUIFragment
 
