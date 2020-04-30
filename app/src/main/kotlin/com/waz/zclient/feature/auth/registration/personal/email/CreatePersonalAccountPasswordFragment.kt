@@ -10,6 +10,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.ui.dialog.Alert
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_password.*
 
@@ -34,6 +35,7 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
         super.onViewCreated(view, savedInstanceState)
         observePasswordValidationData()
         observeRegistrationData()
+        observeNetworkConnectionError()
         initPasswordChangedListener()
         initConfirmationButton()
         showKeyboard()
@@ -81,9 +83,14 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
                     Toast.LENGTH_LONG).show()
             }
             registerErrorLiveData.observe(viewLifecycleOwner) {
-                //TODO show correctly registration error messages
-                Toast.makeText(requireContext(), getString(it.errorMessage), Toast.LENGTH_LONG).show()
+                Alert.showError(requireContext(), getString(it.message))
             }
+        }
+    }
+
+    private fun observeNetworkConnectionError() {
+        createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
+            Alert.showNetworkConnectionError(requireContext())
         }
     }
 

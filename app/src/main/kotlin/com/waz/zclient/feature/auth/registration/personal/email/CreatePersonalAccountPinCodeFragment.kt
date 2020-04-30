@@ -1,19 +1,16 @@
 package com.waz.zclient.feature.auth.registration.personal.email
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.observe
 import com.poovam.pinedittextfield.PinField.OnTextCompleteListener
 import com.waz.zclient.R
-import com.waz.zclient.core.extension.display
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.replaceFragment
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
+import com.waz.zclient.core.ui.dialog.Alert
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_pin_code.*
 
@@ -33,6 +30,8 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeActivateEmailData()
+        observeActivationCodeData()
+        observeNetworkConnectionError()
         initChangeMailListener()
         initDescriptionTextView()
         initResendCodeListener()
@@ -69,7 +68,19 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
                 showEnterNameScreen()
             }
             activateEmailErrorLiveData.observe(viewLifecycleOwner) {
-                showInvalidCodeError(getString(it.errorMessage))
+                Alert.showError(requireContext(), getString(it.message))
+                clearPinCode()
+            }
+        }
+    }
+
+    private fun observeActivationCodeData() {
+        with(createPersonalAccountWithEmailViewModel) {
+            sendActivationCodeSuccessLiveData.observe(viewLifecycleOwner) {
+                //TODO show correctly send activation code success messages
+            }
+            sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
+                Alert.showError(requireContext(), getString(it.message))
                 clearPinCode()
                 showKeyboard()
             }
@@ -83,20 +94,18 @@ class CreatePersonalAccountPinCodeFragment : Fragment(
         )
     }
 
-    private fun showInvalidCodeError(errorMessage: String) =
-        AlertDialog.Builder(requireContext()).display(
-            title = String.empty(),
-            message = errorMessage,
-            positiveText = getString(android.R.string.ok),
-            positiveAction = DialogInterface.OnClickListener { dialog, _ -> dialog.dismiss() }
-        )
-
-
     private fun clearPinCode() = createPersonalAccountPinCodePinEditText.text?.clear()
 
     private fun initChangeMailListener() {
         createPersonalAccountPinCodeChangeMailTextView.setOnClickListener {
             requireActivity().onBackPressed()
+        }
+    }
+
+    private fun observeNetworkConnectionError() {
+        createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
+            Alert.showNetworkConnectionError(requireContext())
+            clearPinCode()
         }
     }
 
