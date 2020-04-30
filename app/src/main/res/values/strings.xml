@@ -94,7 +94,6 @@
     <string name="people_picker__search_result_conversations_header_title">Groups</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s Groups</string>
     <string name="people_picker__search_result_connections_searched_header_title">Contacts</string>
-    <string name="people_picker__search_result_connections_non_searched_header_title">Recents</string>
     <string name="people_picker__search_result_others_header_title">Connect</string>
     <string name="people_picker__search_result__expander_title">Show all %1$s ↓</string>
     <string name="people_picker__search_people">PEOPLE</string>
