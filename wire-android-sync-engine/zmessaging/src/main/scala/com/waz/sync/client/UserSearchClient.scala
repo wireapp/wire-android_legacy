@@ -20,10 +20,8 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model._
 import com.waz.service.SearchQuery
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchResponse}
-import com.waz.threading.Threading
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
@@ -31,7 +29,6 @@ import com.waz.znet2.http._
 
 trait UserSearchClient {
   def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
-  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]]
 }
 
 class UserSearchClientImpl(implicit
@@ -40,9 +37,7 @@ class UserSearchClientImpl(implicit
                            authRequestInterceptor: AuthRequestInterceptor) extends UserSearchClient with CirceJSONSupport {
   import HttpClient.AutoDerivation._
   import HttpClient.dsl._
-  import Threading.Implicits.Background
   import UserSearchClient._
-
   private implicit val errorResponseDeserializer: RawBodyDeserializer[ErrorResponse] =
     objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
@@ -57,27 +52,10 @@ class UserSearchClientImpl(implicit
       .withErrorType[ErrorResponse]
       .executeSafe
   }
-
-
-  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserSearchResponse.User]] = {
-    Request
-      .Get(relativePath = handlesPath(handle))
-      .withResultType[UserSearchResponse.User]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-      .map {
-        case Right(user) => Right(Some(user))
-        case Left(response) if response.code == ResponseCode.NotFound => Right(None)
-        case Left(response) => Left(response)
-      }
-  }
 }
 
 object UserSearchClient extends DerivedLogTag {
   val ContactsPath = "/search/contacts"
-  val HandlesPath = "/users/handles"
-
-  def handlesPath(handle: Handle): String = s"$HandlesPath/${Handle.stripSymbol(handle.string)}"
 
   val DefaultLimit = 10
 

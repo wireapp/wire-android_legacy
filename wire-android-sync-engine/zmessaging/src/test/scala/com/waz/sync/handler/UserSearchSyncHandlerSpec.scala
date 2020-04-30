@@ -1,11 +1,11 @@
 package com.waz.sync.handler
 
 import com.waz.api.impl.ErrorResponse
-import com.waz.model.Handle
+import com.waz.model.{Handle, UserId, UserInfo}
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.SyncResult
-import com.waz.sync.client.UserSearchClient
+import com.waz.sync.client.{UserSearchClient, UsersClient}
 import com.waz.sync.client.UserSearchClient.UserSearchResponse
 import com.waz.sync.client.UserSearchClient.UserSearchResponse.User
 import com.waz.threading.CancellableFuture
@@ -16,6 +16,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
 
   private val userSearch       = mock[UserSearchService]
   private val userSearchClient = mock[UserSearchClient]
+  private val usersClient      = mock[UsersClient]
 
   private val dummyUser = User(
     id = "d9700541-9b05-47b5-b85f-4a195593af71",
@@ -56,9 +57,10 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
   feature("Exact Match Handle query request") {
 
     scenario("Given handle is queried, when exactMatchHandle is successful, then update exact matches") {
+      val dummyInfo = UserInfo(UserId())
       val handle = Handle("ma75")
-      (userSearchClient.exactMatchHandle(_: Handle)).expects(handle).once().returning(CancellableFuture.successful(Right(Some(dummyUser))))
-      (userSearch.updateExactMatch(_: UserSearchResponse.User)).expects(dummyUser).once().returning(Future.successful(Unit))
+      (usersClient.loadByHandle(_: Handle)).expects(handle).once().returning(CancellableFuture.successful(Right(Some(dummyInfo))))
+      (userSearch.updateExactMatch(_: UserInfo)).expects(dummyInfo).once().returning(Future.successful(Unit))
       result(initHandler().exactMatchHandle(handle)) shouldEqual SyncResult.Success
     }
 
@@ -66,11 +68,11 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
       val handle = Handle("ma75")
       val timeoutError = ErrorResponse(ErrorResponse.ConnectionErrorCode, s"Request failed with timeout", "connection-error")
 
-      (userSearchClient.exactMatchHandle(_: Handle)).expects(handle).once().returning(CancellableFuture.successful(Left(timeoutError)))
+      (usersClient.loadByHandle(_: Handle)).expects(handle).once().returning(CancellableFuture.successful(Left(timeoutError)))
       result(initHandler().exactMatchHandle(handle)) shouldEqual SyncResult(timeoutError)
     }
   }
 
-  def initHandler() = new UserSearchSyncHandler(userSearch, userSearchClient)
+  def initHandler() = new UserSearchSyncHandler(userSearch, userSearchClient, usersClient)
 
 }

@@ -22,13 +22,15 @@ import com.waz.log.LogSE._
 import com.waz.model.Handle
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.sync.SyncResult
-import com.waz.sync.client.UserSearchClient
+import com.waz.sync.client.{UserSearchClient, UsersClient}
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
 
-class UserSearchSyncHandler(userSearch: UserSearchService,
-                            client:     UserSearchClient)
+class UserSearchSyncHandler(userSearch:  UserSearchService,
+                            client:      UserSearchClient,
+                            usersClient: UsersClient
+                           )
   extends DerivedLogTag {
 
   import Threading.Implicits.Background
@@ -42,7 +44,7 @@ class UserSearchSyncHandler(userSearch: UserSearchService,
       SyncResult(error)
   }
 
-  def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.map {
+  def exactMatchHandle(handle: Handle): Future[SyncResult] = usersClient.loadByHandle(handle).future.map {
     case Right(Some(user)) =>
       debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
       userSearch.updateExactMatch(user)
