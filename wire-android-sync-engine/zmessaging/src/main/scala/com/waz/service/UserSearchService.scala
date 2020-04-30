@@ -53,7 +53,7 @@ trait UserSearchService {
   def syncSearchResults(query: SearchQuery): Unit
   def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit]
   def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit
-  def updateExactMatch(result: UserSearchResponse.User): Unit
+  def updateExactMatch(info: UserInfo): Unit
 }
 
 class UserSearchServiceImpl(selfUserId:           UserId,
@@ -285,9 +285,9 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     exactMatchUser.mutate(_.map(userUpdate))
   }
 
-  override def updateExactMatch(result: UserSearchResponse.User): Unit = {
-    verbose(l"updateExactMatch(${result.id})")
-    val userData = UserData(UserSearchEntry(result))
+  override def updateExactMatch(info: UserInfo): Unit = {
+    verbose(l"updateExactMatch(${info.id})")
+    val userData = UserData(info)
     exactMatchUser ! Some(userData)
     sync.syncSearchResults(Set(userData.id))
   }
