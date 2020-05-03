@@ -57,9 +57,9 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
               case None => search.usersForNewConversation(query, teamOnly)
             }
           } yield
-            if (results.isEmpty)
+            if (results.isEmpty) {
               if (filter.isEmpty) NoUsers else NoUsersFound
-            else Users(results)
+            } else Users(results)
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
