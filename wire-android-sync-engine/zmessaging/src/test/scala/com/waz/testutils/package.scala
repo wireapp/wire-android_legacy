@@ -19,7 +19,6 @@ package com.waz
 
 import android.database.Cursor
 import android.os.Parcel
-import android.provider.ContactsContract.DisplayNameSources
 import com.google.protobuf.nano.MessageNano
 import com.waz.cache.CacheEntryData
 import com.waz.content.MsgCursor
@@ -30,10 +29,9 @@ import com.waz.utils.events.{EventContext, FlatMapSignal, Signal, Subscription}
 import com.waz.utils.{CachedStorageImpl, Cleanup, Managed, returning}
 import libcore.net.MimeUtils
 import org.scalactic.Equality
-import org.scalatest.enablers.{Emptiness, Length}
+import org.scalatest.enablers.Emptiness
 
 import scala.collection.JavaConverters._
-import scala.collection.breakOut
 import scala.language.implicitConversions
 import scala.util.Random
 
@@ -136,12 +134,6 @@ package object testutils {
   }
 
   lazy val knownMimeTypes = returning(classOf[MimeUtils].getDeclaredField("mimeTypeToExtensionMap"))(_.setAccessible(true)).get(null).asInstanceOf[java.util.Map[String, String]].asScala.keys.toVector.map(Mime(_))
-
-  private def src(c: Contact) = (c.nameSource match {
-    case NameSource.StructuredName => DisplayNameSources.STRUCTURED_NAME
-    case NameSource.Nickname => DisplayNameSources.NICKNAME
-    case _ => DisplayNameSources.UNDEFINED
-  }).toString
 
   def withParcel[A](f: Parcel => A): A = Managed(Parcel.obtain).acquire(f)
   implicit lazy val ParcelCleanup: Cleanup[Parcel] = new Cleanup[Parcel] { def apply(a: Parcel): Unit = a.recycle() }

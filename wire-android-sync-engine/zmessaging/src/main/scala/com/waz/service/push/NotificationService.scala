@@ -136,9 +136,6 @@ class NotificationServiceImpl(selfUserId:      UserId,
         NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time)
       case UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, _) =>
         NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time)
-      case ContactJoinEvent(userId, _) =>
-        verbose(l"ContactJoinEvent")
-        NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)
     }
 
     if (toShow.nonEmpty)

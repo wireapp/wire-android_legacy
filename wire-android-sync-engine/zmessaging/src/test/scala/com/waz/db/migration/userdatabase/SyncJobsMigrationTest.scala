@@ -1,6 +1,6 @@
 package com.waz.db.migration.userdatabase
 
-import com.waz.KotlinMigrationHelper
+import com.waz.db.migration.KotlinMigrationHelper
 import com.waz.model.SyncId
 import com.waz.model.sync.SyncJob.SyncJobDao
 import com.waz.model.sync.{SyncJob, SyncRequest}

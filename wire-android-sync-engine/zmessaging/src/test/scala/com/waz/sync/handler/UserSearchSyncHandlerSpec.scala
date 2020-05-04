@@ -34,7 +34,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
       val documents = Seq(dummyUser)
       val results = UserSearchResponse(took = 13, found = 2, returned = 2, documents = documents)
 
-      (userSearchClient.getContacts(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Right(results)))
+      (userSearchClient.search(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Right(results)))
       (userSearch.updateSearchResults(_: SearchQuery, _: UserSearchClient.UserSearchResponse)).expects(searchQuery, results).once().returning(Future.successful(Unit))
 
       result(initHandler().syncSearchQuery(searchQuery)) shouldEqual SyncResult.Success
@@ -47,7 +47,7 @@ class UserSearchSyncHandlerSpec extends AndroidFreeSpec {
 
       val searchQuery = SearchQuery("Test query", handleOnly = false)
 
-      (userSearchClient.getContacts(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Left(timeoutError)))
+      (userSearchClient.search(_: SearchQuery, _: Int)).expects(searchQuery, *).once().returning(CancellableFuture.successful(Left(timeoutError)))
 
       result(initHandler().syncSearchQuery(searchQuery)) shouldEqual SyncResult(timeoutError)
     }

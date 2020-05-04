@@ -37,8 +37,6 @@ public interface IUserPreferencesController {
 
     void reset();
 
-    boolean showContactsDialog();
-
     void setVerificationCode(String code);
 
     void removeVerificationCode();

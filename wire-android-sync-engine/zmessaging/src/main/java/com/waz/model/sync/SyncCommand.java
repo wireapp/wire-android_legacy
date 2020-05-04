@@ -58,7 +58,6 @@ public enum SyncCommand {
     SyncRichMedia("sync-rich-media"),
     RegisterPushToken("register-push-token"),
     PostSelf("post-self"),
-    PostAddressBook("post-addressbook"),
     SyncSelfClients("sync-clients"),   // sync user clients, register current client and update prekeys when needed
     SyncSelfPermissions("sync-self-permissions"),
     SyncClients("sync-user-clients"),

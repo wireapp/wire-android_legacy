@@ -121,14 +121,6 @@
     <string name="integrations_errors_service_unavailable">The service is unavailable at the moment</string>
     <string name="conversation_errors_full">The conversation is full</string>
 
-    <!-- start ui / people picker, contacts sharing -->
-    <string name="people_picker__share_contacts__title">Share Contacts</string>
-    <string name="people_picker__share_contacts__message">Wire helps you find your friends if you share your contacts.</string>
-    <string name="people_picker__share_contacts__yay">Allow</string>
-    <string name="people_picker__share_contacts__nah">Deny</string>
-    <string name="people_picker__share_contacts__nevvah">Never ask again</string>
-
-
     <!-- Invite -->
     <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
     <string name="people_picker__invite__share_details_dialog">Share Wire with your friends.</string>
@@ -458,8 +450,6 @@
 
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
-    <string name="pref_options_contacts_title">Share Contacts</string>
-    <string name="pref_options_contacts_summary">This helps you connect with others. We anonymize all the information and do not share it with anyone else.</string>
     <string name="pref_options_vbr_title">Variable Bit Rate Encoding</string>
     <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use Constant Bitrate Encoding.</string>
     <string name="pref_options_alerts_category_title">Alerts</string>

@@ -18,7 +18,6 @@
 package com.waz.model.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccentColor, Availability, _}
@@ -85,11 +84,6 @@ object SyncRequest {
 
   case class SyncTeamMember(userId: UserId) extends BaseRequest(Cmd.SyncTeam) {
     override val mergeKey: Any = (cmd, userId)
-  }
-
-  case class PostAddressBook(addressBook: AddressBook) extends BaseRequest(Cmd.PostAddressBook) {
-    override def merge(req: SyncRequest) = mergeHelper[PostAddressBook](req)(Merged(_))
-    override def isDuplicateOf(req: SyncRequest): Boolean = req.cmd == Cmd.PostAddressBook
   }
 
   case class PostSelf(data: UserInfo) extends BaseRequest(Cmd.PostSelf) {
@@ -411,7 +405,6 @@ object SyncRequest {
           case Cmd.SyncConnections           => SyncConnections
           case Cmd.RegisterPushToken         => RegisterPushToken(decodeId[PushToken]('token))
           case Cmd.PostSelf                  => PostSelf(JsonDecoder[UserInfo]('user))
-          case Cmd.PostAddressBook           => PostAddressBook(JsonDecoder.opt[AddressBook]('addressBook).getOrElse(AddressBook.Empty))
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
           case Cmd.SyncClients               => SyncClients(userId)
@@ -535,7 +528,6 @@ object SyncRequest {
           o.put("user", userId)
           o.put("new_role", newRole)
           o.put("orig_role", origRole)
-        case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))
         case PostClientLabel(id, label) =>

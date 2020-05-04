@@ -81,8 +81,6 @@ case class UserDeleteEvent(user: UserId) extends UserEvent
 case class OtrClientAddEvent(client: Client) extends OtrClientEvent
 case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
 
-case class ContactJoinEvent(user: UserId, name: Name) extends Event
-
 case class PushTokenRemoveEvent(token: PushToken, senderId: String, client: Option[String]) extends Event
 
 sealed trait ConversationEvent extends RConvEvent {
@@ -219,8 +217,6 @@ object Event {
 
     def connectionEvent(implicit js: JSONObject, name: Option[Name]) = UserConnectionEvent('conversation, 'from, 'to, 'message, ConnectionStatus('status), JsonDecoder.decodeISORemoteInstant('last_update), fromUserName = name)
 
-    def contactJoinEvent(implicit js: JSONObject) = ContactJoinEvent('id, 'name)
-
     def gcmTokenRemoveEvent(implicit js: JSONObject) = PushTokenRemoveEvent(token = 'token, senderId = 'app, client = 'client)
 
     override def apply(implicit js: JSONObject): Event = Try {
@@ -231,7 +227,6 @@ object Event {
         case "user.update" => UserUpdateEvent(JsonDecoder[UserInfo]('user))
         case "user.identity-remove" => UserUpdateEvent(JsonDecoder[UserInfo]('user), true)
         case "user.connection" => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
-        case "user.contact-join" => contactJoinEvent(js.getJSONObject("user"))
         case "user.push-remove" => gcmTokenRemoveEvent(js.getJSONObject("token"))
         case "user.delete" => UserDeleteEvent(user = 'id)
         case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.client(js.getJSONObject("client")))

@@ -50,7 +50,6 @@ trait OptionsView {
   def setTextTone(string: String): Unit
   def setPingTone(string: String): Unit
   def setDownloadPictures(wifiOnly: Boolean): Unit
-  def setShareEnabled(enabled: Boolean): Unit
   def setAccountId(userId: UserId): Unit
 }
 
@@ -69,7 +68,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
 
   inflate(R.layout.preferences_options_layout)
 
-  val contactsSwitch          = findById[SwitchPreference](R.id.preferences_contacts)
   val vbrSwitch               = findById[SwitchPreference](R.id.preferences_vbr)
   val vibrationSwitch         = findById[SwitchPreference](R.id.preferences_vibration)
   val darkThemeSwitch         = findById[SwitchPreference](R.id.preferences_dark_theme)
@@ -95,7 +93,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
   private var soundLevel = IntensityLevel.NONE
   private var accountId = UserId()
 
-  contactsSwitch.setPreference(ShareContacts)
   darkThemeSwitch.setPreference(DarkTheme)
   downloadImagesSwitch.setPreference(DownloadImagesAlways)
   hideScreenContentSwitch.setPreference(HideScreenContent)
@@ -192,8 +189,6 @@ class OptionsViewImpl(context: Context, attrs: AttributeSet, style: Int) extends
     downloadImagesSwitch.setSubtitle(if (wifiOnly) names.head else names.last)
   }
 
-  override def setShareEnabled(enabled: Boolean) = contactsSwitch.setVisible(enabled)
-
   private def showPrefDialog(f: Fragment, tag: String) = {
     context.asInstanceOf[BaseActivity]
       .getSupportFragmentManager
@@ -273,7 +268,6 @@ class OptionsViewController(view: OptionsView)(implicit inj: Injector, ec: Event
     case (uri, _) => uri
   }.onUi(view.setPingTone)
 
-  team.onUi{ team => view.setShareEnabled(team.isEmpty) }
 
   zms.onUi(z => view.setAccountId(z.selfUserId))
 }
