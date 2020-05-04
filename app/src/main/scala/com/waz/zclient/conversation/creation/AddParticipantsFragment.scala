@@ -274,11 +274,11 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
       }
 
       val directoryTeamMembers = currentUser.map(_.teamId) match {
-        case Some(_)      => directoryResults.filter(_.teamId == teamId)
+        case Some(_)      => directoryResults.filter(u => u.teamId == teamId)
         case None         => Nil
       }
 
-      val userResults = (localResults ++ directoryTeamMembers).distinctBy(_.id)
+      val userResults = (localResults ++ directoryTeamMembers).distinctBy(_.id).filter(!_.isExternal(teamId))
       val integrationResults = res match {
         case Services(ss) => ss
         case _ => Seq.empty
