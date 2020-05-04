@@ -273,8 +273,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
 
       userSearchResult ! allUsers
 
-      if (remote.nonEmpty) sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
-      else Future.successful(())
+      if (remote.nonEmpty)
+        sync.syncSearchResults(remote.map(_.id).toSet).map(_ => ())
+      else
+        Future.successful(())
     }
   }
 
@@ -287,12 +289,10 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     exactMatchUser.mutate(_.map(userUpdate))
   }
 
-  override def updateExactMatch(info: UserInfo): Unit = {
-    verbose(l"updateExactMatch(${info.id})")
-    val userData = UserData(info)
-    exactMatchUser ! Some(userData)
-    sync.syncSearchResults(Set(userData.id))
-  }
+  override def updateExactMatch(info: UserInfo): Unit = 
+    usersStorage.get(info.id)
+      .collect { case None => UserData(info) }
+      .foreach(user => exactMatchUser ! Some(user))
 
   private def topPeople = {
     def messageCount(u: UserData) =
