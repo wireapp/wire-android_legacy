@@ -70,7 +70,6 @@ class SettingsAccountViewModel(
     val resetPasswordUrlLiveData: LiveData<String> = _resetPasswordUrlLiveData
     val logoutNavigationAction: MutableLiveData<String> = _logoutNavigationAction
 
-
     fun loadProfileDetails() {
         getActiveAccountUseCase(viewModelScope, Unit) {
             it.fold(::handleError, ::handleActiveAccountSuccess)
