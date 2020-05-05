@@ -117,10 +117,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
         query,
         searchLocal(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
       )
-      remoteResults     <- filterForExternal(
-        query,
-        directoryResults(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
-      )
+      remoteResults     <- directoryResults(query).map(_.filter(u => !(u.isGuest(teamId) && teamOnly)))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def usersToAddToConversation(query: SearchQuery, toConv: ConvId): Signal[SearchResults] =
@@ -128,7 +125,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       curr              <- membersStorage.activeMembers(toConv)
       conv              <- convsStorage.signal(toConv)
       localResults      <- filterForExternal(query, searchLocal(query, curr).map(_.filter(conv.isUserAllowed)))
-      remoteResults     <- filterForExternal(query, directoryResults(query).map(_.filter(conv.isUserAllowed)))
+      remoteResults     <- directoryResults(query).map(_.filter(conv.isUserAllowed))
     } yield SearchResults(local = localResults, dir = remoteResults)
 
   override def mentionsSearchUsersInConversation(convId: ConvId, filter: String, includeSelf: Boolean = false): Signal[IndexedSeq[UserData]] =
