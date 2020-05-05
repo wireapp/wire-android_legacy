@@ -56,6 +56,8 @@ object Versions {
     const val JUNIT = "4.12"
     const val MOCKITO = "3.1.0"
     const val KLUENT = "1.14"
+    const val ESPRESSO_CORE = "3.2.0"
+    const val ANDROIDX_TEST_RUNNER = "1.1.0"
     const val ANDROIDX_TEST_CORE = "2.1.0"
     const val ANDROIDX_TEST_JUNIT = "1.1.1"
     const val ROBOLECTRIC = "5.0.0_r2-robolectric-1"
@@ -151,6 +153,8 @@ object TestDependencies {
         "inline" to "org.mockito:mockito-inline:${Versions.MOCKITO}"
     ))
     val androidX = AndroidXTestDependencyMap(mapOf(
+        "espressoCore" to "androidx.test.espresso:espresso-core:${Versions.ESPRESSO_CORE}",
+        "testRunner" to "androidx.test:runner:${Versions.ANDROIDX_TEST_RUNNER}",
         "testCore" to "androidx.arch.core:core-testing:${Versions.ANDROIDX_TEST_CORE}",
         "testJunit" to "androidx.test.ext:junit:${Versions.ANDROIDX_TEST_JUNIT}",
         "testRules" to "androidx.test:rules:${Versions.ANDROIDX_TEST_JUNIT}",

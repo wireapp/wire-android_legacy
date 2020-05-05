@@ -34,5 +34,4 @@ abstract class UnitTest {
 
     @get:Rule
     val rule = InstantTaskExecutorRule()
-
 }

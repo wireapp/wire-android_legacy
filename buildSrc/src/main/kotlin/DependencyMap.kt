@@ -83,6 +83,8 @@ class RxJavaDependencyMap(map: Map<String, String>) {
 }
 
 class AndroidXTestDependencyMap(map: Map<String, String>) {
+    val espressoCore: String by map
+    val testRunner: String by map
     val testCore: String by map
     val testJunit: String by map
     val testRules: String by map
