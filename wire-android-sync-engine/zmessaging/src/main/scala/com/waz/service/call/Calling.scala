@@ -167,6 +167,17 @@ object Calling {
     def onParticipantChanged(convId: String, data: String, arg: Pointer): Unit
   }
 
+  trait NetworkQualityChangedHandler extends Callback {
+    def onNetworkQualityChanged(convId: String,
+                                userId: String,
+                                clientId: String,
+                                quality: Int,
+                                roundTripTimeInMilliseconds: Int,
+                                upstreamPacketLossPercentage: Int,
+                                downstreamPacketLossPercentage: Int,
+                                arg: Pointer): Unit
+  }
+
   trait MetricsHandler extends Callback {
     def onMetricsReady(convId: String, metricsJson: String, arg: Pointer): Unit
   }
