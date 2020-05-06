@@ -109,17 +109,17 @@ object Calling {
 
   /* Send calling message otr data */
   trait SendHandler extends Callback {
-    def onSend(ctx: Pointer, convId: String, userid_self: String, clientid_self: String, userid_dest: String, clientid_dest: String, data: Pointer, len: Size_t, transient: Boolean, arg: Pointer): Int
+    def onSend(ctx: Pointer, convId: String, userIdSelf: String, clientIdSelf: String, userIdDest: String, clientIdDest: String, data: Pointer, len: Size_t, isTransient: Boolean, arg: Pointer): Int
   }
 
   /* Incoming call */
   trait IncomingCallHandler extends Callback {
-    def onIncomingCall(convid: String, msg_time: Uint32_t, userid: String, video_call: Boolean, should_ring: Boolean, arg: Pointer): Unit
+    def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, shouldRing: Boolean, arg: Pointer): Unit
   }
 
   /* Missed call */
   trait MissedCallHandler extends Callback {
-    def onMissedCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, arg: Pointer): Unit
+    def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit
   }
 
   trait AnsweredCallHandler extends Callback {
@@ -139,7 +139,7 @@ object Calling {
   }
 
   trait CbrStateChangeHandler extends Callback {
-    def onBitRateStateChanged(userId: String, clientId: String, enabled: Boolean, arg: Pointer): Unit
+    def onBitRateStateChanged(userId: String, clientId: String, isEnabled: Boolean, arg: Pointer): Unit
   }
 
   trait CallStateChangeHandler extends Callback {

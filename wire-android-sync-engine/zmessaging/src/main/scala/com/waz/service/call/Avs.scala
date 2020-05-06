@@ -102,18 +102,18 @@ class AvsImpl() extends Avs with DerivedLogTag {
         }
       },
       new SendHandler {
-        override def onSend(ctx: Pointer, convId: String, userid_self: String, clientid_self: String, userid_dest: String, clientid_dest: String, data: Pointer, len: Size_t, transient: Boolean, arg: Pointer) = {
-          cs.onSend(ctx, RConvId(convId), UserId(userid_dest), ClientId(clientid_dest), data.getString(0, "UTF-8"))
+        override def onSend(ctx: Pointer, convId: String, userIdSelf: String, clientIdSelf: String, userIdDest: String, clientIdDest: String, data: Pointer, len: Size_t, isTransient: Boolean, arg: Pointer) = {
+          cs.onSend(ctx, RConvId(convId), UserId(userIdDest), ClientId(clientIdDest), data.getString(0, "UTF-8"))
           0
         }
       },
       new IncomingCallHandler {
-        override def onIncomingCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, should_ring: Boolean, arg: Pointer) =
-          cs.onIncomingCall(RConvId(convId), UserId(userId), video_call, should_ring)
+        override def onIncomingCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, shouldRing: Boolean, arg: Pointer) =
+          cs.onIncomingCall(RConvId(convId), UserId(userId), isVideoCall, shouldRing)
       },
       new MissedCallHandler {
-        override def onMissedCall(convId: String, msg_time: Uint32_t, userId: String, video_call: Boolean, arg: Pointer): Unit =
-          cs.onMissedCall(RConvId(convId), remoteInstant(msg_time), UserId(userId), video_call)
+        override def onMissedCall(convId: String, msgTime: Uint32_t, userId: String, isVideoCall: Boolean, arg: Pointer): Unit =
+          cs.onMissedCall(RConvId(convId), remoteInstant(msgTime), UserId(userId), isVideoCall)
       },
       new AnsweredCallHandler {
         override def onAnsweredCall(convId: String, arg: Pointer) = cs.onOtherSideAnsweredCall(RConvId(convId))
@@ -135,8 +135,8 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onConfigRequest(inst)
       },
       new CbrStateChangeHandler {
-        override def onBitRateStateChanged(userId: String, clientId: String, enabled: Boolean, arg: Pointer): Unit =
-          cs.onBitRateStateChanged(enabled)
+        override def onBitRateStateChanged(userId: String, clientId: String, isEnabled: Boolean, arg: Pointer): Unit =
+          cs.onBitRateStateChanged(isEnabled)
       },
       new VideoReceiveStateHandler {
         override def onVideoReceiveStateChanged(convId: String, userId: String, clientId: String, state: Int, arg: Pointer): Unit =
