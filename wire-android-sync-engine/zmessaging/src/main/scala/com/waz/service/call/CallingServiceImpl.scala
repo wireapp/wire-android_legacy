@@ -35,7 +35,7 @@ import com.waz.service.ZMessaging.clock
 import com.waz.service._
 import com.waz.service.call.Avs.AvsClosedReason.{StillOngoing, reasonString}
 import com.waz.service.call.Avs.VideoState._
-import com.waz.service.call.Avs.{AvsClosedReason, VideoState, WCall}
+import com.waz.service.call.Avs.{AvsClosedReason, NetworkQuality, VideoState, WCall}
 import com.waz.service.call.CallInfo.{CallState, Participant}
 import com.waz.service.call.CallInfo.CallState._
 import com.waz.service.call.CallingService.GlobalCallProfile
@@ -384,6 +384,10 @@ class CallingServiceImpl(val accountId:       UserId,
       case _ => Future.successful({})
     }
   }
+
+  // TODO: Implement
+  def onNetworkQualityChanged(convId: ConvId, participant: Participant, quality: NetworkQuality): Future[Unit] =
+    Future.successful(())
 
   override def startCall(convId: ConvId, isVideo: Boolean = false, forceOption: Boolean = false) =
     Serialized.future(self) {

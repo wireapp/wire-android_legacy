@@ -99,6 +99,8 @@ object Calling {
 
   @native def wcall_set_proxy(host: String, port: Int): Int
 
+  @native def wcall_set_network_quality_handler(inst: Handle, wcall_network_quality_h: NetworkQualityChangedHandler, intervalInSeconds: Int, arg: Pointer): Int
+
   /* This will be called when the calling system is ready for calling.
      * The version parameter specifies the config obtained version to use
      * for calling.

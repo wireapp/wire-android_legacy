@@ -156,6 +156,23 @@ class AvsImpl() extends Avs with DerivedLogTag {
       }
 
       Calling.wcall_set_participant_changed_handler(wCall, participantChangedHandler, arg = null)
+
+      val networkQualityHandler = new NetworkQualityChangedHandler {
+        override def onNetworkQualityChanged(convId: String,
+                                             userId: String,
+                                             clientId: String,
+                                             quality: Int,
+                                             roundTripTimeInMilliseconds: Int,
+                                             upstreamPacketLossPercentage: Int,
+                                             downstreamPacketLossPercentage: Int,
+                                             arg: Pointer): Unit = {
+          val participant = Participant(UserId(userId), ClientId(clientId))
+          cs.onNetworkQualityChanged(ConvId(convId), participant, NetworkQuality(quality))
+        }
+      }
+
+      Calling.wcall_set_network_quality_handler(wCall, networkQualityHandler, intervalInSeconds = 5, arg = null)
+
       wCall
     }
   }
