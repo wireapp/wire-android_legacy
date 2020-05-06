@@ -93,10 +93,6 @@ class PreferencesActivity extends BaseActivity
       backStackNavigator.onRestore(findViewById(R.id.content).asInstanceOf[ViewGroup], savedInstanceState)
     }
 
-    accentColor.on(Threading.Ui) { color =>
-      getControllerFactory.getUserPreferencesController.setLastAccentColor(color.color)
-    }
-
     accountTabs.onTabClick.onUi { account =>
       val intent = new Intent()
       intent.putExtra(SwitchAccountExtra, account.id.str)
