@@ -116,10 +116,6 @@ class MainActivity extends BaseActivity
       fragmentTransaction.commit
     } else getControllerFactory.getNavigationController.onActivityCreated(savedInstanceState)
 
-    accentColorController.accentColor.map(_.color).onUi(
-      getControllerFactory.getUserPreferencesController.setLastAccentColor
-    )
-
     handleIntent(getIntent)
 
     val currentlyDarkTheme = themeController.darkThemeSet.currentValue.contains(true)
