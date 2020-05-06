@@ -96,7 +96,6 @@ object ViewHelper {
   def findById[V <: View](parent: View)(id: Int): V =
     parent.findViewById[V](id)
 
-  @SuppressLint(Array("LogNotTimber"))
   def inflate[T <: View](layoutResId: Int, group: ViewGroup, addToParent: Boolean)(implicit logTag: LogTag) =
     try LayoutInflater.from(group.getContext).inflate(layoutResId, group, addToParent).asInstanceOf[T]
     catch {
@@ -132,7 +131,7 @@ trait ServiceHelper extends Service with Injectable with WireContext with EventC
 
 trait FragmentHelper
   extends Fragment
-    with OnBackPressedListener 
+    with OnBackPressedListener
     with ViewFinder
     with EventContext
     with Injectable
