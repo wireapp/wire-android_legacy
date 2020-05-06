@@ -274,6 +274,16 @@ object Avs extends DerivedLogTag {
   }
 
   /**
+    * WCALL_AUDIO_STATE_CONNECTING       0
+    * WCALL_AUDIO_STATE_ESTABLISHED      1
+    * WCALL_AUDIO_STATE_NETWORK_PROBLEM  2
+    */
+  type AudioState = AudioState.Value
+  object AudioState extends Enumeration {
+    val Connecting, Established, NetworkProblem = Value
+  }
+
+  /**
     *   WCALL_VIDEO_STATE_STOPPED           0
     *   WCALL_VIDEO_STATE_STARTED           1
     *   WCALL_VIDEO_STATE_BAD_CONN          2
