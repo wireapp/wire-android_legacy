@@ -282,6 +282,7 @@ object CallSessionId extends (String => CallSessionId) {
   }
 }
 
+// TODO: Remove together with Contact
 case class ContactId(str: String) {
   override def toString: String = str
 }

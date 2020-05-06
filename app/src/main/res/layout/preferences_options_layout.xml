@@ -35,14 +35,6 @@
             android:orientation="vertical"
             >
 
-            <com.waz.zclient.preferences.views.SwitchPreference
-                android:id="@+id/preferences_contacts"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:title="@string/pref_options_contacts_title"
-                app:subtitle="@string/pref_options_contacts_summary"
-                />
-
             <com.waz.zclient.ui.text.TypefaceTextView
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/preference_button_height"

@@ -27,11 +27,9 @@ import com.waz.model.PhoneNumber
 import com.waz.threading.SerialDispatchQueue
 
 import scala.concurrent.Future
-import scala.util.Try
 
 trait PhoneNumberService {
   def defaultRegion: String
-  def myPhoneNumber: Future[Option[PhoneNumber]]
   def normalize(phone: PhoneNumber): Future[Option[PhoneNumber]]
   def normalizeNotThreadSafe(phone: PhoneNumber, util: PhoneNumberUtil): Option[PhoneNumber]
 }
@@ -48,12 +46,6 @@ class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService with D
 
   def getLocale(context: Context): Option[String] =
     Option(context.getResources.getConfiguration.locale.getCountry)
-
-  def myPhoneNumber: Future[Option[PhoneNumber]] =
-    Try(telephonyManager.getLine1Number).toOption.flatMap(Option(_)).filter(_.nonEmpty).map(PhoneNumber).map(normalize) match {
-      case None => Future(None)
-      case Some(f) => f
-    }
 
   def normalize(phone: PhoneNumber): Future[Option[PhoneNumber]] = Future(normalizeNotThreadSafe(phone, phoneNumberUtil))
 
@@ -72,5 +64,4 @@ class PhoneNumberServiceImpl(context: Context) extends PhoneNumberService with D
           None
       }
   }
-
 }

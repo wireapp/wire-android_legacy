@@ -37,4 +37,10 @@ object MigrationUtils {
             }
         }
     }
+
+    fun deleteTable(database: SupportSQLiteDatabase, tableName: String) {
+        with(database) {
+            execSQL("DROP TABLE IF EXISTS $tableName")
+        }
+    }
 }

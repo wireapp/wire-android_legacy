@@ -26,6 +26,9 @@ import org.json.JSONObject
 
 import scala.collection.{GenSeq, GenSet, breakOut}
 
+
+// TODO: Left for migrations compatibility. Can be deleted after all devices are migrated
+// and we delete the history of old migrations
 case class AddressBook(self: Seq[String], contacts: GenSeq[AddressBook.ContactHashes]) {
 
   def -(other: AddressBook): AddressBook = {

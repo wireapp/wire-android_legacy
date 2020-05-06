@@ -22,7 +22,6 @@ public interface NotificationsHandler {
     enum NotificationType {
         CONNECT_REQUEST,
         CONNECT_ACCEPTED,
-        CONTACT_JOIN,
         IMAGE_ASSET,
         ANY_ASSET,
         VIDEO_ASSET,

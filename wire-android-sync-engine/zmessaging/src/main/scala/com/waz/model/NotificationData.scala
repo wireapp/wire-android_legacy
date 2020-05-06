@@ -97,7 +97,6 @@ object NotificationData {
   implicit lazy val NotificationCodec: EnumCodec[NotificationType, String] = EnumCodec.injective {
     case NotificationType.CONNECT_REQUEST        => "ConnectRequest"
     case NotificationType.CONNECT_ACCEPTED       => "ConnectAccepted"
-    case NotificationType.CONTACT_JOIN           => "ContactJoin"
     case NotificationType.IMAGE_ASSET            => "Asset"
     case NotificationType.ANY_ASSET              => "AnyAsset"
     case NotificationType.VIDEO_ASSET            => "VideoAsset"
