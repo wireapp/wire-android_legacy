@@ -119,12 +119,12 @@ class AvsImpl() extends Avs with DerivedLogTag {
         override def onAnsweredCall(convId: String, arg: Pointer) = cs.onOtherSideAnsweredCall(RConvId(convId))
       },
       new EstablishedCallHandler {
-        override def onEstablishedCall(convId: String, userId: String, arg: Pointer) =
+        override def onEstablishedCall(convId: String, userId: String, clientId: String, arg: Pointer) =
           cs.onEstablishedCall(RConvId(convId), UserId(userId))
       },
       new CloseCallHandler {
-        override def onClosedCall(reasonCode: Int, convId: String, msg_time: Uint32_t, userId: String, arg: Pointer) =
-          cs.onClosedCall(reasonCode, RConvId(convId), remoteInstant(msg_time), UserId(userId))
+        override def onClosedCall(reasonCode: Int, convId: String, msgTime: Uint32_t, userId: String, clientId: String, arg: Pointer) =
+          cs.onClosedCall(reasonCode, RConvId(convId), remoteInstant(msgTime), UserId(userId))
       },
       new MetricsHandler {
         override def onMetricsReady(convId: String, metricsJson: String, arg: Pointer) =
@@ -135,7 +135,7 @@ class AvsImpl() extends Avs with DerivedLogTag {
           cs.onConfigRequest(inst)
       },
       new CbrStateChangeHandler {
-        override def onBitRateStateChanged(userId: String, enabled: Boolean, arg: Pointer): Unit =
+        override def onBitRateStateChanged(userId: String, clientId: String, enabled: Boolean, arg: Pointer): Unit =
           cs.onBitRateStateChanged(enabled)
       },
       new VideoReceiveStateHandler {

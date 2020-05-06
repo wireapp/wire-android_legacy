@@ -131,15 +131,15 @@ object Calling {
 
   /* Call established (with media) */
   trait EstablishedCallHandler extends Callback {
-    def onEstablishedCall(convId: String, userId: String, arg: Pointer): Unit
+    def onEstablishedCall(convId: String, userId: String, clientId: String, arg: Pointer): Unit
   }
 
   trait CloseCallHandler extends Callback {
-    def onClosedCall(reason: Int, convid: String, msg_time: Uint32_t, userid: String, arg: Pointer): Unit
+    def onClosedCall(reason: Int, convId: String, msgTime: Uint32_t, userId: String, clientId: String, arg: Pointer): Unit
   }
 
   trait CbrStateChangeHandler extends Callback {
-    def onBitRateStateChanged(userId: String, enabled: Boolean, arg: Pointer): Unit
+    def onBitRateStateChanged(userId: String, clientId: String, enabled: Boolean, arg: Pointer): Unit
   }
 
   trait CallStateChangeHandler extends Callback {
