@@ -298,6 +298,17 @@ object Avs extends DerivedLogTag {
   }
 
   /**
+    * WCALL_QUALITY_NORMAL          1
+    * WCALL_QUALITY_MEDIUM          2
+    * WCALL_QUALITY_POOR            3
+    * WCALL_QUALITY_NETWORK_PROBLEM 4
+    */
+  type NetworkQuality = NetworkQuality.Value
+  object NetworkQuality extends Enumeration(1) {
+    val Normal, Medium, Poor, Problem = Value
+  }
+
+  /**
     * WCALL_LOG_LEVEL_DEBUG 0
     * WCALL_LOG_LEVEL_INFO  1
     * WCALL_LOG_LEVEL_WARN  2
