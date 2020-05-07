@@ -1,5 +1,6 @@
 package com.waz.zclient.feature.settings.account
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -119,17 +120,27 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
     }
 
     private fun initLogout() {
+        observeLogoutNavigation()
         observeLogoutData()
         initLogoutButtonListener()
+    }
+
+    private fun observeLogoutNavigation() {
+        settingsAccountViewModel.logoutNavigationAction.observe(viewLifecycleOwner) {
+            startActivity(Intent()
+                .setAction(it)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
     }
 
     private fun observeLogoutData() {
         with(logoutViewModel) {
             successLiveData.observe(viewLifecycleOwner) {
-                Toast.makeText(requireContext(), "Logged out", LENGTH_LONG).show()
+                settingsAccountViewModel.onUserLoggedOut(it)
             }
             errorLiveData.observe(viewLifecycleOwner) {
-                Toast.makeText(requireContext(), "Failed with $it", LENGTH_LONG).show()
+                settingsAccountViewModel.onUserLogoutError(it)
             }
         }
     }

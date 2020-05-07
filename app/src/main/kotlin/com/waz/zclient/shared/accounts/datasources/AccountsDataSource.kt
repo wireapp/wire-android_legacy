@@ -20,11 +20,16 @@ class AccountsDataSource(
     override suspend fun activeAccounts() = accountsLocalDataSource.activeAccounts()
         .map { entityList -> entityList.map { accountMapper.from(it) } }
 
+    override suspend fun activeAccountById(accountId: String): Either<Failure, ActiveAccount?> =
+        accountsLocalDataSource.activeAccountById(accountId).map { entity ->
+            entity?.let { accountMapper.from(it) }
+        }
+
     override suspend fun logout(refreshToken: String, accessToken: String): Either<Failure, Unit> =
         accountsRemoteDataSource.logout(refreshToken, accessToken)
 
-    override suspend fun deleteAccountFromDevice(account: ActiveAccount) =
-        accountsLocalDataSource.removeAccount(accountMapper.toEntity(account))
+    override suspend fun deleteAccountFromDevice(accountId: String): Either<Failure, Unit> =
+        accountsLocalDataSource.removeAccount(accountId)
 
     override suspend fun deleteAccountPermanently(): Either<Failure, Unit> =
         usersRemoteDataSource.deleteAccountPermanently()

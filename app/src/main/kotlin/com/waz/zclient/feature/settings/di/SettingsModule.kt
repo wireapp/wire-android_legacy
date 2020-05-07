@@ -100,6 +100,6 @@ val settingsAccountModule: Module = module {
         factory { ChangeEmailUseCase(get()) }
         factory { DeleteAccountUseCase(get()) }
 
-        factory { LogoutUseCase(get(), get()) }
+        factory { LogoutUseCase(get(), get(), get()) }
     }
 }

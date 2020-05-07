@@ -26,14 +26,16 @@ class AccessTokenConverter {
     }
 
     @TypeConverter
-    fun accessTokenToString(entity: AccessTokenEntity): String =
-        """
+    fun accessTokenToString(entity: AccessTokenEntity?): String? =
+        entity?.let {
+            """
             {
-                "$KEY_TOKEN": "${entity.token}",
-                "$KEY_TOKEN_TYPE": "${entity.tokenType}",
-                "$KEY_EXPIRY": ${entity.expiresInMillis}
+                "$KEY_TOKEN": "${it.token}",
+                "$KEY_TOKEN_TYPE": "${it.tokenType}",
+                "$KEY_EXPIRY": ${it.expiresInMillis}
             }
         """.trimIndent()
+        }
 
     companion object {
         private const val KEY_TOKEN = "token"
