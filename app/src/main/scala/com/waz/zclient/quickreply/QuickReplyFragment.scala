@@ -24,7 +24,7 @@ import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
-import com.waz.model.{ConvId, UserId}
+import com.waz.model.{ConvId, Name, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
 import com.waz.service.{AccountsService, ZMessaging}
@@ -76,10 +76,17 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
 
   lazy val adapter = new QuickReplyContentAdapter(getContext, accountId, convId)
 
-  lazy val conv = for {
-    zs <- zms
+  private lazy val conv = for {
+    zs   <- zms
     conv <- zs.convsStorage.signal(convId)
   } yield conv
+
+  private lazy val convName = for {
+    zs   <- zms
+    name <- zs.conversations.conversationName(convId)
+  } yield
+    if (name.isEmpty) Name(getString(R.string.default_deleted_username))
+    else name
 
   val firstVisibleItemPosition = Signal(0)
 
@@ -159,7 +166,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
     }
 
     subscriptions = Seq(
-      conv.map(_.displayName).onUi(name.setText(_)),
+      convName.onUi(name.setText(_)),
       accentColor.map(_.color).onUi(message.setAccentColor),
       counterStr.onUi { case (visible, str) =>
         counter.setVisible(visible)

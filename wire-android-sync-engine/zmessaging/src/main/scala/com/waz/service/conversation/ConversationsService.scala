@@ -17,7 +17,6 @@
  */
 package com.waz.service.conversation
 
-import com.softwaremill.macwire._
 import com.waz.api.ErrorType
 import com.waz.api.IConversation.Access
 import com.waz.api.impl.ErrorResponse
@@ -48,11 +47,11 @@ trait ConversationsService {
   def convStateEventProcessingStage: EventScheduler.Stage
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0): Future[Any]
   def activeMembersData(conv: ConvId): Signal[Seq[ConversationMemberData]]
+  def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]]
   def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit]
   def updateRemoteId(id: ConvId, remoteId: RConvId): Future[Unit]
   def setConversationArchived(id: ConvId, archived: Boolean): Future[Option[ConversationData]]
   def setReceiptMode(id: ConvId, receiptMode: Int): Future[Option[ConversationData]]
-  def forceNameUpdate(id: ConvId, defaultName: String): Future[Option[(ConversationData, ConversationData)]]
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], error: Option[ErrorType], resp: ErrorResponse): Future[Unit]
   def onUpdateRoleFailed(conv: ConvId, user: UserId, newRole: ConversationRole, origRole: ConversationRole, resp: ErrorResponse): Future[Unit]
   def groupConversation(convId: ConvId): Signal[Boolean]
@@ -72,6 +71,7 @@ trait ConversationsService {
   def setConversationRole(id: ConvId, userId: UserId, role: ConversationRole): Future[Unit]
 
   def deleteConversation(rConvId: RConvId): Future[Unit]
+  def conversationName(convId: ConvId): Signal[Name]
 }
 
 class ConversationsServiceImpl(teamId:          Option[TeamId],
@@ -101,9 +101,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
 
   private implicit val ev = EventContext.Global
   import Threading.Implicits.Background
-
-  private val nameUpdater = wire[NameUpdater]
-  nameUpdater.registerForUpdates()
 
   //On conversation changed, update the state of the access roles as part of migration, then check for a link if necessary
   selectedConv.selectedConversationId {
@@ -158,7 +155,14 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
   def processConversationEvent(ev: ConversationStateEvent, selfUserId: UserId, retryCount: Int = 0) = ev match {
     case CreateConversationEvent(_, time, from, data) =>
       updateConversation(data).flatMap { case (_, created) => Future.traverse(created) { created =>
-        messages.addConversationStartMessage(created.id, from, (data.members.keySet + selfUserId).filter(_ != from), created.name, readReceiptsAllowed = created.readReceiptsAllowed, time = Some(time))
+        messages.addConversationStartMessage(
+          created.id,
+          from,
+          (data.members.keySet + selfUserId).filter(_ != from),
+          created.name,
+          readReceiptsAllowed = created.readReceiptsAllowed,
+          time = Some(time)
+        )
       }}
 
     case ConversationEvent(rConvId, _, _) =>
@@ -277,6 +281,9 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       }
     )
   }
+
+  override def convMembers(convId: ConvId): Signal[Map[UserId, ConversationRole]] =
+    activeMembersData(convId).map(_.map(m => m.userId -> ConversationRole.getRole(m.role)).toMap)
 
   override def updateConversationsWithDeviceStartMessage(conversations: Seq[ConversationResponse], roles: Map[RConvId, Set[ConversationRole]]): Future[Unit] =
     for {
@@ -418,6 +425,29 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     }
   }
 
+  // NOTE: This could be simpler if we didn't cae about backward compatibility
+  override def conversationName(convId: ConvId): Signal[Name] =
+    convsStorage.optSignal(convId).flatMap {
+      case None =>
+        Signal.const(Name.Empty)
+      case Some(conv) if conv.name.isDefined && !ConversationType.isOneToOne(conv.convType) =>
+        // some old 1:1 convs have names defined but they should use the other user's name
+        Signal.const(conv.name.get)
+      case Some(conv) if ConversationType.isOneToOne(conv.convType) =>
+        users.userNames.map(_.getOrElse(UserId(conv.id.str), Name.Empty))
+      case Some(conv) =>
+        for {
+          members   <- activeMembersData(conv.id)
+          memberIds =  members.filterNot(_.userId == selfUserId).take(4).map(_.userId).toSet
+          userNames <- users.userNames.map(_.filterKeys(memberIds.contains).values)
+        } yield
+          if (userNames.isEmpty) Name.Empty
+          else if (userNames.size == 1) userNames.head
+          // This is for backward compatibility: all new real group conversations should have their names set.
+          // For those who don't, we create the name from first four members' names.
+          else Name(userNames.map(_.str).mkString(", "))
+    }
+
   private def deleteConversation(convData: ConversationData): Future[Unit] = (for {
       convMessageIds <- messages.findMessageIds(convData.id)
       convId         =  convData.id
@@ -442,11 +472,6 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       else Future.successful(())
     }
 
-  def forceNameUpdate(id: ConvId, defaultName: String) = {
-    warn(l"forceNameUpdate($id)")
-    nameUpdater.forceNameUpdate(id, defaultName)
-  }
-
   def onMemberAddFailed(conv: ConvId, users: Set[UserId], err: Option[ErrorType], resp: ErrorResponse) =
     for {
       _ <- err.fold(Future.successful(()))(e => errors.addErrorWhenActive(ErrorData(e, resp, conv, users)).map(_ => ()))
@@ -462,15 +487,21 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
       _ =  error(l"Failed to change the conversation role from $origRole to $newRole in the conversation $conv for the user $user")
     } yield ()
 
-  def groupConversation(convId: ConvId) =
-    convsStorage.optSignal(convId).map(_.map(c => (c.convType, c.name, c.team))).flatMap {
-      case None => Signal.const(true) // the conversation might have been deleted - only group conversations can be deleted
-      case Some((convType, _, _)) if convType != ConversationType.Group => Signal.const(false)
-      case Some((_, Some(_), _)) | Some((_, _, None)) => Signal.const(true)
-      case Some(_) => membersStorage.activeMembers(convId).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
+  override def groupConversation(convId: ConvId): Signal[Boolean] =
+    convsStorage.optSignal(convId).flatMap {
+    case None       => Signal.const(true) // the conversation might have been deleted - only group conversations can be deleted
+    case Some(conv) => groupConversation(conv)
+  }
+
+  private def groupConversation(conv: ConversationData) =
+    (conv.convType, conv.name, conv.team) match {
+      case (convType, _, _) if convType != ConversationType.Group => Signal.const(false)
+      case (_, Some(_), _) | (_, _, None)                         => Signal.const(true)
+      case _ =>
+        membersStorage.activeMembers(conv.id).map(ms => !(ms.contains(selfUserId) && ms.size <= 2))
     }
 
-  def isGroupConversation(convId: ConvId) = groupConversation(convId).head
+  override def isGroupConversation(convId: ConvId): Future[Boolean] = groupConversation(convId).head
 
   def isWithService(convId: ConvId) =
     membersStorage.getActiveUsers(convId)

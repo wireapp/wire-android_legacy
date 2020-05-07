@@ -260,7 +260,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       case (results, Some(ex)) => (results.toSet ++ Set(ex)).toIndexedSeq
     }
 
-  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] = {
+  override def updateSearchResults(query: SearchQuery, results: UserSearchResponse): Future[Unit] =
     usersStorage.contents.head.flatMap { usersInStorage =>
       val (local, remote) = unapply(results).partition { u =>
         // a bit hacky way to check if all steps of fetching data were already performed for that user
@@ -281,7 +281,6 @@ class UserSearchServiceImpl(selfUserId:           UserId,
       else
         Future.successful(())
     }
-  }
 
   override def updateSearchResults(remoteUsers: Map[UserId, (UserInfo, Option[TeamMember])]): Unit = {
     val userUpdate = (user: UserData) => remoteUsers.get(user.id).fold(user) {
@@ -292,7 +291,7 @@ class UserSearchServiceImpl(selfUserId:           UserId,
     exactMatchUser.mutate(_.map(userUpdate))
   }
 
-  override def updateExactMatch(info: UserInfo): Unit = 
+  override def updateExactMatch(info: UserInfo): Unit =
     usersStorage.get(info.id)
       .collect { case None => UserData(info) }
       .foreach(user => exactMatchUser ! Some(user))

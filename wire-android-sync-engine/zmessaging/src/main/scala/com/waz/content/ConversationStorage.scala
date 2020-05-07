@@ -109,7 +109,7 @@ class ConversationStorageImpl(storage: ZmsDatabase)
     } yield result
 
   override def findGroupConversations(prefix: SearchKey, self: UserId, limit: Int, handleOnly: Boolean): Future[Seq[ConversationData]] =
-    storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.displayName.str)(currentLocaleOrdering).take(limit))
+    storage(ConversationDataDao.search(prefix, self, handleOnly, None)(_)).map(_.sortBy(_.name.fold("")(_.str))(currentLocaleOrdering).take(limit))
 
   private def findByRemoteId(remoteId: RConvId) = find(c => c.remoteId == remoteId, ConversationDataDao.findByRemoteId(remoteId)(_), identity)
   private def findByRemoteIds(remoteIds: Set[RConvId]) = find(c => remoteIds.contains(c.remoteId), ConversationDataDao.findByRemoteIds(remoteIds)(_), identity)

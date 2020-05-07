@@ -41,12 +41,13 @@ class ConversationFolderListAdapter(implicit context: Context, eventContext: Eve
 
   private var folders = Seq.empty[Folder]
 
-  def setData(incoming: Seq[ConvId],
-              favorites: Seq[ConversationData],
-              groups: Seq[ConversationData],
-              oneToOnes: Seq[ConversationData],
-              custom: Seq[(FolderData, Seq[ConversationData])],
-              folderStates: Map[FolderId, Boolean]): Unit = {
+  def setData(incoming:     Seq[ConvId],
+              favorites:    Seq[(ConversationData, Name)],
+              groups:       Seq[(ConversationData, Name)],
+              oneToOnes:    Seq[(ConversationData, Name)],
+              custom:       Seq[(FolderData, Seq[(ConversationData, Name)])],
+              folderStates: Map[FolderId, Boolean]
+             ): Unit = {
 
     var newItems = List.empty[Item]
 
@@ -55,10 +56,10 @@ class ConversationFolderListAdapter(implicit context: Context, eventContext: Eve
     }
 
     val countMap = Map(
-      FavoritesId -> favorites.count(_.hasUnreadMessages),
-      GroupId     -> groups.count(_.hasUnreadMessages),
-      OneToOnesId -> oneToOnes.count(_.hasUnreadMessages)
-    ) ++ custom.map { case (folder, convs) => folder.id -> convs.count(_.hasUnreadMessages) }.toMap
+      FavoritesId -> favorites.count(_._1.hasUnreadMessages),
+      GroupId     -> groups.count(_._1.hasUnreadMessages),
+      OneToOnesId -> oneToOnes.count(_._1.hasUnreadMessages)
+    ) ++ custom.map { case (folder, convs) => folder.id -> convs.count(_._1.hasUnreadMessages) }.toMap
 
     folders = calculateDefaultFolders(favorites, groups, oneToOnes) ++ calculateCustomFolders(custom)
 
@@ -73,16 +74,17 @@ class ConversationFolderListAdapter(implicit context: Context, eventContext: Eve
     updateList(newItems)
   }
 
-  private def calculateDefaultFolders(favorites: Seq[ConversationData], groups: Seq[ConversationData], oneToOnes: Seq[ConversationData]): Seq[Folder] = {
+  private def calculateDefaultFolders(favorites: Seq[(ConversationData, Name)], groups: Seq[(ConversationData, Name)], oneToOnes: Seq[(ConversationData, Name)]): Seq[Folder] = {
     val favoritesFolder = Folder(FavoritesId, getString(R.string.conversation_folder_name_favorites), favorites)
     val groupsFolder = Folder(GroupId, getString(R.string.conversation_folder_name_group), groups)
     val oneToOnesFolder = Folder(OneToOnesId, getString(R.string.conversation_folder_name_one_to_one), oneToOnes)
     Seq(favoritesFolder, groupsFolder, oneToOnesFolder).flatten
   }
 
-  private def calculateCustomFolders(custom: Seq[(FolderData, Seq[ConversationData])]): Seq[Folder] =
-    custom.flatMap { case (folderData, conversations) => Folder(folderData, conversations) }
-          .sortBy(_.title.toLowerCase(Locale.getDefault))
+  private def calculateCustomFolders(custom: Seq[(FolderData, Seq[(ConversationData, Name)])]): Seq[Folder] =
+    custom.flatMap {
+      case (folderData, conversations) => Folder(folderData, conversations)
+    }.sortBy(_.title.toLowerCase(Locale.getDefault))
 
   override def onClick(position: Int): Unit = items(position) match {
     case header: Item.Header => collapseOrExpand(header, position)
@@ -135,13 +137,11 @@ object ConversationFolderListAdapter {
     val GroupId = FolderId("Groups")
     val OneToOnesId = FolderId("OneToOnes")
 
-    def apply(folderData: FolderData, conversations: Seq[ConversationData]): Option[Folder] = {
-      Folder(folderData.id, folderData.name, conversations)
-    }
+    def apply(folderData: FolderData, conversations: Seq[(ConversationData, Name)]): Option[Folder] =
+      Some(Folder(folderData.id, folderData.name, conversations.map(d => Item.Conversation(d._1, d._2)).toSeq))
 
-    def apply(id: FolderId, title: String, conversations: Seq[ConversationData]): Option[Folder] = {
+    def apply(id: FolderId, title: String, conversations: Seq[(ConversationData, Name)]): Option[Folder] =
       if (conversations.isEmpty) None
-      else Some(Folder(id, title, conversations.map(d => Item.Conversation(d, sectionTitle = Some(title)))))
-    }
+      else Some(Folder(id, title, conversations.map(d => Item.Conversation(d._1, d._2, sectionTitle = Some(title))).toSeq))
   }
 }

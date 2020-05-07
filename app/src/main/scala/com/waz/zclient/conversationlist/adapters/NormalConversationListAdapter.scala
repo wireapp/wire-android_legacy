@@ -18,21 +18,21 @@
 package com.waz.zclient.conversationlist.adapters
 
 import android.content.Context
-import com.waz.model.{ConvId, ConversationData}
+import com.waz.model.{ConvId, ConversationData, Name}
 import com.waz.utils.events.EventContext
 import com.waz.zclient.Injector
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter._
 
 class NormalConversationListAdapter(implicit context: Context, eventContext: EventContext, injector: Injector) extends ConversationListAdapter {
 
-  def setData(convs: Seq[ConversationData], incoming: Seq[ConvId]): Unit = {
+  def setData(convs: Seq[(ConversationData, Name)], incoming: Seq[ConvId]): Unit = {
     var newItems = List.empty[Item]
     
     if (incoming.nonEmpty) {
       newItems = List(Item.IncomingRequests(incoming.head, incoming.size))
     }
 
-    newItems ++= convs.map { data => Item.Conversation(data) }
+    newItems ++= convs.map { case (data, name) => Item.Conversation(data, name) }
     updateList(newItems)
   }
 }

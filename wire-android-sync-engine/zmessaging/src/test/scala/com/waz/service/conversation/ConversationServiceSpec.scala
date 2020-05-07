@@ -399,7 +399,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (sync.postConversation _).expects(*, Set.empty[UserId], Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), defaultRole = ConversationRole.MemberRole))
+      val (data, sId) = result(convsUi.createGroupConversation(name = convName, defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }
@@ -419,7 +419,7 @@ class ConversationServiceSpec extends AndroidFreeSpec {
       (sync.postConversation _).expects(*, users.map(_.id), Some(convName), Some(teamId), *, *, *, *).once().returning(Future.successful(syncId))
 
       val convsUi = createConvsUi(Some(teamId))
-      val (data, sId) = result(convsUi.createGroupConversation(name = Some(convName), members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
+      val (data, sId) = result(convsUi.createGroupConversation(name = convName, members = users.map(_.id), defaultRole = ConversationRole.MemberRole))
       data shouldEqual conv
       sId shouldEqual syncId
     }

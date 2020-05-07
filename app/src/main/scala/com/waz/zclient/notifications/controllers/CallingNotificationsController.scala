@@ -38,6 +38,7 @@ import com.waz.zclient.Intents.{CallIntent, OpenCallingScreen}
 import com.waz.zclient._
 import com.waz.zclient.calling.controllers.CallController
 import com.waz.zclient.common.controllers.SoundController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.notifications.controllers.NotificationManagerWrapper.{IncomingCallNotificationsChannelId, OngoingNotificationsChannelId}
 import com.waz.zclient.utils.ContextUtils.getString
@@ -51,9 +52,10 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   import CallingNotificationsController._
 
-  private lazy val soundController = inject[SoundController]
+  private lazy val soundController     = inject[SoundController]
   private lazy val notificationManager = inject[NotificationManager]
-  private lazy val callCtrler = inject[CallController]
+  private lazy val callController      = inject[CallController]
+  private lazy val convController      = inject[ConversationController]
 
   private val filteredGlobalProfile: Signal[(Option[ConvId], Seq[(ConvId, (UserId, UserId))])] =
     for {
@@ -90,6 +92,8 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
                                         z.usersStorage.optSignal(z.selfUserId).map(_.fold[Availability](Availability.None)(_.availability))
                                       )).map(conv -> _)
                                 }: _*)
+      notInfoNames           <- Signal.sequence(notInfo.map(n => convController.conversationName(n._1).map(n._1 -> _)).toArray: _*)
+      notInfoNamesMap         = notInfoNames.toMap
       notificationData        = notInfo.collect {
                                   case (convId, (Some(callInfo), title, conv, isGroup, availability)) =>
                                     val muteSet = conv.fold(MuteSet.AllMuted)(_.muted)
@@ -106,7 +110,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
                                       callInfo.selfParticipant.userId,
                                       callInfo.startTime,
                                       title,
-                                      conv.fold(Name.Empty)(_.displayName),
+                                      notInfoNamesMap(convId),
                                       bitmaps.getOrElse(convId, None),
                                       curCallId.contains(convId),
                                       action,
@@ -125,7 +129,7 @@ class CallingNotificationsController(implicit cxt: WireContext, eventContext: Ev
 
   notifications.map(_.exists(n => !n.isMainCall && n.allowedByStatus)).onUi(soundController.playRingFromThemInCall)
 
-  callCtrler.currentCallOpt.map(_.isDefined).onUi {
+  callController.currentCallOpt.map(_.isDefined).onUi {
     case true => cxt.startService(new content.Intent(cxt, classOf[CallingNotificationsService]))
     case _ =>
   }

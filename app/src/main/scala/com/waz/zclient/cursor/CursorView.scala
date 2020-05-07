@@ -290,12 +290,11 @@ class CursorView(val context: Context, val attrs: AttributeSet, val defStyleAttr
   (for {
     eph  <- controller.isEphemeral
     av   <- controller.convAvailability
-    name <- controller.conv.map(_.displayName)
-  } yield (eph, av, name)).onUi {
-    case (true, av, _) =>
+  } yield (eph, av)).onUi {
+    case (true, av) =>
       hintView.setText(getString(R.string.cursor__ephemeral_message))
       AvailabilityView.displayStartOfText(hintView, av, defaultHintTextColor)
-    case (false, av, name) if av != Availability.None =>
+    case (false, av) if av != Availability.None =>
       hintView.setText(getString(AvailabilityView.viewData(av).textId))
       AvailabilityView.displayStartOfText(hintView, av, defaultHintTextColor)
     case _ =>

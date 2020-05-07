@@ -18,20 +18,22 @@
 package com.waz.zclient.usersearch.views
 
 import android.content.Context
-import androidx.core.content.ContextCompat
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
 import com.waz.model.ConversationData
 import com.waz.service.ZMessaging
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.conversationlist.views.ConversationAvatarView
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.utils.{ConversationMembersSignal, UiStorage, UserSignal}
 import com.waz.zclient.{Injectable, R, ViewHelper}
 
-class SearchResultConversationRowView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int) extends FrameLayout(context, attrs, defStyleAttr) with ConversationRowView with ViewHelper with Injectable {
+class SearchResultConversationRowView(val context: Context, val attrs: AttributeSet, val defStyleAttr: Int)
+  extends FrameLayout(context, attrs, defStyleAttr)
+    with ConversationRowView with ViewHelper with Injectable {
   def this(context: Context, attrs: AttributeSet) = this(context, attrs, 0)
   def this(context: Context) = this(context, null)
 
@@ -43,27 +45,30 @@ class SearchResultConversationRowView(val context: Context, val attrs: Attribute
   private val avatar = findById[ConversationAvatarView](R.id.conversation_icon)
   private val subtitleView = findById[TypefaceTextView](R.id.conversation_subtitle)
 
-  val zms = inject[Signal[ZMessaging]]
+  private lazy val zms = inject[Signal[ZMessaging]]
   implicit val uiStorage = inject[UiStorage]
 
-  val avatarInfo = for {
-    z <- zms
-    conv <- conversationSignal
+  (for {
+    z         <- zms
+    conv      <- conversationSignal
     memberIds <- ConversationMembersSignal(conv.id)
     memberSeq <- Signal.sequence(memberIds.map(uid => UserSignal(uid)).toSeq:_*)
-    isGroup <- Signal.future(z.conversations.isGroupConversation(conv.id))
-  } yield (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), z.teamId)
-
-  subtitleView.setVisibility(View.GONE)
-  avatarInfo.on(Threading.Ui) {
+    isGroup   <- Signal.future(z.conversations.isGroupConversation(conv.id))
+  } yield (conv.id, isGroup, memberSeq.filter(_.id != z.selfUserId), z.teamId)).onUi {
     case (convId, isGroup, members, selfTeamId) =>
       avatar.setMembers(members, convId, isGroup, selfTeamId)
   }
 
+  (for {
+    conv <- conversationSignal
+    name <- inject[ConversationController].conversationName(conv.id)
+  } yield name).onUi { name => nameView.setText(name.str)}
+
+  subtitleView.setVisibility(View.GONE)
+
   def getConversation: ConversationData = conversation
 
   def setConversation(conversationData: ConversationData): Unit = {
-    nameView.setText(conversationData.displayName)
     if (this.conversation.id != conversationData.id) {
       avatar.clearImages()
       avatar.setConversationType(conversationData.convType)

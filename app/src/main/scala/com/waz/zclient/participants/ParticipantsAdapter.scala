@@ -146,7 +146,7 @@ class ParticipantsAdapter(participants:    Signal[Map[UserId, ConversationRole]]
 
   (for {
     conv  <- convController.currentConv
-    name  =  conv.displayName
+    name  <- convController.currentConvName
     ver   =  conv.verified == Verification.VERIFIED
     read  =  conv.readReceiptsAllowed
     clock <- ClockSignal(5.seconds)

@@ -27,7 +27,7 @@ import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
 import com.waz.service.ConnectionService._
 import com.waz.service.EventScheduler.Stage
-import com.waz.service.conversation.{ConversationsContentUpdater, NameUpdater}
+import com.waz.service.conversation.ConversationsContentUpdater
 import com.waz.service.messages.MessagesService
 import com.waz.service.push.PushService
 import com.waz.sync.SyncServiceHandle
@@ -254,42 +254,33 @@ class ConnectionServiceImpl(selfUserId:      UserId,
       def userIdForConv(convId: ConvId) = UserId(convId.str)
 
       for {
-        allUsers <- usersStorage.listAll(convsInfo.map(_.toUser))
-        userMap   = allUsers.toIdMap
-        remoteIds = convsInfo.map(i => convIdForUser(i.toUser) -> i.remoteId).toMap
-        newConvs  = convsInfo.map {
-          case OneToOneConvData(toUser, remoteId, convType) =>
-            val convId = convIdForUser(toUser)
-            convId -> ConversationData(
-              convId,
-              remoteId.getOrElse(RConvId(toUser.str)),
-              name          = None,
-              creator       = selfUserId,
-              convType      = convType,
-              generatedName = NameUpdater.generatedName(convType)(Seq(userMap(toUser))),
-              team          = teamId,
-              access        = Set(Access.PRIVATE),
-              accessRole    = Some(AccessRole.PRIVATE)
-            )
-        }.toMap
-
-        remotes <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
-
-        _ <- convsStorage.updateLocalIds(convsInfo.collect {
-          case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
-            remotes(remoteId).id -> convIdForUser(toUser)
-        }.toMap)
-
-        // remotes need to be refreshed after updating local ids
-        remotes <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
-
-        result <- convsStorage.updateOrCreateAll2(newConvs.keys, {
-          case (cId, Some(conv)) =>
-            remoteIds(cId).fold(conv)(rId => remotes.getOrElse(rId, conv.copy(remoteId = rId)))
-          case (cId, _) =>
-            val newConv = newConvs(cId)
-            newConv
-        })
+        remotes   <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
+        _         <- convsStorage.updateLocalIds(convsInfo.collect {
+                       case OneToOneConvData(toUser, Some(remoteId), _) if remotes.contains(remoteId) =>
+                         remotes(remoteId).id -> convIdForUser(toUser)
+                     }.toMap)
+                     // remotes need to be refreshed after updating local ids
+        remotes   <- convsStorage.getByRemoteIds2(convsInfo.flatMap(_.remoteId).toSet)
+        remoteIds =  convsInfo.map(i => convIdForUser(i.toUser) -> i.remoteId).toMap
+        newConvs  =  convsInfo.map { case OneToOneConvData(toUser, remoteId, convType) =>
+                       val convId = convIdForUser(toUser)
+                       convId -> ConversationData(
+                         convId,
+                         remoteId.getOrElse(RConvId(toUser.str)),
+                         name          = None,
+                         creator       = selfUserId,
+                         convType      = convType,
+                         team          = teamId,
+                         access        = Set(Access.PRIVATE),
+                         accessRole    = Some(AccessRole.PRIVATE)
+                       )
+                     }.toMap
+        result    <- convsStorage.updateOrCreateAll2(newConvs.keys, {
+                       case (cId, Some(conv)) =>
+                         remoteIds(cId).fold(conv)(rId => remotes.getOrElse(rId, conv.copy(remoteId = rId)))
+                        case (cId, _)          =>
+                          newConvs(cId)
+                     })
       } yield result.map(conv => userIdForConv(conv.id) -> conv).toMap
     }
 

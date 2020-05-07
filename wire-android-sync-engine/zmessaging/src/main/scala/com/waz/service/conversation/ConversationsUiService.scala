@@ -93,7 +93,7 @@ trait ConversationsUiService {
 
   //conversation creation methods
   def getOrCreateOneToOneConversation(other: UserId): Future[ConversationData]
-  def createGroupConversation(name:        Option[Name] = None,
+  def createGroupConversation(name:        Name,
                               members:     Set[UserId] = Set.empty,
                               teamOnly:    Boolean = false,
                               receiptMode: Int = 0,
@@ -364,6 +364,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                         remoteId    = u.conversation.getOrElse(RConvId()),
                         convType    = ConversationType.Incoming,
                         creator     = other,
+                        name        = None,
                         members     = Set(selfUserId),
                         hidden      = true,
                         defaultRole = ConversationRole.AdminRole
@@ -379,6 +380,7 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
                         remoteId    = RConvId(),
                         convType    = ConversationType.OneToOne,
                         creator     = selfUserId,
+                        name        = None,
                         members     = Set(other),
                         defaultRole = ConversationRole.AdminRole
                       )
@@ -418,13 +420,13 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     }
   }
 
-  override def createGroupConversation(name:        Option[Name] = None,
+  override def createGroupConversation(name:        Name,
                                        members:     Set[UserId] = Set.empty,
                                        teamOnly:    Boolean = false,
                                        receiptMode: Int = 0,
                                        defaultRole: ConversationRole = ConversationRole.MemberRole
                                       ): Future[(ConversationData, SyncId)] =
-    createAndPostConversation(ConvId(), name, members, teamOnly, receiptMode, defaultRole)
+    createAndPostConversation(ConvId(), Some(name), members, teamOnly, receiptMode, defaultRole)
 
   private def createAndPostConversation(id:          ConvId,
                                         name:        Option[Name],

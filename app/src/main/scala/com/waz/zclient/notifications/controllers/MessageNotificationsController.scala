@@ -275,7 +275,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
   private def getMessageTitle(account: UserId, n: NotificationData, teamName: Option[String]) =
     if (n.isConvDeleted) Future.successful(ResString(R.string.notification__message__conversation_deleted))
     else if (n.ephemeral) Future.successful(ResString(R.string.notification__message__ephemeral_someone))
-    else getConvName(account, n).map(_.getOrElse(Name.Empty)).map { convName =>
+    else getConvName(account, n).map { convName =>
       teamName match {
         case Some(name) => ResString (R.string.notification__message__group__prefix__other, convName, name)
         case None       => ResString(convName)
@@ -283,9 +283,9 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     }
 
   private def getConvName(account: UserId, n: NotificationData) =
-    inject[AccountToConvsStorage].apply(account).flatMap {
-      case Some(storage) => storage.get(n.conv).map(_.map(_.displayName))
-      case None          => Future.successful(Option.empty[Name])
+    inject[AccountToConvsService].apply(account).flatMap {
+      case Some(service) => service.conversationName(n.conv).head
+      case None          => Future.successful(Name.Empty)
     }
 
   private def getUserName(account: UserId, n: NotificationData) =
@@ -309,7 +309,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
                           case CONNECT_ACCEPTED => Future.successful(ResString.Empty)
                           case _                => getDefaultNotificationMessageLineHeader(account, n, singleConversationInBatch)
                         }
-      convName       <- getConvName(account, n).map(_.getOrElse(Name.Empty))
+      convName       <- getConvName(account, n)
       userName       <- getUserName(account, n).map(_.getOrElse(Name.Empty))
       messagePreview <- userPrefs.flatMap(_.preference(UserPreferences.MessagePreview).signal).head
     } yield {
@@ -371,10 +371,10 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
             R.string.notification__message_with_quote__name__prefix__text_one2one
           else 0
         if (prefixId > 0) {
-          convName match {
-            case Some(cn) => ResString(prefixId, userName, cn)
-            case None => ResString(prefixId, List(ResString(userName), ResString(R.string.notification__message__group__default_conversation_name)))
-          }
+          if (convName.isEmpty)
+            ResString(prefixId, List(ResString(userName), ResString(R.string.notification__message__group__default_conversation_name)))
+          else
+            ResString(prefixId, userName, convName)
         }
         else ResString.Empty
       }
@@ -443,7 +443,7 @@ class MessageNotificationsController(bundleEnabled: Boolean = Build.VERSION.SDK_
     val n = ns.head
 
     for {
-      convName <- getConvName(account, n).map(_.getOrElse(Name.Empty))
+      convName <- getConvName(account, n)
       messages <- Future.sequence(ns.sortBy(_.time.instant).map(n => getMessage(account, n, singleConversationInBatch = isSingleConv)).takeRight(5).toList)
     } yield {
       val header =

@@ -21,7 +21,7 @@ import java.lang.Math.min
 
 import android.text.SpannableString
 import android.text.style.BackgroundColorSpan
-import com.waz.api.{ContentSearchQuery, IConversation, Message, TypeFilter}
+import com.waz.api.{ContentSearchQuery, Message, TypeFilter}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.service.ZMessaging
@@ -47,9 +47,7 @@ class CollectionController(implicit injector: Injector)
 
   private var observers = Set.empty[CollectionsObserver]
 
-  //val conversation = zms.zip(currentConv) flatMap { case (zms, convId) => zms.convsStorage.signal(convId) }
-
-  lazy val conversationName = convController.currentConv map (data => if (data.convType == IConversation.Type.GROUP) data.name.filter(!_.isEmpty).getOrElse(data.generatedName) else data.generatedName)
+  lazy val conversationName: Signal[Name] = convController.currentConvName
 
   val focusedItem: SourceSignal[Option[MessageData]] = Signal(None)
 

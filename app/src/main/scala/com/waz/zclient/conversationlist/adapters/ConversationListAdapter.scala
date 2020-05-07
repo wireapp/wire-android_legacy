@@ -21,7 +21,7 @@ import android.content.Context
 import android.view.{View, ViewGroup}
 import androidx.recyclerview.widget.{DiffUtil, RecyclerView}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{ConvId, ConversationData, FolderId}
+import com.waz.model.{ConvId, ConversationData, FolderId, Name}
 import com.waz.utils.events.{EventContext, EventStream, SourceStream}
 import com.waz.utils.returning
 import com.waz.zclient.conversationlist.adapters.ConversationListAdapter.{ConversationRowViewHolder, _}
@@ -71,9 +71,9 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
   }
 
   override def getItemId(position: Int): Long = items(position) match {
-    case Item.IncomingRequests(first, _)  => first.str.hashCode
-    case Item.Header(id, _, _, _)         => id.str.hashCode
-    case Item.Conversation(data, section) => (data.id.str + section.getOrElse("")).hashCode
+    case Item.IncomingRequests(first, _)     => first.str.hashCode
+    case Item.Header(id, _, _, _)            => id.str.hashCode
+    case Item.Conversation(data, _, section) => (data.id.str + section.getOrElse("")).hashCode
   }
 
   override def onCreateViewHolder(parent: ViewGroup, viewType: Int): ConversationRowViewHolder = viewType match {
@@ -98,12 +98,12 @@ abstract class ConversationListAdapter (implicit context: Context, eventContext:
 
   override def onClick(position: Int): Unit = items(position) match {
     case Item.IncomingRequests(first, _) => onConversationClick ! first
-    case Item.Conversation(data, _)      => onConversationClick ! data.id
+    case Item.Conversation(data, _, _)   => onConversationClick ! data.id
     case _                               =>
   }
 
   override def onLongClick(position: Int): Boolean = items(position) match {
-    case Item.Conversation(data, _) =>
+    case Item.Conversation(data, _, _) =>
       onConversationLongClick ! data
       true
     case _ =>
@@ -133,10 +133,10 @@ object ConversationListAdapter {
       }
     }
 
-    case class Conversation(data: ConversationData, sectionTitle: Option[String] = None) extends Item {
+    case class Conversation(data: ConversationData, displayName: Name, sectionTitle: Option[String] = None) extends Item {
       override val contentDescription: String = {
         val prefix = sectionTitle.map { t => s"$t: "}.getOrElse("")
-        prefix + data.displayName.str
+        prefix + displayName.str
       }
     }
 
@@ -161,7 +161,7 @@ object ConversationListAdapter {
     extends ConversationRowViewHolder(row, listener) {
 
     def bind(item: Item.Conversation): Unit = {
-      row.setConversation(item.data)
+      row.setConversation(item.data, item.displayName)
       row.setContentDescription(item.contentDescription)
     }
   }
@@ -245,7 +245,7 @@ object ConversationListAdapter {
       (oldList(oldItemPosition), newList(newItemPosition)) match {
         case (Header(_, title, isExpanded, oldCount), Header(_, newTitle, newIsExpanded, newCount)) =>
           title == newTitle && isExpanded && newIsExpanded && oldCount == newCount
-        case (Conversation(data, _), Conversation(newData, _)) =>
+        case (Conversation(data, _, _), Conversation(newData, _, _)) =>
           data == newData
         case (IncomingRequests(_, requests), IncomingRequests(_, newRequests)) =>
           requests == newRequests

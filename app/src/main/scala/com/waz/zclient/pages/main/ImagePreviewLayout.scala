@@ -51,7 +51,7 @@ class ImagePreviewLayout(context: Context, attrs: AttributeSet, style: Int)
   def this(context: Context) = this(context, null)
 
   private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
-  private lazy val convName = inject[ConversationController].currentConv.map(_.displayName)
+  private lazy val convName = inject[ConversationController].currentConvName
 
   val sketchShouldBeVisible = Signal(true)
   val titleShouldBeVisible = Signal(true)

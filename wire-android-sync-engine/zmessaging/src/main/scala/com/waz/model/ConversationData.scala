@@ -48,7 +48,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
                             archived:             Boolean                = false,
                             archiveTime:          RemoteInstant          = RemoteInstant.Epoch,
                             cleared:              Option[RemoteInstant]  = None,
-                            generatedName:        Name                   = Name.Empty,
+                            generatedName:        Name                   = Name.Empty, // deprecated
                             searchKey:            Option[SearchKey]      = None,
                             unreadCount:          UnreadCount            = UnreadCount(0, 0, 0, 0, 0),
                             failedCount:          Int                    = 0,
@@ -63,8 +63,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
                             link:                 Option[Link]           = None,
                             receiptMode:          Option[Int]            = None  //Some(1) if both users have RR enabled in a 1-to-1 convo
                            ) extends Identifiable[ConvId] {
-
-  def displayName = if (convType == ConversationType.Group) name.getOrElse(generatedName) else generatedName
+  def getName(): String = name.fold("")(_.str) // still used in Java
 
   def withFreshSearchKey = copy(searchKey = freshSearchKey)
   def savedOrFreshSearchKey = searchKey.orElse(freshSearchKey)
@@ -72,7 +71,7 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   lazy val completelyCleared = cleared.exists(!_.isBefore(lastEventTime))
 
-  val isManaged = team.map(_ => false) //can be returned to parameter list when we need it.
+  lazy val isManaged = team.map(_ => false) //can be returned to parameter list when we need it.
 
   lazy val ephemeralExpiration: Option[EphemeralDuration] = (globalEphemeral, localEphemeral) match {
     case (Some(d), _) => Some(ConvExpiry(d)) //global ephemeral takes precedence over local
@@ -84,32 +83,32 @@ case class ConversationData(override val id:      ConvId                 = ConvI
 
   def withCleared(time: RemoteInstant) = copy(cleared = Some(cleared.fold(time)(_ max time)))
 
-  def isTeamOnly: Boolean = accessRole match {
+  val isTeamOnly: Boolean = accessRole match {
     case Some(TEAM) if access.contains(Access.INVITE) => true
     case _ => false
   }
 
-  def isGuestRoom: Boolean = accessRole match {
+  val isGuestRoom: Boolean = accessRole match {
     case Some(NON_ACTIVATED) if access == Set(Access.INVITE, Access.CODE) => true
     case _ => false
   }
 
-  def isWirelessLegacy: Boolean = !(isTeamOnly || isGuestRoom)
+  val isWirelessLegacy: Boolean = !(isTeamOnly || isGuestRoom)
 
   def isUserAllowed(userData: UserData): Boolean =
     !(userData.isGuest(team) && isTeamOnly)
 
   def isMemberFromTeamGuest(teamId: Option[TeamId]): Boolean = team.isDefined && teamId != team
 
-  def isAllAllowed: Boolean = muted.isAllAllowed
+  val isAllAllowed: Boolean = muted.isAllAllowed
 
-  def isAllMuted: Boolean = muted.isAllMuted
+  val isAllMuted: Boolean = muted.isAllMuted
 
-  def onlyMentionsAllowed: Boolean = muted.onlyMentionsAllowed
+  val onlyMentionsAllowed: Boolean = muted.onlyMentionsAllowed
 
-  def readReceiptsAllowed: Boolean = team.isDefined && receiptMode.exists(_ > 0)
+  val readReceiptsAllowed: Boolean = team.isDefined && receiptMode.exists(_ > 0)
 
-  def hasUnreadMessages: Boolean =
+  val hasUnreadMessages: Boolean =
     (isAllAllowed && unreadCount.total > 0) || (onlyMentionsAllowed && (unreadCount.mentions > 0 || unreadCount.quotes > 0))
 }
 
