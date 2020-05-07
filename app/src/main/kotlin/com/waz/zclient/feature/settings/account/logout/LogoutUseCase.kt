@@ -15,7 +15,7 @@ class LogoutUseCase(
 ) : UseCase<LogoutStatus, Unit>() {
 
     override suspend fun run(params: Unit): Either<Failure, LogoutStatus> {
-        logout()
+        logout() //TODO check w/ backend team what is the side effect if this call fails
         return deleteLoggedOutAccountData()
     }
 
