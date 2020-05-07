@@ -2,7 +2,6 @@ package com.waz.zclient.shared.accounts.usecase
 
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.FeatureFailure
-import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.functional.flatMap
 import com.waz.zclient.core.usecase.UseCase
@@ -21,7 +20,7 @@ class GetActiveAccountUseCase(
 
     override suspend fun run(params: Unit): Either<Failure, ActiveAccount> =
         userRepository.currentUserId().let {
-            if (it == String.empty()) Either.Left(CannotFindActiveAccount)
+            if (it.isEmpty()) Either.Left(CannotFindActiveAccount)
             else activeAccountById(it)
         }
 

@@ -8,6 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.waz.zclient.core.config.AccountUrlConfig
 import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.extension.empty
+import com.waz.zclient.feature.settings.account.logout.AnotherAccountExists
+import com.waz.zclient.feature.settings.account.logout.CouldNotReadRemainingAccounts
+import com.waz.zclient.feature.settings.account.logout.LogoutStatus
+import com.waz.zclient.feature.settings.account.logout.NoAccountsLeft
 import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
@@ -34,6 +38,7 @@ class SettingsAccountViewModel(
     private val _resetPasswordUrlLiveData = MutableLiveData<String>()
     private val _phoneDialogLiveData = MutableLiveData<PhoneDialogDetail>()
     private val _deleteAccountDialogLiveData = MutableLiveData<DeleteAccountDialogDetail>()
+    private val _logoutNavigationAction = MutableLiveData<String>()
 
     val nameLiveData: LiveData<String> = Transformations.map(profileLiveData) {
         it.name
@@ -63,6 +68,7 @@ class SettingsAccountViewModel(
     val phoneDialogLiveData: LiveData<PhoneDialogDetail> = _phoneDialogLiveData
     val deleteAccountDialogLiveData: LiveData<DeleteAccountDialogDetail> = _deleteAccountDialogLiveData
     val resetPasswordUrlLiveData: LiveData<String> = _resetPasswordUrlLiveData
+    val logoutNavigationAction: MutableLiveData<String> = _logoutNavigationAction
 
     fun loadProfileDetails() {
         getActiveAccountUseCase(viewModelScope, Unit) {
@@ -131,8 +137,28 @@ class SettingsAccountViewModel(
         }
     }
 
+    fun onUserLoggedOut(logoutStatus: LogoutStatus) = when (logoutStatus) {
+        CouldNotReadRemainingAccounts, NoAccountsLeft -> handleNoActiveUserLeft()
+        AnotherAccountExists -> handleCurrentUserChange()
+    }
+
+    private fun handleNoActiveUserLeft() {
+        _logoutNavigationAction.value = ACTION_LOGOUT_NO_USER_LEFT
+    }
+
+    private fun handleCurrentUserChange() {
+        _logoutNavigationAction.value = ACTION_LOGOUT_CURRENT_USER_CHANGED
+    }
+
+    fun onUserLogoutError(failure: Failure) {
+        _errorLiveData.value = "Error logging out: $failure"
+    }
+
     companion object {
         private const val RESET_PASSWORD_URL_SUFFIX = "/forgot/"
+
+        private const val ACTION_LOGOUT_CURRENT_USER_CHANGED = "com.wire.ACTION_CURRENT_USER_CHANGED"
+        private const val ACTION_LOGOUT_NO_USER_LEFT = "com.wire.ACTION_NO_USER_LEFT"
     }
 }
 

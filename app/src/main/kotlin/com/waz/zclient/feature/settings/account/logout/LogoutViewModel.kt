@@ -8,19 +8,17 @@ import com.waz.zclient.core.exception.Failure
 
 class LogoutViewModel(private val logoutUseCase: LogoutUseCase) : ViewModel() {
 
-    private var _successLiveData = MutableLiveData<Unit>()
+    private var _successLiveData = MutableLiveData<LogoutStatus>()
     private var _errorLiveData = MutableLiveData<Failure>()
 
     val errorLiveData: LiveData<Failure> = _errorLiveData
-    val successLiveData: LiveData<Unit> = _successLiveData
+    val successLiveData: LiveData<LogoutStatus> = _successLiveData
 
-    fun onVerifyButtonClicked() {
-        logoutUseCase(viewModelScope, Unit) {
-            it.fold(::logoutFailed) { logoutSuccess() }
-        }
+    fun onVerifyButtonClicked() = logoutUseCase(viewModelScope, Unit) {
+        it.fold(::logoutFailed, ::logoutSuccess)
     }
 
-    private fun logoutSuccess() = _successLiveData.postValue(Unit)
+    private fun logoutSuccess(status: LogoutStatus) = _successLiveData.postValue(status)
 
     private fun logoutFailed(failure: Failure) = _errorLiveData.postValue(failure)
 }

@@ -153,6 +153,11 @@
                 <category android:name="android.intent.category.VIEW" />
             </intent-filter>
 
+            <intent-filter>
+                <action android:name="com.wire.ACTION_CURRENT_USER_CHANGED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+
         </activity>
 
         <activity
@@ -213,8 +218,12 @@
             android:launchMode="singleTask"
             android:theme="@style/Theme.Dark"
             android:windowSoftInputMode="stateHidden|adjustResize"
-            android:exported="false"
-            />
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.wire.ACTION_NO_USER_LEFT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".ForceUpdateActivity"
