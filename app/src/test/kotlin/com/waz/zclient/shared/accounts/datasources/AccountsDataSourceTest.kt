@@ -139,12 +139,10 @@ class AccountsDataSourceTest : UnitTest() {
         }
 
     @Test
-    fun `given deleteAcountFromDevice is called, then local data source should remove account from database`() = runBlockingTest {
-        val account = mockActiveAccount()
+    fun `given deleteAccountFromDevice is called with an id, then calls local data source with given id`() = runBlockingTest {
+        accountsDataSource.deleteAccountFromDevice(TEST_ID)
 
-        accountsDataSource.deleteAccountFromDevice(account)
-
-        verify(localDataSource).removeAccount(accountMapper.toEntity(account))
+        verify(localDataSource).removeAccount(TEST_ID)
         verifyNoMoreInteractions(localDataSource)
         verifyNoInteractions(usersRemoteDataSource)
     }

@@ -1,7 +1,6 @@
 package com.waz.zclient.storage.db.accountdata
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 
@@ -30,6 +29,6 @@ interface ActiveAccountsDao {
     @Insert
     suspend fun insertActiveAccount(activeAccountsEntity: ActiveAccountsEntity)
 
-    @Delete
-    suspend fun removeAccount(account: ActiveAccountsEntity)
+    @Query("DELETE from ActiveAccounts WHERE _id = :id")
+    suspend fun removeAccount(id: String)
 }

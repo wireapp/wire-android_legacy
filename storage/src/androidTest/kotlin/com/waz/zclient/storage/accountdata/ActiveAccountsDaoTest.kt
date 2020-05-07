@@ -142,7 +142,7 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         val activeAccount = createActiveAccount(TEST_USER_ID)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
-        activeAccountsDao.removeAccount(activeAccount)
+        activeAccountsDao.removeAccount(TEST_USER_ID)
 
         assertTrue(activeAccountsDao.activeAccountById(TEST_USER_ID) == null)
     }

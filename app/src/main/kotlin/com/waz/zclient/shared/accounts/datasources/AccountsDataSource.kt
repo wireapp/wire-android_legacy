@@ -28,8 +28,8 @@ class AccountsDataSource(
     override suspend fun logout(refreshToken: String, accessToken: String): Either<Failure, Unit> =
         accountsRemoteDataSource.logout(refreshToken, accessToken)
 
-    override suspend fun deleteAccountFromDevice(account: ActiveAccount) =
-        accountsLocalDataSource.removeAccount(accountMapper.toEntity(account))
+    override suspend fun deleteAccountFromDevice(accountId: String): Either<Failure, Unit> =
+        accountsLocalDataSource.removeAccount(accountId)
 
     override suspend fun deleteAccountPermanently(): Either<Failure, Unit> =
         usersRemoteDataSource.deleteAccountPermanently()

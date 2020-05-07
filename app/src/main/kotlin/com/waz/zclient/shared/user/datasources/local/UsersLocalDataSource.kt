@@ -1,7 +1,6 @@
 package com.waz.zclient.shared.user.datasources.local
 
 import com.waz.zclient.core.extension.empty
-import com.waz.zclient.core.functional.Either
 import com.waz.zclient.core.network.requestDatabase
 import com.waz.zclient.storage.db.users.model.UserEntity
 import com.waz.zclient.storage.db.users.service.UserDao
@@ -10,10 +9,11 @@ import kotlinx.coroutines.flow.Flow
 
 class UsersLocalDataSource constructor(
     private val userDao: UserDao,
-    globalPreferences: GlobalPreferences
+    private val globalPreferences: GlobalPreferences
 ) {
 
-    private val userId = globalPreferences.activeUserId
+    private val userId: String
+        get() = globalPreferences.activeUserId
 
     fun profileDetails(): Flow<UserEntity> = userDao.byId(userId)
 
@@ -29,5 +29,9 @@ class UsersLocalDataSource constructor(
 
     suspend fun deletePhone() = requestDatabase { userDao.updatePhone(userId, String.empty()) }
 
-    fun currentUserId() = Either.Right(userId)
+    fun currentUserId() = userId
+
+    fun setCurrentUserId(userId: String) {
+        globalPreferences.activeUserId = userId
+    }
 }

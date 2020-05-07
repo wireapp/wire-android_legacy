@@ -2,7 +2,6 @@ package com.waz.zclient.shared.accounts.datasources.local
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.functional.map
-import com.waz.zclient.eq
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsDao
 import com.waz.zclient.storage.db.accountdata.ActiveAccountsEntity
 import kotlinx.coroutines.CancellationException
@@ -110,9 +109,9 @@ class AccountsLocalDataSourceTest : UnitTest() {
     @Test
     fun `Given removeAccount is called, when dao result is successful, then return success`() {
         runBlockingTest {
-            val result = accountsLocalDataSource.removeAccount(mockEntity)
+            val result = accountsLocalDataSource.removeAccount(TEST_ID)
 
-            verify(activeAccountsDao).removeAccount(eq(mockEntity))
+            verify(activeAccountsDao).removeAccount(TEST_ID)
 
             result.isRight shouldBe true
         }
@@ -121,9 +120,9 @@ class AccountsLocalDataSourceTest : UnitTest() {
     @Test(expected = CancellationException::class)
     fun `Given removeAccount is called, when dao result is cancelled, then returns error`() {
         runBlockingTest {
-            accountsLocalDataSource.removeAccount(mockEntity)
+            accountsLocalDataSource.removeAccount(TEST_ID)
 
-            val result = accountsLocalDataSource.removeAccount(mockEntity)
+            val result = accountsLocalDataSource.removeAccount(TEST_ID)
 
             cancel(CancellationException(TEST_EXCEPTION_MESSAGE))
 
