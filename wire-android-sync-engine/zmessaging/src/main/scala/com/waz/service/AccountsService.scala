@@ -271,26 +271,24 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
   //create account managers for all logged in accounts on app start, or initialise the signal to an empty set
   calculateAccountManagers()
 
-  private var subscribeAccountPrefChanges = true
-  if (kotlinLogoutEnabled) {
-    // Normally, accountManagers is mutated through logout() call in this class, so we don't need to
-    // calculate it from scratch.
-    // In Kotlin mode, the logout process is not handled by this class, so we need to update it
-    // to notify the Scala dependants.
-    activeAccountPref.signal.onChanged.on(Threading.Background) { _ =>
-      if (subscribeAccountPrefChanges) calculateAccountManagers()
-    }
+  private var subscribeAccountPrefChanges = kotlinLogoutEnabled
+  // Normally, accountManagers is mutated through logout() call in this class, so we don't need to
+  // calculate it from scratch.
+  // In Kotlin mode, the logout process is not handled by this class, so we need to update it
+  // to notify the Scala dependants.
+  activeAccountPref.signal.onChanged.on(Threading.Background) { _ =>
+    if (subscribeAccountPrefChanges) calculateAccountManagers()
   }
 
   private def calculateAccountManagers() =
     (for {
-      ids      <- storage.flatMap(_.list().map(_.map(_.id).toSet))
-      managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
-    } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers ! managers.flatten))).recoverWith{
-      case e : Exception =>
-        error(l"error creating account managers $e")
-        Future.failed(e)
-    }
+       ids      <- storage.flatMap(_.list().map(_.map(_.id).toSet))
+       managers <- Future.sequence(ids.map(createAccountManager(_, None, None)))
+     } yield Serialized.future(AccountManagersKey)(Future[Unit](accountManagers ! managers.flatten))).recoverWith {
+       case e : Exception =>
+         error(l"error creating account managers $e")
+         Future.failed(e)
+     }
 
   override def createAccountManager(userId:         UserId,
                                     importDbFile:   Option[File],
@@ -574,9 +572,7 @@ class AccountsServiceImpl(val global: GlobalModule, val backupManager: BackupMan
     } else {
       //let's not retrigger ourselves for no reason
       subscribeAccountPrefChanges = false
-      activeAccountPref := newPref
-      subscribeAccountPrefChanges = true
-      Future.successful(())
+      (activeAccountPref := newPref).map(_ => subscribeAccountPrefChanges = true)
     }
 
 }
