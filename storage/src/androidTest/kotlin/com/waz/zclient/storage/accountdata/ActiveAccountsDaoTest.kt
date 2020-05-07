@@ -37,61 +37,71 @@ class ActiveAccountsDaoTest : IntegrationTest() {
     }
 
     @Test
-    fun givenAnActiveAccount_whenAccessTokenIsCalledWithUserIdThatIsActiveUser_thenDataShouldBeTheSame() = runBlocking {
-        val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+    fun givenAnActiveAccountWithAccessToken_whenAccessTokenIsCalledForThatAccount_thenReturnsAccessToken() = runBlocking {
+        val token = createAccessTokenEntity()
+        val activeAccount = createActiveAccount(TEST_USER_ID, accessToken = token)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
-        val accessToken = activeAccountsDao.accessToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        assertEquals(accessToken?.token, TEST_ACTIVE_ACCOUNT_COOKIE)
-        assertEquals(accessToken?.tokenType, TEST_ACCESS_TOKEN_TYPE)
-        assertEquals(accessToken?.expiresInMillis, TEST_ACCESS_TOKEN_EXPIRATION_TIME)
+        val accessToken = activeAccountsDao.accessToken(TEST_USER_ID)
+
+        assertEquals(accessToken?.token, token.token)
+        assertEquals(accessToken?.tokenType, token.tokenType)
+        assertEquals(accessToken?.expiresInMillis, token.expiresInMillis)
     }
 
     @Test
-    fun givenAnActiveAccount_whenAccessTokenIsCalledWithUserIdThatIsNotAnActiveUser_thenDataShouldBeTheSame() = runBlocking {
-        val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
+    fun givenAnActiveAccountWithoutAccessToken_whenAccessTokenIsCalledForThatAccount_thenReturnsNull() = runBlocking {
+        val activeAccount = createActiveAccount(TEST_USER_ID, accessToken = null)
         activeAccountsDao.insertActiveAccount(activeAccount)
 
-        val accessToken = activeAccountsDao.accessToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+        val accessToken = activeAccountsDao.accessToken(TEST_USER_ID)
         assertEquals(accessToken, null)
     }
 
     @Test
-    fun givenAnActiveAccount_whenUpdateAccessTokenIsCalledWithNewToken_thenDataShouldBeTheSameAsInserted() = runBlocking {
-        val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        activeAccountsDao.insertActiveAccount(activeAccount)
-
-        activeAccountsDao.updateAccessToken(
-            TEST_ACTIVE_ACCOUNT_ID_ACTIVE,
-            createAccessTokenEntity(
-                token = TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED
-            )
-        )
-
-        val accessToken = activeAccountsDao.accessToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-        assertEquals(accessToken?.token, TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
-        assertEquals(accessToken?.tokenType, TEST_ACCESS_TOKEN_TYPE)
-        assertEquals(accessToken?.expiresInMillis, TEST_ACCESS_TOKEN_EXPIRATION_TIME)
+    fun givenAnActiveAccountWithAccessToken_whenUpdateAccessTokenIsCalledWithNewToken_thenUpdatesExistingToken() {
+        val initialToken = AccessTokenEntity("oldToken", "oldTokenType", 12345L)
+        testAccessTokenUpdated(initialToken)
     }
 
     @Test
-    fun givenAnActiveAccount_whenUpdateRefreshTokenIsCalledAndUserIdIsActiveUser_thenDataShouldBeTheSameAsInserted() =
+    fun givenAnActiveAccountWithNoAccessToken_whenUpdateAccessTokenIsCalledWithNewToken_thenUpdatesExistingToken() {
+        testAccessTokenUpdated(initialToken = null)
+    }
+
+    private fun testAccessTokenUpdated(initialToken: AccessTokenEntity?) = runBlocking {
+        val activeAccount = createActiveAccount(TEST_USER_ID, accessToken = initialToken)
+        activeAccountsDao.insertActiveAccount(activeAccount)
+
+        val newAccessToken = AccessTokenEntity("newToken", "newTokenType", 3459834L)
+        activeAccountsDao.updateAccessToken(TEST_USER_ID, newAccessToken)
+
+        val accessToken = activeAccountsDao.accessToken(TEST_USER_ID)
+
+        assertEquals(accessToken?.token, newAccessToken.token)
+        assertEquals(accessToken?.tokenType, newAccessToken.tokenType)
+        assertEquals(accessToken?.expiresInMillis, newAccessToken.expiresInMillis)
+    }
+
+    @Test
+    fun givenAnActiveAccountWithRefreshToken_whenUpdateRefreshTokenIsCalled_thenUpdatesExistingRefreshToken() =
         runBlocking {
-            val activeAccount = createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+            val oldRefreshToken = "oldToken"
+            val activeAccount = createActiveAccount(TEST_USER_ID, refreshToken = oldRefreshToken)
             activeAccountsDao.insertActiveAccount(activeAccount)
 
-            activeAccountsDao.updateRefreshToken(
-                TEST_ACTIVE_ACCOUNT_ID_ACTIVE,
-                TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED
-            )
+            val newRefreshToken = "newToken"
+            activeAccountsDao.updateRefreshToken(TEST_USER_ID, newRefreshToken)
 
-            val refreshToken = activeAccountsDao.refreshToken(TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
-            assertEquals(refreshToken, TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED)
+            val refreshToken = activeAccountsDao.refreshToken(TEST_USER_ID)
+            assertEquals(refreshToken, newRefreshToken)
         }
 
     @Test
-    fun givenAnActiveAccount_withGetAllAccountsIsCalled_thenDataShouldBeSameAsInserted() = runBlocking {
-        val activeAccounts = createActiveAccountsList()
+    fun givenTableHasActiveAccounts_whenAllAccountsIsCalled_thenReturnsAllAccounts() = runBlocking {
+        val account1 = createActiveAccount("id1")
+        val account2 = createActiveAccount("id2")
+        val activeAccounts = listOf(account1, account2)
         activeAccounts.map {
             activeAccountsDao.insertActiveAccount(it)
         }
@@ -100,66 +110,76 @@ class ActiveAccountsDaoTest : IntegrationTest() {
         assertEquals(roomActiveAccounts.size, 2)
 
         val firstAccount = roomActiveAccounts[0]
-        assertEquals(firstAccount.id, TEST_ACTIVE_ACCOUNT_ID_ACTIVE)
+        assertEquals(firstAccount, account1)
 
         val secondAccount = roomActiveAccounts[1]
-        assertEquals(secondAccount.id, TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
+        assertEquals(secondAccount, account2)
     }
 
     @Test
-    fun givenAnActiveAccount_whenDeleteAccountsWithThatAccount_thenRemoveAccountFromDatabase() = runBlocking {
-        val activeAccounts = createActiveAccountsList()
-        activeAccounts.map {
-            activeAccountsDao.insertActiveAccount(it)
+    fun givenAnActiveAccountInDatabase_whenActiveAccountByIdIsCalledWithItsId_thenReturnsThatAccount() =
+        runBlocking {
+            val activeAccount = createActiveAccount(TEST_USER_ID)
+            activeAccountsDao.insertActiveAccount(activeAccount)
+
+            val retrievedAccount = activeAccountsDao.activeAccountById(TEST_USER_ID)
+
+            assertEquals(activeAccount, retrievedAccount)
         }
 
-        val roomActiveAccounts = activeAccountsDao.activeAccounts()
-        roomActiveAccounts.map {
-            activeAccountsDao.removeAccount(it)
+    @Test
+    fun givenNoActiveAccountInDatabaseWithGivenId_whenActiveAccountByIdIsCalled_thenReturnsNull() =
+        runBlocking {
+            activeAccountsDao.insertActiveAccount(createActiveAccount(TEST_USER_ID))
+
+            val retrievedAccount = activeAccountsDao.activeAccountById("someOtherUserId")
+
+            assertEquals(retrievedAccount, null)
         }
 
-        assertTrue(activeAccountsDao.activeAccounts().isEmpty())
+    @Test
+    fun givenAnActiveAccount_whenRemoveAccountIsCalledForThatAccount_thenRemovesAccount() = runBlocking {
+        val activeAccount = createActiveAccount(TEST_USER_ID)
+        activeAccountsDao.insertActiveAccount(activeAccount)
+
+        activeAccountsDao.removeAccount(TEST_USER_ID)
+
+        assertTrue(activeAccountsDao.activeAccountById(TEST_USER_ID) == null)
     }
 
-    private fun createActiveAccount(
-        userId: String
-    ) = ActiveAccountsEntity(
-        id = userId,
-        teamId = TEST_ACTIVE_ACCOUNT_TEAM_ID,
-        refreshToken = TEST_ACTIVE_ACCOUNT_COOKIE,
-        accessToken = createAccessTokenEntity(
-            TEST_ACTIVE_ACCOUNT_COOKIE
-        ),
-        pushToken = TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH,
-        ssoId = SsoIdEntity(
-            TEST_ACTIVE_ACCOUNT_SSO_ID_TENANT,
-            TEST_ACTIVE_ACCOUNT_SSO_ID_SUBJECT
-        )
-    )
-
-    private fun createAccessTokenEntity(
-        token: String,
-        tokenType: String = TEST_ACCESS_TOKEN_TYPE,
-        expiration: Long = TEST_ACCESS_TOKEN_EXPIRATION_TIME
-    ): AccessTokenEntity = AccessTokenEntity(token, tokenType, expiration)
-
-    private fun createActiveAccountsList() =
-        listOf(
-            createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_ACTIVE),
-            createActiveAccount(TEST_ACTIVE_ACCOUNT_ID_INACTIVE)
-        )
-
     companion object {
-        private const val TEST_ACTIVE_ACCOUNT_ID_ACTIVE = "101"
-        private const val TEST_ACTIVE_ACCOUNT_ID_INACTIVE = "102"
+        private const val TEST_USER_ID = "userId"
         private const val TEST_ACTIVE_ACCOUNT_TEAM_ID = "1000229992"
         private const val TEST_ACTIVE_ACCOUNT_COOKIE = "111122333"
-        private const val TEST_ACTIVE_ACCOUNT_COOKIE_UPDATED = "111122333444"
         private const val TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH = "11111122222"
+        private const val TEST_ACCESS_TOKEN_STRING = "accessToken123"
         private const val TEST_ACCESS_TOKEN_TYPE = "Bearer"
         private const val TEST_ACCESS_TOKEN_EXPIRATION_TIME = 1582896705028
         private const val TEST_ACTIVE_ACCOUNT_SSO_ID_TENANT = "ssoIdTenant"
         private const val TEST_ACTIVE_ACCOUNT_SSO_ID_SUBJECT = "ssoIdSubject"
+
+        private fun createActiveAccount(
+            userId: String,
+            accessToken: AccessTokenEntity? = createAccessTokenEntity(),
+            refreshToken: String = TEST_ACTIVE_ACCOUNT_COOKIE
+        ) = ActiveAccountsEntity(
+            id = userId,
+            teamId = TEST_ACTIVE_ACCOUNT_TEAM_ID,
+            refreshToken = refreshToken,
+            accessToken = accessToken,
+            pushToken = TEST_ACTIVE_ACCOUNT_REGISTERED_PUSH,
+            ssoId = SsoIdEntity(
+                TEST_ACTIVE_ACCOUNT_SSO_ID_TENANT,
+                TEST_ACTIVE_ACCOUNT_SSO_ID_SUBJECT
+            )
+        )
+
+        private fun createActiveAccountList(vararg userIds: String): List<ActiveAccountsEntity> =
+            userIds.map { createActiveAccount(it) }
+
+        private fun createAccessTokenEntity() = AccessTokenEntity(
+            TEST_ACCESS_TOKEN_STRING, TEST_ACCESS_TOKEN_TYPE, TEST_ACCESS_TOKEN_EXPIRATION_TIME
+        )
     }
 
 }

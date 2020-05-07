@@ -2,8 +2,12 @@ package com.waz.zclient.feature.settings.account
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.config.AccountUrlConfig
+import com.waz.zclient.core.exception.Failure
 import com.waz.zclient.core.exception.ServerError
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.feature.settings.account.logout.AnotherAccountExists
+import com.waz.zclient.feature.settings.account.logout.CouldNotReadRemainingAccounts
+import com.waz.zclient.feature.settings.account.logout.NoAccountsLeft
 import com.waz.zclient.framework.livedata.observeOnce
 import com.waz.zclient.shared.accounts.usecase.GetActiveAccountUseCase
 import com.waz.zclient.shared.user.User
@@ -19,6 +23,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.amshove.kluent.shouldBe
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -186,13 +191,51 @@ class SettingsAccountViewModelTest : UnitTest() {
 
 
         viewModel.resetPasswordUrlLiveData.observeOnce {
-            assert(it == "$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORLD_URL_SUFFIX")
+            assertEquals(it, "$TEST_ACCOUNT_CONFIG_URL$TEST_RESET_PASSWORD_URL_SUFFIX")
+        }
+    }
+
+    @Test
+    fun `given onUserLoggedOut called with status NoAccountsLeft, then updates logoutNavigationAction with ACTION_NO_USER_LEFT`() {
+        viewModel.onUserLoggedOut(NoAccountsLeft)
+
+        viewModel.logoutNavigationAction.observeOnce {
+            it shouldBe "com.wire.ACTION_NO_USER_LEFT"
+        }
+    }
+
+    @Test
+    fun `given onUserLoggedOut called with status CouldNotReadRemainingAccounts, then updates logoutNavigationAction with ACTION_NO_USER_LEFT`() {
+        viewModel.onUserLoggedOut(CouldNotReadRemainingAccounts)
+
+        viewModel.logoutNavigationAction.observeOnce {
+            it shouldBe "com.wire.ACTION_NO_USER_LEFT"
+        }
+    }
+
+    @Test
+    fun `given onUserLoggedOut called with status AnotherAccountExists, then updates logoutNavigationAction with ACTION_CURRENT_USER_CHANGED`() {
+        viewModel.onUserLoggedOut(AnotherAccountExists)
+
+        viewModel.logoutNavigationAction.observeOnce {
+            it shouldBe "com.wire.ACTION_CURRENT_USER_CHANGED"
+        }
+    }
+
+    @Test
+    fun `given onUserLogoutError called with a failure, then updates errorLiveData with that failure`() {
+        val failure = mock(Failure::class.java)
+
+        viewModel.onUserLogoutError(failure)
+
+        viewModel.errorLiveData.observeOnce {
+            assertEquals(it, "Error logging out: $failure")
         }
     }
 
     companion object {
         private const val TEST_ACCOUNT_CONFIG_URL = "http://www.wire.com"
-        private const val TEST_RESET_PASSWORLD_URL_SUFFIX = "/forgot/"
+        private const val TEST_RESET_PASSWORD_URL_SUFFIX = "/forgot/"
         private const val TEST_NAME = "testName"
         private const val TEST_HANDLE = "@Wire"
         private const val TEST_EMAIL = "email@wire.com"

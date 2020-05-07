@@ -31,7 +31,6 @@
         android:layout_height="?actionBarSize"
         android:background="@color/transparent"
         android:theme="?actionBarTheme"
-        app:layout_constraintBottom_toTopOf="@id/activitySettingsAboutLayoutContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

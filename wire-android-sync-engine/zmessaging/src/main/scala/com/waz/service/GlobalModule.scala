@@ -127,7 +127,7 @@ class GlobalModuleImpl(val context:                 AContext,
   lazy val backupManager:       BackupManager                    = wire[BackupManagerImpl]
 
   lazy val ssoService:          SSOService                       = wire[SSOService]
-  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, backupManager)
+  lazy val accountsService:     AccountsService                  = new AccountsServiceImpl(this, backupManager, BuildConfig.KOTLIN_SETTINGS)
   lazy val syncHandler:         SyncHandler                      = new AccountSyncHandler(accountsService)
   lazy val calling:             GlobalCallingService             = new GlobalCallingService
 

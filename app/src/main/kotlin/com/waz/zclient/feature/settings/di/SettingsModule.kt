@@ -9,6 +9,8 @@ import com.waz.zclient.feature.settings.account.edithandle.SettingsAccountEditHa
 import com.waz.zclient.feature.settings.account.editphonenumber.CountryCodePickerViewModel
 import com.waz.zclient.feature.settings.account.editphonenumber.GetCountryCodesUseCase
 import com.waz.zclient.feature.settings.account.editphonenumber.SettingsAccountPhoneNumberViewModel
+import com.waz.zclient.feature.settings.account.logout.LogoutUseCase
+import com.waz.zclient.feature.settings.account.logout.LogoutViewModel
 import com.waz.zclient.feature.settings.devices.detail.SettingsDeviceDetailViewModel
 import com.waz.zclient.feature.settings.devices.list.SettingsDeviceListViewModel
 import com.waz.zclient.feature.settings.support.SettingsSupportViewModel
@@ -79,6 +81,7 @@ val settingsAccountModule: Module = module {
         viewModel { SettingsAccountPhoneNumberViewModel(get(), get(), get(), get()) }
         viewModel { SettingsAccountDeleteAccountViewModel(get()) }
         viewModel { CountryCodePickerViewModel(get()) }
+        viewModel { LogoutViewModel(get()) }
 
         scoped { PhoneNumberUtil.getInstance() }
         factory { ChangePhoneNumberUseCase(get()) }
@@ -96,5 +99,7 @@ val settingsAccountModule: Module = module {
         factory { ChangeNameUseCase(get()) }
         factory { ChangeEmailUseCase(get()) }
         factory { DeleteAccountUseCase(get()) }
+
+        factory { LogoutUseCase(get(), get(), get()) }
     }
 }

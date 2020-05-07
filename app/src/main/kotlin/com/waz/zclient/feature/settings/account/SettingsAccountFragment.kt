@@ -1,8 +1,10 @@
 package com.waz.zclient.feature.settings.account
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import android.widget.Toast.LENGTH_LONG
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
@@ -10,12 +12,15 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.extension.invisible
 import com.waz.zclient.core.extension.openUrl
+import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.viewModel
 import com.waz.zclient.core.extension.visible
 import com.waz.zclient.core.ui.dialog.EditTextDialogFragment
 import com.waz.zclient.feature.settings.account.deleteaccount.DeleteAccountDialogFragment
 import com.waz.zclient.feature.settings.account.edithandle.EditHandleDialogFragment
 import com.waz.zclient.feature.settings.account.editphonenumber.EditPhoneNumberActivity
+import com.waz.zclient.feature.settings.account.logout.LogoutDialogFragment
+import com.waz.zclient.feature.settings.account.logout.LogoutViewModel
 import com.waz.zclient.feature.settings.di.SETTINGS_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_settings_account.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +33,8 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
 
     private val settingsAccountViewModel by viewModel<SettingsAccountViewModel>(SETTINGS_SCOPE_ID)
 
+    private val logoutViewModel by sharedViewModel<LogoutViewModel>(SETTINGS_SCOPE_ID)
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initToolbar()
@@ -39,10 +46,12 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         initAccountEmail()
         initAccountPhoneNumber()
         initResetPassword()
+        initLogout()
         initDeleteAccountButton()
         loadProfile()
     }
 
+    //TODO Will need changing to a phone dialog
     private fun initSsoButtons() {
         settingsAccountViewModel.isSsoAccountLiveData.observe(viewLifecycleOwner) {
             defineButtonVisibility(!it, settingsAccountEmailContainerLinearLayout)
@@ -110,6 +119,37 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
         }
     }
 
+    private fun initLogout() {
+        observeLogoutNavigation()
+        observeLogoutData()
+        initLogoutButtonListener()
+    }
+
+    private fun observeLogoutNavigation() {
+        settingsAccountViewModel.logoutNavigationAction.observe(viewLifecycleOwner) {
+            startActivity(Intent()
+                .setAction(it)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
+
+    private fun observeLogoutData() {
+        with(logoutViewModel) {
+            successLiveData.observe(viewLifecycleOwner) {
+                settingsAccountViewModel.onUserLoggedOut(it)
+            }
+            errorLiveData.observe(viewLifecycleOwner) {
+                settingsAccountViewModel.onUserLogoutError(it)
+            }
+        }
+    }
+
+    private fun initLogoutButtonListener() =
+        settingsAccountLogoutButton.setOnClickListener {
+            showLogoutDialog()
+        }
+
     private fun initDeleteAccountButton() {
         settingsAccountViewModel.deleteAccountDialogLiveData.observe(viewLifecycleOwner) {
             showDeleteAccountDialog(it.email, it.number)
@@ -156,7 +196,11 @@ class SettingsAccountFragment : Fragment(R.layout.fragment_settings_account) {
     }
 
     private fun showErrorMessage(errorMessage: String) =
-        Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), errorMessage, LENGTH_LONG).show()
+
+    private fun showLogoutDialog() =
+        LogoutDialogFragment.newInstance()
+            .show(requireActivity().supportFragmentManager, String.empty())
 
     private fun showEditHandleDialog() =
         EditHandleDialogFragment.newInstance(settingsAccountHandleTitleTextView.text.toString())

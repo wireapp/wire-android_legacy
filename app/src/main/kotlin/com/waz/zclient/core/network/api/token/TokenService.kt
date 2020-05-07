@@ -12,6 +12,13 @@ class TokenService(
 
     suspend fun renewAccessToken(refreshToken: String): Either<Failure, AccessTokenResponse> =
         request(AccessTokenResponse.EMPTY) {
-            tokenApi.access(mapOf("Cookie" to "zuid=$refreshToken"))
+            tokenApi.access(generateCookieHeader(refreshToken))
         }
+
+    suspend fun logout(refreshToken: String, accessToken: String): Either<Failure, Unit> =
+        request { tokenApi.logout(generateCookieHeader(refreshToken), generateTokenQuery(accessToken)) }
+
+    private fun generateTokenQuery(accessToken: String) = mapOf("access_token" to accessToken)
+
+    private fun generateCookieHeader(refreshToken: String) = mapOf("Cookie" to "zuid=$refreshToken")
 }
