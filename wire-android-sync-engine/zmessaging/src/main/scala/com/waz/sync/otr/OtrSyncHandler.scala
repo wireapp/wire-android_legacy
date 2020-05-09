@@ -93,7 +93,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         resp       <- if (content.estimatedSize < MaxContentSize)
                         msgClient.postMessage(
                           conv.remoteId,
-                          OtrMessage(selfClientId, content, external, nativePush, recipients),
+                          OtrMessage(selfClientId, content, external, nativePush),
                           ignoreMissing = enforceIgnoreMissing || retries > 1
                         ).future
                       else {
@@ -107,6 +107,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         _          <- resp.map(_.missing.keySet).mapFuture(convsService.addUnexpectedMembersToConv(conv.id, _))
         retry      <- resp.flatMapFuture {
                         case MessageResponse.Failure(ClientMismatch(_, missing, _, _)) if retries < 3 =>
+                          warn(l"a message response failure with client mismatch with $missing, self client id is: $selfClientId")
                           clientsSyncHandler.syncSessions(missing).flatMap { err =>
                             if (err.isDefined) error(l"syncSessions for missing clients failed: $err")
                             encryptAndSend(msg, external, retries + 1, content)
@@ -145,7 +146,6 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
       }
 
       broadcastRecipients.flatMap { recp =>
-        verbose(l"recipients: $recp")
         for {
           content  <- service.encryptForUsers(recp, message, useFakeOnError = retry > 0, previous)
           response <- otrClient.broadcastMessage(
@@ -180,13 +180,9 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
             )))
           case _ =>
             clientsSyncHandler.syncSessions(missing).flatMap {
-              case None =>
-                onRetry(missing.keySet)
-              case Some(err) if retry < 3 =>
-                error(l"syncSessions for missing clients failed: $err")
-                onRetry(currentRecipients)
-              case Some(err) =>
-                successful(Left(err))
+              case None                 => onRetry(missing.keySet)
+              case Some(_) if retry < 3 => onRetry(currentRecipients)
+              case Some(err)            => successful(Left(err))
             }
         }
       case Left(err) =>

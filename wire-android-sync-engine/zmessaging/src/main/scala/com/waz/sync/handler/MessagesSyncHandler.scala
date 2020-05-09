@@ -95,16 +95,16 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
 
   def postReceipt(convId: ConvId, msgs: Seq[MessageId], userId: UserId, tpe: ReceiptType): Future[SyncResult] =
-    convs.convById(convId) flatMap {
+    convs.convById(convId).flatMap {
       case Some(conv) =>
-        val (msg, recipients) = tpe match {
-          case ReceiptType.Delivery         => (GenericMessage(msgs.head.uid, Proto.DeliveryReceipt(msgs))(Proto.DeliveryReceipt), Set(userId))
-          case ReceiptType.Read             => (GenericMessage(msgs.head.uid, Proto.ReadReceipt(msgs))(Proto.ReadReceipt), Set(userId))
-          case ReceiptType.EphemeralExpired => (GenericMessage(msgs.head.uid, Proto.MsgRecall(msgs.head)), Set(selfUserId, userId))
+        val msg = tpe match {
+          case ReceiptType.Delivery         => GenericMessage(msgs.head.uid, Proto.DeliveryReceipt(msgs))(Proto.DeliveryReceipt)
+          case ReceiptType.Read             => GenericMessage(msgs.head.uid, Proto.ReadReceipt(msgs))(Proto.ReadReceipt)
+          case ReceiptType.EphemeralExpired => GenericMessage(msgs.head.uid, Proto.MsgRecall(msgs.head))
         }
 
         otrSync
-          .postOtrMessage(conv.id, msg, Some(recipients), nativePush = false)
+          .postOtrMessage(conv.id, msg, recipients = Some(Set(selfUserId, userId)), nativePush = false)
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
