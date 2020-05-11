@@ -1519,5 +1519,9 @@
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
 
+    <!-- StartSSO Screen  -->
+    <string name="start_sso_leaving_wire">Leaving Wire</string>
+    <string name="start_sso_redirected_to">You are being redirected to</string>
+    <string name="start_sso_notice">Provide credentials only if you are sure is your organization log in.</string>
 </resources>
 

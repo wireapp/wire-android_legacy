@@ -633,4 +633,28 @@
     <dimen name="composite_message_button_padding">16dp</dimen>
     <dimen name="composite_message_button_text_size">12sp</dimen>
     <dimen name="composite_message_button_error_text_size">12sp</dimen>
+
+    <!-- StartSSO Screen  -->
+    <dimen name="start_sso_logo_image_view_padding_top">27dp</dimen>
+    <dimen name="start_sso_logo_image_view_padding_bottom">27dp</dimen>
+    <dimen name="start_sso_logo_image_view_padding_start">24dp</dimen>
+    <dimen name="start_sso_logo_image_view_padding_end">24dp</dimen>
+    <dimen name="start_sso_title_text_size">24sp</dimen>
+    <dimen name="start_sso_description_margin_top">14dp</dimen>
+    <dimen name="start_sso_description_text_size">16sp</dimen>
+    <dimen name="start_sso_link_margin_start">16dp</dimen>
+    <dimen name="start_sso_link_margin_end">16dp</dimen>
+    <dimen name="start_sso_link_margin_top">8dp</dimen>
+    <dimen name="start_sso_link_margin_bottom">23dp</dimen>
+    <dimen name="start_sso_link_text_size">16sp</dimen>
+    <dimen name="start_sso_notice_card_margin_start">16dp</dimen>
+    <dimen name="start_sso_notice_card_margin_end">16dp</dimen>
+    <dimen name="start_sso_notice_card_corner_radius">8dp</dimen>
+    <dimen name="start_sso_notice_description_text_size">14sp</dimen>
+    <dimen name="start_sso_notice_description_margin_start">27dp</dimen>
+    <dimen name="start_sso_notice_description_margin_end">27dp</dimen>
+    <dimen name="start_sso_notice_description_margin_top">16dp</dimen>
+    <dimen name="start_sso_notice_description_margin_bottom">16dp</dimen>
+    <dimen name="start_sso_notice_description_elevation">2dp</dimen>
+    <dimen name="start_sso_notice_description_drawable_padding">7dp</dimen>
 </resources>
