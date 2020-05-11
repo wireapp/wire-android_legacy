@@ -93,7 +93,7 @@ class OtrSyncHandlerImpl(teamId:             Option[TeamId],
         resp       <- if (content.estimatedSize < MaxContentSize)
                         msgClient.postMessage(
                           conv.remoteId,
-                          OtrMessage(selfClientId, content, external, nativePush),
+                          OtrMessage(selfClientId, content, external, nativePush, recipients),
                           ignoreMissing = enforceIgnoreMissing || retries > 1
                         ).future
                       else {
