@@ -24,7 +24,7 @@ class StartSSOFragment extends SSOFragment {
   private lazy val linkTextView = view[TextView](R.id.startSsoLinkTextView)
   private lazy val backendController = inject[BackendController]
 
-  lazy val timer = new CountDownTimer(TIME_TO_WAIT, COUNTDOWN_INTERVAL) {
+  private lazy val timer = new CountDownTimer(TIME_TO_WAIT, COUNTDOWN_INTERVAL) {
     def onTick(millisUntilFinished: Long): Unit = {
       val progress: Int = (TIME_TO_WAIT - millisUntilFinished / 100).toInt
       updateProgressBar(progress)

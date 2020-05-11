@@ -126,7 +126,7 @@
     <androidx.cardview.widget.CardView
         android:id="@+id/startSsoNoticeCardView"
         android:layout_width="0dp"
-        android:layout_height="96dp"
+        android:layout_height="@dimen/start_sso_notice_card_margin_height"
         android:layout_marginStart="@dimen/start_sso_notice_card_margin_start"
         android:layout_marginEnd="@dimen/start_sso_notice_card_margin_end"
         android:backgroundTint="@color/link_water"
