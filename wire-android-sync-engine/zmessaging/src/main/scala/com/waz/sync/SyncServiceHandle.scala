@@ -26,7 +26,6 @@ import com.waz.log.LogSE._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.PostConvRole
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._

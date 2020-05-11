@@ -479,7 +479,6 @@ class ConversationsUiServiceImpl(selfUserId:        UserId,
     }
 
   override def setLastRead(convId: ConvId, msg: MessageData): Future[Option[ConversationData]] = {
-
     def sendReadReceipts(from: RemoteInstant, to: RemoteInstant, readReceiptSettings: ReadReceiptSettings): Future[Seq[SyncId]] = {
       shouldSendReadReceipts(convId, readReceiptSettings).flatMap {
         case true =>

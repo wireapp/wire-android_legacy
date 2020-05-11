@@ -25,7 +25,6 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
-import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
@@ -69,6 +68,7 @@ object MessagesClient extends DerivedLogTag {
     msg.nativePush = m.nativePush
     msg.recipients = m.recipients.userEntries
     m.external foreach { msg.blob = _ }
+    m.report_missing.foreach(users => msg.reportMissing = users.map(OtrClient.userId).toArray)
 
     val bytes = MessageNano.toByteArray(msg)
     RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))
