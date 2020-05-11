@@ -77,28 +77,26 @@ class OtrClientsSyncHandlerImpl(context:    Context,
     def syncSessionsIfNeeded(clients: Iterable[ClientId]) =
       for {
         toSync <- withoutSession(clients)
-        err <- if (toSync.isEmpty) Future successful None else syncSessions(Map(user -> toSync))
+        err    <- if (toSync.isEmpty) Future.successful(None) else syncSessions(Map(user -> toSync))
       } yield
         err.fold[SyncResult](Success)(SyncResult(_))
 
     def updatePreKeys(id: ClientId) =
-      netClient.loadRemainingPreKeys(id).future flatMap {
+      netClient.loadRemainingPreKeys(id).future.flatMap {
         case Right(ids) =>
-          verbose(l"remaining prekeys: $ids")
-          cryptoBox.generatePreKeysIfNeeded(ids) flatMap {
+          cryptoBox.generatePreKeysIfNeeded(ids).flatMap {
             case keys if keys.isEmpty => Future.successful(Success)
-            case keys => netClient.updateKeys(id, Some(keys)).future map {
-              case Right(_) => Success
+            case keys                 => netClient.updateKeys(id, Some(keys)).future map {
+              case Right(_)    => Success
               case Left(error) => SyncResult(error)
             }
           }
         case Left(error) => Future.successful(SyncResult(error))
       }
 
-    loadClients flatMap {
-      case Left(error) => Future successful SyncResult(error)
+    loadClients.flatMap {
+      case Left(error)    => Future.successful(SyncResult(error))
       case Right(clients) =>
-
         val userClients =
           if (user == userId)
             clients.map(c => if (selfClient == c.id) c.copy(verified = Verification.VERIFIED) else c)
@@ -110,37 +108,36 @@ class OtrClientsSyncHandlerImpl(context:    Context,
           _   <- syncSessionsIfNeeded(ucs.clients.keys)
           res <- updatePreKeys(selfClient)
           _   <- res match {
-            case Success => otrClients.lastSelfClientsSyncPref := System.currentTimeMillis()
-            case _ => Future.successful({})
-          }
+                   case Success => otrClients.lastSelfClientsSyncPref := System.currentTimeMillis()
+                   case _       => Future.successful({})
+                 }
         } yield res
     }
   }
 
   def postLabel(id: ClientId, label: String): Future[SyncResult] =
     netClient.postClientLabel(id, label).future map {
-      case Right(_) => Success
+      case Right(_)  => Success
       case Left(err) => SyncResult(err)
     }
 
-  def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients) map {
+  def syncPreKeys(clients: Map[UserId, Seq[ClientId]]): Future[SyncResult] = syncSessions(clients).map {
     case Some(error) => SyncResult(error)
-    case None => Success
+    case None        => Success
   }
 
   def syncSessions(clients: Map[UserId, Seq[ClientId]]): Future[Option[ErrorResponse]] =
     netClient.loadPreKeys(clients).future
       .flatMap {
         case Left(error) => Future.successful(Some(error))
-        case Right(us) =>
+        case Right(us)   =>
           for {
-            _ <- otrClients.updateClients(us.mapValues(_.map { case (id, key) => Client(id, "") }))
-            prekeys = us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, c), p)} }
-            _ <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
-            _ <- VerificationStateUpdater.awaitUpdated(userId)
+            _       <- otrClients.updateClients(us.mapValues(_.map { case (id, key) => Client(id, "") }))
+            prekeys =  us.flatMap { case (u, cs) => cs map { case (c, p) => (SessionId(u, c), p)} }
+            _       <- Future.traverse(prekeys) { case (id, p) => sessions.getOrCreateSession(id, p) }
+            _       <- VerificationStateUpdater.awaitUpdated(userId)
           } yield None
-      }
-      .recover {
+      }.recover {
         case e: Throwable => Some(ErrorResponse.internalError(e.getMessage))
       }
 

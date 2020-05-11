@@ -93,11 +93,10 @@ class OtrClientImpl(implicit
   override def loadPreKeys(users: Map[UserId, Seq[ClientId]]): ErrorOrResponse[Map[UserId, Seq[ClientKey]]] = {
     // TODO: request accepts up to 128 clients, we should make sure not to send more
     val data = JsonEncoder { o =>
-      users foreach { case (u, cs) =>
+      users.foreach { case (u, cs) =>
         o.put(u.str, JsonEncoder.arrString(cs.map(_.str)))
       }
     }
-    verbose(l"loadPreKeys: $users")
     Request.Post(relativePath = prekeysPath, body = data)
       .withResultType[PreKeysResponse]
       .withErrorType[ErrorResponse]

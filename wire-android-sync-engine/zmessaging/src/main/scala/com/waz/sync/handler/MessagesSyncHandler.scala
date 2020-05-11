@@ -95,7 +95,7 @@ class MessagesSyncHandler(selfUserId: UserId,
     }
 
   def postReceipt(convId: ConvId, msgs: Seq[MessageId], userId: UserId, tpe: ReceiptType): Future[SyncResult] =
-    convs.convById(convId) flatMap {
+    convs.convById(convId).flatMap {
       case Some(conv) =>
         val (msg, recipients) = tpe match {
           case ReceiptType.Delivery         => (GenericMessage(msgs.head.uid, Proto.DeliveryReceipt(msgs))(Proto.DeliveryReceipt), Set(userId))
@@ -104,7 +104,7 @@ class MessagesSyncHandler(selfUserId: UserId,
         }
 
         otrSync
-          .postOtrMessage(conv.id, msg, Some(recipients), nativePush = false)
+          .postOtrMessage(conv.id, msg, recipients = Some(recipients), nativePush = false)
           .map(SyncResult(_))
       case None =>
         successful(Failure("conversation not found"))
