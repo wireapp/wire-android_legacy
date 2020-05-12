@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:innerRadiusRatio="2.5"
+    android:shape="ring"
+    android:thickness="@dimen/start_sso_circular_progress_bar_thickness"
+    android:useLevel="true">
+    <solid android:color="@color/curious_blue" />
+</shape>
