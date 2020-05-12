@@ -128,6 +128,7 @@
         android:layout_marginEnd="@dimen/start_sso_notice_card_margin_end"
         android:backgroundTint="@color/link_water"
         app:cardCornerRadius="@dimen/start_sso_notice_card_corner_radius"
+        app:cardElevation="@dimen/start_sso_notice_card_elevation"
         app:layout_constraintBottom_toTopOf="@+id/startSsoBottomGuideline"
         app:layout_constraintEnd_toEndOf="@+id/startSsoGrayView"
         app:layout_constraintStart_toStartOf="@+id/startSsoGrayView">
@@ -142,7 +143,6 @@
             android:layout_marginBottom="@dimen/start_sso_notice_description_margin_bottom"
             android:drawableTop="@drawable/ic_info"
             android:drawablePadding="@dimen/start_sso_notice_description_drawable_padding"
-            android:elevation="@dimen/start_sso_notice_description_elevation"
             android:gravity="center_horizontal"
             android:text="@string/start_sso_notice"
             android:textColor="@color/curious_blue"
