@@ -639,6 +639,8 @@
     <dimen name="start_sso_logo_image_view_padding_bottom">27dp</dimen>
     <dimen name="start_sso_logo_image_view_padding_start">24dp</dimen>
     <dimen name="start_sso_logo_image_view_padding_end">24dp</dimen>
+    <dimen name="start_sso_progress_bar_width">95dp</dimen>
+    <dimen name="start_sso_progress_bar_height">95dp</dimen>
     <dimen name="start_sso_title_text_size">24sp</dimen>
     <dimen name="start_sso_description_margin_top">14dp</dimen>
     <dimen name="start_sso_description_text_size">16sp</dimen>

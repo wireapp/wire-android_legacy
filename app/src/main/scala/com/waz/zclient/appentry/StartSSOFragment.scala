@@ -18,20 +18,22 @@ class StartSSOFragment extends SSOFragment {
 
   import com.waz.threading.Threading.Implicits.Ui
 
-  private val TIME_TO_WAIT: Long = 5000
-  private val COUNTDOWN_INTERVAL: Long = 1000
+  private val TIME_TO_WAIT: Int = 5000
+  private val COUNTDOWN_INTERVAL: Int = 1000
+  private val FULL_PERCENTAGE: Int = 100
   private lazy val progressBar = view[ProgressBar](R.id.startSsoProgressBar)
   private lazy val linkTextView = view[TextView](R.id.startSsoLinkTextView)
   private lazy val backendController = inject[BackendController]
 
   private lazy val timer = new CountDownTimer(TIME_TO_WAIT, COUNTDOWN_INTERVAL) {
     def onTick(millisUntilFinished: Long): Unit = {
-      val progress: Int = (TIME_TO_WAIT - millisUntilFinished / 100).toInt
+      val progress: Float = ((TIME_TO_WAIT - millisUntilFinished).toFloat / TIME_TO_WAIT.toFloat) * FULL_PERCENTAGE
       updateProgressBar(progress)
     }
 
     def onFinish(): Unit = {
       fetchSsoToken()
+      updateProgressBar(FULL_PERCENTAGE)
     }
   }
 
@@ -72,7 +74,7 @@ class StartSSOFragment extends SSOFragment {
       }(Threading.Ui)
     }
 
-  private def updateProgressBar(progress: Int): Unit = progressBar.foreach(_.setProgress(progress))
+  private def updateProgressBar(progress: Float): Unit = progressBar.foreach(_.setProgress(progress.toInt))
 
   private def showCustomBackendLink(): Unit = linkTextView.foreach(
     _.setText(backendController.customBackendConfigUrl.getOrElse(""))
