@@ -27,7 +27,7 @@ class StartSSOFragment extends SSOFragment {
 
   private lazy val timer = new CountDownTimer(TIME_TO_WAIT, COUNTDOWN_INTERVAL) {
     def onTick(millisUntilFinished: Long): Unit = {
-      val progress: Float = ((TIME_TO_WAIT - millisUntilFinished).toFloat / TIME_TO_WAIT.toFloat) * FULL_PERCENTAGE
+      val progress: Double = ((TIME_TO_WAIT - millisUntilFinished).toDouble / TIME_TO_WAIT.toDouble) * FULL_PERCENTAGE
       updateProgressBar(progress)
     }
 
@@ -74,7 +74,7 @@ class StartSSOFragment extends SSOFragment {
       }(Threading.Ui)
     }
 
-  private def updateProgressBar(progress: Float): Unit = progressBar.foreach(_.setProgress(progress.toInt))
+  private def updateProgressBar(progress: Double): Unit = progressBar.foreach(_.setProgress(progress.toInt))
 
   private def showCustomBackendLink(): Unit = linkTextView.foreach(
     _.setText(backendController.customBackendConfigUrl.getOrElse(""))
