@@ -67,7 +67,7 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="@dimen/start_sso_progress_bar_width"
         android:layout_height="@dimen/start_sso_progress_bar_height"
-        android:progressDrawable="@drawable/progress_circle"
+        android:progressDrawable="@drawable/start_sso_circular_progress_bar"
         app:layout_constraintBottom_toBottomOf="@+id/startSsoBackgroundDividerGuideline"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

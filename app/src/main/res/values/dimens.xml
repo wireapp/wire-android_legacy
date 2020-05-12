@@ -659,4 +659,5 @@
     <dimen name="start_sso_notice_description_margin_bottom">16dp</dimen>
     <dimen name="start_sso_notice_description_elevation">2dp</dimen>
     <dimen name="start_sso_notice_description_drawable_padding">7dp</dimen>
+    <dimen name="start_sso_circular_progress_bar_thickness">4dp</dimen>
 </resources>
