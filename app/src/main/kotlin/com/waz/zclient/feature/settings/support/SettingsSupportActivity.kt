@@ -32,9 +32,9 @@ class SettingsSupportActivity : AppCompatActivity(R.layout.activity_settings_sup
     @InternalCoroutinesApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSupportActionBar(activitySettingsSupportToolbar)
+        setSupportActionBar(settingsSupportToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        replaceFragment(R.id.activitySettingsSupportLayoutContainer, SettingsSupportFragment.newInstance(), false)
+        replaceFragment(R.id.settingsSupportLayoutContainer, SettingsSupportFragment.newInstance(), false)
         overridePendingTransition(R.anim.slide_in_left, 0)
         loadBackground(this, viewModel, activitySettingsSupportConstraintLayout)
     }

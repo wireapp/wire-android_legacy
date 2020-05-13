@@ -39,7 +39,7 @@
     <style name="Button.Authentication"  parent="@style/Widget.AppCompat.ImageButton">
         <item name="android:layout_marginEnd">@dimen/authentication_confirmation_button_margin_end</item>
         <item name="android:layout_marginTop">@dimen/authentication_confirmation_button_margin_top</item>
-        <item name="android:background">@drawable/selector_confirm_button</item>
+        <item name="android:background">@drawable/selector_authentication_confirmation_button</item>
         <item name="android:padding">@dimen/authentication_confirmation_button_padding</item>
         <item name="android:src">@drawable/ic_arrow_right</item>
     </style>
