@@ -1522,6 +1522,6 @@
     <!-- StartSSO Screen  -->
     <string name="start_sso_leaving_wire">Leaving Wire</string>
     <string name="start_sso_redirected_to">You are being redirected to</string>
-    <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organisation\'s login.</string>
+    <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
 </resources>
 
