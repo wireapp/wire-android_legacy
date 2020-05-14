@@ -203,8 +203,7 @@ class SoundControllerImpl(implicit inj: Injector, cxt: Context)
   }
 
   def playRingFromThemInCall(play: Boolean): Unit =
-    setMediaPlaying(if (shouldPlayCallTone) R.raw.ringing_from_them_incall else 0, play)
-
+    if (shouldPlayCallTone) setMediaPlaying(R.raw.ringing_from_them_incall, play)
   /**
     * @param play For looping patterns, this parameter will tell to stop vibrating if they have previously been started
     */
