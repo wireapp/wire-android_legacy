@@ -430,7 +430,7 @@ class ConversationsServiceImpl(teamId:          Option[TeamId],
     convsStorage.optSignal(convId).flatMap {
       case None =>
         Signal.const(Name.Empty)
-      case Some(conv) if conv.name.isDefined && !ConversationType.isOneToOne(conv.convType) =>
+      case Some(conv) if conv.name.exists(_.nonEmpty) && !ConversationType.isOneToOne(conv.convType) =>
         // some old 1:1 convs have names defined but they should use the other user's name
         Signal.const(conv.name.get)
       case Some(conv) if ConversationType.isOneToOne(conv.convType) =>
