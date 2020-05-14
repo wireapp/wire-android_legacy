@@ -10,7 +10,7 @@ import com.waz.zclient.R
 import com.waz.zclient.core.extension.sharedViewModel
 import com.waz.zclient.core.extension.showKeyboard
 import com.waz.zclient.core.extension.viewModel
-import com.waz.zclient.core.ui.dialog.Alert
+import com.waz.zclient.core.ui.dialog.WireDialog
 import com.waz.zclient.feature.auth.registration.di.REGISTRATION_SCOPE_ID
 import kotlinx.android.synthetic.main.fragment_create_personal_account_password.*
 
@@ -83,14 +83,19 @@ class CreatePersonalAccountPasswordFragment : Fragment(R.layout.fragment_create_
                     Toast.LENGTH_LONG).show()
             }
             registerErrorLiveData.observe(viewLifecycleOwner) {
-                Alert.showError(requireContext(), getString(it.message))
+                WireDialog.Builder(requireContext())
+                    .type(WireDialog.GENERIC_ERROR)
+                    .message(it.message)
+                    .show()
             }
         }
     }
 
     private fun observeNetworkConnectionError() {
         createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observe(viewLifecycleOwner) {
-            Alert.showNetworkConnectionError(requireContext())
+            WireDialog.Builder(requireContext())
+                .type(WireDialog.NETWORK_CONNECTION_ERROR)
+                .show()
         }
     }
 
