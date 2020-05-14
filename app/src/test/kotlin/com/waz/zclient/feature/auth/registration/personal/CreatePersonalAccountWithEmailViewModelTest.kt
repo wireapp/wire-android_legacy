@@ -4,6 +4,7 @@ import com.waz.zclient.R
 import com.waz.zclient.UnitTest
 import com.waz.zclient.any
 import com.waz.zclient.core.config.PasswordLengthConfig
+import com.waz.zclient.core.exception.NetworkConnection
 import com.waz.zclient.core.functional.Either
 import com.waz.zclient.feature.auth.registration.personal.email.CreatePersonalAccountWithEmailViewModel
 import com.waz.zclient.feature.auth.registration.register.usecase.InvalidActivationCode
@@ -130,6 +131,18 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
         }
 
     @Test
+    fun `given sendActivationCode is called, when there is a network connection error then the activation code is not sent`() =
+        runBlockingTest {
+            lenient().`when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+
+            createPersonalAccountWithEmailViewModel.sendActivationCode(TEST_EMAIL)
+
+            createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observeOnce {
+                it shouldBe Unit
+            }
+        }
+
+    @Test
     fun `given sendActivationCode is called, when there is no error then the activation code is sent`() =
         runBlocking {
             `when`(sendEmailActivationCodeUseCase.run(any())).thenReturn(Either.Right(Unit))
@@ -149,6 +162,18 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             val error = createPersonalAccountWithEmailViewModel.activateEmailErrorLiveData.awaitValue()
             assertEquals(error.errorMessage, R.string.email_verification_invalid_code_error)
+        }
+
+    @Test
+    fun `given activateEmail is called, when there is a network connection error then the activation is not done`() =
+        runBlockingTest {
+            lenient().`when`(activateEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+
+            createPersonalAccountWithEmailViewModel.activateEmail(TEST_EMAIL, TEST_CODE)
+
+            createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observeOnce {
+                it shouldBe Unit
+            }
         }
 
     @Test
@@ -194,6 +219,18 @@ class CreatePersonalAccountWithEmailViewModelTest : UnitTest() {
 
             val error = createPersonalAccountWithEmailViewModel.registerErrorLiveData.awaitValue()
             assertEquals(error.errorMessage, R.string.create_personal_account_email_in_use_error)
+        }
+
+    @Test
+    fun `given register is called, when there is a network connection error then the registration is not done`() =
+        runBlockingTest {
+            lenient().`when`(registerPersonalAccountWithEmailUseCase.run(any())).thenReturn(Either.Left(NetworkConnection))
+
+            createPersonalAccountWithEmailViewModel.register(TEST_NAME, TEST_EMAIL, TEST_PASSWORD, TEST_CODE)
+
+            createPersonalAccountWithEmailViewModel.networkConnectionErrorLiveData.observeOnce {
+                it shouldBe Unit
+            }
         }
 
     @Test
