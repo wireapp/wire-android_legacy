@@ -24,7 +24,7 @@ import android.view.{KeyEvent, LayoutInflater, View, ViewGroup}
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
-import com.waz.model.{ConvId, Name, UserId}
+import com.waz.model.{ConvId, UserId}
 import com.waz.service.tracking.ContributionEvent
 import com.waz.service.tracking.ContributionEvent.Action
 import com.waz.service.{AccountsService, ZMessaging}
@@ -32,6 +32,7 @@ import com.waz.utils.events.Signal
 import com.waz.utils.returning
 import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.global.AccentColorController
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.pages.main.popup.ViewPagerLikeLayoutManager
 import com.waz.zclient.ui.text.{TypefaceEditText, TypefaceTextView}
@@ -85,7 +86,7 @@ class QuickReplyFragment extends Fragment with FragmentHelper {
     zs   <- zms
     name <- zs.conversations.conversationName(convId)
   } yield
-    if (name.isEmpty) Name(getString(R.string.default_deleted_username))
+    if (name.isEmpty) inject[ConversationController].DefaultDeletedName
     else name
 
   val firstVisibleItemPosition = Signal(0)

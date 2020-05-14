@@ -68,7 +68,7 @@ class ConversationController(implicit injector: Injector, context: Context, ec: 
   private lazy val accentColorController = inject[AccentColorController]
   private lazy val selfId                = inject[Signal[UserId]]
 
-  private val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
+  val DefaultDeletedName: Name = Name(getString(R.string.default_deleted_username))
 
   private var lastConvId = Option.empty[ConvId]
 

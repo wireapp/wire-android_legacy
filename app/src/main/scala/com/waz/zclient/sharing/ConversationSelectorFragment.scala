@@ -41,22 +41,21 @@ import com.waz.threading.Threading
 import com.waz.utils.events._
 import com.waz.utils.{RichWireInstant, returning}
 import com.waz.zclient._
+import com.waz.zclient.common.controllers.SharingController
 import com.waz.zclient.common.controllers.SharingController.{FileContent, ImageContent, NewContent, TextContent}
 import com.waz.zclient.common.controllers.global.AccentColorController
-import com.waz.zclient.common.controllers.{AssetsController, SharingController}
 import com.waz.zclient.common.views._
+import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.cursor.{EphemeralLayout, EphemeralTimerButton}
 import com.waz.zclient.glide.WireGlide
-import com.waz.zclient.messages.{MessagesController, UsersController}
 import com.waz.zclient.ui.text.TypefaceTextView
 import com.waz.zclient.ui.utils.{ColorUtils, KeyboardUtils}
 import com.waz.zclient.ui.views.CursorIconButton
 import com.waz.zclient.usersearch.views.{PickerSpannableEditText, SearchEditText}
-import com.waz.zclient.utils.ContextUtils.{getDimenPx, getString, showToast}
+import com.waz.zclient.utils.ContextUtils.{getDimenPx, showToast}
 import com.waz.zclient.utils.{RichView, ViewUtils}
 
 import scala.util.Success
-
 
 class ConversationSelectorFragment extends FragmentHelper with OnBackPressedListener {
 
@@ -64,13 +63,10 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
 
   import ConversationSelectorFragment._
 
-  lazy val zms = inject[Signal[ZMessaging]]
-  lazy val accounts = inject[AccountsService]
-  lazy val assetsController = inject[AssetsController]
-  lazy val messagesController = inject[MessagesController]
-  lazy val sharingController = inject[SharingController]
-  lazy val usersController = inject[UsersController]
-  private lazy val accentColor = inject[AccentColorController].accentColor.map(_.color)
+  private lazy val accounts          = inject[AccountsService]
+  private lazy val convController    = inject[ConversationController]
+  private lazy val sharingController = inject[SharingController]
+  private lazy val accentColor       = inject[AccentColorController].accentColor.map(_.color)
 
   private lazy val filterText = Signal[String]("")
 
@@ -108,10 +104,8 @@ class ConversationSelectorFragment extends FragmentHelper with OnBackPressedList
     ZMessaging.currentAccounts.activeAccount.onChanged.onUi(_ => vh.foreach(v => v.getElements.foreach(v.removeElement)))
 
     (for {
-      z        <- zms
       selected <- Signal.wrap(adapter.conversationSelectEvent)
-      convName <- z.conversations.conversationName(selected._1)
-      name     =  if (convName.isEmpty) Name(getString(R.string.default_deleted_username)) else convName
+      name     <- convController.conversationName(selected._1)
     } yield (PickableConversation(selected._1.str, name.str), selected._2)).onUi {
       case (convData, true) if multiPicker  => vh.foreach(_.addElement(convData))
       case (convData, false) if multiPicker => vh.foreach(_.removeElement(convData))
@@ -339,14 +333,13 @@ case class SelectableConversationRowViewHolder(view: SelectableConversationRow)(
     with DerivedLogTag {
 
   private val conversationId = Signal[ConvId]()
+  private lazy val convController = inject[ConversationController]
 
   (for {
-    z        <- inject[Signal[ZMessaging]]
     cid      <- conversationId
-    convName <- z.conversations.conversationName(cid)
+    convName <- convController.conversationName(cid)
   } yield convName).onUi { convName =>
-    val name = if (convName.isEmpty) Name(getString(R.string.default_deleted_username)(view.getContext)) else convName
-    view.nameView.setText(name.str)
+    view.nameView.setText(convName.str)
   }
 
   def setConversation(convId: ConvId, checked: Boolean): Unit = {
