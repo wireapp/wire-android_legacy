@@ -9,7 +9,7 @@ import com.waz.zclient.R
 class WireDialog {
 
     class Builder(context: Context) {
-        private val builder = AlertDialog.Builder(context)
+        private val dialogBuilder = AlertDialog.Builder(context)
 
         fun type(value: Int): Builder {
 
@@ -27,50 +27,48 @@ class WireDialog {
         }
 
         fun title(@StringRes resId: Int): Builder {
-            builder.setTitle(resId)
+            dialogBuilder.setTitle(resId)
             return this
         }
 
         fun title(value: String): Builder {
-            builder.setTitle(value)
+            dialogBuilder.setTitle(value)
             return this
         }
 
         fun message(@StringRes resId: Int): Builder {
-            builder.setMessage(resId)
+            dialogBuilder.setMessage(resId)
             return this
         }
 
-
         fun message(value: String): Builder {
-            builder.setMessage(value)
+            dialogBuilder.setMessage(value)
             return this
         }
 
         fun positiveButton(@StringRes resId: Int, listener: ((DialogInterface, Int) -> Unit)): Builder {
-            builder.setPositiveButton(resId, listener)
+            dialogBuilder.setPositiveButton(resId, listener)
             return this
         }
 
         fun positiveButton(text: String, listener: ((DialogInterface, Int) -> Unit)): Builder {
-            builder.setPositiveButton(text, listener)
+            dialogBuilder.setPositiveButton(text, listener)
             return this
         }
 
         fun negativeButton(@StringRes resId: Int, listener: ((DialogInterface, Int) -> Unit)): Builder {
-            builder.setNegativeButton(resId, listener)
+            dialogBuilder.setNegativeButton(resId, listener)
             return this
         }
 
         fun negativeButton(text: String, listener: ((DialogInterface, Int) -> Unit)): Builder {
-            builder.setNegativeButton(text, listener)
+            dialogBuilder.setNegativeButton(text, listener)
             return this
         }
 
         fun show() {
-            builder.create().show()
+            dialogBuilder.create().show()
         }
-
     }
 
     companion object {
