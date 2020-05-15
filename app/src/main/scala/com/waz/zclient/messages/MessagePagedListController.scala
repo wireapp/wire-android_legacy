@@ -89,7 +89,7 @@ class MessagePagedListController()(implicit inj: Injector, ec: EventContext, cxt
     canHaveLink             = isGroup && cTeam.exists(z.teamId.contains(_)) && !teamOnly
     cursor                  <- RefreshingSignal(loadCursor(cId), cursorRefreshEvent(z, cId))
     _ = verbose(l"cursor changed")
-    list                    = PagedListWrapper(getPagedList(cursor))
+    list                    =  PagedListWrapper(getPagedList(cursor))
     lastRead                <- convController.currentConv.map(_.lastRead)
     messageToReveal         <- messageActionsController.messageToReveal.map(_.map(_.id))
   } yield (MessageAdapterData(cId, lastRead, isGroup, canHaveLink, z.selfUserId, z.teamId), list, messageToReveal)

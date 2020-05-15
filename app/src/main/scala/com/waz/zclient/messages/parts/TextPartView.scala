@@ -29,7 +29,6 @@ import com.waz.api.{ContentSearchQuery, Message}
 import com.waz.model.{Mention, MessageContent, MessageData}
 import com.waz.service.messages.MessageAndLikes
 import com.waz.service.tracking.TrackingService
-import com.waz.threading.Threading
 import com.waz.utils.events.Signal
 import com.waz.zclient.collection.controllers.{CollectionController, CollectionUtils}
 import com.waz.zclient.common.controllers.global.AccentColorController
@@ -87,7 +86,7 @@ class TextPartView(context: Context, attrs: AttributeSet, style: Int)
   } yield
     CollectionUtils.getHighlightedSpannableString(content, ContentSearchQuery.transliterated(content), query.elements, ColorUtils.injectAlpha(0.5f, color.color))._1
 
-  searchResultText.on(Threading.Ui) { textView.setText }
+  searchResultText.onUi { textView.setText }
 
   private def setText(text: String): Unit = { // TODO: remove try/catch blocks when the bug is fixed
     try {

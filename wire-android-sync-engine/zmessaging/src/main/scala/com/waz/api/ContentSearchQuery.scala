@@ -19,7 +19,7 @@ package com.waz.api
 
 import com.waz.utils.Locales
 
-case class ContentSearchQuery(originalString: String){
+case class ContentSearchQuery(originalString: String) {
   import ContentSearchQuery._
 
   lazy val elements : Set[String] =
@@ -31,7 +31,8 @@ case class ContentSearchQuery(originalString: String){
       .toSet
 
   override def toString = elements.mkString(" ")
-  def toFtsQuery = elements.map(_ + "*").mkString(" ")
+
+  def toFtsQuery = toString.concat("*")
 
   def isEmpty = elements.isEmpty
 }
