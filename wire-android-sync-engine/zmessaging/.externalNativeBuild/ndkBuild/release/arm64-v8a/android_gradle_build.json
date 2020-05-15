@@ -1,0 +1,49 @@
+{
+  "buildFiles": [
+    "/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Android.mk",
+    "/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Application.mk"
+  ],
+  "cleanCommands": [
+    "/home/marco/android-sdk-linux/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Android.mk NDK_APPLICATION_MK\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Application.mk APP_ABI\u003darm64-v8a NDK_ALL_ABIS\u003darm64-v8a NDK_DEBUG\u003d0 APP_PLATFORM\u003dandroid-21 NDK_OUT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj NDK_LIBS_OUT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/lib clean"
+  ],
+  "libraries": {
+    "randombytes-release-arm64-v8a": {
+      "buildCommand": "/home/marco/android-sdk-linux/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Android.mk NDK_APPLICATION_MK\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Application.mk APP_ABI\u003darm64-v8a NDK_ALL_ABIS\u003darm64-v8a NDK_DEBUG\u003d0 APP_PLATFORM\u003dandroid-21 NDK_OUT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj NDK_LIBS_OUT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/lib /home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj/local/arm64-v8a/librandombytes.so",
+      "toolchain": "toolchain-arm64-v8a",
+      "abi": "arm64-v8a",
+      "artifactName": "randombytes",
+      "files": [
+        {
+          "src": "/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/randombytes.c",
+          "flags": "-target aarch64-none-linux-android21 -fdata-sections -ffunction-sections -fstack-protector-strong -funwind-tables -no-canonical-prefixes --sysroot /home/marco/android-sdk-linux/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/sysroot -g -Wno-invalid-command-line-argument -Wno-unused-command-line-argument -D_FORTIFY_SOURCE\u003d2 -fpic -O2 -DNDEBUG -I/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni -DANDROID -std\u003dc99 -O2 -Wall -pedantic -Wno-variadic-macros -lsodium -fstack-protector-all -Wformat -Werror\u003dformat-security"
+        }
+      ],
+      "output": "/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj/local/arm64-v8a/librandombytes.so"
+    },
+    "lzw-decoder-release-arm64-v8a": {
+      "buildCommand": "/home/marco/android-sdk-linux/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Android.mk NDK_APPLICATION_MK\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/Application.mk APP_ABI\u003darm64-v8a NDK_ALL_ABIS\u003darm64-v8a NDK_DEBUG\u003d0 APP_PLATFORM\u003dandroid-21 NDK_OUT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj NDK_LIBS_OUT\u003d/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/lib /home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj/local/arm64-v8a/liblzw-decoder.so",
+      "toolchain": "toolchain-arm64-v8a",
+      "abi": "arm64-v8a",
+      "artifactName": "lzw-decoder",
+      "files": [
+        {
+          "src": "/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni/LzwDecoder.cpp",
+          "flags": "-target aarch64-none-linux-android21 -fdata-sections -ffunction-sections -fstack-protector-strong -funwind-tables -no-canonical-prefixes --sysroot /home/marco/android-sdk-linux/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/sysroot -g -Wno-invalid-command-line-argument -Wno-unused-command-line-argument -D_FORTIFY_SOURCE\u003d2 -fno-exceptions -fno-rtti -fpic -O2 -DNDEBUG -I/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/src/main/jni -DANDROID -O2 -Wall -pedantic -Wno-variadic-macros -fstack-protector-all -Wformat -Werror\u003dformat-security"
+        }
+      ],
+      "output": "/home/marco/Wire/wire-android/wire-android-sync-engine/zmessaging/build/intermediates/ndkBuild/release/obj/local/arm64-v8a/liblzw-decoder.so"
+    }
+  },
+  "toolchains": {
+    "toolchain-arm64-v8a": {
+      "cCompilerExecutable": "/home/marco/android-sdk-linux/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/clang",
+      "cppCompilerExecutable": "/home/marco/android-sdk-linux/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}
