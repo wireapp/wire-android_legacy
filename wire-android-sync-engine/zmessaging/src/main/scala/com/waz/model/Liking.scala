@@ -93,7 +93,7 @@ object Liking {
 
   import com.waz.utils.JsonDecoder._
 
-  implicit lazy val ContactDataDecoder: JsonDecoder[Liking] = new JsonDecoder[Liking] {
+  implicit lazy val LikingDecoder: JsonDecoder[Liking] = new JsonDecoder[Liking] {
     override def apply(implicit js: JSONObject): Liking = Liking(
       decodeId[MessageId]('message),
       decodeId[UserId]('user),

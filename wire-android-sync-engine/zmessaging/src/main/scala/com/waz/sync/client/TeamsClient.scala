@@ -20,19 +20,21 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.model.UserPermissions.PermissionsMasks
 import com.waz.model._
-import com.waz.sync.client.TeamsClient.TeamMember
-import com.waz.utils.CirceJSONSupport
+
+import com.waz.sync.client.TeamsClient.{TeamMember, TeamMembers}
+import com.waz.utils.{CirceJSONSupport, Json, JsonEncoder, _}
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http.{HttpClient, Request}
 
 trait TeamsClient {
-  def getTeamMembers(id: TeamId): ErrorOrResponse[Seq[TeamMember]]
+  def getTeamMembers(id: TeamId): ErrorOrResponse[TeamMembers]
   def getTeamData(id: TeamId): ErrorOrResponse[TeamData]
   def getPermissions(teamId: TeamId, userId: UserId): ErrorOrResponse[Option[PermissionsMasks]]
   def getTeamMember(teamId: TeamId, userId: UserId): ErrorOrResponse[TeamMember]
   def deleteTeamConversation(teamId: TeamId, convId: RConvId): ErrorOrResponse[Unit]
   def getTeamRoles(id: TeamId): ErrorOrResponse[Set[ConversationRole]]
+  def getTeamMembersWithPost(teamId: TeamId, userIds: Seq[UserId]): ErrorOrResponse[Seq[TeamMember]]
 }
 
 class TeamsClientImpl(implicit
@@ -45,11 +47,11 @@ class TeamsClientImpl(implicit
   import TeamsClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def getTeamMembers(id: TeamId): ErrorOrResponse[Seq[TeamMember]] = {
+  override def getTeamMembers(id: TeamId): ErrorOrResponse[TeamMembers] = {
     Request.Get(relativePath = teamMembersPath(id))
       .withResultType[TeamMembers]
       .withErrorType[ErrorResponse]
-      .executeSafe(_.members)
+      .executeSafe
   }
 
   override def getTeamData(id: TeamId): ErrorOrResponse[TeamData] = {
@@ -75,6 +77,16 @@ class TeamsClientImpl(implicit
       .executeSafe
   }
 
+  override def getTeamMembersWithPost(teamId: TeamId, userIds: Seq[UserId]): ErrorOrResponse[Seq[TeamMember]] = {
+    import HttpClient.AutoDerivationOld.JsonBodySerializer
+    Request.Post(
+      relativePath = membersPostPath(teamId),
+      body         = Json("user_ids" -> JsonEncoder.arrString(userIds.map(_.str)))
+    ).withResultType[TeamMembers]
+     .withErrorType[ErrorResponse]
+     .executeSafe(_.members)
+  }
+
   override def deleteTeamConversation(teamId: TeamId, convId: RConvId): ErrorOrResponse[Unit] = {
     Request.Delete(relativePath = teamConversationPath(teamId, convId))
       .withResultType[Unit]
@@ -89,7 +101,7 @@ class TeamsClientImpl(implicit
       .executeSafe(_.toConversationRoles)
 
   private def createPermissionsMasks(permissions: Permissions): PermissionsMasks =
-    (permissions.self, permissions.copy)
+    permissions.toMasks
 
 }
 
@@ -106,13 +118,19 @@ object TeamsClient {
 
   def memberPath(teamId: TeamId, userId: UserId): String = s"${teamMembersPath(teamId)}/${userId.str}"
 
+  def membersPostPath(teamId: TeamId): String = s"/teams/${teamId.str}/get-members-by-ids-using-post"
+
   def teamConversationPath(id: TeamId, cid: RConvId): String = s"$TeamsPath/${id.str}/conversations/${cid.str}"
 
-  case class TeamMembers(members: Seq[TeamMember])
+  case class TeamMembers(members: Seq[TeamMember], hasMore: Boolean)
 
-  case class TeamMember(user: UserId, permissions: Option[Permissions], created_by: Option[UserId])
+  case class TeamMember(user: UserId, permissions: Option[Permissions], created_by: Option[UserId]) {
+    lazy val permissionMasks: PermissionsMasks = permissions.fold((0L, 0L))(_.toMasks)
+  }
 
-  case class Permissions(self: Long, copy: Long)
+  case class Permissions(self: Long, copy: Long) {
+    def toMasks: PermissionsMasks = (self, copy)
+  }
 
   case class TeamConvRole(conversation_role: String, actions: Seq[String]) {
     def toConversationRole: ConversationRole = ConversationRole(conversation_role, actions.flatMap(a => ConversationAction.allActions.find(_.name == a)).toSet)

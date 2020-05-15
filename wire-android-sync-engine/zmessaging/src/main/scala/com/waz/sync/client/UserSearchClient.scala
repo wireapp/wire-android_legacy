@@ -20,18 +20,15 @@ package com.waz.sync.client
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
-import com.waz.model._
 import com.waz.service.SearchQuery
 import com.waz.sync.client.UserSearchClient.{DefaultLimit, UserSearchResponse}
-import com.waz.threading.Threading
 import com.waz.utils.CirceJSONSupport
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 
 trait UserSearchClient {
-  def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
-  def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]]
+  def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse]
 }
 
 class UserSearchClientImpl(implicit
@@ -40,53 +37,34 @@ class UserSearchClientImpl(implicit
                            authRequestInterceptor: AuthRequestInterceptor) extends UserSearchClient with CirceJSONSupport {
   import HttpClient.AutoDerivation._
   import HttpClient.dsl._
-  import Threading.Implicits.Background
   import UserSearchClient._
-
   private implicit val errorResponseDeserializer: RawBodyDeserializer[ErrorResponse] =
     objectFromCirceJsonRawBodyDeserializer[ErrorResponse]
 
-  override def getContacts(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse] = {
-    verbose(l"getContacts($query, $limit)")
+  override def search(query: SearchQuery, limit: Int = DefaultLimit): ErrorOrResponse[UserSearchResponse] = {
+    verbose(l"search($query, $limit)")
     Request
       .Get(
-        relativePath = ContactsPath,
+        relativePath = SearchPath,
         queryParameters = queryParameters("q" -> query.str, "size" -> limit)
       )
       .withResultType[UserSearchResponse]
       .withErrorType[ErrorResponse]
       .executeSafe
   }
-
-
-  override def exactMatchHandle(handle: Handle): ErrorOrResponse[Option[UserId]] = {
-    Request.Get(relativePath = handlesQuery(handle))
-      .withResultType[ExactHandleResponse]
-      .withErrorType[ErrorResponse]
-      .executeSafe
-      .map {
-        case Right(response) => Right(Some(UserId(response.user)))
-        case Left(response) if response.code == ResponseCode.NotFound => Right(None)
-        case Left(response) => Left(response)
-      }
-  }
 }
 
 object UserSearchClient extends DerivedLogTag {
-  val ContactsPath = "/search/contacts"
-  val HandlesPath = "/users/handles"
+  val SearchPath = "/search/contacts"
 
   val DefaultLimit = 10
 
-  def handlesQuery(handle: Handle): String =
-    UserSearchClient.HandlesPath + "/" + Handle.stripSymbol(handle.string)
-
   // Response types
 
-  case class ExactHandleResponse(user: String)
   case class UserSearchResponse(took: Int, found: Int, returned: Int, documents: Seq[UserSearchResponse.User])
 
   object UserSearchResponse {
-    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int])
+    case class User(id: String, name: String, handle: Option[String], accent_id: Option[Int], team: Option[String], assets: Option[Seq[Asset]])
+    case class Asset(key: String, size: String, `type`: String)
   }
 }

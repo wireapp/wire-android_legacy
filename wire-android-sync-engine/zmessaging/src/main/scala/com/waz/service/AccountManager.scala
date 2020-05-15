@@ -99,7 +99,11 @@ class AccountManager(val userId:   UserId,
     _ <- initialSelf.fold2(Future.successful({}), u =>
       for {
         _ <- storage.userPrefs(CrashesAndAnalyticsRequestShown) := false //new login/registration, we need to ask for permission to send analytics
-        _ <- storage.usersStorage.updateOrCreate(u.id, _.updated(u, withSearchKey = false), UserData(u, withSearchKey = false)) //no search key to avoid transliteration loading
+        _ <- storage.usersStorage.updateOrCreate(
+               u.id,
+               _.updated(u, withSearchKey = false, permissions = (0L, 0L)),
+               UserData(u, withSearchKey = false)
+             ) //no search key to avoid transliteration loading
       } yield {})
     _ <- isLogin.fold2(Future.successful({}), storage.userPrefs(IsLogin) := _)
   } yield {}

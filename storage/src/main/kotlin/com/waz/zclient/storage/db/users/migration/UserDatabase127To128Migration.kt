@@ -3,7 +3,7 @@ package com.waz.zclient.storage.db.users.migration
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.waz.zclient.storage.db.users.migration.MigrationUtils.executeSimpleMigration
+import com.waz.zclient.storage.db.users.migration.MigrationUtils.recreateAndTryMigrate
 
 val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
     override fun migrate(database: SupportSQLiteDatabase) {
@@ -78,7 +78,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
 
         val conversationIdIndex = "CREATE INDEX IF NOT EXISTS Conversation_id on $originalTableName ($primaryKey)"
         val searchKeyIndex = "CREATE INDEX IF NOT EXISTS UserData_search_key on $originalTableName ($searchKey)"
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -98,7 +98,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 data TEXT NOT NULL DEFAULT ''
                 )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -149,7 +149,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val conversationSearchKeyIndex = """
             CREATE INDEX IF NOT EXISTS Conversation_search_key on $originalTableName ($searchKey)
             """.trimIndent()
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -174,7 +174,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val conversationIdIndex = "CREATE INDEX IF NOT EXISTS ConversationMembers_conv on $originalTableName ($convid)"
         val userIdIndex = "CREATE INDEX IF NOT EXISTS ConversationMembers_userid on $originalTableName ($userId)"
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -218,7 +218,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                )""".trimIndent()
         val convAndTimeIndex = "CREATE INDEX IF NOT EXISTS Messages_conv_time on $originalTableName ($convId, $time)"
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -236,7 +236,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 value TEXT NOT NULL DEFAULT ''
                )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -253,7 +253,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 data TEXT NOT NULL DEFAULT ''
                )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -277,7 +277,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
                 time INTEGER NOT NULL DEFAULT 0
                 )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -294,7 +294,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
             data TEXT NOT NULL DEFAULT ''
             )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -311,7 +311,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              hashes TEXT
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -332,7 +332,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
 
         val contactIndex = "CREATE INDEX IF NOT EXISTS ContactsOnWire_contact on $originalTableName ( $contact )"
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -350,7 +350,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              data TEXT NOT NULL DEFAULT ''
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -370,7 +370,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              PRIMARY KEY (message_id, user_id)
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -393,7 +393,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
 
         val contactSortingIndex = "CREATE INDEX IF NOT EXISTS Contacts_sorting on $originalTableName ( $sorting )"
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -417,7 +417,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val contactIndex = "CREATE INDEX IF NOT EXISTS EmailAddresses_contact on EmailAddresses ($contact)"
         val emailIndex = "CREATE INDEX IF NOT EXISTS EmailAddresses_email on EmailAddresses ($emailAddress)"
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -442,7 +442,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
         val contactIndex = "CREATE INDEX IF NOT EXISTS PhoneNumbers_contact on $originalTableName ($contact)"
         val phoneIndex = "CREATE INDEX IF NOT EXISTS PhoneNumbers_phone on $originalTableName ($phoneNumber)"
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -461,7 +461,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              timestamp INTEGER NOT NULL DEFAULT 0
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -479,7 +479,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              timestamp INTEGER NOT NULL DEFAULT 0
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -500,7 +500,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              transient INTEGER NOT NULL DEFAULT 0
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -519,7 +519,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              PRIMARY KEY (message_id, user_id)
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -536,7 +536,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              value TEXT NOT NULL DEFAULT ''
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -567,7 +567,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
              asset_id TEXT
              )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -590,7 +590,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               status INTEGER NOT NULL DEFAULT 0
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -616,7 +616,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               conversation_id TEXT
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -635,7 +635,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               PRIMARY KEY (_id, stage)
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -654,7 +654,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               bucket3 INTEGER NOT NULL DEFAULT 0
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -672,7 +672,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               type INTEGER NOT NULL DEFAULT 0
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -690,7 +690,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               PRIMARY KEY (conv_id, folder_id)
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,
@@ -714,7 +714,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
             CREATE INDEX IF NOT EXISTS ConversationRoleAction_convid on $originalTableName ($convId)
             """.trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database,
                 originalTableName,
                 tempTableName,
@@ -738,7 +738,7 @@ val USER_DATABASE_MIGRATION_127_TO_128 = object : Migration(127, 128) {
               $time INTEGER NOT NULL DEFAULT 0,
               )""".trimIndent()
 
-        executeSimpleMigration(
+        recreateAndTryMigrate(
                 database = database,
                 originalTableName = originalTableName,
                 tempTableName = tempTableName,

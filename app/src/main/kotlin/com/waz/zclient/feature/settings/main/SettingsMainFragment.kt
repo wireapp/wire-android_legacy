@@ -43,7 +43,7 @@ class SettingsMainFragment : Fragment(R.layout.fragment_settings_main), OnItemCl
     }
 
     private fun replaceFragment(fragment: Fragment) {
-        (activity as AppCompatActivity).replaceFragment(R.id.activitySettingsMainLayoutContainer, fragment)
+        (activity as AppCompatActivity).replaceFragment(R.id.settingsMainLayoutContainer, fragment)
     }
 
     companion object {

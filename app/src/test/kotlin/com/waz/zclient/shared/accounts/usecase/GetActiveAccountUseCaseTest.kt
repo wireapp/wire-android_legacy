@@ -2,8 +2,10 @@ package com.waz.zclient.shared.accounts.usecase
 
 import com.waz.zclient.UnitTest
 import com.waz.zclient.core.exception.Failure
-import com.waz.zclient.core.exception.ServerError
+import com.waz.zclient.core.extension.empty
 import com.waz.zclient.core.functional.Either
+import com.waz.zclient.core.functional.map
+import com.waz.zclient.core.functional.onFailure
 import com.waz.zclient.shared.accounts.AccountsRepository
 import com.waz.zclient.shared.accounts.ActiveAccount
 import com.waz.zclient.shared.user.UsersRepository
@@ -15,7 +17,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
-import org.mockito.Mockito.lenient
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 
 @ExperimentalCoroutinesApi
@@ -35,48 +37,67 @@ class GetActiveAccountUseCaseTest : UnitTest() {
     }
 
     @Test
-    fun `given use-case is executed, when active account exists in list, then should return filteredAccount`() = runBlockingTest {
-        val mockListOfAccounts = successListOfAccounts()
+    fun `given use-case is executed, when currentUserId is empty, then returns CannotFindActiveAccount directly`() =
+        runBlockingTest {
+            `when`(userRepository.currentUserId()).thenReturn(String.empty())
 
-        `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_ACTIVE_USER_ID))
-        `when`(accountsRepository.activeAccounts()).thenReturn(mockListOfAccounts)
+            val result = getActiveAccountUseCase.run(Unit)
 
-        val result = getActiveAccountUseCase.run(Unit)
-
-        result.isRight shouldBe true
-    }
-
-    @Test
-    fun `given use-case is executed, when active account does not exist in list, then should return error`() = runBlockingTest {
-        val mockListOfAccounts = successListOfAccounts()
-
-        `when`(userRepository.currentUserId()).thenReturn(Either.Right(TEST_NON_ACTIVE_USER_ID))
-        `when`(accountsRepository.activeAccounts()).thenReturn(mockListOfAccounts)
-
-        val result = getActiveAccountUseCase.run(Unit)
-
-        result.isLeft shouldBe true
-    }
+            result.isLeft shouldBe true
+            result.onFailure {
+                it shouldBe CannotFindActiveAccount
+            }
+            verifyNoInteractions(accountsRepository)
+        }
 
     @Test
-    fun `given use-case is executed, when failure is returned from data layer, then return failure`() = runBlockingTest {
-        `when`(accountsRepository.activeAccounts()).thenReturn(Either.Left(ServerError))
+    fun `given use-case is executed, when an active account with id exists in database, then return that account`() =
+        runBlockingTest {
+            val activeAccount = mock(ActiveAccount::class)
 
-        val result = getActiveAccountUseCase.run(Unit)
+            `when`(userRepository.currentUserId()).thenReturn(TEST_USER_ID)
+            `when`(accountsRepository.activeAccountById(TEST_USER_ID)).thenReturn(Either.Right(activeAccount))
 
-        result.isLeft shouldBe true
+            val result = getActiveAccountUseCase.run(Unit)
 
-        verifyNoInteractions(userRepository)
-    }
+            result.isRight shouldBe true
+            result.map {
+                it shouldBe activeAccount
+            }
+            verify(accountsRepository).activeAccountById(TEST_USER_ID)
+        }
 
-    private fun successListOfAccounts(): Either<Failure, List<ActiveAccount>>? {
-        val activeAccount = mock(ActiveAccount::class)
-        lenient().`when`(activeAccount.id).thenReturn(TEST_ACTIVE_USER_ID)
-        return Either.Right(listOf(activeAccount))
-    }
+    @Test
+    fun `given use-case is executed, when no active account with id exists in database, then return CannotFindActiveAccount`() =
+        runBlockingTest {
+            `when`(userRepository.currentUserId()).thenReturn(TEST_USER_ID)
+            `when`(accountsRepository.activeAccountById(TEST_USER_ID)).thenReturn(Either.Right(null))
+
+            val result = getActiveAccountUseCase.run(Unit)
+
+            result.isLeft shouldBe true
+            result.onFailure {
+                it shouldBe CannotFindActiveAccount
+            }
+            verify(accountsRepository).activeAccountById(TEST_USER_ID)
+        }
+
+    @Test
+    fun `given use-case is executed, when failure is returned from data layer, then return failure`() =
+        runBlockingTest {
+            val failure = mock(Failure::class)
+            `when`(userRepository.currentUserId()).thenReturn(TEST_USER_ID)
+            `when`(accountsRepository.activeAccountById(TEST_USER_ID)).thenReturn(Either.Left(failure))
+
+            val result = getActiveAccountUseCase.run(Unit)
+
+            result.isLeft shouldBe true
+            result.onFailure {
+                it shouldBe failure
+            }
+        }
 
     companion object {
-        private const val TEST_NON_ACTIVE_USER_ID = "wrongUserId"
-        private const val TEST_ACTIVE_USER_ID = "testUserId"
+        private const val TEST_USER_ID = "testUserId"
     }
 }

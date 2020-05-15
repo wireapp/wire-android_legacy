@@ -184,7 +184,7 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     }
   }
 
-   def showCustomBackendDialog(configUrl: URL): Unit = {
+  def showCustomBackendDialog(configUrl: URL): Unit = {
     inject[AccentColorController].accentColor.head.flatMap { color =>
       showConfirmationDialog(
         title = ContextUtils.getString(R.string.custom_backend_dialog_confirmation_title),
@@ -196,35 +196,40 @@ class AppEntryActivity extends BaseActivity with SSOFragmentHandler {
     }.foreach {
       case false =>
       case true =>
-        enableProgress(true)
-        inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
-          case Left(ErrorResponse(ErrorResponse.NotFound, _, _)) =>
-            enableProgress(false)
-            showErrorDialog(
-              getString(R.string.custom_backend_not_found_error_title),
-              getString(R.string.custom_backend_not_found_error_message, configUrl.getHost))
-
-          case Left(errorResponse) =>
-            error(l"error trying to download backend config.", errorResponse)
-            enableProgress(false)
-
-            showErrorDialog(
-              R.string.custom_backend_dialog_network_error_title,
-              R.string.custom_backend_dialog_network_error_message)
-
-          case Right(config) =>
-            enableProgress(false)
-
-            backendController.switchBackend(inject[GlobalModule], config, configUrl)
-
-            // re-present fragment for updated ui.
-            getSupportFragmentManager.popBackStackImmediate(CustomBackendLoginFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            showCustomBackendLoginScreen()
-        }
+        loadBackendConfig(configUrl)
     }
   }
 
-   private def showCustomBackendLoginScreen(): Unit = {
+  def showStartSSOScreen() = showFragment(StartSSOFragment.newInstance(), StartSSOFragment.TAG, animated = false)
+
+  def loadBackendConfig(configUrl: URL) = {
+    enableProgress(true)
+    inject[CustomBackendClient].loadBackendConfig(configUrl).foreach {
+      case Left(ErrorResponse(ErrorResponse.NotFound, _, _)) =>
+        enableProgress(false)
+        showErrorDialog(
+          getString(R.string.custom_backend_not_found_error_title),
+          getString(R.string.custom_backend_not_found_error_message, configUrl.getHost))
+
+      case Left(errorResponse) =>
+        error(l"error trying to download backend config.", errorResponse)
+        enableProgress(false)
+
+        showErrorDialog(
+          R.string.custom_backend_dialog_network_error_title,
+          R.string.custom_backend_dialog_network_error_message)
+
+      case Right(config) =>
+        enableProgress(false)
+        backendController.switchBackend(inject[GlobalModule], config, configUrl)
+
+        // re-present fragment for updated ui.
+        getSupportFragmentManager.popBackStackImmediate(StartSSOFragment.TAG, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        showStartSSOScreen()
+    }
+  }
+
+  def showCustomBackendLoginScreen(): Unit = {
      val customBackendLoginFragment = new CustomBackendLoginFragment
      customBackendLoginFragment.onEmailLoginClick.onUi { _ => showEmailSignInForCustomBackend() }
      showFragment(customBackendLoginFragment, CustomBackendLoginFragment.TAG, animated = false)

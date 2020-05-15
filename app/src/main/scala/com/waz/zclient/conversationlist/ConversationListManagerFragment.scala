@@ -268,7 +268,6 @@ class ConversationListManagerFragment extends Fragment
 
   override def onShowUserProfile(userId: UserId, fromDeepLink: Boolean) =
     if (!pickUserController.isShowingUserProfile) {
-
       def show(fragment: Fragment, tag: String): Unit = {
         getChildFragmentManager
           .beginTransaction
@@ -291,10 +290,8 @@ class ConversationListManagerFragment extends Fragment
         import com.waz.api.ConnectionStatus._
         userData.connection match {
           case CANCELLED | UNCONNECTED =>
-            if (!userData.isConnected) {
               show(SendConnectRequestFragment.newInstance(userId, userRequester), SendConnectRequestFragment.Tag)
               navController.setLeftPage(Page.SEND_CONNECT_REQUEST, Tag)
-            }
 
           case PENDING_FROM_OTHER  =>
             show(

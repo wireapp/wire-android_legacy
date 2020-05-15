@@ -181,6 +181,7 @@ object Generators {
       arbitrary[RequestForUser],
       arbitrary[RequestForConversation],
       arbitrary[SyncUser],
+      arbitrary[SyncSearchResults],
       arbitrary[SyncConversation],
       arbitrary[SyncSearchQuery],
       arbitrary[SyncRichMedia],
@@ -189,7 +190,6 @@ object Generators {
       arbitrary[PostConvJoin],
       arbitrary[PostConvLeave],
       arbitrary[DeletePushToken],
-      arbitrary[PostAddressBook],
       arbitrary[SyncPreKeys]))
 
     implicit lazy val arbUserBasedSyncRequest: Arbitrary[RequestForUser] = Arbitrary(oneOf(
@@ -210,6 +210,7 @@ object Generators {
     lazy val arbSimpleSyncRequest: Arbitrary[SyncRequest] = Arbitrary(oneOf(SyncSelf, DeleteAccount, SyncConversations, SyncConnections))
 
     implicit lazy val arbUsersSyncRequest: Arbitrary[SyncUser] = Arbitrary(listOf(arbitrary[UserId]) map { u => SyncUser(u.toSet) })
+    implicit lazy val arbSearchResultSyncRequest: Arbitrary[SyncSearchResults] = Arbitrary(listOf(arbitrary[UserId]) map { u => SyncSearchResults(u.toSet) })
     implicit lazy val arbConvsSyncRequest: Arbitrary[SyncConversation] = Arbitrary(listOf(arbitrary[ConvId]) map { c => SyncConversation(c.toSet) })
     implicit lazy val arbSearchSyncRequest: Arbitrary[SyncSearchQuery] = Arbitrary(resultOf(SyncSearchQuery))
     implicit lazy val arbSelfPictureSyncRequest: Arbitrary[PostSelfPicture] = Arbitrary(resultOf(PostSelfPicture))
@@ -227,7 +228,6 @@ object Generators {
     implicit lazy val arbPostConvJoinSyncRequest: Arbitrary[PostConvJoin] = Arbitrary(resultOf(PostConvJoin))
     implicit lazy val arbPostConvLeaveSyncRequest: Arbitrary[PostConvLeave] = Arbitrary(resultOf(PostConvLeave))
     implicit lazy val arbConnectionSyncRequest: Arbitrary[PostConnection] = Arbitrary(resultOf(PostConnection))
-    implicit lazy val arbAddressBookSyncRequest: Arbitrary[PostAddressBook] = Arbitrary(resultOf(PostAddressBook))
     implicit lazy val arbPostLiking: Arbitrary[PostLiking] = Arbitrary(resultOf(PostLiking))
     implicit lazy val arbSyncPreKey: Arbitrary[SyncPreKeys] = Arbitrary(resultOf(SyncPreKeys))
     implicit lazy val arbPostAssetStatus: Arbitrary[PostAssetStatus] = Arbitrary(resultOf(PostAssetStatus))
@@ -248,7 +248,6 @@ object Generators {
   implicit lazy val arbGcmId: Arbitrary[PushToken]           = Arbitrary(sideEffect(PushToken()))
   implicit lazy val arbMessageId: Arbitrary[MessageId]   = Arbitrary(sideEffect(MessageId()))
   implicit lazy val arbTrackingId: Arbitrary[TrackingId] = Arbitrary(sideEffect(TrackingId()))
-  implicit lazy val arbContactId: Arbitrary[ContactId]   = Arbitrary(sideEffect(ContactId()))
   implicit lazy val arbCallSessionId: Arbitrary[CallSessionId] = Arbitrary(sideEffect(CallSessionId()))
   implicit lazy val arbClientId: Arbitrary[ClientId] = Arbitrary(sideEffect(ClientId()))
 
@@ -291,11 +290,6 @@ object Generators {
     trackingId <- arbitrary[Option[TrackingId]]
     accent <- arbitrary[Option[Int]]
   } yield UserInfo(userId, name.map(Name), accent, email, phone, Some(picture.toSeq), trackingId))
-
-  implicit lazy val arbAddressBook: Arbitrary[AddressBook] = Arbitrary(for {
-    selfHashes <- arbitrary[Seq[String]] map (_ map sha2)
-    contacts   <- arbitrary[Seq[AddressBook.ContactHashes]]
-  } yield AddressBook(selfHashes, contacts))
 
   implicit lazy val arbContactData: Arbitrary[AddressBook.ContactHashes] = Arbitrary(for {
     id     <- arbitrary[String] map sha2

@@ -22,37 +22,37 @@ import com.waz.log.LogSE._
 import com.waz.model.Handle
 import com.waz.service.{SearchQuery, UserSearchService}
 import com.waz.sync.SyncResult
-import com.waz.sync.client.UserSearchClient
+import com.waz.sync.client.{UserSearchClient, UsersClient}
 import com.waz.threading.Threading
 
 import scala.concurrent.Future
-import scala.concurrent.Future.successful
 
-class UserSearchSyncHandler(userSearch: UserSearchService,
-                            client: UserSearchClient,
-                            usersSyncHandler: UsersSyncHandler) extends DerivedLogTag {
+class UserSearchSyncHandler(userSearch:  UserSearchService,
+                            client:      UserSearchClient,
+                            usersClient: UsersClient
+                           )
+  extends DerivedLogTag {
 
   import Threading.Implicits.Background
 
-  def syncSearchQuery(query: SearchQuery): Future[SyncResult] = {
-    debug(l"starting sync for: $query")
-    client.getContacts(query).future flatMap {
-      case Right(results) =>
-        userSearch.updateSearchResults(query, results)
-          .map(_ => SyncResult.Success)
-      case Left(error) =>
-        successful(SyncResult(error))
-    }
+  def syncSearchQuery(query: SearchQuery): Future[SyncResult] = client.search(query).future.map {
+    case Right(results) =>
+      debug(l"syncSearchQuery got: ${results.documents.map(_.team)}")
+      userSearch.updateSearchResults(query, results)
+      SyncResult.Success
+    case Left(error) =>
+      SyncResult(error)
   }
 
-  def exactMatchHandle(handle: Handle): Future[SyncResult] = client.exactMatchHandle(handle).future.flatMap {
-    case Right(Some(userId)) =>
-      debug(l"exactMatchHandle, got: $userId for the handle $handle")
-      for {
-        _ <- usersSyncHandler.syncUsers(userId)
-        _ <- userSearch.updateExactMatch(userId)
-      } yield SyncResult.Success
-    case Right(None)         => successful(SyncResult.Success)
-    case Left(error)         => successful(SyncResult(error))
+  def exactMatchHandle(handle: Handle): Future[SyncResult] = usersClient.loadByHandle(handle).future.map {
+    case Right(Some(user)) =>
+      debug(l"exactMatchHandle, got: ${user.id} for the handle $handle")
+      userSearch.updateExactMatch(user)
+      SyncResult.Success
+    case Right(None) =>
+      debug(l"exactMatchHandle, No user id for the handle $handle")
+      SyncResult.Success
+    case Left(error) =>
+      SyncResult(error)
   }
 }

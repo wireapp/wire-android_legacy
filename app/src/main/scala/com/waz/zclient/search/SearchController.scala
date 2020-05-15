@@ -19,12 +19,12 @@ package com.waz.zclient.search
 
 import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model.{IntegrationData, UserData}
+import com.waz.model.IntegrationData
 import com.waz.service.{IntegrationsService, SearchQuery, SearchResults, UserSearchService}
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.conversation.creation.CreateConversationController
-import com.waz.zclient.{Injectable, Injector}
 import com.waz.zclient.log.LogUI._
+import com.waz.zclient.{Injectable, Injector}
 
 class SearchController(implicit inj: Injector, eventContext: EventContext) extends Injectable with DerivedLogTag {
 
@@ -40,6 +40,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
 
   lazy val addUserOrServices: Signal[AddUserListState] = {
     import AddUserListState._
+
     for {
       filter  <- filter
       tab     <- tab
@@ -48,6 +49,7 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
           lazy val query = SearchQuery(filter)
           for {
             search      <- searchService
+            _           <- Signal(search.syncSearchResults(query))
             convId      <- createConvController.convId
             teamOnly    <- createConvController.teamOnly
             results     <- convId match {
@@ -55,9 +57,9 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
               case None => search.usersForNewConversation(query, teamOnly)
             }
           } yield
-            if (results.isEmpty)
+            if (results.isEmpty) {
               if (filter.isEmpty) NoUsers else NoUsersFound
-            else Users(results)
+            } else Users(results)
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
@@ -84,9 +86,9 @@ class SearchController(implicit inj: Injector, eventContext: EventContext) exten
             results     <- search.search(filter)
             _ = verbose(l"results: $results")
           } yield
-            if (results.isEmpty)
+            if (results.isEmpty) {
               if (filter.isEmpty) NoUsers else NoUsersFound
-            else Users(results)
+            } else Users(results)
         case Tab.Services =>
           servicesService.flatMap { svc =>
             Signal
@@ -110,7 +112,7 @@ object SearchController {
   object AddUserListState {
     case object NoUsers extends AddUserListState
     case object NoUsersFound extends AddUserListState
-    case class Users(us: Seq[UserData]) extends AddUserListState
+    case class Users(us: SearchResults) extends AddUserListState
 
     case object NoServices extends AddUserListState
     case object NoServicesFound extends AddUserListState

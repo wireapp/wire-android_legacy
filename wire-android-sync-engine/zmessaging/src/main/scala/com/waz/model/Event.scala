@@ -81,8 +81,6 @@ case class UserDeleteEvent(user: UserId) extends UserEvent
 case class OtrClientAddEvent(client: Client) extends OtrClientEvent
 case class OtrClientRemoveEvent(client: ClientId) extends OtrClientEvent
 
-case class ContactJoinEvent(user: UserId, name: Name) extends Event
-
 case class PushTokenRemoveEvent(token: PushToken, senderId: String, client: Option[String]) extends Event
 
 sealed trait ConversationEvent extends RConvEvent {
@@ -219,8 +217,6 @@ object Event {
 
     def connectionEvent(implicit js: JSONObject, name: Option[Name]) = UserConnectionEvent('conversation, 'from, 'to, 'message, ConnectionStatus('status), JsonDecoder.decodeISORemoteInstant('last_update), fromUserName = name)
 
-    def contactJoinEvent(implicit js: JSONObject) = ContactJoinEvent('id, 'name)
-
     def gcmTokenRemoveEvent(implicit js: JSONObject) = PushTokenRemoveEvent(token = 'token, senderId = 'app, client = 'client)
 
     override def apply(implicit js: JSONObject): Event = Try {
@@ -231,7 +227,6 @@ object Event {
         case "user.update" => UserUpdateEvent(JsonDecoder[UserInfo]('user))
         case "user.identity-remove" => UserUpdateEvent(JsonDecoder[UserInfo]('user), true)
         case "user.connection" => connectionEvent(js.getJSONObject("connection"), JsonDecoder.opt('user, _.getJSONObject("user")) flatMap (JsonDecoder.decodeOptName('name)(_)))
-        case "user.contact-join" => contactJoinEvent(js.getJSONObject("user"))
         case "user.push-remove" => gcmTokenRemoveEvent(js.getJSONObject("token"))
         case "user.delete" => UserDeleteEvent(user = 'id)
         case "user.client-add" => OtrClientAddEvent(OtrClient.ClientsResponse.client(js.getJSONObject("client")))
@@ -385,18 +380,11 @@ object TeamEvent extends DerivedLogTag {
     * See: https://github.com/wireapp/architecture/blob/master/teams/backend.md
     */
 
-  case class Create(teamId: TeamId) extends TeamEvent
-  case class Delete(teamId: TeamId) extends TeamEvent
   case class Update(teamId: TeamId, name: Option[Name], icon: AssetId) extends TeamEvent
-
-  case class Ignored() extends TeamEvent {
-    override val teamId: TeamId = TeamId.Empty
-  }
 
   sealed trait MemberEvent extends TeamEvent {
     val userId: UserId
   }
-  case class MemberJoin(teamId: TeamId, userId: UserId) extends MemberEvent
   case class MemberLeave(teamId: TeamId, userId: UserId) extends MemberEvent
   case class MemberUpdate(teamId: TeamId, userId: UserId) extends MemberEvent
 
@@ -404,24 +392,17 @@ object TeamEvent extends DerivedLogTag {
     val convId: RConvId
   }
 
-  case class ConversationCreate(teamId: TeamId, convId: RConvId) extends ConversationEvent
-
   case class UnknownTeamEvent(js: JSONObject) extends TeamEvent { override val teamId = TeamId.Empty }
 
   implicit lazy val TeamEventDecoder: JsonDecoder[TeamEvent] = new JsonDecoder[TeamEvent] {
 
     override def apply(implicit js: JSONObject): TeamEvent =
       decodeString('type) match {
-        case "team.create"              => Create('team)
-        case "team.delete"              => Delete('team)
         case "team.update"              => Update('team, decodeOptName('name)('data), AssetId(decodeString('icon)('data)))
-        case "team.member-join"         => MemberJoin ('team, UserId(decodeString('user)('data)))
         case "team.member-leave"        => MemberLeave('team, UserId(decodeString('user)('data)))
         case "team.member-update"       => MemberUpdate('team, UserId(decodeString('user)('data)))
-        case "team.conversation-create" => ConversationCreate('team, RConvId(decodeString('conv)('data)))
-        case "team.conversation-delete" => Ignored()
         case _ =>
-          error(l"Unhandled event: $js")
+          warn(l"Unhandled/ignored event: $js")
           UnknownTeamEvent(js)
     }
   }

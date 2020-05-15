@@ -43,7 +43,7 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
   import SearchUIAdapter._
   import SearchViewItem._
 
-  private var results = mutable.ListBuffer[SearchViewItem]()
+  private val results = mutable.ArrayBuffer[SearchViewItem]()
 
   setHasStableIds(true)
 
@@ -81,20 +81,15 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
     val item: SearchViewItem = results(position)
     item.itemType match {
       case TopUsers =>
-        val topUserData = item.asInstanceOf[TopUserViewItem].data
-        holder.asInstanceOf[TopUsersViewHolder].bind(topUserData)
+        holder.asInstanceOf[TopUsersViewHolder].bind(item.asInstanceOf[TopUserViewItem])
       case GroupConversation =>
-        val groupConversationData = item.asInstanceOf[GroupConversationViewItem].data
-        holder.asInstanceOf[ConversationViewHolder].bind(groupConversationData)
+        holder.asInstanceOf[ConversationViewHolder].bind(item.asInstanceOf[GroupConversationViewItem])
       case ConnectedUser | UnconnectedUser =>
-        val userConnectionData = item.asInstanceOf[ConnectionViewItem].data
-        holder.asInstanceOf[UserViewHolder].bind(userConnectionData)
+        holder.asInstanceOf[UserViewHolder].bind(item.asInstanceOf[ConnectionViewItem])
       case SectionHeader =>
-        val sectionData = item.asInstanceOf[SectionViewItem].data
-        holder.asInstanceOf[SectionHeaderViewHolder].bind(sectionData)
+        holder.asInstanceOf[SectionHeaderViewHolder].bind(item.asInstanceOf[SectionViewItem])
       case Expand =>
-        val expandData = item.asInstanceOf[ExpandViewItem].data
-        holder.asInstanceOf[SectionExpanderViewHolder].bind(expandData, new View.OnClickListener {
+        holder.asInstanceOf[SectionExpanderViewHolder].bind(item.asInstanceOf[ExpandViewItem], new View.OnClickListener {
           override def onClick(view: View): Unit = {
             if (item.section == SectionViewItem.ContactsSection) {
               adapterCallback.onContactsExpanded()
@@ -104,14 +99,14 @@ class SearchUIAdapter(adapterCallback: Callback) extends RecyclerView.Adapter[Re
           }
         })
       case Integration =>
-        val integrationData = item.asInstanceOf[IntegrationViewItem].data
-        holder.asInstanceOf[IntegrationViewHolder].bind(integrationData)
+        holder.asInstanceOf[IntegrationViewHolder].bind(item.asInstanceOf[IntegrationViewItem])
       case _ =>
     }
   }
 
-  def updateResults(results: mutable.ListBuffer[SearchViewItem]): Unit = {
-    this.results = results
+  def updateResults(results: List[SearchViewItem]): Unit = {
+    this.results.clear()
+    this.results ++= results
     notifyDataSetChanged()
   }
 
@@ -134,7 +129,7 @@ object SearchUIAdapter {
 
     def onGroupsExpanded(): Unit
 
-    def onUserClicked(userId: UserId): Unit
+    def onUserClicked(user: UserData): Unit
 
     def onIntegrationClicked(data: IntegrationData): Unit
 
@@ -191,7 +186,7 @@ object SearchUIAdapter {
     topUsersRecyclerView.setHasFixedSize(false)
     topUsersRecyclerView.setAdapter(this.topUserAdapter)
 
-    def bind(topUserViewModel: TopUserViewModel): Unit = topUserAdapter.setTopUsers(topUserViewModel.topUsers)
+    def bind(item: TopUserViewItem): Unit = topUserAdapter.setTopUsers(item.topUsers)
   }
 
   object TopUsersViewHolder {
@@ -217,7 +212,7 @@ object SearchUIAdapter {
     class TopUserViewHolder(view: TopUserChathead, callback: Callback) extends RecyclerView.ViewHolder(view) {
       private var user = Option.empty[UserData]
 
-      view.onClick(user.map(_.id).foreach(callback.onUserClicked))
+      view.onClick(user.foreach(callback.onUserClicked))
 
       def bind(user: UserData): Unit = {
         this.user = Some(user)
@@ -230,16 +225,14 @@ object SearchUIAdapter {
   class UserViewHolder(view: SingleUserRowView, callback: Callback) extends RecyclerView.ViewHolder(view) {
     private var userData = Option.empty[UserData]
 
-    view.onClick(userData.map(_.id).foreach(callback.onUserClicked))
+    view.onClick(userData.foreach(callback.onUserClicked))
     view.showArrow(false)
     view.showCheckbox(false)
     view.setTheme(Theme.Dark, background = false)
 
-    def bind(connectionViewModel: ConnectionViewModel): Unit = {
-      val userData = connectionViewModel.results(connectionViewModel.indexVal)
-      this.userData = Some(userData)
-      val teamId = connectionViewModel.team.map(_.id)
-      view.setUserData(userData, teamId, connectionViewModel.shouldHideUserStatus)
+    def bind(item: ConnectionViewItem): Unit = {
+      this.userData = Some(item.user)
+      view.setUserData(item.user, item.selfTeamId)
     }
   }
 
@@ -250,10 +243,9 @@ object SearchUIAdapter {
     view.onClick(conversation.foreach(callback.onConversationClicked))
     conversationRowView.applyDarkTheme()
 
-    def bind(groupConversationViewModel: GroupConversationViewModel): Unit = {
-      val conversationData = groupConversationViewModel.conversations(groupConversationViewModel.indexVal)
-      conversation = Some(conversationData)
-      conversationRowView.setConversation(conversationData)
+    def bind(item: GroupConversationViewItem): Unit = {
+      conversation = Some(item.conversation)
+      conversationRowView.setConversation(item.conversation)
     }
   }
 
@@ -266,19 +258,17 @@ object SearchUIAdapter {
     view.setTheme(Theme.Dark, background = false)
     view.setSeparatorVisible(true)
 
-    def bind(integrationViewModel: IntegrationViewModel): Unit = {
-      val integrationData = integrationViewModel.integrations(integrationViewModel.indexVal)
-      this.integrationData = Some(integrationData)
-      view.setIntegration(integrationData)
+    def bind(item: IntegrationViewItem): Unit = {
+      this.integrationData = Some(item.integration)
+      view.setIntegration(item.integration)
     }
   }
 
   class SectionExpanderViewHolder(val view: View) extends RecyclerView.ViewHolder(view) {
     private val viewAllTextView = ViewUtils.getView[TypefaceTextView](view, R.id.ttv_startui_section_header)
 
-    def bind(expandViewModel: ExpandViewModel, clickListener: View.OnClickListener): Unit = {
-      val itemCount = expandViewModel.itemCount
-      val title = getString(R.string.people_picker__search_result__expander_title, Integer.toString(itemCount))(view.getContext)
+    def bind(item: ExpandViewItem, clickListener: View.OnClickListener): Unit = {
+      val title = getString(R.string.people_picker__search_result__expander_title, Integer.toString(item.itemCount))(view.getContext)
       viewAllTextView.setText(title)
       viewAllTextView.setOnClickListener(clickListener)
     }
@@ -289,21 +279,17 @@ object SearchUIAdapter {
 
     private implicit val context: Context = sectionHeaderView.getContext
 
-    def bind(sectionViewModel: SectionViewModel): Unit = {
-      val section = sectionViewModel.section
-      val teamName = sectionViewModel.name
-      val title = section match {
-        case TopUsersSection                               => getString(R.string.people_picker__top_users_header_title)
-        case GroupConversationsSection if teamName.isEmpty => getString(R.string.people_picker__search_result_conversations_header_title)
-        case GroupConversationsSection                     => getString(R.string.people_picker__search_result_team_conversations_header_title, teamName)
-        case ContactsSection                               => getString(R.string.people_picker__search_result_connections_header_title)
-        case DirectorySection                              => getString(R.string.people_picker__search_result_others_header_title)
-        case IntegrationsSection                           => getString(R.string.integrations_picker__section_title)
+    def bind(item: SectionViewItem): Unit = sectionHeaderView.setText(
+      item.section match {
+        case TopUsersSection                                => getString(R.string.people_picker__top_users_header_title)
+        case GroupConversationsSection if item.name.isEmpty => getString(R.string.people_picker__search_result_conversations_header_title)
+        case GroupConversationsSection                      => getString(R.string.people_picker__search_result_team_conversations_header_title, item.name)
+        case ContactsSection                                => getString(R.string.people_picker__search_result_connections_searched_header_title)
+        case DirectorySection                               => getString(R.string.people_picker__search_result_others_header_title)
+        case IntegrationsSection                            => getString(R.string.integrations_picker__section_title)
       }
-      sectionHeaderView.setText(title)
-    }
+    )
   }
-
 }
 
 

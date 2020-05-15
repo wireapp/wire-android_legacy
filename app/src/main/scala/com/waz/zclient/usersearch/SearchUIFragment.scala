@@ -18,23 +18,20 @@
 
 package com.waz.zclient.usersearch
 
-import android.Manifest.permission.READ_CONTACTS
-import android.content.{Context, DialogInterface, Intent}
+import android.content.{Context, Intent}
 import android.os.Bundle
 import android.view._
 import android.view.animation.Animation
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget._
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
-import com.waz.content.UserPreferences
+import com.waz.content.UsersStorage
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model._
-import com.waz.permissions.PermissionsService
 import com.waz.service.tracking.{GroupConversationEvent, TrackingEvent, TrackingService}
 import com.waz.service.{SearchQuery, ZMessaging}
 import com.waz.threading.{CancellableFuture, Threading}
@@ -59,16 +56,16 @@ import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
 import com.waz.zclient.ui.text.TypefaceTextView
-import com.waz.zclient.usersearch.SearchUIFragment.{Container, PERFORM_SEARCH_DELAY, SHOW_KEYBOARD_THRESHOLD, TAG}
 import com.waz.zclient.usersearch.domain.RetrieveSearchResults
 import com.waz.zclient.usersearch.views.SearchEditText
 import com.waz.zclient.utils.ContextUtils._
 import com.waz.zclient.utils.{IntentUtils, ResColor, RichView, StringUtils, UiStorage, UserSignal}
 import com.waz.zclient.views._
 
-import scala.collection.immutable.ListSet
 import scala.concurrent.Future
 import scala.concurrent.duration._
+
+import com.waz.zclient.usersearch.SearchUIFragment._
 
 class SearchUIFragment extends BaseFragment[Container]
   with FragmentHelper
@@ -81,6 +78,8 @@ class SearchUIFragment extends BaseFragment[Container]
   private implicit def context: Context = getContext
 
   private lazy val zms                    = inject[Signal[ZMessaging]]
+  private lazy val usersStorage           = inject[Signal[UsersStorage]]
+  private lazy val teamId                 = inject[Signal[Option[TeamId]]]
   private lazy val self                   = zms.flatMap(z => UserSignal(z.selfUserId))
   private lazy val userAccountsController = inject[UserAccountsController]
   private lazy val accentColor            = inject[AccentColorController].accentColor.map(_.color)
@@ -93,9 +92,6 @@ class SearchUIFragment extends BaseFragment[Container]
   private lazy val pickUserController     = inject[IPickUserController]
   private lazy val conversationScreenController   = inject[IConversationScreenController]
   private lazy val navigationController   = inject[INavigationController]
-
-  private lazy val shareContactsPref      = zms.map(_.userPrefs.preference(UserPreferences.ShareContacts))
-  private lazy val showShareContactsPref  = zms.map(_.userPrefs.preference(UserPreferences.ShowShareContacts))
 
   private lazy val adapter                = new SearchUIAdapter(this)
   private lazy val searchController       = inject[SearchController]
@@ -285,7 +281,7 @@ class SearchUIFragment extends BaseFragment[Container]
       isExternal <- userAccountsController.isExternal
     } yield isTeam && !isExternal).onUi(tabs.setVisible)
 
-    searchController.filter! ""
+    searchController.filter ! ""
 
     containerSub = Some((for {
       kb <- keyboard.isKeyboardVisible
@@ -295,14 +291,6 @@ class SearchUIFragment extends BaseFragment[Container]
       .onUi(getContainer.getLoadingViewIndicator.setColor))
 
     emptyServicesIcon.foreach(_.setImageDrawable(ManageServicesIcon(ResColor.fromId(R.color.white_24))))
-  }
-
-  override def onStart(): Unit = {
-    super.onStart()
-    userAccountsController.isTeam.head.map {
-      case true => //
-      case _    => showShareContactsDialog()
-    }
   }
 
   override def onResume(): Unit = {
@@ -345,38 +333,50 @@ class SearchUIFragment extends BaseFragment[Container]
     }
     else false
 
-  override def onUserClicked(userId: UserId): Unit = zms.head.foreach { z =>
-    z.usersStorage.get(userId).foreach {
-      case Some(user) =>
-        import ConnectionStatus._
-        keyboard.hideKeyboardIfVisible()
-        if (user.connection == Accepted || (user.connection == Unconnected && z.teamId.isDefined && z.teamId == user.teamId)) {
-          conversationCreationInProgress.head.foreach {
-            case false =>
-              spinner.showSpinner(true)
-              conversationCreationInProgress ! true
-              userAccountsController
-                .getOrCreateAndOpenConvFor(userId)
-                .onComplete { _ =>
-                  spinner.hideSpinner()
-                  conversationCreationInProgress ! false
-                }
-            case _ =>
-          }
-        } else {
-          user.connection match {
-            case PendingFromUser | Blocked | Ignored | Cancelled | Unconnected =>
-              conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
-              pickUserController.showUserProfile(userId, false)
-            case ConnectionStatus.PendingFromOther =>
-              getContainer.showIncomingPendingConnectRequest(ConvId(userId.str))
-            case _ =>
-          }
+  override def onUserClicked(user: UserData): Unit = {
+    def checkStorageAndThen(doStuff: => Unit) = for {
+      storage <- usersStorage.head
+      _       <- storage.getOrCreate(user.id, user)
+    } yield doStuff
+
+    def tryOpenConversation() = conversationCreationInProgress.head.foreach {
+      case false =>
+        checkStorageAndThen {
+          spinner.showSpinner(true)
+          conversationCreationInProgress ! true
+          userAccountsController
+            .getOrCreateAndOpenConvFor(user.id)
+            .onComplete { _ =>
+              spinner.hideSpinner()
+              conversationCreationInProgress ! false
+            }
         }
-      case _ =>
+      case true =>
+    }
+
+    import ConnectionStatus._
+    keyboard.hideKeyboardIfVisible()
+    teamId.head.map((_, user.connection)).foreach {
+      case (Some(_), Accepted) =>
+        tryOpenConversation()
+      case (Some(tId), Unconnected) if user.teamId.contains(tId) =>
+        tryOpenConversation()
+      case (None, Accepted) =>
+        tryOpenConversation()
+      case (None, PendingFromOther) =>
+        checkStorageAndThen {
+          getContainer.showIncomingPendingConnectRequest(ConvId(user.id.str))
+        }
+      case (_, connection) if connectionsForOpenProfile.contains(connection) =>
+        conversationScreenController.setPopoverLaunchedMode(DialogLaunchMode.SEARCH)
+        checkStorageAndThen {
+          pickUserController.showUserProfile(user.id, false)
+        }
+
+      case (teamId, connection) =>
+        warn(l"Unhandled connection type. The UI shouldn't display such entry. teamId: $teamId, connection type: $connection")
     }
   }
-
 
   override def onConversationClicked(conversationData: ConversationData): Unit = {
     keyboard.hideKeyboardIfVisible()
@@ -429,43 +429,6 @@ class SearchUIFragment extends BaseFragment[Container]
     pickUserController.hidePickUser()
   }
 
-  // XXX Only show contact sharing dialogs for PERSONAL START UI
-  private def showShareContactsDialog(): Unit = {
-    (for {
-      false <- shareContactsPref.head.flatMap(_.apply())(Threading.Background)
-      true  <- showShareContactsPref.head.flatMap(_.apply())(Threading.Background)
-    } yield {}).map { _ =>
-      val checkBoxView= View.inflate(getContext, R.layout.dialog_checkbox, null)
-      val checkBox = checkBoxView.findViewById(R.id.checkbox).asInstanceOf[CheckBox]
-      var checked = false
-
-      checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-        def onCheckedChanged(buttonView: CompoundButton, isChecked: Boolean): Unit =
-          checked = isChecked
-      })
-      checkBox.setText(R.string.people_picker__share_contacts__nevvah)
-
-      new AlertDialog.Builder(getContext)
-        .setTitle(R.string.people_picker__share_contacts__title)
-        .setMessage(R.string.people_picker__share_contacts__message)
-        .setView(checkBoxView)
-        .setPositiveButton(R.string.people_picker__share_contacts__yay,
-          new DialogInterface.OnClickListener() {
-            def onClick(dialog: DialogInterface, which: Int): Unit =
-              inject[PermissionsService].requestAllPermissions(ListSet(READ_CONTACTS)).map { granted =>
-                shareContactsPref.head.flatMap(_ := granted)
-                if (!granted && !shouldShowRequestPermissionRationale(READ_CONTACTS)) showShareContactsPref.head.flatMap(_ := false)
-              }
-          })
-        .setNegativeButton(R.string.people_picker__share_contacts__nah,
-          new DialogInterface.OnClickListener() {
-            def onClick(dialog: DialogInterface, which: Int): Unit =
-              if (checked) showShareContactsPref.head.flatMap(_ := false)
-          }).create
-        .show()
-    }
-  }
-
   override def onIntegrationClicked(data: IntegrationData): Unit = {
     keyboard.hideKeyboardIfVisible()
     verbose(l"onIntegrationClicked(${data.id})")
@@ -498,6 +461,9 @@ object SearchUIFragment {
 
   private val SHOW_KEYBOARD_THRESHOLD: Int = 10
   private val PERFORM_SEARCH_DELAY = 500.millis
+
+  import ConnectionStatus._
+  private val connectionsForOpenProfile = Set(PendingFromUser, Blocked, Ignored, Cancelled, Unconnected)
 
   def newInstance(): SearchUIFragment = new SearchUIFragment
 

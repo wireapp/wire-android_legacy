@@ -23,8 +23,9 @@ import androidx.fragment.app.{Fragment, FragmentManager}
 import com.waz.api.impl.ErrorResponse
 import com.waz.api.impl.ErrorResponse.{ConnectionErrorCode, TimeoutCode}
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
-import com.waz.model2.transport.responses.{DomainSuccessful}
+import com.waz.model2.transport.responses.DomainSuccessful
 import com.waz.service.SSOService
+import com.waz.threading.Threading
 import com.waz.zclient.InputDialog._
 import com.waz.zclient._
 import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
@@ -111,6 +112,23 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         .setListener(dialogListener)
         .show(getChildFragmentManager, SSODialogTag)
 
+  protected def startSsoFlow(ssoCode: String, fromStart: Boolean = false) =
+    ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
+      onVerifyingToken(true)
+      ssoService.verifyToken(token).flatMap { result =>
+        onVerifyingToken(false)
+        userAccountsController.ssoToken ! None
+        result match {
+          case Right(true)  => goToSsoWebView(token.toString, fromStart)
+          case Right(false) => showSsoDialogFuture()
+          case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
+            showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
+          case Left(_)      => showSsoDialogFuture()
+        }
+      }(Threading.Ui)
+    }
+
+
   protected def verifySsoCode(input: String): Future[Unit] =
     ssoService.extractUUID(input).fold(Future.successful(())) { token =>
       onVerifyingToken(true)
@@ -118,9 +136,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
         onVerifyingToken(false)
         userAccountsController.ssoToken ! None
         result match {
-          case Right(true) =>
-            dismissSsoDialog()
-            showSsoWebView(token.toString)
+          case Right(true) => goToSsoWebView(token.toString)
           case Right(false) => showInlineSsoError(getString(R.string.sso_signin_wrong_code_message))
           case Left(errorResponse) => handleVerificationError(errorResponse)
         }
@@ -136,7 +152,7 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
           showInlineSsoError(getString(R.string.enterprise_signin_email_multiple_servers_not_supported))
         else {
           dismissSsoDialog()
-          Future.successful(activity.showCustomBackendDialog(new URL(configFileUrl)))
+          Future.successful(activity.loadBackendConfig(new URL(configFileUrl)))
         }
       case Right(_) => showInlineSsoError(getString(R.string.enterprise_signin_domain_not_found_error))
       case Left(err) => handleVerificationError(err)
@@ -150,11 +166,16 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
     case error => showInlineSsoError(getString(R.string.sso_signin_error_try_again_message, error.code.toString))
   }
 
-  private def dismissSsoDialog() = getSsoDialog.foreach(_.dismiss())
+  protected def showSsoDialogFuture() = Future.successful(extractTokenAndShowSSODialog(true))
+
+  protected def dismissSsoDialog() = getSsoDialog.foreach(_.dismiss())
 
   private def showInlineSsoError(errorText: String) = Future.successful(getSsoDialog.foreach(_.setError(errorText)))
 
-  protected def showSsoWebView(token: String) = {
+  protected def showSsoWebView(token: String, fromStart: Boolean) = {
+    if (fromStart) {
+      getActivity.getSupportFragmentManager.popBackStack()
+    }
     getFragmentManager.popBackStack(SSOWebViewFragment.Tag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     Future.successful(activity.showFragment(SSOWebViewFragment.newInstance(token.toString), SSOWebViewFragment.Tag))
   }
@@ -163,6 +184,11 @@ trait SSOFragment extends FragmentHelper with DerivedLogTag {
 
   protected def onVerifyingToken(verifying: Boolean): Unit =
     inject[SpinnerController].showSpinner(verifying)
+
+  protected def goToSsoWebView(token: String, fromStart: Boolean = false) = {
+    dismissSsoDialog()
+    showSsoWebView(token, fromStart)
+  }
 }
 
 trait SSOFragmentHandler {

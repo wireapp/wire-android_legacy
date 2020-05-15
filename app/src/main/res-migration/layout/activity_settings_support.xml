@@ -26,26 +26,22 @@
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/activitySettingsSupportToolbar"
-        android:layout_width="match_parent"
+        android:id="@+id/settingsSupportToolbar"
+        style="@style/Toolbar.Settings"
+        android:layout_width="0dp"
         android:layout_height="?actionBarSize"
-        android:background="@color/transparent"
-        android:theme="?actionBarTheme"
-        app:layout_constraintBottom_toTopOf="@id/activitySettingsSupportLayoutContainer"
+        app:layout_constraintBottom_toTopOf="@id/settingsSupportLayoutContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:popupTheme="?actionBarPopupTheme"
-        app:titleMarginStart="@dimen/wire__padding__regular" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <FrameLayout
-        android:id="@+id/activitySettingsSupportLayoutContainer"
+        android:id="@+id/settingsSupportLayoutContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/activitySettingsSupportToolbar" />
+        app:layout_constraintTop_toBottomOf="@id/settingsSupportToolbar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

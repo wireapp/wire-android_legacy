@@ -19,18 +19,17 @@ package com.waz.zclient.conversation.creation
 
 import android.content.Context
 import android.os.Bundle
-import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import android.view._
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
 import android.widget.{ImageView, TextView}
 import androidx.core.graphics.ColorUtils
+import androidx.recyclerview.widget.{LinearLayoutManager, RecyclerView}
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
-import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.{TeamSizeThreshold, ZMessaging}
+import com.waz.service.ZMessaging
 import com.waz.service.tracking.{OpenSelectParticipants, TrackingService}
 import com.waz.threading.Threading
 import com.waz.utils.events._
@@ -67,7 +66,6 @@ class AddParticipantsFragment extends FragmentHelper {
   private lazy val themeController    = inject[ThemeController]
   private lazy val userAccounts       = inject[UserAccountsController]
   private lazy val browserController  = inject[BrowserController]
-  private lazy val usersStorage       = inject[Signal[UsersStorage]]
 
   private lazy val adapter = AddParticipantsAdapter(newConvController.users, newConvController.integrations)
 
@@ -237,16 +235,13 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   private implicit val ctx = context
   private lazy val themeController = inject[ThemeController]
   private lazy val teamId = inject[Signal[Option[TeamId]]]
+  private lazy val currentUserController = inject[UserAccountsController]
 
   private val searchController = new SearchController()
 
   val filter = searchController.filter
   val tab    = searchController.tab
   val searchResults = searchController.addUserOrServices
-
-  private lazy val usersStorage = inject[Signal[UsersStorage]]
-
-  private var hideUserStatus = false
 
   setHasStableIds(true)
 
@@ -257,23 +252,28 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
 
   (for {
     res           <- searchResults
+    currentUser   <- currentUserController.currentUser
     usersSelected <- usersSelected
-    _teamId        <- teamId
+    _teamId       <- teamId
     servsSelected <- servicesSelected
-    hideStatus <- Signal.future(TeamSizeThreshold.shouldHideStatus(teamId, usersStorage))
-
-  } yield (_teamId, res, usersSelected, servsSelected, hideStatus)).onUi {
-    case (teamId, res, usersSelected, servsSelected, hideStatus) =>
+  } yield (_teamId, res, usersSelected, servsSelected, currentUser)).onUi {
+    case (teamId, res, usersSelected, servsSelected, currentUser) =>
       team = teamId
       val prev = this.results
-      hideUserStatus = hideStatus
 
       import AddUserListState._
-      val userResults = res match {
-        case Users(us) => us
-        case _ => Seq.empty
+
+      val (localResults, directoryResults) = res match {
+        case AddUserListState.Users(search) => (search.local, search.dir)
+        case _ => (Nil, Nil)
       }
 
+      val directoryTeamMembers = currentUser.map(_.teamId) match {
+        case Some(_)      => directoryResults.filter(_.teamId == teamId)
+        case None         => Nil
+      }
+
+      val userResults = (localResults ++ directoryTeamMembers).distinctBy(_.id)
       val integrationResults = res match {
         case Services(ss) => ss
         case _ => Seq.empty
@@ -334,7 +334,7 @@ case class AddParticipantsAdapter(usersSelected: SourceSignal[Set[UserId]],
   }
 
   override def onBindViewHolder(holder: SelectableRowViewHolder, position: Int): Unit = results(position) match {
-    case (Left(user), selected) => holder.bind(user, team, selected = selected, hideUserStatus)
+    case (Left(user), selected) => holder.bind(user, team, selected = selected)
     case (Right(integration), selected) => holder.bind(integration, selected = selected)
   }
 }
@@ -349,9 +349,9 @@ case class SelectableRowViewHolder(v: SingleUserRowView) extends RecyclerView.Vi
 
   var selectable: Option[Either[UserData, IntegrationData]] = None
 
-  def bind(user: UserData, teamId: Option[TeamId], selected: Boolean, hideStatus: Boolean) = {
+  def bind(user: UserData, teamId: Option[TeamId], selected: Boolean) = {
     this.selectable = Some(Left(user))
-    v.setUserData(user, teamId, hideStatus)
+    v.setUserData(user, teamId)
     v.setChecked(selected)
   }
 

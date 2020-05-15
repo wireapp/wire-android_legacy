@@ -136,9 +136,6 @@ class NotificationServiceImpl(selfUserId:      UserId,
         NotificationData(NotId(CONNECT_REQUEST, userId), msg.getOrElse(""), ConvId(userId.str), userId, CONNECT_REQUEST, time)
       case UserConnectionEvent(_, _, userId, _, ConnectionStatus.Accepted, time, _) =>
         NotificationData(NotId(CONNECT_ACCEPTED, userId), "", ConvId(userId.str), userId, CONNECT_ACCEPTED, time)
-      case ContactJoinEvent(userId, _) =>
-        verbose(l"ContactJoinEvent")
-        NotificationData(NotId(CONTACT_JOIN, userId), "", ConvId(userId.str), userId, CONTACT_JOIN)
     }
 
     if (toShow.nonEmpty)
@@ -255,10 +252,6 @@ class NotificationServiceImpl(selfUserId:      UserId,
             case ANY_ASSET    => Some(NotificationType.ANY_ASSET)
             case AUDIO_ASSET  => Some(NotificationType.AUDIO_ASSET)
             case VIDEO_ASSET  => Some(NotificationType.VIDEO_ASSET)
-            case MEMBER_JOIN  =>
-              if (msg.members == Set(msg.userId)) None // ignoring auto-generated member join event when user accepts connection
-              else Some(NotificationType.MEMBER_JOIN)
-            case MEMBER_LEAVE => Some(NotificationType.MEMBER_LEAVE)
             case COMPOSITE    => Some(NotificationType.COMPOSITE)
             case _ => None
           }

@@ -14,7 +14,7 @@ ext {
     avsGroup = 'com.wire'
 
     // proprietary avs artifact configuration
-    customAvsVersion = '5.5.6@aar'
+    customAvsVersion = '5.5.11@aar'
     customAvsInternalVersion = customAvsVersion
     customAvsName = 'avs'
     customAvsGroup = 'com.wearezeta.avs'
@@ -376,7 +376,6 @@ dependencies {
     implementation(BuildDependencies.androidX.workManager) {
         exclude group: 'androidx.room', module: 'room-runtime'
     }
-    implementation BuildDependencies.androidX.viewPager2
 
     // Play services
     implementation BuildDependencies.playServices.base

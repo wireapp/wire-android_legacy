@@ -43,6 +43,7 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
 
     private fun initEmailChangedListener() {
         createPersonalAccountEmailEditText.doAfterTextChanged {
+            showEmailError(String.empty())
             createPersonalAccountWithEmailViewModel.validateEmail(it.toString())
         }
     }
@@ -63,7 +64,6 @@ class CreatePersonalAccountEmailFragment : Fragment(R.layout.fragment_create_per
                     createPersonalAccountEmailEditText.text.toString()
                 )
                 showEmailVerificationScreen()
-                showEmailError(String.empty())
             }
             sendActivationCodeErrorLiveData.observe(viewLifecycleOwner) {
                 showEmailError(getString(it.errorMessage))

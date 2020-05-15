@@ -1,6 +1,6 @@
 package com.waz.db.migration.userdatabase
 
-import com.waz.KotlinMigrationHelper
+import com.waz.db.migration.KotlinMigrationHelper
 import com.waz.model.ReadReceipt.ReadReceiptDao
 import com.waz.model.{MessageId, ReadReceipt, RemoteInstant, UserId}
 import com.waz.utils.wrappers.{DB, SQLiteDBWrapper}

@@ -2,7 +2,7 @@
 
 object Versions {
     //wire android client
-    const val ANDROID_CLIENT_MAJOR_VERSION = "3.47."
+    const val ANDROID_CLIENT_MAJOR_VERSION = "3.48."
 
     //core
     const val KOTLIN = "1.3.60"
@@ -17,8 +17,6 @@ object Versions {
     //build
     const val COROUTINES = "1.3.2"
     const val WORK_MANAGER = "2.0.1"
-    //TODO: do not upgrade to 1.1.0 until google fixes this issue:
-    //https://github.com/material-components/material-components-android/issues/1077
     const val ANDROIDX_MATERIAL = "1.0.0"
     const val ANDROIDX_MULTIDEX = "2.0.0"
     const val ANDROIDX_APP_COMPAT = "1.0.0"
@@ -36,7 +34,6 @@ object Versions {
     const val ANDROIDX_ROOM = "2.2.2"
     const val ANDROIDX_BIOMETRIC = "1.0.1"
     const val ANDROIDX_ANNOTATION = "1.0.0"
-    const val ANDROIDX_VIEW_PAGER_2 = "1.0.0"
     const val PLAY_SERVICES = "17.0.0"
     const val PLAY_SERVICES_BASE = "17.1.0"
     const val FIREBASE_MESSAGING = "20.1.0"
@@ -100,8 +97,7 @@ object BuildDependencies {
         "roomCompiler" to "androidx.room:room-compiler:${Versions.ANDROIDX_ROOM}",
         "biometric" to "androidx.biometric:biometric:${Versions.ANDROIDX_BIOMETRIC}",
         "workManager" to "androidx.work:work-runtime:${Versions.WORK_MANAGER}",
-        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}",
-        "viewPager2" to "androidx.viewpager2:viewpager2:${Versions.ANDROIDX_VIEW_PAGER_2}"
+        "annotation" to "androidx.annotation:annotation:${Versions.ANDROIDX_ANNOTATION}"
     ))
     val playServices = PlayServicesDependencyMap(mapOf(
         "base" to "com.google.android.gms:play-services-base:${Versions.PLAY_SERVICES_BASE}",

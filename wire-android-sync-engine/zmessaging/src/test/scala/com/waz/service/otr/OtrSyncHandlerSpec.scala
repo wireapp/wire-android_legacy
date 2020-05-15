@@ -75,7 +75,7 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
       .returning(Future.successful(encryptedContent))
 
     (msgClient.postMessage _)
-      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent, nativePush = true), *, Option.empty[Set[UserId]])
+      .expects(conv.remoteId, OtrMessage(selfClientId, encryptedContent), *)
       .returning(CancellableFuture.successful(Right(MessageResponse.Success(ClientMismatch(time = RemoteInstant.Epoch)))))
 
     (service.deleteClients _)
@@ -167,9 +167,9 @@ class OtrSyncHandlerSpec extends AndroidFreeSpec {
 
     var callsToPostMessage = 0
     (msgClient.postMessage _)
-      .expects(conv.remoteId, *, *, Option.empty[Set[UserId]])
+      .expects(conv.remoteId, *, *)
       .twice()
-      .onCall { (_, msg, ignoreMissing: Boolean, _) =>
+      .onCall { (_, msg, ignoreMissing: Boolean) =>
         CancellableFuture.successful(Right {
           callsToPostMessage += 1
           ignoreMissing shouldEqual false

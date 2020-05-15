@@ -70,8 +70,8 @@ case class UserData(override val id:       UserId,
   lazy val isReadOnlyProfile: Boolean   = managedBy.exists(_ != ManagedBy.Wire) //if none or "Wire", then it's not read only.
   lazy val isWireBot: Boolean           = integrationId.nonEmpty
 
-  def updated(user: UserInfo): UserData = updated(user, withSearchKey = true)
-  def updated(user: UserInfo, withSearchKey: Boolean): UserData = copy(
+  def updated(user: UserInfo): UserData = updated(user, withSearchKey = true, permissions = permissions)
+  def updated(user: UserInfo, withSearchKey: Boolean, permissions: PermissionsMasks): UserData = copy(
     name          = user.name.getOrElse(name),
     email         = user.email.orElse(email),
     phone         = user.phone.orElse(phone),
@@ -89,11 +89,13 @@ case class UserData(override val id:       UserId,
     handle        = user.handle match {
       case Some(h) if !h.toString.isEmpty => Some(h)
       case _ => handle
-    }
+    },
+    permissions = permissions
   )
 
   def updated(user: UserSearchEntry): UserData = copy(
     name      = user.name,
+    teamId    = user.teamId,
     searchKey = SearchKey(user.name),
     accent    = user.colorId.getOrElse(accent),
     handle    = Some(user.handle)
@@ -173,7 +175,7 @@ object UserData {
   def apply(entry: UserSearchEntry): UserData =
     UserData(
       id        = entry.id,
-      teamId    = None,
+      teamId    = entry.teamId,
       name      = entry.name,
       accent    = entry.colorId.getOrElse(0),
       searchKey = SearchKey(entry.name),
@@ -182,7 +184,8 @@ object UserData {
 
   def apply(user: UserInfo): UserData = apply(user, withSearchKey = true)
 
-  def apply(user: UserInfo, withSearchKey: Boolean): UserData = UserData(user.id, user.name.getOrElse(Name.Empty)).updated(user, withSearchKey)
+  def apply(user: UserInfo, withSearchKey: Boolean): UserData =
+    UserData(user.id, user.name.getOrElse(Name.Empty)).updated(user, withSearchKey, permissions = (0L, 0L))
 
   implicit object UserDataDao extends Dao[UserData, UserId] with StorageCodecs {
     val Id = id[UserId]('_id, "PRIMARY KEY").apply(_.id)
@@ -243,8 +246,6 @@ object UserData {
     def findByConnectionStatus(status: Set[ConnectionStatus])(implicit db: DB): Managed[Iterator[UserData]] = iteratingMultiple(findInSet(Conn, status))
 
     def findAll(users: Set[UserId])(implicit db: DB) = iteratingMultiple(findInSet(Id, users))
-
-    def listContacts(implicit db: DB) = list(db.query(table.name, null, s"(${Conn.name} = ? or ${Conn.name} = ?) and ${Deleted.name} = 0", Array(ConnectionStatus.Accepted.code, ConnectionStatus.Blocked.code), null, null, null))
 
     def topPeople(implicit db: DB): Managed[Iterator[UserData]] =
       search(s"${Conn.name} = ? and ${Deleted.name} = 0", Array(Conn(ConnectionStatus.Accepted)))

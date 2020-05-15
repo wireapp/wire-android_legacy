@@ -1,6 +1,6 @@
 package com.waz.db.migration.userdatabase
 
-import com.waz.KotlinMigrationHelper
+import com.waz.db.migration.KotlinMigrationHelper
 import com.waz.model.{MD5, Mime, Sha256, UploadAssetId}
 import com.waz.service.assets.UploadAssetStorage.UploadAssetDao
 import com.waz.service.assets._

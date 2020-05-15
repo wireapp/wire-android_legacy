@@ -76,10 +76,6 @@ public class ConversationPagerFragment extends BaseFragment<ConversationPagerFra
         conversationPagerAdapter = new ConversationPagerAdapter(getChildFragmentManager());
         conversationPager.setAdapter(conversationPagerAdapter);
 
-        if (this.getControllerFactory().getUserPreferencesController().showContactsDialog()) {
-            conversationPager.setCurrentItem(NavigationController.FIRST_PAGE);
-        }
-
         return conversationPager;
     }
 

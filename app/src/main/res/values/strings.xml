@@ -93,7 +93,7 @@
     <string name="people_picker__top_users_header_title">Top people</string>
     <string name="people_picker__search_result_conversations_header_title">Groups</string>
     <string name="people_picker__search_result_team_conversations_header_title">%1$s Groups</string>
-    <string name="people_picker__search_result_connections_header_title">Contacts</string>
+    <string name="people_picker__search_result_connections_searched_header_title">Contacts</string>
     <string name="people_picker__search_result_others_header_title">Connect</string>
     <string name="people_picker__search_result__expander_title">Show all %1$s ↓</string>
     <string name="people_picker__search_people">PEOPLE</string>
@@ -120,14 +120,6 @@
     <string name="integrations_errors_add_service">Adding service not possible</string>
     <string name="integrations_errors_service_unavailable">The service is unavailable at the moment</string>
     <string name="conversation_errors_full">The conversation is full</string>
-
-    <!-- start ui / people picker, contacts sharing -->
-    <string name="people_picker__share_contacts__title">Share Contacts</string>
-    <string name="people_picker__share_contacts__message">Wire helps you find your friends if you share your contacts.</string>
-    <string name="people_picker__share_contacts__yay">Allow</string>
-    <string name="people_picker__share_contacts__nah">Deny</string>
-    <string name="people_picker__share_contacts__nevvah">Never ask again</string>
-
 
     <!-- Invite -->
     <!-- Should not use newline in the dialog message, not supported by all devices, text will be cut off -->
@@ -458,8 +450,6 @@
 
     <!-- Options -->
     <string name="pref_options_screen_title">Options</string>
-    <string name="pref_options_contacts_title">Share Contacts</string>
-    <string name="pref_options_contacts_summary">This helps you connect with others. We anonymize all the information and do not share it with anyone else.</string>
     <string name="pref_options_vbr_title">Variable Bit Rate Encoding</string>
     <string name="pref_options_vbr_summary">This makes audio calls use less data and work better on slower networks. Turn off to use Constant Bitrate Encoding.</string>
     <string name="pref_options_alerts_category_title">Alerts</string>
@@ -1471,7 +1461,7 @@
     <!-- SSO Login -->
     <string name="sso_login_dialog_title">Enterprise Login</string>
     <string name="sso_login_dialog_message">Please enter your SSO code:</string>
-    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server:</string>
+    <string name="email_sso_login_dialog_message">Please enter your email or SSO code. If your email matches an enterprise installation of Wire, this app will connect to that server.</string>
 
     <!-- Welcome -->
     <string name="welcome_to_wire">Welcome to Wire</string>
@@ -1529,5 +1519,9 @@
     <string name="composite_message_button_action_error">Your answer can\'t be sent, please retry.</string>
     <string name="composite_message_confirmed_button_content_description">%1$s confirmed</string>
 
+    <!-- StartSSO Screen  -->
+    <string name="start_sso_leaving_wire">Leaving Wire</string>
+    <string name="start_sso_redirected_to">You are being redirected to</string>
+    <string name="start_sso_notice">Provide credentials only if you\'re sure this is your organization\'s login.</string>
 </resources>
 

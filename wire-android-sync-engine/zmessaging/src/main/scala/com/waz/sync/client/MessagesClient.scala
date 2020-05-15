@@ -25,19 +25,13 @@ import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
 import com.waz.sync.client.OtrClient.{ClientMismatch, MessageResponse}
 import com.waz.sync.otr.OtrSyncHandler.OtrMessage
-import com.waz.utils._
 import com.waz.znet2.AuthRequestInterceptor
 import com.waz.znet2.http.Request.UrlCreator
 import com.waz.znet2.http._
 import com.wire.messages.nano.Otr
 
 trait MessagesClient {
-  def postMessage(
-      conv: RConvId,
-      content: OtrMessage,
-      ignoreMissing: Boolean,
-      receivers: Option[Set[UserId]] = None
-  ): ErrorOrResponse[MessageResponse]
+  def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse]
 }
 
 class MessagesClientImpl(implicit
@@ -50,13 +44,8 @@ class MessagesClientImpl(implicit
   import MessagesClient._
   import com.waz.threading.Threading.Implicits.Background
 
-  override def postMessage(
-      conv: RConvId,
-      content: OtrMessage,
-      ignoreMissing: Boolean,
-      receivers: Option[Set[UserId]] = None
-  ): ErrorOrResponse[MessageResponse] = {
-    Request.Post(relativePath = convMessagesPath(conv, ignoreMissing, receivers), body = content)
+  override def postMessage(conv: RConvId, content: OtrMessage, ignoreMissing: Boolean): ErrorOrResponse[MessageResponse] =
+    Request.Post(relativePath = convMessagesPath(conv, ignoreMissing), body = content)
       .withResultHttpCodes(ResponseCode.SuccessCodes + ResponseCode.PreconditionFailed)
       .withResultType[Response[ClientMismatch]]
       .withErrorType[ErrorResponse]
@@ -64,15 +53,13 @@ class MessagesClientImpl(implicit
         if (code == ResponseCode.PreconditionFailed) MessageResponse.Failure(body)
         else MessageResponse.Success(body)
       }
-  }
 }
 
 object MessagesClient extends DerivedLogTag {
 
-  def convMessagesPath(conv: RConvId, ignoreMissing: Boolean, receivers: Option[Set[UserId]] = None): String = {
+  def convMessagesPath(conv: RConvId, ignoreMissing: Boolean): String = {
     val base = s"/conversations/$conv/otr/messages"
-    if (ignoreMissing) s"$base?ignore_missing=true"
-    else receivers.fold2(base, uids => s"$base?report_missing=${uids.iterator.map(_.str).mkString(",")}")
+    if (ignoreMissing) s"$base?ignore_missing=true" else base
   }
 
   implicit val OtrMessageSerializer: RawBodySerializer[OtrMessage] = RawBodySerializer.create { m =>
@@ -81,6 +68,7 @@ object MessagesClient extends DerivedLogTag {
     msg.nativePush = m.nativePush
     msg.recipients = m.recipients.userEntries
     m.external foreach { msg.blob = _ }
+    m.report_missing.foreach(users => msg.reportMissing = users.map(OtrClient.userId).toArray)
 
     val bytes = MessageNano.toByteArray(msg)
     RawBody(mediaType = Some(MediaType.Protobuf), () => new ByteArrayInputStream(bytes), dataLength = Some(bytes.length))

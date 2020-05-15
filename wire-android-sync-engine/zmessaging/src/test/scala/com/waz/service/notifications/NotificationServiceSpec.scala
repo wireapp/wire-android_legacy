@@ -30,7 +30,7 @@ import com.waz.service.UserService
 import com.waz.service.push.{NotificationServiceImpl, NotificationUiController, PushService}
 import com.waz.specs.AndroidFreeSpec
 import com.waz.sync.client.ConversationsClient.ConversationResponse
-import com.waz.threading.{SerialDispatchQueue, Threading}
+import com.waz.threading.Threading
 import com.waz.utils._
 import com.waz.utils.events.Signal
 import org.threeten.bp.Duration
@@ -41,9 +41,8 @@ import scala.concurrent.duration._
 
 class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
 
-  import Threading.Implicits.Background
-
   import ConversationRole._
+  import Threading.Implicits.Background
 
   val messages      = mock[MessagesStorage]
   val storage       = mock[NotificationStorage]
@@ -552,13 +551,7 @@ class NotificationServiceSpec extends AndroidFreeSpec with DerivedLogTag {
         eventTime    = None
       )
 
-      (uiController.onNotificationsChanged _).expects(account1Id, *).onCall { (_, nots) =>
-        nots.size shouldEqual 1
-        nots.head.msg shouldEqual ""
-        nots.head.msgType shouldEqual NotificationType.MEMBER_JOIN
-        nots.head.hasBeenDisplayed shouldEqual false
-        Future.successful({})
-      }
+      (uiController.onNotificationsChanged _).expects(account1Id, *).never().returning(Future.successful({}))
 
       result(getService.messageNotificationEventsStage(rConvId, Vector(event)))
 

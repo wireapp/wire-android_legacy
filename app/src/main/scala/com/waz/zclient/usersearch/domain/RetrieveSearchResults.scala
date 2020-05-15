@@ -17,14 +17,10 @@
   */
 package com.waz.zclient.usersearch.domain
 
-import com.waz.content.UsersStorage
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.model._
-import com.waz.service.TeamSizeThreshold
-import com.waz.threading.Threading
 import com.waz.utils.events.{EventContext, Signal}
 import com.waz.zclient.common.controllers.UserAccountsController
-import com.waz.zclient.conversation.ConversationController
 import com.waz.zclient.log.LogUI._
 import com.waz.zclient.search.SearchController
 import com.waz.zclient.search.SearchController.{SearchUserListState, Tab}
@@ -40,10 +36,8 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   import SectionViewItem._
 
   private val userAccountsController    = inject[UserAccountsController]
-  private val convController            = inject[ConversationController]
   private val searchController          = inject[SearchController]
 
-  private var mergedResult              = mutable.ListBuffer[SearchViewItem]()
   private var collapsedContacts         = true
   private var collapsedGroups           = true
 
@@ -57,9 +51,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   private var currentUserCanAddServices = false
   private var noServices                = false
 
-  private lazy val usersStorage      = inject[Signal[UsersStorage]]
-
-  val resultsData = Signal(mergedResult)
+  val resultsData = Signal(List.empty[SearchViewItem])
 
   (for {
     curUser  <- userAccountsController.currentUser
@@ -98,11 +90,6 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       updateMergedResults()
   }
 
-  private var shouldHideUserStatus = false
-  TeamSizeThreshold.shouldHideStatus(Signal.const(team.map(_.id)), usersStorage).foreach { hide =>
-    shouldHideUserStatus = hide
-  }(Threading.Ui)
-
   def expandGroups(): Unit = {
     collapsedGroups = false
     updateMergedResults()
@@ -114,84 +101,77 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
   }
 
   private def updateMergedResults(): Unit = {
-    mergedResult = mutable.ListBuffer[SearchViewItem]()
+    val mergedResult = mutable.ListBuffer[SearchViewItem]()
 
     val teamName = team.map(_.name).getOrElse(Name.Empty)
 
-    def addTopPeople(): Unit = {
-      if (topUsers.nonEmpty) {
-        val topUserSectionHeader = new SectionViewItem(SectionViewModel(TopUsersSection, 0))
-        val topUsersListItem = new TopUserViewItem(TopUserViewModel(0, topUsers))
-        mergedResult = mergedResult ++ Seq(topUserSectionHeader)
-        mergedResult = mergedResult ++ Seq(topUsersListItem)
-      }
+    def addTopPeople(): Unit = if (topUsers.nonEmpty) {
+      mergedResult += SectionViewItem(TopUsersSection, 0)
+      mergedResult += TopUserViewItem(0, topUsers)
     }
 
     def addContacts(): Unit = {
-      if (localResults.nonEmpty) {
-        val contactsSectionHeader = new SectionViewItem(SectionViewModel(ContactsSection, 0, teamName))
-        mergedResult = mergedResult ++ Seq(contactsSectionHeader)
-        var contactsSection = Seq[SearchViewItem]()
+      val directoryTeamMembers = currentUser.map(_.teamId) match {
+        case Some(teamId) => directoryResults.filter(_.teamId == teamId)
+        case None         => Nil
+      }
+      val contactsList = (localResults ++ directoryTeamMembers).distinctBy(_.id)
+      if (contactsList.nonEmpty) {
+        mergedResult += SectionViewItem(ContactsSection, 0, teamName)
 
-        contactsSection = contactsSection ++ localResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, localResults(i).id.str.hashCode, isConnected = true, shouldHideUserStatus, localResults, localResults(i).name, team))
+        val contactsSection = contactsList.zipWithIndex.map { case (user, index) =>
+          ConnectionViewItem(index, user, team.map(_.id), connected = true)
         }
 
         val shouldCollapse = searchController.filter.currentValue.exists(_.nonEmpty) && collapsedContacts && contactsSection.size > CollapsedContacts
 
-        contactsSection = contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
-
-        mergedResult = mergedResult ++ contactsSection
-        if (shouldCollapse) {
-          val expandViewItem = ExpandViewItem(ExpandViewModel(ContactsSection, 0, localResults.size))
-          mergedResult = mergedResult ++ Seq(expandViewItem)
-        }
+        mergedResult ++= contactsSection.sortBy(_.name.str).take(if (shouldCollapse) CollapsedContacts else contactsSection.size)
+        if (shouldCollapse)
+          mergedResult += ExpandViewItem(ContactsSection, 0, contactsList.size)
       }
     }
 
-    def addGroupConversations(): Unit = {
-      if (conversations.nonEmpty) {
-        val groupConversationSectionHeader = new SectionViewItem(SectionViewModel(GroupConversationsSection, 0, teamName))
-        mergedResult = mergedResult ++ Seq(groupConversationSectionHeader)
+    def addGroupConversations(): Unit = if (conversations.nonEmpty) {
+      mergedResult += SectionViewItem(GroupConversationsSection, 0, teamName)
 
-        val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
+      val shouldCollapse = collapsedGroups && conversations.size > CollapsedGroups
 
-        mergedResult = mergedResult ++ conversations.indices.map { i =>
-          GroupConversationViewItem(GroupConversationViewModel(i, conversations(i).id.str.hashCode, conversations))
-        }.take(if (shouldCollapse) CollapsedGroups else conversations.size)
-        if (shouldCollapse) {
-          val expandViewItem = ExpandViewItem(ExpandViewModel(GroupConversationsSection, 0, conversations.size))
-          mergedResult = mergedResult ++ Seq(expandViewItem)
-        }
-      }
+      mergedResult ++= conversations.zipWithIndex.map { case (conv, index) =>
+        GroupConversationViewItem(index, conv)
+      }.take(if (shouldCollapse) CollapsedGroups else conversations.size)
+      if (shouldCollapse)
+        mergedResult += ExpandViewItem(GroupConversationsSection, 0, conversations.size)
     }
 
     def addConnections(): Unit = {
-      if (directoryResults.nonEmpty) {
-        val directorySectionHeader = SectionViewItem(SectionViewModel(DirectorySection, 0))
-        mergedResult = mergedResult ++ Seq(directorySectionHeader)
-        mergedResult = mergedResult ++ directoryResults.indices.map { i =>
-          ConnectionViewItem(ConnectionViewModel(i, directoryResults(i).id.str.hashCode, isConnected = false, shouldHideUserStatus, directoryResults, team = team))
+      val directoryExternalMembers = currentUser.map(_.teamId) match {
+        case Some(teamId) => directoryResults.filterNot(_.teamId == teamId)
+        case None         => Nil
+      }
+      if (directoryExternalMembers.nonEmpty) {
+        mergedResult += SectionViewItem(DirectorySection, 0)
+        mergedResult ++= directoryResults.zipWithIndex.map { case (user, index) =>
+          ConnectionViewItem(index, user, team.map(_.id), connected = false)
         }
       }
     }
 
     def addIntegrations(): Unit = {
       if (integrations.nonEmpty) {
-        mergedResult = mergedResult ++ integrations.indices.map { i =>
-          IntegrationViewItem(IntegrationViewModel(i, integrations(i).id.str.hashCode, integrations))
+        mergedResult ++= integrations.zipWithIndex.map { case (integration, index) =>
+          IntegrationViewItem(index, integration)
         }
       }
     }
 
     def addGroupCreationButton(): Unit =
-      mergedResult = mergedResult ++ Seq(TopUserButtonViewItem(TopUserButtonViewModel(NewConversation, TopUsersSection, 0)))
+      mergedResult += TopUserButtonViewItem(NewConversation, TopUsersSection, 0)
 
     def addGuestRoomCreationButton(): Unit =
-      mergedResult = mergedResult ++ Seq(TopUserButtonViewItem(TopUserButtonViewModel(NewGuestRoom, TopUsersSection, 0)))
+      mergedResult += TopUserButtonViewItem(NewGuestRoom, TopUsersSection, 0)
 
     def addManageServicesButton(): Unit =
-      mergedResult = mergedResult ++ Seq(TopUserButtonViewItem(TopUserButtonViewModel(ManageServices, TopUsersSection, 0)))
+      mergedResult += TopUserButtonViewItem(ManageServices, TopUsersSection, 0)
 
     if (team.isDefined) {
       if (searchController.tab.currentValue.contains(Tab.Services)) {
@@ -214,6 +194,7 @@ class RetrieveSearchResults()(implicit injector: Injector, eventContext: EventCo
       addGroupConversations()
       addConnections()
     }
-    resultsData ! mergedResult
+
+    resultsData ! mergedResult.toList
   }
 }

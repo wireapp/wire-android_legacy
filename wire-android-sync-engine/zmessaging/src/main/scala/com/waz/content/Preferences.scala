@@ -333,7 +333,6 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
       verbose(l"migrating global prefs to user prefs: ${currentPrefs.map(showString)}")
       import UserPreferences._
 
-      val shareContacts = if (!currentPrefs.contains(ShareContacts.str)) setValue(ShareContacts, gPrefs.getFromPref(GlobalPreferences._ShareContacts)) else Future.successful({})
       val darKTheme = if (!currentPrefs.contains(DarkTheme.str)) setValue(DarkTheme, gPrefs.getFromPref(GlobalPreferences._DarkTheme)) else Future.successful({})
       val sounds =
         if (!currentPrefs.contains(Sounds.str)) {
@@ -358,7 +357,6 @@ class UserPreferences(context: Context, storage: ZmsDatabase)
         else Future.successful({})
 
       for {
-        _ <- shareContacts
         _ <- darKTheme
         _ <- sounds
         _ <- wifiDownload
@@ -420,7 +418,6 @@ object GlobalPreferences {
   lazy val IncognitoKeyboardEnabled: PrefKey[Boolean] = PrefKey[Boolean]("incognito_keyboard_enabled", customDefault = false)
 
   //DEPRECATED!!! Use the UserPreferences instead!!
-  lazy val _ShareContacts = PrefKey[Boolean]("PREF_KEY_PRIVACY_CONTACTS")
   lazy val _DarkTheme = PrefKey[Boolean]("DarkTheme")
   lazy val _SoundsPrefKey = PrefKey[String]("PREF_KEY_SOUND")
   lazy val _DownloadImages = PrefKey[String]("zms_pref_image_download")
@@ -447,8 +444,6 @@ object UserPreferences {
   lazy val PendingPassword = PrefKey[Boolean]("pending_password") //true if the user needs to set a password
   lazy val PendingPhone = PrefKey[Option[PhoneNumber]]("pending_phone")
 
-  lazy val ShareContacts = PrefKey[Boolean]("share_contacts")
-  lazy val ShowShareContacts = PrefKey[Boolean]("show_share_contacts", customDefault = true) //whether to ask for permission or not
   lazy val DarkTheme = PrefKey[Boolean]("dark_theme")
   lazy val Sounds = PrefKey[IntensityLevel]("sounds")
   lazy val DownloadImagesAlways = PrefKey[Boolean]("download_images_always", customDefault = true)
@@ -466,9 +461,6 @@ object UserPreferences {
   lazy val GcmRegistrationTime = PrefKey[Instant]("gcm_registration_time")
   lazy val GcmRegistrationRetry = PrefKey[Int]("gcm_registration_retry_count")
 
-  lazy val AddressBookVersion = PrefKey[Option[Int]]("address_book_version_of_last_upload")
-  lazy val AddressBookLastUpload = PrefKey[Option[Instant]]("address_book_last_upload_time")
-
   lazy val RingTone = PrefKey[String]("ringtone_key")
   lazy val TextTone = PrefKey[String]("text_key")
   lazy val PingTone = PrefKey[String]("ping_key")
@@ -483,10 +475,12 @@ object UserPreferences {
 
   //increment number to perform slow sync on particular type
   lazy val ShouldSyncConversations = PrefKey[Boolean]("should_sync_conversations_2", customDefault = true)
-  lazy val ShouldSyncInitial = PrefKey[Boolean]("should_sync_initial_1", customDefault = true)
+  lazy val ShouldSyncInitial = PrefKey[Boolean]("should_sync_initial_2", customDefault = true)
   lazy val ShouldSyncUsers = PrefKey[Boolean]("should_sync_users_1", customDefault = true)
   lazy val ShouldSyncTeam = PrefKey[Boolean]("should_sync_team_1", customDefault = true)
   lazy val ShouldSyncFolders = PrefKey[Boolean]("should_sync_folders", customDefault = true)
+  lazy val LastTeamUpdate = PrefKey[Instant]("last_team_update", customDefault = Instant.EPOCH)
+  lazy val RemoveUncontactedTeamMembers = PrefKey[Boolean]("remove_uncontacted_team_members", customDefault = true)
 
   // fix for duplicated entries in the database, left there by a bug from an old version of the app
   lazy val FixDuplicatedConversations = PrefKey[Boolean]("fix_duplicated_conversations", customDefault = true)

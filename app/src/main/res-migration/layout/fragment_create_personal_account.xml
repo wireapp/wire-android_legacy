@@ -43,27 +43,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/topGuideline" />
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/createPersonalAccountTabLayout"
-        style="@style/TabLayout.Authentication"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/authentication_tab_layout_view_pager_margin_start"
-        android:layout_marginTop="@dimen/authentication_tab_layout_margin_top"
-        android:layout_marginEnd="@dimen/authentication_tab_layout_view_pager_margin_end"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountTitleTextView" />
 
-    <androidx.viewpager2.widget.ViewPager2
+    <androidx.viewpager.widget.ViewPager
         android:id="@+id/createPersonalAccountViewPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="@dimen/authentication_tab_layout_view_pager_margin_start"
-        android:layout_marginEnd="@dimen/authentication_tab_layout_view_pager_margin_end"
+        android:layout_marginStart="@dimen/authentication_view_pager_margin_start"
+        android:layout_marginTop="@dimen/authentication_view_pager_margin_top"
+        android:layout_marginEnd="@dimen/authentication_view_pager_margin_end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountTabLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/createPersonalAccountTitleTextView">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/createPersonalAccountTabLayout"
+            style="@style/TabLayout.Authentication"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </androidx.viewpager.widget.ViewPager>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

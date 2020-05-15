@@ -18,7 +18,6 @@
 package com.waz.model.sync
 
 import com.waz.api.IConversation.{Access, AccessRole}
-import com.waz.model.AddressBook.AddressBookDecoder
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.{AccentColor, Availability, _}
@@ -87,11 +86,6 @@ object SyncRequest {
     override val mergeKey: Any = (cmd, userId)
   }
 
-  case class PostAddressBook(addressBook: AddressBook) extends BaseRequest(Cmd.PostAddressBook) {
-    override def merge(req: SyncRequest) = mergeHelper[PostAddressBook](req)(Merged(_))
-    override def isDuplicateOf(req: SyncRequest): Boolean = req.cmd == Cmd.PostAddressBook
-  }
-
   case class PostSelf(data: UserInfo) extends BaseRequest(Cmd.PostSelf) {
     override def merge(req: SyncRequest) = mergeHelper[PostSelf](req)(Merged(_))
   }
@@ -104,6 +98,26 @@ object SyncRequest {
 
   case class DeletePushToken(token: PushToken) extends BaseRequest(Cmd.DeletePushToken) {
     override val mergeKey: Any = (cmd, token)
+  }
+
+  case class SyncSearchResults(users: Set[UserId]) extends BaseRequest(Cmd.SyncSearchResults) {
+
+    override def toString = s"SyncSearchResults(${users.size} users: ${users.take(5)}...)"
+
+    override def merge(req: SyncRequest): MergeResult[SyncRequest.SyncSearchResults] = mergeHelper[SyncSearchResults](req) { other =>
+      if (other.users.subsetOf(users)) Merged(this)
+      else {
+        val union = users ++ other.users
+        if (union.size <= UsersClient.IdsCountThreshold) Merged(SyncSearchResults(union))
+        else if (union.size == users.size + other.users.size) Unchanged
+        else Updated(other.copy(other.users -- users))
+      }
+    }
+
+    override def isDuplicateOf(req: SyncRequest): Boolean = req match {
+      case SyncSearchResults(us) => users.subsetOf(us)
+      case _ => false
+    }
   }
 
   case class SyncSearchQuery(query: SearchQuery) extends BaseRequest(Cmd.SyncSearchQuery) {
@@ -359,6 +373,7 @@ object SyncRequest {
           case Cmd.SyncConversation          => SyncConversation(decodeConvIdSeq('convs).toSet)
           case Cmd.SyncConvLink              => SyncConvLink('conv)
           case Cmd.SyncSearchQuery           => SyncSearchQuery(SearchQuery.fromCacheKey(decodeString('queryCacheKey)))
+          case Cmd.SyncSearchResults         => SyncSearchResults(users)
           case Cmd.ExactMatchHandle          => ExactMatchHandle(Handle(decodeString('handle)))
           case Cmd.PostConv                  => PostConv(convId, decodeStringSeq('users).map(UserId(_)).toSet, 'name, 'team, 'access, 'access_role, 'receipt_mode, 'default_role)
           case Cmd.PostConvName              => PostConvName(convId, 'name)
@@ -390,7 +405,6 @@ object SyncRequest {
           case Cmd.SyncConnections           => SyncConnections
           case Cmd.RegisterPushToken         => RegisterPushToken(decodeId[PushToken]('token))
           case Cmd.PostSelf                  => PostSelf(JsonDecoder[UserInfo]('user))
-          case Cmd.PostAddressBook           => PostAddressBook(JsonDecoder.opt[AddressBook]('addressBook).getOrElse(AddressBook.Empty))
           case Cmd.SyncSelfClients           => SyncSelfClients
           case Cmd.SyncSelfPermissions       => SyncSelfPermissions
           case Cmd.SyncClients               => SyncClients(userId)
@@ -435,6 +449,7 @@ object SyncRequest {
 
       req match {
         case SyncUser(users)                  => o.put("users", arrString(users.toSeq map (_.str)))
+        case SyncSearchResults(users)         => o.put("users", arrString(users.toSeq map (_.str)))
         case SyncConversation(convs)          => o.put("convs", arrString(convs.toSeq map (_.str)))
         case SyncConvLink(conv)               => o.put("conv", conv.str)
         case SyncSearchQuery(queryCacheKey)   => o.put("queryCacheKey", queryCacheKey.cacheKey)
@@ -513,7 +528,6 @@ object SyncRequest {
           o.put("user", userId)
           o.put("new_role", newRole)
           o.put("orig_role", origRole)
-        case PostAddressBook(ab) => o.put("addressBook", JsonEncoder.encode(ab))
         case PostLiking(_, liking) =>
           o.put("liking", JsonEncoder.encode(liking))
         case PostClientLabel(id, label) =>

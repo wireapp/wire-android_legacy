@@ -10,7 +10,6 @@ class AccessTokenRepository(
     private val accessTokenMapper: AccessTokenMapper,
     private val refreshTokenMapper: RefreshTokenMapper
 ) {
-
     suspend fun accessToken(): AccessToken =
         localDataSource.accessToken()?.let { accessTokenMapper.from(it) } ?: AccessToken.EMPTY
 

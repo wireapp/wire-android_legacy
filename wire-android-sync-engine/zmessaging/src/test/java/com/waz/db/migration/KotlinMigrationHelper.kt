@@ -8,14 +8,10 @@ import com.waz.zclient.storage.db.assets.AssetsV1Entity
 import com.waz.zclient.storage.db.assets.DownloadAssetsEntity
 import com.waz.zclient.storage.db.assets.UploadAssetsEntity
 import com.waz.zclient.storage.db.cache.CacheEntryEntity
-import com.waz.zclient.storage.db.contacts.ContactHashesEntity
-import com.waz.zclient.storage.db.contacts.ContactsEntity
-import com.waz.zclient.storage.db.contacts.ContactsOnWireEntity
 import com.waz.zclient.storage.db.conversations.ConversationFoldersEntity
 import com.waz.zclient.storage.db.conversations.ConversationMembersEntity
 import com.waz.zclient.storage.db.conversations.ConversationRoleActionEntity
 import com.waz.zclient.storage.db.conversations.ConversationsEntity
-import com.waz.zclient.storage.db.email.EmailAddressesEntity
 import com.waz.zclient.storage.db.errors.ErrorsEntity
 import com.waz.zclient.storage.db.folders.FoldersEntity
 import com.waz.zclient.storage.db.history.EditHistoryEntity
@@ -27,7 +23,6 @@ import com.waz.zclient.storage.db.notifications.CloudNotificationStatsEntity
 import com.waz.zclient.storage.db.notifications.CloudNotificationsEntity
 import com.waz.zclient.storage.db.notifications.NotificationDataEntity
 import com.waz.zclient.storage.db.notifications.PushNotificationEventEntity
-import com.waz.zclient.storage.db.phone.PhoneNumbersEntity
 import com.waz.zclient.storage.db.property.KeyValuesEntity
 import com.waz.zclient.storage.db.property.PropertiesEntity
 import com.waz.zclient.storage.db.receipts.ReadReceiptsEntity
@@ -51,27 +46,6 @@ object KotlinMigrationHelper {
         runBlocking {
             val entity = roomDB.assetsV1Dao().allAssets()[0]
             check(assetsV1Entity, entity)
-        }
-
-    @JvmStatic
-    fun assertContactHashesEntity(roomDB: UserDatabase, contactHashesEntity: ContactHashesEntity) =
-        runBlocking {
-            val entity = roomDB.contactHashesDao().allContactHashes()[0]
-            check(contactHashesEntity, entity)
-        }
-
-    @JvmStatic
-    fun assertContactsEntity(roomDB: UserDatabase, contactsEntity: ContactsEntity) =
-        runBlocking {
-            val entity = roomDB.contactsDao().allContacts()[0]
-            check(contactsEntity, entity)
-        }
-
-    @JvmStatic
-    fun assertContactsOnWireEntity(roomDB: UserDatabase, contactsOnWireEntity: ContactsOnWireEntity) =
-        runBlocking {
-            val entity = roomDB.contactOnWireDao().allContactOnWire()[0]
-            check(contactsOnWireEntity, entity)
         }
 
     @JvmStatic
@@ -114,13 +88,6 @@ object KotlinMigrationHelper {
         runBlocking {
             val entity = roomDB.editHistoryDao().allHistory()[0]
             check(editHistoryEntity, entity)
-        }
-
-    @JvmStatic
-    fun assertEmailAddressEntity(roomDB: UserDatabase, emailAddressesEntity: EmailAddressesEntity) =
-        runBlocking {
-            val entity = roomDB.emailAddressesDao().allEmailAddresses()[0]
-            check(emailAddressesEntity, entity)
         }
 
     @JvmStatic
@@ -191,13 +158,6 @@ object KotlinMigrationHelper {
         runBlocking {
             val entity = roomDB.notificationDataDao().allNotificationsData()[0]
             check(notEntity, entity)
-        }
-
-    @JvmStatic
-    fun assertPhoneNumbersEntity(roomDB: UserDatabase, phoneNumbersEntity: PhoneNumbersEntity) =
-        runBlocking {
-            val entity = roomDB.phoneNumbersDao().allPhoneNumbers()[0]
-            check(phoneNumbersEntity, entity)
         }
 
     @JvmStatic

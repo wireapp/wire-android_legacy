@@ -28,6 +28,8 @@ import scala.collection.{GenSet, breakOut, mutable}
 import scala.collection.generic.CanBuild
 import scala.language.higherKinds
 
+// TODO: Left for migrations compatibility. Can be deleted after all devices are migrated
+// and we delete the history of old migrations
 case class Contact(id: ContactId, name: String, nameSource: NameSource, sortKey: String, searchKey: SearchKey, phoneNumbers: GenSet[PhoneNumber], emailAddresses: GenSet[EmailAddress]) {
   lazy val initials = NameParts.parseFrom(name).initials
   def hasProperName = name.nonEmpty && nameSource != NameSource.Other

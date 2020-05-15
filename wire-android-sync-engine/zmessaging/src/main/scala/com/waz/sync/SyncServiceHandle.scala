@@ -26,7 +26,6 @@ import com.waz.log.LogSE._
 import com.waz.model.UserData.ConnectionStatus
 import com.waz.model.otr.ClientId
 import com.waz.model.sync.SyncJob.Priority
-import com.waz.model.sync.SyncRequest.PostConvRole
 import com.waz.model.sync._
 import com.waz.model.{AccentColor, Availability, _}
 import com.waz.service._
@@ -39,6 +38,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait SyncServiceHandle {
+  def syncSearchResults(ids: Set[UserId]): Future[SyncId]
   def syncSearchQuery(query: SearchQuery): Future[SyncId]
   def exactMatchHandle(handle: Handle): Future[SyncId]
   def syncUsers(ids: Set[UserId]): Future[SyncId]
@@ -84,7 +84,6 @@ trait SyncServiceHandle {
   def postConversationRole(id: ConvId, member: UserId, newRole: ConversationRole, origRole: ConversationRole): Future[SyncId]
   def postLastRead(id: ConvId, time: RemoteInstant): Future[SyncId]
   def postCleared(id: ConvId, time: RemoteInstant): Future[SyncId]
-  def postAddressBook(ab: AddressBook): Future[SyncId]
   def postTypingState(id: ConvId, typing: Boolean): Future[SyncId]
   def postOpenGraphData(conv: ConvId, msg: MessageId, editTime: RemoteInstant): Future[SyncId]
   def postReceipt(conv: ConvId, messages: Seq[MessageId], user: UserId, tpe: ReceiptType): Future[SyncId]
@@ -137,6 +136,7 @@ class AndroidSyncServiceHandle(account:         UserId,
   private def addRequest(req: SyncRequest, priority: Int = Priority.Normal, dependsOn: Seq[SyncId] = Nil, forceRetry: Boolean = false, delay: FiniteDuration = Duration.Zero): Future[SyncId] =
     service.addRequest(account, req, priority, dependsOn, forceRetry, delay)
 
+  def syncSearchResults(users: Set[UserId]) = addRequest(SyncSearchResults(users))
   def syncSearchQuery(query: SearchQuery) = addRequest(SyncSearchQuery(query), priority = Priority.High)
   def syncUsers(ids: Set[UserId]) = addRequest(SyncUser(ids))
   def exactMatchHandle(handle: Handle) = addRequest(ExactMatchHandle(handle), priority = Priority.High)
@@ -161,7 +161,6 @@ class AndroidSyncServiceHandle(account:         UserId,
   def postDeleted(conv: ConvId, msg: MessageId) = addRequest(PostDeleted(conv, msg))
   def postRecalled(conv: ConvId, msg: MessageId, recalled: MessageId) = addRequest(PostRecalled(conv, msg, recalled))
   def postAssetStatus(id: MessageId, conv: ConvId, exp: Option[FiniteDuration], status: UploadAssetStatus) = addRequest(PostAssetStatus(conv, id, exp, status))
-  def postAddressBook(ab: AddressBook) = addRequest(PostAddressBook(ab))
   def postConnection(user: UserId, name: Name, message: String) = addRequest(PostConnection(user, name, message))
   def postConnectionStatus(user: UserId, status: ConnectionStatus) = addRequest(PostConnectionStatus(user, Some(status)))
   def postTypingState(conv: ConvId, typing: Boolean) = addRequest(PostTypingState(conv, typing))
@@ -261,6 +260,7 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case SyncConversations                               => zms.conversationSync.syncConversations()
           case SyncConvLink(conv)                              => zms.conversationSync.syncConvLink(conv)
           case SyncUser(u)                                     => zms.usersSync.syncUsers(u.toSeq: _*)
+          case SyncSearchResults(u)                            => zms.usersSync.syncSearchResults(u.toSeq: _*)
           case SyncSearchQuery(query)                          => zms.usersearchSync.syncSearchQuery(query)
           case ExactMatchHandle(query)                         => zms.usersearchSync.exactMatchHandle(query)
           case SyncRichMedia(messageId)                        => zms.richmediaSync.syncRichMedia(messageId)
@@ -279,7 +279,6 @@ class AccountSyncHandler(accounts: AccountsService) extends SyncHandler {
           case PostSelfName(name)                              => zms.usersSync.postSelfName(name)
           case PostSelfAccentColor(color)                      => zms.usersSync.postSelfAccentColor(color)
           case PostAvailability(availability)                  => zms.usersSync.postAvailability(availability)
-          case PostAddressBook(ab)                             => zms.addressbookSync.postAddressBook(ab)
           case RegisterPushToken(token)                        => zms.gcmSync.registerPushToken(token)
           case PostLiking(convId, liking)                      => zms.reactionsSync.postReaction(convId, liking)
           case PostAddBot(cId, pId, iId)                       => zms.integrationsSync.addBot(cId, pId, iId)

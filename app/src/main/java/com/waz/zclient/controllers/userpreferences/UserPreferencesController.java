@@ -35,10 +35,8 @@ public class UserPreferencesController implements IUserPreferencesController {
     public static final String USER_PREFS_TAG = "com.wire.preferences";
 
     //TODO Move these preferences to the UserPreferences service in SE, since a lot of them are user-scoped anyway.
-    public static final String USER_PREFS_LAST_ACCENT_COLOR = "USER_PREFS_LAST_ACCENT_COLOR";
     public static final String USER_PREFS_REFERRAL_TOKEN = "USER_PREFS_REFERRAL_TOKEN";
     public static final String USER_PREFS_PERSONAL_INVITATION_TOKEN = "USER_PREFS_PERSONAL_INVITATION_TOKEN";
-    private static final String USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG = "USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG ";
     private static final String USER_PREF_PHONE_VERIFICATION_CODE = "PREF_PHONE_VERIFICATION_CODE";
     public static final String USER_PREF_ACTION_PREFIX = "USER_PREF_ACTION_PREFIX";
     private static final String USER_PREF_RECENT_EMOJIS = "USER_PREF_RECENT_EMOJIS";
@@ -59,19 +57,6 @@ public class UserPreferencesController implements IUserPreferencesController {
     @Override
     public void reset() {
         // TODO: AN-2066 Should reset all preferences
-    }
-
-    public void setLastAccentColor(int accentColor) {
-        userPreferences.edit().putInt(USER_PREFS_LAST_ACCENT_COLOR, accentColor).apply();
-    }
-
-    public int getLastAccentColor() {
-        return userPreferences.getInt(USER_PREFS_LAST_ACCENT_COLOR, -1);
-    }
-
-    @Override
-    public boolean showContactsDialog() {
-        return userPreferences.getBoolean(USER_PREFS_SHOW_SHARE_CONTACTS_DIALOG, true);
     }
 
     @Override

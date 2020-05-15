@@ -12,11 +12,9 @@ import com.waz.zclient.appentry.DialogErrorMessage.GenericDialogErrorMessage
 import com.waz.zclient.utils.BackendController
 import com.waz.zclient.utils.ContextUtils.{showErrorDialog, showInfoDialog}
 
-import scala.concurrent.Future
-
 class CustomBackendLoginFragment extends SSOFragment {
 
-  val onEmailLoginClick = EventStream[Unit]
+  val onEmailLoginClick = EventStream[Unit]()
 
   private lazy val backendController = inject[BackendController]
 
@@ -63,38 +61,19 @@ class CustomBackendLoginFragment extends SSOFragment {
     super.onPause()
     activity.getWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
   }
-  
+
   private def fetchSsoToken(): Unit =
     userAccountsController.ssoToken.head.foreach {
       case Some(token) => verifySsoCode(token)
       case None =>
         ssoService.fetchSSO().flatMap {
           case Right(SSOFound(ssoCode)) => startSsoFlow(ssoCode)
-          case Right(_) => showSsoDialogFuture
+          case Right(_) => showSsoDialogFuture()
           case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
             showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(_) => showSsoDialogFuture
+          case Left(_) => showSsoDialogFuture()
         }(Threading.Ui)
     } (Threading.Ui)
-
-  private def startSsoFlow(ssoCode: String) =
-    ssoService.extractUUID(s"wire-$ssoCode").fold(Future.successful(())) { token =>
-      onVerifyingToken(true)
-      ssoService.verifyToken(token).flatMap { result =>
-        onVerifyingToken(false)
-        userAccountsController.ssoToken ! None
-        result match {
-          case Right(true) =>
-            showSsoWebView(token.toString)
-          case Right(false) => showSsoDialogFuture
-          case Left(ErrorResponse(ConnectionErrorCode | TimeoutCode, _, _)) =>
-            showErrorDialog(GenericDialogErrorMessage(ConnectionErrorCode))
-          case Left(_) => showSsoDialogFuture
-        }
-      }(Threading.Ui)
-    }
-
-  protected def showSsoDialogFuture = Future.successful(extractTokenAndShowSSODialog(true))
 }
 
 object CustomBackendLoginFragment {

@@ -21,7 +21,6 @@ import com.waz.api.impl.ErrorResponse
 import com.waz.log.BasicLogging.LogTag.DerivedLogTag
 import com.waz.log.LogSE._
 import com.waz.model._
-import com.waz.service.tracking.TrackingService.NoReporting
 import com.waz.threading.{CancellableFuture, Threading}
 import com.waz.utils.{JsonDecoder, JsonEncoder}
 import com.waz.znet2.AuthRequestInterceptor
@@ -34,6 +33,7 @@ import scala.util.Right
 
 trait UsersClient {
   def loadUsers(ids: Seq[UserId]): ErrorOrResponse[Seq[UserInfo]]
+  def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]]
   def loadSelf(): ErrorOrResponse[UserInfo]
   def loadRichInfo(user: UserId): ErrorOrResponse[Seq[UserField]]
   def updateSelf(info: UserInfo): ErrorOrResponse[Unit]
@@ -66,6 +66,18 @@ class UsersClientImpl(implicit
 
       CancellableFuture.lift(result)
     }
+  }
+
+  override def loadByHandle(handle: Handle): ErrorOrResponse[Option[UserInfo]] = {
+    Request.Get(
+      relativePath = UsersPath,
+      queryParameters = queryParameters("handles" -> handle.string.toLowerCase)
+    )
+      .withResultType[Seq[UserInfo]]
+      .withErrorType[ErrorResponse]
+      .execute
+      .map(res => Right(res.headOption))
+      .recover { case e: ErrorResponse => Left(e) }
   }
 
   override def loadSelf(): ErrorOrResponse[UserInfo] = {
@@ -122,8 +134,4 @@ object UsersClient {
       v.password foreach (o.put("password", _))
     }
   }
-
-  class FailedLoadUsersResponse(val error: ErrorResponse)
-    extends RuntimeException(s"loading users failed with: $error") with NoReporting
-
 }

@@ -18,28 +18,18 @@
 package com.waz.zclient.usersearch.listitems
 
 import com.waz.model
-import com.waz.model.{Name, TeamData, UserData}
+import com.waz.model.{TeamId, UserData}
 
-case class ConnectionViewItem(data: ConnectionViewModel) extends SearchViewItem {
-
+case class ConnectionViewItem(override val index: Int,
+                              user:               UserData,
+                              selfTeamId:         Option[TeamId],
+                              connected:          Boolean
+                             ) extends SearchViewItem {
   import SearchViewItem._
   import SectionViewItem._
 
-  override def section: Int = if (data.isConnected) ContactsSection else DirectorySection
-
-  override def index: Int = data.indexVal
-
-  override def itemType: Int = if (data.isConnected) ConnectedUser else UnconnectedUser
-
-  override def id: Long = data.idVal
-
-  override def name: model.Name = if (data.isConnected) data.name else super.name
+  override val id: Long         = user.id.str.hashCode
+  override val section: Int     = if (connected) ContactsSection else DirectorySection
+  override val itemType: Int    = if (connected) ConnectedUser else UnconnectedUser
+  override val name: model.Name = if (connected) user.name else super.name
 }
-
-case class ConnectionViewModel(indexVal:              Int,
-                               idVal:                 Long,
-                               isConnected:           Boolean,
-                               shouldHideUserStatus:  Boolean,
-                               results:               Seq[UserData],
-                               name:                  Name = Name.Empty,
-                               team:                  Option[TeamData])

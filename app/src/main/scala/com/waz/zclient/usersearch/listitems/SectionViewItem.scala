@@ -17,25 +17,16 @@
   */
 package com.waz.zclient.usersearch.listitems
 
-import com.waz.model
 import com.waz.model.Name
 
-case class SectionViewItem(data: SectionViewModel) extends SearchViewItem {
-
+case class SectionViewItem(override val section: Int,
+                           override val index:   Int,
+                           override val name:    Name = Name.Empty)
+  extends SearchViewItem {
   import SearchViewItem._
 
-  override def section: Int = data.section
-
-  override def index: Int = data.indexVal
-
-  override def itemType: Int = SectionHeader
-
-  override def name: model.Name = data.name
+  override val itemType: Int = SectionHeader
 }
-
-case class SectionViewModel(section:  Int,
-                            indexVal: Int,
-                            name:     Name = Name.Empty)
 
 object SectionViewItem {
   val TopUsersSection           = 0

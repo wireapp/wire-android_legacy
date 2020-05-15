@@ -195,7 +195,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val convClient         = new ConversationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val teamClient         = new TeamsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val pushNotificationsClient: PushNotificationsClient = new PushNotificationsClientImpl()(urlCreator, httpClient, authRequestInterceptor)
-  lazy val abClient           = new AddressBookClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val gcmClient          = new PushTokenClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val typingClient       = new TypingClientImpl()(urlCreator, httpClient, authRequestInterceptor)
   lazy val invitationClient   = account.invitationClient
@@ -220,9 +219,8 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val reporting                                  = new ZmsReportingService(selfUserId, global.reporting)
   lazy val wsFactory                                  = new OkHttpWebSocketFactory(account.global.httpProxy)
   lazy val wsPushService: WSPushService               = wireWith(WSPushServiceImpl.apply _)
-  lazy val userSearch                                 = wire[UserSearchService]
+  lazy val userSearch: UserSearchService              = wire[UserSearchServiceImpl]
   lazy val users: UserService                         = wire[UserServiceImpl]
-  lazy val teamSize: TeamSizeThreshold                = wire[TeamSizeThresholdImpl]
   lazy val conversations: ConversationsService        = wire[ConversationsServiceImpl]
   lazy val convOrder: ConversationOrderEventsService  = wire[ConversationOrderEventsService]
   lazy val convsUi: ConversationsUiService            = wire[ConversationsUiServiceImpl]
@@ -235,7 +233,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val connection: ConnectionService              = wire[ConnectionServiceImpl]
   lazy val calling: CallingServiceImpl                = wire[CallingServiceImpl]
   lazy val callLogging: CallLoggingService            = wire[CallLoggingService]
-  lazy val contacts: ContactsServiceImpl              = wire[ContactsServiceImpl]
   lazy val typing: TypingService                      = wire[TypingService]
   lazy val richmedia                                  = wire[RichMediaService]
   lazy val giphy: GiphyService                        = new GiphyServiceImpl(giphyClient)(Threading.Background)
@@ -254,11 +251,10 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val foldersService: FoldersService             = wire[FoldersServiceImpl]
   lazy val rolesService: ConversationRolesService     = wire[ConversationRolesServiceImpl]
   lazy val usersearchSync                             = wire[UserSearchSyncHandler]
-  lazy val usersSync                                  = wire[UsersSyncHandler]
+  lazy val usersSync: UsersSyncHandler                = wire[UsersSyncHandlerImpl]
   lazy val conversationSync                           = wire[ConversationsSyncHandler]
   lazy val teamsSync:       TeamsSyncHandler          = wire[TeamsSyncHandlerImpl]
   lazy val connectionsSync                            = wire[ConnectionsSyncHandler]
-  lazy val addressbookSync                            = wire[AddressBookSyncHandler]
   lazy val gcmSync                                    = wire[PushTokenSyncHandler]
   lazy val typingSync                                 = wire[TypingSyncHandler]
   lazy val richmediaSync                              = wire[RichMediaSyncHandler]
@@ -274,12 +270,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
   lazy val foldersSyncHandler                         = wire[FoldersSyncHandler]
   lazy val propertiesService: PropertiesService       = wire[PropertiesServiceImpl]
   lazy val fcmNotStatsService                         = wire[FCMNotificationStatsServiceImpl]
-
-//  lazy val contentCache: AssetContentCache = new AssetContentCacheImpl(
-//    cacheDirectory = new File(context.getExternalCacheDir, s"assets_${selfUserId.str}"),
-//    directorySizeThreshold = 1024 * 1024 * 200,
-//    sizeCheckingInterval = 30.seconds
-//  )(Threading.BlockingIO, EventContext.Global)
 
   lazy val eventPipeline: EventPipeline = new EventPipelineImpl(Vector(), eventScheduler.enqueue)
 
@@ -316,7 +306,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     new EventScheduler(
       Stage(Sequential)(
         connection.connectionEventsStage,
-        connection.contactJoinEventsStage,
         users.userUpdateEventsStage,
         users.userDeleteEventsStage,
         calling.callMessagesStage,
@@ -348,9 +337,6 @@ class ZMessaging(val teamId: Option[TeamId], val clientId: ClientId, account: Ac
     push // connect on start
     notifications
     blockStreamsWhenProcessing
-
-    // services listening on lifecycle verified login events
-    contacts
 
     // services listening for storage updates
     richmedia
